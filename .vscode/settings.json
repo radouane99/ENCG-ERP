@@ -1,0 +1,10 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npm run build": true,
+        "npx tsc": true,
+        "/^cmd\\.exe /C \"cd /d c:\\\\Users\\\\radou\\\\Desktop\\\\ENCG ERP\\\\frontend && npx vitest run --reporter=verbose src/features/public/components/__tests__/RoleJourneySection\\.test\\.tsx\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

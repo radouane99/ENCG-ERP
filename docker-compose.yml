@@ -1,0 +1,112 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: encg_nginx
+    ports:
+      - '80:80'
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./backend:/var/www/html
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - encgnet
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: encg_backend
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=encg_erp
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - encgnet
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: encg_frontend
+    networks:
+      - encgnet
+
+  mysql:
+    image: mysql:8.0
+    container_name: encg_mysql
+    ports:
+      - '3307:3306'
+    environment:
+      MYSQL_DATABASE: encg_erp
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - encgnet
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: encg_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - encgnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: encg_mailpit
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+    networks:
+      - encgnet
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: encg_phpmyadmin
+    ports:
+      - '8080:80'
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_ARBITRARY=1
+    networks:
+      - encgnet
+    depends_on:
+      - mysql
+
+networks:
+  encgnet:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:

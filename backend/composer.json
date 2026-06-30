@@ -1,0 +1,80 @@
+{
+  "name": "encg/erp-backend",
+  "version": "1.0.0",
+  "description": "ENCG ERP — University Management Platform for Moroccan Public Universities",
+  "keywords": ["laravel", "university", "erp", "encg", "maroc"],
+  "license": "proprietary",
+  "require": {
+    "php": "^8.4",
+    "barryvdh/laravel-dompdf": "^3.0",
+    "guzzlehttp/guzzle": "^7.9",
+    "laravel/framework": "^12.0",
+    "laravel/horizon": "^5.30",
+    "laravel/reverb": "^1.5",
+    "laravel/sanctum": "^4.0",
+    "laravel/tinker": "^2.10",
+    "maatwebsite/excel": "*",
+    "pragmarx/google2fa": "^8.0",
+    "pragmarx/google2fa-qrcode": "^3.0",
+    "predis/predis": "^2.3",
+    "resend/resend-laravel": "^1.4",
+    "simplesoftwareio/simple-qrcode": "^4.2",
+    "spatie/laravel-activitylog": "^4.10",
+    "spatie/laravel-medialibrary": "^11.11",
+    "spatie/laravel-permission": "^6.10"
+  },
+  "require-dev": {
+    "fakerphp/faker": "^1.23",
+    "laravel/pint": "^1.13",
+    "laravel/sail": "^1.41",
+    "mockery/mockery": "^1.6",
+    "nunomaduro/collision": "^8.0",
+    "pestphp/pest": "^3.8",
+    "pestphp/pest-plugin-laravel": "^3.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
+    "post-update-cmd": [
+      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ],
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ],
+    "post-create-project-cmd": [
+      "@php artisan key:generate --ansi",
+      "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+      "@php artisan migrate --graceful --ansi"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": []
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true,
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
