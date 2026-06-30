@@ -39,10 +39,16 @@ services:
       - encgnet
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: encg_frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    environment:
+      - WATCHPACK_POLLING=true
     networks:
       - encgnet
 
@@ -59,7 +65,7 @@ services:
     networks:
       - encgnet
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-u", "root", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,7 +80,7 @@ services:
     networks:
       - encgnet
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -91,8 +97,9 @@ services:
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: encg_phpmyadmin
+    restart: always
     ports:
-      - '8080:80'
+      - "8081:80"
     environment:
       - PMA_HOST=mysql
       - PMA_PORT=3306
