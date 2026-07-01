@@ -116,9 +116,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Timetable & Smart Scheduling
     Route::prefix('timetable')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\TimetableController::class, 'index']);
-        Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
-        Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
-        Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
+        Route::get('/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
+        Route::get('/export/{type}/{id}/pdf', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportPdf']);
+        Route::get('/export/{type}/{id}/ics', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportIcs']);
         Route::post('/generate', [\App\Http\Controllers\Api\TimetableController::class, 'generate']);
         Route::post('/check-conflict', [\App\Http\Controllers\Api\TimetableController::class, 'checkConflict']);
     });
