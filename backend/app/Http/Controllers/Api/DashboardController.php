@@ -43,8 +43,8 @@ class DashboardController extends Controller
 
         // ── Enrollment by Month (last 6 months) ──────────────────────
         $enrollmentByMonth = Student::select(
-                DB::raw('strftime("%m", created_at) as month'),
-                DB::raw('strftime("%Y", created_at) as year'),
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('YEAR(created_at) as year'),
                 DB::raw('COUNT(*) as students')
             )
             ->where('created_at', '>=', now()->subMonths(6))

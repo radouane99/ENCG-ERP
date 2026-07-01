@@ -15,7 +15,7 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::prefix('v1/auth')->group(function () {
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:5,1');
     
@@ -47,6 +47,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('exam-sessions', \App\Http\Controllers\Api\ExamSessionController::class);
     Route::apiResource('final-projects', \App\Http\Controllers\Api\FinalProjectController::class);
     Route::apiResource('attendances', \App\Http\Controllers\Api\AttendanceController::class)->only(['index', 'destroy']);
+
+    // Clubs
+    Route::apiResource('clubs', \App\Http\Controllers\Api\ClubController::class)->except(['destroy']);
+
+    // Internships
+    Route::apiResource('internships', \App\Http\Controllers\Api\InternshipController::class)->except(['destroy']);
+
+    // Complaints
+    Route::apiResource('complaints', \App\Http\Controllers\Api\ComplaintController::class)->except(['destroy']);
+
+    // Discipline
+    Route::apiResource('discipline', \App\Http\Controllers\Api\DisciplineController::class)->except(['destroy']);
+    Route::post('discipline/{id}/decide', [\App\Http\Controllers\Api\DisciplineController::class, 'decide']);
     
     // Grades
     Route::prefix('grades')->group(function () {
@@ -57,6 +70,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // HR & Personnel
     Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
     Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
+
+    // Exam Locking (Admin)
+    Route::prefix('admin/exam-locking')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ExamLockingController::class, 'index']);
+        Route::post('/change', [\App\Http\Controllers\Api\ExamLockingController::class, 'updateStatus']);
+    });
 
     // Infrastructure
     Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
@@ -97,6 +116,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Timetable & Smart Scheduling
     Route::prefix('timetable')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\TimetableController::class, 'index']);
+        Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
+        Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
+        Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
         Route::post('/generate', [\App\Http\Controllers\Api\TimetableController::class, 'generate']);
         Route::post('/check-conflict', [\App\Http\Controllers\Api\TimetableController::class, 'checkConflict']);
     });
@@ -114,9 +136,34 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
     });
 
+    // Retakes
+    Route::prefix('retakes')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\RetakeController::class, 'index']);
+        Route::patch('/{id}/status', [\App\Http\Controllers\Api\RetakeController::class, 'updateStatus']);
+    });
+
+    // Professor Availability
+    Route::prefix('professor-availability')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);
+        Route::post('/alert', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'alert']);
+    });
+
+    // Schedule Change Requests
+    Route::prefix('schedule-change-requests')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'index']);
+        Route::patch('/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);
+    });
+
     // Student Absences Justification
     Route::prefix('student')->group(function () {
         Route::post('/absences/upload', [\App\Http\Controllers\Api\ConvocationController::class, 'uploadJustification']);
+    });
+
+    // Admin — Absence Justifications Management
+    Route::prefix('admin/absences-justifications')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
+        Route::patch('/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
+        Route::delete('/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
     });
 
     // Analytics & AI
@@ -124,10 +171,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/at-risk-students', [\App\Http\Controllers\Api\AnalyticsController::class, 'getAtRiskStudents']);
     });
 
-    // Anti-Fraud Documents
+    // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
         Route::post('/generate', [\App\Http\Controllers\Api\DocumentController::class, 'generate']);
         Route::get('/verify/{token}', [\App\Http\Controllers\Api\DocumentController::class, 'verify']);
+        
+        // PDF Previews
+        Route::get('/preview/ordre-mission', [\App\Http\Controllers\Api\PdfExportController::class, 'previewOrdreMission']);
+        Route::get('/preview/convention-stage', [\App\Http\Controllers\Api\PdfExportController::class, 'previewConventionStage']);
+        Route::get('/preview/attestation-travail', [\App\Http\Controllers\Api\PdfExportController::class, 'previewAttestationTravail']);
+        Route::get('/preview/releve-notes', [\App\Http\Controllers\Api\PdfExportController::class, 'releveNotes']);
+    });
+
+    // Admin — Document Requests Management
+    Route::prefix('admin/document-requests')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\DocumentRequestController::class, 'index']);
+        Route::patch('/{documentRequest}/status', [\App\Http\Controllers\Api\DocumentRequestController::class, 'updateStatus']);
     });
 
     // Admissions / TAFEM
@@ -135,13 +194,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/campaigns/{campaignId}/calculate-seuil', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'calculateSeuil']);
     });
 
-    // AI Assistant & Features
-    Route::prefix('ai')->group(function () {
-        Route::post('/chat', [\App\Http\Controllers\Api\AiFeatureController::class, 'chat']);
-        Route::post('/qcm/generate', [\App\Http\Controllers\Api\AiFeatureController::class, 'generateQcm']);
-        Route::post('/pdf/summarize', [\App\Http\Controllers\Api\AiFeatureController::class, 'summarizePdf']);
-        Route::post('/tutor', [\App\Http\Controllers\Api\AiFeatureController::class, 'virtualTutor']);
-    });
+    // AI Assistant & Features (Exact endpoints according to specs)
+    Route::post('/chatbot/message', [\App\Http\Controllers\Api\AiFeatureController::class, 'chat']);
+    Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiFeatureController::class, 'generateQcm']);
+    Route::post('/student/ai/revision-planner', [\App\Http\Controllers\Api\AiFeatureController::class, 'revisionPlanner']);
+    Route::post('/classroom/ai/summarize-pdf', [\App\Http\Controllers\Api\AiFeatureController::class, 'summarizePdf']);
+    Route::post('/classroom/ai/tutor', [\App\Http\Controllers\Api\AiFeatureController::class, 'virtualTutor']);
+    Route::post('/admin/students/{student}/ai-report', [\App\Http\Controllers\Api\AiFeatureController::class, 'studentReport']);
 
     // Alumni / Insertion Pro
     Route::prefix('alumni')->group(function () {
@@ -165,8 +224,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('dashboard')->group(function () {
     // Dashboard & Pilotage
-    Route::get('dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStats']);
-    Route::get('pilotage/metrics', [\App\Http\Controllers\Api\PilotageController::class, 'getGlobalMetrics']);
+    Route::get('/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStats']);
+    Route::get('/pilotage/metrics', [\App\Http\Controllers\Api\PilotageController::class, 'getGlobalMetrics']);
         Route::get('/admin/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getAdminStats']);
         Route::get('/executive/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getExecutiveStats']);
         Route::get('/student/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStudentStats']);
@@ -188,6 +247,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Timetable
     Route::get('/timetable/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
+    // ---------------------------------------------------------
+    // GENERATION DE DOCUMENTS PDF (DomPDF)
+    // ---------------------------------------------------------
+    Route::get('/admin/convocations/print-session', [\App\Http\Controllers\Api\PdfExportController::class, 'printSession']);
+    Route::get('/admin/convocations/print-professors', [\App\Http\Controllers\Api\PdfExportController::class, 'printProfessors']);
+    Route::get('/professor/exams/{exam}/pv/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
+    Route::get('/admin/pv-globaux/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvGlobal']);
+    Route::get('/admin/students/{id}/releve-notes/{year}', [\App\Http\Controllers\Api\PdfExportController::class, 'releveNotes']);
+    Route::get('/admin/students/{id}/attestation-reussite/{year}', [\App\Http\Controllers\Api\PdfExportController::class, 'attestationReussite']);
+    Route::get('/admin/exams/{exam}/attendance-sheet', [\App\Http\Controllers\Api\PdfExportController::class, 'attendanceSheet']);
+    Route::get('/admin/reports/absences', [\App\Http\Controllers\Api\PdfExportController::class, 'rapportAbsences']);
+    Route::get('/admin/schedules/export/group-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportScheduleGroupPdf']);
+    Route::get('/admin/exams/{exam}/live-attendance/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'liveAttendancePdf']);
+    Route::get('/admin/exams/{exam}/display-list/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'displayList']);
+    
 });
 
 // Public Documents & Cards Verification
@@ -208,4 +282,33 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureInstitutionContext
 Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
     Route::post('/attendance/session', [\App\Http\Controllers\Api\AttendanceController::class, 'createSession']);
     Route::get('/attendance/session/{id}/stats', [\App\Http\Controllers\Api\AttendanceController::class, 'sessionStats']);
+});
+
+// ---------------------------------------------------------
+// REST API (Protected endpoints for third-party integrations)
+// ---------------------------------------------------------
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
+    Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);
+    Route::get('/schedule', [\App\Http\Controllers\Api\RestApiController::class, 'schedule']);
+    Route::get('/absences', [\App\Http\Controllers\Api\RestApiController::class, 'absences']);
+    Route::get('/exams', [\App\Http\Controllers\Api\RestApiController::class, 'exams']);
+    Route::get('/appointments', [\App\Http\Controllers\Api\RestApiController::class, 'appointments']);
+    Route::get('/notifications', [\App\Http\Controllers\Api\RestApiController::class, 'notifications']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\RestApiController::class, 'readNotification']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\RestApiController::class, 'readAllNotifications']);
+});
+
+// ---------------------------------------------------------
+// INTERNAL DYNAMIC ENDPOINTS (Admin Web Auth)
+// ---------------------------------------------------------
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/admin/api/filieres/{id}/groups', [\App\Http\Controllers\Api\InternalApiController::class, 'filiereGroups']);
+    Route::get('/admin/api/groups/{id}/modules', [\App\Http\Controllers\Api\InternalApiController::class, 'groupModules']);
+    Route::get('/admin/api/rooms/{id}/availability', [\App\Http\Controllers\Api\InternalApiController::class, 'roomAvailability']);
+    Route::get('/admin/exams/api/calendar', [\App\Http\Controllers\Api\InternalApiController::class, 'examCalendar']);
+    Route::get('/admin/timetable/calendar-events', [\App\Http\Controllers\Api\InternalApiController::class, 'timetableEvents']);
+    Route::get('/admin/exams/{exam}/live-attendance/stats', [\App\Http\Controllers\Api\InternalApiController::class, 'liveAttendanceStats']);
+    Route::get('/classroom/chat/{group}/{module}/messages', [\App\Http\Controllers\Api\InternalApiController::class, 'chatMessages']);
+    Route::post('/admin/schedules/makeup/suggest', [\App\Http\Controllers\Api\InternalApiController::class, 'suggestMakeup']);
 });

@@ -133,135 +133,95 @@ export default function ModulesListPage() {
   )
 
   return (
-    <div className="space-y-6 animate-in relative p-6">
+    <div className="space-y-6 animate-in relative p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Modules & Matières</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Gérez le catalogue des modules enseignés.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#0f2863] italic">Catalogue des Modules</h1>
+            <p className="text-slate-500 mt-1 text-sm">Gestion des modules académiques, des coefficients et des charges de cours de l'UPF.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <ExcelActions model="modules" label="Modules" onImportSuccess={fetchData} />
+        <div className="flex items-center gap-3 flex-wrap">
+          <ExcelActions model="modules" label="CSV/EXCEL" onImportSuccess={fetchData} />
           <button 
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 transition-colors text-sm"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white rounded-lg font-bold shadow-sm hover:bg-[#1a387e] transition-colors text-sm uppercase tracking-wide"
           >
             <Plus className="w-4 h-4" />
-            Nouveau Module
+            Ajouter Module
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Total Modules</p>
-            <p className="text-2xl font-bold text-foreground">{modules.length}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <BookOpen className="w-5 h-5" />
-          </div>
-        </div>
-        <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Modules Actifs</p>
-            <p className="text-2xl font-bold text-foreground">{modules.filter(m => m.active).length}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5" />
-          </div>
-        </div>
-        <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Modules sans Filière</p>
-            <p className="text-2xl font-bold text-foreground">{modules.filter(m => !m.filiere_id).length}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-muted text-foreground flex items-center justify-center">
-            <Filter className="w-5 h-5" />
-          </div>
-        </div>
+      {/* Filter Box */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex items-center gap-4">
+        <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Filtrer par filière :</label>
+        <select 
+          className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 min-w-[250px] outline-none focus:border-blue-500 transition-colors"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        >
+          <option value="">-- Toutes les Filières --</option>
+          {filieres.map(f => (
+            <option key={f.id} value={f.code}>{f.code} - {f.name}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Filters & Table Container */}
-      <div className="bg-card border rounded-xl shadow-sm overflow-hidden flex flex-col">
-        {/* Toolbar */}
-        <div className="p-4 border-b flex flex-col sm:flex-row gap-4 items-center justify-between bg-muted/20">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Rechercher un module..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
-        </div>
-
+      {/* Table Container */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Table */}
         <div className="overflow-x-auto min-h-[300px]">
           {loading ? (
-            <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement des données...</div>
+            <div className="flex justify-center items-center py-20 text-slate-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
+            </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+              <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
                 <tr>
-                  <th scope="col" className="px-6 py-3 font-semibold">Code / Intitulé</th>
-                  <th scope="col" className="px-6 py-3 font-semibold text-center">Semestre</th>
-                  <th scope="col" className="px-6 py-3 font-semibold text-center">Filière</th>
-                  <th scope="col" className="px-6 py-3 font-semibold text-center">Coef.</th>
-                  <th scope="col" className="px-6 py-3 font-semibold">Professeur</th>
-                  <th scope="col" className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <th scope="col" className="px-6 py-4 font-bold tracking-wider">Code Module</th>
+                  <th scope="col" className="px-6 py-4 font-bold tracking-wider">Désignation</th>
+                  <th scope="col" className="px-6 py-4 font-bold tracking-wider text-center">Coefficient</th>
+                  <th scope="col" className="px-6 py-4 font-bold tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-slate-50">
                 {filteredModules.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-muted-foreground">Aucun module trouvé.</td>
+                    <td colSpan={4} className="text-center py-12 text-slate-400 font-medium">Aucun module trouvé.</td>
                   </tr>
                 ) : (
                   filteredModules.map((mod) => (
-                    <tr key={mod.id} className="bg-card hover:bg-muted/50 transition-colors group">
+                    <tr key={mod.id} className="bg-white hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-foreground">{mod.code}</span>
-                          <span className="text-sm text-muted-foreground">{mod.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border bg-blue-500/10 text-blue-600 border-blue-500/20">
-                          {mod.semester}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="font-medium text-foreground bg-muted px-2 py-1 rounded-md text-xs">
-                          {mod.filiere}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="font-bold text-foreground">{mod.coefficient}</span>
+                        <span className="font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-md text-xs">{mod.code}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                            {mod.professor !== 'Non assigné' ? mod.professor.split(' ')[1]?.charAt(0) || 'P' : '?'}
-                          </div>
-                          <span className="font-medium text-muted-foreground text-xs">{mod.professor}</span>
-                        </div>
+                        <span className="font-bold text-slate-700">{mod.name}</span>
+                        {mod.filiere && <span className="block mt-1 text-xs text-slate-400">{mod.filiere}</span>}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                          x{mod.coefficient.toFixed(2)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => handleOpenModal(mod)}
-                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" 
+                            className="text-amber-500 hover:text-amber-600 transition-colors" 
                             title="Modifier"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => handleDelete(mod.id)}
-                            className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            className="text-red-400 hover:text-red-600 transition-colors"
                             title="Supprimer"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -279,90 +239,77 @@ export default function ModulesListPage() {
 
       {/* Modal CRUD */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <h3 className="font-bold text-lg">{editingId ? 'Modifier le module' : 'Nouveau Module'}</h3>
-              <button onClick={handleCloseModal} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5"/></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-bold text-2xl text-[#0f2863]">{editingId ? 'Edit Module' : 'Add New Module'}</h3>
+                <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 bg-slate-50 p-2 rounded-full"><X className="w-5 h-5"/></button>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Code *</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Filière (Requis)</label>
+                  <select 
+                    value={formData.filiere_id} 
+                    onChange={e => setFormData({...formData, filiere_id: e.target.value})}
+                    className="w-full px-4 py-3 border border-blue-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+                    required
+                  >
+                    <option value="">-- Sélectionner la Filière --</option>
+                    {filieres.map(f => (
+                      <option key={f.id} value={f.id}>{f.code} - {f.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Semestre (Requis)</label>
+                  <select 
+                    value={formData.semester_number} 
+                    onChange={e => setFormData({...formData, semester_number: parseInt(e.target.value)})}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700"
+                    required
+                  >
+                    <option value={0}>-- Sélectionner le Semestre --</option>
+                    {[1,2,3,4,5,6,7,8,9,10].map(s => (
+                      <option key={s} value={s}>Semestre {s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Module Code</label>
                   <input 
                     type="text" required 
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg bg-background text-sm" 
-                    placeholder="Ex: M101" 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Semestre *</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Module Name</label>
                   <input 
-                    type="number" min="1" max="12" required 
-                    value={formData.semester_number} 
-                    onChange={e => setFormData({...formData, semester_number: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-lg bg-background text-sm" 
+                    type="text" required 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" 
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Nom du module *</label>
-                <input 
-                  type="text" required 
-                  value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm" 
-                  placeholder="Ex: Mathématiques Financières" 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Coefficient</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Coefficient</label>
                   <input 
                     type="number" step="0.5" min="0" required 
                     value={formData.coefficient} 
                     onChange={e => setFormData({...formData, coefficient: parseFloat(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-lg bg-background text-sm" 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" 
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Volume Horaire (heures)</label>
-                  <input 
-                    type="number" min="0" 
-                    value={formData.credit_hours} 
-                    onChange={e => setFormData({...formData, credit_hours: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-lg bg-background text-sm" 
-                  />
+                
+                <div className="flex items-center justify-end pt-6">
+                  <button type="submit" className="px-6 py-3 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-lg shadow-md transition-colors uppercase text-sm tracking-wide">
+                    {editingId ? 'UPDATE MODULE' : 'CREATE MODULE'}
+                  </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Filière (Optionnel)</label>
-                <select 
-                  value={formData.filiere_id} 
-                  onChange={e => setFormData({...formData, filiere_id: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
-                >
-                  <option value="">Tronc Commun (Toutes filières)</option>
-                  {filieres.map(f => (
-                    <option key={f.id} value={f.id}>{f.code} - {f.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex items-center justify-end gap-3 pt-4 border-t mt-6">
-                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg">
-                  Annuler
-                </button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">
-                  {editingId ? 'Mettre à jour' : 'Enregistrer'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

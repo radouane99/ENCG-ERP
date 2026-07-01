@@ -1,77 +1,85 @@
-﻿import React, { useState } from 'react';
-import { ChevronDown, HelpCircle } from 'lucide-react';
-import { cn } from '@shared/lib/utils';
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { cn } from '@shared/lib/utils'
 
 export default function FAQPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   const faqs = [
     {
-      question: "Comment accéder Ã  mon espace étudiant ?",
-      answer: "Vous pouvez accéder Ã  votre espace étudiant en utilisant votre adresse email institutionnelle et le mot de passe fourni par l'administration lors de votre inscription. Si vous avez oublié votre mot de passe, utilisez la fonction 'Mot de passe oublié' sur la page de connexion."
+      question: "Comment accéder à mon espace étudiant ?",
+      answer: "Votre espace étudiant est accessible via le menu latéral en utilisant vos identifiants institutionnels fournis par l'administration lors de votre inscription."
     },
     {
       question: "Comment demander une attestation de scolarité ?",
-      answer: "Les attestations de scolarité peuvent être demandées directement depuis le module 'Documents' de votre espace. Une fois générée, vous pourrez la télécharger au format PDF avec un cachet électronique."
+      answer: "Vous pouvez effectuer une demande dans la rubrique 'Demandes Administratives'. Sélectionnez 'Attestation de scolarité' et soumettez la demande. Vous serez notifié dès qu'elle sera prête."
     },
     {
       question: "Comment justifier une absence ?",
-      answer: "Toute absence doit être justifiée dans les 48 heures ouvrables. Vous pouvez soumettre votre certificat médical ou justificatif via le portail étudiant dans la section 'Mes Absences' > 'Soumettre un justificatif'."
+      answer: "Les absences doivent être justifiées dans les 48h ouvrables via le module 'Gestion des Absences' en fournissant un certificat médical ou un document officiel numérisé."
     },
     {
       question: "Comment consulter mes notes et mon relevé ?",
-      answer: "Vos notes sont disponibles dans la rubrique 'Examens & Notes'. Les relevés officiels sont publiés Ã  la fin de chaque semestre après les délibérations du jury."
+      answer: "Vos notes sont disponibles dans la rubrique 'Examens & Notes'. Les relevés finaux sont générés et téléchargeables au format PDF avec signature électronique."
     },
     {
       question: "Comment contacter l'administration ?",
-      answer: "Vous pouvez utiliser la Messagerie Interne de la plateforme pour contacter les différents services (Scolarité, Informatique, Direction) ou vous rendre directement aux guichets pendant les heures d'ouverture."
+      answer: "Vous pouvez utiliser la rubrique 'Messagerie' ou soumettre une requête via le module 'Réclamations' pour tout besoin administratif."
     },
     {
       question: "Comment changer la langue de l'interface ?",
-      answer: "La langue peut être modifiée en haut Ã  droite de l'écran en cliquant sur le sélecteur de langue (FR/AR). Vos préférences seront sauvegardées pour vos prochaines connexions."
+      answer: "Le bouton de changement de langue se situe en haut à droite de l'écran, vous permettant de basculer entre le Français et l'Arabe."
     }
-  ];
+  ]
+
+  const toggleAccordion = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index)
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-12 font-sans animate-in fade-in zoom-in duration-500 pb-24">
-      
-      {/* Header */}
-      <div className="text-center pt-8">
-        <h1 className="text-xl font-black text-[#003a8c] italic mb-8">Questions Fréquentes (FAQ)</h1>
-        <h2 className="text-4xl font-black text-white mb-4 italic">Besoin d'aide ?</h2>
-        <p className="text-white/50">Trouvez rapidement les réponses aux questions les plus courantes.</p>
+    <div className="space-y-6 animate-in p-6 max-w-4xl mx-auto pb-20">
+      <div className="flex items-center justify-center mb-12">
+        <h1 className="text-xl font-bold text-[#0f2863] italic">
+          Questions Fréquentes (FAQ)
+        </h1>
       </div>
 
-      {/* Accordion List */}
+      <div className="text-center mb-12">
+        <h2 className="text-3xl font-bold text-slate-800 italic mb-2">Besoin d'aide ?</h2>
+        <p className="text-sm text-slate-500">Trouvez rapidement les réponses aux questions les plus courantes.</p>
+      </div>
+
       <div className="space-y-4">
-        {faqs.map((faq, idx) => (
+        {faqs.map((faq, index) => (
           <div 
-            key={idx} 
-            className="bg-white rounded-2xl shadow-sm border border-white/5 overflow-hidden transition-all duration-300"
+            key={index} 
+            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all duration-200 hover:border-blue-200"
           >
             <button 
-              onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-              className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
+              onClick={() => toggleAccordion(index)}
+              className="w-full flex items-center justify-between p-6 text-left"
             >
-              <span className="text-[14px] font-bold text-white">{faq.question}</span>
-              <ChevronDown className={cn(
-                "w-5 h-5 text-[#003a8c] transition-transform duration-300",
-                openIndex === idx ? "transform rotate-180" : ""
-              )} />
+              <span className="font-bold text-slate-700 text-sm">{faq.question}</span>
+              <ChevronDown 
+                className={cn(
+                  "w-5 h-5 text-blue-500 transition-transform duration-300",
+                  openIndex === index ? "rotate-180" : ""
+                )} 
+              />
             </button>
-            
-            <div className={cn(
-              "overflow-hidden transition-all duration-300",
-              openIndex === idx ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-            )}>
-              <div className="p-6 pt-0 text-sm text-white/70 leading-relaxed border-t border-gray-50 bg-white/[0.02]/50">
+            <div 
+              className={cn(
+                "overflow-hidden transition-all duration-300",
+                openIndex === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              )}
+            >
+              <div className="p-6 pt-0 text-slate-500 text-sm leading-relaxed border-t border-slate-50 mt-2">
                 {faq.answer}
               </div>
             </div>
           </div>
         ))}
       </div>
-
     </div>
-  );
+  )
 }

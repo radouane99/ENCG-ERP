@@ -103,6 +103,9 @@ class RbacSeeder extends Seeder
 
         // ── System ─────────────────────────────────────────────
         'system.settings', 'system.horizon', 'system.logs',
+        
+        // ── Infrastructure ─────────────────────────────────────
+        'infrastructure.view', 'infrastructure.create', 'infrastructure.edit', 'infrastructure.delete',
     ];
 
     /**
@@ -123,6 +126,7 @@ class RbacSeeder extends Seeder
             'library.manage', 'library.view',
             'discipline.*', 'internships.*', 'finalprojects.*',
             'ai.*', 'tickets.manage', 'reports.*', 'compliance.*',
+            'infrastructure.*', 'system.*',
         ],
 
         'director' => [

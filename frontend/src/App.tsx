@@ -140,8 +140,50 @@ const AdminJuryPFE = lazy(() => import('@features/admin/pages/AdminJuryPFE'))
 const StudentMobility = lazy(() => import('@features/student-portal/pages/StudentMobility'))
 const DoctorantDashboard = lazy(() => import('@features/cedoc/pages/DoctorantDashboard'))
 const AdminPredictiveAnalytics = lazy(() => import('@features/admin/pages/AdminPredictiveAnalytics'))
-const AdminWorkflowBuilder = lazy(() => import('@features/admin/pages/AdminWorkflowBuilder'))
 const AdminSmartCampus = lazy(() => import('@features/admin/pages/AdminSmartCampus'))
+const ExamLockingPage = lazy(() => import('@features/admin/pages/ExamLockingPage'))
+const AcademicYearSettingsPage = lazy(() => import('@features/academic/pages/AcademicYearSettingsPage'))
+const StaffProfessorsPage = lazy(() => import('@features/admin/pages/StaffProfessorsPage'))
+const AddUserPage = lazy(() => import('@features/admin/pages/AddUserPage'))
+const EditUserPage = lazy(() => import('@features/admin/pages/EditUserPage'))
+const ViewUserPage = lazy(() => import('@features/admin/pages/ViewUserPage'))
+const AdminStudentsPage = lazy(() => import('@features/admin/pages/AdminStudentsPage'))
+const AdminStudentDetailPage = lazy(() => import('@features/admin/pages/AdminStudentDetailPage'))
+const SchedulesEnginePage = lazy(() => import('@features/admin/pages/SchedulesEnginePage'))
+const InteractiveCalendarPage = lazy(() => import('@features/admin/pages/InteractiveCalendarPage'))
+const CreateSchedulePage = lazy(() => import('@features/admin/pages/CreateSchedulePage'))
+const ReservationsPage = lazy(() => import('@features/admin/pages/ReservationsPage'))
+const ReservationCreatePage = lazy(() => import('@features/admin/pages/ReservationCreatePage'))
+const ReservationEditPage = lazy(() => import('@features/admin/pages/ReservationEditPage'))
+const StudentsCreditsPage = lazy(() => import('@features/admin/pages/StudentsCreditsPage'))
+const ManageStudentCreditPage = lazy(() => import('@features/admin/pages/ManageStudentCreditPage'))
+const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
+const AdminGradesEditPage = lazy(() => import('@features/admin/pages/AdminGradesEditPage'))
+const AdminAbsencesPage = lazy(() => import('@features/admin/pages/AdminAbsencesPage'))
+const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
+const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
+const AdminRequestsPage = lazy(() => import('@features/admin/pages/AdminRequestsPage'))
+const AdminMessagesPage = lazy(() => import('@features/admin/pages/AdminMessagesPage'))
+const AdminActivityLogsPage = lazy(() => import('@features/admin/pages/AdminActivityLogsPage'))
+const AdminEvaluationsPage = lazy(() => import('@features/admin/pages/AdminEvaluationsPage'))
+const AdminSettingsPage = lazy(() => import('@features/admin/pages/AdminSettingsPage'))
+const AdminClubsRoomRequestsPage = lazy(() => import('@features/admin/pages/AdminClubsRoomRequestsPage'))
+const AdminClubsCalendarPage = lazy(() => import('@features/admin/pages/AdminClubsCalendarPage'))
+const AdminClubFinancePage = lazy(() => import('@features/admin/pages/AdminClubFinancePage'))
+const ClassroomPage = lazy(() => import('@features/classroom/pages/ClassroomPage'))
+const ClassroomShowPage = lazy(() => import('@features/classroom/pages/ClassroomShowPage'))
+const AdminExamsPage = lazy(() => import('@features/exams/pages/AdminExamsPage'))
+const AdminExamDisplayListPage = lazy(() => import('@features/exams/pages/AdminExamDisplayListPage'))
+const AdminExamAttendanceSheetPage = lazy(() => import('@features/exams/pages/AdminExamAttendanceSheetPage'))
+const AdminExamLiveAttendancePage = lazy(() => import('@features/exams/pages/AdminExamLiveAttendancePage'))
+const AdminExamLiveAttendanceReportPage = lazy(() => import('@features/exams/pages/AdminExamLiveAttendanceReportPage'))
+const AdminExamEditPage = lazy(() => import('@features/exams/pages/AdminExamEditPage'))
+const AdminRetakePage = lazy(() => import('@features/exams/pages/AdminRetakePage'))
+const AdminConvocationsPage = lazy(() => import('@features/exams/pages/AdminConvocationsPage'))
+const AdminPrintProfessorsConvocationPage = lazy(() => import('@features/exams/pages/AdminPrintProfessorsConvocationPage'))
+const AdminProfessorAvailabilityPage = lazy(() => import('@features/exams/pages/AdminProfessorAvailabilityPage'))
+const AdminScheduleChangeRequestsPage = lazy(() => import('@features/exams/pages/AdminScheduleChangeRequestsPage'))
+const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
 const AdminFinanceDashboard = lazy(() => import('@features/admin/pages/AdminFinanceDashboard'))
 const AdminBlockchainDiplomas = lazy(() => import('@features/admin/pages/AdminBlockchainDiplomas'))
 const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
@@ -364,16 +406,60 @@ export default function App() {
           <Route path="/admin/textbooks" element={<TextbooksPage />} />
           <Route path="/admin/evaluations" element={<EvaluationsPage />} />
           <Route path="/admin/clubs" element={<AdminClubsPage />} />
+          <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
+          <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
+          <Route path="/admin/club-finance" element={<AdminClubFinancePage />} />
           <Route path="/admin/tafem" element={<AdminTafem />} />
           <Route path="/admin/mobility" element={<AdminMobility />} />
           <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
           <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
           <Route path="/admin/workflow-builder" element={<AdminWorkflowBuilder />} />
+          <Route path="/admin/exam-locking" element={<ExamLockingPage />} />
           <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
+          <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
+          <Route path="/admin/users" element={<StaffProfessorsPage />} />
+          <Route path="/admin/users/create" element={<AddUserPage />} />
+          <Route path="/admin/users/:id/edit" element={<EditUserPage />} />
+          <Route path="/admin/users/:id" element={<ViewUserPage />} />
+          <Route path="/admin/students" element={<AdminStudentsPage />} />
+          <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
+          <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
+          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage />} />
+          <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
+          <Route path="/admin/reservations" element={<ReservationsPage />} />
+          <Route path="/admin/reservations/create" element={<ReservationCreatePage />} />
+          <Route path="/admin/reservations/:id/edit" element={<ReservationEditPage />} />
+          <Route path="/admin/students-credits" element={<StudentsCreditsPage />} />
+          <Route path="/admin/students-credits/:id/manage" element={<ManageStudentCreditPage />} />
+          <Route path="/admin/grades" element={<AdminGradesPage />} />
+          <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+          <Route path="/admin/absences" element={<AdminAbsencesPage />} />
+          <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
+          <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
+          <Route path="/admin/requests" element={<AdminRequestsPage />} />
+          <Route path="/admin/messages" element={<AdminMessagesPage />} />
+          <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+          <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
           <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
           <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
           <Route path="/admin/alumni" element={<AlumniNetwork />} />
           <Route path="/admin/pilotage" element={<PilotagePage />} />
+          <Route path="/admin/exams" element={<AdminExamsPage />} />
+          <Route path="/admin/exams/:id/edit" element={<AdminExamEditPage />} />
+          <Route path="/admin/exams/:id/display-list" element={<AdminExamDisplayListPage />} />
+          <Route path="/admin/exams/:id/attendance-sheet" element={<AdminExamAttendanceSheetPage />} />
+          <Route path="/admin/exams/:id/live-attendance" element={<AdminExamLiveAttendancePage />} />
+          <Route path="/admin/exams/:id/live-attendance/report" element={<AdminExamLiveAttendanceReportPage />} />
+          <Route path="/admin/retake" element={<AdminRetakePage />} />
+          <Route path="/admin/convocations" element={<AdminConvocationsPage />} />
+          <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
+          <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
+          <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />
+          <Route path="/admin/analytics" element={<AdminExamAnalyticsPage />} />
+          <Route path="/classroom" element={<ClassroomPage />} />
+          <Route path="/classroom/show/:classId/:groupId" element={<ClassroomShowPage />} />
         </Route>
 
         {/* 404 */}

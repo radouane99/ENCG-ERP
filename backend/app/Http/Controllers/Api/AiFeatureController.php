@@ -106,4 +106,47 @@ class AiFeatureController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Module 3: Planificateur de Révision
+     */
+    public function revisionPlanner(Request $request): JsonResponse
+    {
+        // En vrai on récupérerait les modules de l'étudiant via auth()->user()
+        $modules = $request->input('modules', 'Comptabilité, Mathématiques, Informatique');
+        
+        $planJson = $this->aiService->generateRevisionPlan($modules);
+        $planArray = json_decode($planJson, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur format JSON',
+                'raw' => $planJson
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $planArray
+        ]);
+    }
+
+    /**
+     * Module 6: Rapport IA Étudiant
+     */
+    public function studentReport(Request $request, $studentId): JsonResponse
+    {
+        // Dummy data fetch pour l'étudiant
+        $studentData = "Etudiant #$studentId - Notes moyennes: 11/20, Absences: 3, Modules échoués: Comptabilité";
+        
+        $report = $this->aiService->generateStudentReport($studentData);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'report' => $report
+            ]
+        ]);
+    }
 }

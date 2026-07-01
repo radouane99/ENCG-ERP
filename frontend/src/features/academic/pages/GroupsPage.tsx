@@ -3,7 +3,8 @@ import { Search, Plus, Edit2, Trash2, X, Users, Layers, BookOpen } from 'lucide-
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import ExcelActions from '@shared/components/ui/ExcelActions'
+import MassImportView from '@shared/components/ui/MassImportView'
+import { Upload } from 'lucide-react'
 
 interface Group {
   id: number; name: string; filiere: string; filiere_id: number | null;
@@ -22,6 +23,7 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
 
@@ -69,134 +71,129 @@ export default function GroupsPage() {
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1"
 
+  if (isImporting) {
+    return (
+      <MassImportView
+        title="Importation Massive de Groupes (Excel/CSV)"
+        bannerTitle="Importateur de Cohortes & Groupes"
+        bannerSubtitle="Gérez la structure académique de l'UPF en ajoutant des dizaines de classes d'élèves en un instant."
+        modelName="Groupes"
+        templateName="Fichier Modèle des Classes"
+        templateDesc={
+          <>Téléchargez et remplissez le gabarit pré-formaté. Il contient les colonnes requises : <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">name</span> (nom complet ou trigramme du groupe, ex: GI-1), et <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">level</span> (niveau d'étude, ex: L1, L2, L3, M1, M2).</>
+        }
+        instructions={<>Pour le champ level, utilisez de préférence les formats académiques suivants : <strong>L1, L2, L3</strong> (Licence) ou <strong>M1, M2</strong> (Master).</>}
+        apiModel="groups"
+        onBack={() => setIsImporting(false)}
+        onSuccess={() => {
+          fetchData()
+        }}
+      />
+    )
+  }
+
   return (
-    <div className="space-y-6 animate-in p-6 relative">
+    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Groupes & Sections</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Organisez les étudiants en groupes par filière et semestre.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#0f2863] italic">Groupes &amp; Cohortes</h1>
+            <p className="text-slate-500 mt-1 text-sm">Gestion des classes d'élèves, des sections et des cohortes académiques de l'UPF.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <ExcelActions model="groups" label="Groupes" onImportSuccess={fetchData} />
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
-            <Plus className="w-4 h-4" /> Nouveau Groupe
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={() => setIsImporting(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide">
+            <Upload className="w-4 h-4" /> Importer CSV/Excel
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-lg font-bold shadow-sm text-sm uppercase tracking-wide transition-colors">
+            <Plus className="w-4 h-4" /> Ajouter Groupe
           </button>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: 'Total Groupes', value: groups.length, icon: <Layers className="w-5 h-5" />, color: 'bg-primary/10 text-primary' },
-          { label: 'Capacité totale', value: groups.reduce((s, g) => s + g.capacity, 0), icon: <Users className="w-5 h-5" />, color: 'bg-secondary/10 text-secondary' },
-          { label: 'Filières couvertes', value: new Set(groups.map(g => g.filiere_id).filter(Boolean)).size, icon: <BookOpen className="w-5 h-5" />, color: 'bg-muted text-foreground' },
-        ].map((c, i) => (
-          <div key={i} className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
-            <div><p className="text-sm font-medium text-muted-foreground mb-1">{c.label}</p>
-              <p className="text-2xl font-bold text-foreground">{c.value}</p></div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${c.color}`}>{c.icon}</div>
+      {/* Table Container */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        {loading ? (
+          <div className="flex justify-center items-center py-20 text-slate-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
           </div>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-muted/20">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input type="text" placeholder="Rechercher un groupe..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" />
-          </div>
-        </div>
-        <div className="overflow-x-auto min-h-[250px]">
-          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div> : (
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+        ) : (
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 font-bold tracking-wider">Désignation du groupe</th>
+                <th className="px-6 py-4 font-bold tracking-wider text-center">Niveau académique</th>
+                <th className="px-6 py-4 font-bold tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filtered.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-3 font-semibold">Nom du groupe</th>
-                  <th className="px-6 py-3 font-semibold">Filière</th>
-                  <th className="px-6 py-3 font-semibold text-center">Semestre</th>
-                  <th className="px-6 py-3 font-semibold text-center">Effectif / Capacité</th>
-                  <th className="px-6 py-3 font-semibold">Année académique</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <td colSpan={3} className="text-center py-12 text-slate-400 font-medium">Aucun groupe trouvé.</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">
-                    Aucun groupe. <button onClick={openCreate} className="text-primary hover:underline">Créer le premier groupe →</button>
-                  </td></tr>
-                ) : filtered.map(g => {
-                  const fill = g.capacity > 0 ? Math.min((g.current_count / g.capacity) * 100, 100) : 0
-                  return (
-                    <tr key={g.id} className="hover:bg-muted/50 group">
-                      <td className="px-6 py-4 font-bold text-foreground">{g.name}</td>
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-md">{g.filiere}</span>
-                        <p className="text-xs text-muted-foreground mt-0.5">{g.filiere_name}</p>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border bg-blue-500/10 text-blue-600 border-blue-500/20">S{g.semester_number}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1 items-center">
-                          <span className="text-sm font-medium">{g.current_count} / {g.capacity}</span>
-                          <div className="w-24 bg-muted rounded-full h-1.5">
-                            <div className={cn("h-1.5 rounded-full", fill >= 90 ? "bg-red-500" : fill >= 70 ? "bg-amber-500" : "bg-green-500")} style={{ width: `${fill}%` }} />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground text-sm">{g.academic_year}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(g)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(g.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+              ) : filtered.map(g => (
+                <tr key={g.id} className="bg-white hover:bg-slate-50/80 transition-colors group">
+                  <td className="px-6 py-4 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                      {g.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-bold text-slate-700">{g.name}</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                      {/* Mapping semester to Level for display mock */}
+                      L{Math.ceil(g.semester_number / 2)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => openEdit(g)} className="text-amber-500 hover:text-amber-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(g.id)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <h3 className="font-bold text-lg">{editingId ? 'Modifier le groupe' : 'Nouveau Groupe'}</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div><label className={labelCls}>Nom du groupe *</label>
-                <input required value={form.name} onChange={set('name')} className={inputCls} placeholder="Ex: GFC-G1-S3" /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Filière</label>
-                  <select value={form.filiere_id} onChange={set('filiere_id')} className={inputCls}>
-                    <option value="">— Toutes —</option>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-bold text-2xl text-[#0f2863]">{editingId ? 'Edit Group' : 'Add New Group'}</h3>
+                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 bg-slate-50 p-2 rounded-full"><X className="w-5 h-5" /></button>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Filière (Requis)</label>
+                  <select value={form.filiere_id} onChange={set('filiere_id')} className="w-full px-4 py-3 border border-blue-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
+                    <option value="">-- Sélectionner la Filière --</option>
                     {filieres.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
                   </select>
                 </div>
-                <div><label className={labelCls}>Semestre *</label>
-                  <input required type="number" min="1" max="12" value={form.semester_number} onChange={set('semester_number')} className={inputCls} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Capacité *</label>
-                  <input required type="number" min="1" value={form.capacity} onChange={set('capacity')} className={inputCls} /></div>
-                <div><label className={labelCls}>Année académique</label>
-                  <select value={form.academic_year_id} onChange={set('academic_year_id')} className={inputCls}>
-                    <option value="">— Choisir —</option>
-                    {years.map(y => <option key={y.id} value={y.id}>{y.label}{y.is_current ? ' (En cours)' : ''}</option>)}
-                  </select>
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Group Name</label>
+                  <input required value={form.name} onChange={set('name')} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" placeholder="e.g. Génie Informatique - Groupe 1" />
                 </div>
-              </div>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Level</label>
+                  <input required type="text" value={form.semester_number} onChange={set('semester_number')} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" placeholder="e.g. L1, L2, Master 1" />
+                </div>
+                
+                <div className="flex items-center justify-end pt-6">
+                  <button type="submit" className="px-6 py-3 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-lg shadow-md transition-colors uppercase text-sm tracking-wide">
+                    {editingId ? 'UPDATE GROUP' : 'CREATE GROUP'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

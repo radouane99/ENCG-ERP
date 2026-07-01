@@ -24,18 +24,73 @@ class ConvocationController extends Controller
 
     public function generate(int $examId): JsonResponse
     {
+        $exam = \App\Models\Exam::with(['group.students', 'room'])->findOrFail($examId);
+        
+        $generatedCount = 0;
+        foreach ($exam->group->students as $student) {
+            $seating = \Illuminate\Support\Facades\DB::table('exam_seatings')
+                ->where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->first();
+
+            if (!$seating) {
+                \Illuminate\Support\Facades\DB::table('exam_seatings')->insert([
+                    'exam_id' => $exam->id,
+                    'student_id' => $student->id,
+                    'room_id' => $exam->room_id ?? 1, // fallback to 1 if no room assigned
+                    'seat_number' => $generatedCount + 1,
+                    'qr_token' => \Illuminate\Support\Str::uuid()->toString(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } elseif (empty($seating->qr_token)) {
+                \Illuminate\Support\Facades\DB::table('exam_seatings')
+                    ->where('id', $seating->id)
+                    ->update(['qr_token' => \Illuminate\Support\Str::uuid()->toString()]);
+            }
+            $generatedCount++;
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Convocations générées (PDF + QR)',
-            'generated_count' => 45
+            'message' => 'Convocations générées (QR assignés)',
+            'generated_count' => $generatedCount
         ]);
     }
 
     public function sendEmails(int $examId): JsonResponse
     {
+        $exam = \App\Models\Exam::with(['group.students.user', 'module', 'room'])->findOrFail($examId);
+        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')->where('exam_id', $examId)->get()->keyBy('student_id');
+
+        $sentCount = 0;
+        foreach ($exam->group->students as $student) {
+            if (!$student->user || !$student->user->email) continue;
+
+            $seating = $seatings->get($student->id);
+            if (!$seating || !$seating->qr_token) continue;
+
+            $examData = [
+                'studentName' => $student->user->name,
+                'moduleName' => $exam->module->name ?? 'N/A',
+                'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
+                'examTime' => $exam->start_time ?? 'N/A',
+                'roomName' => $exam->room->name ?? 'N/A',
+                'qrToken' => $seating->qr_token,
+            ];
+
+            // Generate PDF on the fly
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('emails.convocation', $examData);
+            
+            \Illuminate\Support\Facades\Mail::to($student->user->email)->send(
+                new \App\Mail\ConvocationEmail($examData, $pdf->output())
+            );
+            $sentCount++;
+        }
+
         return response()->json([
             'success' => true,
-            'message' => '45 emails envoyés avec succès aux étudiants.'
+            'message' => "{$sentCount} emails envoyés avec succès aux étudiants."
         ]);
     }
 
@@ -46,9 +101,28 @@ class ConvocationController extends Controller
             'exam_id' => 'required|integer'
         ]);
 
+        $seating = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->where('exam_id', $validated['exam_id'])
+            ->where('qr_token', $validated['qr_token'])
+            ->first();
+
+        if (!$seating) {
+            return response()->json(['success' => false, 'message' => 'QR Code invalide ou introuvable.'], 404);
+        }
+
+        // Mark as present
+        \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->where('id', $seating->id)
+            ->update([
+                'is_present' => true,
+                'updated_at' => now(),
+            ]);
+
+        $student = \App\Models\Student::with('user')->find($seating->student_id);
+
         return response()->json([
             'success' => true,
-            'student_name' => 'Aniss El Alaoui',
+            'student_name' => $student->user->name ?? 'Étudiant inconnu',
             'status' => 'present',
             'time' => now()->toTimeString(),
             'message' => 'Présence validée.'
@@ -57,16 +131,17 @@ class ConvocationController extends Controller
 
     public function liveStats(int $examId): JsonResponse
     {
+        $total = \Illuminate\Support\Facades\DB::table('exam_seatings')->where('exam_id', $examId)->count();
+        $present = \Illuminate\Support\Facades\DB::table('exam_seatings')->where('exam_id', $examId)->where('is_present', true)->count();
+        $absent = $total - $present;
+
         return response()->json([
             'success' => true,
             'data' => [
-                'total_students' => 45,
-                'present' => rand(20, 40),
-                'absent' => 0,
-                'latest_scans' => [
-                    ['student' => 'Aniss El Alaoui', 'time' => now()->subSeconds(rand(5, 60))->toTimeString()],
-                    ['student' => 'Salma Bennis', 'time' => now()->subSeconds(rand(60, 120))->toTimeString()],
-                ]
+                'total_students' => $total,
+                'present' => $present,
+                'absent' => $absent,
+                'latest_scans' => []
             ]
         ]);
     }

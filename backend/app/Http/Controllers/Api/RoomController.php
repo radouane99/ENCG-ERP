@@ -11,6 +11,8 @@ class RoomController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('infrastructure.view'), 403);
+
         $query = Room::query();
         if ($request->type)   $query->where('type', $request->type);
         if ($request->search) $query->where('name', 'like', "%{$request->search}%")->orWhere('code', 'like', "%{$request->search}%");
@@ -39,6 +41,8 @@ class RoomController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('infrastructure.create'), 403);
+
         $validated = $request->validate([
             'name'          => 'required|string|max:100',
             'code'          => 'required|string|max:20|unique:rooms,code',
@@ -55,6 +59,8 @@ class RoomController extends Controller
 
     public function update(Request $request, Room $room): JsonResponse
     {
+        abort_unless($request->user()->can('infrastructure.edit'), 403);
+
         $validated = $request->validate([
             'name'          => 'sometimes|required|string|max:100',
             'code'          => 'sometimes|required|string|max:20|unique:rooms,code,' . $room->id,
@@ -68,8 +74,10 @@ class RoomController extends Controller
         return response()->json(['message' => 'Salle mise à jour.', 'data' => $room]);
     }
 
-    public function destroy(Room $room): JsonResponse
+    public function destroy(Request $request, Room $room): JsonResponse
     {
+        abort_unless($request->user()->can('infrastructure.delete'), 403);
+
         $room->delete();
         return response()->json(['message' => 'Salle supprimée.']);
     }

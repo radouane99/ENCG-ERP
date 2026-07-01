@@ -11,7 +11,7 @@ import {
   RefreshCcw, ShieldAlert, GraduationCap as ProfIcon, UserPlus, Target,
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
-  BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope
+  BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles
 } from 'lucide-react'
 
 interface NavItem {
@@ -40,37 +40,62 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Pilotage Académique', labelAr: 'القيادة الأكاديمية', href: '/admin/pilotage', icon: Target, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Analytique IA', labelAr: 'تحليل الذكاء الاصطناعي', href: '/admin/predictive-analytics', icon: BrainCircuit, roles: ['super-admin', 'institution-admin'] },
       { label: 'Finance & Tableau', labelAr: 'المالية', href: '/admin/finance-dashboard', icon: Landmark, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Statistiques Globales', labelAr: 'إحصائيات', href: '/admin/analytics', icon: BarChart3, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    group: 'Scolarité & Pédagogie',
+    group: 'Scolarité & Étudiants',
     groupAr: 'الشؤون الأكاديمية',
     items: [
+      { label: 'Année & Affectations', labelAr: 'السنوات والتعيينات', href: '/admin/academic', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Filières & Modules', labelAr: 'الشعب والوحدات', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Groupes & Sections', labelAr: 'المجموعات', href: '/academic/groups', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Groupes & Sections', labelAr: 'المجموعات', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Inscriptions', labelAr: 'التسجيل', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Jours Fériés & Vacances', labelAr: 'العطل', href: '/academic/holidays', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Gestion des Notes', labelAr: 'إدارة النقط', href: '/exams/notes', icon: Edit3, roles: ['super-admin', 'institution-admin', 'professor', 'vacataire'] },
-      { label: 'Stages & PFE', labelAr: 'التداريب والمشاريع', href: '/academic/internships', icon: Briefcase, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Examens & Surveillance', labelAr: 'الامتحانات', href: '/academic/exam-planning', icon: Target, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Étudiants', labelAr: 'الطلاب', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion des Absences', labelAr: 'إدارة الغياب', href: '/admin/absences', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Étudiants à Risque', labelAr: 'الطلاب في خطر', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Demandes Admin', labelAr: 'الطلبات الإدارية', href: '/admin/requests', icon: FileText, roles: ['super-admin', 'institution-admin', 'director'] },
+    ]
+  },
+  {
+    group: 'Examens & Notes',
+    groupAr: 'الامتحانات والنقاط',
+    items: [
+      { label: 'Gestion des Examens', labelAr: 'إدارة الامتحانات', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Convocations', labelAr: 'الاستدعاءات', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Rattrapages', labelAr: 'الاستدراكية', href: '/admin/retake', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion des Notes', labelAr: 'إدارة النقط', href: '/admin/grades', icon: Edit3, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },
+      { label: 'Verrouillage des Notes', labelAr: 'قفل النقط', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
     group: 'Ressources Humaines',
     groupAr: 'الموارد البشرية',
     items: [
-      { label: 'Étudiants', labelAr: 'الطلاب', href: '/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Staff & Personnel', labelAr: 'الموظفون', href: '/admin/users', icon: Users2, roles: ['super-admin', 'institution-admin'] },
       { label: 'Professeurs', labelAr: 'الأساتذة', href: '/professors', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
-      { label: 'Vacataires', labelAr: 'المتعاقدون', href: '/vacataires', icon: Clock, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'Vacataires', labelAr: 'المتعاقدون', href: '/vacataires', icon: Briefcase, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'Disponibilités', labelAr: 'توفر الأساتذة', href: '/admin/professor-availability', icon: Clock, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
+      { label: 'Modifs Emploi du Temps', labelAr: 'تعديلات الجدول', href: '/admin/schedule-change-requests', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    group: 'Plannings & Infrastructures',
-    groupAr: 'الجداول والبنية التحتية',
+    group: 'Plannings & Espaces',
+    groupAr: 'الجداول والفضاءات',
     items: [
-      { label: 'Emplois du Temps', labelAr: 'جداول الحصص', href: '/timetable', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Emploi du temps', labelAr: 'جدول الحصص', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Salles & Infrastructures', labelAr: 'القاعات', href: '/infrastructure/classrooms', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Calendrier Annuel', labelAr: 'التقويم', href: '/calendar', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Réservations', labelAr: 'الحجوزات', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Jours Fériés', labelAr: 'العطل', href: '/academic/holidays', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+    ]
+  },
+  {
+    group: 'Vie Étudiante & Parascolaire',
+    groupAr: 'الحياة الطلابية',
+    items: [
+      { label: 'Stages & PFE', labelAr: 'التداريب والمشاريع', href: '/academic/internships', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Gestion des Clubs', labelAr: 'إدارة الأندية', href: '/admin/clubs', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Demandes Salles Clubs', labelAr: 'طلبات قاعات الأندية', href: '/admin/clubs-room-requests', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
@@ -94,12 +119,23 @@ const navigation: (NavItem | NavGroup)[] = [
     ]
   },
   {
-    group: 'Administration & Outils',
-    groupAr: 'الإدارة والأدوات',
+    group: 'Communication & Outils',
+    groupAr: 'التواصل والأدوات',
+    items: [
+      { label: 'Classroom', labelAr: 'الأقسام الافتراضية', href: '/classroom', icon: MonitorPlay, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
+      { label: 'Messagerie', labelAr: 'الرسائل', href: '/admin/messages', icon: MessageSquare, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Cahiers de Textes Admin', labelAr: 'دفاتر النصوص', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'FAQ', labelAr: 'أسئلة شائعة', href: '/faq', icon: HelpCircle, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
+    ]
+  },
+  {
+    group: 'Administration Système',
+    groupAr: 'إدارة النظام',
     items: [
       { label: 'Documents & Attestations', labelAr: 'الوثائق', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Journal d\'Activité', labelAr: 'سجل النشاط', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
       { label: 'Réseau Alumni', labelAr: 'الخريجين', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
-      { label: 'Paramètres du Système', labelAr: 'الإعدادات', href: '/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Paramètres', labelAr: 'الإعدادات', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
     ]
   }
 ]

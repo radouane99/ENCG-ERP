@@ -11,6 +11,8 @@ class ProfessorController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('professors.view'), 403);
+
         $query = Professor::with('department');
 
         if ($request->search) {
@@ -50,6 +52,8 @@ class ProfessorController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('professors.create'), 403);
+
         $validated = $request->validate([
             'first_name'    => 'required|string|max:100',
             'last_name'     => 'required|string|max:100',
@@ -77,13 +81,16 @@ class ProfessorController extends Controller
         ], 201);
     }
 
-    public function show(Professor $professor): JsonResponse
+    public function show(Request $request, Professor $professor): JsonResponse
     {
+        abort_unless($request->user()->can('professors.view'), 403);
         return response()->json(['data' => $professor->load('department')]);
     }
 
     public function update(Request $request, Professor $professor): JsonResponse
     {
+        abort_unless($request->user()->can('professors.edit'), 403);
+
         $validated = $request->validate([
             'first_name'    => 'sometimes|required|string|max:100',
             'last_name'     => 'sometimes|required|string|max:100',
@@ -105,8 +112,10 @@ class ProfessorController extends Controller
         ]);
     }
 
-    public function destroy(Professor $professor): JsonResponse
+    public function destroy(Request $request, Professor $professor): JsonResponse
     {
+        abort_unless($request->user()->can('professors.delete'), 403);
+
         $professor->delete();
 
         return response()->json([

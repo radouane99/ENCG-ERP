@@ -3,7 +3,8 @@ import { Search, Plus, Edit2, Trash2, X, Monitor, Thermometer, Building, CheckCi
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import ExcelActions from '@shared/components/ui/ExcelActions'
+import MassImportView from '@shared/components/ui/MassImportView'
+import { Upload } from 'lucide-react'
 
 interface Room {
   id: number; name: string; code: string; type: string;
@@ -23,6 +24,7 @@ export default function ClassroomsPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
 
@@ -60,138 +62,150 @@ export default function ClassroomsPage() {
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1"
 
+  if (isImporting) {
+    return (
+      <MassImportView
+        title="Importation Massive de Salles (Excel/CSV)"
+        bannerTitle="Importateur de Locaux & Salles de Cours"
+        bannerSubtitle="Gérez l'infrastructure physique de l'UPF en ajoutant des dizaines d'amphis, salles de TD ou laboratoires TP instantanément."
+        modelName="Salles"
+        templateName="Fichier Modèle d'Infrastructure"
+        templateDesc={
+          <>Téléchargez et remplissez le gabarit pré-formaté. Il contient les colonnes requises : <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">name</span> (nom de la salle), <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">capacity</span> (nombre de places), et <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">type</span> (catégorie de salle).</>
+        }
+        instructions={<>Les types de salles autorisés sont : <strong>course</strong> (Amphithéâtre / Cours magistral), <strong>TD</strong> (Travaux Dirigés), et <strong>TP</strong> (Laboratoire informatique ou technique).</>}
+        apiModel="rooms"
+        onBack={() => setIsImporting(false)}
+        onSuccess={() => {
+          fetchData()
+        }}
+      />
+    )
+  }
+
   return (
-    <div className="space-y-6 animate-in p-6 relative">
+    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Salles & Infrastructure</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Gérez les salles de cours, amphithéâtres et laboratoires.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+            <Building className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#0f2863] italic">Infrastructures &amp; Salles</h1>
+            <p className="text-slate-500 mt-1 text-sm">Gestion complète des amphis, salles de cours TD et laboratoires TP de l'UPF.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <ExcelActions model="rooms" label="Salles" onImportSuccess={fetchData} />
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
-            <Plus className="w-4 h-4" /> Nouvelle Salle
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={() => setIsImporting(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide">
+            <Upload className="w-4 h-4" /> Importer CSV/Excel
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-lg font-bold shadow-sm text-sm uppercase tracking-wide transition-colors">
+            <Plus className="w-4 h-4" /> Ajouter Salle
           </button>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Salles', value: stats.total, icon: <Building className="w-5 h-5" />, color: 'bg-primary/10 text-primary' },
-          { label: 'Disponibles', value: stats.available, icon: <CheckCircle className="w-5 h-5" />, color: 'bg-green-500/10 text-green-600' },
-          { label: 'Amphithéâtres', value: stats.amphitheatres, icon: <Building className="w-5 h-5" />, color: 'bg-purple-500/10 text-purple-600' },
-          { label: 'Capacité totale', value: stats.total_capacity, icon: <Building className="w-5 h-5" />, color: 'bg-muted text-foreground' },
-        ].map((c, i) => (
-          <div key={i} className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
-            <div><p className="text-sm font-medium text-muted-foreground mb-1">{c.label}</p>
-              <p className="text-2xl font-bold text-foreground">{c.value}</p></div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${c.color}`}>{c.icon}</div>
+      {/* Table Container */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col mt-8">
+        {loading ? (
+          <div className="flex justify-center items-center py-20 text-slate-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
           </div>
-        ))}
-      </div>
-
-      {/* Filters & Table */}
-      <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-muted/20 flex flex-col sm:flex-row gap-3">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input type="text" placeholder="Rechercher une salle..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none">
-            <option value="">Tous les types</option>
-            {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-        <div className="overflow-x-auto min-h-[250px]">
-          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div> : (
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+        ) : (
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-slate-400 uppercase bg-white border-b border-slate-100">
+              <tr>
+                <th className="px-8 py-5 font-bold tracking-wider">Nom de la salle</th>
+                <th className="px-6 py-5 font-bold tracking-wider text-center">Catégorie</th>
+                <th className="px-6 py-5 font-bold tracking-wider text-center">Capacité</th>
+                <th className="px-8 py-5 font-bold tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {rooms.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-3 font-semibold">Salle / Code</th>
-                  <th className="px-6 py-3 font-semibold">Type</th>
-                  <th className="px-6 py-3 font-semibold text-center">Capacité</th>
-                  <th className="px-6 py-3 font-semibold text-center">Équipements</th>
-                  <th className="px-6 py-3 font-semibold text-center">Disponibilité</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <td colSpan={4} className="text-center py-12 text-slate-400 font-medium">Aucune salle trouvée.</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rooms.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">
-                    Aucune salle. <button onClick={openCreate} className="text-primary hover:underline">Créer la première →</button>
-                  </td></tr>
-                ) : rooms.map(r => (
-                  <tr key={r.id} className="hover:bg-muted/50 group">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-foreground">{r.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{r.code}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={cn("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border", TYPE_COLORS[r.type])}>
-                        {TYPE_LABELS[r.type] || r.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center font-bold">{r.capacity}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {r.has_projector && <span title="Projecteur" className="p-1 rounded bg-blue-500/10 text-blue-500"><Monitor className="w-3.5 h-3.5" /></span>}
-                        {r.has_ac && <span title="Climatisation" className="p-1 rounded bg-cyan-500/10 text-cyan-600"><Thermometer className="w-3.5 h-3.5" /></span>}
-                        {!r.has_projector && !r.has_ac && <span className="text-muted-foreground text-xs">—</span>}
+              ) : rooms.map(r => {
+                let badgeClass = "bg-slate-100 text-slate-600";
+                let displayType = TYPE_LABELS[r.type] || r.type;
+                if (r.type === 'amphitheatre') {
+                  badgeClass = "bg-blue-50 text-blue-700";
+                  displayType = "COURS (AMPHI)";
+                } else if (r.type === 'classroom') {
+                  badgeClass = "bg-white border border-blue-200 text-blue-700";
+                  displayType = "SALLE TD";
+                } else if (r.type === 'lab') {
+                  badgeClass = "bg-emerald-50 text-emerald-700";
+                  displayType = "LABO TP";
+                }
+                
+                return (
+                  <tr key={r.id} className="bg-white hover:bg-slate-50/80 transition-colors group">
+                    <td className="px-8 py-5 flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
+                        {r.name.charAt(0).toUpperCase()}
                       </div>
+                      <span className="font-bold text-slate-800">{r.name}</span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border",
-                        r.is_available ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-red-500/10 text-red-600 border-red-500/20")}>
-                        {r.is_available ? 'Disponible' : 'Occupée'}
+                    <td className="px-6 py-5 text-center">
+                      <span className={cn("inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider", badgeClass)}>
+                        {displayType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(r)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(r.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4" /></button>
+                    <td className="px-6 py-5 text-center">
+                      <span className="font-bold text-slate-500 text-xs tracking-wider">{r.capacity} SIÈGES</span>
+                    </td>
+                    <td className="px-8 py-5 text-right">
+                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(r)} className="text-amber-500 hover:text-amber-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
+      {/* Modal CRUD (Keeping it for functionality) */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <h3 className="font-bold text-lg">{editingId ? 'Modifier la salle' : 'Nouvelle Salle'}</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-800">{editingId ? 'Modifier la salle' : 'Nouvelle Salle'}</h3>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Nom *</label><input required value={form.name} onChange={set('name')} className={inputCls} placeholder="Amphi A" /></div>
-                <div><label className={labelCls}>Code *</label><input required value={form.code} onChange={set('code')} className={inputCls} placeholder="AMPH-A" /></div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nom *</label>
+                  <input required value={form.name} onChange={set('name')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" placeholder="Amphi Ibn Khaldoun" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Code *</label>
+                  <input required value={form.code} onChange={set('code')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" placeholder="AMPH-1" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Type *</label>
-                  <select value={form.type} onChange={set('type')} className={inputCls}>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Type *</label>
+                  <select value={form.type} onChange={set('type')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
                     {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
-                <div><label className={labelCls}>Capacité *</label><input required type="number" min="1" value={form.capacity} onChange={set('capacity')} className={inputCls} /></div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Capacité *</label>
+                  <input required type="number" min="1" value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                {[['has_projector', 'Projecteur disponible'], ['has_ac', 'Climatisation'], ['is_available', 'Salle disponible']].map(([k, label]) => (
-                  <div key={k} className="flex items-center gap-3">
-                    <input type="checkbox" id={k} checked={(form as any)[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.checked }))} className="w-4 h-4 accent-primary rounded" />
-                    <label htmlFor={k} className="text-sm text-foreground">{label}</label>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
+              
+              <div className="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-slate-100">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">ANNULER</button>
+                <button type="submit" className="px-5 py-2.5 text-sm font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-sm transition-colors">{editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}</button>
               </div>
             </form>
           </div>

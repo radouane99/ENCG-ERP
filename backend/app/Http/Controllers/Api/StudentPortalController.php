@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Grade;
 use App\Models\AbsenceJustification;
-use App\Models\Schedule;
 
 class StudentPortalController extends Controller
 {

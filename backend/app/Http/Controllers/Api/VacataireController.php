@@ -11,6 +11,8 @@ class VacataireController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('vacataires.view'), 403);
+
         $query = VacationContract::with(['module', 'sessions', 'payments']);
 
         if ($request->search) {
@@ -27,8 +29,8 @@ class VacataireController extends Controller
         }
 
         $contracts = $query->get()->map(function ($c) {
-            $hoursCompleted = $c->sessions->sum('duration_hours');
-            $paidAmount = $c->payments->where('status', 'paid')->sum('amount');
+            $hoursCompleted = $c->sessions->sum('hours');
+            $paidAmount = $c->payments->where('status', 'paid')->sum('net_amount');
 
             return [
                 'id' => $c->id,
@@ -64,6 +66,8 @@ class VacataireController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('vacataires.create'), 403);
+
         $validated = $request->validate([
             'first_name'    => 'required|string|max:100',
             'last_name'     => 'required|string|max:100',
@@ -88,13 +92,16 @@ class VacataireController extends Controller
         ], 201);
     }
 
-    public function show(VacationContract $vacationContract): JsonResponse
+    public function show(Request $request, VacationContract $vacataire): JsonResponse
     {
-        return response()->json(['data' => $vacationContract->load(['module', 'sessions', 'payments'])]);
+        abort_unless($request->user()->can('vacataires.view'), 403);
+        return response()->json(['data' => $vacataire->load(['module', 'sessions', 'payments'])]);
     }
 
-    public function update(Request $request, VacationContract $vacationContract): JsonResponse
+    public function update(Request $request, VacationContract $vacataire): JsonResponse
     {
+        abort_unless($request->user()->can('vacataires.edit'), 403);
+
         $validated = $request->validate([
             'first_name'    => 'sometimes|required|string|max:100',
             'last_name'     => 'sometimes|required|string|max:100',
@@ -109,17 +116,19 @@ class VacataireController extends Controller
             'contract_end'  => 'nullable|date',
         ]);
 
-        $vacationContract->update($validated);
+        $vacataire->update($validated);
 
         return response()->json([
             'message' => 'Contrat mis à jour avec succès.',
-            'data' => $vacationContract
+            'data' => $vacataire
         ]);
     }
 
-    public function destroy(VacationContract $vacationContract): JsonResponse
+    public function destroy(Request $request, VacationContract $vacataire): JsonResponse
     {
-        $vacationContract->delete();
+        abort_unless($request->user()->can('vacataires.delete'), 403);
+
+        $vacataire->delete();
 
         return response()->json(['message' => 'Contrat supprimé avec succès.']);
     }

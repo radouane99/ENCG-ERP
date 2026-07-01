@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
 import { Play, Square, Users, MapPin, Clock, CheckCircle2 } from 'lucide-react';
@@ -47,7 +47,7 @@ export default function ProfessorAttendanceView() {
         try {
           const res = await api.get(`/v1/professor/attendance/session/${session.id}/stats`);
           setStats(res.data.data);
-        } catch (e) {}
+        } catch (e) { console.error('[AttendancePoller] Failed to fetch session stats:', e) }
       }, 3000); // Poll every 3 seconds for new scans
     }
     return () => clearInterval(interval);

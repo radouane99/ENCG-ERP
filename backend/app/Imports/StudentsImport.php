@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class StudentsImport implements ToModel, WithHeadingRow, SkipsEmptyRows
 {
@@ -39,7 +40,7 @@ class StudentsImport implements ToModel, WithHeadingRow, SkipsEmptyRows
         $student->status           = $row['statut'] ?? $student->status ?? 'active';
 
         if (!$student->exists && $student->email) {
-            $student->password = Hash::make('password123');
+            $student->password = Hash::make(Str::random(16));
         }
 
         $this->imported++;

@@ -63,15 +63,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-        $userData = $user->toArray();
-        $userData['roles'] = $user->roles->pluck('name')->toArray();
-        $userData['permissions'] = $user->permissions->pluck('name')->toArray();
-
         return response()->json([
             'data' => [
                 'requires_two_factor' => false,
                 'token'               => $token,
-                'user'                => $userData,
+                'user'                => $this->buildUserData($user),
             ]
         ]);
     }
@@ -109,15 +105,12 @@ class AuthController extends Controller
         Cache::forget('2fa_challenge_' . $request->challenge_token);
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
-        $userData = $user->toArray();
-        $userData['roles'] = $user->roles->pluck('name')->toArray();
-        $userData['permissions'] = $user->permissions->pluck('name')->toArray();
 
         return response()->json([
             'data' => [
                 'requires_two_factor' => false,
                 'token' => $token,
-                'user' => $userData,
+                'user' => $this->buildUserData($user),
             ]
         ]);
     }
@@ -128,13 +121,9 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load('roles', 'permissions');
-        $userData = $user->toArray();
-        $userData['roles'] = $user->roles->pluck('name')->toArray();
-        $userData['permissions'] = $user->permissions->pluck('name')->toArray();
-
+        $user = $request->user();
         return response()->json([
-            'data' => $userData
+            'data' => $this->buildUserData($user)
         ]);
     }
 
@@ -245,16 +234,12 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-            $userData = $user->toArray();
-            $userData['roles'] = [];
-            $userData['permissions'] = [];
-
             return response()->json([
                 'message' => 'Inscription réussie',
                 'data' => [
                     'requires_two_factor' => false,
                     'token'               => $token,
-                    'user'                => $userData,
+                    'user'                => $this->buildUserData($user),
                 ]
             ]);
 
@@ -329,5 +314,17 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Authentification à deux facteurs désactivée.',
         ]);
+    }
+
+    /**
+     * Build a consistent user data array for API responses.
+     */
+    private function buildUserData(\App\Models\User $user): array
+    {
+        $user->loadMissing('roles', 'permissions');
+        $data = $user->toArray();
+        $data['roles'] = $user->roles->pluck('name')->toArray();
+        $data['permissions'] = $user->permissions->pluck('name')->toArray();
+        return $data;
     }
 }

@@ -115,4 +115,34 @@ class GeminiApiService
         $prompt = "Contexte du cours :\n$contextText\n\nQuestion de l'étudiant : $question";
         return $this->generateContent($prompt, $system) ?? "Désolé, je ne peux pas analyser ce document pour le moment.";
     }
+
+    // Module 3: Planificateur de Révision
+    public function generateRevisionPlan(string $modules): string
+    {
+        $system = [
+            "Tu es un coach académique expert pour les étudiants de l'ENCG.",
+            "Génère un plan de révision au format JSON strictement valide, sans markdown autour.",
+            "Format attendu: {\"motivationMessage\":\"...\",\"plan\":[{\"day\":\"Jour 1\",\"focus\":\"Module X\",\"tasks\":[\"Tâche 1\"]}],\"tips\":[\"Conseil 1\"]}"
+        ];
+        
+        $prompt = "Crée un plan de révision sur 7 jours pour un étudiant ayant ces modules : $modules.";
+        
+        $result = $this->generateContent($prompt, $system);
+        if ($result) {
+            $result = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $result);
+        }
+        return $result ?? "{}";
+    }
+
+    // Module 6: Rapport IA Étudiant
+    public function generateStudentReport(string $studentData): string
+    {
+        $system = [
+            "Tu es un conseiller pédagogique de l'ENCG analysant les performances d'un étudiant.",
+            "Génère un rapport pédagogique structuré en Markdown avec des recommandations d'amélioration."
+        ];
+        
+        $prompt = "Analyse le profil de cet étudiant et génère un rapport : \n" . $studentData;
+        return $this->generateContent($prompt, $system) ?? "Impossible de générer le rapport.";
+    }
 }

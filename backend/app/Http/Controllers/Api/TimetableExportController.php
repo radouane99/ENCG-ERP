@@ -10,64 +10,99 @@ class TimetableExportController extends Controller
 {
     /**
      * Export timetable data formatted for FullCalendar.
-     * Supports filtering by group, professor, or room.
      */
     public function exportForFullCalendar(Request $request, $type, $id): JsonResponse
     {
-        // Mocking FullCalendar format based on the ENCG ERP requirements
+        $schedules = $this->fetchSchedules($type, $id);
+        $events = [];
         $startDate = now()->startOfWeek();
 
-        // In a real implementation, we would query the `attendance_sessions` or `schedules` tables
-        // and map them to FullCalendar event format.
-        
-        $events = [
-            [
-                'id' => '1',
-                'title' => 'Comptabilité Approfondie',
-                'start' => $startDate->copy()->addDays(0)->setHour(8)->setMinute(0)->toIso8601String(),
-                'end' => $startDate->copy()->addDays(0)->setHour(10)->setMinute(0)->toIso8601String(),
+        foreach ($schedules as $session) {
+            // Map day_of_week (1 = Monday) to current week
+            $dayOffset = $session->day_of_week - 1;
+            
+            $events[] = [
+                'id' => $session->id,
+                'title' => $session->module_name,
+                'start' => $startDate->copy()->addDays($dayOffset)->setTimeFromTimeString($session->start_time)->toIso8601String(),
+                'end' => $startDate->copy()->addDays($dayOffset)->setTimeFromTimeString($session->end_time)->toIso8601String(),
                 'extendedProps' => [
-                    'professor' => 'Pr. BENCHEKROUN',
-                    'room' => 'Amphi A',
-                    'type' => 'CM',
-                    'group' => 'GFC',
+                    'professor' => $session->prof_name,
+                    'room' => $session->room_name,
+                    'type' => $session->session_type,
+                    'group' => $session->group_name ?? 'N/A',
                 ],
                 'backgroundColor' => '#3b82f6',
                 'borderColor' => '#2563eb',
-            ],
-            [
-                'id' => '2',
-                'title' => 'Marketing Stratégique',
-                'start' => $startDate->copy()->addDays(1)->setHour(10)->setMinute(15)->toIso8601String(),
-                'end' => $startDate->copy()->addDays(1)->setHour(12)->setMinute(15)->toIso8601String(),
-                'extendedProps' => [
-                    'professor' => 'Pr. ALAOUI',
-                    'room' => 'Salle 201',
-                    'type' => 'TD',
-                    'group' => 'MCM-G1',
-                ],
-                'backgroundColor' => '#10b981',
-                'borderColor' => '#059669',
-            ],
-            [
-                'id' => '3',
-                'title' => 'Analyse Financière',
-                'start' => $startDate->copy()->addDays(2)->setHour(14)->setMinute(0)->toIso8601String(),
-                'end' => $startDate->copy()->addDays(2)->setHour(16)->setMinute(0)->toIso8601String(),
-                'extendedProps' => [
-                    'professor' => 'Dr. TAZI',
-                    'room' => 'Amphi B',
-                    'type' => 'CM',
-                    'group' => 'GFC',
-                ],
-                'backgroundColor' => '#3b82f6',
-                'borderColor' => '#2563eb',
-            ],
-        ];
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'data' => $events
         ]);
+    }
+
+    public function exportPdf(Request $request, $type, $id)
+    {
+        $schedules = $this->fetchSchedules($type, $id);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.timetable', ['schedules' => $schedules]);
+        return $pdf->download("emploi_du_temps_{$type}_{$id}.pdf");
+    }
+
+    public function exportIcs(Request $request, $type, $id)
+    {
+        $schedules = $this->fetchSchedules($type, $id);
+        $startDate = now()->startOfWeek();
+        
+        $ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG ERP//Timetable//FR\nCALSCALE:GREGORIAN\n";
+
+        foreach ($schedules as $session) {
+            $dayOffset = $session->day_of_week - 1;
+            $dtStart = $startDate->copy()->addDays($dayOffset)->setTimeFromTimeString($session->start_time)->format('Ymd\THis\Z');
+            $dtEnd = $startDate->copy()->addDays($dayOffset)->setTimeFromTimeString($session->end_time)->format('Ymd\THis\Z');
+            
+            $ics .= "BEGIN:VEVENT\n";
+            $ics .= "UID:session-{$session->id}@encg-erp.com\n";
+            $ics .= "DTSTAMP:" . now()->format('Ymd\THis\Z') . "\n";
+            $ics .= "DTSTART:{$dtStart}\n";
+            $ics .= "DTEND:{$dtEnd}\n";
+            $ics .= "SUMMARY:{$session->module_name}\n";
+            $ics .= "LOCATION:{$session->room_name}\n";
+            $ics .= "DESCRIPTION:Prof: {$session->prof_name}\n";
+            $ics .= "END:VEVENT\n";
+        }
+        $ics .= "END:VCALENDAR";
+
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"emploi_du_temps_{$type}_{$id}.ics\"",
+        ]);
+    }
+
+    private function fetchSchedules($type, $id)
+    {
+        $query = \Illuminate\Support\Facades\DB::table('schedules')
+            ->join('modules', 'schedules.module_id', '=', 'modules.id')
+            ->join('users', 'schedules.professor_id', '=', 'users.id')
+            ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
+            ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
+            ->select(
+                'schedules.*',
+                'modules.name as module_name',
+                'users.name as prof_name',
+                'rooms.name as room_name',
+                'groups.name as group_name'
+            );
+
+        if ($type === 'group') {
+            $query->where('schedules.group_id', $id);
+        } elseif ($type === 'professor') {
+            $query->where('schedules.professor_id', $id);
+        } elseif ($type === 'room') {
+            $query->where('schedules.room_id', $id);
+        }
+
+        return $query->get();
     }
 }

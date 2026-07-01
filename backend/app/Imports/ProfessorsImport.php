@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ProfessorsImport implements ToModel, WithHeadingRow, SkipsEmptyRows
 {
@@ -27,7 +28,7 @@ class ProfessorsImport implements ToModel, WithHeadingRow, SkipsEmptyRows
         $professor->status           = $row['statut'] ?? $professor->status ?? 'active';
 
         if (!$professor->exists && $professor->email) {
-            $professor->password = Hash::make('password123');
+            $professor->password = Hash::make(Str::random(16));
         }
 
         $this->imported++;

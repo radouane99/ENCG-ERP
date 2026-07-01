@@ -60,7 +60,7 @@ class StudentController extends Controller
                 'status' => $student->status ?? 'active',
                 'scholarship_type' => $student->scholarship_type,
                 'current_filiere' => $latestPathway?->filiere?->code,
-                'current_semester' => $latestPathway?->semester_number,
+                'current_semester' => $latestPathway?->current_semester,
                 'current_group' => null, // Phase 2 groups
             ];
         });

@@ -8,6 +8,7 @@ import {
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
 import api from '@shared/lib/api';
+import { useAuthStore } from '@stores/authStore';
 
 /* ── Types ── */
 type StepId = 1 | 2 | 3;
@@ -187,8 +188,12 @@ export default function InscriptionPage() {
     try {
       const res = await api.post('/v1/auth/register', payload);
       if (res.data.data?.token) {
-        // Set token (could use authStore, but we'll just redirect since it's a demo flow)
-        localStorage.setItem('auth_token', res.data.data.token);
+        // Store token in auth store (Zustand) — never in localStorage directly
+        useAuthStore.setState({
+          token: res.data.data.token,
+          user: res.data.data.user ?? null,
+          isAuthenticated: !!res.data.data.user,
+        });
       }
       setSubmitting(false);
       setDone(true);
