@@ -46,6 +46,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
     });
 
+    // LMS & E-Learning
+    Route::prefix('lms')->group(function () {
+        Route::get('/courses', [\App\Http\Controllers\Api\LmsCourseController::class, 'index']);
+        Route::get('/courses/{id}', [\App\Http\Controllers\Api\LmsCourseController::class, 'show']);
+        Route::post('/courses/{id}/materials', [\App\Http\Controllers\Api\LmsCourseController::class, 'storeMaterial']);
+    });
+
     // Academic Structure
     Route::apiResource('filieres', \App\Http\Controllers\Api\FiliereController::class);
     Route::apiResource('modules', \App\Http\Controllers\Api\ModuleController::class);

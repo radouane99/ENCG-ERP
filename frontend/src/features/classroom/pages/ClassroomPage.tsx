@@ -1,17 +1,35 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search, Folder, Zap, X, BookOpen } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import api from '@shared/lib/api'
+
+interface Classroom {
+  id: number;
+  title: string;
+  code: string;
+  group: string;
+  color: string;
+  teacher: string;
+  pubs: number;
+  supports: number;
+}
 
 export default function ClassroomPage() {
-  const [classes] = useState([
-    { id: 1, title: 'Introduction - Génie Informatique', code: 'INF-101', group: 'GÉNIE INFORMATIQUE - GROUPE 1', color: 'from-purple-600 to-fuchsia-600', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-    { id: 2, title: 'Avancé - Génie Informatique', code: 'INF-102', group: 'GÉNIE INFORMATIQUE - GROUPE 2', color: 'from-emerald-600 to-teal-600', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-    { id: 3, title: 'Développement mobile', code: 'INF-103', group: 'GÉNIE INFORMATIQUE - GROUPE 1', color: 'from-orange-500 to-amber-500', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-    { id: 4, title: 'GAMING', code: 'INF-107', group: 'GÉNIE INFORMATIQUE - GROUPE 1', color: 'from-indigo-600 to-violet-600', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-    { id: 5, title: 'SQL SERVER BASE DE DONNEE', code: 'INF-106', group: 'GÉNIE INFORMATIQUE - GROUPE 1', color: 'from-blue-600 to-indigo-600', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-    { id: 6, title: 'Développement mobile LARAVEL', code: 'INF-104', group: 'GÉNIE INFORMATIQUE - GROUPE 1', color: 'from-orange-600 to-red-600', teacher: 'Radouane el asri', pubs: 0, supports: 0 },
-  ])
+  const [classes, setClasses] = useState<Classroom[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await api.get('/lms/courses');
+        setClasses(res.data.data);
+      } catch (error) {
+        console.error('Failed to fetch courses:', error);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -59,7 +77,7 @@ export default function ClassroomPage() {
           Mes Classes Actives 📚
         </h2>
         <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
-          14 CLASSES
+          {classes.length} CLASSES
         </span>
       </div>
 
@@ -100,9 +118,12 @@ export default function ClassroomPage() {
               </div>
 
               <div className="mt-auto">
-                <Link to={`/classroom/show/${c.id}/1`} className="block w-full py-3 bg-slate-50 hover:bg-slate-100 text-[#0f2863] text-xs font-bold uppercase tracking-wider rounded-xl text-center transition-colors">
-                  ACCÉDER À LA CLASSE
-                </Link>
+                <button 
+                  onClick={() => navigate(`/student/classroom/${c.id}`)}
+                  className="w-full py-3 bg-[#0f2863] text-white rounded-xl text-sm font-bold hover:bg-[#0f2863]/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  Ouvrir l'Espace
+                </button>
               </div>
             </div>
           </div>

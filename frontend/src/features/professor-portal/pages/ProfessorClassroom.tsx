@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import api from '@shared/lib/api';
 import { 
   ChevronLeft, 
   BookOpen, 
@@ -17,6 +18,61 @@ export default function ProfessorClassroom() {
   const { moduleId } = useParams();
   const [activeTab, setActiveTab] = useState<'annonces' | 'devoirs' | 'discussion' | 'ia'>('annonces');
   const [annonceType, setAnnonceType] = useState<'annonce' | 'support'>('annonce');
+
+  const [course, setCourse] = useState<any>(null);
+  const [materials, setMaterials] = useState<any[]>([]);
+
+  // Form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const res = await api.get(`/lms/courses/${moduleId}`);
+        setCourse(res.data.module);
+        setMaterials(res.data.materials);
+      } catch (error) {
+        console.error('Failed to fetch course details:', error);
+      }
+    };
+    if (moduleId) fetchCourse();
+  }, [moduleId]);
+
+  if (!course) {
+    return <div className="p-8 text-center">Chargement de la classe...</div>;
+  }
+
+  const handlePublish = async () => {
+    if (!title) return alert("Veuillez saisir un titre");
+    setIsPublishing(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('type', annonceType === 'support' ? 'document' : 'link'); // simple mapping
+      if (file) {
+        formData.append('file', file);
+      }
+
+      const res = await api.post(`/lms/courses/${moduleId}/materials`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setMaterials([res.data.data, ...materials]);
+      setTitle('');
+      setDescription('');
+      setFile(null);
+      alert("Publié avec succès !");
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la publication");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
@@ -38,14 +94,11 @@ export default function ProfessorClassroom() {
         <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
             <span className="bg-white/20 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
-              Génie Informatique - Groupe 1
-            </span>
-            <span className="bg-white/20 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
-              Génie Informatique
+              {course.code}
             </span>
           </div>
           <h1 className="text-4xl font-black tracking-tight mb-2 flex items-center gap-3">
-            ðŸ“š Introduction - Génie Informatique
+            📚 {course.title}
           </h1>
           <p className="text-blue-100 text-sm">
             Espace d'échange et d'évaluation académique de votre classe.
@@ -54,7 +107,7 @@ export default function ProfessorClassroom() {
         
         <div className="relative z-10 flex gap-4">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-lg">
-            <div className="text-3xl font-black mb-1">0</div>
+            <div className="text-3xl font-black mb-1">{materials.length}</div>
             <div className="text-[9px] font-bold text-blue-200 uppercase tracking-widest">Publications</div>
           </div>
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-lg">
@@ -144,18 +197,35 @@ export default function ProfessorClassroom() {
                   </button>
                 </div>
 
+                <input 
+                  type="text"
+                  placeholder="Titre de l'annonce ou du support..."
+                  className="w-full bg-white/[0.02] border border-white/5 rounded-xl p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] mb-4"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+
                 <textarea 
                   rows={4}
-                  placeholder="Rédigez votre annonce ou message pour les étudiants..."
-                  className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-white resize-none mb-4"
+                  placeholder="Rédigez votre annonce ou description du support..."
+                  className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] resize-none mb-4"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 ></textarea>
 
-                <div className="border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer mb-6">
+                <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer mb-6">
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  />
                   <div className="flex items-center gap-3">
                     <Folder className="w-6 h-6 text-amber-400" />
                     <div className="text-left">
-                      <p className="text-sm font-bold text-white/80">Cliquez pour déposer un fichier</p>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">PDF, PowerPoint, Word, ZIP â€” max 20 Mo</p>
+                      <p className="text-sm font-bold text-black/80">
+                        {file ? file.name : "Cliquez pour déposer un fichier"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">PDF, PowerPoint, Word, ZIP — max 50 Mo</p>
                     </div>
                   </div>
                 </div>
@@ -165,18 +235,51 @@ export default function ProfessorClassroom() {
                     <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#003a8c] focus:ring-[#003a8c]" />
                     Notifier les étudiants de ce groupe
                   </label>
-                  <button className="bg-[#003a8c] hover:bg-[#002a66] text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-900/20">
-                    Publier L'annonce
+                  <button 
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="bg-[#003a8c] hover:bg-[#002a66] disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-900/20"
+                  >
+                    {isPublishing ? "Publication..." : "Publier"}
                   </button>
                 </div>
               </div>
 
-              {/* Empty State */}
-              <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
-                <Megaphone className="w-12 h-12 text-orange-300 mb-4" />
-                <h3 className="text-lg font-black text-white/90 mb-2">Aucune annonce pour le moment</h3>
-                <p className="text-sm text-white/50">L'enseignant n'a pas encore publié d'annonces ou de cours.</p>
-              </div>
+              {materials.length === 0 ? (
+                {/* Empty State */}
+                <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
+                  <Megaphone className="w-12 h-12 text-orange-300 mb-4" />
+                  <h3 className="text-lg font-black text-black/90 mb-2">Aucune annonce pour le moment</h3>
+                  <p className="text-sm text-black/50">Vous n'avez pas encore publié d'annonces ou de cours.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {materials.map((mat) => (
+                    <div key={mat.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex gap-4">
+                      <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        {mat.type === 'document' ? <BookOpen className="w-5 h-5" /> : <Megaphone className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <h3 className="text-sm font-bold text-gray-900">{mat.title}</h3>
+                          <span className="text-xs text-gray-400">{new Date(mat.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{mat.description}</p>
+                        {mat.file_path && (
+                          <a 
+                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${mat.file_path}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-[#0f2863] text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                          >
+                            <Paperclip className="w-4 h-4" /> Télécharger la pièce jointe
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
