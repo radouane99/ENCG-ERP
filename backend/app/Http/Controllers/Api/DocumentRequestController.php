@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Notifications\SystemNotification;
 
 class DocumentRequestController extends Controller
 {
@@ -77,6 +78,22 @@ class DocumentRequestController extends Controller
             'processed_by'     => $request->user()->id,
             'processed_at'     => now(),
         ]);
+
+        // Send notification to the user
+        $user = $documentRequest->user;
+        if ($user) {
+            $statusText = $validated['status'] === 'approved' ? 'approuvée' : 'rejetée';
+            $message = "Votre demande administrative ({$documentRequest->reference_number}) a été {$statusText}.";
+            if ($validated['status'] === 'rejected' && !empty($validated['rejection_reason'])) {
+                $message .= " Motif : {$validated['rejection_reason']}";
+            }
+            $user->notify(new SystemNotification(
+                "Demande administrative {$statusText}",
+                $message,
+                'administrative',
+                '/student/requests'
+            ));
+        }
 
         return response()->json([
             'message' => $validated['status'] === 'approved'

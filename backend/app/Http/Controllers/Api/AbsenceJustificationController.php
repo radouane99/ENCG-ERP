@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsenceJustification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Notifications\SystemNotification;
 
 class AbsenceJustificationController extends Controller
 {
@@ -101,6 +102,22 @@ class AbsenceJustificationController extends Controller
             \App\Models\AttendanceRecord::where('attendance_session_id', $absenceJustification->attendance_id)
                 ->where('student_id', $absenceJustification->student_id)
                 ->update(['is_justified' => true]);
+        }
+
+        // Send notification to the student
+        $studentUser = $absenceJustification->student?->user;
+        if ($studentUser) {
+            $statusText = $validated['status'] === 'approved' ? 'approuvé' : 'rejeté';
+            $message = "Votre justificatif d'absence a été {$statusText}.";
+            if ($validated['status'] === 'rejected' && !empty($validated['rejection_reason'])) {
+                $message .= " Motif : {$validated['rejection_reason']}";
+            }
+            $studentUser->notify(new SystemNotification(
+                "Justificatif {$statusText}",
+                $message,
+                'academic',
+                '/student/absences'
+            ));
         }
 
         return response()->json([

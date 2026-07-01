@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ExamLockingAudit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\SystemNotification;
 
 class ExamLockingController extends Controller
 {
@@ -60,6 +62,17 @@ class ExamLockingController extends Controller
                 'new_phase' => $newPhase,
                 'ip_address' => $request->ip(),
             ]);
+
+            // Notify all professors about the phase change
+            $professors = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'professeur'))->get();
+            if ($professors->isNotEmpty()) {
+                Notification::send($professors, new SystemNotification(
+                    "Changement de phase des notes",
+                    "La phase de saisie des notes est passée à : {$newPhase}.",
+                    "system",
+                    "/professor/grades"
+                ));
+            }
         }
 
         return $this->index();

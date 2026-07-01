@@ -38,6 +38,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
 
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::post('/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+        Route::patch('/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+        Route::delete('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
+    });
+
     // Academic Structure
     Route::apiResource('filieres', \App\Http\Controllers\Api\FiliereController::class);
     Route::apiResource('modules', \App\Http\Controllers\Api\ModuleController::class);

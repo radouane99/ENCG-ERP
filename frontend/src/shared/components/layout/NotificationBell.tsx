@@ -1,54 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell, User, BookOpen, CreditCard, ExternalLink, Calendar as CalendarIcon, Check, CheckCircle2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import api from '@shared/lib/api';
 
 interface Notification {
   id: string;
-  type: 'system' | 'academic' | 'administrative' | 'financial';
-  title: string;
-  message: string;
-  read: boolean;
-  time: string;
-  actionUrl?: string;
+  type: string;
+  data: {
+    title: string;
+    message: string;
+    type?: string;
+    action_url?: string;
+  };
+  read_at: string | null;
+  created_at: string;
 }
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'academic',
-    title: 'Nouveau cours ajouté',
-    message: 'Le cours "Analyse Financière" a été ajouté à votre emploi du temps.',
-    read: false,
-    time: 'Il y a 5 min',
-    actionUrl: '/timetable'
-  },
-  {
-    id: '2',
-    type: 'financial',
-    title: 'Reçu de paiement',
-    message: 'Votre reçu d\'inscription est disponible au téléchargement.',
-    read: false,
-    time: 'Il y a 2 heures',
-  },
-  {
-    id: '3',
-    type: 'system',
-    title: 'Mise à jour système',
-    message: 'L\'application sera en maintenance le dimanche 25 Juin.',
-    read: true,
-    time: 'Hier',
-  }
-];
 
 export function NotificationBell() {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data.data);
+      setUnreadCount(res.data.meta.unread_count);
+    } catch (error) {
+      console.error('Error fetching notifications', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // In a real app, you might want to poll or use WebSockets (Laravel Reverb)
+    // const interval = setInterval(fetchNotifications, 60000);
+    // return () => clearInterval(interval);
+  }, []);
 
   const getIcon = (type: string) => {
     switch(type) {
@@ -59,12 +51,24 @@ export function NotificationBell() {
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const markAsRead = async (id: string) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking as read', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/notifications/mark-all-read');
+      setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all as read', error);
+    }
   };
 
   return (
@@ -100,30 +104,36 @@ export function NotificationBell() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {notifications.map(notif => (
+                {notifications.map(notif => {
+                  const isUnread = notif.read_at === null;
+                  const typeLabel = notif.data.type || 'system';
+                  
+                  return (
                   <div 
                     key={notif.id} 
                     className={cn(
                       "p-3 hover:bg-muted/50 transition-colors flex gap-3 group relative",
-                      !notif.read ? "bg-primary/5" : ""
+                      isUnread ? "bg-primary/5" : ""
                     )}
                   >
                     <div className="mt-1 w-8 h-8 rounded-full bg-background border border-border flex flex-shrink-0 items-center justify-center">
-                      {getIcon(notif.type)}
+                      {getIcon(typeLabel)}
                     </div>
                     <div className="flex-1 pr-4">
-                      <p className={cn("text-sm", !notif.read ? "font-semibold text-foreground" : "text-foreground/80 font-medium")}>
-                        {notif.title}
+                      <p className={cn("text-sm", isUnread ? "font-semibold text-foreground" : "text-foreground/80 font-medium")}>
+                        {notif.data.title}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
-                        {notif.message}
+                        {notif.data.message}
                       </p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-[10px] text-muted-foreground/80 font-medium">{notif.time}</span>
-                        {notif.actionUrl && (
+                        <span className="text-[10px] text-muted-foreground/80 font-medium">
+                          {new Date(notif.created_at).toLocaleDateString()}
+                        </span>
+                        {notif.data.action_url && (
                           <button 
                             onClick={() => {
-                              navigate(notif.actionUrl!);
+                              navigate(notif.data.action_url!);
                               setIsOpen(false);
                             }}
                             className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
@@ -134,7 +144,7 @@ export function NotificationBell() {
                       </div>
                     </div>
                     
-                    {!notif.read && (
+                    {isUnread && (
                       <button 
                         onClick={() => markAsRead(notif.id)}
                         className="absolute top-3 right-3 p-1 rounded-md opacity-0 group-hover:opacity-100 bg-background border border-border text-muted-foreground hover:text-foreground transition-all"
@@ -144,7 +154,7 @@ export function NotificationBell() {
                       </button>
                     )}
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>
