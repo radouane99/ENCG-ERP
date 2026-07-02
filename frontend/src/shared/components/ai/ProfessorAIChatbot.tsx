@@ -1,13 +1,78 @@
-import React, { useState } from 'react';
-import { X, Calendar, UserX, FileText, Building, Send, MessageSquare } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Calendar, UserX, FileText, Building, Send, MessageSquare, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
+import api from '@/shared/lib/api';
+import { toast } from 'sonner';
+
+interface Message {
+  id: string;
+  sender: 'user' | 'bot';
+  text: string;
+}
 
 export default function ProfessorAIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const { hasAnyRole } = useAuthStore();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      sender: 'bot',
+      text: "Bonjour Professeur ! Je suis votre assistant IA 🤝\nJe peux vous aider à générer des QCM, trouver le règlement, ou analyser vos présences."
+    }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Only render if user is a professor
   if (!hasAnyRole(['professor', 'vacataire'])) return null;
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isOpen) scrollToBottom();
+  }, [messages, isTyping, isOpen]);
+
+  const handleSendMessage = async (e?: React.FormEvent, predefinedText?: string) => {
+    e?.preventDefault();
+    const textToSend = predefinedText || inputValue;
+    if (!textToSend.trim()) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      sender: 'user',
+      text: textToSend
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue('');
+    setIsTyping(true);
+
+    try {
+      const res = await api.post('/chatbot/message', {
+        message: userMsg.text
+      });
+
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'bot',
+        text: res.data.data.reply
+      };
+
+      setMessages(prev => [...prev, botMsg]);
+    } catch (error) {
+      toast.error("Erreur de connexion à l'IA.");
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        sender: 'bot',
+        text: "Désolé, je rencontre des difficultés techniques. Veuillez réessayer plus tard."
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   return (
     <>
@@ -50,63 +115,82 @@ export default function ProfessorAIChatbot() {
           </div>
 
           {/* Chat Body */}
-          <div className="flex-1 p-5 bg-gray-50/50 min-h-[300px] max-h-[400px] overflow-y-auto">
+          <div className="flex-1 p-5 bg-gray-50/50 min-h-[300px] max-h-[400px] overflow-y-auto space-y-4">
             
-            {/* AI Message */}
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-sm shrink-0 shadow-sm border border-amber-200">
-                🧑‍🏫
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.sender === 'bot' && (
+                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-sm shrink-0 shadow-sm border border-amber-200">
+                    🧑‍🏫
+                  </div>
+                )}
+                
+                <div className={`p-4 rounded-2xl shadow-sm border text-sm w-fit max-w-[85%] ${
+                  msg.sender === 'user' 
+                    ? 'bg-gradient-to-tr from-amber-500 to-orange-400 text-white rounded-tr-sm border-transparent' 
+                    : 'bg-white border-gray-100 text-gray-700 rounded-tl-sm'
+                }`}>
+                  <div className="whitespace-pre-wrap leading-relaxed">
+                    {msg.sender === 'bot' ? (
+                      msg.text.split('**').map((part, i) => i % 2 === 1 ? <strong key={i} className="text-gray-900">{part}</strong> : part)
+                    ) : (
+                      msg.text
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 text-gray-700 text-sm w-full">
-                <p className="mb-4">Bonjour Professeur ! Je suis votre assistant IA 🤝</p>
-                <p className="font-bold text-gray-900 mb-2">Je peux vous aider avec :</p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-500" /> Votre emploi du temps
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <UserX className="w-4 h-4 text-emerald-500" /> Absences de vos étudiants
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-rose-500" /> Générer des QCM
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Building className="w-4 h-4 text-purple-500" /> Réservation de salles
-                  </li>
-                </ul>
-              </div>
-            </div>
+            ))}
 
+            {isTyping && (
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-sm shrink-0 shadow-sm border border-amber-200">
+                  🧑‍🏫
+                </div>
+                <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex gap-1 items-center">
+                  <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 bg-orange-400/80 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 bg-orange-400/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Actions */}
           <div className="px-5 py-3 flex flex-wrap gap-2 border-t border-gray-100 bg-white">
-            <button className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-full text-xs font-bold border border-amber-200 flex items-center gap-1.5 transition-colors">
+            <button 
+              onClick={() => handleSendMessage(undefined, "Quelles sont mes heures de cours cette semaine ?")}
+              className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-full text-xs font-bold border border-amber-200 flex items-center gap-1.5 transition-colors"
+            >
               <Calendar className="w-3 h-3" /> Mon planning
             </button>
-            <button className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200 flex items-center gap-1.5 transition-colors">
-              <UserX className="w-3 h-3" /> Absences non justifiées
-            </button>
-            <button className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-full text-xs font-bold border border-rose-200 flex items-center gap-1.5 transition-colors">
+            <button 
+              onClick={() => handleSendMessage(undefined, "Génère un QCM de 3 questions sur la Comptabilité de Gestion.")}
+              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-full text-xs font-bold border border-rose-200 flex items-center gap-1.5 transition-colors"
+            >
               <FileText className="w-3 h-3" /> Générer un QCM
-            </button>
-            <button className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full text-xs font-bold border border-gray-200 flex items-center gap-1.5 transition-colors">
-              <Building className="w-3 h-3" /> Réserver une salle
             </button>
           </div>
 
           {/* Input Area */}
           <div className="p-4 bg-white">
-            <div className="flex gap-2 items-center bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-400 transition-all">
+            <form onSubmit={(e) => handleSendMessage(e)} className="flex gap-2 items-center bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-400 transition-all">
               <input 
                 type="text" 
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Votre question..."
-                className="flex-1 bg-transparent px-3 py-2 text-sm font-medium focus:outline-none text-gray-700 placeholder:text-gray-400"
+                disabled={isTyping}
+                className="flex-1 bg-transparent px-3 py-2 text-sm font-medium focus:outline-none text-gray-700 placeholder:text-gray-400 disabled:opacity-50"
               />
-              <button className="bg-orange-300 hover:bg-orange-400 text-white w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors">
-                <Send className="w-4 h-4 ml-1" />
+              <button 
+                type="submit"
+                disabled={!inputValue.trim() || isTyping}
+                className="bg-orange-400 hover:bg-orange-500 disabled:bg-orange-300 text-white w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+              >
+                {isTyping ? <Loader2 className="w-4 h-4 ml-1 animate-spin" /> : <Send className="w-4 h-4 ml-1" />}
               </button>
-            </div>
+            </form>
           </div>
 
         </div>

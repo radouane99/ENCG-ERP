@@ -58,6 +58,7 @@ const StudentGamification = lazy(() => import('@features/student-portal/pages/St
 // HR
 const VacatairesManager = lazy(() => import('@features/hr/pages/VacatairesManager'))
 const ProfessorsListPage = lazy(() => import('@features/professors/pages/ProfessorsListPage'))
+const AdminWorkflowBuilder = lazy(() => import('@features/admin/pages/AdminWorkflowBuilder'))
 const VacatairesListPage = lazy(() => import('@features/vacataire/components/VacataireList'))
 const VacataireContractPage = lazy(() => import('@features/vacataire/pages/VacataireContractPage'))
 

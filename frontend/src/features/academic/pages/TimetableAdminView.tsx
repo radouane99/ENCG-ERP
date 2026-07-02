@@ -1,18 +1,27 @@
-﻿import React, { useState, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { Calendar as CalendarIcon, Cpu, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import api from '@/shared/lib/api';
-import { toast } from 'sonner';
+import React, { useState, useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import arLocale from '@fullcalendar/core/locales/ar'
+import frLocale from '@fullcalendar/core/locales/fr'
+import { Calendar as CalendarIcon, Cpu, AlertTriangle, CheckCircle2, ChevronRight, Settings } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import api from '@shared/lib/api'
+import { cn } from '@shared/lib/utils'
+import { toast } from 'sonner'
+import { Button } from '@shared/components/ui/Button'
+import { Modal } from '@shared/components/ui/Modal'
 
 export default function TimetableAdminView() {
-  const calendarRef = useRef<FullCalendar>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [conflictModalOpen, setConflictModalOpen] = useState(false);
-  const [conflictDetails, setConflictDetails] = useState<any>(null);
+  const { t, i18n } = useTranslation('common')
+  const isRtl = i18n.language === 'ar'
+  const calendarRef = useRef<FullCalendar>(null)
+  const queryClient = useQueryClient()
+
+  const [conflictModalOpen, setConflictModalOpen] = useState(false)
+  const [conflictDetails, setConflictDetails] = useState<any>(null)
 
   // MOCK DATA for Demo purposes (Replace with actual queries later)
   const [events, setEvents] = useState([
@@ -21,7 +30,8 @@ export default function TimetableAdminView() {
       title: 'Fiscalité d\'Entreprise\nAmphi A\nPr. El Fassi',
       start: '2026-10-12T08:30:00',
       end: '2026-10-12T10:30:00',
-      backgroundColor: '#1F3A5F',
+      backgroundColor: 'hsl(var(--color-primary))',
+      borderColor: 'transparent',
       extendedProps: { roomId: 1, profId: 1, groupId: 1 }
     },
     {
@@ -30,105 +40,191 @@ export default function TimetableAdminView() {
       start: '2026-10-13T10:45:00',
       end: '2026-10-13T12:45:00',
       backgroundColor: '#A80A0B',
+      borderColor: 'transparent',
       extendedProps: { roomId: 2, profId: 2, groupId: 1 }
     }
-  ]);
+  ])
 
-  const generateTimetable = async () => {
-    setIsGenerating(true);
-    try {
-      // Fake delay to simulate AI constraint solving
-      await new Promise(r => setTimeout(r, 2000));
-      
-      const res = await api.post('/timetable/generate', {
-        institution_id: 1,
-        academic_year_id: 1,
-        semester_id: 1,
-        filiere_id: 1
-      });
-
-      toast.success(res.data.message || 'Emploi du temps généré avec succès !');
-      // In reality, refetch events here
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors de la génération.');
-    } finally {
-      setIsGenerating(false);
+  const generateMutation = useMutation({
+    mutationFn: () => api.post('/timetable/generate', {
+      institution_id: 1,
+      academic_year_id: 1,
+      semester_id: 1,
+      filiere_id: 1
+    }),
+    onSuccess: (res) => {
+      toast.success(res.data.message || (isRtl ? 'تم إنشاء الجدول بنجاح!' : 'Emploi du temps généré avec succès !'))
+      queryClient.invalidateQueries({ queryKey: ['timetable'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || (isRtl ? 'خطأ أثناء الإنشاء' : 'Erreur lors de la génération.'))
     }
-  };
+  })
+
+  const conflictCheckMutation = useMutation({
+    mutationFn: (payload: any) => api.post('/timetable/check-conflict', payload)
+  })
 
   const handleEventDrop = async (info: any) => {
-    const { event } = info;
+    const { event } = info
     
     // Compute new day (1=Mon) and time
-    const newDay = event.start.getDay() === 0 ? 7 : event.start.getDay();
-    const newStart = event.start.toTimeString().split(' ')[0];
-    const newEnd = event.end.toTimeString().split(' ')[0];
+    const newDay = event.start.getDay() === 0 ? 7 : event.start.getDay()
+    const newStart = event.start.toTimeString().split(' ')[0]
+    const newEnd = event.end.toTimeString().split(' ')[0]
 
     try {
-      const res = await api.post('/timetable/check-conflict', {
+      const res = await conflictCheckMutation.mutateAsync({
         schedule_id: parseInt(event.id),
         new_day: newDay,
         new_start_time: newStart,
         new_end_time: newEnd,
         new_room_id: event.extendedProps.roomId // Keep same room for now
-      });
+      })
 
       if (res.data.success) {
-        toast.success('Mouvement validé.');
+        toast.success(isRtl ? 'تم تأكيد التغيير' : 'Mouvement validé.')
       } else {
-        // Revert move
-        info.revert();
-        // Show Conflict Modal
+        info.revert()
         setConflictDetails({
           message: res.data.message,
           suggestions: res.data.suggestions
-        });
-        setConflictModalOpen(true);
+        })
+        setConflictModalOpen(true)
       }
     } catch (error) {
-      info.revert();
-      toast.error('Erreur de validation réseau.');
+      info.revert()
+      toast.error(isRtl ? 'خطأ في الاتصال' : 'Erreur de validation réseau.')
     }
-  };
+  }
+
+  // Inject CSS directly for FullCalendar RTL logic overriding and glassmorphism styling
+  const customCalendarStyles = `
+    .fc {
+      font-family: inherit;
+    }
+    .fc-theme-standard .fc-scrollgrid {
+      border-color: hsl(var(--border));
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .fc-theme-standard th {
+      border-color: hsl(var(--border));
+      background: hsl(var(--muted)/50);
+      padding: 0.75rem 0;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+    .fc-theme-standard td {
+      border-color: hsl(var(--border));
+    }
+    .fc-timegrid-slot {
+      height: 3rem;
+    }
+    .fc-timegrid-slot-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+    }
+    .fc-v-event {
+      border-radius: 0.75rem;
+      padding: 4px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      transition: transform 0.2s;
+    }
+    .fc-v-event:hover {
+      transform: scale(1.02);
+      z-index: 10 !important;
+    }
+    .fc-event-main {
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .fc-button-primary {
+      background-color: hsl(var(--background)) !important;
+      border-color: hsl(var(--border)) !important;
+      color: hsl(var(--foreground)) !important;
+      border-radius: 0.5rem !important;
+      font-weight: 600 !important;
+      text-transform: capitalize !important;
+    }
+    .fc-button-primary:hover {
+      background-color: hsl(var(--muted)) !important;
+    }
+    .fc-button-primary:not(:disabled).fc-button-active, .fc-button-primary:not(:disabled):active {
+      background-color: hsl(var(--color-primary)) !important;
+      color: white !important;
+      border-color: hsl(var(--color-primary)) !important;
+    }
+    .fc-toolbar-title {
+      font-size: 1.25rem !important;
+      font-weight: 700 !important;
+      color: hsl(var(--foreground)) !important;
+    }
+  `
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-primary" />
-            Smart Timetabling
+    <div className="space-y-6 p-4 md:p-6 max-w-[1400px] mx-auto animate-in">
+      <style>{customCalendarStyles}</style>
+      
+      {/* Header Panel */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-6 rounded-[2rem] shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 end-0 p-8 opacity-5 text-[hsl(var(--color-primary))] pointer-events-none">
+          <CalendarIcon size={120} />
+        </div>
+        
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3">
+            <div className="w-10 h-10 bg-[hsl(var(--color-primary))/10] rounded-xl flex items-center justify-center text-[hsl(var(--color-primary))]">
+              <CalendarIcon className="w-5 h-5" />
+            </div>
+            {isRtl ? 'إدارة الجداول الذكية' : 'Smart Timetabling'}
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Génération algorithmique et gestion intelligente des emplois du temps.
+          <p className="text-[hsl(var(--muted-foreground))] mt-2 font-medium">
+            {isRtl ? 'توليد تلقائي وإدارة ذكية للجداول الزمنية مع تفادي التعارضات.' : 'Génération algorithmique et gestion intelligente des emplois du temps.'}
           </p>
         </div>
         
-        <button
-          onClick={generateTimetable}
-          disabled={isGenerating}
-          className="bg-[#A80A0B] hover:bg-[#7D0809] text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all disabled:opacity-70"
-        >
-          {isGenerating ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Cpu className="w-5 h-5" />
-          )}
-          {isGenerating ? 'Calcul en cours...' : 'Génération Automatique IA'}
-        </button>
+        <div className="relative z-10 flex flex-wrap items-center gap-3">
+          <div className="flex bg-[hsl(var(--muted)/30)] p-1 rounded-xl border border-[hsl(var(--border))]">
+            <select className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8">
+              <option>S6 - Génie Info</option>
+              <option>S4 - Tronc Commun</option>
+            </select>
+            <div className="w-px bg-[hsl(var(--border))] mx-2 my-1"></div>
+            <select className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8">
+              <option>{isRtl ? 'المجموعة 1' : 'Groupe 1'}</option>
+              <option>{isRtl ? 'المجموعة 2' : 'Groupe 2'}</option>
+            </select>
+          </div>
+          
+          <Button
+            onClick={() => generateMutation.mutate()}
+            isLoading={generateMutation.isPending}
+            variant="primary"
+            className="rounded-xl px-6 bg-[#A80A0B] hover:bg-[#7D0809] text-white border-none shadow-lg shadow-red-900/20"
+            icon={<Cpu size={18} />}
+          >
+            {isRtl ? 'توليد ذكي (IA)' : 'Génération Automatique IA'}
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      {/* Calendar Area */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
-            left: 'prev,next today',
+            left: isRtl ? 'timeGridDay,timeGridWeek' : 'prev,next today',
             center: 'title',
-            right: 'timeGridWeek,timeGridDay'
+            right: isRtl ? 'today next,prev' : 'timeGridWeek,timeGridDay'
           }}
-          locale="fr"
+          locale={isRtl ? arLocale : frLocale}
+          direction={isRtl ? 'rtl' : 'ltr'}
           hiddenDays={[0]} // Hide Sunday
           slotMinTime="08:00:00"
           slotMaxTime="19:00:00"
@@ -138,54 +234,52 @@ export default function TimetableAdminView() {
           droppable={true}
           eventDrop={handleEventDrop}
           height="auto"
-          eventClassNames="rounded-md border-none px-1 text-xs shadow-sm"
         />
       </div>
 
       {/* Conflict Modal */}
-      {conflictModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-lg rounded-2xl p-6 shadow-xl border border-border">
-            <div className="flex items-center gap-3 text-amber-500 mb-4">
-              <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-xl font-bold text-foreground">Conflit Détecté</h2>
-            </div>
-            <p className="text-muted-foreground mb-6">
-              Le système a refusé ce déplacement : {conflictDetails?.message}
-            </p>
-            
-            <h3 className="font-semibold text-sm mb-3">L'IA vous suggère ces alternatives :</h3>
-            <div className="space-y-3 mb-6">
-              {conflictDetails?.suggestions?.length > 0 ? (
-                conflictDetails.suggestions.map((sug: any, i: number) => (
-                  <div key={i} className="flex justify-between items-center border border-border rounded-lg p-3 hover:bg-muted/30 cursor-pointer">
-                    <div>
-                      <p className="font-medium">Même Horaire, Autre Salle</p>
-                      <p className="text-sm text-muted-foreground">Salle: {sug.room_name}</p>
-                    </div>
-                    <button className="text-primary text-sm font-medium hover:underline">
-                      Appliquer
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="bg-muted/30 p-4 rounded-lg text-sm text-muted-foreground text-center">
-                  Aucune alternative trouvée pour ce créneau.
-                </div>
-              )}
-            </div>
+      <Modal
+        isOpen={conflictModalOpen}
+        onClose={() => setConflictModalOpen(false)}
+        title={isRtl ? 'تعارض في الجدول الزمني' : 'Conflit Détecté'}
+        size="md"
+      >
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-2">
+            <AlertTriangle size={32} />
+          </div>
+          
+          <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">
+            {isRtl ? 'تداخل في المواعيد' : 'Collision de créneaux'}
+          </h3>
+          
+          <p className="text-[hsl(var(--muted-foreground))] max-w-sm">
+            {conflictDetails?.message || (isRtl ? 'هذا الإجراء يسبب تعارضاً مع أستاذ أو قاعة مشغولة.' : 'Cette action cause un conflit (Salle occupée ou Professeur indisponible).')}
+          </p>
 
-            <div className="flex justify-end">
-              <button 
-                onClick={() => setConflictModalOpen(false)}
-                className="bg-muted text-foreground px-4 py-2 rounded-lg font-medium hover:bg-muted/80 transition-colors"
-              >
-                Annuler le déplacement
-              </button>
+          {conflictDetails?.suggestions?.length > 0 && (
+            <div className="w-full text-start mt-4 bg-[hsl(var(--muted)/30)] rounded-2xl p-4 border border-[hsl(var(--border))]">
+              <p className="font-bold text-sm mb-3 text-[hsl(var(--foreground))]">
+                {isRtl ? 'مقترحات ذكية لتفادي التعارض:' : 'Suggestions intelligentes :'}
+              </p>
+              <ul className="space-y-2">
+                {conflictDetails.suggestions.map((sug: any, idx: number) => (
+                  <li key={idx} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                    <span>{sug.day} à {sug.start_time} - {sug.room}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
+
+          <div className="w-full pt-4 mt-2">
+            <Button className="w-full" variant="outline" onClick={() => setConflictModalOpen(false)}>
+              {isRtl ? 'فهمت، إلغاء التغيير' : 'Compris, annuler le déplacement'}
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
-  );
+  )
 }

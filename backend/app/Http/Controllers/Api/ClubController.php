@@ -3,51 +3,68 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Club;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use App\Services\Academic\StudentLifeService;
 
 class ClubController extends Controller
 {
-    public function index()
+    protected StudentLifeService $studentLifeService;
+
+    public function __construct(StudentLifeService $studentLifeService)
     {
-        $clubs = Club::with(['events', 'members.user'])->get();
-        return response()->json(['success' => true, 'data' => $clubs]);
+        $this->studentLifeService = $studentLifeService;
     }
 
-    public function store(Request $request)
+    /**
+     * Display a listing of the clubs.
+     */
+    public function index(): JsonResponse
     {
-        $validated = $request->validate([
-            'institution_id' => 'required|exists:institutions,id',
-            'name' => 'required|string|max:255',
-            'category' => 'required|string',
-            'description' => 'nullable|string',
-            'president_name' => 'nullable|string',
-        ]);
-
-        $club = Club::create($validated);
-
-        return response()->json(['success' => true, 'message' => 'Club créé', 'data' => $club]);
-    }
-
-    public function show($id)
-    {
-        $club = Club::with(['events', 'members.user'])->findOrFail($id);
-        return response()->json(['success' => true, 'data' => $club]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $club = Club::findOrFail($id);
+        $clubs = $this->studentLifeService->getAllClubs();
         
+        return response()->json([
+            'success' => true,
+            'data' => $clubs
+        ]);
+    }
+
+    /**
+     * Store a newly created club.
+     */
+    public function store(Request $request): JsonResponse
+    {
         $validated = $request->validate([
-            'name' => 'string|max:255',
-            'category' => 'string',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'name'         => 'required|string|max:255',
+            'description'  => 'required|string',
+            'president_id' => 'required|integer|exists:students,id',
+            'logo_url'     => 'nullable|url'
         ]);
 
-        $club->update($validated);
+        $club = $this->studentLifeService->createClub($validated);
 
-        return response()->json(['success' => true, 'message' => 'Club mis à jour', 'data' => $club]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Club créé et en attente de validation.',
+            'data' => $club
+        ], 201);
+    }
+
+    /**
+     * Update the specified club (e.g. change status).
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        // Simple update wrapper (e.g. status validation)
+        if ($request->has('status')) {
+            try {
+                $club = $this->studentLifeService->updateClubStatus((int) $id, $request->status);
+                return response()->json(['success' => true, 'data' => $club]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Mise à jour non supportée ici.'], 400);
     }
 }

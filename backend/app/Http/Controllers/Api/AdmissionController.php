@@ -3,65 +3,68 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Application;
-use App\Models\AdmissionCampaign;
-use App\Domain\Admission\Repositories\ApplicationRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\Academic\AdmissionService;
 
 class AdmissionController extends Controller
 {
-    private ApplicationRepository $applicationRepository;
+    protected AdmissionService $admissionService;
 
-    public function __construct(ApplicationRepository $applicationRepository)
+    public function __construct(AdmissionService $admissionService)
     {
-        $this->applicationRepository = $applicationRepository;
+        $this->admissionService = $admissionService;
     }
 
     /**
-     * Get a paginated list of applications for a given campaign.
+     * Display a listing of applications for a specific campaign.
      */
-    public function index(Request $request, AdmissionCampaign $campaign): JsonResponse
+    public function index($campaignId): JsonResponse
     {
-        // Simple authorization check (could use Policies)
-        if (!$request->user()->can('manage admissions')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $filters = $request->only(['status', 'search']);
-        $applications = $this->applicationRepository->getApplicationsForCampaign(
-            $campaign->id,
-            $filters,
-            $request->get('per_page', 15)
-        );
-
-        return response()->json($applications);
-    }
-
-    /**
-     * Accept or reject an application.
-     */
-    public function updateStatus(Request $request, Application $application): JsonResponse
-    {
-        if (!$request->user()->can('manage admissions')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $validated = $request->validate([
-            'status' => 'required|in:accepted,rejected,waiting_list',
-            'rejection_reason' => 'required_if:status,rejected|string|nullable'
-        ]);
-
-        $this->applicationRepository->update($application->id, [
-            'status' => $validated['status'],
-            'rejection_reason' => $validated['rejection_reason'] ?? null,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
-
+        $applications = $this->admissionService->getApplicationsForCampaign((int) $campaignId);
+        
         return response()->json([
-            'message' => 'Application status updated successfully',
-            'application' => $application->fresh()
+            'success' => true,
+            'data' => $applications
+        ]);
+    }
+
+    /**
+     * Update the status of a specific application.
+     */
+    public function updateStatus(Request $request, $applicationId): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,accepted,waitlisted,rejected'
+        ]);
+
+        try {
+            $application = $this->admissionService->updateApplicationStatus((int) $applicationId, $validated['status']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Statut de la candidature mis à jour avec succès.',
+                'data' => $application
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+    
+    /**
+     * Delete an application (if necessary, though updating to 'rejected' is preferred).
+     */
+    public function destroy($applicationId): JsonResponse
+    {
+        $application = \App\Models\Application::findOrFail($applicationId);
+        $application->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidature supprimée avec succès.'
         ]);
     }
 }

@@ -6,15 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\Academic\ExamPlanningEngine;
-use Illuminate\Support\Facades\DB;
+use App\Services\Academic\ExamConvocationService;
 
 class ExamPlanningController extends Controller
 {
     protected ExamPlanningEngine $engine;
+    protected ExamConvocationService $convocationService;
 
-    public function __construct(ExamPlanningEngine $engine)
+    public function __construct(ExamPlanningEngine $engine, ExamConvocationService $convocationService)
     {
         $this->engine = $engine;
+        $this->convocationService = $convocationService;
     }
 
     /**
@@ -44,28 +46,7 @@ class ExamPlanningController extends Controller
      */
     public function getDetails(int $examId): JsonResponse
     {
-        $seatings = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
-            ->where('exam_id', $examId)
-            ->select('exam_seatings.*', 'students.first_name', 'students.last_name', 'rooms.name as room_name')
-            ->orderBy('rooms.name')
-            ->orderBy('exam_seatings.seat_number')
-            ->get();
-
-        $surveillances = DB::table('exam_surveillances')
-            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-            ->join('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
-            ->where('exam_id', $examId)
-            ->select('exam_surveillances.*', 'users.first_name', 'users.last_name', 'rooms.name as room_name')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'seatings' => $seatings,
-                'surveillances' => $surveillances
-            ]
-        ]);
+        $result = $this->convocationService->getExamDetails($examId);
+        return response()->json($result);
     }
 }

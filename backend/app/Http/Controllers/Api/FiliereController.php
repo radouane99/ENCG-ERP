@@ -4,37 +4,27 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Filiere;
+use App\Services\Academic\FiliereService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class FiliereController extends Controller
 {
-    /**
-     * Obtenir la liste de toutes les filières avec leurs départements et coordinateurs (si définis)
-     */
-    public function index(): JsonResponse
-    {
-        // Pour l'instant, on récupère le coordinateur via la relation department s'il existe
-        $filieres = Filiere::with(['department'])->get()->map(function ($filiere) {
-            return [
-                'id' => $filiere->id,
-                'code' => $filiere->code,
-                'name' => $filiere->name,
-                'type' => $filiere->type ?? 'Formation Initiale',
-                'coordinator' => $filiere->department ? $filiere->department->head_name : 'Non assigné',
-                'students' => rand(50, 400), // Simulation du nombre d'étudiants en attendant la Phase 2
-                'active' => $filiere->is_active,
-                'duration_years' => $filiere->duration_years,
-                'department_id' => $filiere->department_id,
-            ];
-        });
+    protected FiliereService $filiereService;
 
-        return response()->json(['data' => $filieres]);
+    public function __construct(FiliereService $filiereService)
+    {
+        $this->filiereService = $filiereService;
     }
 
-    /**
-     * Enregistrer une nouvelle filière
-     */
+    public function index(): JsonResponse
+    {
+        $filieres = $this->filiereService->getAllFilieres();
+        $mapped = $this->filiereService->mapFiliereCollection($filieres);
+
+        return response()->json(['data' => $mapped]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -46,10 +36,7 @@ class FiliereController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        // Default institution ID to 1 (ENCG Fès) si non fourni
-        $validated['institution_id'] = 1;
-
-        $filiere = Filiere::create($validated);
+        $filiere = $this->filiereService->createFiliere($validated, 1);
 
         return response()->json([
             'message' => 'Filière créée avec succès.',
@@ -57,17 +44,11 @@ class FiliereController extends Controller
         ], 201);
     }
 
-    /**
-     * Afficher les détails d'une filière
-     */
     public function show(Filiere $filiere): JsonResponse
     {
         return response()->json(['data' => $filiere->load('department')]);
     }
 
-    /**
-     * Mettre à jour une filière
-     */
     public function update(Request $request, Filiere $filiere): JsonResponse
     {
         $validated = $request->validate([
@@ -79,7 +60,7 @@ class FiliereController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $filiere->update($validated);
+        $filiere = $this->filiereService->updateFiliere($filiere, $validated);
 
         return response()->json([
             'message' => 'Filière mise à jour avec succès.',
@@ -87,9 +68,6 @@ class FiliereController extends Controller
         ]);
     }
 
-    /**
-     * Supprimer une filière
-     */
     public function destroy(Filiere $filiere): JsonResponse
     {
         $filiere->delete();

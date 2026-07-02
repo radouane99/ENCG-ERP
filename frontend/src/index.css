@@ -1,275 +1,325 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+/* ────────────────────────────────────────────────────────────────
+   ENCG ERP — Design System v2.0
+   Fonts: Inter (body) + Noto Sans Arabic (RTL) + JetBrains Mono (data)
+   Stack: Tailwind CSS v4 · React 18 · TypeScript
+   ──────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ── Enable class-based dark mode for Tailwind v4 ── */
 @variant dark (&:where(.dark, .dark *));
 
+/* ────────────────────────────────────────────────────────────────
+   TAILWIND v4 THEME — Design Tokens
+   ──────────────────────────────────────────────────────────────── */
 @theme {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  
-  --color-primary: hsl(var(--color-primary));
-  --color-primary-foreground: hsl(var(--color-primary-foreground));
-  
-  --color-secondary: hsl(var(--color-secondary));
-  --color-secondary-foreground: hsl(var(--color-secondary-foreground));
-  
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  
-  --color-accent: hsl(var(--color-accent));
-  --color-accent-foreground: hsl(var(--color-accent-foreground));
-  
-  --color-destructive: hsl(var(--color-destructive));
-  --color-destructive-foreground: hsl(var(--color-destructive-foreground));
-  
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  
-  --color-sidebar-background: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-border: hsl(var(--sidebar-border));
+  /* Semantic surface tokens */
+  --color-background:             hsl(var(--background));
+  --color-foreground:             hsl(var(--foreground));
+  --color-card:                   hsl(var(--card));
+  --color-card-foreground:        hsl(var(--card-foreground));
+  --color-popover:                hsl(var(--popover));
+  --color-popover-foreground:     hsl(var(--popover-foreground));
+  --color-muted:                  hsl(var(--muted));
+  --color-muted-foreground:       hsl(var(--muted-foreground));
+  --color-border:                 hsl(var(--border));
+  --color-input:                  hsl(var(--input));
+  --color-ring:                   hsl(var(--ring));
 
+  /* Brand tokens */
+  --color-primary:                hsl(var(--color-primary));
+  --color-primary-foreground:     hsl(var(--color-primary-foreground));
+  --color-secondary:              hsl(var(--color-secondary));
+  --color-secondary-foreground:   hsl(var(--color-secondary-foreground));
+  --color-accent:                 hsl(var(--color-accent));
+  --color-accent-foreground:      hsl(var(--color-accent-foreground));
+  --color-destructive:            hsl(var(--color-destructive));
+  --color-destructive-foreground: hsl(var(--color-destructive-foreground));
+  --color-success:                hsl(var(--color-success));
+  --color-success-foreground:     hsl(var(--color-success-foreground));
+  --color-warning:                hsl(var(--color-warning));
+  --color-warning-foreground:     hsl(var(--color-warning-foreground));
+
+  /* Sidebar tokens */
+  --color-sidebar-background:             hsl(var(--sidebar-background));
+  --color-sidebar-foreground:             hsl(var(--sidebar-foreground));
+  --color-sidebar-primary:                hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground:     hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent:                 hsl(var(--sidebar-accent));
+  --color-sidebar-border:                 hsl(var(--sidebar-border));
+
+  /* Chart palette */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-}/* ──────────────────────────────────────────────────────────────
-   ENCG ERP Design System — Global CSS Variables
-   Supports: Light Mode · Dark Mode · RTL (Arabic)
-   ────────────────────────────────────────────────────────────── */
+  /* Radius scale */
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 10px);
 
+  /* Typography */
+  --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   CSS CUSTOM PROPERTIES — Light Mode (Default)
+   ENCG Fès Brand Colors:
+     Primary Red  → #A80A0B  (359° 89% 35%)
+     Navy Blue    → #1F3A5F  (215° 51% 25%)
+   ──────────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    /* Brand Colors - ENCG Fès Official */
-    --color-primary: 359 89% 35%; /* Primary Red #A80A0B */
-    --color-primary-foreground: 0 0% 100%;
-    --color-secondary: 215 51% 25%; /* Navy Blue #1F3A5F */
-    --color-secondary-foreground: 0 0% 100%;
-    --color-accent: 213 48% 91%; /* Light Blue #DCE6F2 */
-    --color-accent-foreground: 215 51% 15%;
-    --color-destructive: 0 84% 60%;
-    --color-destructive-foreground: 0 0% 100%;
-    --color-background: 216 33% 97%; /* Light Gray #F5F7FA */
-    --color-foreground: 215 51% 10%;
-    --color-card: 0 0% 100%;
-    --color-card-foreground: 215 51% 10%;
-    --color-popover: 0 0% 100%;
-    --color-popover-foreground: 215 51% 10%;
-    --color-muted: 213 48% 91%;
-    --color-muted-foreground: 215 20% 45%;
-    --color-border: 214 32% 91%;
-    --color-input: 214 32% 91%;
-    --color-ring: 359 89% 35%;
+    /* ── Brand (ENCG) ── */
+    /* Primary: ENCG Blue #1a3673 */
+    --color-primary:                221 63% 28%;
+    --color-primary-foreground:     0   0%  100%;
+    
+    /* Accent/Destructive: ENCG Red #a31f24 */
+    --color-accent:                 358 68% 38%;
+    --color-accent-foreground:      0   0%  100%;
+    --color-destructive:            358 68% 38%;
+    --color-destructive-foreground: 0   0%  100%;
 
-    /* Surface Colors */
-    --background: 220 14% 96%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
+    --color-secondary:              215 51% 25%;
+    --color-secondary-foreground:   0   0%  100%;
+    
+    --color-success:                142 71% 45%;
+    --color-success-foreground:     0   0%  100%;
+    --color-warning:                38  92% 50%;
+    --color-warning-foreground:     0   0%  100%;
+
+    /* ── Surfaces ── */
+    --background:        210 33% 98%;  /* #f8fafc (surface) */
+    --foreground:        222 47% 11%;
+    --card:              0   0%  100%;
+    --card-foreground:   222 47% 11%;
+    --popover:           0   0%  100%;
     --popover-foreground: 222 47% 11%;
-    --muted: 220 14% 93%;
-    --muted-foreground: 215 16% 47%;
-    --border: 220 13% 88%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --muted:             220 14% 93%;
+    --muted-foreground:  215 16% 47%;
+    --border:            220 13% 88%;
+    --input:             220 13% 91%;
+    --ring:              221 63% 28%; /* Focus ring = ENCG Blue */
+    --radius:            0.625rem;    /* 10px base radius */
 
-    /* Sidebar */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 215 25% 80%;
-    --sidebar-primary: 217 91% 60%;
+    /* ── Sidebar (dark blue) ── */
+    --sidebar-background: 221 63% 28%; /* ENCG Blue */
+    --sidebar-foreground: 215 25% 85%;
+    --sidebar-primary:    358 68% 38%; /* ENCG Red */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-accent:     221 63% 35%; /* Lighter blue for hover */
+    --sidebar-border:     221 63% 25%;
 
-    /* Chart Colors */
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 68% 60%;
-    --chart-5: 0 84% 60%;
-
-    /* Radius */
-    --radius: 0.625rem;
-
-    /* Font */
-    --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    /* ── Charts ── */
+    --chart-1: 221 63% 28%;
+    --chart-2: 358 68% 38%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 38  92% 50%;
+    --chart-5: 280 68% 60%;
   }
 
+  /* ────────────────────────────────────────────────────────────────
+     Dark Mode Overrides
+     ──────────────────────────────────────────────────────────────── */
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 96%;
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 96%;
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 55%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 359 89% 45%;
-    --sidebar-background: 222 47% 4%;
-    --sidebar-accent: 217 33% 12%;
-    --sidebar-border: 217 33% 12%;
+    --color-primary:                221 63% 40%;
+    --color-primary-foreground:     0   0%  100%;
+    --color-secondary:              215 51% 40%;
+    --color-secondary-foreground:   0   0%  100%;
+    --color-accent:                 358 68% 50%;
+    --color-accent-foreground:      0   0%  100%;
+    --color-destructive:            358 68% 50%;
+    --color-destructive-foreground: 0   0%  100%;
+    --color-success:                142 71% 40%;
+    --color-success-foreground:     0   0%  100%;
+    --color-warning:                38  92% 45%;
+    --color-warning-foreground:     0   0%  100%;
 
-    /* Dark Mode ENCG Colors */
-    --color-primary: 359 89% 45%; 
-    --color-primary-foreground: 0 0% 100%;
-    --color-secondary: 215 51% 30%;
-    --color-secondary-foreground: 0 0% 100%;
-    --color-accent: 215 51% 20%;
-    --color-accent-foreground: 216 33% 97%;
-    --color-destructive: 0 62.8% 30.6%;
-    --color-destructive-foreground: 216 33% 97%;
-    --color-background: 222 47% 6%;
-    --color-foreground: 210 40% 96%;
-    --color-card: 222 47% 9%;
-    --color-card-foreground: 210 40% 96%;
-    --color-popover: 222 47% 9%;
-    --color-popover-foreground: 210 40% 96%;
-    --color-muted: 217 33% 15%;
-    --color-muted-foreground: 215 20% 55%;
-    --color-border: 217 33% 17%;
-    --color-input: 217 33% 17%;
-    --color-ring: 359 89% 45%;
+    --background:        222 47% 6%;
+    --foreground:        210 40% 96%;
+    --card:              222 47% 9%;
+    --card-foreground:   210 40% 96%;
+    --popover:           222 47% 9%;
+    --popover-foreground: 210 40% 96%;
+    --muted:             217 33% 15%;
+    --muted-foreground:  215 20% 55%;
+    --border:            217 33% 19%;
+    --input:             217 33% 17%;
+    --ring:              221 63% 40%;
+
+    --sidebar-background: 222 47% 4%;
+    --sidebar-foreground: 215 25% 70%;
+    --sidebar-primary:    358 68% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     217 33% 12%;
+    --sidebar-border:     217 33% 12%;
   }
 
-  /* RTL support for Arabic */
+  /* ── RTL: switch to Arabic font stack ── */
   [dir="rtl"] {
-    font-family: 'Noto Sans Arabic', 'Cairo', system-ui, sans-serif;
+    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+    letter-spacing: 0; /* Arabic doesn't use letter-spacing */
   }
 }
 
+/* ────────────────────────────────────────────────────────────────
+   BASE RESETS & GLOBALS
+   ──────────────────────────────────────────────────────────────── */
 @layer base {
-  * {
+  *, *::before, *::after {
     border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
+    font-size: 0.9375rem; /* 15px — more readable than 14px */
+    line-height: 1.6;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-muted;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground;
-  }
-
-  /* Focus styles */
+  /* ── Accessible focus ring — visible, beautiful ── */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2;
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ── Reduce motion for accessibility ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ── Custom scrollbar (subtle, matches theme) ── */
+  ::-webkit-scrollbar          { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track    { background: transparent; }
+  ::-webkit-scrollbar-thumb    { background: hsl(var(--border)); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+  /* ── Selection color ── */
+  ::selection {
+    background-color: hsl(var(--color-primary) / 0.15);
+    color: hsl(var(--color-primary));
+  }
+
+  /* ── Headings use tighter tracking ── */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
   }
 }
 
-/* ──────────────────────────────────────────────────────────────
-   Utility Classes
-   ────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────────
+   UTILITY CLASSES — Design System Helpers
+   ──────────────────────────────────────────────────────────────── */
 @layer utilities {
+
+  /* ── Glassmorphism ── */
   .glass {
-    backdrop-filter: blur(12px);
-    background: hsl(var(--card) / 0.8);
-    border: 1px solid hsl(var(--border) / 0.5);
+    backdrop-filter: blur(12px) saturate(1.6);
+    -webkit-backdrop-filter: blur(12px) saturate(1.6);
+    background: hsl(var(--card) / 0.75);
+    border: 1px solid hsl(var(--border) / 0.6);
   }
 
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-secondary)));
+  /* ── Brand gradient ── */
+  .gradient-brand {
+    background: linear-gradient(135deg,
+      hsl(var(--color-primary)),
+      hsl(var(--color-secondary)));
   }
 
-  .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-secondary)));
+  /* ── Text gradient ── */
+  .text-gradient-brand {
+    background: linear-gradient(135deg,
+      hsl(var(--color-primary)),
+      hsl(var(--color-secondary)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .animate-in {
-    animation: animateIn 0.3s ease-out forwards;
-  }
+  /* ── Surface elevation levels ── */
+  .elevation-0 { box-shadow: none; }
+  .elevation-1 { box-shadow: 0 1px 3px hsl(0 0% 0% / 0.06), 0 1px 2px hsl(0 0% 0% / 0.04); }
+  .elevation-2 { box-shadow: 0 4px 6px hsl(0 0% 0% / 0.07), 0 2px 4px hsl(0 0% 0% / 0.05); }
+  .elevation-3 { box-shadow: 0 10px 15px hsl(0 0% 0% / 0.08), 0 4px 6px hsl(0 0% 0% / 0.05); }
+  .elevation-4 { box-shadow: 0 20px 25px hsl(0 0% 0% / 0.1), 0 8px 10px hsl(0 0% 0% / 0.06); }
 
-  .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-  .slide-in-from-bottom-4 { animation: slideFromBottom4 0.5s ease-out forwards; }
-  .slide-in-from-bottom-8 { animation: slideFromBottom8 0.6s ease-out forwards; }
-  .slide-in-from-bottom-10 { animation: slideFromBottom10 0.4s ease-out forwards; }
-  .slide-in-from-bottom-12 { animation: slideFromBottom12 0.7s ease-out forwards; }
-  .zoom-in-95 { animation: zoomIn95 0.4s ease-out forwards; }
-  .duration-300 { animation-duration: 0.3s; }
-  .duration-500 { animation-duration: 0.5s; }
-  .delay-150 { animation-delay: 0.15s; }
-  .delay-300 { animation-delay: 0.3s; }
-  .delay-500 { animation-delay: 0.5s; }
-  .delay-700 { animation-delay: 0.7s; }
+  /* ── Animation utilities ── */
+  .animate-in          { animation: animate-in 0.2s ease-out both; }
+  .animate-fade-in     { animation: fade-in 0.3s ease-out both; }
+  .animate-slide-up    { animation: slide-up 0.3s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-slide-down  { animation: slide-down 0.2s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-scale-in    { animation: scale-in 0.2s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-scale-out   { animation: scale-out 0.15s ease-in both; }
 
-  @keyframes animateIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes slideFromBottom4 {
-    from { opacity: 0; transform: translateY(1rem); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideFromBottom8 {
-    from { opacity: 0; transform: translateY(2rem); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideFromBottom10 {
-    from { opacity: 0; transform: translateY(2.5rem); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideFromBottom12 {
-    from { opacity: 0; transform: translateY(3rem); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes zoomIn95 {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
+  @keyframes animate-in  { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fade-in     { from { opacity:0; } to { opacity:1; } }
+  @keyframes slide-up    { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slide-down  { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes scale-in    { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+  @keyframes scale-out   { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.95); } }
 
+  /* ── Delay modifiers ── */
+  .delay-75  { animation-delay: 75ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* ── Sidebar item ── */
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200;
-    @apply text-sidebar-foreground hover:bg-sidebar-accent hover:text-white;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           transition-all duration-200 cursor-pointer select-none
+           text-[hsl(var(--sidebar-foreground))]
+           hover:bg-[hsl(var(--sidebar-accent))]
+           hover:text-white;
+  }
+  .sidebar-item.active {
+    @apply bg-[hsl(var(--sidebar-primary))] text-white shadow-sm;
   }
 
-  .sidebar-item.active {
-    @apply bg-sidebar-primary text-sidebar-primary-foreground;
+  /* ── Status dot indicator ── */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full flex-shrink-0;
+  }
+  .status-dot-success { @apply bg-[hsl(var(--color-success))]; }
+  .status-dot-warning { @apply bg-[hsl(var(--color-warning))]; }
+  .status-dot-error   { @apply bg-[hsl(var(--color-destructive))]; }
+  .status-dot-muted   { @apply bg-[hsl(var(--muted-foreground))]; }
+
+  /* ── Data table row hover ── */
+  .table-row-hover {
+    @apply hover:bg-[hsl(var(--muted))] transition-colors duration-150;
+  }
+
+  /* ── Truncate long text ── */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
-
-/* ──────────────────────────────────────────────────────────────
-   Google Fonts Import (Moved to top)
-   ────────────────────────────────────────────────────────────── */

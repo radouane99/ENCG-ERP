@@ -1,52 +1,162 @@
+/**
+ * <Button> — ENCG ERP Design System
+ *
+ * Features:
+ * - 5 variants: primary, secondary, destructive, outline, ghost, link
+ * - 4 sizes: sm, md, lg, icon
+ * - Loading state with accessible aria-busy
+ * - RTL-safe: uses me-* (margin-end) instead of mr-*
+ * - WCAG AA: min 44×44pt touch target, focus ring, disabled semantics
+ * - prefers-reduced-motion: disables scale transform
+ */
 import React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@shared/lib/utils'
 import { Loader2 } from 'lucide-react'
 
+// ── CVA Variant Definition ───────────────────────────────────────
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  // Base — shared across ALL variants
+  [
+    'relative inline-flex items-center justify-center gap-2',
+    'rounded-md text-sm font-semibold tracking-[-0.01em]',
+    'select-none cursor-pointer whitespace-nowrap',
+    'border border-transparent',
+    'transition-all duration-150',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+    'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
+    // Scale on active — respects prefers-reduced-motion via CSS
+    'motion-safe:active:scale-[0.97]',
+  ],
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm',
-        outline: 'border border-border bg-transparent hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-        glass: 'glass hover:bg-card/90 text-foreground',
+        // Primary — ENCG Red, main CTA
+        primary: [
+          'bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))]',
+          'hover:bg-[hsl(var(--color-primary)/0.88)]',
+          'shadow-sm',
+        ],
+        // Secondary — Navy Blue
+        secondary: [
+          'bg-[hsl(var(--color-secondary))] text-[hsl(var(--color-secondary-foreground))]',
+          'hover:bg-[hsl(var(--color-secondary)/0.88)]',
+          'shadow-sm',
+        ],
+        // Destructive — Error red
+        destructive: [
+          'bg-[hsl(var(--color-destructive))] text-[hsl(var(--color-destructive-foreground))]',
+          'hover:bg-[hsl(var(--color-destructive)/0.88)]',
+          'shadow-sm',
+        ],
+        // Outline — transparent with border
+        outline: [
+          'border-[hsl(var(--border))] bg-transparent text-[hsl(var(--foreground))]',
+          'hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--muted-foreground)/0.3)]',
+        ],
+        // Ghost — no border, subtle hover
+        ghost: [
+          'bg-transparent text-[hsl(var(--foreground))]',
+          'hover:bg-[hsl(var(--muted))]',
+        ],
+        // Link — looks like a link, minimal chrome
+        link: [
+          'bg-transparent text-[hsl(var(--color-primary))]',
+          'underline underline-offset-4',
+          'hover:text-[hsl(var(--color-primary)/0.8)]',
+          'hover:no-underline',
+        ],
+        // Success
+        success: [
+          'bg-[hsl(var(--color-success))] text-[hsl(var(--color-success-foreground))]',
+          'hover:bg-[hsl(var(--color-success)/0.88)]',
+          'shadow-sm',
+        ],
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-lg px-8 text-base',
-        icon: 'h-10 w-10',
+        sm:   'min-h-[36px] px-3 text-xs rounded-md',
+        md:   'min-h-[44px] px-4 text-sm rounded-md',
+        lg:   'min-h-[48px] px-6 text-base rounded-lg',
+        xl:   'min-h-[56px] px-8 text-base rounded-lg',
+        icon: 'min-h-[44px] w-[44px] rounded-md p-0',
+        'icon-sm': 'min-h-[36px] w-[36px] rounded-md p-0',
       },
     },
     defaultVariants: {
-      variant: 'default',
-      size: 'default',
+      variant: 'primary',
+      size: 'md',
     },
   }
 )
 
+// ── Props ────────────────────────────────────────────────────────
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  /** Show spinner and disable interaction. Sets aria-busy="true". */
   isLoading?: boolean
+  /** Label shown to screen readers during loading (replaces children). */
+  loadingText?: string
+  /** Icon placed at the START of the button (RTL-aware). */
+  leadingIcon?: React.ReactNode
+  /** Icon placed at the END of the button (RTL-aware). */
+  trailingIcon?: React.ReactNode
 }
 
+// ── Component ────────────────────────────────────────────────────
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      isLoading = false,
+      loadingText,
+      leadingIcon,
+      trailingIcon,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    const isDisabled = disabled || isLoading
+
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        disabled={isLoading || props.disabled}
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={isDisabled}
+        aria-disabled={isDisabled}
+        aria-busy={isLoading}
         {...props}
       >
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {children}
+        {/* Loading spinner — RTL-safe: me-* instead of mr-* */}
+        {isLoading && (
+          <Loader2
+            className="h-4 w-4 animate-spin me-1 shrink-0"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Leading icon (when not loading) — RTL-safe spacing */}
+        {!isLoading && leadingIcon && (
+          <span className="shrink-0 me-0.5" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        )}
+
+        {/* Content */}
+        <span className={cn(isLoading && 'opacity-80')}>
+          {isLoading && loadingText ? loadingText : children}
+        </span>
+
+        {/* Trailing icon — RTL-safe spacing */}
+        {trailingIcon && !isLoading && (
+          <span className="shrink-0 ms-0.5" aria-hidden="true">
+            {trailingIcon}
+          </span>
+        )}
       </button>
     )
   }

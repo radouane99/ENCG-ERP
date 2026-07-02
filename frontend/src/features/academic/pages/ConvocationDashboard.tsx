@@ -1,222 +1,214 @@
-﻿import React, { useState } from 'react';
-import { ClipboardList, Users, CheckCircle2, GraduationCap, FileText, Send, Mail, Printer, LayoutList } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react'
+import { ClipboardList, Users, CheckCircle2, GraduationCap, FileText, Send, Mail, Printer, LayoutList } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { cn } from '@shared/lib/utils'
+import { Button } from '@shared/components/ui/Button'
+import { Badge } from '@shared/components/ui/Badge'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import api from '@shared/lib/api'
+import { toast } from 'sonner'
 
 export default function ConvocationDashboard() {
-  const [activeTab, setActiveTab] = useState<'etudiants' | 'surveillants' | 'dispo'>('surveillants');
+  const { t, i18n } = useTranslation('common')
+  const isRtl = i18n.language === 'ar'
+  const queryClient = useQueryClient()
+
+  const [activeTab, setActiveTab] = useState<'etudiants' | 'surveillants' | 'dispo'>('surveillants')
+
+  const generateMutation = useMutation({
+    mutationFn: (examId: number) => api.post(`/exam-planning/${examId}/generate-convocations`),
+    onSuccess: (res) => {
+      toast.success(res.data.message || (isRtl ? 'تم توليد الاستدعاءات' : 'Convocations générées'))
+      queryClient.invalidateQueries({ queryKey: ['convocations'] })
+    },
+    onError: () => toast.error(isRtl ? 'حدث خطأ' : 'Erreur lors de la génération')
+  })
+
+  const sendEmailMutation = useMutation({
+    mutationFn: (examId: number) => api.post(`/exam-planning/${examId}/send-emails`),
+    onSuccess: (res) => {
+      toast.success(res.data.message || (isRtl ? 'تم إرسال الرسائل' : 'Emails envoyés'))
+    },
+    onError: () => toast.error(isRtl ? 'حدث خطأ' : 'Erreur lors de l\'envoi')
+  })
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-white/10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-pink-500/10 rounded-xl">
-            <ClipboardList className="w-6 h-6 text-pink-600" />
+    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] p-8 text-white rounded-[2rem] shadow-xl shadow-[hsl(var(--color-primary))/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+            <ClipboardList className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-pink-600 italic">Gestion des Convocations d'Examens</h1>
+            <h1 className="text-3xl font-bold mb-1">
+              {isRtl ? 'إدارة الاستدعاءات' : 'Gestion des Convocations d\'Examens'}
+            </h1>
+            <p className="text-white/80 font-medium text-sm">
+              {isRtl ? 'توليد الرموز (QR)، إرسال البريد الإلكتروني والإحصائيات' : 'Génération de QR, envoi d\'emails et statistiques'}
+            </p>
           </div>
         </div>
-        <div className="text-sm font-bold text-white/50">
+        <div className="relative z-10 text-sm font-bold bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/20">
           24/06/2026
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-4 rounded-3xl shadow-sm">
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-white/50 uppercase mb-1 block">Session d'examens</label>
-          <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background">
-            <option>Normale Automne â€” 2025/2026</option>
+          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'دورة الامتحان' : 'Session d\'examens'}</label>
+          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+            <option>Normale Automne — 2025/2026</option>
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-white/50 uppercase mb-1 block">Filière</label>
-          <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background">
-            <option>Toutes les filières</option>
+          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'الشعبة' : 'Filière'}</label>
+          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+            <option>{isRtl ? 'جميع الشعب' : 'Toutes les filières'}</option>
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-white/50 uppercase mb-1 block">Statut</label>
-          <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background">
-            <option>Tous les statuts</option>
+          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'الحالة' : 'Statut'}</label>
+          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+            <option>{isRtl ? 'جميع الحالات' : 'Tous les statuts'}</option>
           </select>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10">
+      <div className="flex gap-2 border-b border-[hsl(var(--border))]">
         <button 
           onClick={() => setActiveTab('etudiants')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase transition-colors border-b-2 ${activeTab === 'etudiants' ? 'border-[#1F3A5F] text-white' : 'border-transparent text-white/50 hover:text-foreground'}`}
+          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'etudiants' ? "border-[hsl(var(--color-primary))] text-[hsl(var(--color-primary))]" : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]")}
         >
-          <GraduationCap className="w-4 h-4" /> Étudiants (750)
+          <GraduationCap className="w-5 h-5" /> {isRtl ? 'الطلاب (750)' : 'Étudiants (750)'}
         </button>
         <button 
           onClick={() => setActiveTab('surveillants')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase transition-colors border-b-2 ${activeTab === 'surveillants' ? 'border-[#e91e63] text-[#e91e63]' : 'border-transparent text-white/50 hover:text-foreground'}`}
+          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'surveillants' ? "border-[#e91e63] text-[#e91e63]" : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]")}
         >
-          <Users className="w-4 h-4" /> Surveillants (28)
-        </button>
-        <button 
-          onClick={() => setActiveTab('dispo')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase transition-colors border-b-2 ${activeTab === 'dispo' ? 'border-blue-500 text-blue-500' : 'border-transparent text-white/50 hover:text-foreground'}`}
-        >
-          <LayoutList className="w-4 h-4" /> Disponibilités (5)
+          <Users className="w-5 h-5" /> {isRtl ? 'المراقبين (28)' : 'Surveillants (28)'}
         </button>
       </div>
 
       {/* KPIs depending on tab */}
       {activeTab === 'surveillants' ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-[#7165e3] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1">28</div>
-            <div className="text-xs font-bold uppercase opacity-90">Total Profs</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-[#e91e63]/10 border border-[#e91e63]/20 text-[#e91e63] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">28</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الأساتذة' : 'Total Profs'}</div>
+            </div>
+            <Users className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#2979ff] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1">23</div>
-            <div className="text-xs font-bold uppercase opacity-90">Générées</div>
+          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">23</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
+            </div>
+            <FileText className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#00bfa5] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1">0</div>
-            <div className="text-xs font-bold uppercase opacity-90">Envoyées</div>
+          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">0</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
+            </div>
+            <Send className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#4caf50] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1">5</div>
-            <div className="text-xs font-bold uppercase opacity-90">Confirmées</div>
+          <div className="bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">5</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُؤكدة' : 'Confirmées'}</div>
+            </div>
+            <CheckCircle2 className="w-10 h-10 opacity-30" />
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-[#1F3A5F] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1 flex items-center gap-2"><GraduationCap className="w-6 h-6 opacity-50"/> 750</div>
-            <div className="text-xs font-bold uppercase opacity-90">Total Étudiants</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-[hsl(var(--color-primary))]/10 border border-[hsl(var(--color-primary))]/20 text-[hsl(var(--color-primary))] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">750</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الطلاب' : 'Total Étudiants'}</div>
+            </div>
+            <GraduationCap className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#2979ff] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1 flex items-center gap-2"><FileText className="w-6 h-6 opacity-50"/> 728</div>
-            <div className="text-xs font-bold uppercase opacity-90">Générées</div>
+          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">728</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
+            </div>
+            <FileText className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#00bfa5] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1 flex items-center gap-2"><Send className="w-6 h-6 opacity-50"/> 21</div>
-            <div className="text-xs font-bold uppercase opacity-90">Envoyées</div>
+          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">21</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
+            </div>
+            <Send className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#8e24aa] text-white p-6 rounded-2xl shadow-sm">
-            <div className="text-4xl font-black mb-1 flex items-center gap-2"><CheckCircle2 className="w-6 h-6 opacity-50"/> 1</div>
-            <div className="text-xs font-bold uppercase opacity-90">Téléchargées</div>
+          <div className="bg-[#8e24aa]/10 border border-[#8e24aa]/20 text-[#8e24aa] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-4xl font-black mb-1">1</div>
+              <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'تنزيلات' : 'Téléchargées'}</div>
+            </div>
+            <CheckCircle2 className="w-10 h-10 opacity-30" />
           </div>
         </div>
       )}
 
       {/* Actions */}
-      <div className="bg-white border border-white/10 p-6 rounded-2xl shadow-sm">
-        <h3 className="text-[#e91e63] font-bold text-sm uppercase flex items-center gap-2 mb-4">
-          <span className="bg-[#e91e63] p-1 rounded text-white"><LayoutList className="w-4 h-4"/></span> 
-          Actions â€” {activeTab === 'surveillants' ? 'Surveillance' : 'Étudiants'}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-6 rounded-3xl shadow-sm">
+        <h3 className="text-[hsl(var(--foreground))] font-bold text-lg mb-4">
+          {isRtl ? 'إجراءات جماعية' : 'Actions Groupées'} — {activeTab === 'surveillants' ? (isRtl ? 'المراقبين' : 'Surveillance') : (isRtl ? 'الطلاب' : 'Étudiants')}
         </h3>
         
         {activeTab === 'surveillants' ? (
-          <div className="flex flex-wrap gap-3">
-            <button className="bg-[#e91e63] hover:bg-[#c2185b] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              Affectation Auto des Surveillants
-            </button>
-            <button className="bg-[#2979ff] hover:bg-[#1565c0] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <FileText className="w-4 h-4" /> Générer Convocations Profs
-            </button>
-            <button className="bg-[#e91e63] hover:bg-[#c2185b] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <Mail className="w-4 h-4" /> Envoyer Emails Profs
-            </button>
-            <Link to="/academic/convocations/professor/1/print" className="bg-[#7165e3] hover:bg-[#5c50c5] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <Printer className="w-4 h-4" /> Imprimer Convocations Profs
-            </Link>
+          <div className="flex flex-wrap gap-4">
+            <Button variant="primary" className="bg-[#e91e63] border-none shadow-md shadow-pink-500/20 hover:bg-[#d81b60]" icon={<Users size={16} />}>
+              {isRtl ? 'تعيين آلي للمراقبين' : 'Affectation Auto'}
+            </Button>
+            <Button variant="outline" icon={<FileText size={16} />} onClick={() => generateMutation.mutate(1)}>
+              {isRtl ? 'توليد استدعاءات' : 'Générer Convocations Profs'}
+            </Button>
+            <Button variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50" icon={<Mail size={16} />} onClick={() => sendEmailMutation.mutate(1)}>
+              {isRtl ? 'إرسال البريد' : 'Envoyer Emails Profs'}
+            </Button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3">
-            <button className="bg-[#2979ff] hover:bg-[#1565c0] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <FileText className="w-4 h-4" /> Générer Convocations Étudiants
-            </button>
-            <button className="bg-[#00bfa5] hover:bg-[#009688] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <Mail className="w-4 h-4" /> Envoyer Emails Étudiants
-            </button>
-            <Link to="/academic/convocations/student/1/print" className="bg-[#7165e3] hover:bg-[#5c50c5] text-white px-4 py-2.5 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2">
-              <Printer className="w-4 h-4" /> Aperçu Convocation Étudiant (Demo)
-            </Link>
+          <div className="flex flex-wrap gap-4">
+            <Button variant="primary" icon={<FileText size={16} />} onClick={() => generateMutation.mutate(1)}>
+              {isRtl ? 'توليد استدعاءات الطلاب' : 'Générer Convocations Étudiants'}
+            </Button>
+            <Button variant="outline" className="text-teal-600 border-teal-200 hover:bg-teal-50" icon={<Mail size={16} />} onClick={() => sendEmailMutation.mutate(1)}>
+              {isRtl ? 'إرسال بريد الطلاب' : 'Envoyer Emails Étudiants'}
+            </Button>
+            <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50" icon={<Printer size={16} />}>
+              {isRtl ? 'معاينة PDF' : 'Aperçu PDF (Demo)'}
+            </Button>
           </div>
         )}
       </div>
 
       {/* Data Table */}
-      <div className="bg-white border border-white/10 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-white/10">
-          <h3 className="font-bold text-lg">
-            Convocations de {activeTab === 'surveillants' ? 'surveillance' : 'passage'}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
+          <h3 className="font-bold text-[hsl(var(--foreground))] text-lg px-2">
+            {isRtl ? 'قائمة الاستدعاءات' : 'Liste des convocations'}
           </h3>
         </div>
-        
-        <table className="w-full text-sm text-left">
-          <thead className="text-[10px] text-white/50 font-bold uppercase bg-white/5/20">
-            <tr>
-              {activeTab === 'surveillants' ? (
-                <>
-                  <th className="px-6 py-4">Professeur</th>
-                  <th className="px-6 py-4">Examen</th>
-                  <th className="px-6 py-4">Date / Heure</th>
-                  <th className="px-6 py-4">Salle</th>
-                  <th className="px-6 py-4">Rôle</th>
-                  <th className="px-6 py-4 text-right">Statut</th>
-                </>
-              ) : (
-                <>
-                  <th className="px-6 py-4">Étudiant</th>
-                  <th className="px-6 py-4">Filière</th>
-                  <th className="px-6 py-4 text-right">Statut</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {activeTab === 'surveillants' ? (
-              <>
-                <tr className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold">Radouane el asri</td>
-                  <td className="px-6 py-4 font-medium">Introduction - Génie Civil</td>
-                  <td className="px-6 py-4 text-xs">01/07/2026<br/>09:00</td>
-                  <td className="px-6 py-4 text-xs font-bold text-white/50">Labo Info 1</td>
-                  <td className="px-6 py-4"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Principal</span></td>
-                  <td className="px-6 py-4 text-right"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-emerald-200">Confirmée</span></td>
-                </tr>
-                <tr className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold">Prof. Hicham Alaoui</td>
-                  <td className="px-6 py-4 font-medium">Avancé - Marketing & Commerce</td>
-                  <td className="px-6 py-4 text-xs">02/07/2026<br/>09:00</td>
-                  <td className="px-6 py-4 text-xs font-bold text-white/50">Salle TD 02</td>
-                  <td className="px-6 py-4"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Principal</span></td>
-                  <td className="px-6 py-4 text-right"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-blue-200">Générée</span></td>
-                </tr>
-                <tr className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold">Radouane el asri</td>
-                  <td className="px-6 py-4 font-medium">Introduction - Marketing & Commerce</td>
-                  <td className="px-6 py-4 text-xs">01/07/2026<br/>16:30</td>
-                  <td className="px-6 py-4 text-xs font-bold text-white/50">Labo Info 1</td>
-                  <td className="px-6 py-4"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Principal</span></td>
-                  <td className="px-6 py-4 text-right"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-emerald-200">Confirmée</span></td>
-                </tr>
-              </>
-            ) : (
-              <>
-                <tr className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold">Aniss El Alaoui</td>
-                  <td className="px-6 py-4 font-medium">Génie Informatique</td>
-                  <td className="px-6 py-4 text-right"><span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-purple-200">Téléchargée</span></td>
-                </tr>
-                <tr className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold">Salma Bennis</td>
-                  <td className="px-6 py-4 font-medium">Finance & Audit</td>
-                  <td className="px-6 py-4 text-right"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase border border-emerald-200">Envoyée</span></td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
+        <div className="p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-20 h-20 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mb-4">
+            <ClipboardList className="w-10 h-10 text-[hsl(var(--muted-foreground))]" />
+          </div>
+          <p className="font-bold text-[hsl(var(--foreground))] text-lg mb-1">{isRtl ? 'البيانات قيد التحميل...' : 'Chargement des données...'}</p>
+          <p className="text-[hsl(var(--muted-foreground))] text-sm">
+            {isRtl ? 'يرجى الانتظار، سيتم عرض الجدول قريباً.' : 'Veuillez patienter, le tableau sera affiché.'}
+          </p>
+        </div>
       </div>
     </div>
-  );
+  )
 }

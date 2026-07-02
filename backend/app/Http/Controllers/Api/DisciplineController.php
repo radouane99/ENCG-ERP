@@ -3,76 +3,79 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\DisciplinaryCase;
-use App\Models\DisciplinaryDecision;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
+use App\Services\Academic\StudentAffairsService;
 
 class DisciplineController extends Controller
 {
-    public function index()
+    protected StudentAffairsService $affairsService;
+
+    public function __construct(StudentAffairsService $affairsService)
     {
-        $cases = DisciplinaryCase::with(['student.user', 'decision'])->get();
-        return response()->json(['success' => true, 'data' => $cases]);
+        $this->affairsService = $affairsService;
     }
 
-    public function store(Request $request)
+    /**
+     * Display a listing of the discipline cases.
+     */
+    public function index(): JsonResponse
+    {
+        $cases = $this->affairsService->getAllDisciplineCases();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $cases
+        ]);
+    }
+
+    /**
+     * Report a new incident.
+     */
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'institution_id' => 'required|exists:institutions,id',
-            'student_id' => 'required|exists:students,id',
-            'infraction_type' => 'required|string',
-            'description' => 'required|string',
+            'student_id'    => 'required|integer|exists:students,id',
             'incident_date' => 'required|date',
-            'reported_by_name' => 'nullable|string',
+            'type'          => 'required|string',
+            'description'   => 'required|string',
+            'severity'      => 'nullable|string|in:low,medium,high'
         ]);
 
-        $validated['case_number'] = 'DC-' . date('Y') . '-' . strtoupper(Str::random(5));
-        $validated['status'] = 'pending';
+        $reporterId = auth()->id() ?? 1; // Fallback to 1 for demo purposes
 
-        $case = DisciplinaryCase::create($validated);
+        $case = $this->affairsService->reportIncident($validated, $reporterId);
 
-        return response()->json(['success' => true, 'message' => 'Cas disciplinaire créé', 'data' => $case]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Incident signalé avec succès.',
+            'data' => $case
+        ], 201);
     }
 
-    public function show($id)
+    /**
+     * Make a decision on a specific discipline case.
+     */
+    public function decide(Request $request, $id): JsonResponse
     {
-        $case = DisciplinaryCase::with(['student.user', 'decision.decidedBy'])->findOrFail($id);
-        return response()->json(['success' => true, 'data' => $case]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $case = DisciplinaryCase::findOrFail($id);
-        
         $validated = $request->validate([
-            'status' => 'string|in:pending,under_review,decided,appealed',
-            'student_statement' => 'nullable|string',
+            'decision' => 'required|string|in:warning,blame,exclusion,dismissed',
+            'notes'    => 'nullable|string'
         ]);
 
-        $case->update($validated);
-
-        return response()->json(['success' => true, 'message' => 'Cas mis à jour', 'data' => $case]);
-    }
-
-    public function decide(Request $request, $id)
-    {
-        $case = DisciplinaryCase::findOrFail($id);
-
-        $validated = $request->validate([
-            'sanction_type' => 'required|string|in:warning,suspension,exclusion,none',
-            'suspension_days' => 'nullable|integer',
-            'decision_text' => 'required|string',
-            'decision_date' => 'required|date',
-        ]);
-
-        $validated['disciplinary_case_id'] = $case->id;
-        $validated['decided_by'] = auth()->id() ?? 1; // fallback for testing
-
-        $decision = DisciplinaryDecision::create($validated);
-        
-        $case->update(['status' => 'decided']);
-
-        return response()->json(['success' => true, 'message' => 'Décision enregistrée', 'data' => $decision]);
+        try {
+            $case = $this->affairsService->makeDecision((int) $id, $validated['decision'], $validated['notes'] ?? null);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Décision disciplinaire enregistrée.',
+                'data' => $case
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 }

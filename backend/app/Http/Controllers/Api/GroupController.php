@@ -4,36 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Services\Academic\GroupService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class GroupController extends Controller
 {
+    protected GroupService $groupService;
+
+    public function __construct(GroupService $groupService)
+    {
+        $this->groupService = $groupService;
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $query = Group::with(['filiere', 'academicYear']);
+        $groups = $this->groupService->getFilteredGroups($request->only(['filiere_id', 'semester']));
+        $mapped = $this->groupService->mapGroupCollection($groups);
 
-        if ($request->filiere_id) {
-            $query->where('filiere_id', $request->filiere_id);
-        }
-        if ($request->semester) {
-            $query->where('semester_number', $request->semester);
-        }
-
-        $groups = $query->get()->map(fn ($g) => [
-            'id'              => $g->id,
-            'name'            => $g->name,
-            'filiere'         => $g->filiere?->code ?? '—',
-            'filiere_id'      => $g->filiere_id,
-            'filiere_name'    => $g->filiere?->name ?? '—',
-            'semester_number' => $g->semester_number,
-            'capacity'        => $g->capacity,
-            'current_count'   => $g->current_count ?? 0,
-            'academic_year'   => $g->academicYear?->label ?? '—',
-            'academic_year_id'=> $g->academic_year_id,
-        ]);
-
-        return response()->json(['data' => $groups]);
+        return response()->json(['data' => $mapped]);
     }
 
     public function store(Request $request): JsonResponse
@@ -46,7 +35,8 @@ class GroupController extends Controller
             'capacity'         => 'required|integer|min:1',
         ]);
 
-        $group = Group::create($validated);
+        $group = $this->groupService->createGroup($validated);
+        
         return response()->json(['message' => 'Groupe créé avec succès.', 'data' => $group], 201);
     }
 
@@ -60,13 +50,15 @@ class GroupController extends Controller
             'capacity'         => 'sometimes|required|integer|min:1',
         ]);
 
-        $group->update($validated);
+        $group = $this->groupService->updateGroup($group, $validated);
+        
         return response()->json(['message' => 'Groupe mis à jour.', 'data' => $group]);
     }
 
     public function destroy(Group $group): JsonResponse
     {
         $group->delete();
+        
         return response()->json(['message' => 'Groupe supprimé.']);
     }
 }

@@ -83,8 +83,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // HR & Personnel
-    Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
-    Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
+    Route::prefix('hr')->group(function () {
+        Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
+        Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
+    });
 
     // Exam Locking (Admin)
     Route::prefix('admin/exam-locking')->group(function () {
@@ -100,15 +102,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('export/{model}/template', [\App\Http\Controllers\Api\ExcelController::class, 'template']);
     Route::post('import/{model}', [\App\Http\Controllers\Api\ExcelController::class, 'import']);
 
-    // Admission Applications
-    Route::get('applications', [\App\Http\Controllers\Api\ApplicationController::class, 'index']);
-    Route::patch('applications/{application}/status', [\App\Http\Controllers\Api\ApplicationController::class, 'updateStatus']);
-    Route::delete('applications/{application}', [\App\Http\Controllers\Api\ApplicationController::class, 'destroy']);
+    // Secure Documents & Anti-Fraud
+    Route::post('documents/generate-attestation', [\App\Http\Controllers\Api\DocumentController::class, 'generateAttestation']);
+    Route::get('documents/verify/{trackingCode}', [\App\Http\Controllers\Api\DocumentController::class, 'verifyDocument']);
 
-    // Admissions
+    // Admissions (TAFEM & Applications)
     Route::prefix('admissions')->group(function () {
-        Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
-        Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
+        Route::get('/campaigns/{campaign}/applications', [\App\Http\Controllers\Api\AdmissionController::class, 'index']);
+        Route::patch('/applications/{application}/status', [\App\Http\Controllers\Api\AdmissionController::class, 'updateStatus']);
+        Route::delete('/applications/{application}', [\App\Http\Controllers\Api\AdmissionController::class, 'destroy']);
     });
 
     // HR & Vacataires
@@ -209,13 +211,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/campaigns/{campaignId}/calculate-seuil', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'calculateSeuil']);
     });
 
-    // AI Assistant & Features (Exact endpoints according to specs)
-    Route::post('/chatbot/message', [\App\Http\Controllers\Api\AiFeatureController::class, 'chat']);
-    Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiFeatureController::class, 'generateQcm']);
-    Route::post('/student/ai/revision-planner', [\App\Http\Controllers\Api\AiFeatureController::class, 'revisionPlanner']);
-    Route::post('/classroom/ai/summarize-pdf', [\App\Http\Controllers\Api\AiFeatureController::class, 'summarizePdf']);
-    Route::post('/classroom/ai/tutor', [\App\Http\Controllers\Api\AiFeatureController::class, 'virtualTutor']);
-    Route::post('/admin/students/{student}/ai-report', [\App\Http\Controllers\Api\AiFeatureController::class, 'studentReport']);
+    // AI Assistant & Features
+    Route::post('/chatbot/message', [\App\Http\Controllers\Api\AiAssistantController::class, 'chat']);
+    Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
 
     // Alumni / Insertion Pro
     Route::prefix('alumni')->group(function () {

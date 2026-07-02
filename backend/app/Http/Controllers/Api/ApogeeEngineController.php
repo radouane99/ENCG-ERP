@@ -41,7 +41,6 @@ class ApogeeEngineController extends Controller
             $request->user()->id ?? 1
         );
 
-        // Feature 8: Audit Logging
         if (class_exists('Spatie\Activitylog\Models\Activity')) {
             activity()
                 ->performedOn($period)
@@ -61,22 +60,18 @@ class ApogeeEngineController extends Controller
      */
     public function mockDeliberation(Request $request): JsonResponse
     {
-        // This is a test endpoint to verify the strict Apogee rules based on incoming mock grades
         $cc = $request->input('cc_grade', 8);
         $resit = $request->input('resit_grade', 18);
         
-        $ordinaryResult = $this->deliberationEngine->calculateModuleGrade($cc, 7, false); // Failed ordinary
+        $ordinaryResult = $this->deliberationEngine->calculateModuleGrade($cc, 7, false);
         $resitResult = $this->deliberationEngine->calculateResitGrade($cc, $resit, false);
 
-        // Mock semester compensation
         $semesterGrades = [
-            ['module_id' => 1, 'grade' => 8], // Fails
-            ['module_id' => 2, 'grade' => 12] // Passes
+            ['module_id' => 1, 'grade' => 8],
+            ['module_id' => 2, 'grade' => 12]
         ];
         
         $compensation = $this->deliberationEngine->applyCompensation($semesterGrades);
-        
-        // Mock progression (e.g. they have 3 reserved modules in year 1)
         $progression = $this->deliberationEngine->evaluateProgression(3);
 
         return response()->json([
@@ -86,12 +81,12 @@ class ApogeeEngineController extends Controller
                 'rule_2_module_resit' => [
                     'cc' => $cc,
                     'resit_exam' => $resit,
-                    'result' => $resitResult, // Should be exactly 10.0
+                    'result' => $resitResult,
                 ],
-                'rule_3_semester_compensation' => $compensation, // Avg 10, module 1 compensated
+                'rule_3_semester_compensation' => $compensation,
                 'rule_4_progression' => [
                     'failed_modules' => 3,
-                    'decision' => $progression // Should be REPEAT_YEAR
+                    'decision' => $progression
                 ]
             ]
         ]);

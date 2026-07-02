@@ -3,133 +3,78 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\VacationContract;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\HR\VacataireService;
 
 class VacataireController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    protected VacataireService $vacataireService;
+
+    public function __construct(VacataireService $vacataireService)
     {
-        abort_unless($request->user()->can('vacataires.view'), 403);
-
-        $query = VacationContract::with(['module', 'sessions', 'payments']);
-
-        if ($request->search) {
-            $s = $request->search;
-            $query->where(function ($q) use ($s) {
-                $q->where('first_name', 'like', "%$s%")
-                  ->orWhere('last_name', 'like', "%$s%")
-                  ->orWhere('email', 'like', "%$s%");
-            });
-        }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        $contracts = $query->get()->map(function ($c) {
-            $hoursCompleted = $c->sessions->sum('hours');
-            $paidAmount = $c->payments->where('status', 'paid')->sum('net_amount');
-
-            return [
-                'id' => $c->id,
-                'first_name' => $c->first_name,
-                'last_name' => $c->last_name,
-                'email' => $c->email,
-                'phone' => $c->phone,
-                'qualification' => $c->qualification,
-                'module' => $c->module?->name ?? 'Non assigné',
-                'module_id' => $c->module_id,
-                'agreed_hours' => $c->agreed_hours,
-                'hours_completed' => $hoursCompleted,
-                'hourly_rate' => $c->hourly_rate,
-                'status' => $c->status, // pending, signed, completed
-                'payment_amount' => $paidAmount,
-                'payment_status' => $paidAmount >= ($c->agreed_hours * $c->hourly_rate)
-                    ? 'paid' : ($paidAmount > 0 ? 'partial' : 'unpaid'),
-                'contract_start' => $c->contract_start?->format('Y-m-d'),
-                'contract_end' => $c->contract_end?->format('Y-m-d'),
-            ];
-        });
-
-        return response()->json([
-            'data' => $contracts,
-            'stats' => [
-                'total' => $contracts->count(),
-                'pending' => $contracts->where('status', 'pending')->count(),
-                'total_hours' => $contracts->sum('hours_completed'),
-                'unpaid_contracts' => $contracts->where('payment_status', 'unpaid')->count(),
-            ]
-        ]);
+        $this->vacataireService = $vacataireService;
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * Display a listing of vacataires.
+     */
+    public function index(): JsonResponse
     {
-        abort_unless($request->user()->can('vacataires.create'), 403);
+        $vacataires = $this->vacataireService->getAllVacataires();
+        return response()->json(['success' => true, 'data' => $vacataires]);
+    }
 
+    /**
+     * Display the specified vacataire details.
+     */
+    public function show($id): JsonResponse
+    {
+        $vacataire = $this->vacataireService->getVacataireDetails((int) $id);
+        
+        if (!$vacataire) {
+            return response()->json(['success' => false, 'message' => 'Vacataire non trouvé'], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $vacataire]);
+    }
+
+    /**
+     * Store a newly created vacation contract.
+     */
+    public function storeContract(Request $request): JsonResponse
+    {
         $validated = $request->validate([
-            'first_name'    => 'required|string|max:100',
-            'last_name'     => 'required|string|max:100',
-            'email'         => 'required|email',
-            'phone'         => 'nullable|string|max:20',
-            'qualification' => 'nullable|string|max:255',
-            'module_id'     => 'nullable|exists:modules,id',
-            'agreed_hours'  => 'required|numeric|min:1',
-            'hourly_rate'   => 'required|numeric|min:0',
-            'status'        => 'required|in:pending,signed,completed',
-            'contract_start'=> 'nullable|date',
-            'contract_end'  => 'nullable|date',
+            'professor_id' => 'required|integer|exists:professors,id',
+            'agreed_hours' => 'required|numeric|min:1',
+            'start_date'   => 'required|date',
+            'end_date'     => 'required|date|after:start_date',
         ]);
 
-        $validated['institution_id'] = 1;
-
-        $contract = VacationContract::create($validated);
+        $contract = $this->vacataireService->generateContract($validated);
 
         return response()->json([
-            'message' => 'Contrat vacataire créé avec succès.',
-            'data' => $contract
+            'success' => true,
+            'message' => 'Contrat généré avec succès',
+            'data'    => $contract
         ], 201);
     }
 
-    public function show(Request $request, VacationContract $vacataire): JsonResponse
+    /**
+     * Process a payment for a vacataire contract.
+     */
+    public function processPayment(Request $request, $contractId): JsonResponse
     {
-        abort_unless($request->user()->can('vacataires.view'), 403);
-        return response()->json(['data' => $vacataire->load(['module', 'sessions', 'payments'])]);
-    }
-
-    public function update(Request $request, VacationContract $vacataire): JsonResponse
-    {
-        abort_unless($request->user()->can('vacataires.edit'), 403);
-
         $validated = $request->validate([
-            'first_name'    => 'sometimes|required|string|max:100',
-            'last_name'     => 'sometimes|required|string|max:100',
-            'email'         => 'sometimes|required|email',
-            'phone'         => 'nullable|string|max:20',
-            'qualification' => 'nullable|string|max:255',
-            'module_id'     => 'nullable|exists:modules,id',
-            'agreed_hours'  => 'sometimes|required|numeric|min:1',
-            'hourly_rate'   => 'sometimes|required|numeric|min:0',
-            'status'        => 'sometimes|required|in:pending,signed,completed',
-            'contract_start'=> 'nullable|date',
-            'contract_end'  => 'nullable|date',
+            'hours_declared' => 'required|numeric|min:1'
         ]);
 
-        $vacataire->update($validated);
+        $payment = $this->vacataireService->calculatePayments((int) $contractId, $validated['hours_declared']);
 
         return response()->json([
-            'message' => 'Contrat mis à jour avec succès.',
-            'data' => $vacataire
+            'success' => true,
+            'message' => 'Paiement calculé et enregistré',
+            'data'    => $payment
         ]);
-    }
-
-    public function destroy(Request $request, VacationContract $vacataire): JsonResponse
-    {
-        abort_unless($request->user()->can('vacataires.delete'), 403);
-
-        $vacataire->delete();
-
-        return response()->json(['message' => 'Contrat supprimé avec succès.']);
     }
 }

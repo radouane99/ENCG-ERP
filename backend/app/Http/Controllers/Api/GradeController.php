@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Models\Grade;
-use App\Models\Student;
-use App\Models\Module;
-use Illuminate\Support\Facades\DB;
+use App\Services\Academic\GradeService;
 use Illuminate\Support\Facades\Log;
 
 class GradeController extends Controller
 {
+    protected GradeService $gradeService;
+
+    public function __construct(GradeService $gradeService)
+    {
+        $this->gradeService = $gradeService;
+    }
+
     /**
      * Store or update a batch of grades submitted by a professor.
      */
@@ -29,35 +33,20 @@ class GradeController extends Controller
             'grades.*.type' => 'required|in:normal,rattrapage',
         ]);
 
-        DB::beginTransaction();
         try {
-            $savedCount = 0;
-            foreach ($validated['grades'] as $gradeData) {
-                Grade::updateOrCreate(
-                    [
-                        'student_id' => $gradeData['student_id'],
-                        'module_id' => $validated['module_id'],
-                        'academic_year_id' => $validated['academic_year_id'],
-                        'type' => $gradeData['type'],
-                    ],
-                    [
-                        'value' => $gradeData['value'],
-                        'status' => 'draft', // Requires admin validation later
-                        'created_by' => $request->user()->id ?? null
-                    ]
-                );
-                $savedCount++;
-            }
-            
-            DB::commit();
+            $result = $this->gradeService->storeBatch(
+                $validated['module_id'],
+                $validated['academic_year_id'],
+                $validated['grades'],
+                $request->user()->id ?? null
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => "$savedCount notes ont été enregistrées avec succès.",
+                'message' => "{$result['count']} notes ont été enregistrées avec succès.",
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error("Grade Batch Error: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -78,14 +67,14 @@ class GradeController extends Controller
             'academic_year_id' => 'required|exists:academic_years,id',
         ]);
 
-        $updated = Grade::where('module_id', $validated['module_id'])
-            ->where('academic_year_id', $validated['academic_year_id'])
-            ->where('status', 'draft')
-            ->update(['status' => 'validated']);
+        $updatedCount = $this->gradeService->validateGrades(
+            $validated['module_id'], 
+            $validated['academic_year_id']
+        );
 
         return response()->json([
             'success' => true,
-            'message' => "$updated notes ont été validées."
+            'message' => "$updatedCount notes ont été validées définitivement."
         ]);
     }
 }

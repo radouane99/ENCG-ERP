@@ -5,71 +5,52 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Services\Documents\DocumentGenerationService;
+use App\Services\Core\DocumentService;
+use App\Models\Student;
 
 class DocumentController extends Controller
 {
-    protected DocumentGenerationService $docService;
+    protected DocumentService $documentService;
 
-    public function __construct(DocumentGenerationService $docService)
+    public function __construct(DocumentService $documentService)
     {
-        $this->docService = $docService;
+        $this->documentService = $documentService;
     }
 
     /**
-     * Generate a new document
+     * Generate an attestation for a given student
      */
-    public function generate(Request $request): JsonResponse
+    public function generateAttestation(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'student_id' => 'required|integer',
-            'document_type' => 'required|string'
+        $request->validate([
+            'student_id' => 'required|integer|exists:students,id',
+            'type' => 'required|string'
         ]);
 
-        try {
-            // Because we don't have perfect DB seeds for document requests, we catch constraint errors
-            $data = $this->docService->generateAntiFraudDocument(
-                $validated['student_id'],
-                $validated['document_type']
-            );
-            return response()->json(['success' => true, 'data' => $data]);
-        } catch (\Exception $e) {
-            // Return fake success for UI demo if DB constraints fail
-            $fakeToken = hash('sha256', rand());
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'student_name' => 'Demo Student',
-                    'document_type' => $validated['document_type'],
-                    'verification_token' => $fakeToken,
-                    'verification_url' => config('app.url') . "/verify-document/" . $fakeToken,
-                    'message' => 'Document généré (Mode Simulation)'
-                ]
-            ]);
-        }
+        $student = Student::findOrFail($request->student_id);
+        
+        $result = $this->documentService->generateAttestation($student, $request->type);
+        
+        return response()->json($result);
     }
 
     /**
-     * Verify a document's authenticity publicly
+     * Verify a document's authenticity
      */
-    public function verify(string $token): JsonResponse
+    public function verifyDocument($trackingCode): JsonResponse
     {
-        $result = $this->docService->verifyDocument($token);
+        $result = $this->documentService->verifyDocument($trackingCode);
         
-        // If fake token from above was used, pretend it's valid
-        if (!$result['is_valid'] && strlen($token) > 20) {
+        if ($result['valid']) {
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'is_valid' => true,
-                    'document_type' => 'Certificat de Scolarité (Simulé)',
-                    'issued_at' => now()->toDateTimeString(),
-                    'student_name' => 'John Doe',
-                    'student_number' => '2023000'
-                ]
+                'data' => $result['document']
             ]);
         }
 
-        return response()->json(['success' => $result['is_valid'], 'data' => $result]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Document invalide ou introuvable.'
+        ], 404);
     }
 }

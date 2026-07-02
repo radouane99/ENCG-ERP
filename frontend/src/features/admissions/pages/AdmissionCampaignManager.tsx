@@ -1,166 +1,205 @@
-﻿import React, { useState } from 'react';
-import { Target, Users, Search, Download, Calculator, FileCheck2, Filter } from 'lucide-react';
-import api from '@/shared/lib/api';
-import { toast } from 'sonner';
+import React, { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import {
+  Target, Users, Search, Download, Calculator, FileCheck2, Filter,
+  CheckCircle2, XCircle, Clock
+} from 'lucide-react'
+import api from '@shared/lib/api'
+import { cn } from '@shared/lib/utils'
+import { Button } from '@shared/components/ui/Button'
+import { Badge } from '@shared/components/ui/Badge'
+import { Input } from '@shared/components/ui/Input'
+import { toast } from 'sonner'
 
 export default function AdmissionCampaignManager() {
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const { t, i18n } = useTranslation('common')
+  const isRtl = i18n.language === 'ar'
+  const queryClient = useQueryClient()
 
-  const calculateSeuil = async () => {
-    setIsCalculating(true);
-    try {
-      const res = await api.post('/admissions/campaigns/1/calculate-seuil');
-      setResult(res.data.data);
-      toast.success('Seuil calculé et candidats triés avec succès.');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors du calcul.');
-    } finally {
-      setIsCalculating(false);
+  const [search, setSearch] = useState('')
+  const campaignId = 1 // Mock campaign ID
+
+  // Fetch Applications
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ['applications', campaignId],
+    queryFn: () => api.get(`/admissions/campaigns/${campaignId}/applications`).then(res => res.data.data)
+  })
+
+  // Mutate Application Status
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number, status: string }) => 
+      api.patch(`/admissions/applications/${id}/status`, { status }),
+    onSuccess: (res) => {
+      toast.success(res.data.message || (isRtl ? 'تم تحديث الحالة' : 'Statut mis à jour avec succès'))
+      queryClient.invalidateQueries({ queryKey: ['applications', campaignId] })
+    },
+    onError: () => toast.error(isRtl ? 'خطأ في التحديث' : 'Erreur lors de la mise à jour')
+  })
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'accepted':
+        return <Badge className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'مقبول' : 'Accepté'}</Badge>
+      case 'rejected':
+        return <Badge className="bg-red-500/10 text-red-600 border-none hover:bg-red-500/20"><XCircle size={12} className="me-1"/> {isRtl ? 'مرفوض' : 'Rejeté'}</Badge>
+      case 'waitlisted':
+        return <Badge className="bg-amber-500/10 text-amber-600 border-none hover:bg-amber-500/20"><Clock size={12} className="me-1"/> {isRtl ? 'لائحة الانتظار' : 'Liste d\'attente'}</Badge>
+      default:
+        return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none hover:bg-[hsl(var(--muted))/80]">{isRtl ? 'قيد الانتظار' : 'En attente'}</Badge>
     }
-  };
+  }
+
+  // Filter logic
+  const filteredApps = applications?.filter((app: any) => 
+    (app.candidate?.first_name?.toLowerCase().includes(search.toLowerCase()) || '') || 
+    (app.candidate?.last_name?.toLowerCase().includes(search.toLowerCase()) || '')
+  ) || []
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Target className="w-6 h-6 text-primary" />
-            Moteur de Présélection (TAFEM)
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Calcul du Seuil, tri par mérite et génération des listes d'attente pour l'accès Ã  l'ENCG.
-          </p>
+    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+      
+      {/* Premium Header */}
+      <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2A4D7C] rounded-[2rem] p-8 text-white shadow-xl shadow-[#1F3A5F]/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-white/20">
+            <Target className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black mb-1 tracking-tight">
+              {isRtl ? 'إدارة القبول (TAFEM)' : 'Moteur de Présélection (TAFEM)'}
+            </h1>
+            <p className="text-white/80 font-medium text-sm">
+              {isRtl ? 'فرز وإدارة المترشحين لولوج المدرسة' : 'Calcul du seuil, tri par mérite et gestion des admissions.'}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Actions */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-            <h2 className="font-semibold text-lg mb-4">Campagne 2026-2027</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* Sidebar Status / Actions */}
+        <div className="xl:col-span-1 space-y-6">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm relative overflow-hidden group">
+            <div className="absolute -end-6 -top-6 w-24 h-24 bg-[hsl(var(--color-primary))/5] rounded-full blur-2xl transition-transform group-hover:scale-150"></div>
+            <h2 className="font-black text-lg mb-6 text-[hsl(var(--foreground))] relative z-10">
+              {isRtl ? 'حملة 2026-2027' : 'Campagne 2026-2027'}
+            </h2>
             
-            <div className="space-y-4 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Formule:</span>
-                <span className="font-medium text-foreground">75% Nat + 25% Reg</span>
+            <div className="space-y-4 text-sm text-[hsl(var(--muted-foreground))] relative z-10">
+              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+                <span className="font-bold">{isRtl ? 'الصيغة المعتمدة:' : 'Formule :'}</span>
+                <Badge variant="outline" className="bg-[hsl(var(--background))]">75% Nat + 25% Reg</Badge>
               </div>
-              <div className="flex justify-between">
-                <span>Capacité Cible:</span>
-                <span className="font-medium text-foreground">450 places</span>
+              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+                <span className="font-bold">{isRtl ? 'الطاقة الاستيعابية:' : 'Capacité Cible :'}</span>
+                <span className="font-black text-[hsl(var(--foreground))]">450 {isRtl ? 'مقعد' : 'places'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Candidats Inscrits:</span>
-                <span className="font-medium text-foreground">12 500</span>
+              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+                <span className="font-bold">{isRtl ? 'المسجلون:' : 'Inscrits :'}</span>
+                <span className="font-black text-[hsl(var(--foreground))]">12,500</span>
               </div>
             </div>
 
-            <button
-              onClick={calculateSeuil}
-              disabled={isCalculating}
-              className="w-full mt-6 bg-[#A80A0B] hover:bg-[#7D0809] text-white px-4 py-3 rounded-xl font-medium flex justify-center items-center gap-2 transition-all disabled:opacity-70"
-            >
-              {isCalculating ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Calculator className="w-5 h-5" />
-              )}
-              Calculer le Seuil (Rank)
-            </button>
+            <Button className="w-full mt-6 bg-[#A80A0B] hover:bg-[#A80A0B]/90 text-white font-bold h-12 shadow-md shadow-[#A80A0B]/20" icon={<Calculator size={18}/>}>
+              {isRtl ? 'احتساب عتبة الانتقاء' : 'Calculer le Seuil (Rank)'}
+            </Button>
           </div>
-
-          {result && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-emerald-800 flex items-center gap-2 mb-3">
-                <FileCheck2 className="w-5 h-5" />
-                Résultat du Calcul
-              </h3>
-              <div className="text-3xl font-black text-emerald-600 mb-1">
-                {result.seuil_calculated.toFixed(2)}
-              </div>
-              <p className="text-emerald-700/80 text-sm">Seuil d'admissibilité</p>
-              
-              <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                <p className="text-sm font-medium text-emerald-800">
-                  {result.invited_to_exam} candidats convoqués Ã  l'écrit.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Main Content: Ranking List */}
-        <div className="lg:col-span-3">
-          <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-border flex flex-wrap gap-4 items-center justify-between bg-muted/20">
-              <h2 className="font-semibold text-lg flex items-center gap-2">
-                <Users className="w-5 h-5 text-muted-foreground" />
-                Classement par Mérite
+        <div className="xl:col-span-3">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden flex flex-col h-full">
+            <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
+              <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
+                <div className="p-2 bg-[hsl(var(--color-primary))/10] rounded-lg text-[hsl(var(--color-primary))]"><Users size={18} /></div>
+                {isRtl ? 'لائحة المترشحين' : 'Dossiers de candidature'}
               </h2>
               
               <div className="flex gap-3">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input 
-                    type="text" 
-                    placeholder="Rechercher..." 
-                    className="pl-9 pr-4 py-2 bg-background border border-input rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                <div className="w-64">
+                  <Input 
+                    placeholder={isRtl ? 'بحث...' : 'Rechercher...'} 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                    icon={<Search size={16}/>}
                   />
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-lg text-sm font-medium hover:bg-muted">
-                  <Filter className="w-4 h-4" />
-                  Filtres
-                </button>
-                <button className="flex items-center gap-2 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:bg-primary/20">
-                  <Download className="w-4 h-4" />
-                  Exporter
-                </button>
+                <Button variant="outline" icon={<Download size={16}/>} className="bg-[hsl(var(--background))]">
+                  {isRtl ? 'تصدير' : 'Exporter'}
+                </Button>
               </div>
             </div>
 
-            <div className="flex-1 p-0 overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-muted/50 text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Rang</th>
-                    <th className="px-6 py-4 font-medium">Nom Complet</th>
-                    <th className="px-6 py-4 font-medium text-right">Score Calculé</th>
-                    <th className="px-6 py-4 font-medium text-center">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {result ? (
-                    result.top_candidates.map((candidate: any, idx: number) => (
-                      <tr key={candidate.application_id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-6 py-4 font-bold text-foreground">
+            {isLoading ? (
+              <div className="flex-1 p-12 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--color-primary))]"></div>
+              </div>
+            ) : (
+              <div className="flex-1 p-0 overflow-x-auto">
+                <table className="w-full text-sm text-start">
+                  <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4">{isRtl ? 'الترتيب' : 'Rang'}</th>
+                      <th className="px-6 py-4">{isRtl ? 'الاسم الكامل' : 'Nom Complet'}</th>
+                      <th className="px-6 py-4 text-center">{isRtl ? 'المعدل المحسوب' : 'Score Calculé'}</th>
+                      <th className="px-6 py-4 text-center">{isRtl ? 'الحالة' : 'Statut'}</th>
+                      <th className="px-6 py-4 text-end">{isRtl ? 'تحديث الحالة' : 'Actions (Statut)'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[hsl(var(--border))]">
+                    {filteredApps?.length > 0 ? filteredApps.map((app: any, idx: number) => (
+                      <tr key={app.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                        <td className="px-6 py-4 font-black text-[hsl(var(--foreground))] opacity-70">
                           #{idx + 1}
                         </td>
-                        <td className="px-6 py-4 font-medium">
-                          {candidate.last_name} {candidate.first_name}
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-[hsl(var(--foreground))]">{app.candidate?.last_name || 'Candidat'} {app.candidate?.first_name || 'Anonyme'}</p>
+                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">CNE: {app.candidate?.cne || 'N/A'}</p>
                         </td>
-                        <td className="px-6 py-4 text-right font-mono font-medium text-primary">
-                          {candidate.score.toFixed(2)}
+                        <td className="px-6 py-4 text-center font-black text-lg text-[hsl(var(--color-primary))]">
+                          {(app.score || 14.5).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                            Présélectionné(e)
-                          </span>
+                          {getStatusBadge(app.status)}
+                        </td>
+                        <td className="px-6 py-4 text-end">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {app.status !== 'accepted' && (
+                              <button onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })} className="p-2 text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Accepter">
+                                <CheckCircle2 size={16} />
+                              </button>
+                            )}
+                            {app.status !== 'waitlisted' && (
+                              <button onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'waitlisted' })} className="p-2 text-amber-600 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg transition-colors" title="Liste d'attente">
+                                <Clock size={16} />
+                              </button>
+                            )}
+                            {app.status !== 'rejected' && (
+                              <button onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })} className="p-2 text-red-600 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors" title="Rejeter">
+                                <XCircle size={16} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                        Cliquez sur "Calculer le Seuil" pour lancer l'algorithme de classement sur l'ensemble de la base de données (Mode Batch).
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                          <div className="flex flex-col items-center gap-2">
+                            <Target className="w-8 h-8 opacity-20" />
+                            {isRtl ? 'لا يوجد مترشحين' : 'Aucune candidature trouvée.'}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function ReservationCreatePage() {

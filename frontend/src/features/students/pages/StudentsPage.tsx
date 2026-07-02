@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  Users, Plus, Search, Filter, Eye, Edit2,
+  Users, Plus, Search, Eye, Edit2,
   Trash2, GraduationCap, ChevronLeft, ChevronRight,
-  SortAsc, SortDesc, X
+  SortAsc, SortDesc, X, Mail
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 import ExcelActions from '@shared/components/ui/ExcelActions';
 import { Button } from '@shared/components/ui/Button';
 import { Input } from '@shared/components/ui/Input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/components/ui/Table';
-import { Card } from '@shared/components/ui/Card';
+import { Badge } from '@shared/components/ui/Badge';
+import { Modal } from '@shared/components/ui/Modal';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 // ── Types ──────────────────────────────────────────────────────────
 interface Student {
@@ -54,177 +55,18 @@ const EMPTY_FORM: StudentForm = {
   phone: '', gender: 'male', birth_date: '', status: 'active', scholarship_type: ''
 };
 
-const STATUS_STYLES = {
-  active:    'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-  suspended: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-  graduated: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-  withdrawn: 'bg-red-500/15 text-red-400 border-red-500/20',
-};
-
 const STATUS_LABELS: Record<string, string> = {
   active: 'Actif', suspended: 'Suspendu', graduated: 'Diplômé', withdrawn: 'Retiré',
 };
 
-// ── Modal Component ─────────────────────────────────────────────────
-const StudentModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: StudentForm) => void;
-  initialData?: Student | null;
-  isLoading?: boolean;
-}> = ({ isOpen, onClose, onSave, initialData, isLoading }) => {
-  const [form, setForm] = useState<StudentForm>(() =>
-    initialData ? {
-      first_name: initialData.first_name,
-      last_name: initialData.last_name,
-      email: initialData.email,
-      cne: initialData.cne,
-      massar_code: initialData.massar_code ?? '',
-      phone: initialData.phone ?? '',
-      gender: initialData.gender,
-      birth_date: initialData.birth_date ?? '',
-      status: initialData.status,
-      scholarship_type: initialData.scholarship_type ?? '',
-    } : { ...EMPTY_FORM }
-  );
-
-  React.useEffect(() => {
-    if (isOpen) {
-      setForm(initialData ? {
-        first_name: initialData.first_name,
-        last_name: initialData.last_name,
-        email: initialData.email,
-        cne: initialData.cne,
-        massar_code: initialData.massar_code ?? '',
-        phone: initialData.phone ?? '',
-        gender: initialData.gender,
-        birth_date: initialData.birth_date ?? '',
-        status: initialData.status,
-        scholarship_type: initialData.scholarship_type ?? '',
-      } : { ...EMPTY_FORM });
-    }
-  }, [isOpen, initialData]);
-
-  if (!isOpen) return null;
-
-  const set = (key: keyof StudentForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(prev => ({ ...prev, [key]: e.target.value }));
-
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave(form); };
-
-  const inputCls = "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50 transition-all";
-  const labelCls = "block text-xs font-bold text-white/40 uppercase mb-1";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1a1d2e] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
-          <h3 className="font-bold text-lg text-white">
-            {initialData ? 'Modifier l\'étudiant' : 'Nouvel Étudiant'}
-          </h3>
-          <button onClick={onClose} className="p-1 text-white/40 hover:text-white hover:bg-white/10 rounded-lg">
-            <X size={18} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
-          {/* Identity */}
-          <div>
-            <p className="text-xs font-bold text-white/50 uppercase mb-3 border-b border-white/5 pb-2">Identité</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>Prénom *</label>
-                <input type="text" required value={form.first_name} onChange={set('first_name')} className={inputCls} placeholder="Fatima" />
-              </div>
-              <div>
-                <label className={labelCls}>Nom *</label>
-                <input type="text" required value={form.last_name} onChange={set('last_name')} className={inputCls} placeholder="ALAOUI" />
-              </div>
-              <div>
-                <label className={labelCls}>Genre *</label>
-                <select value={form.gender} onChange={set('gender')} className={inputCls}>
-                  <option value="male">Masculin</option>
-                  <option value="female">Féminin</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Date de naissance</label>
-                <input type="date" value={form.birth_date} onChange={set('birth_date')} className={inputCls} />
-              </div>
-            </div>
-          </div>
-
-          {/* Administrative Codes */}
-          <div>
-            <p className="text-xs font-bold text-white/50 uppercase mb-3 border-b border-white/5 pb-2">Codes Administratifs</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>CNE *</label>
-                <input type="text" required value={form.cne} onChange={set('cne')} className={inputCls} placeholder="R134567890" />
-              </div>
-              <div>
-                <label className={labelCls}>Code Massar</label>
-                <input type="text" value={form.massar_code} onChange={set('massar_code')} className={inputCls} placeholder="G123456789" />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <p className="text-xs font-bold text-white/50 uppercase mb-3 border-b border-white/5 pb-2">Contact</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>Email *</label>
-                <input type="email" required value={form.email} onChange={set('email')} className={inputCls} placeholder="f.alaoui@etu.encg-fes.ma" />
-              </div>
-              <div>
-                <label className={labelCls}>Téléphone</label>
-                <input type="tel" value={form.phone} onChange={set('phone')} className={inputCls} placeholder="+212 6xx xxx xxx" />
-              </div>
-            </div>
-          </div>
-
-          {/* Academic Info */}
-          <div>
-            <p className="text-xs font-bold text-white/50 uppercase mb-3 border-b border-white/5 pb-2">Informations Académiques</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>Statut</label>
-                <select value={form.status} onChange={set('status')} className={inputCls}>
-                  <option value="active">Actif</option>
-                  <option value="suspended">Suspendu</option>
-                  <option value="graduated">Diplômé</option>
-                  <option value="withdrawn">Retiré</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Bourse</label>
-                <select value={form.scholarship_type} onChange={set('scholarship_type')} className={inputCls}>
-                  <option value="">Aucune</option>
-                  <option value="excellence">Excellence</option>
-                  <option value="social">Social</option>
-                  <option value="state">État</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-              Annuler
-            </button>
-            <button type="submit" disabled={isLoading} className="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all disabled:opacity-60">
-              {isLoading ? 'Enregistrement...' : (initialData ? 'Mettre à jour' : 'Enregistrer')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+const STATUS_VARIANTS: Record<string, "success" | "warning" | "info" | "destructive" | "default"> = {
+  active: 'success', suspended: 'warning', graduated: 'info', withdrawn: 'destructive',
 };
 
 // ── Main Page Component ─────────────────────────────────────────────
 const StudentsPage: React.FC = () => {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const isRtl = i18n.language === 'ar';
   const queryClient = useQueryClient();
 
   // State
@@ -238,7 +80,10 @@ const StudentsPage: React.FC = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const perPage = 15;
 
-  // Query — real API, no fallback mock
+  // Form State
+  const [form, setForm] = useState<StudentForm>({ ...EMPTY_FORM });
+
+  // Query
   const { data, isLoading } = useQuery({
     queryKey: ['students', { search, statusFilter, sortField, sortOrder, page }],
     queryFn: () =>
@@ -254,7 +99,7 @@ const StudentsPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: StudentForm) => api.post('/students', data),
     onSuccess: () => {
-      toast.success('Étudiant créé avec succès !');
+      toast.success(isRtl ? 'تمت إضافة الطالب بنجاح' : 'Étudiant créé avec succès !');
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowModal(false);
     },
@@ -268,7 +113,7 @@ const StudentsPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: StudentForm }) => api.put(`/students/${id}`, data),
     onSuccess: () => {
-      toast.success('Étudiant mis à jour avec succès !');
+      toast.success(isRtl ? 'تم تحديث الطالب بنجاح' : 'Étudiant mis à jour avec succès !');
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowModal(false);
       setEditingStudent(null);
@@ -283,13 +128,14 @@ const StudentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/students/${id}`),
     onSuccess: () => {
-      toast.success('Étudiant supprimé.');
+      toast.success(isRtl ? 'تم حذف الطالب' : 'Étudiant supprimé.');
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
     onError: () => toast.error('Erreur lors de la suppression.')
   });
 
-  const handleSave = (form: StudentForm) => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     if (editingStudent) {
       updateMutation.mutate({ id: editingStudent.id, data: form });
     } else {
@@ -299,17 +145,30 @@ const StudentsPage: React.FC = () => {
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
+    setForm({
+      first_name: student.first_name,
+      last_name: student.last_name,
+      email: student.email,
+      cne: student.cne,
+      massar_code: student.massar_code ?? '',
+      phone: student.phone ?? '',
+      gender: student.gender,
+      birth_date: student.birth_date ?? '',
+      status: student.status,
+      scholarship_type: student.scholarship_type ?? '',
+    });
     setShowModal(true);
   };
 
   const handleDelete = (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+    if (confirm(isRtl ? 'هل أنت متأكد من حذف هذا الطالب؟' : 'Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
       deleteMutation.mutate(id);
     }
   };
 
   const handleOpenCreate = () => {
     setEditingStudent(null);
+    setForm({ ...EMPTY_FORM });
     setShowModal(true);
   };
 
@@ -324,15 +183,7 @@ const StudentsPage: React.FC = () => {
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
-    return sortOrder === 'asc' ? <SortAsc size={12} /> : <SortDesc size={12} />;
-  };
-
-  const toggleSelect = (id: number) => {
-    setSelectedStudents(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    return sortOrder === 'asc' ? <SortAsc size={14} className="ms-1" /> : <SortDesc size={14} className="ms-1" />;
   };
 
   const toggleSelectAll = () => {
@@ -343,48 +194,56 @@ const StudentsPage: React.FC = () => {
     }
   };
 
+  const toggleSelect = (id: number) => {
+    setSelectedStudents(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const isMutating = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 animate-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Users size={20} className="text-blue-400" />
-            Gestion des Étudiants
+          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+            <div className="p-2 bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] rounded-xl">
+              <Users size={24} />
+            </div>
+            {isRtl ? 'إدارة الطلاب' : 'Gestion des Étudiants'}
           </h1>
-          <p className="text-white/40 text-sm mt-0.5">
-            {meta.total} étudiant{meta.total > 1 ? 's' : ''} au total
+          <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
+            {meta.total} {isRtl ? 'طالب في المجموع' : `étudiant${meta.total > 1 ? 's' : ''} au total`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3">
           <ExcelActions
             model="students"
-            label="Étudiants"
+            label={isRtl ? 'طلاب' : 'Étudiants'}
             onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['students'] })}
           />
-          <Button
-            onClick={handleOpenCreate}
-            size="sm"
-          >
-            <Plus size={14} className="mr-1.5" /> Nouvel étudiant
+          <Button onClick={handleOpenCreate} icon={<Plus size={18} />}>
+            {isRtl ? 'طالب جديد' : 'Nouvel étudiant'}
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Filters Card */}
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
         <div className="relative flex-1">
           <Input
-            icon={<Search size={15} />}
-            placeholder="Rechercher par nom, CNE, n° étudiant..."
+            icon={<Search size={18} className="text-[hsl(var(--muted-foreground))]" />}
+            placeholder={isRtl ? 'البحث بالاسم، CNE، رقم الطالب...' : 'Rechercher par nom, CNE, n° étudiant...'}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
+            className="w-full bg-[hsl(var(--background))] border-transparent hover:border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X size={14} />
+            <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
+              <X size={16} />
             </button>
           )}
         </div>
@@ -392,195 +251,310 @@ const StudentsPage: React.FC = () => {
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-white/5 border border-white/10 rounded-xl text-sm text-white px-3 py-2.5 focus:outline-none focus:border-blue-500/50 min-w-[140px]"
+          className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[hsl(var(--muted-foreground))/30]"
         >
-          <option value="">Tous les statuts</option>
-          <option value="active">Actif</option>
-          <option value="suspended">Suspendu</option>
-          <option value="graduated">Diplômé</option>
-          <option value="withdrawn">Retiré</option>
+          <option value="">{isRtl ? 'جميع الحالات' : 'Tous les statuts'}</option>
+          <option value="active">{isRtl ? 'نشط' : 'Actif'}</option>
+          <option value="suspended">{isRtl ? 'موقوف' : 'Suspendu'}</option>
+          <option value="graduated">{isRtl ? 'خريج' : 'Diplômé'}</option>
+          <option value="withdrawn">{isRtl ? 'منسحب' : 'Retiré'}</option>
         </select>
       </div>
 
       {/* Bulk actions */}
       {selectedStudents.size > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-          <span className="text-blue-400 text-sm font-medium">{selectedStudents.size} sélectionné{selectedStudents.size > 1 ? 's' : ''}</span>
-          <button className="text-xs text-red-400 hover:text-red-300 bg-red-500/10 px-2 py-1 rounded-lg">Supprimer</button>
-          <button onClick={() => setSelectedStudents(new Set())} className="ml-auto text-white/40 hover:text-white">
-            <X size={14} />
+        <div className="flex items-center gap-3 p-3 bg-[hsl(var(--color-primary))/5] border border-[hsl(var(--color-primary))/20] rounded-xl animate-in fade-in slide-in-from-top-2">
+          <span className="text-[hsl(var(--color-primary))] text-sm font-semibold px-2">
+            {selectedStudents.size} {isRtl ? 'محدد' : `sélectionné${selectedStudents.size > 1 ? 's' : ''}`}
+          </span>
+          <Button variant="destructive" size="sm" onClick={() => {}}>
+            {isRtl ? 'حذف المحدد' : 'Supprimer'}
+          </Button>
+          <button onClick={() => setSelectedStudents(new Set())} className="ms-auto text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-2">
+            <X size={16} />
           </button>
         </div>
       )}
 
       {/* Table */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <input
-                  type="checkbox"
-                  checked={selectedStudents.size === students.length && students.length > 0}
-                  onChange={toggleSelectAll}
-                  className="w-4 h-4 rounded accent-primary"
-                />
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:text-foreground select-none"
-                onClick={() => handleSort('last_name')}
-              >
-                <span className="flex items-center gap-1">Étudiant <SortIcon field="last_name" /></span>
-              </TableHead>
-              <TableHead>CNE / N°</TableHead>
-              <TableHead>Filière</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Bourse</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-start text-sm">
+            <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] uppercase text-xs tracking-wider font-semibold border-b border-[hsl(var(--border))]">
+              <tr>
+                <th className="px-4 py-4 w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedStudents.size === students.length && students.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
+                  />
+                </th>
+                <th 
+                  className="px-4 py-4 cursor-pointer hover:text-[hsl(var(--foreground))] transition-colors"
+                  onClick={() => handleSort('last_name')}
+                >
+                  <div className="flex items-center">
+                    {isRtl ? 'الطالب' : 'Étudiant'} <SortIcon field="last_name" />
+                  </div>
+                </th>
+                <th className="px-4 py-4">{isRtl ? 'CNE / الرقم' : 'CNE / N°'}</th>
+                <th className="px-4 py-4">{isRtl ? 'الشعبة' : 'Filière'}</th>
+                <th className="px-4 py-4">{isRtl ? 'الحالة' : 'Statut'}</th>
+                <th className="px-4 py-4">{isRtl ? 'المنحة' : 'Bourse'}</th>
+                <th className="px-4 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[hsl(var(--border))]">
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 7 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <div className="h-4 bg-muted animate-pulse rounded" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                <tr>
+                  <td colSpan={7} className="p-12 text-center">
+                    <Spinner size="lg" className="mx-auto" />
+                  </td>
+                </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-white/30">
-                    <GraduationCap size={40} className="mx-auto mb-3 opacity-20" />
-                    <p>Aucun étudiant trouvé</p>
-                    <button onClick={handleOpenCreate} className="mt-3 text-xs text-blue-400 hover:text-blue-300">
-                      + Ajouter le premier étudiant
-                    </button>
+                  <td colSpan={7} className="p-16 text-center text-[hsl(var(--muted-foreground))]">
+                    <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <GraduationCap size={32} className="opacity-50" />
+                    </div>
+                    <p className="text-base font-medium text-[hsl(var(--foreground))]">
+                      {isRtl ? 'لم يتم العثور على طلاب' : 'Aucun étudiant trouvé'}
+                    </p>
+                    <p className="text-sm mt-1 mb-4">
+                      {isRtl ? 'جرب تغيير مرشحات البحث.' : 'Essayez de modifier vos filtres de recherche.'}
+                    </p>
+                    <Button onClick={handleOpenCreate} variant="outline" icon={<Plus size={16} />}>
+                      {isRtl ? 'إضافة طالب' : 'Ajouter un étudiant'}
+                    </Button>
                   </td>
                 </tr>
               ) : (
                 students.map((student) => (
-                  <TableRow key={student.id} className="group">
-                    <TableCell>
+                  <tr key={student.id} className="hover:bg-[hsl(var(--muted)/50)] transition-colors group">
+                    <td className="px-4 py-3 text-center">
                       <input
                         type="checkbox"
                         checked={selectedStudents.has(student.id)}
                         onChange={() => toggleSelect(student.id)}
-                        className="w-4 h-4 rounded accent-primary"
+                        className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
                       />
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white text-sm font-bold shadow-sm">
                           {student.first_name[0]}{student.last_name[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{student.last_name} {student.first_name}</p>
-                          <p className="text-muted-foreground text-xs">{student.email}</p>
+                          <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                            {student.last_name} {student.first_name}
+                          </p>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-0.5 flex items-center gap-1">
+                            <Mail size={12} /> {student.email}
+                          </p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm font-mono">{student.cne}</p>
-                      <p className="text-muted-foreground text-xs">{student.student_number}</p>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-mono font-medium text-[hsl(var(--foreground))]">{student.cne}</p>
+                      <p className="text-[hsl(var(--muted-foreground))] text-xs mt-0.5">{student.student_number}</p>
+                    </td>
+                    <td className="px-4 py-3">
                       {student.current_filiere ? (
                         <div>
-                          <span className="text-sm font-medium">{student.current_filiere}</span>
-                          <p className="text-muted-foreground text-xs">S{student.current_semester} · {student.current_group ?? '—'}</p>
+                          <Badge variant="outline" className="font-semibold bg-[hsl(var(--background))] border-[hsl(var(--border))]">
+                            {student.current_filiere}
+                          </Badge>
+                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 ms-1">
+                            S{student.current_semester} · {student.current_group ?? '—'}
+                          </p>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
+                        <span className="text-[hsl(var(--muted-foreground))] text-sm">—</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[student.status]}`}>
-                        {STATUS_LABELS[student.status]}
-                      </span>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={STATUS_VARIANTS[student.status] || 'default'} size="sm">
+                        {isRtl ? (student.status === 'active' ? 'نشط' : student.status === 'suspended' ? 'موقوف' : student.status === 'graduated' ? 'خريج' : 'منسحب') : STATUS_LABELS[student.status]}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
                       {student.scholarship_type ? (
-                        <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full capitalize">
+                        <Badge variant="info" size="sm" className="capitalize bg-purple-500/10 text-purple-600 dark:text-purple-400 border-transparent">
                           {student.scholarship_type}
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
+                        <span className="text-[hsl(var(--muted-foreground))] text-sm">—</span>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    </td>
+                    <td className="px-4 py-3 text-end">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleEdit(student)}
-                          className="h-8 w-8 hover:text-amber-500 hover:bg-amber-500/10"
-                          title="Modifier"
+                          className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-amber-600 hover:bg-amber-500/10"
+                          aria-label="Modifier"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={16} />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleDelete(student.id)}
-                          className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                          title="Supprimer"
+                          className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-destructive))] hover:bg-[hsl(var(--color-destructive))/10]"
+                          aria-label="Supprimer"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-          </TableBody>
-        </Table>
-      </Card>
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination */}
+        {/* Pagination Footer */}
         {meta.last_page > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
-            <p className="text-white/40 text-sm">
-              Page {meta.current_page} sur {meta.last_page} · {meta.total} étudiants
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
+            <p className="text-[hsl(var(--muted-foreground))] text-sm">
+              {isRtl ? `الصفحة ${meta.current_page} من ${meta.last_page}` : `Page ${meta.current_page} sur ${meta.last_page}`}
             </p>
-            <div className="flex items-center gap-1">
-              <button
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-all"
+                className="w-9 h-9 p-0"
               >
-                <ChevronLeft size={16} />
-              </button>
+                <ChevronLeft size={16} className="rtl:rotate-180" />
+              </Button>
               {Array.from({ length: Math.min(5, meta.last_page) }, (_, i) => i + 1).map(p => (
-                <button
+                <Button
                   key={p}
+                  variant={page === p ? 'primary' : 'ghost'}
+                  size="sm"
                   onClick={() => setPage(p)}
-                  className={`w-7 h-7 text-xs rounded-lg transition-all ${page === p ? 'bg-blue-600 text-white' : 'text-white/50 hover:bg-white/10 hover:text-white'}`}
+                  className={`w-9 h-9 p-0 font-medium ${page !== p && 'text-[hsl(var(--muted-foreground))]'}`}
                 >
                   {p}
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage(p => Math.min(meta.last_page, p + 1))}
                 disabled={page >= meta.last_page}
-                className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-all"
+                className="w-9 h-9 p-0"
               >
-                <ChevronRight size={16} />
-              </button>
+                <ChevronRight size={16} className="rtl:rotate-180" />
+              </Button>
             </div>
           </div>
         )}
+      </div>
 
-      {/* Student Modal */}
-      <StudentModal
+      {/* Custom Modal for Create / Edit */}
+      <Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setEditingStudent(null); }}
-        onSave={handleSave}
-        initialData={editingStudent}
-        isLoading={isMutating}
-      />
+        title={editingStudent ? (isRtl ? 'تحديث الطالب' : 'Modifier l\'étudiant') : (isRtl ? 'إضافة طالب' : 'Nouvel Étudiant')}
+        size="lg"
+      >
+        <form onSubmit={handleSave} className="space-y-6">
+          {/* Section: Identité */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+              {isRtl ? 'الهوية' : 'Identité'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم الأول' : 'Prénom'} *</label>
+                <Input required value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} placeholder="Fatima" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم العائلي' : 'Nom'} *</label>
+                <Input required value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} placeholder="ALAOUI" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الجنس' : 'Genre'} *</label>
+                <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50">
+                  <option value="male">{isRtl ? 'ذكر' : 'Masculin'}</option>
+                  <option value="female">{isRtl ? 'أنثى' : 'Féminin'}</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'تاريخ الميلاد' : 'Date de naissance'}</label>
+                <Input type="date" value={form.birth_date} onChange={e => setForm({ ...form, birth_date: e.target.value })} />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Administration */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+              {isRtl ? 'الإدارة' : 'Administration'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">CNE *</label>
+                <Input required value={form.cne} onChange={e => setForm({ ...form, cne: e.target.value })} placeholder="R134567890" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">Code Massar</label>
+                <Input value={form.massar_code} onChange={e => setForm({ ...form, massar_code: e.target.value })} placeholder="G123456789" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">Email *</label>
+                <Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="f.alaoui@etu.encg-fes.ma" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الهاتف' : 'Téléphone'}</label>
+                <Input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+212 6xx xxx xxx" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Académique */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+              {isRtl ? 'أكاديمي' : 'Académique'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الحالة' : 'Statut'}</label>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+                  <option value="active">{isRtl ? 'نشط' : 'Actif'}</option>
+                  <option value="suspended">{isRtl ? 'موقوف' : 'Suspendu'}</option>
+                  <option value="graduated">{isRtl ? 'خريج' : 'Diplômé'}</option>
+                  <option value="withdrawn">{isRtl ? 'منسحب' : 'Retiré'}</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'المنحة' : 'Bourse'}</label>
+                <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+                  <option value="">{isRtl ? 'بدون' : 'Aucune'}</option>
+                  <option value="excellence">{isRtl ? 'تفوق' : 'Excellence'}</option>
+                  <option value="social">{isRtl ? 'اجتماعية' : 'Social'}</option>
+                  <option value="state">{isRtl ? 'دولة' : 'État'}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-[hsl(var(--border))]">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
+              {isRtl ? 'إلغاء' : 'Annuler'}
+            </Button>
+            <Button type="submit" variant="primary" disabled={isMutating} isLoading={isMutating}>
+              {editingStudent ? (isRtl ? 'تحديث' : 'Mettre à jour') : (isRtl ? 'حفظ' : 'Enregistrer')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

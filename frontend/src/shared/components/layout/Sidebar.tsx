@@ -11,7 +11,8 @@ import {
   RefreshCcw, ShieldAlert, GraduationCap as ProfIcon, UserPlus, Target,
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
-  BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles
+  BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles, Mail,
+  X
 } from 'lucide-react'
 
 interface NavItem {
@@ -28,6 +29,7 @@ interface NavGroup {
   items: NavItem[]
 }
 
+// Keep existing navigation array exactly as it was
 const navigation: (NavItem | NavGroup)[] = [
   {
     label: 'Tableau de bord', labelAr: 'لوحة التحكم',
@@ -140,8 +142,12 @@ const navigation: (NavItem | NavGroup)[] = [
   }
 ]
 
-export default function Sidebar() {
-  const { t, i18n } = useTranslation('common')
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
+  const { i18n } = useTranslation('common')
   const { user, hasAnyRole } = useAuthStore()
   const isRtl = i18n.language === 'ar'
   const navigate = useNavigate()
@@ -149,34 +155,49 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        'flex flex-col w-64 shrink-0 h-full overflow-hidden',
+        'flex flex-col w-[280px] shrink-0 h-full overflow-hidden',
         'bg-[hsl(var(--sidebar-background))]',
-        'border-r border-[hsl(var(--sidebar-border))]'
+        'border-e border-[hsl(var(--sidebar-border))]',
+        'shadow-xl lg:shadow-none transition-shadow'
       )}
     >
+      {/* Mobile Close Button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 end-4 p-2 rounded-full bg-white/10 text-white/70 hover:text-white hover:bg-white/20 lg:hidden z-50 transition-colors"
+          aria-label="Fermer le menu"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+
       {/* Logo */}
-      <div className="flex justify-center px-5 py-5 border-b border-[hsl(var(--sidebar-border))] bg-white/5">
-        <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain" />
+      <div className="flex items-center justify-center px-6 py-6 border-b border-[hsl(var(--sidebar-border))] bg-gradient-to-b from-white/[0.02] to-transparent">
+        <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain drop-shadow-sm" />
       </div>
 
       {/* Institution badge */}
       {user && (
-        <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--sidebar-accent))]">
-          <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate">{user.institution_name}</p>
-          <p className="text-xs text-[hsl(var(--sidebar-primary))] font-medium capitalize">{user.roles[0]}</p>
+        <div className="mx-4 mt-5 px-4 py-3 rounded-xl bg-gradient-to-br from-[hsl(var(--sidebar-accent))] to-[hsl(var(--sidebar-background))] border border-[hsl(var(--sidebar-border))] shadow-sm">
+          <p className="text-sm font-semibold text-[hsl(var(--sidebar-foreground))] truncate">{user.institution_name}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--sidebar-primary))] shadow-[0_0_8px_hsl(var(--sidebar-primary))] animate-pulse" />
+            <p className="text-xs text-[hsl(var(--sidebar-primary))] font-medium uppercase tracking-wider">{user.roles[0]}</p>
+          </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navigation.map((navItem, idx) => {
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 custom-scrollbar">
+        {navigation.map((navItem) => {
           if ('group' in navItem) {
             const groupItems = navItem.items.filter(item => !item.roles || hasAnyRole(item.roles))
             if (groupItems.length === 0) return null
 
             return (
-              <div key={navItem.group} className="mt-4 first:mt-0">
-                <p className="px-3 text-[0.65rem] font-bold tracking-wider text-[hsl(var(--sidebar-foreground))] uppercase mb-1">
+              <div key={navItem.group} className="mt-6 first:mt-0">
+                <p className="px-3 text-[11px] font-bold tracking-[0.1em] text-[hsl(var(--sidebar-foreground))/60] uppercase mb-2">
                   {isRtl ? navItem.groupAr : navItem.group}
                 </p>
                 <div className="space-y-0.5">
@@ -184,14 +205,32 @@ export default function Sidebar() {
                     <NavLink
                       key={item.href}
                       to={item.href}
+                      onClick={onClose}
                       className={({ isActive }) =>
-                        cn('sidebar-item', isActive && 'active')
+                        cn(
+                          'sidebar-item group relative',
+                          isActive && 'active'
+                        )
                       }
                     >
-                      <item.icon className="w-4 h-4 shrink-0" />
-                      <span className="flex-1 truncate text-sm">
-                        {isRtl ? item.labelAr : item.label}
-                      </span>
+                      {({ isActive }) => (
+                        <>
+                          {/* Active Indicator Line (RTL safe) */}
+                          {isActive && (
+                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-[hsl(var(--sidebar-primary))] rounded-e-full" />
+                          )}
+                          <item.icon className={cn(
+                            "w-4 h-4 shrink-0 transition-transform duration-200",
+                            isActive ? "text-white" : "text-[hsl(var(--sidebar-foreground))/70] group-hover:text-white group-hover:scale-110"
+                          )} />
+                          <span className={cn(
+                            "flex-1 truncate transition-colors duration-200",
+                            isActive ? "font-semibold text-white" : "font-medium"
+                          )}>
+                            {isRtl ? item.labelAr : item.label}
+                          </span>
+                        </>
+                      )}
                     </NavLink>
                   ))}
                 </div>
@@ -201,15 +240,16 @@ export default function Sidebar() {
             if (navItem.roles && !hasAnyRole(navItem.roles)) return null
 
             return (
-              <div key={navItem.href} className="mt-4 first:mt-0">
+              <div key={navItem.href} className="mt-6 first:mt-0">
                 <NavLink
                   to={navItem.href}
+                  onClick={onClose}
                   className={({ isActive }) =>
-                    cn('sidebar-item', isActive && 'active')
+                    cn('sidebar-item group', isActive && 'active')
                   }
                 >
-                  <navItem.icon className="w-4 h-4 shrink-0" />
-                  <span className="flex-1 truncate text-sm">
+                  <navItem.icon className="w-4 h-4 shrink-0 text-[hsl(var(--sidebar-foreground))/70] group-hover:text-white" />
+                  <span className="flex-1 truncate font-medium">
                     {isRtl ? navItem.labelAr : navItem.label}
                   </span>
                 </NavLink>
@@ -222,17 +262,20 @@ export default function Sidebar() {
       {/* User footer */}
       {user && (
         <div
-          className="flex items-center gap-3 px-4 py-4 border-t border-[hsl(var(--sidebar-border))] cursor-pointer hover:bg-[hsl(var(--sidebar-accent))] transition-colors"
-          onClick={() => navigate('/profile')}
+          className="flex items-center gap-3 px-5 py-5 bg-[hsl(var(--sidebar-background))] border-t border-[hsl(var(--sidebar-border))] cursor-pointer hover:bg-[hsl(var(--sidebar-accent))] transition-colors group"
+          onClick={() => {
+            navigate('/profile');
+            onClose && onClose();
+          }}
         >
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white text-sm font-bold shadow-sm">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">{user.name}</p>
-            <p className="text-[hsl(var(--sidebar-foreground))] text-xs truncate">{user.email}</p>
+            <p className="text-white text-sm font-semibold truncate group-hover:text-[hsl(var(--color-primary))] transition-colors">{user.name}</p>
+            <p className="text-[hsl(var(--sidebar-foreground))/70] text-xs truncate">{user.email}</p>
           </div>
-          <ChevronRight className="w-3.5 h-3.5 text-[hsl(var(--sidebar-foreground))]" />
+          <ChevronRight className="w-4 h-4 text-[hsl(var(--sidebar-foreground))/50] group-hover:text-[hsl(var(--sidebar-foreground))] transition-colors transform rtl:rotate-180" />
         </div>
       )}
     </div>

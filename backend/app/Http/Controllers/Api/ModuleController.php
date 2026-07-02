@@ -4,31 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Module;
+use App\Services\Academic\ModuleService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class ModuleController extends Controller
 {
+    protected ModuleService $moduleService;
+
+    public function __construct(ModuleService $moduleService)
+    {
+        $this->moduleService = $moduleService;
+    }
+
     public function index(): JsonResponse
     {
-        $modules = Module::with(['filiere'])->get()->map(function ($module) {
-            return [
-                'id' => $module->id,
-                'code' => $module->code,
-                'name' => $module->name,
-                'semester' => 'S' . $module->semester_number,
-                'coefficient' => $module->coefficient,
-                'filiere' => $module->filiere ? $module->filiere->code : 'TC',
-                'professor' => 'Non assigné', // Placeholder for Phase 3
-                'studentsCount' => rand(50, 400),
-                'active' => $module->is_active,
-                'filiere_id' => $module->filiere_id,
-                'semester_number' => $module->semester_number,
-                'credit_hours' => $module->credit_hours,
-            ];
-        });
+        $modules = $this->moduleService->getAllModules();
+        $mapped = $this->moduleService->mapModuleCollection($modules);
 
-        return response()->json(['data' => $modules]);
+        return response()->json(['data' => $mapped]);
     }
 
     public function store(Request $request): JsonResponse
@@ -43,9 +37,7 @@ class ModuleController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $validated['institution_id'] = 1; // Default to ENCG Fès
-
-        $module = Module::create($validated);
+        $module = $this->moduleService->createModule($validated, 1);
 
         return response()->json([
             'message' => 'Module créé avec succès.',
@@ -70,7 +62,7 @@ class ModuleController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $module->update($validated);
+        $module = $this->moduleService->updateModule($module, $validated);
 
         return response()->json([
             'message' => 'Module mis à jour avec succès.',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { 
@@ -10,7 +10,8 @@ import {
   Bot, 
   Folder, 
   Info,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -27,6 +28,12 @@ export default function ProfessorClassroom() {
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // IA State
+  const [qcmTopic, setQcmTopic] = useState('');
+  const [qcmCount, setQcmCount] = useState(5);
+  const [isGeneratingQcm, setIsGeneratingQcm] = useState(false);
+  const [generatedQcm, setGeneratedQcm] = useState<any[] | null>(null);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -71,6 +78,24 @@ export default function ProfessorClassroom() {
       alert("Erreur lors de la publication");
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleGenerateQcm = async () => {
+    if (!qcmTopic) return alert("Veuillez saisir un sujet");
+    setIsGeneratingQcm(true);
+    setGeneratedQcm(null);
+    try {
+      const res = await api.post('/professor/ai/generate-qcm', {
+        topic: qcmTopic,
+        count: qcmCount
+      });
+      setGeneratedQcm(res.data.data);
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la génération du QCM");
+    } finally {
+      setIsGeneratingQcm(false);
     }
   };
 
@@ -246,7 +271,6 @@ export default function ProfessorClassroom() {
               </div>
 
               {materials.length === 0 ? (
-                {/* Empty State */}
                 <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
                   <Megaphone className="w-12 h-12 text-orange-300 mb-4" />
                   <h3 className="text-lg font-black text-black/90 mb-2">Aucune annonce pour le moment</h3>
@@ -343,6 +367,84 @@ export default function ProfessorClassroom() {
                 <BookOpen className="w-12 h-12 text-emerald-300 mb-4" />
                 <h3 className="text-lg font-black text-white/90 mb-2">Aucun devoir en cours</h3>
                 <p className="text-sm text-white/50">Créez un devoir pour évaluer vos étudiants.</p>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'ia' && (
+            <>
+              {/* IA QCM Generator Card */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-gray-900">Générateur de QCM par IA</h2>
+                    <p className="text-xs text-gray-500">Utilisez Gemini pour créer des évaluations automatiquement</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sujet du QCM</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ex: Les principes de la comptabilité générale..."
+                      value={qcmTopic}
+                      onChange={(e) => setQcmTopic(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nombre de questions</label>
+                    <input 
+                      type="number" 
+                      min="1" max="20"
+                      value={qcmCount}
+                      onChange={(e) => setQcmCount(parseInt(e.target.value))}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end mb-8">
+                  <button 
+                    onClick={handleGenerateQcm}
+                    disabled={isGeneratingQcm}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-purple-900/20"
+                  >
+                    {isGeneratingQcm ? "Génération en cours..." : "Générer le QCM"}
+                  </button>
+                </div>
+
+                {/* Generated QCM Display */}
+                {generatedQcm && (
+                  <div className="mt-8 space-y-4 border-t border-gray-100 pt-6">
+                    <h3 className="text-md font-bold text-gray-900 flex items-center gap-2 mb-4">
+                      <Sparkles className="w-5 h-5 text-yellow-500" /> Résultat de la génération
+                    </h3>
+                    
+                    {generatedQcm.map((q, idx) => (
+                      <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                        <p className="font-bold text-sm text-gray-900 mb-3">{idx + 1}. {q.question}</p>
+                        <div className="space-y-2">
+                          {q.options.map((opt: string, oIdx: number) => (
+                            <div key={oIdx} className={`px-3 py-2 rounded-lg text-xs font-medium border ${oIdx === q.correct_index ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-white border-gray-200 text-gray-600'}`}>
+                              {String.fromCharCode(65 + oIdx)}. {opt}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="flex justify-end pt-4">
+                      <button className="bg-[#003a8c] hover:bg-[#002a66] text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-900/20">
+                        Enregistrer comme Devoir
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

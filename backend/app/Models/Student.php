@@ -65,6 +65,11 @@ class Student extends Model
         return $this->hasMany(StudentPathway::class);
     }
 
+    public function latestPathway(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(StudentPathway::class)->latestOfMany();
+    }
+
     public function registrations(): HasMany
     {
         return $this->hasMany(StudentRegistration::class);
