@@ -251,17 +251,47 @@ export default function ProfilePage() {
         {/* Two Factor Authentication Card */}
         <div className="bg-white border border-slate-100 rounded-[1.5rem] shadow-sm p-8 md:p-12">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-slate-800">Double Authentification (2FA) Active</h2>
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-[#0f2863]" />
+              Double Authentification (2FA)
+            </h2>
             <p className="text-sm text-slate-500 mt-1">
-              La sécurité de votre compte administrateur est renforcée par un mot de passe à usage unique (TOTP).
+              Ajoutez une couche de sécurité supplémentaire en utilisant une application d'authentification comme Google Authenticator.
             </p>
           </div>
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex items-start gap-4 max-w-3xl">
-            <ShieldCheck className="w-6 h-6 text-emerald-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-bold text-emerald-800">
-                Votre compte est hautement sécurisé par authentificateur mobile.
+          
+          {/* Simulated 2FA State */}
+          <div className="space-y-6 max-w-3xl">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-slate-800 mb-2">Statut : Non configuré</h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  Lorsque la double authentification est activée, vous serez invité à saisir un jeton aléatoire sécurisé lors de l'authentification.
+                </p>
+                <button
+                  type="button"
+                  className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-xs uppercase tracking-wide shadow-sm"
+                  onClick={() => alert("Appel API : /api/v1/auth/two-factor/setup\nEnsuite, afficher le QRCode SVG retourné par le backend.")}
+                >
+                  Activer 2FA
+                </button>
+              </div>
+            </div>
+
+            {/* Simulated QR Code Display (Hidden by default, shown during setup) */}
+            <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-6 hidden">
+              <h3 className="text-sm font-bold text-slate-800 mb-2">1. Scannez le QR Code</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                Scannez ce QR Code avec Google Authenticator ou saisissez la clé manuellement.
               </p>
+              <div className="w-40 h-40 bg-slate-100 border border-slate-200 rounded-xl mb-4 flex items-center justify-center text-xs text-slate-400">
+                [SVG QR Code]
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 mb-2">2. Confirmez le code</h3>
+              <div className="flex gap-2">
+                <input type="text" placeholder="Code à 6 chiffres" className="rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-blue-500" />
+                <button type="button" className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-sm">Confirmer</button>
+              </div>
             </div>
           </div>
         </div>

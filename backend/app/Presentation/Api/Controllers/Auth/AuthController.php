@@ -327,4 +327,46 @@ class AuthController extends Controller
         $data['permissions'] = $user->permissions->pluck('name')->toArray();
         return $data;
     }
+
+    /**
+     * Redirect the user to the Google authentication page.
+     */
+    public function redirectToGoogle()
+    {
+        // Require laravel/socialite package installed
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->stateless()->redirect();
+    }
+
+    /**
+     * Obtain the user information from Google.
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->stateless()->user();
+            
+            // Check if user exists by email
+            $user = \App\Models\User::where('email', $googleUser->getEmail())->first();
+
+            if (!$user) {
+                // Auto-register user (assuming student by default or require manual admin approval)
+                $user = \App\Models\User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'password' => bcrypt(\Illuminate\Support\Str::random(16)), // Random password
+                ]);
+            }
+
+            // Create Sanctum Token
+            $tokenResult = $user->createToken('Personal Access Token');
+            $token = $tokenResult->plainTextToken;
+
+            // Redirect back to frontend with token
+            $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
+            return redirect()->to($frontendUrl . '/auth/callback?token=' . $token);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Erreur lors de la connexion via Google.'], 500);
+        }
+    }
 }
