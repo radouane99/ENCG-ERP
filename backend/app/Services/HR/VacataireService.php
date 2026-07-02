@@ -19,7 +19,7 @@ class VacataireService
                 // Load only active/latest contracts to reduce payload
                 $query->latest()->limit(1);
             }])
-            ->where('contract_type', 'contractual')
+            ->where('contract_type', 'visiting')
             ->get();
     }
 
@@ -33,7 +33,7 @@ class VacataireService
                 'vacationContracts.payments',
                 'modules' // Modules taught
             ])
-            ->where('contract_type', 'contractual')
+            ->where('contract_type', 'visiting')
             ->find($id);
     }
 

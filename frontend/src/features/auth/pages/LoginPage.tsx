@@ -162,7 +162,7 @@ export default function LoginPage() {
           variant="outline"
           className="w-full font-semibold border-slate-200 hover:bg-slate-50 transition-all duration-200 flex items-center justify-center gap-2"
           onClick={() => {
-            window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/auth/google/redirect`
+            window.location.href = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/redirect`
           }}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
