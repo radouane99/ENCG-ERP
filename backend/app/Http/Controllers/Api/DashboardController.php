@@ -34,27 +34,25 @@ class DashboardController extends Controller
 
     public function getStudentStats(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'gpa'                 => 0,
-                'attendance'          => 0,
-                'upcoming_exams'      => 0,
-                'pending_assignments' => 0
-            ]
-        ]);
+        $userId = $request->user()->id;
+        $result = $this->analyticsService->getStudentStats($userId);
+        
+        if (isset($result['success']) && !$result['success']) {
+            return response()->json($result, 404);
+        }
+        
+        return response()->json($result);
     }
 
     public function getProfessorStats(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_students' => 0,
-                'total_modules'  => 0,
-                'pending_grades' => 0,
-                'next_class'     => null
-            ]
-        ]);
+        $userId = $request->user()->id;
+        $result = $this->analyticsService->getProfessorStats($userId);
+        
+        if (isset($result['success']) && !$result['success']) {
+            return response()->json($result, 404);
+        }
+        
+        return response()->json($result);
     }
 }

@@ -1,32 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>PV d'Examen</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        h1 { color: #2c3e50; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-    </style>
-</head>
-<body>
-    <h1>Procès-Verbal d'Examen (#{{ $exam_id }})</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>CNE</th>
-                <th>Nom & Prénom</th>
-                <th>Note</th>
-                <th>Signature</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="4" style="text-align: center; color: #777;">Données dynamiques à insérer ici</td>
-            </tr>
-        </tbody>
-    </table>
-</body>
-</html>
+@extends('pdf.layout')
+
+@section('title', 'PV d\'Examen')
+
+@section('document_title', 'PROCÈS-VERBAL D\'EXAMEN')
+@section('title_color', 'blue')
+
+@section('meta_info', 'Examen N° : ' . $exam_id . ' &nbsp;&nbsp;&nbsp; Date : ' . date('d/m/Y'))
+
+@section('content')
+<table class="info-table" style="margin-top: 10px;">
+    <thead>
+        <tr>
+            <th>CNE</th>
+            <th>NOM & PRÉNOM</th>
+            <th style="width: 15%; text-align: center;">NOTE</th>
+            <th style="width: 25%; text-align: center;">SIGNATURE</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">
+                <em>Données des étudiants à insérer dynamiquement ici...</em>
+            </td>
+        </tr>
+    </tbody>
+</table>
+@endsection
+
+@section('signature_left')
+    <div style="margin-top: 20px;">SIGNATURE DU SURVEILLANT</div>
+@endsection
+
+@section('signature_right')
+    <div style="margin-top: 20px;">SIGNATURE DU RESPONSABLE</div>
+@endsection

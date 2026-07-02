@@ -24,7 +24,7 @@
 <div class="parties">
     <strong>Entre les soussignés :</strong>
     <ol>
-        <li><span class="red">1.</span> <strong>L'Université Privée de Fès (UPF)</strong>, représentée par son administration.</li>
+        <li><span class="red">1.</span> <strong>L'École Nationale de Commerce et de Gestion de Fès (ENCG)</strong>, représentée par son administration.</li>
         <li><span class="red">2.</span> <strong>L'Entreprise d'Accueil</strong> (à compléter par l'organisme d'accueil).</li>
         <li><span class="red">3.</span> <strong>L'Étudiant(e) :</strong> Nom et Prénom : <strong>Aniss el alaoui</strong><br>
             N° d'immatriculation : <strong>STU-7207</strong> | Inscrit(e) au titre de l'année universitaire <strong>2025-2026</strong>.
@@ -36,7 +36,7 @@
 
 <div class="article-title">Article 1 : Objet de la convention</div>
 <div class="article-text">
-    La présente convention a pour objet de définir les conditions dans lesquelles l'étudiant(e) effectuera son stage au sein de l'entreprise d'accueil dans le cadre de son cursus académique à l'UPF.
+    La présente convention a pour objet de définir les conditions dans lesquelles l'étudiant(e) effectuera son stage au sein de l'entreprise d'accueil dans le cadre de son cursus académique à l'ENCG.
 </div>
 
 <div class="article-title">Article 2 : Durée et déroulement</div>
@@ -52,9 +52,9 @@
 @endsection
 
 @section('signature_left')
-    POUR L'UPF
+    POUR L'ENCG
     <div class="stamp" style="margin-top: 20px;">
-        ★ UPF ★<br>
+        ★ ENCG FÈS ★<br>
         ADMINISTRATION
     </div>
 @endsection

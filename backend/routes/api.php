@@ -125,13 +125,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Exports
     Route::get('/export/students', function (\Illuminate\Http\Request $request) {
-        // Normally handled by a Controller, inline for simplicity in this demo structure
-        $institutionId = auth()->user()->institution_id;
-        // The return format depends on Maatwebsite/Excel
-        // return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\StudentsExport($institutionId), 'students.xlsx');
-        
-        // Mock download response for testing UI before composer is fixed
-        return response()->json(['success' => true, 'message' => 'Export simulated successfully']);
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\StudentsExport(), 'etudiants.xlsx');
     });
     
     // Timetable & Smart Scheduling
@@ -216,7 +210,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // AI Assistant & Features
+    Route::get('/chatbot/history', [\App\Http\Controllers\Api\AiAssistantController::class, 'history']);
     Route::post('/chatbot/message', [\App\Http\Controllers\Api\AiAssistantController::class, 'chat']);
+    Route::post('/chatbot/transcribe', [\App\Http\Controllers\Api\AiAssistantController::class, 'transcribe']);
     Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
 
     // Alumni / Insertion Pro
@@ -258,7 +254,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // APOGEE Academic Engine
         Route::post('/academic/grade-periods', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'openGradePeriod']);
-        Route::get('/academic/mock-deliberation', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'mockDeliberation']);
+        Route::post('/academic/deliberation/run', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'runDeliberation']);
         Route::get('/academic/reports/{type}', [\App\Http\Controllers\Api\AcademicReportController::class, 'generate']);
     });
 

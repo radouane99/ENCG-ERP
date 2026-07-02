@@ -34,8 +34,30 @@ class PdfExportController extends Controller
 
     public function releveNotes($studentId = null, $year = null)
     {
-        $pdf = Pdf::loadView('pdf.releve_notes', ['student_id' => $studentId, 'year' => $year]);
-        return $pdf->stream("releve_notes.pdf");
+        $student = \App\Models\Student::with(['latestPathway.filiere'])->find($studentId);
+        if (!$student) abort(404, 'Étudiant introuvable');
+
+        $grades = \App\Models\Grade::with('gradeComponent.module')->where('student_id', $studentId)->get();
+        
+        $modules = $grades->map(function ($grade) {
+            return [
+                'code' => $grade->gradeComponent->module->code ?? 'N/A',
+                'name' => $grade->gradeComponent->module->name ?? 'Module Inconnu',
+                'score' => $grade->value,
+                'is_validated' => $grade->value >= 10,
+            ];
+        });
+
+        $avgGrade = $grades->count() > 0 ? $grades->avg('value') : 0;
+
+        $pdf = Pdf::loadView('pdf.releve_notes', [
+            'student' => $student,
+            'year' => $year ?? '2025/2026',
+            'modules' => $modules,
+            'avgGrade' => $avgGrade
+        ]);
+        
+        return $pdf->stream("releve_notes_{$studentId}.pdf");
     }
 
     public function previewOrdreMission()
@@ -58,7 +80,14 @@ class PdfExportController extends Controller
 
     public function attestationReussite($studentId, $year)
     {
-        $pdf = Pdf::loadView('pdf.attestation', ['student_id' => $studentId, 'year' => $year]);
+        $student = \App\Models\Student::with(['latestPathway.filiere'])->find($studentId);
+        if (!$student) abort(404, 'Étudiant introuvable');
+
+        $pdf = Pdf::loadView('pdf.attestation', [
+            'student' => $student, 
+            'year' => $year
+        ]);
+        
         return $pdf->download("attestation_{$studentId}_{$year}.pdf");
     }
 

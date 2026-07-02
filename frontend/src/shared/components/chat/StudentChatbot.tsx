@@ -3,6 +3,7 @@ import { MessageSquare, X, Send, GraduationCap, BarChart3, Calendar, FileText, A
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';
+import api from '@shared/lib/api';
 
 export default function StudentChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,17 +34,22 @@ export default function StudentChatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) return;
     const userMsg = message;
     setMessage('');
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     
     setIsTyping(true);
-    setTimeout(() => {
+    try {
+      const res = await api.post('/chatbot/message', { message: userMsg, role: botTitle });
+      setMessages(prev => [...prev, { role: 'bot', text: res.data.reply }]);
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { role: 'bot', text: "Désolé, une erreur de connexion s'est produite avec l'IA." }]);
+    } finally {
       setIsTyping(false);
-      setMessages(prev => [...prev, { role: 'bot', text: "Ceci est une réponse générée par l'IA. Cette fonctionnalité sera entièrement connectée au backend prochainement pour fournir des données réelles." }]);
-    }, 1500);
+    }
   };
 
   const toggleRecording = () => {

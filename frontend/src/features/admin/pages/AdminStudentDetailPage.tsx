@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { FileText, CheckCircle, Bot, Loader2 } from 'lucide-react'
-import { studentsApi } from '@shared/api/students'
+import { studentsApi, api } from '@shared/api/students'
 import { toast } from 'sonner'
 import EditStudentModal from '../components/EditStudentModal'
 
@@ -30,26 +30,47 @@ export default function AdminStudentDetailPage() {
 
   const getInitials = (name: string) => name ? name.charAt(0).toUpperCase() : '?'
 
-  const handleDocumentClick = (docName: string) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
-      {
-        loading: `Génération de ${docName} en cours...`,
-        success: `${docName} généré avec succès ! (Mode Démo)`,
-        error: `Erreur lors de la génération de ${docName}`,
-      }
-    )
+  const handleDocumentClick = async (type: string) => {
+    const year = student.latest_pathway?.academic_year_id || '2025-2026'; // Defaulting to 2025/2026 string or id
+    // Since backend expects year string in route like 2025/2026 but URL can't have slash, we encode or use a safe string. Let's just use 2025-2026
+    const encodedYear = '2025-2026';
+    
+    let url = '';
+    if (type === 'releve') {
+      url = `/admin/students/${student.id}/releve-notes/${encodedYear}`;
+    } else {
+      url = `/admin/students/${student.id}/attestation-reussite/${encodedYear}`;
+    }
+
+    try {
+      toast.loading(`Génération du ${type === 'releve' ? 'Relevé' : 'Attestation'} en cours...`, { id: 'pdf' });
+      const response = await api.get(url, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `${type}_${student.student_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      toast.success('Document généré avec succès !', { id: 'pdf' });
+    } catch (error) {
+      toast.error('Erreur lors de la génération du document', { id: 'pdf' });
+    }
   }
 
-  const handleGenerateAI = () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 2500)),
-      {
-        loading: 'Analyse du dossier par LLaMA 3.3 en cours...',
-        success: 'Le bilan pédagogique a été généré avec succès ! (Mode Démo)',
-        error: 'Erreur lors de la génération',
-      }
-    )
+  const handleGenerateAI = async () => {
+    try {
+      toast.loading('Analyse du dossier par Gemini en cours...', { id: 'ai' });
+      // In a real scenario we'd call a specific AI endpoint. For now we use the chat endpoint with a system prompt
+      const response = await api.post('/chatbot/message', {
+        message: `Génère un bilan pédagogique professionnel pour l'étudiant ${student.first_name} ${student.last_name} (Matricule: ${student.student_number}). Fais-le en 3 paragraphes concis.`,
+        role: 'Admin'
+      });
+      toast.success('Bilan pédagogique généré avec succès !', { id: 'ai' });
+      // We could display this in a modal, but for now an alert will do
+      alert("Bilan Pédagogique IA :\n\n" + response.data.reply);
+    } catch (error) {
+      toast.error('Erreur lors de la génération du bilan', { id: 'ai' });
+    }
   }
 
   if (loading) {
@@ -115,11 +136,11 @@ export default function AdminStudentDetailPage() {
             <div className="pt-4">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Documents Officiels (2025/2026)</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => handleDocumentClick("Relevé de notes")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("releve")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <FileText className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Relevé de notes</span>
                 </button>
-                <button onClick={() => handleDocumentClick("Attestation de réussite")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("attestation")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <CheckCircle className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Attestation de réussite</span>
                 </button>
@@ -136,7 +157,7 @@ export default function AdminStudentDetailPage() {
                 <div className="relative z-10">
                   <h4 className="text-[#0f2863] font-bold mb-2">Bilan Pédagogique Intelligent</h4>
                   <p className="text-sm text-indigo-900/70 font-medium mb-4 pr-12">
-                    LLaMA 3.3 analysera les notes et les absences pour rédiger un rapport professionnel.
+                    Gemini 1.5 Pro analysera le dossier pour rédiger un rapport professionnel.
                   </p>
                   <button onClick={handleGenerateAI} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-sm">
                     <Bot className="w-4 h-4" /> Générer le bilan IA

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use App\Models\Grade;
+use App\Models\AttendanceRecord;
 
 class MobileStudentController extends Controller
 {
@@ -20,19 +23,28 @@ class MobileStudentController extends Controller
             return response()->json(['error' => 'Unauthorized access'], 403);
         }
 
-        $student = $user->student; // Assuming User model has a relationship to Student model
+        $student = $user->student;
+
+        if (!$student) {
+            return response()->json(['error' => 'Profil étudiant introuvable'], 404);
+        }
+
+        // Real DB aggregations
+        $avgGrade = DB::table('grades')->where('student_id', $student->id)->avg('value');
+        $absences = AttendanceRecord::where('student_id', $student->id)->where('status', 'absent')->count();
+        $filiere = $student->latestPathway ? $student->latestPathway->filiere->code : 'Non affecté';
 
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => $student->id ?? 1,
+                'id' => $student->id,
                 'name' => $user->name,
-                'cne' => $student->cne ?? 'N123456789',
-                'program' => 'Gestion',
-                'semester' => 'S3',
-                'current_average' => 14.2,
-                'rank' => 12,
-                'absences' => 2
+                'cne' => $student->cne ?? 'N/A',
+                'program' => $filiere,
+                'semester' => 'S1', // Needs semester management implementation
+                'current_average' => $avgGrade ? round($avgGrade, 2) : 0,
+                'rank' => null, // Rank computation is complex, skipping for MVP
+                'absences' => $absences
             ]
         ]);
     }
@@ -73,27 +85,32 @@ class MobileStudentController extends Controller
      */
     public function grades(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (!$user->hasRole('student') || !$user->student) {
+            return response()->json(['error' => 'Non autorisé'], 403);
+        }
+
+        $studentId = $user->student->id;
+        
+        $grades = Grade::with('gradeComponent.module')
+            ->where('student_id', $studentId)
+            ->get();
+
+        $modules = $grades->map(function ($grade) {
+            return [
+                'name' => $grade->gradeComponent->module->name ?? 'Module Inconnu',
+                'score' => $grade->value,
+                'is_validated' => $grade->value >= 10,
+            ];
+        });
+
+        $avgGrade = $grades->avg('value');
+
         return response()->json([
             'success' => true,
             'data' => [
-                'semester_average' => 14.2,
-                'modules' => [
-                    [
-                        'name' => 'Math',
-                        'score' => 14,
-                        'is_validated' => true,
-                    ],
-                    [
-                        'name' => 'Accounting',
-                        'score' => 16,
-                        'is_validated' => true,
-                    ],
-                    [
-                        'name' => 'Marketing',
-                        'score' => 13,
-                        'is_validated' => true,
-                    ]
-                ]
+                'semester_average' => $avgGrade ? round($avgGrade, 2) : 0,
+                'modules' => $modules
             ]
         ]);
     }

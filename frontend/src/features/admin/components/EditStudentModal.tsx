@@ -39,12 +39,19 @@ export default function EditStudentModal({
     e.preventDefault();
     try {
       setSaving(true);
-      await studentsApi.updateStudent(student.id, formData);
+      const updateData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        current_filiere: formData.current_filiere,
+        current_semester: formData.current_semester,
+      };
+      await studentsApi.updateStudent(student.id, updateData);
       onRefresh();
       onClose();
     } catch (error) {
       console.error('Failed to update student', error);
-      alert('Erreur lors de la mise à jour');
+      alert('Erreur lors de la mise à jour (vérifiez les champs).');
     } finally {
       setSaving(false);
     }

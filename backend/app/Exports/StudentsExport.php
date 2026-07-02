@@ -17,7 +17,7 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     public function collection()
     {
-        return Student::with('filiere')->get();
+        return Student::with('latestPathway.filiere')->get();
     }
 
     public function headings(): array
@@ -45,11 +45,11 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithS
             $student->birth_date,
             $student->city,
             $student->address,
-            $student->filiere_id,
-            $student->bac_year,
-            $student->bac_series,
-            $student->bac_mention,
-            $student->enrollment_year,
+            $student->latestPathway ? $student->latestPathway->filiere->name : 'N/A',
+            $student->bac_year ?? 'N/A',
+            $student->bac_series ?? 'N/A',
+            $student->bac_mention ?? 'N/A',
+            $student->enrollment_year ?? 'N/A',
             $student->status,
             $student->student_number,
         ];

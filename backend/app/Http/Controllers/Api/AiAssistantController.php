@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\Core\AiService;
+use App\Models\AiChatMessage;
 
 class AiAssistantController extends Controller
 {
@@ -42,10 +43,53 @@ class AiAssistantController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'message' => 'required|string'
+            'message' => 'required|string',
+            'role' => 'nullable|string'
         ]);
 
-        $result = $this->aiService->chatWithAssistant($validated['message']);
+        $user = $request->user();
+        $name = $user ? $user->name : 'Utilisateur';
+        $role = $request->input('role', 'Étudiant');
+        $userId = $user ? $user->id : null;
+
+        $result = $this->aiService->chatWithAssistant($validated['message'], $role, $name, $userId);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get user's chat history
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['messages' => []]);
+        }
+
+        $messages = AiChatMessage::where('user_id', $user->id)
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'role' => $msg->role,
+                    'content' => $msg->content
+                ];
+            });
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    /**
+     * Transcribe an audio file using AI (Speech to Text)
+     */
+    public function transcribe(Request $request): JsonResponse
+    {
+        $request->validate([
+            'audio' => 'required|file|mimes:wav,webm,mp3,ogg|max:10240',
+        ]);
+
+        $result = $this->aiService->transcribeAudio($request->file('audio'));
 
         return response()->json($result);
     }

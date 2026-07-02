@@ -131,4 +131,74 @@ class DashboardAnalyticsService
             ]
         ];
     }
+
+    /**
+     * Get statistics specifically tailored for the Student Dashboard
+     */
+    public function getStudentStats(int $userId): array
+    {
+        $student = Student::where('user_id', $userId)->first();
+        
+        if (!$student) {
+            return [
+                'success' => false,
+                'message' => 'Étudiant introuvable pour cet utilisateur.'
+            ];
+        }
+
+        // Attendance calculation
+        $totalRecords = AttendanceRecord::where('student_id', $student->id)->count();
+        $presentRecords = AttendanceRecord::where('student_id', $student->id)->where('status', 'present')->count();
+        $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : 100.0;
+
+        // Note: GPA, exams and assignments are simplified pending full module implementations
+        $grades = DB::table('grades')->where('student_id', $student->id)->avg('value');
+        
+        return [
+            'success' => true,
+            'data' => [
+                'gpa'                 => $grades ? round($grades, 2) : 0,
+                'attendance'          => $attendanceRate,
+                'upcoming_exams'      => DB::table('exams')->where('date', '>=', now())->count(),
+                'pending_assignments' => 0 // A implémenter si un module "LMS" complet gère les devoirs
+            ]
+        ];
+    }
+
+    /**
+     * Get statistics specifically tailored for the Professor Dashboard
+     */
+    public function getProfessorStats(int $userId): array
+    {
+        $professor = Professor::where('user_id', $userId)->first();
+        
+        if (!$professor) {
+            return [
+                'success' => false,
+                'message' => 'Professeur introuvable pour cet utilisateur.'
+            ];
+        }
+
+        $modulesCount = DB::table('module_professor')
+            ->where('professor_id', $professor->id)
+            ->count();
+
+        // Calculate total students across all assigned modules
+        $studentCount = DB::table('module_professor')
+            ->where('professor_id', $professor->id)
+            ->join('module_group', 'module_professor.module_id', '=', 'module_group.module_id')
+            ->join('student_registrations', 'module_group.group_id', '=', 'student_registrations.group_id')
+            ->distinct('student_registrations.student_id')
+            ->count();
+
+        return [
+            'success' => true,
+            'data' => [
+                'total_students' => $studentCount,
+                'total_modules'  => $modulesCount,
+                'pending_grades' => 0, // Placeholder
+                'next_class'     => null // Placeholder for timetable implementation
+            ]
+        ];
+    }
 }

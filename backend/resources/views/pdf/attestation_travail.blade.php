@@ -16,7 +16,7 @@
 
 @section('content')
 <p style="margin-bottom: 20px; text-align: justify; line-height: 1.8;">
-    Le Secrétariat Général de l'<strong>Université Privée de Fès (UPF)</strong> certifie par la présente que la personne dont l'identité est précisée ci-dessous est bien employée en qualité de <strong>membre du corps enseignant</strong> au sein de notre établissement.
+    Le Secrétariat Général de l'<strong>École Nationale de Commerce et de Gestion (ENCG) de Fès</strong> certifie par la présente que la personne dont l'identité est précisée ci-dessous est bien employée en qualité de <strong>membre du corps enseignant</strong> au sein de notre établissement.
 </p>
 
 <table class="info-table" style="margin-top: 30px;">
@@ -34,7 +34,7 @@
     </tr>
     <tr>
         <th>ÉTABLISSEMENT</th>
-        <td>Université Privée de Fès (UPF)</td>
+        <td>École Nationale de Commerce et de Gestion (ENCG)</td>
     </tr>
     <tr>
         <th>ANNÉE UNIVERSITAIRE</th>

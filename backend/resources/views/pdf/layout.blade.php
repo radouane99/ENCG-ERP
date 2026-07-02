@@ -186,19 +186,19 @@
                     <tr>
                         <td class="header-left">
                             ROYAUME DU MAROC<br>
-                            UNIVERSITÉ PRIVÉE DE FÈS<br>
-                            École Supérieure d'Ingénierie<br>
-                            et de Technologie de Fès
+                            UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH<br>
+                            École Nationale de Commerce<br>
+                            et de Gestion de Fès
                         </td>
                         <td class="header-center">
-                            <div class="logo-box">UPF</div>
-                            <div class="logo-text">UNIVERSITÉ PRIVÉE DE FÈS</div>
+                            <div class="logo-box">ENCG FÈS</div>
+                            <div class="logo-text">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
                         </td>
                         <td class="header-right">
                             المملكة المغربية<br>
-                            الجامعة الخاصة لفاس<br>
-                            المدرسة العليا للهندسة<br>
-                            والتكنولوجيا بفاس
+                            جامعة سيدي محمد بن عبد الله<br>
+                            المدرسة الوطنية للتجارة<br>
+                            والتسيير بفاس
                         </td>
                     </tr>
                 </table>
@@ -225,7 +225,7 @@
                         </td>
                         <td>
                             <div class="stamp">
-                                ★ UPF ★<br>
+                                ★ ENCG FÈS ★<br>
                                 ADMINISTRATION
                             </div>
                         </td>
@@ -234,6 +234,21 @@
                         </td>
                     </tr>
                 </table>
+                <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 9px; color: #64748b; clear: both; overflow: hidden;">
+                    <div style="float: left; width: 60px; height: 60px; margin-right: 15px;">
+                        @php
+                            $verifyUrl = isset($verifyUrl) ? $verifyUrl : url('/verify/document/' . \Illuminate\Support\Str::random(10));
+                            $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+                        @endphp
+                        <img src="{{ $qrUrl }}" alt="QR Code" style="width: 100%; height: 100%;">
+                    </div>
+                    <div style="padding-top: 5px;">
+                        <strong style="color:#0f2863; font-size: 10px;">Document numérique officiel</strong><br>
+                        Généré par le portail universitaire de l'ENCG.<br>
+                        Scannez le code QR ci-dessus pour vérifier l'authenticité de ce<br>
+                        document en ligne.
+                    </div>
+                </div>
             </div>
 
         </div>

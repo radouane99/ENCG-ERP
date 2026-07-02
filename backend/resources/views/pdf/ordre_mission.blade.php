@@ -8,7 +8,7 @@
 
 @section('content')
 <p style="margin-bottom: 20px;">
-    Le Secrétariat Général de l'<strong>Université Privée de Fès (UPF)</strong> ordonne par la présente à l'enseignant(e) désigné(e) ci-dessous de se rendre dans le lieu indiqué aux dates spécifiées, afin d'accomplir la mission académique ou administrative décrite :
+    Le Secrétariat Général de l'<strong>École Nationale de Commerce et de Gestion (ENCG) de Fès</strong> ordonne par la présente à l'enseignant(e) désigné(e) ci-dessous de se rendre dans le lieu indiqué aux dates spécifiées, afin d'accomplir la mission académique ou administrative décrite :
 </p>
 
 <table class="info-table">
@@ -22,7 +22,7 @@
     </tr>
     <tr>
         <th>ÉTABLISSEMENT</th>
-        <td>Université Privée de Fès (UPF)</td>
+        <td>École Nationale de Commerce et de Gestion (ENCG)</td>
     </tr>
     <tr>
         <th>DESTINATION</th>
