@@ -251,11 +251,8 @@
                     <div style="float: left; width: 60px; height: 60px; margin-right: 15px;">
                         @php
                             $verifyUrl = isset($verifyUrl) ? $verifyUrl : url('/verify/document/' . \Illuminate\Support\Str::random(10));
-                            // Use SimpleSoftwareIO QR Code with base64 encoded SVG string as fallback but standard format
-                            $qrCodeSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->margin(0)->generate($verifyUrl);
-                            $base64Qr = base64_encode($qrCodeSvg);
                         @endphp
-                        <img src="data:image/svg+xml;base64,{{ $base64Qr }}" alt="QR Code" style="width: 100%; height: 100%;">
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(60)->margin(0)->generate($verifyUrl) !!}
                     </div>
                     <div style="padding-top: 5px;">
                         <strong style="color:#0f2863; font-size: 10px;">Document numérique officiel</strong><br>
