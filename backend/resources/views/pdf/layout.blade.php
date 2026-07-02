@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Document Officiel')</title>
     <style>
+        @page {
+            margin: 40px;
+        }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             margin: 0;
@@ -11,16 +14,22 @@
             color: #1a202c;
         }
         .outer-border {
+            position: fixed;
+            top: -20px; left: -20px; bottom: -20px; right: -20px;
             border: 3px solid #0f2863;
-            padding: 4px;
-            margin: 20px;
-            height: 94%;
+            z-index: -2;
         }
         .inner-border {
+            position: fixed;
+            top: -12px; left: -12px; bottom: -12px; right: -12px;
             border: 1px solid #0f2863;
-            padding: 30px;
-            height: 98%;
+            z-index: -1;
+        }
+        .content-container {
             position: relative;
+            z-index: 1;
+            padding: 10px;
+            padding-bottom: 150px; /* Space for footer */
         }
         .header {
             width: 100%;
@@ -130,10 +139,11 @@
             color: #1e293b;
         }
         .footer {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            right: 30px;
+            position: fixed;
+            bottom: 0px;
+            left: 10px;
+            right: 10px;
+            height: 120px;
         }
         .signatures {
             width: 100%;
@@ -178,10 +188,13 @@
     @yield('styles')
 </head>
 <body>
-    <div class="outer-border">
-        <div class="inner-border">
-            
-            <div class="header">
+    <!-- Background Borders -->
+    <div class="outer-border"></div>
+    <div class="inner-border"></div>
+
+    <div class="content-container">
+        
+        <div class="header">
                 <table class="header-table">
                     <tr>
                         <td class="header-left">
@@ -238,9 +251,11 @@
                     <div style="float: left; width: 60px; height: 60px; margin-right: 15px;">
                         @php
                             $verifyUrl = isset($verifyUrl) ? $verifyUrl : url('/verify/document/' . \Illuminate\Support\Str::random(10));
-                            $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+                            // Use SimpleSoftwareIO QR Code with base64 encoded SVG string as fallback but standard format
+                            $qrCodeSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->margin(0)->generate($verifyUrl);
+                            $base64Qr = base64_encode($qrCodeSvg);
                         @endphp
-                        <img src="{{ $qrUrl }}" alt="QR Code" style="width: 100%; height: 100%;">
+                        <img src="data:image/svg+xml;base64,{{ $base64Qr }}" alt="QR Code" style="width: 100%; height: 100%;">
                     </div>
                     <div style="padding-top: 5px;">
                         <strong style="color:#0f2863; font-size: 10px;">Document numérique officiel</strong><br>
@@ -251,7 +266,6 @@
                 </div>
             </div>
 
-        </div>
     </div>
 </body>
 </html>
