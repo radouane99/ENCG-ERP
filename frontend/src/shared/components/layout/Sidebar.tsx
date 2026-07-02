@@ -12,7 +12,7 @@ import {
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
   BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles, Mail,
-  X
+  X, Layers
 } from 'lucide-react'
 
 interface NavItem {
@@ -50,7 +50,8 @@ const navigation: (NavItem | NavGroup)[] = [
     groupAr: 'الشؤون الأكاديمية',
     items: [
       { label: 'Année & Affectations', labelAr: 'السنوات والتعيينات', href: '/admin/academic', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Filières & Modules', labelAr: 'الشعب والوحدات', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Filières', labelAr: 'الشعب', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Modules', labelAr: 'الوحدات', href: '/academic/modules', icon: Layers, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Groupes & Sections', labelAr: 'المجموعات', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Inscriptions', labelAr: 'التسجيل', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Étudiants', labelAr: 'الطلاب', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },

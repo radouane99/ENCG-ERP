@@ -1,4 +1,4 @@
-ï»¿import React from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Users, BookOpen, Clock, FileEdit, CheckCircle 
@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 const attendanceData = [
   { module: 'Marketing', presence: 85 },
-  { module: 'ComptabilitÃ©', presence: 92 },
+  { module: 'Comptabilité', presence: 92 },
   { module: 'Finance', presence: 78 },
 ];
 
@@ -24,7 +24,7 @@ const ProfessorDashboard: React.FC = () => {
       total_students: 120,
       pending_grades: 45,
       next_class: {
-        module: 'Marketing StratÃ©gique',
+        module: 'Marketing Stratégique',
         time: '14:00 - 16:00',
         room: 'Salle 12'
       }
@@ -35,40 +35,40 @@ const ProfessorDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Espace Professeur Ã°Å¸â€˜â€¹</h1>
-          <p className="text-white/40 text-sm mt-0.5">Bienvenue, Prof. {user?.name}</p>
+          <h1 className="text-2xl font-bold text-foreground">Espace Professeur ðŸ‘‹</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Bienvenue, Prof. {user?.name}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 relative overflow-hidden">
-          <p className="text-white/50 text-xs font-medium uppercase">Modules AssignÃ©s</p>
-          <p className="text-3xl font-bold text-white mt-1">{stats?.modules_taught}</p>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Modules Assignés</p>
+          <p className="text-3xl font-bold text-foreground mt-1">{stats?.modules_taught}</p>
           <BookOpen className="absolute right-[-10px] bottom-[-10px] text-blue-500/10" size={80} />
         </div>
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 relative overflow-hidden">
-          <p className="text-white/50 text-xs font-medium uppercase">Ã‰tudiants</p>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Étudiants</p>
           <p className="text-3xl font-bold text-indigo-400 mt-1">{stats?.total_students}</p>
           <Users className="absolute right-[-10px] bottom-[-10px] text-indigo-500/10" size={80} />
         </div>
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 relative overflow-hidden">
-          <p className="text-white/50 text-xs font-medium uppercase">Notes en attente</p>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Notes en attente</p>
           <p className="text-3xl font-bold text-amber-400 mt-1">{stats?.pending_grades}</p>
           <FileEdit className="absolute right-[-10px] bottom-[-10px] text-amber-500/10" size={80} />
         </div>
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 relative overflow-hidden">
-          <p className="text-white/50 text-xs font-medium uppercase">SÃ©ances ValidÃ©es</p>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Séances Validées</p>
           <p className="text-3xl font-bold text-emerald-400 mt-1">12</p>
           <CheckCircle className="absolute right-[-10px] bottom-[-10px] text-emerald-500/10" size={80} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-          <h3 className="text-white font-semibold mb-4">AssiduitÃ© par Module</h3>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5">
+          <h3 className="text-foreground font-semibold mb-4">Assiduité par Module</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={attendanceData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }} axisLine={false} />
               <YAxis dataKey="module" type="category" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }} axisLine={false} width={100} />
               <Tooltip contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }} />
@@ -77,16 +77,16 @@ const ProfessorDashboard: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-          <h3 className="text-white font-semibold mb-4">Prochain Cours</h3>
+        <div className="rounded-2xl bg-muted/50 border border-border p-5">
+          <h3 className="text-foreground font-semibold mb-4">Prochain Cours</h3>
           {stats?.next_class && (
-            <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+            <div className="bg-muted/50 rounded-xl p-4 border border-white/5">
               <div className="flex items-center gap-3 mb-2 text-indigo-400">
                 <Clock size={18} />
                 <span className="font-medium">{stats.next_class.time}</span>
               </div>
-              <p className="text-lg font-bold text-white">{stats.next_class.module}</p>
-              <p className="text-white/50 text-sm mt-1">Salle: {stats.next_class.room}</p>
+              <p className="text-lg font-bold text-foreground">{stats.next_class.module}</p>
+              <p className="text-muted-foreground text-sm mt-1">Salle: {stats.next_class.room}</p>
             </div>
           )}
         </div>

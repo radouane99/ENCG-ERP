@@ -1,4 +1,4 @@
-﻿import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import LoadingScreen from '@/shared/components/ui/LoadingScreen';
 

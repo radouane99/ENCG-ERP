@@ -15,7 +15,8 @@ class DocumentRequestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->can('documents.view') || $request->user()->hasRole('admin'), 403);
+        $hasRole = $request->user()->roles->pluck('name')->intersect(['super-admin', 'institution-admin', 'admin', 'super_admin'])->isNotEmpty();
+        abort_unless($request->user()->can('documents.view') || $hasRole, 403);
 
         $query = DocumentRequest::with(['user', 'template', 'processor']);
 
@@ -65,7 +66,8 @@ class DocumentRequestController extends Controller
      */
     public function updateStatus(Request $request, DocumentRequest $documentRequest): JsonResponse
     {
-        abort_unless($request->user()->hasRole('admin'), 403);
+        $hasRole = $request->user()->roles->pluck('name')->intersect(['super-admin', 'institution-admin', 'admin', 'super_admin'])->isNotEmpty();
+        abort_unless($hasRole, 403);
 
         $validated = $request->validate([
             'status'           => 'required|in:approved,rejected',

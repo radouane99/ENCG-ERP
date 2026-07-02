@@ -102,7 +102,7 @@ const BarChartSVG: React.FC<{ data: { day: string; rate: number }[] }> = ({ data
           return (
             <g key={i}>
               <rect x={x} y={y} width={barW} height={barH} rx="3" fill={color} opacity="0.85" />
-              <text x={x + barW / 2} y={68} textAnchor="middle" fontSize="5" fill="rgba(255,255,255,0.4)">{d.day}</text>
+              <text x={x + barW / 2} y={68} textAnchor="middle" fontSize="5" fill="currentColor" className="text-muted-foreground">{d.day}</text>
             </g>
           );
         })}
@@ -120,7 +120,7 @@ const DonutChart: React.FC<{ data: typeof filiereDistribution }> = ({ data }) =>
 
   return (
     <svg viewBox="0 0 100 100" className="w-full" style={{ height: 140 }}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={13} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" className="text-border" strokeWidth={13} />
       {data.map((d, i) => {
         const dash = (d.value / total) * circumference;
         const gap = circumference - dash;
@@ -141,7 +141,7 @@ const DonutChart: React.FC<{ data: typeof filiereDistribution }> = ({ data }) =>
         return el;
       })}
       <text x={cx} y={cy - 3} textAnchor="middle" fontSize="11" fontWeight="bold" fill="white">{total}%</text>
-      <text x={cx} y={cy + 9} textAnchor="middle" fontSize="5" fill="rgba(255,255,255,0.4)">total</text>
+      <text x={cx} y={cy + 9} textAnchor="middle" fontSize="5" fill="currentColor" className="text-muted-foreground">total</text>
     </svg>
   );
 };
@@ -162,9 +162,9 @@ const StatCard: React.FC<{
 
     <div className="flex items-start justify-between relative z-10">
       <div className="flex-1 min-w-0">
-        <p className="text-white/50 text-xs font-medium uppercase tracking-widest mb-2">{label}</p>
-        <p className="text-3xl font-extrabold text-white tracking-tight leading-none">{value}</p>
-        {sub && <p className="text-white/40 text-xs mt-1">{sub}</p>}
+        <p className="text-muted-foreground text-xs font-medium uppercase tracking-widest mb-2">{label}</p>
+        <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none">{value}</p>
+        {sub && <p className="text-muted-foreground text-xs mt-1">{sub}</p>}
         {trend !== undefined && (
           <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trend >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {trend >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
@@ -201,17 +201,17 @@ const AdminDashboard: React.FC = () => {
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
             {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{user?.name?.split(' ')[0] ?? 'Admin'}</span> 👋
           </h1>
-          <p className="text-white/40 text-sm mt-0.5 capitalize">{now} · Année académique 2024-2025</p>
+          <p className="text-muted-foreground text-sm mt-0.5 capitalize">{now} · Année académique 2024-2025</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-white/50 text-xs bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs bg-muted/50 border border-border px-3 py-2 rounded-xl">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Système opérationnel
           </div>
-          <div className="flex items-center gap-2 text-white/50 text-xs bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs bg-muted/50 border border-border px-3 py-2 rounded-xl">
             <Zap size={12} className="text-amber-400" />
             <span>12 alertes</span>
           </div>
@@ -262,11 +262,11 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Area Chart — Enrollment */}
-        <div className="lg:col-span-2 rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:bg-white/[0.06] transition-colors">
+        <div className="lg:col-span-2 rounded-2xl bg-white/[0.04] border border-border p-5 hover:bg-white/[0.06] transition-colors">
           <div className="flex items-center justify-between mb-1">
             <div>
-              <h3 className="text-white font-semibold">Évolution des inscriptions</h3>
-              <p className="text-white/40 text-xs">Semestre en cours · 2024-2025</p>
+              <h3 className="text-foreground font-semibold">Évolution des inscriptions</h3>
+              <p className="text-muted-foreground text-xs">Semestre en cours · 2024-2025</p>
             </div>
             <span className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full font-medium">
               +2.8% ↑
@@ -276,7 +276,7 @@ const AdminDashboard: React.FC = () => {
           {/* X-axis labels */}
           <div className="flex justify-between px-1 mb-1 mt-3">
             {enrollmentData.map(d => (
-              <span key={d.month} className="text-white/30 text-[10px]">{d.month}</span>
+              <span key={d.month} className="text-foreground/30 text-[10px]">{d.month}</span>
             ))}
           </div>
           <AreaChartSVG data={enrollmentData} />
@@ -288,8 +288,8 @@ const AdminDashboard: React.FC = () => {
               { label: 'Min', value: '408', color: 'text-red-400' },
               { label: 'Moy', value: '418', color: 'text-blue-400' },
             ].map(p => (
-              <div key={p.label} className="flex-1 text-center bg-white/5 rounded-xl py-2">
-                <p className="text-white/40 text-[10px] uppercase tracking-wider">{p.label}</p>
+              <div key={p.label} className="flex-1 text-center bg-muted/50 rounded-xl py-2">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wider">{p.label}</p>
                 <p className={`text-sm font-bold ${p.color}`}>{p.value}</p>
               </div>
             ))}
@@ -297,13 +297,13 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Donut — Filière Distribution */}
-        <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:bg-white/[0.06] transition-colors">
+        <div className="rounded-2xl bg-white/[0.04] border border-border p-5 hover:bg-white/[0.06] transition-colors">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-white font-semibold">Répartition filières</h3>
-              <p className="text-white/40 text-xs">Par effectif inscrits</p>
+              <h3 className="text-foreground font-semibold">Répartition filières</h3>
+              <p className="text-muted-foreground text-xs">Par effectif inscrits</p>
             </div>
-            <Layers size={15} className="text-white/20" />
+            <Layers size={15} className="text-foreground/20" />
           </div>
           <DonutChart data={filiereDistribution} />
           <div className="space-y-2 mt-1">
@@ -311,13 +311,13 @@ const AdminDashboard: React.FC = () => {
               <div key={f.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-sm" style={{ background: f.color }} />
-                  <span className="text-white/55 text-xs">{f.name}</span>
+                  <span className="text-foreground/55 text-xs">{f.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${f.value}%`, background: f.color }} />
                   </div>
-                  <span className="text-white text-xs font-semibold w-8 text-right">{f.value}%</span>
+                  <span className="text-foreground text-xs font-semibold w-8 text-right">{f.value}%</span>
                 </div>
               </div>
             ))}
@@ -329,17 +329,17 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Bar Chart — Attendance */}
-        <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:bg-white/[0.06] transition-colors">
+        <div className="rounded-2xl bg-white/[0.04] border border-border p-5 hover:bg-white/[0.06] transition-colors">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-white font-semibold">Présence par jour</h3>
-              <p className="text-white/40 text-xs">Semaine en cours</p>
+              <h3 className="text-foreground font-semibold">Présence par jour</h3>
+              <p className="text-muted-foreground text-xs">Semaine en cours</p>
             </div>
             <div className="flex gap-1.5">
               {[{ c: 'bg-emerald-400', l: '≥88%' }, { c: 'bg-indigo-400', l: '≥80%' }, { c: 'bg-amber-400', l: '<80%' }].map(b => (
                 <div key={b.l} className="flex items-center gap-1">
                   <div className={`w-1.5 h-1.5 rounded-full ${b.c}`} />
-                  <span className="text-white/30 text-[9px]">{b.l}</span>
+                  <span className="text-foreground/30 text-[9px]">{b.l}</span>
                 </div>
               ))}
             </div>
@@ -348,20 +348,20 @@ const AdminDashboard: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2.5 text-center">
               <p className="text-emerald-400 text-lg font-bold">87.3%</p>
-              <p className="text-white/40 text-[10px]">Taux moyen</p>
+              <p className="text-muted-foreground text-[10px]">Taux moyen</p>
             </div>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-center">
               <p className="text-amber-400 text-lg font-bold">28</p>
-              <p className="text-white/40 text-[10px]">Absences non justifiées</p>
+              <p className="text-muted-foreground text-[10px]">Absences non justifiées</p>
             </div>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:bg-white/[0.06] transition-colors">
+        <div className="rounded-2xl bg-white/[0.04] border border-border p-5 hover:bg-white/[0.06] transition-colors">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-semibold">Indicateurs clés</h3>
-            <Award size={15} className="text-white/20" />
+            <h3 className="text-foreground font-semibold">Indicateurs clés</h3>
+            <Award size={15} className="text-foreground/20" />
           </div>
           <div className="space-y-2.5">
             {[
@@ -371,10 +371,10 @@ const AdminDashboard: React.FC = () => {
               { label: 'Moyenne générale /20', value: '12.4', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/15', link: '/exams/notes' },
               { label: 'Modules au total', value: '320', icon: Layers, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/15', link: '/academic/modules' },
             ].map((item) => (
-              <Link key={item.label} to={item.link} className={`flex items-center justify-between p-2.5 rounded-xl border hover:bg-white/5 transition-colors ${item.bg}`}>
+              <Link key={item.label} to={item.link} className={`flex items-center justify-between p-2.5 rounded-xl border hover:bg-muted/50 transition-colors ${item.bg}`}>
                 <div className={`flex items-center gap-2.5 ${item.color}`}>
                   <item.icon size={13} />
-                  <span className="text-xs text-white/60">{item.label}</span>
+                  <span className="text-xs text-foreground/60">{item.label}</span>
                 </div>
                 <span className={`font-bold text-sm ${item.color}`}>{item.value}</span>
               </Link>
@@ -383,10 +383,10 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Activity Feed */}
-        <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:bg-white/[0.06] transition-colors flex flex-col">
+        <div className="rounded-2xl bg-white/[0.04] border border-border p-5 hover:bg-white/[0.06] transition-colors flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-semibold">Activité récente</h3>
-            <button className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
+            <h3 className="text-foreground font-semibold">Activité récente</h3>
+            <button className="flex items-center gap-1 text-xs text-foreground/30 hover:text-foreground/60 transition-colors">
               Voir tout <ChevronRight size={12} />
             </button>
           </div>
@@ -396,20 +396,20 @@ const AdminDashboard: React.FC = () => {
                 <div className="relative mt-1">
                   <div className={`w-2 h-2 rounded-full ${activityColors[a.type]} ring-2 ring-offset-1 ring-offset-transparent`} />
                   {i < recentActivities.length - 1 && (
-                    <div className="absolute top-3 left-0.5 w-px h-7 bg-white/10" />
+                    <div className="absolute top-3 left-0.5 w-px h-7 bg-muted" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
-                  <p className="text-white/75 text-xs leading-snug group-hover:text-white/90 transition-colors">{a.message}</p>
-                  <p className="text-white/25 text-[10px] mt-0.5">{a.time}</p>
+                  <p className="text-foreground/75 text-xs leading-snug group-hover:text-foreground/90 transition-colors">{a.message}</p>
+                  <p className="text-foreground/25 text-[10px] mt-0.5">{a.time}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Quick Actions */}
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <p className="text-white/30 text-[10px] uppercase tracking-widest mb-2">Actions rapides</p>
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-foreground/30 text-[10px] uppercase tracking-widest mb-2">Actions rapides</p>
             <div className="grid grid-cols-2 gap-2">
               {quickActions.map((a) => (
                 <Link key={a.label} to={a.link} className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br border text-xs font-medium transition-all hover:scale-105 hover:shadow-lg ${a.color}`}>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   MapPin, 
@@ -39,14 +39,14 @@ export default function StudentDashboard() {
     if (note >= 14) return 'BIEN';
     if (note >= 12) return 'ASSEZ BIEN';
     if (note >= 10) return 'PASSABLE';
-    return 'AJOURNÉ';
+    return 'AJOURN�';
   };
 
   const radarData = [
-    { subject: 'Introduction - Génie Informatique', A: 16.10, fullMark: 20 },
-    { subject: 'Avancé - Génie Informatique', A: 7.00, fullMark: 20 },
-    { subject: 'Développement mobile', A: 14.66, fullMark: 20 },
-    { subject: 'Développement mobile LARAVEL', A: 8.62, fullMark: 20 },
+    { subject: 'Introduction - G�nie Informatique', A: 16.10, fullMark: 20 },
+    { subject: 'Avanc� - G�nie Informatique', A: 7.00, fullMark: 20 },
+    { subject: 'D�veloppement mobile', A: 14.66, fullMark: 20 },
+    { subject: 'D�veloppement mobile LARAVEL', A: 8.62, fullMark: 20 },
     { subject: 'Intelligent Artificiel', A: 11.74, fullMark: 20 },
     { subject: 'SQL SERVER BASE DE DONNEE', A: 13.14, fullMark: 20 },
     { subject: 'GAMING', A: 15.00, fullMark: 20 },
@@ -62,12 +62,12 @@ export default function StudentDashboard() {
   ];
 
   const grades = [
-    { name: 'Introduction - Génie Informatique', cc1: 19.00, cc2: 18.00, exam: 14.50, total: 16.10, status: 'VALIDÉ', color: 'emerald' },
-    { name: 'Avancé - Génie Informatique', cc1: 5.50, cc2: 8.50, exam: 7.00, total: 7.00, status: 'RATTRAPAGE', color: 'rose' },
-    { name: 'Développement mobile', cc1: 11.80, cc2: 11.70, exam: 16.60, total: 14.66, status: 'VALIDÉ', color: 'emerald' },
-    { name: 'Développement mobile LARAVEL', cc1: 12.90, cc2: 12.20, exam: 6.00, total: 8.62, status: 'RATTRAPAGE', color: 'rose' },
-    { name: 'Intelligent Artificiel', cc1: 17.20, cc2: 16.30, exam: 8.40, total: 11.74, status: 'VALIDÉ', color: 'emerald' },
-    { name: 'SQL SERVER BASE DE DONNEE', cc1: 14.20, cc2: 17.60, exam: 11.30, total: 13.14, status: 'VALIDÉ', color: 'emerald' },
+    { name: 'Introduction - G�nie Informatique', cc1: 19.00, cc2: 18.00, exam: 14.50, total: 16.10, status: 'VALID�', color: 'emerald' },
+    { name: 'Avanc� - G�nie Informatique', cc1: 5.50, cc2: 8.50, exam: 7.00, total: 7.00, status: 'RATTRAPAGE', color: 'rose' },
+    { name: 'D�veloppement mobile', cc1: 11.80, cc2: 11.70, exam: 16.60, total: 14.66, status: 'VALID�', color: 'emerald' },
+    { name: 'D�veloppement mobile LARAVEL', cc1: 12.90, cc2: 12.20, exam: 6.00, total: 8.62, status: 'RATTRAPAGE', color: 'rose' },
+    { name: 'Intelligent Artificiel', cc1: 17.20, cc2: 16.30, exam: 8.40, total: 11.74, status: 'VALID�', color: 'emerald' },
+    { name: 'SQL SERVER BASE DE DONNEE', cc1: 14.20, cc2: 17.60, exam: 11.30, total: 13.14, status: 'VALID�', color: 'emerald' },
   ];
 
   return (
@@ -76,24 +76,24 @@ export default function StudentDashboard() {
       {/* Top Navigation / Quick Links */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-2xl font-black text-[#001A4B] italic">Mon Espace Académique</h1>
-          <p className="text-sm text-white/50 capitalize">{currentDate}</p>
+          <h1 className="text-2xl font-black text-[#001A4B] italic">Mon Espace Acad�mique</h1>
+          <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-white/10 text-sm font-bold text-white/80 hover:bg-white/[0.02] transition-colors shadow-sm">
-            <Smartphone className="w-4 h-4 text-indigo-500" /> Carte Numérique
+          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
+            <Smartphone className="w-4 h-4 text-indigo-500" /> Carte Num�rique
           </button>
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-white/10 text-sm font-bold text-white/80 hover:bg-white/[0.02] transition-colors shadow-sm">
-            <Library className="w-4 h-4 text-rose-500" /> Clubs & Événements
+          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
+            <Library className="w-4 h-4 text-rose-500" /> Clubs & �v�nements
           </button>
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-white/10 text-sm font-bold text-white/80 hover:bg-white/[0.02] transition-colors shadow-sm">
+          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
             <MapPin className="w-4 h-4 text-emerald-500" /> Smart Campus
           </button>
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-white/10 text-sm font-bold text-white/80 hover:bg-white/[0.02] transition-colors shadow-sm">
+          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
             <Briefcase className="w-4 h-4 text-amber-600" /> Career & Alumni
           </button>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md shadow-purple-500/20 hover:scale-105 transition-transform">
+          <button className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 rounded-xl text-sm font-bold text-foreground shadow-md shadow-purple-500/20 hover:scale-105 transition-transform">
             <Zap className="w-4 h-4" /> PLANIFICATEUR IA
           </button>
         </div>
@@ -102,36 +102,36 @@ export default function StudentDashboard() {
       {/* Alert */}
       <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 flex items-center gap-3 text-rose-700 font-bold text-sm shadow-sm">
         <AlertTriangle className="w-5 h-5 text-rose-500" />
-        4 ABSENCE(S) NON JUSTIFIÉE(S)
+        4 ABSENCE(S) NON JUSTIFI�E(S)
       </div>
 
       {/* Hero Banner */}
-      <div className="relative bg-[#0b1021] rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
+      <div className="relative bg-[#0b1021] rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 border border-border">
         {/* Abstract Background pattern */}
         <div className="absolute inset-0 opacity-20 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
         
         <div className="relative z-10 flex items-center gap-6">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#e6007e] to-[#8b5cf6] flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-pink-500/30 border-2 border-white/20">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#e6007e] to-[#8b5cf6] flex items-center justify-center text-4xl font-black text-foreground shadow-lg shadow-pink-500/30 border-2 border-border">
             Ae
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-white/10">
-                ðŸŽ“ PORTAIL ÉTUDIANT
+              <span className="bg-muted text-foreground/90 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-border">
+                🎓 PORTAIL �TUDIANT
               </span>
             </div>
-            <h2 className="text-4xl font-black text-white mb-4">Aniss el alaoui</h2>
+            <h2 className="text-4xl font-black text-foreground mb-4">Aniss el alaoui</h2>
             <div className="flex flex-wrap gap-2">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-white/80 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
-                ðŸ“š Génie Informatique - Groupe 1
+              <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
+                📚 G�nie Informatique - Groupe 1
               </span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-white/80 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
-                ðŸ›ï¸ Génie Informatique
+              <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
+                🏛️ G�nie Informatique
               </span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-white/80 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
-                ðŸ—“ï¸ A.U. 2025-2026
+              <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
+                🗓️ A.U. 2025-2026
               </span>
             </div>
           </div>
@@ -141,12 +141,12 @@ export default function StudentDashboard() {
         <div className="relative z-10">
           <div className="w-40 h-40 relative flex items-center justify-center">
             <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-              <circle cx="80" cy="80" r="70" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+              <circle cx="80" cy="80" r="70" fill="transparent" stroke="currentColor" className="text-border" strokeWidth="12" />
               <circle cx="80" cy="80" r="70" fill="transparent" stroke="#f59e0b" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * 11.61) / 20} className="transition-all duration-1000 ease-out" />
             </svg>
             <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(245,158,11,0.2)] pointer-events-none"></div>
             <div className="text-center">
-              <div className="text-3xl font-black text-white">11.61</div>
+              <div className="text-3xl font-black text-foreground">11.61</div>
               <div className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1">GPA / 20</div>
               <div className="text-xs font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> Admis
@@ -162,16 +162,16 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-pink-50 to-white rounded-2xl p-6 border border-pink-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-pink-100 text-2xl shrink-0">
-              ðŸ“
+              📝
             </div>
             <div>
-              <div className="text-[10px] font-bold text-pink-600 uppercase tracking-widest mb-1">CAMPAGNE ACADÉMIQUE</div>
-              <h3 className="text-lg font-black text-white">Procédez Ã  votre réinscription en 1-Clic</h3>
-              <p className="text-sm text-white/50">Consultez vos crédits modules de dette et validez votre passage Ã  l'année d'études suivante.</p>
+              <div className="text-[10px] font-bold text-pink-600 uppercase tracking-widest mb-1">CAMPAGNE ACAD�MIQUE</div>
+              <h3 className="text-lg font-black text-foreground">Proc�dez à votre r�inscription en 1-Clic</h3>
+              <p className="text-sm text-muted-foreground">Consultez vos cr�dits modules de dette et validez votre passage à l'ann�e d'�tudes suivante.</p>
             </div>
           </div>
-          <button className="bg-[#e6007e] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-[#cc006f] transition-colors whitespace-nowrap">
-            SE RÉINSCRIRE â†’
+          <button className="bg-[#e6007e] text-foreground px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-[#cc006f] transition-colors whitespace-nowrap">
+            SE R�INSCRIRE →
           </button>
         </div>
 
@@ -185,14 +185,14 @@ export default function StudentDashboard() {
               <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1 flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> PROCHAIN COURS
               </div>
-              <h3 className="text-lg font-black text-white">Développement mobile</h3>
+              <h3 className="text-lg font-black text-foreground">D�veloppement mobile</h3>
               <div className="flex items-center gap-2 text-sm font-bold text-[#003a8c] mt-1">
-                10:30 â€” <MapPin className="w-4 h-4 text-gray-400" /> <span className="text-white/50">Amphi Al Khwarizmi</span>
+                10:30 — <MapPin className="w-4 h-4 text-gray-400" /> <span className="text-muted-foreground">Amphi Al Khwarizmi</span>
               </div>
             </div>
           </div>
-          <button className="bg-[#001A4B] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-[#000d26] transition-colors whitespace-nowrap">
-            VOIR LE PLANNING COMPLET â†’
+          <button className="bg-[#001A4B] text-foreground px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-[#000d26] transition-colors whitespace-nowrap">
+            VOIR LE PLANNING COMPLET →
           </button>
         </div>
       </div>
@@ -202,17 +202,17 @@ export default function StudentDashboard() {
         {/* Left Column (Main Content) */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Résultats Récents */}
+          {/* R�sultats R�cents */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-black text-[#001A4B] flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full border-2 border-[#003a8c] flex items-center justify-center">
                   <div className="w-2 h-2 rounded-full bg-[#003a8c]"></div>
                 </div>
-                Résultats Académiques Récents
+                R�sultats Acad�miques R�cents
               </h2>
               <button className="text-xs font-bold text-[#003a8c] hover:underline uppercase tracking-widest">
-                BULLETIN COMPLET â†’
+                BULLETIN COMPLET →
               </button>
             </div>
 
@@ -223,7 +223,7 @@ export default function StudentDashboard() {
                   grade.color === 'emerald' ? "border-emerald-100/50" : "border-rose-100/50"
                 )}>
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-white text-sm leading-snug w-2/3">{grade.name}</h3>
+                    <h3 className="font-bold text-foreground text-sm leading-snug w-2/3">{grade.name}</h3>
                     <div className="text-right">
                       <div className={cn("text-2xl font-black", grade.color === 'emerald' ? "text-[#001A4B]" : "text-rose-600")}>
                         {grade.total.toFixed(2)}
@@ -260,10 +260,10 @@ export default function StudentDashboard() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* Profil de Compétences */}
+            {/* Profil de Comp�tences */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-black text-[#001A4B] italic">Profil de Compétences</h2>
+                <h2 className="text-sm font-black text-[#001A4B] italic">Profil de Comp�tences</h2>
                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">RADAR PAR MODULE</span>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-bold justify-center mb-2">
@@ -283,10 +283,10 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Évolution Académique */}
+            {/* �volution Acad�mique */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-sm font-black text-[#001A4B] italic">Évolution Académique</h2>
+                <h2 className="text-sm font-black text-[#001A4B] italic">�volution Acad�mique</h2>
                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">MOYENNE GLOBALE</span>
               </div>
               <div className="h-[220px] w-full">
@@ -308,25 +308,25 @@ export default function StudentDashboard() {
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-black text-[#001A4B] italic flex items-center gap-2">
-                Simulateur de Notes & Mention ðŸŽ¯
+                Simulateur de Notes & Mention 🎯
               </h2>
               <span className="text-[10px] font-bold text-[#e6007e] bg-pink-50 px-3 py-1 rounded-full uppercase tracking-widest border border-pink-100">
                 INTERACTIF
               </span>
             </div>
-            <p className="text-sm text-white/50 mb-8">Estimez vos moyennes prévisionnelles pour vos modules en cours.</p>
+            <p className="text-sm text-muted-foreground mb-8">Estimez vos moyennes pr�visionnelles pour vos modules en cours.</p>
 
             <div className="bg-white/[0.02]/50 rounded-2xl p-6 border border-white/5 flex flex-col md:flex-row gap-8 mb-8">
               <div className="flex-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">MOYENNE ESTIMÉE DU MODULE</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">MOYENNE ESTIM�E DU MODULE</div>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-white">{simModuleAvg.toFixed(2)}</span>
+                  <span className="text-4xl font-black text-foreground">{simModuleAvg.toFixed(2)}</span>
                   <span className="text-lg font-bold text-gray-400 mb-1">/ 20</span>
                 </div>
               </div>
               <div className="w-px bg-gray-200 hidden md:block"></div>
               <div className="flex-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">NOUVELLE MOYENNE ACADÉMIQUE</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">NOUVELLE MOYENNE ACAD�MIQUE</div>
                 <div className="flex items-end gap-1 mb-2">
                   <span className="text-4xl font-black text-[#003a8c]">{simGlobalAvg.toFixed(2)}</span>
                   <span className="text-lg font-bold text-gray-400 mb-1">/ 20</span>
@@ -340,12 +340,12 @@ export default function StudentDashboard() {
             {/* Sliders */}
             <div className="space-y-6">
               {[
-                { label: 'Contrôle Continu 1 (20%)', val: simCC1, setter: setSimCC1 },
-                { label: 'Contrôle Continu 2 (20%)', val: simCC2, setter: setSimCC2 },
+                { label: 'Contr�le Continu 1 (20%)', val: simCC1, setter: setSimCC1 },
+                { label: 'Contr�le Continu 2 (20%)', val: simCC2, setter: setSimCC2 },
                 { label: 'Examen Final (60%)', val: simExam, setter: setSimExam },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-6">
-                  <div className="w-48 text-sm font-bold text-white/80">{item.label}</div>
+                  <div className="w-48 text-sm font-bold text-muted-foreground">{item.label}</div>
                   <div className="flex-1 relative flex items-center">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full h-1 bg-white/[0.05] rounded-full"></div>
@@ -363,44 +363,44 @@ export default function StudentDashboard() {
                     {/* Custom thumb visual */}
                     <div className="absolute w-4 h-4 rounded-full bg-[#003a8c] shadow-md pointer-events-none transform -translate-x-1/2" style={{ left: `${(item.val / 20) * 100}%` }}></div>
                   </div>
-                  <div className="w-12 text-right font-black text-white">{item.val}</div>
+                  <div className="w-12 text-right font-black text-foreground">{item.val}</div>
                 </div>
               ))}
             </div>
 
           </div>
 
-          {/* Secrétariat */}
+          {/* Secr�tariat */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
              <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-[#001A4B] italic">Secrétariat & Documents Officiels</h2>
-                  <p className="text-xs text-white/50">Accédez aux pièces signées électroniquement par la direction</p>
+                  <h2 className="text-lg font-black text-[#001A4B] italic">Secr�tariat & Documents Officiels</h2>
+                  <p className="text-xs text-muted-foreground">Acc�dez aux pi�ces sign�es �lectroniquement par la direction</p>
                 </div>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="border border-white/5 rounded-2xl p-6 bg-white/[0.02]/50 hover:bg-white transition-colors hover:shadow-md group">
                  <FileText className="w-8 h-8 text-[#003a8c] mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                 <h3 className="font-bold text-white mb-1">Reçu d'Inscription</h3>
-                 <p className="text-[10px] text-white/50 mb-4">Attestation de scolarité validée au titre de l'année en cours.</p>
+                 <h3 className="font-bold text-foreground mb-1">Re�u d'Inscription</h3>
+                 <p className="text-[10px] text-muted-foreground mb-4">Attestation de scolarit� valid�e au titre de l'ann�e en cours.</p>
                  <div className="flex gap-2">
-                   <button className="flex-1 bg-white border border-white/10 rounded-xl py-2 text-[10px] font-bold text-white/80 uppercase tracking-widest shadow-sm hover:bg-white/[0.02]">
-                     ðŸ‘ï¸ APERÇU
+                   <button className="flex-1 bg-white border border-border rounded-xl py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest shadow-sm hover:bg-white/[0.02]">
+                     👁️ APER�U
                    </button>
-                   <button className="w-10 flex items-center justify-center bg-[#003a8c] text-white rounded-xl shadow-sm hover:bg-[#002a66]">
+                   <button className="w-10 flex items-center justify-center bg-[#003a8c] text-foreground rounded-xl shadow-sm hover:bg-[#002a66]">
                      <Download className="w-4 h-4" />
                    </button>
                  </div>
                </div>
-               <div className="border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] hover:border-gray-300 transition-colors">
+               <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] hover:border-gray-300 transition-colors">
                  <Plus className="w-8 h-8 text-[#e6007e] mb-2" />
-                 <h3 className="font-bold text-white mb-1">Autre Document ?</h3>
-                 <p className="text-[10px] text-white/50 mb-4 px-4">Faites une demande auprès du guichet unique de l'administration.</p>
-                 <button className="bg-[#001A4B] text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                 <h3 className="font-bold text-foreground mb-1">Autre Document ?</h3>
+                 <p className="text-[10px] text-muted-foreground mb-4 px-4">Faites une demande aupr�s du guichet unique de l'administration.</p>
+                 <button className="bg-[#001A4B] text-foreground px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">
                    NOUVELLE DEMANDE
                  </button>
                </div>
@@ -423,8 +423,8 @@ export default function StudentDashboard() {
             <div className="relative pl-4 border-l-2 border-white/5">
               <div className="absolute w-3 h-3 bg-[#003a8c] rounded-full -left-[7px] top-2 border-2 border-white shadow-sm"></div>
               <div className="mb-1 text-xs font-bold text-[#003a8c]">10:30 - 12:15</div>
-              <h3 className="text-sm font-bold text-white mb-1">Introduction - Génie Informatique</h3>
-              <div className="flex items-center gap-1 text-[10px] font-medium text-white/50">
+              <h3 className="text-sm font-bold text-foreground mb-1">Introduction - G�nie Informatique</h3>
+              <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
                 <MapPin className="w-3 h-3 text-rose-500" /> Amphi Ibn Khaldoun
               </div>
             </div>
@@ -432,15 +432,15 @@ export default function StudentDashboard() {
 
           {/* Absences */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">ASSIDUITÉ & ABSENCES</h2>
+            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">ASSIDUIT� & ABSENCES</h2>
             <div className="grid grid-cols-3 gap-2 mb-6 text-center">
               <div className="bg-white/[0.02] rounded-xl p-3 border border-white/5">
-                <div className="text-2xl font-black text-white">4</div>
+                <div className="text-2xl font-black text-foreground">4</div>
                 <div className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">TOTAL</div>
               </div>
               <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
                 <div className="text-2xl font-black text-emerald-600">0</div>
-                <div className="text-[8px] font-bold text-emerald-600/60 uppercase tracking-widest mt-1">JUSTIFIÉES</div>
+                <div className="text-[8px] font-bold text-emerald-600/60 uppercase tracking-widest mt-1">JUSTIFI�ES</div>
               </div>
               <div className="bg-rose-50 rounded-xl p-3 border border-rose-100">
                 <div className="text-2xl font-black text-rose-600">4</div>
@@ -450,25 +450,25 @@ export default function StudentDashboard() {
             <div className="bg-rose-50 text-rose-700 text-xs font-bold p-3 rounded-xl border border-rose-100 flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 shrink-0" /> Action requise : Justifiez vos absences
             </div>
-            <button className="w-full bg-[#001A4B] text-white font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest hover:bg-[#000d26] transition-colors">
-              DÉPOSER UN JUSTIFICATIF â†’
+            <button className="w-full bg-[#001A4B] text-foreground font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest hover:bg-[#000d26] transition-colors">
+              D�POSER UN JUSTIFICATIF →
             </button>
           </div>
 
           {/* Demandes */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">DEMANDES RÉCEMMENT VALIDÉES</h2>
+            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">DEMANDES R�CEMMENT VALID�ES</h2>
             <div className="space-y-3">
               {[
-                { title: 'Relevé de Notes', date: '07/06/2026' },
-                { title: 'Attestation de Scolarité', date: '02/06/2026' },
-                { title: 'Relevé de Notes', date: '02/06/2026' },
+                { title: 'Relev� de Notes', date: '07/06/2026' },
+                { title: 'Attestation de Scolarit�', date: '02/06/2026' },
+                { title: 'Relev� de Notes', date: '02/06/2026' },
               ].map((doc, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl group hover:bg-emerald-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-emerald-600/50" />
                     <div>
-                      <div className="text-xs font-bold text-white">{doc.title}</div>
+                      <div className="text-xs font-bold text-foreground">{doc.title}</div>
                       <div className="text-[9px] font-bold text-gray-400 mt-0.5">{doc.date}</div>
                     </div>
                   </div>
@@ -476,7 +476,7 @@ export default function StudentDashboard() {
                     <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200">
                       <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                     </div>
-                    <button className="w-6 h-6 bg-blue-500 text-white rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                    <button className="w-6 h-6 bg-blue-500 text-foreground rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
                       <Download className="w-3 h-3" />
                     </button>
                   </div>

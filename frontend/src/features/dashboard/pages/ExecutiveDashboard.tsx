@@ -1,4 +1,4 @@
-ï»¿import React from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Building2, Users, GraduationCap, Percent, 
@@ -58,7 +58,7 @@ export default function ExecutiveDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Direction / Executive Dashboard</h1>
-          <p className="text-white/50 mt-1">Vue d'ensemble stratÃ©gique de l'institution.</p>
+          <p className="text-muted-foreground mt-1">Vue d'ensemble stratégique de l'institution.</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium shadow-lg hover:shadow-primary/20 transition-all">
           <Building2 className="w-4 h-4" /> Rapport Mensuel
@@ -66,67 +66,67 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-3xl p-6 text-white shadow-xl shadow-primary/20">
+        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-3xl p-6 text-foreground shadow-xl shadow-primary/20">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total Ã‰tudiants</p>
+              <p className="text-foreground/60 text-xs font-bold uppercase tracking-widest mb-1">Total Étudiants</p>
               <h3 className="text-4xl font-black">{stats.overview.total_students}</h3>
             </div>
-            <Users className="w-8 h-8 text-white/20" />
+            <Users className="w-8 h-8 text-foreground/20" />
           </div>
-          <div className="mt-4 flex items-center gap-1 text-sm bg-white/10 w-fit px-2 py-1 rounded-lg">
-            <TrendingUp className="w-4 h-4" /> +5.2% cette annÃ©e
+          <div className="mt-4 flex items-center gap-1 text-sm bg-muted w-fit px-2 py-1 rounded-lg">
+            <TrendingUp className="w-4 h-4" /> +5.2% cette année
           </div>
         </div>
 
-        <div className="bg-card border border-white/10 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Corps Professoral</p>
+              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Corps Professoral</p>
               <h3 className="text-3xl font-bold text-foreground">{stats.overview.total_professors}</h3>
             </div>
             <div className="p-3 bg-indigo-500/10 rounded-2xl">
               <GraduationCap className="w-6 h-6 text-indigo-500" />
             </div>
           </div>
-          <p className="mt-4 text-sm font-medium text-indigo-500">Ratio: 1 prof. pour 14 Ã©tu.</p>
+          <p className="mt-4 text-sm font-medium text-indigo-500">Ratio: 1 prof. pour 14 étu.</p>
         </div>
 
-        <div className="bg-card border border-white/10 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Taux de RÃ©ussite</p>
+              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Taux de Réussite</p>
               <h3 className="text-3xl font-bold text-foreground">{stats.overview.overall_success_rate}%</h3>
             </div>
             <div className="p-3 bg-emerald-500/10 rounded-2xl">
               <Percent className="w-6 h-6 text-emerald-500" />
             </div>
           </div>
-          <p className="mt-4 text-sm font-medium text-emerald-500">+1.5% vs Semestre PrÃ©cÃ©dent</p>
+          <p className="mt-4 text-sm font-medium text-emerald-500">+1.5% vs Semestre Précédent</p>
         </div>
 
-        <div className="bg-card border border-white/10 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Taux d'Insertion Pro</p>
+              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Taux d'Insertion Pro</p>
               <h3 className="text-3xl font-bold text-foreground">{stats.overview.graduation_rate}%</h3>
             </div>
             <div className="p-3 bg-amber-500/10 rounded-2xl">
               <Award className="w-6 h-6 text-amber-500" />
             </div>
           </div>
-          <p className="mt-4 text-sm font-medium text-white/50">Promo 2024</p>
+          <p className="mt-4 text-sm font-medium text-muted-foreground">Promo 2024</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-card border border-white/10 rounded-3xl p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-card border border-border rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-lg text-foreground">Ã‰volution de l'Insertion</h3>
-              <p className="text-xs text-white/50">Taux de diplÃ´mÃ©s en poste aprÃ¨s 6 mois</p>
+              <h3 className="font-bold text-lg text-foreground">Évolution de l'Insertion</h3>
+              <p className="text-xs text-muted-foreground">Taux de diplômés en poste après 6 mois</p>
             </div>
-            <BarChart3 className="w-5 h-5 text-white/50" />
+            <BarChart3 className="w-5 h-5 text-muted-foreground" />
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -150,7 +150,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-card border border-white/10 rounded-3xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4 text-foreground">
               <Wallet className="w-5 h-5 text-emerald-500" />
               <h3 className="font-bold text-lg">Finances & Vacations</h3>
@@ -159,31 +159,31 @@ export default function ExecutiveDashboard() {
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-white/50">Budget UtilisÃ©</span>
+                  <span className="text-muted-foreground">Budget Utilisé</span>
                   <span className="font-bold text-foreground">{stats.financials.budget_utilized}%</span>
                 </div>
-                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${stats.financials.budget_utilized}%` }} />
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5/50 rounded-2xl border border-white/10/50">
-                <p className="text-xs text-white/50 uppercase tracking-widest font-bold mb-1">CoÃ»t des Vacations</p>
-                <p className="text-2xl font-bold text-foreground">{stats.financials.vacation_expenses.toLocaleString('fr-MA')} <span className="text-sm font-medium text-white/50">MAD</span></p>
+              <div className="p-4 bg-muted/50/50 rounded-2xl border border-border/50">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-1">Coût des Vacations</p>
+                <p className="text-2xl font-bold text-foreground">{stats.financials.vacation_expenses.toLocaleString('fr-MA')} <span className="text-sm font-medium text-muted-foreground">MAD</span></p>
               </div>
             </div>
           </div>
 
-          <div className="bg-card border border-white/10 rounded-3xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
             <h3 className="font-bold text-lg text-foreground mb-4 flex items-center gap-2">
               <Award className="w-5 h-5 text-amber-500" />
-              Top FiliÃ¨res
+              Top Filières
             </h3>
             <div className="space-y-3">
               {stats.top_performing_filieres.map((f: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-white/5/30 rounded-xl border border-white/10/50">
+                <div key={idx} className="flex items-center justify-between p-3 bg-muted/50/30 rounded-xl border border-border/50">
                   <div className="flex items-center gap-3">
-                    <span className="text-white/50 font-mono font-bold text-xs">{idx + 1}.</span>
+                    <span className="text-muted-foreground font-mono font-bold text-xs">{idx + 1}.</span>
                     <span className="font-bold text-sm text-foreground">{f.name}</span>
                   </div>
                   <span className="bg-emerald-500/10 text-emerald-600 font-bold px-2 py-1 rounded text-xs">
