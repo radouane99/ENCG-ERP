@@ -3,29 +3,54 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { FileText, CheckCircle, Bot, Loader2 } from 'lucide-react'
 import { studentsApi } from '@shared/api/students'
 import { toast } from 'sonner'
+import EditStudentModal from '../components/EditStudentModal'
 
 export default function AdminStudentDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [student, setStudent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const fetchStudent = async () => {
+    try {
+      const data = await studentsApi.getStudent(Number(id))
+      setStudent(data)
+    } catch (error) {
+      toast.error('Erreur lors du chargement de l\'étudiant')
+      navigate('/admin/students')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const data = await studentsApi.getStudent(Number(id))
-        setStudent(data)
-      } catch (error) {
-        toast.error('Erreur lors du chargement de l\'étudiant')
-        navigate('/admin/students')
-      } finally {
-        setLoading(false)
-      }
-    }
     if (id) fetchStudent()
   }, [id, navigate])
 
   const getInitials = (name: string) => name ? name.charAt(0).toUpperCase() : '?'
+
+  const handleDocumentClick = (docName: string) => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+      {
+        loading: `Génération de ${docName} en cours...`,
+        success: `${docName} généré avec succès ! (Mode Démo)`,
+        error: `Erreur lors de la génération de ${docName}`,
+      }
+    )
+  }
+
+  const handleGenerateAI = () => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 2500)),
+      {
+        loading: 'Analyse du dossier par LLaMA 3.3 en cours...',
+        success: 'Le bilan pédagogique a été généré avec succès ! (Mode Démo)',
+        error: 'Erreur lors de la génération',
+      }
+    )
+  }
 
   if (loading) {
     return (
@@ -80,8 +105,8 @@ export default function AdminStudentDetailPage() {
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filière Actuelle</span>
               <p className="font-bold text-slate-800 text-lg">
-                {student.pathways?.[0]?.filiere?.name 
-                  ? `${student.pathways[0].filiere.name} (S${student.pathways[0].current_semester})` 
+                {student.latest_pathway?.filiere?.name 
+                  ? `${student.latest_pathway.filiere.name} (S${student.latest_pathway.current_semester})` 
                   : 'Non affecté'}
               </p>
             </div>
@@ -90,11 +115,11 @@ export default function AdminStudentDetailPage() {
             <div className="pt-4">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Documents Officiels (2025/2026)</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("Relevé de notes")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <FileText className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Relevé de notes</span>
                 </button>
-                <button className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("Attestation de réussite")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <CheckCircle className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Attestation de réussite</span>
                 </button>
@@ -113,7 +138,7 @@ export default function AdminStudentDetailPage() {
                   <p className="text-sm text-indigo-900/70 font-medium mb-4 pr-12">
                     LLaMA 3.3 analysera les notes et les absences pour rédiger un rapport professionnel.
                   </p>
-                  <button className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-sm">
+                  <button onClick={handleGenerateAI} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-sm">
                     <Bot className="w-4 h-4" /> Générer le bilan IA
                   </button>
                 </div>
@@ -127,11 +152,19 @@ export default function AdminStudentDetailPage() {
           <Link to="/admin/students" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide">
             Retour à la liste
           </Link>
-          <button className="px-8 py-3 bg-[#f59e0b] text-white font-bold rounded-xl hover:bg-[#d97706] transition-colors text-sm uppercase tracking-wide shadow-md">
+          <button onClick={() => setIsEditing(true)} className="px-8 py-3 bg-[#f59e0b] text-white font-bold rounded-xl hover:bg-[#d97706] transition-colors text-sm uppercase tracking-wide shadow-md">
             Modifier le Profil
           </button>
         </div>
       </div>
+      
+      {isEditing && (
+        <EditStudentModal
+          student={student}
+          onClose={() => setIsEditing(false)}
+          onRefresh={fetchStudent}
+        />
+      )}
     </div>
   )
 }

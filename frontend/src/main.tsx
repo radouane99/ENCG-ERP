@@ -46,7 +46,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <ThemeProvider defaultTheme="system" storageKey="encg-ui-theme">
             <App />
           </ThemeProvider>
-          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </BrowserRouter>
     </ErrorBoundary>

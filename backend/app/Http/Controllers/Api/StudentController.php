@@ -92,6 +92,8 @@ class StudentController extends Controller
             'birth_date' => 'nullable|date',
             'status'     => 'sometimes|required|in:active,suspended,graduated,withdrawn',
             'scholarship_type' => 'nullable|string|max:50',
+            'current_filiere' => 'nullable|string',
+            'current_semester' => 'nullable|integer',
         ]);
 
         $student = $this->studentService->updateStudent($student, $validated);

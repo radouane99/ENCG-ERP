@@ -92,7 +92,43 @@ class StudentService
      */
     public function updateStudent(Student $student, array $data): Student
     {
-        $student->update($data);
-        return $student;
+        return DB::transaction(function () use ($student, $data) {
+            $filiereCode = $data['current_filiere'] ?? null;
+            $semester = $data['current_semester'] ?? null;
+            
+            unset($data['current_filiere'], $data['current_semester']);
+            
+            $student->update($data);
+
+            if ($filiereCode !== null || $semester !== null) {
+                $pathway = $student->latestPathway()->first();
+                $pathwayData = [];
+                
+                if ($semester !== null) {
+                    $pathwayData['current_semester'] = $semester;
+                }
+                
+                if ($filiereCode) {
+                    $filiere = \App\Models\Filiere::where('code', $filiereCode)->first();
+                    if ($filiere) {
+                        $pathwayData['filiere_id'] = $filiere->id;
+                    }
+                }
+                
+                if ($pathway) {
+                    $pathway->update($pathwayData);
+                } else if (isset($pathwayData['filiere_id'])) {
+                    $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+                    $student->pathways()->create([
+                        'filiere_id' => $pathwayData['filiere_id'],
+                        'current_semester' => $pathwayData['current_semester'] ?? 1,
+                        'academic_year_id' => $academicYear ? $academicYear->id : 1,
+                        'is_current' => true,
+                    ]);
+                }
+            }
+
+            return $student;
+        });
     }
 }
