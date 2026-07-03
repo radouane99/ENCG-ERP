@@ -32,6 +32,7 @@ export default function ModulesListPage() {
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Modal state
   const [showModal, setShowModal] = useState(false)
@@ -96,6 +97,8 @@ export default function ModulesListPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       // Convert filiere_id to null if empty string
       const payload = {
@@ -110,9 +113,15 @@ export default function ModulesListPage() {
       }
       handleCloseModal();
       fetchData(); // Refresh list
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur de sauvegarde", error);
-      alert("Une erreur est survenue lors de la sauvegarde.");
+      if (error.response?.status === 422) {
+        alert("Erreur de validation: Le code module existe déjà ou les données sont invalides.");
+      } else {
+        alert("Une erreur est survenue lors de la sauvegarde.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -127,10 +136,15 @@ export default function ModulesListPage() {
     }
   }
 
-  const filteredModules = modules.filter(m => 
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    m.code.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredModules = modules.filter(m => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (m.filiere && m.filiere.toLowerCase() === q) ||
+      m.name.toLowerCase().includes(q) || 
+      m.code.toLowerCase().includes(q)
+    );
+  })
 
   return (
     <div className="space-y-6 animate-in relative p-6 max-w-7xl mx-auto">
@@ -304,8 +318,12 @@ export default function ModulesListPage() {
                 </div>
                 
                 <div className="flex items-center justify-end pt-6">
-                  <button type="submit" className="px-6 py-3 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-lg shadow-md transition-colors uppercase text-sm tracking-wide">
-                    {editingId ? 'UPDATE MODULE' : 'CREATE MODULE'}
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="px-6 py-3 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-md transition-colors uppercase text-sm tracking-wide"
+                  >
+                    {isSubmitting ? 'EN COURS...' : (editingId ? 'UPDATE MODULE' : 'CREATE MODULE')}
                   </button>
                 </div>
               </form>

@@ -1,4 +1,4 @@
-@extends('pdf.layout')
+@extends('pdf.layouts.pdf_master')
 
 @section('title', 'Attestation de Travail')
 

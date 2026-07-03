@@ -92,6 +92,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
     });
 
+    Route::apiResource('departments', \App\Http\Controllers\Api\DepartmentController::class);
+
     // Exam Locking (Admin)
     Route::prefix('admin/exam-locking')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ExamLockingController::class, 'index']);
@@ -300,7 +302,7 @@ Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
 // ---------------------------------------------------------
 // REST API (Protected endpoints for third-party integrations)
 // ---------------------------------------------------------
-Route::middleware('auth:sanctum')->group(function () {
+Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
     Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
     Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);
     Route::get('/schedule', [\App\Http\Controllers\Api\RestApiController::class, 'schedule']);

@@ -50,7 +50,8 @@ const navigation: (NavItem | NavGroup)[] = [
     groupAr: 'الشؤون الأكاديمية',
     items: [
       { label: 'Année & Affectations', labelAr: 'السنوات والتعيينات', href: '/admin/academic', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Filières', labelAr: 'الشعب', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Départements', labelAr: 'الأقسام', href: '/academic/departments', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Filières', labelAr: 'المسالك', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Modules', labelAr: 'الوحدات', href: '/academic/modules', icon: Layers, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Groupes & Sections', labelAr: 'المجموعات', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Inscriptions', labelAr: 'التسجيل', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },

@@ -12,7 +12,14 @@ import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Badge } from '@shared/components/ui/Badge'
 import { Input } from '@shared/components/ui/Input'
+import { Modal } from '@shared/components/ui/Modal'
 import { toast } from 'sonner'
+
+const EMPTY_FORM = {
+  first_name: '', last_name: '', email: '', phone: '',
+  grade: '', specialty: '', contract_type: 'visiting',
+  hire_date: '', is_active: true, department_id: ''
+};
 
 export default function VacatairesListPage() {
   const { t, i18n } = useTranslation('common')
@@ -20,11 +27,67 @@ export default function VacatairesListPage() {
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [form, setForm] = useState({ ...EMPTY_FORM })
 
   const { data: vacatairesData, isLoading } = useQuery({
     queryKey: ['hr-vacataires', search],
     queryFn: () => api.get('/hr/vacataires', { params: { search } }).then(res => res.data.data)
   })
+
+  const { data: deptsData } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then(r => r.data)
+  })
+  const departments: any[] = deptsData?.data || []
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
+    onSuccess: () => {
+      toast.success(isRtl ? 'تم الحفظ بنجاح' : 'Sauvegardé avec succès !')
+      queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
+      setShowModal(false)
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || (isRtl ? 'حدث خطأ' : 'Erreur lors de la sauvegarde.'))
+    }
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/hr/professors/${id}`),
+    onSuccess: () => {
+      toast.success(isRtl ? 'تم الحذف' : 'Supprimé avec succès.')
+      queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
+    }
+  })
+
+  const openCreate = () => { setEditingId(null); setForm({ ...EMPTY_FORM }); setShowModal(true) }
+  const openEdit = (p: any) => {
+    setEditingId(p.id)
+    setForm({
+      first_name: p.first_name, last_name: p.last_name, email: p.email,
+      phone: p.phone, grade: p.grade, specialty: p.specialty,
+      contract_type: 'visiting', hire_date: p.hire_date ?? '',
+      is_active: p.is_active, department_id: p.department_id?.toString() ?? ''
+    })
+    setShowModal(true)
+  }
+
+  const handleDelete = (id: number) => {
+    if (confirm(isRtl ? 'حذف هذا الزائر؟' : 'Supprimer ce vacataire ?')) {
+      deleteMutation.mutate(id)
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const payload = { ...form, department_id: form.department_id ? parseInt(form.department_id as string) : null }
+    saveMutation.mutate(payload)
+  }
+
+  const setF = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(prev => ({ ...prev, [key]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value }))
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
@@ -47,7 +110,7 @@ export default function VacatairesListPage() {
         </div>
         <div className="relative z-10 flex gap-3">
           <ExcelActions model="vacataires" label={isRtl ? 'استيراد/تصدير' : 'Excel'} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })} />
-          <Button variant="primary" leadingIcon={<Plus size={16} />} className="bg-emerald-500 hover:bg-emerald-600 border-none">
+          <Button onClick={openCreate} variant="primary" leadingIcon={<Plus size={16} />} className="bg-emerald-500 hover:bg-emerald-600 border-none">
             {isRtl ? 'إضافة أستاذ زائر' : 'Nouveau Vacataire'}
           </Button>
         </div>
@@ -162,10 +225,10 @@ export default function VacatairesListPage() {
                           <button className="p-2 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                             <FileText size={16} />
                           </button>
-                          <button className="p-2 text-[hsl(var(--muted-foreground))] hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <button onClick={() => openEdit(v)} className="p-2 text-[hsl(var(--muted-foreground))] hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
                             <Edit2 size={16} />
                           </button>
-                          <button className="p-2 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <button onClick={() => handleDelete(v.id)} className="p-2 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -187,6 +250,82 @@ export default function VacatairesListPage() {
           </div>
         )}
       </div>
+
+      <Modal 
+        open={showModal} 
+        onClose={() => setShowModal(false)}
+        title={editingId ? (isRtl ? 'تحديث الزائر' : 'Modifier le vacataire') : (isRtl ? 'زائر جديد' : 'Nouveau Vacataire')}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم' : 'Prénom'} *</label>
+              <Input required value={form.first_name} onChange={setF('first_name')} placeholder="Ahmed" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'النسب' : 'Nom'} *</label>
+              <Input required value={form.last_name} onChange={setF('last_name')} placeholder="BENSOUDA" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'البريد' : 'Email'} *</label>
+              <Input required type="email" value={form.email} onChange={setF('email')} placeholder="prof@encg-fes.ma" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الهاتف' : 'Téléphone'}</label>
+              <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الدرجة' : 'Grade académique'}</label>
+              <Input value={form.grade} onChange={setF('grade')} placeholder="Professeur, Expert..." />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'التخصص' : 'Spécialité'}</label>
+              <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance, Management..." />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'القسم' : 'Département'}</label>
+              <select 
+                value={form.department_id} 
+                onChange={setF('department_id')} 
+                className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+              >
+                <option value="">{isRtl ? '-- اختيار القسم --' : '-- Choisir un département --'}</option>
+                {departments.map((dept: any) => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <input type="checkbox" id="is_active" checked={form.is_active as boolean}
+              onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
+              className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]" />
+            <label htmlFor="is_active" className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              {isRtl ? 'زائر نشط' : 'Vacataire actif'}
+            </label>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[hsl(var(--border))]">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
+              {isRtl ? 'إلغاء' : 'Annuler'}
+            </Button>
+            <Button type="submit" variant="primary" isLoading={saveMutation.isPending}>
+              {editingId ? (isRtl ? 'تحديث' : 'Mettre à jour') : (isRtl ? 'حفظ' : 'Enregistrer')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

@@ -33,11 +33,12 @@ interface Module {
   id: number;
   code: string;
   name: string;
+  filiere_id: number;
 }
 
 const EMPTY_FORM = {
   first_name: '', last_name: '', email: '', phone: '',
-  qualification: '', module_id: '', agreed_hours: 30,
+  qualification: '', department_id: '', filiere_id: '', module_id: '', agreed_hours: 30,
   hourly_rate: 400, status: 'pending', contract_start: '', contract_end: ''
 };
 
@@ -45,6 +46,8 @@ export default function VacataireList() {
   const { t } = useTranslation('common')
   const [vacataires, setVacataires] = useState<Vacataire[]>([])
   const [modules, setModules] = useState<Module[]>([])
+  const [departments, setDepartments] = useState<any[]>([])
+  const [filieres, setFilieres] = useState<any[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, total_hours: 0, unpaid_contracts: 0 })
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -55,13 +58,17 @@ export default function VacataireList() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [vacRes, modRes] = await Promise.all([
+      const [vacRes, modRes, deptRes, filRes] = await Promise.all([
         api.get('/vacataires', { params: { search: searchQuery } }),
-        api.get('/modules')
+        api.get('/modules'),
+        api.get('/departments'),
+        api.get('/filieres')
       ])
       setVacataires(vacRes.data.data || [])
       setStats(vacRes.data.stats || {})
       setModules(modRes.data.data || [])
+      setDepartments(deptRes.data.data || [])
+      setFilieres(filRes.data.data || [])
     } catch (err) {
       console.error(err)
     } finally {
@@ -74,9 +81,13 @@ export default function VacataireList() {
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY_FORM }); setShowModal(true) }
   const openEdit = (v: Vacataire) => {
     setEditingId(v.id)
+    const mod = modules.find(m => m.id === v.module_id)
+    const fil = filieres.find(f => f.id === mod?.filiere_id)
     setForm({
       first_name: v.first_name, last_name: v.last_name, email: v.email,
       phone: v.phone, qualification: v.qualification,
+      department_id: fil?.department_id?.toString() ?? '',
+      filiere_id: mod?.filiere_id?.toString() ?? '',
       module_id: v.module_id?.toString() ?? '',
       agreed_hours: v.agreed_hours, hourly_rate: v.hourly_rate,
       status: v.status, contract_start: '', contract_end: ''
@@ -283,10 +294,26 @@ export default function VacataireList() {
               </div>
               <div><label className={labelCls}>Qualification / Titre</label>
                 <input value={form.qualification} onChange={set('qualification')} className={inputCls} placeholder="Dr., Expert-Comptable..." /></div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Département</label>
+                  <select value={form.department_id} onChange={set('department_id')} className={inputCls}>
+                    <option value="">— Aucun département —</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div><label className={labelCls}>Filière</label>
+                  <select value={form.filiere_id} onChange={set('filiere_id')} className={inputCls}>
+                    <option value="">— Aucune filière —</option>
+                    {filieres.filter(f => !form.department_id || f.department_id.toString() === form.department_id.toString()).map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
               <div><label className={labelCls}>Module assigné</label>
                 <select value={form.module_id} onChange={set('module_id')} className={inputCls}>
                   <option value="">— Aucun module —</option>
-                  {modules.map(m => <option key={m.id} value={m.id}>{m.code} - {m.name}</option>)}
+                  {modules.filter(m => !form.filiere_id || m.filiere_id.toString() === form.filiere_id.toString()).map(m => <option key={m.id} value={m.id}>{m.code} - {m.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">

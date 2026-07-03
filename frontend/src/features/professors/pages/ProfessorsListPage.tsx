@@ -50,7 +50,13 @@ export default function ProfessorsListPage() {
     queryFn: () => api.get('/hr/professors', { params: { search, contract_type: contractFilter } }).then(r => r.data)
   })
 
+  const { data: deptsData } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then(r => r.data)
+  })
+
   const professors: Professor[] = data?.data || []
+  const departments: any[] = deptsData?.data || []
 
   const saveMutation = useMutation({
     mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
@@ -260,7 +266,7 @@ export default function ProfessorsListPage() {
 
       {/* Modal using the UI/UX Pro Max generic Modal */}
       <Modal 
-        isOpen={showModal} 
+        open={showModal} 
         onClose={() => setShowModal(false)}
         title={editingId ? (isRtl ? 'تحديث بيانات الأستاذ' : 'Modifier le professeur') : (isRtl ? 'أستاذ جديد' : 'Nouveau Professeur')}
         size="lg"
@@ -315,6 +321,22 @@ export default function ProfessorsListPage() {
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'تاريخ التوظيف' : 'Date d\'embauche'}</label>
               <Input type="date" value={form.hire_date} onChange={setF('hire_date')} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'القسم' : 'Département'}</label>
+              <select 
+                value={form.department_id} 
+                onChange={setF('department_id')} 
+                className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+              >
+                <option value="">{isRtl ? '-- اختيار القسم --' : '-- Choisir un département --'}</option>
+                {departments.map((dept: any) => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

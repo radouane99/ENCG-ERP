@@ -68,6 +68,7 @@ const ApplicationsPage = lazy(() => import('@features/admission/pages/Applicatio
 const AcademicYearsPage = lazy(() => import('@features/academic/pages/AcademicYearsPage'))
 const GroupsPage = lazy(() => import('@features/academic/pages/GroupsPage'))
 const FilieresPage = lazy(() => import('@features/academic/components/FiliereList'))
+const DepartmentsPage = lazy(() => import('@features/academic/components/DepartmentList'))
 const ModulesListPage = lazy(() => import('@features/modules/pages/ModulesListPage'))
 const DeliberationManager = lazy(() => import('@features/academic/pages/DeliberationManager'))
 
@@ -320,6 +321,7 @@ export default function App() {
           <Route path="/academic/years" element={<AcademicYearsPage />} />
           <Route path="/academic/groups" element={<GroupsPage />} />
           <Route path="/academic/filieres" element={<FilieresPage />} />
+          <Route path="/academic/departments" element={<DepartmentsPage />} />
           <Route path="/academic/modules" element={<ModulesListPage />} />
           <Route path="/academic/deliberations" element={<DeliberationManager />} />
           <Route path="/professors" element={<ProfessorsListPage />} />
