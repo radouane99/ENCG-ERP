@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { cn } from '@shared/lib/utils'
-import api from '@/shared/api'
+import api from '@shared/lib/api'
 import { toast } from 'react-hot-toast'
 
 export default function EditUserPage() {

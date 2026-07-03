@@ -20,13 +20,13 @@ class UserController extends Controller
             'super-admin' => 'Super Administrateur',
             'institution-admin' => 'Admin Institution',
             'director' => 'Directeur',
-            'department-head' => 'Chef de DǸpartement',
+            'department-head' => 'Chef de Département',
             'professor' => 'Professeur',
             'vacataire' => 'Vacataire',
             'finance-officer' => 'Finance',
             'hr-officer' => 'Ressources Humaines',
-            'library-manager' => 'Bibliothcaire',
-            'discipline-committee' => 'ComitǸ de Discipline'
+            'library-manager' => 'Bibliothécaire',
+            'discipline-committee' => 'Comité de Discipline'
         ];
 
         $adminRoles = ['super-admin', 'institution-admin', 'director', 'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee'];
@@ -53,8 +53,8 @@ class UserController extends Controller
                 "phone" => $u->phone,
                 "type" => $isAdmin ? "admin" : "professor",
                 "role_label" => $roleLabels[$primaryRole] ?? 'Professeur',
-                "department" => "Non assignǸ",
-                "speciality" => "Non assignǸ",
+                "department" => "Non assigné",
+                "speciality" => "Non assigné",
                 "roles" => $roles
             ];
         });
@@ -68,12 +68,27 @@ class UserController extends Controller
         $roles = $user->roles->pluck('name')->toArray();
         $primaryRole = count($roles) > 0 ? $roles[0] : 'professor';
         
+        $roleLabels = [
+            'super-admin' => 'Super Administrateur',
+            'institution-admin' => 'Admin Institution',
+            'director' => 'Directeur',
+            'department-head' => 'Chef de Département',
+            'professor' => 'Professeur',
+            'vacataire' => 'Vacataire',
+            'finance-officer' => 'Finance',
+            'hr-officer' => 'Ressources Humaines',
+            'library-manager' => 'Bibliothécaire',
+            'discipline-committee' => 'Comité de Discipline'
+        ];
+
         return response()->json([
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $primaryRole
+                'role' => $primaryRole,
+                'role_label' => $roleLabels[$primaryRole] ?? 'Professeur',
+                'joined' => $user->created_at ? $user->created_at->format('d/m/Y à H:i') : 'N/A'
             ]
         ]);
     }
@@ -100,14 +115,14 @@ class UserController extends Controller
             $user->syncRoles([$validated['role']]);
         }
 
-        return response()->json(['success' => true, 'message' => 'Utilisateur mis à jour avec succès', 'data' => $user]);
+        return response()->json(['succèss' => true, 'message' => 'Utilisateur mis à jour avec succès', 'data' => $user]);
     }
 
     public function destroy($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
-        return response()->json(['success' => true, 'message' => 'Utilisateur supprimé avec succès']);
+        return response()->json(['succèss' => true, 'message' => 'Utilisateur supprimé avec succès']);
     }
 }
 

@@ -1,16 +1,28 @@
+import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import api from '@shared/lib/api'
 
 export default function ViewUserPage() {
   const { id } = useParams()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const user = {
-    name: 'Radouane el asri',
-    email: 'radouane.asri99@gmail.com',
-    role: 'PROFESSOR',
-    department: 'Génie Informatique',
-    contract: 'Permanent',
-    joined: "29/05/2026 à 17:48"
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get(`/users/${id}`)
+        setUser(res.data.data)
+      } catch (error) {
+        console.error('Erreur de chargement', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUser()
+  }, [id])
+
+  if (loading) return <div className="p-10 text-center text-slate-500">Chargement...</div>
+  if (!user) return <div className="p-10 text-center text-red-500">Utilisateur non trouvé</div>
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1000px] mx-auto">
@@ -32,7 +44,7 @@ export default function ViewUserPage() {
           </div>
           <div>
             <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-1 block">
-              {user.role}
+              {user.role_label || user.role}
             </span>
             <h2 className="text-3xl font-bold italic mb-1">{user.name}</h2>
             <p className="text-blue-200 text-sm font-medium">
@@ -55,7 +67,7 @@ export default function ViewUserPage() {
             </div>
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Rôle Système</span>
-              <p className="font-bold text-slate-800 text-lg">{user.role}</p>
+              <p className="font-bold text-slate-800 text-lg">{user.role_label || user.role}</p>
             </div>
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Date d'inscription</span>
@@ -63,11 +75,11 @@ export default function ViewUserPage() {
             </div>
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Département d'enseignement</span>
-              <p className="font-bold text-blue-600 text-lg">{user.department}</p>
+              <p className="font-bold text-slate-400 text-sm">Non assigné</p>
             </div>
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Type de contrat</span>
-              <p className="font-bold text-slate-800 text-lg">{user.contract}</p>
+              <p className="font-bold text-slate-400 text-sm">Non assigné</p>
             </div>
           </div>
 
