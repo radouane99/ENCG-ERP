@@ -116,13 +116,19 @@ export default function StaffProfessorsPage() {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider border border-green-500 text-green-600">
-                      PROFESSEUR
+                    <span className={cn(
+                      "px-3 py-1 rounded-full text-[10px] font-bold tracking-wider border",
+                      u.type === 'admin' ? "border-blue-500 text-blue-600 bg-blue-50" : "border-green-500 text-green-600 bg-green-50"
+                    )}>
+                      {u.type === 'admin' ? 'ADMINISTRATEUR' : 'PROFESSEUR'}
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <div className="font-bold text-slate-700 text-xs">{u.department || u.speciality || 'N/A'}</div>
-                    <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mt-1">{u.type || 'PERMANENT'}</div>
+                    <div className="font-bold text-slate-700 text-xs">{u.department || u.speciality || 'Non assigné'}</div>
+                    <div className={cn(
+                      "text-[10px] font-bold uppercase tracking-wider mt-1",
+                      u.type === 'admin' ? "text-blue-500" : "text-emerald-500"
+                    )}>{u.role_label || (u.type === 'admin' ? 'ADMIN' : 'PROFESSOR')}</div>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <div className="flex items-center justify-end gap-3">

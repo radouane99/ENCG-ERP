@@ -1,23 +1,70 @@
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { cn } from '@shared/lib/utils'
+import api from '@/shared/api'
+import { toast } from 'react-hot-toast'
 
 export default function EditUserPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
 
   const [formData, setFormData] = useState({
-    name: 'Prof. Fatima Zahra Bennani',
-    email: 'fatima.bennani@usmba.ac.ma',
+    name: '',
+    email: '',
     password: '',
     password_confirmation: '',
-    role: 'Professor',
-    department: 'Génie Civil',
-    contract: 'Permanent'
+    role: 'professor'
   })
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get(`/users/${id}`)
+        const user = res.data.data
+        setFormData(prev => ({
+          ...prev,
+          name: user.name || '',
+          email: user.email || '',
+          role: user.role || 'professor'
+        }))
+      } catch (error) {
+        toast.error('Erreur lors du chargement')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUser()
+  }, [id])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const payload: any = {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role
+      }
+      if (formData.password) {
+        if (formData.password !== formData.password_confirmation) {
+          return toast.error('Les mots de passe ne correspondent pas')
+        }
+        payload.password = formData.password
+        payload.password_confirmation = formData.password_confirmation
+      }
+      await api.put(`/users/${id}`, payload)
+      toast.success('Utilisateur mis à jour avec succès')
+      navigate('/admin/users')
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour')
+    }
+  }
+
+  if (loading) return <div className="p-10 text-center text-slate-500">Chargement...</div>
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1000px] mx-auto">
@@ -40,7 +87,7 @@ export default function EditUserPage() {
           </p>
         </div>
 
-        <form className="p-10 space-y-8">
+        <form onSubmit={handleSubmit} className="p-10 space-y-8">
           <h3 className="text-xl font-bold text-[#0f2863] italic mb-6">Modifier les Paramètres</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,41 +143,24 @@ export default function EditUserPage() {
               onChange={handleChange}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
             >
-              <option value="Professor">Professor</option>
-              <option value="Admin">Administrateur</option>
+              <option value="super-admin">Super Administrateur</option>
+              <option value="institution-admin">Admin Institution</option>
+              <option value="director">Directeur</option>
+              <option value="department-head">Chef de Département</option>
+              <option value="professor">Professeur</option>
+              <option value="vacataire">Vacataire</option>
+              <option value="finance-officer">Finance</option>
+              <option value="hr-officer">Ressources Humaines</option>
+              <option value="library-manager">Bibliothécaire</option>
+              <option value="discipline-committee">Comité de Discipline</option>
             </select>
           </div>
 
-          {formData.role === 'Professor' && (
-            <div className="border-2 border-emerald-50 rounded-3xl p-8 space-y-6 mt-6 bg-emerald-50/30">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Département d'enseignement</label>
-                <input 
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Type de contrat</label>
-                <select
-                  name="contract"
-                  value={formData.contract}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
-                >
-                  <option value="Permanent">Permanent</option>
-                  <option value="Vacataire">Vacataire</option>
-                </select>
-              </div>
-            </div>
-          )}
+
 
           <div className="pt-6">
             <button 
-              type="button" 
+              type="submit" 
               className="w-full py-4 bg-[#f59e0b] text-white font-bold rounded-2xl hover:bg-[#d97706] transition-colors text-sm uppercase tracking-wide shadow-lg shadow-orange-500/20"
             >
               Sauvegarder les modifications
