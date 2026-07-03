@@ -59,7 +59,7 @@ export default function VacataireList() {
     try {
       setLoading(true)
       const [vacRes, modRes, deptRes, filRes] = await Promise.all([
-        api.get('/vacataires', { params: { search: searchQuery } }),
+        api.get('/hr/vacataires', { params: { search: searchQuery } }),
         api.get('/modules'),
         api.get('/departments'),
         api.get('/filieres')
@@ -98,12 +98,12 @@ export default function VacataireList() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const payload = { ...form, module_id: form.module_id ? parseInt(form.module_id as string) : null }
+      const payload = { ...form, module_id: form.module_id ? parseInt(form.module_id as string) : null, contract_type: 'visiting' }
       if (editingId) {
-        await api.put(`/vacataires/${editingId}`, payload)
+        await api.put(`/hr/professors/${editingId}`, payload)
         toast.success('Contrat mis à jour avec succès !')
       } else {
-        await api.post('/vacataires', payload)
+        await api.post('/hr/professors', payload)
         toast.success('Vacataire créé avec succès !')
       }
       setShowModal(false)
@@ -114,12 +114,12 @@ export default function VacataireList() {
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm('Supprimer ce contrat vacataire ?')) {
+    if (confirm('Voulez-vous vraiment supprimer ce vacataire ?')) {
       try {
-        await api.delete(`/vacataires/${id}`)
-        toast.success('Contrat supprimé.')
+        await api.delete(`/hr/professors/${id}`)
+        toast.success('Vacataire supprimé avec succès')
         fetchData()
-      } catch { toast.error('Erreur lors de la suppression.') }
+      } catch (err) { toast.error('Erreur lors de la suppression.') }
     }
   }
 
