@@ -63,7 +63,18 @@ class ProfessorService
     {
         return DB::transaction(function () use ($data, $institutionId) {
             $year = date('Y');
-            $count = Professor::whereYear('created_at', $year)->count() + 1;
+            
+            // Get the maximum employee number for this year to avoid duplicates on soft deletes
+            $lastProf = Professor::withTrashed()
+                ->where('employee_number', 'LIKE', "PROF-$year-%")
+                ->orderBy('employee_number', 'desc')
+                ->first();
+                
+            $count = 1;
+            if ($lastProf) {
+                $lastNumber = intval(substr($lastProf->employee_number, -3));
+                $count = $lastNumber + 1;
+            }
             
             $data['employee_number'] = 'PROF-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
             $data['institution_id'] = $institutionId;
