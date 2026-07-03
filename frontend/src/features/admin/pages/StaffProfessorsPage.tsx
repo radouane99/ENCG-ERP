@@ -14,7 +14,7 @@ export default function StaffProfessorsPage() {
     const fetchProfessors = async () => {
       try {
         setLoading(true)
-        const res = await api.get('/professors')
+        const res = await api.get('/users')
         setProfessors(res.data.data || res.data)
       } catch (error) {
         console.error('Failed to fetch professors:', error)
@@ -28,7 +28,7 @@ export default function StaffProfessorsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('Supprimer ce professeur ?')) return
     try {
-      await api.delete(`/professors/${id}`)
+      await api.delete(`/users/${id}`)
       toast.success('Professeur supprimé')
       setProfessors(prev => prev.filter(p => p.id !== id))
     } catch { toast.error('Erreur lors de la suppression') }

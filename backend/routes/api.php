@@ -93,6 +93,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::apiResource('departments', \App\Http\Controllers\Api\DepartmentController::class);
+    Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
 
     // Exam Locking (Admin)
     Route::prefix('admin/exam-locking')->group(function () {

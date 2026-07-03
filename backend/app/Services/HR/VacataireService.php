@@ -17,7 +17,7 @@ class VacataireService
     {
         return Professor::with(['department', 'vacationContracts' => function($query) {
                 // Load only active/latest contracts to reduce payload
-                $query->latest()->limit(1);
+                $query->with('module')->latest()->limit(1);
             }])
             ->where('contract_type', 'visiting')
             ->get();
@@ -43,14 +43,22 @@ class VacataireService
     public function generateContract(array $data): VacationContract
     {
         return DB::transaction(function () use ($data) {
+            $professor = Professor::findOrFail($data['professor_id']);
+            
             $contract = VacationContract::create([
                 'professor_id'  => $data['professor_id'],
-                'academic_year' => $data['academic_year'] ?? '2025/2026',
+                'first_name'    => $professor->first_name,
+                'last_name'     => $professor->last_name,
+                'email'         => $professor->email,
+                'phone'         => $professor->phone,
+                'institution_id' => $professor->institution_id,
+                'academic_year_id' => 1, // Fallback default
+                'module_id'     => $data['module_id'] ?? null,
                 'agreed_hours'  => $data['agreed_hours'],
-                'hourly_rate'   => $data['hourly_rate'] ?? 300.00, // Standard rate MAD
-                'start_date'    => $data['start_date'],
-                'end_date'      => $data['end_date'],
-                'status'        => 'pending'
+                'hourly_rate'   => $data['hourly_rate'] ?? 400.00, // Standard rate MAD
+                'contract_start'=> $data['start_date'],
+                'contract_end'  => $data['end_date'],
+                'status'        => $data['status'] ?? 'pending'
             ]);
 
             return $contract;

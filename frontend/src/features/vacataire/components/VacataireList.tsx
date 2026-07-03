@@ -100,10 +100,10 @@ export default function VacataireList() {
     try {
       const payload = { ...form, module_id: form.module_id ? parseInt(form.module_id as string) : null, contract_type: 'visiting' }
       if (editingId) {
-        await api.put(`/hr/professors/${editingId}`, payload)
+        await api.put(`/hr/vacataires/${editingId}`, payload)
         toast.success('Contrat mis à jour avec succès !')
       } else {
-        await api.post('/hr/professors', payload)
+        await api.post('/hr/vacataires', payload)
         toast.success('Vacataire créé avec succès !')
       }
       setShowModal(false)
@@ -116,7 +116,7 @@ export default function VacataireList() {
   const handleDelete = async (id: number) => {
     if (confirm('Voulez-vous vraiment supprimer ce vacataire ?')) {
       try {
-        await api.delete(`/hr/professors/${id}`)
+        await api.delete(`/hr/vacataires/${id}`)
         toast.success('Vacataire supprimé avec succès')
         fetchData()
       } catch (err) { toast.error('Erreur lors de la suppression.') }
@@ -215,7 +215,13 @@ export default function VacataireList() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-foreground">{vac.module}</td>
+                        <td className="px-6 py-4">
+                          {vac.module ? (
+                            <span className="font-medium text-foreground">{vac.module}</span>
+                          ) : (
+                            <span className="text-muted-foreground italic text-sm">Non assignǸ</span>
+                          )}
+                        </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1.5 w-36">
                           <div className="flex items-center justify-between text-xs">

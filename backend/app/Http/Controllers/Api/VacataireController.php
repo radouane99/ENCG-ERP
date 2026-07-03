@@ -6,14 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\HR\VacataireService;
+use App\Services\HR\ProfessorService;
+use App\Models\Professor;
+use App\Models\VacationContract;
 
 class VacataireController extends Controller
 {
     protected VacataireService $vacataireService;
+    protected ProfessorService $professorService;
 
-    public function __construct(VacataireService $vacataireService)
+    public function __construct(VacataireService $vacataireService, ProfessorService $professorService)
     {
         $this->vacataireService = $vacataireService;
+        $this->professorService = $professorService;
     }
 
     /**
@@ -21,8 +26,42 @@ class VacataireController extends Controller
      */
     public function index(): JsonResponse
     {
-        $vacataires = $this->vacataireService->getAllVacataires();
-        return response()->json(['success' => true, 'data' => $vacataires]);
+        $professors = $this->vacataireService->getAllVacataires();
+        
+        $mapped = $professors->map(function ($p) {
+            $contract = $p->vacationContracts->first();
+            $moduleName = $contract && $contract->module ? $contract->module->code . ' - ' . $contract->module->name : null;
+            
+            return [
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'last_name' => $p->last_name,
+                'email' => $p->email,
+                'phone' => $p->phone,
+                'qualification' => $p->specialty,
+                'department_id' => $p->department_id,
+                
+                'module' => $moduleName,
+                'module_id' => $contract->module_id ?? null,
+                'agreed_hours' => $contract->agreed_hours ?? 0,
+                'hours_completed' => 0, // Mock for now
+                'hourly_rate' => $contract->hourly_rate ?? 0,
+                'status' => $contract->status ?? 'pending',
+                'contract_start' => $contract->contract_start ?? null,
+                'contract_end' => $contract->contract_end ?? null,
+                'payment_status' => 'unpaid', // Mock for now
+                'payment_amount' => 0,
+            ];
+        });
+        
+        $stats = [
+           'total' => $professors->count(),
+           'pending' => $professors->filter(fn($p) => $p->vacationContracts->first()?->status === 'pending')->count(),
+           'total_hours' => collect($mapped)->sum('agreed_hours'),
+           'unpaid_contracts' => collect($mapped)->where('payment_status', 'unpaid')->count()
+        ];
+
+        return response()->json(['success' => true, 'data' => $mapped, 'stats' => $stats]);
     }
 
     /**
@@ -37,6 +76,122 @@ class VacataireController extends Controller
         }
 
         return response()->json(['success' => true, 'data' => $vacataire]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'first_name'    => 'required|string|max:100',
+            'last_name'     => 'required|string|max:100',
+            'email'         => 'required|email|unique:professors,email',
+            'phone'         => 'nullable|string|max:20',
+            'qualification' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            
+            // Contract fields
+            'module_id'     => 'nullable|exists:modules,id',
+            'agreed_hours'  => 'required|numeric|min:1',
+            'hourly_rate'   => 'required|numeric|min:1',
+            'status'        => 'required|in:pending,signed,completed',
+            'contract_start'=> 'required|date',
+            'contract_end'  => 'required|date|after_or_equal:contract_start',
+        ]);
+
+        $profData = [
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'specialty' => $validated['qualification'] ?? null,
+            'department_id' => $validated['department_id'],
+            'contract_type' => 'visiting',
+            'is_active' => true,
+        ];
+
+        $professor = $this->professorService->createProfessor($profData, 1);
+
+        $contractData = [
+            'professor_id' => $professor->id,
+            'module_id' => $validated['module_id'] ?? null,
+            'agreed_hours' => $validated['agreed_hours'],
+            'hourly_rate' => $validated['hourly_rate'],
+            'status' => $validated['status'],
+            'start_date' => $validated['contract_start'],
+            'end_date' => $validated['contract_end'],
+        ];
+
+        $this->vacataireService->generateContract($contractData);
+
+        return response()->json(['success' => true, 'message' => 'Vacataire crǸǸ avec succs']);
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        $professor = Professor::findOrFail($id);
+
+        $validated = $request->validate([
+            'first_name'    => 'sometimes|required|string|max:100',
+            'last_name'     => 'sometimes|required|string|max:100',
+            'email'         => 'sometimes|required|email|unique:professors,email,' . $professor->id,
+            'phone'         => 'nullable|string|max:20',
+            'qualification' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            
+            // Contract fields
+            'module_id'     => 'nullable|exists:modules,id',
+            'agreed_hours'  => 'sometimes|required|numeric|min:1',
+            'hourly_rate'   => 'sometimes|required|numeric|min:1',
+            'status'        => 'sometimes|required|in:pending,signed,completed',
+            'contract_start'=> 'sometimes|required|date',
+            'contract_end'  => 'sometimes|required|date|after_or_equal:contract_start',
+        ]);
+
+        $profData = [
+            'first_name' => $validated['first_name'] ?? $professor->first_name,
+            'last_name' => $validated['last_name'] ?? $professor->last_name,
+            'email' => $validated['email'] ?? $professor->email,
+            'phone' => $validated['phone'] ?? $professor->phone,
+            'specialty' => $validated['qualification'] ?? $professor->specialty,
+            'department_id' => $validated['department_id'] ?? $professor->department_id,
+        ];
+
+        $this->professorService->updateProfessor($professor, $profData);
+
+        // Update or create latest contract
+        $contract = $professor->vacationContracts()->latest()->first();
+        if (!$contract) {
+            $contract = new VacationContract();
+            $contract->professor_id = $professor->id;
+            $contract->first_name = $professor->first_name;
+            $contract->last_name = $professor->last_name;
+            $contract->email = $professor->email;
+            $contract->phone = $professor->phone;
+            $contract->institution_id = $professor->institution_id;
+            $contract->academic_year_id = 1;
+        }
+
+        if (isset($validated['module_id'])) $contract->module_id = $validated['module_id'];
+        if (isset($validated['agreed_hours'])) $contract->agreed_hours = $validated['agreed_hours'];
+        if (isset($validated['hourly_rate'])) $contract->hourly_rate = $validated['hourly_rate'];
+        if (isset($validated['status'])) $contract->status = $validated['status'];
+        if (isset($validated['contract_start'])) $contract->contract_start = $validated['contract_start'];
+        if (isset($validated['contract_end'])) $contract->contract_end = $validated['contract_end'];
+        $contract->save();
+
+        return response()->json(['success' => true, 'message' => 'Vacataire mis  jour avec succs']);
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        $professor = Professor::findOrFail($id);
+        
+        // Delete related contracts
+        $professor->vacationContracts()->delete();
+        
+        // Delete the professor (soft delete)
+        $professor->delete();
+        
+        return response()->json(['success' => true, 'message' => 'Vacataire supprimǸ avec succs']);
     }
 
     /**
