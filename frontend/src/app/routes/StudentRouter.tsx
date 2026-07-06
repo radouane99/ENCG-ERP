@@ -17,6 +17,7 @@ const StudentClubsHub = lazy(() => import('@features/student-portal/pages/Studen
 const StudentDigitalLibrary = lazy(() => import('@features/student-portal/pages/StudentDigitalLibrary'))
 const StudentGamification = lazy(() => import('@features/student-portal/pages/StudentGamification'))
 const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/StudentAbsencesPage'))
+const StudentDocumentRequestsPage = lazy(() => import('@features/documents/pages/StudentDocumentRequestsPage'))
 
 export default function StudentRouter() {
   return (
@@ -37,6 +38,7 @@ export default function StudentRouter() {
       <Route path="library" element={<StudentDigitalLibrary />} />
       <Route path="gamification" element={<StudentGamification />} />
       <Route path="absences" element={<StudentAbsencesPage />} />
+      <Route path="documents" element={<StudentDocumentRequestsPage />} />
     </Routes>
   );
 }

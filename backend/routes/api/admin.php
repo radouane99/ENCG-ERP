@@ -239,9 +239,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Admin — Document Requests Management
     Route::prefix('admin/document-requests')->middleware('require-admin-2fa')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\DocumentRequestController::class, 'index']);
-        Route::patch('/{documentRequest}/status', [\App\Http\Controllers\Api\DocumentRequestController::class, 'updateStatus']);
+        Route::get('/', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
+        Route::patch('/{id}/status', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
+        Route::post('/{id}/generate', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
     });
+
+    // Admin — Document Types Management
+    Route::apiResource('admin/document-types', \App\Http\Controllers\Api\Admin\AdminDocumentTypeController::class)->middleware('require-admin-2fa');
 
     // Admissions / TAFEM
     Route::prefix('admissions')->group(function () {

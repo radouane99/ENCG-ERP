@@ -86,7 +86,7 @@ const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPa
 const GradeEntryPage = lazy(() => import('@features/exams/components/GradeEntry'))
 const DeliberationPage = lazy(() => import('@features/deliberation/pages/DeliberationPage'))
 
-const DocumentRequestsPage = lazy(() => import('@features/documents/pages/DocumentRequestsPage'))
+const DocumentRequestsPage = lazy(() => import('@features/documents/pages/AdminDocumentRequestsPage'))
 const DocumentTemplatesPage = lazy(() => import('@features/documents/pages/DocumentTemplatesPage'))
 const DiplomasPage = lazy(() => import('@features/documents/pages/DiplomasPage'))
 const DocumentsAttestationsPage = lazy(() => import('@features/documents/pages/DocumentsAttestationsPage'))

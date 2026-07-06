@@ -32,6 +32,13 @@ Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function
         Route::get('/', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'index']);
         Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'download']);
     });
+    
+    // Document Requests (Guichet Électronique)
+    Route::prefix('document-requests')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'store']);
+        Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'download']);
+    });
 });
 
 Route::middleware(['auth:sanctum'])->prefix('student')->group(function () {
