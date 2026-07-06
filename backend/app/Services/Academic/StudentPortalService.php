@@ -27,17 +27,37 @@ class StudentPortalService
 
     /**
      * Get student schedule. 
-     * In a real system, this would join with schedules, groups, and modules.
      */
-    public function getSchedule(int $studentId): array
+    public function getSchedule(int $studentId): Collection
     {
-        // For demonstration, returning a structured mockup.
-        // A real implementation would query the `schedules` table using the student's group_id.
-        return [
-            ['id' => 1, 'day' => 1, 'time' => '08:30 - 10:30', 'module' => 'Comptabilité Générale II', 'room' => 'Amphi A', 'type' => 'CM', 'professor' => 'Pr. Benchekroun'],
-            ['id' => 2, 'day' => 2, 'time' => '10:45 - 12:45', 'module' => 'Algèbre Linéaire', 'room' => 'Salle 302', 'type' => 'TD', 'professor' => 'Pr. Alaoui'],
-            ['id' => 3, 'day' => 3, 'time' => '14:00 - 16:00', 'module' => 'Marketing Stratégique', 'room' => 'Salle 105', 'type' => 'TP', 'professor' => 'Pr. Tazi'],
-        ];
+        // Find current active pathway group
+        $pathway = DB::table('student_pathways')
+            ->where('student_id', $studentId)
+            ->where('is_current', true)
+            ->first();
+
+        if (!$pathway || !$pathway->group_id) {
+            return collect([]);
+        }
+
+        return DB::table('schedules')
+            ->join('modules', 'schedules.module_id', '=', 'modules.id')
+            ->join('rooms', 'schedules.room_id', '=', 'rooms.id')
+            ->leftJoin('users', 'schedules.professor_id', '=', 'users.id')
+            ->where('schedules.group_id', $pathway->group_id)
+            ->where('schedules.is_active', true)
+            ->select(
+                'schedules.id',
+                'schedules.day_of_week as day',
+                DB::raw("CONCAT(schedules.start_time, ' - ', schedules.end_time) as time"),
+                'modules.name as module',
+                'rooms.name as room',
+                'schedules.session_type as type',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as professor")
+            )
+            ->orderBy('schedules.day_of_week')
+            ->orderBy('schedules.start_time')
+            ->get();
     }
 
     /**
@@ -45,15 +65,13 @@ class StudentPortalService
      */
     public function submitAbsenceJustification(array $data, $file): array
     {
-        // 1. Validate the attendance record exists and belongs to the student.
-        // 2. Handle file upload (mocking path for demo).
-        $path = 'justifications/cert_' . time() . '.' . ($file ? $file->getClientOriginalExtension() : 'pdf');
-        
+        $path = null;
         if ($file) {
-            // $file->storeAs('public/justifications', $path);
+            // Save file in public storage 'justifications' folder
+            $path = $file->store('justifications', 'public');
         }
 
-        // 3. Create the justification record.
+        // Create the justification record.
         $justification = AbsenceJustification::create([
             'student_id' => $data['student_id'],
             'attendance_id' => $data['attendance_id'],
@@ -67,6 +85,43 @@ class StudentPortalService
             'success' => true,
             'message' => 'Justificatif soumis avec succès. En attente de validation.',
             'data' => $justification
+        ];
+    }
+
+    /**
+     * Dashboard specific stats
+     */
+    public function getDashboardStats(int $studentId): array
+    {
+        // Get un-justified absences
+        $absences = DB::table('attendance_records')
+            ->where('student_id', $studentId)
+            ->where('status', 'absent')
+            ->count();
+
+        // Get grades count
+        $gradesCount = $this->getGrades($studentId)->count();
+
+        // Check if there are scheduled classes today
+        $dayOfWeek = now()->dayOfWeekIso; // 1 = Monday, 7 = Sunday
+        $pathway = DB::table('student_pathways')
+            ->where('student_id', $studentId)
+            ->where('is_current', true)
+            ->first();
+
+        $classesToday = 0;
+        if ($pathway && $pathway->group_id) {
+            $classesToday = DB::table('schedules')
+                ->where('group_id', $pathway->group_id)
+                ->where('day_of_week', $dayOfWeek)
+                ->where('is_active', true)
+                ->count();
+        }
+
+        return [
+            'absences' => $absences,
+            'published_grades' => $gradesCount,
+            'classes_today' => $classesToday,
         ];
     }
 }

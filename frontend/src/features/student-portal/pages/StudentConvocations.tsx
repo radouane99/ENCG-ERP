@@ -1,16 +1,54 @@
-﻿import React from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin, FileText, Download, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Calendar as CalendarIcon, Clock, MapPin, FileText, Download, CheckCircle2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
+import { examsApi } from '@shared/api/exams';
+import { useAuthStore } from '@stores/authStore';
 
 export default function StudentConvocations() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [convocations, setConvocations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
-  const convocations = [
-    { id: '276', module: 'Introduction - Génie Informatique', type: 'CC1', date: 'JUIL. 01', time: '09:00 - 10:30', duration: '90 min', room: 'Amphi Al Khwarizmi', ref: 'CONV-2026-000001', days: 6 },
-    { id: '277', module: 'Avancé - Génie Informatique', type: 'CC1', date: 'JUIL. 01', time: '11:00 - 12:30', duration: '90 min', room: 'Amphi Ibn Khaldoun', ref: 'CONV-2026-000301', days: 6 },
-    { id: '278', module: 'Développement mobile', type: 'CC1', date: 'JUIL. 02', time: '09:00 - 10:30', duration: '90 min', room: 'Amphi Al Khwarizmi', ref: 'CONV-2026-000328', days: 7 },
-  ];
+  useEffect(() => {
+    fetchConvocations();
+  }, []);
+
+  const fetchConvocations = async () => {
+    try {
+      setIsLoading(true);
+      // Hardcode studentId 1 for demo purposes if user is not a student
+      const studentId = user?.id || 1;
+      const res = await examsApi.getStudentConvocations(studentId);
+      if (res.success) {
+        setConvocations(res.data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async (convId: number) => {
+    try {
+      setIsDownloading(convId.toString());
+      const blob = await examsApi.downloadConvocationPdf(convId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `convocation_${convId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -98,15 +136,31 @@ export default function StudentConvocations() {
                   <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">JOURS</div>
                 </div>
                 <button 
-                  onClick={() => navigate(`/student/convocations/${conv.id}/download`)}
-                  className="bg-[#0b1021] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#000d26] transition-colors shadow-sm"
+                  onClick={() => handleDownloadPdf(conv.id)}
+                  disabled={isDownloading === conv.id.toString()}
+                  className="bg-[#0b1021] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#000d26] transition-colors shadow-sm disabled:opacity-50"
                 >
-                  <FileText className="w-4 h-4" /> PDF
+                  {isDownloading === conv.id.toString() ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
+                  PDF
                 </button>
               </div>
 
             </div>
           ))}
+          {isLoading && (
+            <div className="py-12 flex justify-center">
+              <Loader2 className="w-8 h-8 text-[#003a8c] animate-spin" />
+            </div>
+          )}
+          {!isLoading && convocations.length === 0 && (
+            <div className="py-12 text-center text-gray-400">
+              Aucune convocation à venir.
+            </div>
+          )}
         </div>
       </div>
 

@@ -61,4 +61,17 @@ class StudentPortalController extends Controller
 
         return response()->json(['success' => true, 'data' => $schedule]);
     }
+
+    /**
+     * Get dashboard stats for the student
+     */
+    public function getDashboardStats(Request $request): JsonResponse
+    {
+        // In a real app: $studentId = $request->user()->student->id;
+        $studentId = $request->input('student_id', 1);
+
+        $stats = $this->portalService->getDashboardStats($studentId);
+
+        return response()->json(['success' => true, 'data' => $stats]);
+    }
 }

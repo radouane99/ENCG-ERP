@@ -3,9 +3,10 @@
 namespace App\Services;
 
 use App\Models\ExamSession;
-use App\Models\Professor;
+use App\Models\User;
+use App\Models\ProfessorAvailability;
 use App\Models\ExamSurveillance;
-use App\Models\ExamSeating;
+use App\Models\Exam;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -17,55 +18,69 @@ class ProctorAssignmentService
      */
     public function autoAssignProctors(int $examSessionId): array
     {
-        $session = ExamSession::with(['rooms'])->find($examSessionId);
+        $session = ExamSession::with(['exams.room'])->find($examSessionId);
         
         if (!$session) {
             return ['success' => false, 'message' => 'Session introuvable.'];
         }
 
-        // Normally we should check ProfessorAvailability, but for this MVP, 
-        // we'll assign randomly from those who don't already have an assignment at this time.
-        
         $assignedCount = 0;
         
         DB::beginTransaction();
         
         try {
-            // Get all professors
-            $availableProfessors = Professor::where('status', 'active')
-                ->whereDoesntHave('surveillances', function ($query) use ($session) {
-                    $query->whereHas('examSession', function ($q) use ($session) {
-                        $q->where('date', $session->date)
-                          ->where(function ($timeQ) use ($session) {
-                              $timeQ->whereBetween('start_time', [$session->start_time, $session->end_time])
-                                    ->orWhereBetween('end_time', [$session->start_time, $session->end_time]);
-                          });
-                    });
+            // Get all professors who have submitted their availability
+            $availableProfessors = User::whereHas('roles', function($q) {
+                    $q->where('name', 'professor');
                 })
-                ->get()
-                ->shuffle(); // Simple load balancing (randomize)
+                ->where('is_active', true)
+                ->whereHas('availabilities', function ($q) {
+                    $q->where('status', 'Soumise')
+                      ->orWhere('status', 'submitted');
+                })
+                ->get();
 
-            $professorIndex = 0;
-            
-            // For each room in the session, assign 2 proctors (surveillants)
-            foreach ($session->rooms as $room) {
-                $proctorsNeeded = 2; // Can be dynamic based on room capacity
+            // Check if we have any available professors
+            if ($availableProfessors->isEmpty()) {
+                 DB::rollBack();
+                 return ['success' => false, 'message' => 'Aucun professeur n\'a soumis de disponibilité.'];
+            }
+
+            foreach ($session->exams as $exam) {
+                if (!$exam->room_id) continue;
                 
-                for ($i = 0; $i < $proctorsNeeded; $i++) {
-                    if (isset($availableProfessors[$professorIndex])) {
-                        $prof = $availableProfessors[$professorIndex];
-                        
-                        // Create surveillance assignment
+                // We should ensure we don't assign the same professor to multiple exams at the exact same time
+                $examDate = $exam->exam_date ? $exam->exam_date->format('Y-m-d') : null;
+                
+                if (!$examDate) continue;
+
+                // Shuffle for basic load balancing
+                $shuffledProfs = $availableProfessors->shuffle();
+                
+                $proctorsNeeded = 2; // Default to 2 proctors per room
+                $assignedForExam = 0;
+
+                foreach ($shuffledProfs as $prof) {
+                    if ($assignedForExam >= $proctorsNeeded) break;
+
+                    // Basic check: is prof already assigned at this time?
+                    $alreadyAssigned = ExamSurveillance::where('professor_id', $prof->id)
+                        ->whereHas('exam', function($q) use ($examDate, $exam) {
+                            $q->where('exam_date', $examDate)
+                              ->where('start_time', $exam->start_time);
+                        })->exists();
+
+                    if (!$alreadyAssigned) {
                         ExamSurveillance::create([
-                            'exam_session_id' => $session->id,
-                            'room_id' => $room->id,
+                            'exam_id' => $exam->id,
+                            'room_id' => $exam->room_id,
                             'professor_id' => $prof->id,
-                            'role' => $i === 0 ? 'principal' : 'assistant', // First is principal
-                            'status' => 'assigned'
+                            'role' => $assignedForExam === 0 ? 'principal' : 'assistant',
+                            'has_attended' => false
                         ]);
                         
                         $assignedCount++;
-                        $professorIndex++;
+                        $assignedForExam++;
                     }
                 }
             }
@@ -74,7 +89,7 @@ class ProctorAssignmentService
             
             return [
                 'success' => true, 
-                'message' => "$assignedCount surveillants ont été affectés avec succès."
+                'message' => "$assignedCount affectations de surveillance ont été générées avec succès."
             ];
             
         } catch (\Exception $e) {

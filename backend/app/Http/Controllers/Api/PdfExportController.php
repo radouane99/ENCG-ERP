@@ -46,6 +46,16 @@ class PdfExportController extends Controller
         return $pdf->download('convocations_session.pdf');
     }
 
+    public function studentConvocationPdf($convocationId)
+    {
+        $pdf = $this->getPdfInstance('pdf.generic_report', [
+            'title' => 'Convocation d\'Examen',
+            'description' => 'Ceci est votre convocation officielle pour l\'examen. Veuillez vous munir de votre carte d\'étudiant.',
+            'ref' => 'CONV-' . date('Y') . '-' . str_pad($convocationId, 6, '0', STR_PAD_LEFT)
+        ]);
+        return $pdf->download("convocation_etudiant_{$convocationId}.pdf");
+    }
+
     public function printProfessors(Request $request)
     {
         $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Surveillants']);

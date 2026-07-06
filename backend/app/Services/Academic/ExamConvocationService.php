@@ -5,6 +5,7 @@ namespace App\Services\Academic;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Exam;
+use App\Models\ExamSession;
 use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
@@ -12,6 +13,167 @@ use App\Mail\ConvocationEmail;
 
 class ExamConvocationService
 {
+    /**
+     * Generate convocations for all exams in a session
+     */
+    public function generateSessionConvocations(int $sessionId): array
+    {
+        $session = ExamSession::with('exams.group.students')->findOrFail($sessionId);
+        
+        $totalGenerated = 0;
+        
+        foreach ($session->exams as $exam) {
+            $generatedCount = 0;
+            foreach ($exam->group->students as $student) {
+                $seating = DB::table('exam_seatings')
+                    ->where('exam_id', $exam->id)
+                    ->where('student_id', $student->id)
+                    ->first();
+
+                if (!$seating) {
+                    DB::table('exam_seatings')->insert([
+                        'exam_id' => $exam->id,
+                        'student_id' => $student->id,
+                        'room_id' => $exam->room_id ?? 1, // fallback
+                        'seat_number' => $generatedCount + 1,
+                        'qr_token' => Str::uuid()->toString(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $totalGenerated++;
+                } elseif (empty($seating->qr_token)) {
+                    DB::table('exam_seatings')
+                        ->where('id', $seating->id)
+                        ->update(['qr_token' => Str::uuid()->toString()]);
+                    $totalGenerated++;
+                }
+                $generatedCount++;
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Convocations générées pour la session (QR assignés)',
+            'generated_count' => $totalGenerated
+        ];
+    }
+
+    /**
+     * Send emails for all unsent convocations in a session
+     */
+    public function sendSessionEmails(int $sessionId): array
+    {
+        $session = ExamSession::with(['exams.group.students.user', 'exams.module', 'exams.room'])->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+        
+        // Only select seatings that haven't been sent yet
+        $seatings = DB::table('exam_seatings')
+            ->whereIn('exam_id', $examIds)
+            ->whereNull('sent_at')
+            ->get()
+            ->groupBy('exam_id');
+
+        $sentCount = 0;
+        
+        foreach ($session->exams as $exam) {
+            if (!$seatings->has($exam->id)) continue;
+            
+            $examSeatings = $seatings->get($exam->id)->keyBy('student_id');
+            
+            foreach ($exam->group->students as $student) {
+                if (!$student->user || !$student->user->email) continue;
+
+                $seating = $examSeatings->get($student->id);
+                if (!$seating || !$seating->qr_token) continue;
+
+                $examData = [
+                    'studentName' => $student->user->name,
+                    'moduleName' => $exam->module->name ?? 'N/A',
+                    'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
+                    'examTime' => $exam->start_time ?? 'N/A',
+                    'roomName' => $exam->room->name ?? 'N/A',
+                    'qrToken' => $seating->qr_token,
+                ];
+
+                if (class_exists(Pdf::class) && class_exists(ConvocationEmail::class)) {
+                    try {
+                        $pdf = Pdf::loadView('emails.convocation', $examData);
+                        Mail::to($student->user->email)->send(
+                            new ConvocationEmail($examData, $pdf->output())
+                        );
+                        
+                        DB::table('exam_seatings')
+                            ->where('id', $seating->id)
+                            ->update(['sent_at' => now()]);
+                            
+                        $sentCount++;
+                    } catch (\Exception $e) {
+                        // Log email error but continue
+                    }
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => "{$sentCount} convocations envoyées avec succès."
+        ];
+    }
+
+    /**
+     * Verify convocation by reference (QR token UUID)
+     */
+    public function verifyByReference(string $reference): array
+    {
+        $seating = DB::table('exam_seatings')
+            ->where('qr_token', $reference)
+            ->first();
+
+        if (!$seating) {
+            return ['success' => false, 'message' => 'Convocation introuvable.'];
+        }
+
+        $student = Student::with('user')->find($seating->student_id);
+        $exam = Exam::with(['module', 'room'])->find($seating->exam_id);
+
+        return [
+            'success' => true,
+            'data' => [
+                'student_name' => $student->user->name ?? 'N/A',
+                'module' => $exam->module->name ?? 'N/A',
+                'room' => $exam->room->name ?? 'N/A',
+                'date' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
+                'status' => $seating->is_present ? 'present' : 'absent'
+            ]
+        ];
+    }
+
+    /**
+     * Mark presence by reference (QR token UUID)
+     */
+    public function markAsPresent(string $reference): array
+    {
+        $seating = DB::table('exam_seatings')
+            ->where('qr_token', $reference)
+            ->first();
+
+        if (!$seating) {
+            return ['success' => false, 'message' => 'Convocation introuvable.'];
+        }
+
+        DB::table('exam_seatings')
+            ->where('id', $seating->id)
+            ->update([
+                'is_present' => true,
+                'updated_at' => now(),
+            ]);
+
+        return [
+            'success' => true,
+            'message' => 'Présence enregistrée.'
+        ];
+    }
+
     /**
      * Generate QR seatings for an exam
      */

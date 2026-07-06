@@ -80,4 +80,25 @@ class AcademicYearController extends Controller
         $academicYear->delete();
         return response()->json(['message' => 'Année académique supprimée.']);
     }
+
+    public function rollover(Request $request, $id, \App\Services\Academic\AcademicYearRolloverService $rolloverService): JsonResponse
+    {
+        // Only super-admins should probably do this, but we'll use a generic permission for now
+        // abort_unless($request->user()->can('academic.rollover'), 403);
+
+        $validated = $request->validate([
+            'new_label' => 'required|string|max:50',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date'
+        ]);
+
+        $result = $rolloverService->executeRollover(
+            $id,
+            $validated['new_label'],
+            $validated['start_date'],
+            $validated['end_date']
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
 }

@@ -6,7 +6,7 @@ import {
   FileQuestion, Lightbulb, GraduationCap, Copy, CheckCircle2,
   Mic, MicOff, Volume2, Square
 } from 'lucide-react'
-import api from '@shared/lib/api'
+import { aiApi } from '@shared/api/ai'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
@@ -37,8 +37,8 @@ export default function AiAssistantPage() {
   useQuery({
     queryKey: ['chat-history'],
     queryFn: async () => {
-      const res = await api.get('/chatbot/history')
-      return res.data.messages
+      const res = await aiApi.getHistory()
+      return res.messages
     },
     onSuccess: (data) => {
       if (data && data.length > 0) {
@@ -56,9 +56,9 @@ export default function AiAssistantPage() {
 
   // Chat Mutation
   const chatMutation = useMutation({
-    mutationFn: (message: string) => api.post('/chatbot/message', { message }),
+    mutationFn: (message: string) => aiApi.sendMessage(message),
     onSuccess: (res) => {
-      setMessages(prev => [...prev, { role: 'assistant', content: res.data.reply }])
+      setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
     },
     onError: () => toast.error(isRtl ? 'حدث خطأ' : 'Erreur de connexion à l\'IA')
   })
@@ -66,12 +66,10 @@ export default function AiAssistantPage() {
   // Transcribe Mutation
   const transcribeMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
-      const formData = new FormData()
-      formData.append('audio', audioBlob, 'audio.webm')
-      const res = await api.post('/chatbot/transcribe', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      return res.data
+      // Create a file from blob
+      const file = new File([audioBlob], 'audio.webm', { type: 'audio/webm' })
+      const res = await aiApi.transcribeAudio(file)
+      return res
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -88,9 +86,9 @@ export default function AiAssistantPage() {
 
   // QCM Mutation
   const qcmMutation = useMutation({
-    mutationFn: (topic: string) => api.post('/professor/ai/generate-qcm', { topic, difficulty: 'intermediate' }),
+    mutationFn: (topic: string) => aiApi.generateQuiz({ topic, difficulty: 'intermediate' }),
     onSuccess: (res) => {
-      setQcmResult(res.data.quiz)
+      setQcmResult(res.quiz)
       toast.success(isRtl ? 'تم إنشاء الاختبار' : 'QCM généré avec succès')
     },
     onError: () => toast.error(isRtl ? 'فشل التوليد' : 'Échec de la génération')

@@ -81,7 +81,7 @@ class LmsCourseController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:document,video,link,quiz_bank',
-            'file' => 'nullable|file|max:51200', // max 50MB
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:51200', // max 50MB, strict mimes
             'external_url' => 'nullable|url',
         ]);
 

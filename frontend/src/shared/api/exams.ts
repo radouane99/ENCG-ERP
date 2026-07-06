@@ -37,9 +37,35 @@ export const examsApi = {
     const response = await api.get(`/exam-planning/${examId}/live-stats`); // Temp reuse
     return response.data;
   },
+  generateSession: async () => {
+    const response = await api.post('/exam-planning/generate-session');
+    return response.data;
+  },
+  createExam: async (data: any) => {
+    const response = await api.post('/exam-planning/store', data);
+    return response.data;
+  },
+  checkRoomConflict: async (data: any) => {
+    const response = await api.post('/exam-planning/check-conflict', data);
+    return response.data;
+  },
+  getStudentConvocations: async (studentId: number) => {
+    const response = await api.get(`/exam-planning/student/${studentId}`);
+    return response.data;
+  },
+  downloadConvocationPdf: async (convocationId: number) => {
+    const response = await api.get(`/exam-planning/student/${convocationId}/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
   generateConvocations: async (examId: number) => {
     const response = await api.post(`/exam-planning/${examId}/generate-convocations`);
     return response.data;
+  },
+  getExamDetails: async (examId: number) => {
+    const response = await api.get(`/exam-planning/${examId}/details`);
+    return response.data.data;
   },
   autoAssignProctors: async (sessionId: number) => {
     const response = await api.post(`/exam-planning/${sessionId}/auto-assign-proctors`);

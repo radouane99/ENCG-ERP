@@ -5,12 +5,20 @@ namespace App\Services\Academic;
 use App\Models\Module;
 use App\Models\Room;
 use App\Models\Group;
+use App\Models\Semester;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
 
-class SmartSchedulingEngine
+class SmartSchedulingService
 {
+    protected ScheduleConflictService $conflictService;
+
+    public function __construct(ScheduleConflictService $conflictService)
+    {
+        $this->conflictService = $conflictService;
+    }
+
     /**
      * Standard time blocks for Moroccan universities (2-hour blocks)
      */
@@ -27,12 +35,17 @@ class SmartSchedulingEngine
     protected const DAYS = [1, 2, 3, 4, 5, 6];
 
     /**
-     * Generate an entire semester timetable
-     * Uses a greedy constraint solver approach
+     * Generate an entire semester timetable for a filière
      */
-    public function generateSemesterTimetable(int $institutionId, int $academicYearId, int $semesterId, int $filiereId): array
+    public function generate(int $semesterId, int $filiereId): array
     {
-        $generatedSessions = [];
+        // Get academic year from semester
+        $semester = Semester::findOrFail($semesterId);
+        $academicYearId = $semester->academic_year_id;
+        $institutionId = $semester->academicYear->institution_id ?? 1; // fallback
+
+        $generatedCount = 0;
+        $failedCount = 0;
         $conflicts = [];
 
         // 1. Fetch data
@@ -57,9 +70,7 @@ class SmartSchedulingEngine
             foreach ($groups as $group) {
                 foreach ($modules as $module) {
                     
-                    // Determine how many 2-hour blocks are needed (e.g. 48h / 14 weeks = ~3.4h/week -> 2 blocks)
-                    // For demo purposes, we will try to place 2 blocks per module per group
-                    $blocksNeeded = 2; 
+                    $blocksNeeded = 2; // For demo purposes, we will try to place 2 blocks per module per group
 
                     // Fetch assigned professor for this module and group
                     $assignment = DB::table('module_professor')
@@ -86,15 +97,24 @@ class SmartSchedulingEngine
                             })->first();
 
                             if (!$suitableRoom) {
-                                $conflicts[] = "Pas de salle de type $roomTypeNeeded assez grande pour le groupe {$group->name}";
+                                $conflicts[] = "Pas de salle ({$roomTypeNeeded}) assez grande pour le groupe {$group->name}";
                                 continue;
                             }
 
-                            // Check constraints
-                            if ($this->isSlotFree($day, $block['start'], $block['end'], $suitableRoom->id, $assignment->professor_id, $group->id, $academicYearId)) {
-                                
+                            // Use the Conflict Service to validate the slot
+                            $validation = $this->conflictService->validateSlot(
+                                $academicYearId,
+                                $day,
+                                $block['start'],
+                                $block['end'],
+                                $suitableRoom->id,
+                                $assignment->professor_id,
+                                $group->id
+                            );
+
+                            if ($validation['isValid']) {
                                 // Schedule it
-                                $scheduleId = DB::table('schedules')->insertGetId([
+                                DB::table('schedules')->insert([
                                     'institution_id' => $institutionId,
                                     'academic_year_id' => $academicYearId,
                                     'semester_id' => $semesterId,
@@ -112,13 +132,16 @@ class SmartSchedulingEngine
                                     'updated_at' => now()
                                 ]);
 
-                                $generatedSessions[] = $scheduleId;
+                                $generatedCount++;
                                 $blocksScheduled++;
+                            } else {
+                                // Conflict detected, try the next slot (done by loop)
                             }
                         }
                     }
 
                     if ($blocksScheduled < $blocksNeeded) {
+                        $failedCount++;
                         $conflicts[] = "Impossible de placer le module {$module->name} pour le groupe {$group->name} (Manque de créneaux)";
                     }
                 }
@@ -128,8 +151,9 @@ class SmartSchedulingEngine
 
             return [
                 'success' => true,
-                'message' => 'Emploi du temps généré avec succès',
-                'sessions_generated' => count($generatedSessions),
+                'planifiés' => $generatedCount,
+                'échoués' => $failedCount,
+                'message' => 'Génération automatique terminée',
                 'conflicts' => array_unique($conflicts)
             ];
 
@@ -137,57 +161,10 @@ class SmartSchedulingEngine
             DB::rollBack();
             return [
                 'success' => false,
+                'planifiés' => 0,
+                'échoués' => 0,
                 'message' => 'Erreur lors de la génération: ' . $e->getMessage()
             ];
         }
-    }
-
-    /**
-     * Check if a specific time slot is free regarding all Hard Constraints.
-     */
-    public function isSlotFree(int $day, string $start, string $end, int $roomId, int $profId, int $groupId, int $academicYearId, ?int $excludeScheduleId = null): bool
-    {
-        $query = DB::table('schedules')
-            ->where('academic_year_id', $academicYearId)
-            ->where('day_of_week', $day)
-            ->where('is_active', true)
-            ->where(function($q) use ($start, $end) {
-                // Time overlap check
-                $q->where(function($sub) use ($start, $end) {
-                    $sub->where('start_time', '<', $end)
-                        ->where('end_time', '>', $start);
-                });
-            });
-
-        if ($excludeScheduleId) {
-            $query->where('id', '!=', $excludeScheduleId);
-        }
-
-        // Check Room Conflict
-        $roomConflict = (clone $query)->where('room_id', $roomId)->exists();
-        if ($roomConflict) return false;
-
-        // Check Group Conflict
-        $groupConflict = (clone $query)->where('group_id', $groupId)->exists();
-        if ($groupConflict) return false;
-
-        // Check Professor Conflict
-        $profConflict = (clone $query)->where('professor_id', $profId)->exists();
-        if ($profConflict) return false;
-
-        // Check Professor Availability Preference
-        $isProfAvailable = DB::table('professor_availability')
-            ->where('professor_id', $profId)
-            ->where('academic_year_id', $academicYearId)
-            ->where('day_of_week', $day)
-            ->where('is_available', false)
-            ->where('start_time', '<=', $start)
-            ->where('end_time', '>=', $end)
-            ->exists();
-
-        // If an explicit unavailability record covers this slot, they are NOT free
-        if ($isProfAvailable) return false;
-
-        return true;
     }
 }

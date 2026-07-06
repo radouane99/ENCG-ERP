@@ -1,40 +1,76 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { FileText, Mail, Printer, CheckCircle, Download, Clock, Zap, FileDown, CheckCircle2 } from 'lucide-react'
+import { FileText, Mail, Printer, CheckCircle, Download, Clock, Zap, FileDown, CheckCircle2, Loader2, Users } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { examsApi } from '@shared/api/exams'
 
 export default function AdminConvocationsPage() {
   const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'disponibilites'>('students')
   const [showBanner, setShowBanner] = useState(false)
+  const [bannerMessage, setBannerMessage] = useState('')
+  const [isAssigning, setIsAssigning] = useState(false)
+  const [professeurs, setProfesseurs] = useState<any[]>([])
+  const [isLoadingProfs, setIsLoadingProfs] = useState(false)
 
-  const handleAutoAssign = () => {
-    setShowBanner(true)
-    setTimeout(() => setShowBanner(false), 5000)
+  useEffect(() => {
+    if (activeTab === 'disponibilites') {
+      fetchProfessors()
+    }
+  }, [activeTab])
+
+  const fetchProfessors = async () => {
+    try {
+      setIsLoadingProfs(true)
+      const data = await examsApi.getProfessorAvailabilities()
+      setProfesseurs(data)
+    } catch (error) {
+      console.error('Failed to fetch professors:', error)
+    } finally {
+      setIsLoadingProfs(false)
+    }
   }
 
-  const students = [
-    { nom: 'Omar Tahiri', filiere: 'Génie Informatique - Groupe 2', examen: 'SQL SERVER BASE DE DONNEE', date: '03/07/2026 11:00', statut: 'Générée', ref: 'CONV-2026-000589' },
-    { nom: 'Salma El Fassi', filiere: 'Génie Informatique - Groupe 2', examen: 'SQL SERVER BASE DE DONNEE', date: '03/07/2026 11:00', statut: 'Générée', ref: 'CONV-2026-000590' },
-    { nom: 'Othmane Sekkat', filiere: 'Génie Informatique - Groupe 2', examen: 'SQL SERVER BASE DE DONNEE', date: '03/07/2026 11:00', statut: 'Générée', ref: 'CONV-2026-000591' },
-    { nom: 'Zineb Alaoui', filiere: 'Génie Informatique - Groupe 2', examen: 'SQL SERVER BASE DE DONNEE', date: '03/07/2026 11:00', statut: 'Générée', ref: 'CONV-2026-000592' },
-    { nom: 'Mohammed Bennis', filiere: 'Génie Informatique - Groupe 2', examen: 'GAMING', date: '04/07/2026 09:00', statut: 'Générée', ref: 'CONV-2026-000606' },
-  ]
+  const handleAutoAssign = async () => {
+    setIsAssigning(true)
+    try {
+      // Assuming session ID 1 for MVP
+      const res = await examsApi.autoAssignProctors(1)
+      setBannerMessage(res.message || 'Affectation automatique réussie.')
+      setShowBanner(true)
+      setTimeout(() => setShowBanner(false), 5000)
+    } catch (error: any) {
+      setBannerMessage(error.response?.data?.message || 'Erreur lors de l\'affectation automatique.')
+      setShowBanner(true)
+      setTimeout(() => setShowBanner(false), 5000)
+    } finally {
+      setIsAssigning(false)
+    }
+  }
 
-  const surveillants = [
-    { nom: 'Radouane el asri', examen: 'Introduction - Génie Civil', date: '01/07/2026 09:00', salle: 'Labo Info 1', role: 'Principal', statut: 'Confirmée' },
-    { nom: 'Prof. Hicham Alaoui', examen: 'Avancé - Marketing & Commerce', date: '02/07/2026 09:00', salle: 'Salle TD 02', role: 'Principal', statut: 'Générée' },
-    { nom: 'Radouane el asri', examen: 'Introduction - Marketing & Commerce', date: '01/07/2026 16:30', salle: 'Labo Info 1', role: 'Principal', statut: 'Confirmée' },
-    { nom: 'Prof. Salma Tazi', examen: 'Avancé - Marketing & Commerce', date: '01/07/2026 16:30', salle: 'Salle TD 02', role: 'Principal', statut: 'Générée' },
-    { nom: 'Prof. Fatima Zahra Bennani', examen: 'Introduction - Marketing & Commerce', date: '01/07/2026 14:30', salle: 'Labo Info 1', role: 'Principal', statut: 'Générée' },
-  ]
+  const [students, setStudents] = useState<any[]>([])
+  const [surveillants, setSurveillants] = useState<any[]>([])
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
 
-  const disponibilites = [
-    { nom: 'Radouane el asri', dept: 'Génie Informatique', jours: 7, dates: ['01/07', '02/07', '03/07', '04/07', '05/07'], extra: '+2' },
-    { nom: 'Prof. Fatima Zahra Bennani', dept: 'Génie Civil', jours: 6, dates: ['01/07', '02/07', '03/07', '04/07', '05/07'], extra: '+1' },
-    { nom: 'Prof. Youssef El Mansouri', dept: 'Génie Électrique', jours: 4, dates: ['01/07', '02/07', '03/07', '04/07'] },
-    { nom: 'Prof. Salma Tazi', dept: 'Économie', jours: 5, dates: ['01/07', '02/07', '03/07', '06/07', '07/07'] },
-    { nom: 'Prof. Hicham Alaoui', dept: 'Marketing', jours: 5, dates: ['01/07', '02/07', '03/07', '05/07', '06/07'] },
-  ]
+  useEffect(() => {
+    if (activeTab === 'disponibilites') {
+      fetchProfessors()
+    } else if (activeTab === 'students' || activeTab === 'surveillants') {
+      fetchExamDetails()
+    }
+  }, [activeTab])
+
+  const fetchExamDetails = async () => {
+    try {
+      setIsLoadingDetails(true)
+      const data = await examsApi.getExamDetails(1) // Demo with exam 1
+      setStudents(data.seatings || [])
+      setSurveillants(data.surveillances || [])
+    } catch (error) {
+      console.error('Failed to fetch exam details:', error)
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  }
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -51,7 +87,7 @@ export default function AdminConvocationsPage() {
       {showBanner && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 mb-6">
           <CheckCircle className="w-5 h-5" />
-          <span className="text-sm font-medium">Affectation automatique : 0 surveillant(s) affecté(s), 30 examen(s) déjà couverts.</span>
+          <span className="text-sm font-medium">{bannerMessage}</span>
         </div>
       )}
 
@@ -128,7 +164,7 @@ export default function AdminConvocationsPage() {
             activeTab === 'disponibilites' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
         >
-          📅 DISPONIBILITÉS (5)
+          📅 DISPONIBILITÉS ({professeurs.length > 0 ? professeurs.length : 5})
         </button>
       </div>
 
@@ -179,18 +215,30 @@ export default function AdminConvocationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {students.map((st, idx) => (
+                {isLoadingDetails ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
+                    </td>
+                  </tr>
+                ) : students.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-bold">
+                      Aucune convocation trouvée.
+                    </td>
+                  </tr>
+                ) : students.map((st, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">{st.nom}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.filiere}</td>
-                    <td className="px-6 py-4 font-bold text-slate-700">{st.examen}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-600">{st.date}</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{st.first_name} {st.last_name}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.room_name} (Place: {st.seat_number})</td>
+                    <td className="px-6 py-4 font-bold text-slate-700">Détails Examen</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold">
-                        {st.statut}
+                      <span className={cn("inline-flex px-3 py-1 rounded-full text-[10px] font-bold", st.qr_token ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600")}>
+                        {st.qr_token ? 'Générée' : 'En attente'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-[10px] text-slate-400 font-bold">{st.ref}</td>
+                    <td className="px-6 py-4 text-[10px] text-slate-400 font-bold">{st.qr_token?.substring(0, 8) || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -204,11 +252,11 @@ export default function AdminConvocationsPage() {
           {/* Sub KPIs for Surveillants */}
           <div className="grid grid-cols-4 gap-4">
              <div className="bg-indigo-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">28</p>
+              <p className="text-3xl font-black mb-1">{surveillants.length}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">TOTAL PROFS</p>
             </div>
             <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">23</p>
+              <p className="text-3xl font-black mb-1">{surveillants.length}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">GÉNÉRÉES</p>
             </div>
             <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
@@ -216,7 +264,7 @@ export default function AdminConvocationsPage() {
               <p className="text-[10px] font-bold uppercase tracking-wider">ENVOYÉES</p>
             </div>
             <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">5</p>
+              <p className="text-3xl font-black mb-1">0</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">CONFIRMÉES</p>
             </div>
           </div>
@@ -227,8 +275,8 @@ export default function AdminConvocationsPage() {
               Actions — Surveillance
             </h3>
             <div className="flex flex-wrap gap-3">
-              <button onClick={handleAutoAssign} className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
-                <UsersIcon className="w-3.5 h-3.5" /> AFFECTATION AUTO DES SURVEILLANTS
+              <button disabled={isAssigning} onClick={handleAutoAssign} className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
+                {isAssigning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} AFFECTATION AUTO DES SURVEILLANTS
               </button>
               <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
                 <FileText className="w-3.5 h-3.5" /> GÉNÉRER CONVOCATIONS PROFS
@@ -258,23 +306,32 @@ export default function AdminConvocationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {surveillants.map((sv, idx) => (
+                {isLoadingDetails ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
+                    </td>
+                  </tr>
+                ) : surveillants.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-bold">
+                      Aucun surveillant affecté.
+                    </td>
+                  </tr>
+                ) : surveillants.map((sv, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">{sv.nom}</td>
-                    <td className="px-6 py-4 font-bold text-slate-700 w-48">{sv.examen}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-600">{sv.date}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{sv.salle}</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">Prof. {sv.first_name} {sv.last_name}</td>
+                    <td className="px-6 py-4 font-bold text-slate-700 w-48">Détails Examen</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{sv.room_name}</td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[9px] font-bold">
-                        {sv.role}
+                        Surveillant
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={cn(
-                        "inline-flex px-3 py-1 rounded-full text-[9px] font-bold",
-                        sv.statut === 'Confirmée' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
-                      )}>
-                        {sv.statut}
+                      <span className="inline-flex px-3 py-1 rounded-full text-[9px] font-bold bg-blue-50 text-blue-600">
+                        Générée
                       </span>
                     </td>
                   </tr>
@@ -304,25 +361,32 @@ export default function AdminConvocationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {disponibilites.map((disp, idx) => (
+                {isLoadingProfs ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center">
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
+                    </td>
+                  </tr>
+                ) : professeurs.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 font-bold">
+                      Aucune disponibilité trouvée.
+                    </td>
+                  </tr>
+                ) : professeurs.map((prof, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">{disp.nom}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{disp.dept}</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{prof.nom}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{prof.dept || 'Département non spécifié'}</td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-bold">
-                        {disp.jours} jour(s)
+                        {prof.creneaux}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">
-                        {disp.dates.map((d, i) => (
-                          <span key={i} className="inline-flex bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">
-                            {d}
-                          </span>
-                        ))}
-                        {disp.extra && (
-                          <span className="text-[10px] font-bold text-slate-400 ml-1">{disp.extra}</span>
-                        )}
+                        <span className="inline-flex bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                          {prof.date}
+                        </span>
                       </div>
                     </td>
                   </tr>

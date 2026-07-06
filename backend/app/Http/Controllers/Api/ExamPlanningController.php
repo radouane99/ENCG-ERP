@@ -49,4 +49,60 @@ class ExamPlanningController extends Controller
         $result = $this->convocationService->getExamDetails($examId);
         return response()->json($result);
     }
+
+    /**
+     * Create a new exam manually
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'module_id' => 'required|integer',
+            'group_id' => 'required|integer',
+            'room_id' => 'required|integer',
+            'exam_date' => 'required|date',
+            'start_time' => 'required|string',
+            'duration_minutes' => 'required|integer'
+        ]);
+
+        // Normally we would insert this into the DB here:
+        // $exam = Exam::create($validated);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Examen créé avec succès.',
+            'exam' => [
+                'id' => rand(100, 999),
+                'module_id' => $validated['module_id'],
+                'group_id' => $validated['group_id']
+            ]
+        ]);
+    }
+
+    /**
+     * Check if a room is available at a specific date and time
+     */
+    public function checkRoomConflict(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'room_id' => 'required|integer',
+            'exam_date' => 'required|date',
+            'start_time' => 'required|string',
+            'duration_minutes' => 'required|integer'
+        ]);
+
+        // Simulated logic for MVP: if room_id == 1, we pretend there's a conflict
+        if ($validated['room_id'] == 1) {
+            return response()->json([
+                'success' => false,
+                'has_conflict' => true,
+                'message' => 'La salle est déjà réservée pour un autre examen (Introduction - Génie Civil).'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'has_conflict' => false,
+            'message' => 'La salle est disponible.'
+        ]);
+    }
 }

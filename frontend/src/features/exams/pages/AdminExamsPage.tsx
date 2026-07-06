@@ -22,16 +22,55 @@ export default function AdminExamsPage() {
   }
 
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const [showManualModal, setShowManualModal] = useState(false)
+  const [manualForm, setManualForm] = useState({
+    module_id: 1,
+    group_id: 1,
+    room_id: 1,
+    exam_date: '',
+    start_time: '',
+    duration_minutes: 90
+  })
+  const [conflictMsg, setConflictMsg] = useState('')
+  const [isCheckingConflict, setIsCheckingConflict] = useState(false)
+
   const handleAutoGenerate = async () => {
     setIsAutoGenerating(true)
     try {
-      // Simulate auto-generation for a session
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      handleNotify('Planification et convocations générées automatiquement avec succès.')
-    } catch (error) {
-      handleNotify('Erreur lors de la génération automatique.')
+      const res = await examsApi.generateSession()
+      handleNotify(res.message || 'Planification et convocations générées automatiquement avec succès.')
+    } catch (error: any) {
+      handleNotify(error.response?.data?.message || 'Erreur lors de la génération automatique.')
     } finally {
       setIsAutoGenerating(false)
+    }
+  }
+
+  const handleCheckConflict = async () => {
+    if (!manualForm.room_id || !manualForm.exam_date || !manualForm.start_time) return;
+    setIsCheckingConflict(true)
+    setConflictMsg('')
+    try {
+      const res = await examsApi.checkRoomConflict(manualForm)
+      if (res.has_conflict) {
+        setConflictMsg(res.message)
+      } else {
+        setConflictMsg('Salle disponible !')
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsCheckingConflict(false)
+    }
+  }
+
+  const handleCreateManual = async () => {
+    try {
+      await examsApi.createExam(manualForm)
+      setShowManualModal(false)
+      handleNotify('Examen créé manuellement avec succès.')
+    } catch (error) {
+      handleNotify('Erreur lors de la création de l\'examen.')
     }
   }
 
@@ -82,7 +121,9 @@ export default function AdminExamsPage() {
               {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <ZapIcon className="w-4 h-4 text-amber-400" />} 
               AUTO-GÉNÉRER
             </button>
-            <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2">
+            <button 
+              onClick={() => setShowManualModal(true)}
+              className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2">
               + MANUEL
             </button>
           </div>
@@ -93,6 +134,68 @@ export default function AdminExamsPage() {
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 mb-6">
           <CheckSquare className="w-5 h-5" />
           <span className="text-sm font-medium">{notificationMsg}</span>
+        </div>
+      )}
+
+      {showManualModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[#0f2863]">Créer un examen manuellement</h2>
+              <button onClick={() => setShowManualModal(false)} className="text-slate-400 hover:text-slate-600">X</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Module</label>
+                  <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.module_id} onChange={(e) => setManualForm({...manualForm, module_id: Number(e.target.value)})}>
+                    <option value={1}>Bases de données</option>
+                    <option value={2}>Algorithmique</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Groupe</label>
+                  <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.group_id} onChange={(e) => setManualForm({...manualForm, group_id: Number(e.target.value)})}>
+                    <option value={1}>Groupe 1</option>
+                    <option value={2}>Groupe 2</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Salle</label>
+                  <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.room_id} onChange={(e) => {
+                    setManualForm({...manualForm, room_id: Number(e.target.value)});
+                    setConflictMsg('');
+                  }}>
+                    <option value={1}>Amphi Ibn Khaldoun (Cap: 200)</option>
+                    <option value={2}>Salle TD 1 (Cap: 40)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Date</label>
+                  <input type="date" className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.exam_date} onChange={(e) => setManualForm({...manualForm, exam_date: e.target.value})} onBlur={handleCheckConflict} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Heure</label>
+                  <input type="time" className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.start_time} onChange={(e) => setManualForm({...manualForm, start_time: e.target.value})} onBlur={handleCheckConflict} />
+                </div>
+              </div>
+              
+              {isCheckingConflict ? (
+                <div className="text-xs text-blue-500 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> Vérification de la disponibilité...</div>
+              ) : conflictMsg ? (
+                <div className={cn("text-xs font-bold p-2 rounded", conflictMsg.includes('disponible') ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
+                  {conflictMsg.includes('disponible') ? <CheckSquare className="w-4 h-4 inline mr-1" /> : <AlertTriangle className="w-4 h-4 inline mr-1" />}
+                  {conflictMsg}
+                </div>
+              ) : null}
+            </div>
+            <div className="p-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+              <button onClick={() => setShowManualModal(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800">Annuler</button>
+              <button onClick={handleCreateManual} disabled={conflictMsg !== '' && !conflictMsg.includes('disponible')} className="bg-[#0f2863] text-white px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50">
+                Créer l'examen
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
