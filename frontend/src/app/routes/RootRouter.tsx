@@ -14,8 +14,8 @@ const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
 const InscriptionPage = lazy(() => import('@features/public/pages/InscriptionPage'))
 const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage')) // Fallback for now if it doesn't exist
 
-const StudentRouter = lazy(() => import('./app/routes/StudentRouter'))
-const ProfessorRouter = lazy(() => import('./app/routes/ProfessorRouter'))
+const StudentRouter = lazy(() => import('./StudentRouter'))
+const ProfessorRouter = lazy(() => import('./ProfessorRouter'))
 
 // Professor Portal
 const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'))
@@ -168,6 +168,8 @@ const AdminAbsencesPage = lazy(() => import('@features/absences/ui/pages/AdminAb
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
 const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
 const AdminInternshipsPage = lazy(() => import('@features/internships/ui/pages/AdminInternshipsPage'))
+const AdminConvocationsUIPage = lazy(() => import('@features/exams/ui/pages/AdminConvocationsPage'))
+const AdminRequestsPage = lazy(() => import('@features/admin/pages/AdminRequestsPage'))
 const AdminMessagesPage = lazy(() => import('@features/admin/pages/AdminMessagesPage'))
 const AdminActivityLogsPage = lazy(() => import('@features/admin/pages/AdminActivityLogsPage'))
 const AdminEvaluationsPage = lazy(() => import('@features/admin/pages/AdminEvaluationsPage'))
@@ -309,7 +311,7 @@ export default function RootRouter() {
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
           
           {/* Convocations Officielles */}
-          <Route path="/academic/convocations/dashboard" element={<ConvocationDashboard />} />
+          <Route path="/academic/convocations/dashboard" element={<AdminConvocationsUIPage />} />
           <Route path="/academic/convocations/student/:id/print" element={<StudentConvocationPdf />} />
           <Route path="/academic/convocations/professor/:id/print" element={<ProfessorConvocationPdf />} />
 

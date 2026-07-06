@@ -162,6 +162,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/store', [\App\Http\Controllers\Api\ExamPlanningController::class, 'store']);
         Route::post('/check-conflict', [\App\Http\Controllers\Api\ExamPlanningController::class, 'checkRoomConflict']);
         
+        // New Convocations module logic
+        Route::prefix('/{exam}/convocations')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'index']);
+            Route::post('/generate', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'generate']);
+            Route::post('/publish', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'publish']);
+        });
+        
         // New Convocations & Live routes
         Route::post('/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
         // Old endpoints are replaced by the /convocations group below

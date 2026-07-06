@@ -26,6 +26,12 @@ Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function
         Route::post('/', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'store']);
         Route::post('/{id}/documents', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'uploadDocument']);
     });
+    
+    // Convocations (Exams)
+    Route::prefix('convocations')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'index']);
+        Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'download']);
+    });
 });
 
 Route::middleware(['auth:sanctum'])->prefix('student')->group(function () {
