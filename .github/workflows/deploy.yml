@@ -27,6 +27,10 @@ jobs:
           npm run build
       - name: Create .env for testing
         run: cp .env.example .env
+      - name: Run Code Style Check (Pint)
+        run: vendor/bin/pint --test
+      - name: Run Static Analysis (PHPStan)
+        run: vendor/bin/phpstan analyse --memory-limit=2G
       - name: Run Laravel Tests
         run: php artisan test
 
@@ -50,3 +54,4 @@ jobs:
             docker-compose exec -T app php artisan config:cache
             docker-compose exec -T app php artisan route:cache
             docker-compose exec -T app php artisan view:cache
+

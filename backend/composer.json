@@ -9,7 +9,7 @@
     "barryvdh/laravel-dompdf": "^3.1",
     "guzzlehttp/guzzle": "^7.9",
     "laravel/framework": "^12.0",
-    "laravel/horizon": "^5.30",
+    "laravel/horizon": "^5.47",
     "laravel/reverb": "^1.5",
     "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.28",
@@ -17,22 +17,26 @@
     "maatwebsite/excel": "^3.1",
     "pragmarx/google2fa": "^8.0",
     "pragmarx/google2fa-qrcode": "^3.0",
-    "predis/predis": "^2.3",
+    "predis/predis": "^3.5",
     "resend/resend-laravel": "^1.4",
     "simplesoftwareio/simple-qrcode": "^4.2",
     "smalot/pdfparser": "^2.12",
     "spatie/laravel-activitylog": "^4.10",
+    "spatie/laravel-backup": "*",
     "spatie/laravel-medialibrary": "^11.11",
     "spatie/laravel-permission": "^6.10"
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",
-    "laravel/pint": "^1.13",
+    "larastan/larastan": "*",
+    "laravel/pint": "*",
     "laravel/sail": "^1.41",
+    "laravel/telescope": "^5.20",
     "mockery/mockery": "^1.6",
     "nunomaduro/collision": "^8.0",
     "pestphp/pest": "^3.8",
-    "pestphp/pest-plugin-laravel": "^3.2"
+    "pestphp/pest-plugin-laravel": "^3.2",
+    "phpstan/phpstan": "*"
   },
   "autoload": {
     "psr-4": {

@@ -35,6 +35,56 @@ services:
     networks:
       - encgnet
 
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: encg_reverb
+    command: php artisan reverb:start --host="0.0.0.0" --port=8080
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=encg_erp
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - backend
+      - mysql
+      - redis
+    networks:
+      - encgnet
+
+  queue-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: encg_queue_worker
+    command: php artisan horizon
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=encg_erp
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - backend
+      - mysql
+      - redis
+    networks:
+      - encgnet
+
   frontend:
     image: node:20-alpine
     container_name: encg_frontend
