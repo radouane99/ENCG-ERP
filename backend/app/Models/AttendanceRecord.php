@@ -17,6 +17,8 @@ class AttendanceRecord extends Model
         'scanned_latitude',
         'scanned_longitude',
         'is_valid',
+        'status',
+        'is_justified',
     ];
 
     protected $casts = [
@@ -24,6 +26,7 @@ class AttendanceRecord extends Model
         'scanned_latitude' => 'decimal:8',
         'scanned_longitude' => 'decimal:8',
         'is_valid' => 'boolean',
+        'is_justified' => 'boolean',
     ];
 
     public function session(): BelongsTo

@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\Academic\StoreAcademicYearRequest;
+use App\Http\Requests\Academic\UpdateAcademicYearRequest;
+use App\Http\Requests\Academic\RolloverAcademicYearRequest;
 
 class AcademicYearController extends Controller
 {
@@ -26,18 +29,9 @@ class AcademicYearController extends Controller
         return response()->json(['data' => $years]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAcademicYearRequest $request): JsonResponse
     {
-        abort_unless($request->user()->can('academic.create'), 403);
-
-        $validated = $request->validate([
-            'label'      => 'required|string|max:50',
-            'start_year' => 'required|integer|min:2000',
-            'end_year'   => 'required|integer|gt:start_year',
-            'start_date' => 'nullable|date',
-            'end_date'   => 'nullable|date',
-            'is_current' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         if (!empty($validated['is_current'])) {
             AcademicYear::where('is_current', true)->update(['is_current' => false]);
@@ -48,19 +42,9 @@ class AcademicYearController extends Controller
         return response()->json(['message' => 'Année académique créée.', 'data' => $year], 201);
     }
 
-    public function update(Request $request, AcademicYear $academicYear): JsonResponse
+    public function update(UpdateAcademicYearRequest $request, AcademicYear $academicYear): JsonResponse
     {
-        abort_unless($request->user()->can('academic.edit'), 403);
-
-        $validated = $request->validate([
-            'label'      => 'sometimes|required|string|max:50',
-            'start_year' => 'sometimes|required|integer|min:2000',
-            'end_year'   => 'sometimes|required|integer',
-            'start_date' => 'nullable|date',
-            'end_date'   => 'nullable|date',
-            'is_current' => 'boolean',
-            'is_locked'  => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         if (!empty($validated['is_current'])) {
             AcademicYear::where('id', '!=', $academicYear->id)->update(['is_current' => false]);
@@ -81,16 +65,9 @@ class AcademicYearController extends Controller
         return response()->json(['message' => 'Année académique supprimée.']);
     }
 
-    public function rollover(Request $request, $id, \App\Services\Academic\AcademicYearRolloverService $rolloverService): JsonResponse
+    public function rollover(RolloverAcademicYearRequest $request, $id, \App\Services\Academic\AcademicYearRolloverService $rolloverService): JsonResponse
     {
-        // Only super-admins should probably do this, but we'll use a generic permission for now
-        // abort_unless($request->user()->can('academic.rollover'), 403);
-
-        $validated = $request->validate([
-            'new_label' => 'required|string|max:50',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date'
-        ]);
+        $validated = $request->validated();
 
         $result = $rolloverService->executeRollover(
             $id,

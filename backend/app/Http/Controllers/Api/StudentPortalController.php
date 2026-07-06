@@ -32,15 +32,9 @@ class StudentPortalController extends Controller
     /**
      * Submit a medical certificate for an absence
      */
-    public function submitAbsence(Request $request): JsonResponse
+    public function submitAbsence(\App\Http\Requests\Academic\SubmitAbsenceRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'student_id' => 'required|integer',
-            'attendance_id' => 'required|integer',
-            'reason' => 'required|string',
-            'description' => 'nullable|string',
-            // 'document' => 'nullable|file|mimes:pdf,jpg,png'
-        ]);
+        $validated = $request->validated();
 
         $result = $this->portalService->submitAbsenceJustification(
             $validated, 

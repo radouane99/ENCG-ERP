@@ -102,26 +102,40 @@ class AcademicYearRolloverService
 
         // Clone Module-Professor Assignments
         $assignments = DB::table('module_professor')->where('academic_year_id', $oldYear->id)->get();
+        
+        // Eager load group mappings to prevent N+1
+        $oldGroups = Group::where('academic_year_id', $oldYear->id)->get()->keyBy('id');
+        $newGroups = Group::where('academic_year_id', $newYear->id)->get()->groupBy('filiere_id');
+        
+        $newAssignments = [];
+        $now = now();
+
         foreach ($assignments as $assignment) {
+            $oldGroup = $oldGroups->get($assignment->group_id);
+            if (!$oldGroup) {
+                continue;
+            }
+
             // Find equivalent group in new year
-            $oldGroup = Group::find($assignment->group_id);
-            $newGroup = Group::where('academic_year_id', $newYear->id)
-                             ->where('name', $oldGroup->name)
-                             ->where('filiere_id', $oldGroup->filiere_id)
-                             ->first();
+            $newGroup = $newGroups->get($oldGroup->filiere_id)?->firstWhere('name', $oldGroup->name);
 
             if ($newGroup) {
-                DB::table('module_professor')->insert([
+                $newAssignments[] = [
                     'module_id' => $assignment->module_id,
                     'professor_id' => $assignment->professor_id,
                     'professor_type' => $assignment->professor_type,
                     'academic_year_id' => $newYear->id,
                     'group_id' => $newGroup->id,
                     'session_type' => $assignment->session_type,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ];
             }
+        }
+        
+        // Bulk insert to prevent N+1
+        foreach (array_chunk($newAssignments, 500) as $chunk) {
+            DB::table('module_professor')->insert($chunk);
         }
     }
 
@@ -131,24 +145,37 @@ class AcademicYearRolloverService
                                   ->where('is_current', true)
                                   ->get();
 
+        if ($pathways->isEmpty()) {
+            return ['total_processed' => 0, 'passed' => 0, 'repeated' => 0];
+        }
+
+        // 1. Bulk mark old pathways as no longer current
+        StudentPathway::where('academic_year_id', $oldYear->id)
+                      ->where('is_current', true)
+                      ->update(['is_current' => false]);
+
+        // 2. Fetch Grades & Calculate Decision via Apogee Engine without N+1
+        $studentIds = $pathways->pluck('student_id')->toArray();
+        
+        $failedCounts = DB::table('grades')
+            ->where('academic_year_id', $oldYear->id)
+            ->whereIn('student_id', $studentIds)
+            ->where('value', '<', 10)
+            ->select('student_id', DB::raw('count(*) as failed_count'))
+            ->groupBy('student_id')
+            ->pluck('failed_count', 'student_id');
+
+        $newGroups = Group::where('academic_year_id', $newYear->id)->get();
+        $newPathways = [];
+        $groupIncrements = [];
+        
         $passed = 0;
         $repeated = 0;
+        $now = now();
 
         foreach ($pathways as $pathway) {
-            // 1. Mark old pathway as no longer current
-            $pathway->update(['is_current' => false]);
-
-            // 2. Fetch Grades & Calculate Decision via Apogee Engine
-            // Simplification: We assume a method in DeliberationEngine or we query DB directly
-            // For now, we simulate finding the 'failed' modules count
-            $failedCount = DB::table('grades')
-                ->where('student_id', $pathway->student_id)
-                ->where('academic_year_id', $oldYear->id)
-                ->where('value', '<', 10)
-                ->count();
-
+            $failedCount = $failedCounts->get($pathway->student_id, 0);
             $decision = $this->deliberationEngine->evaluateProgression($failedCount);
-
             $newSemesterNumber = $pathway->current_semester;
 
             if ($decision === 'PASS' || $decision === 'PASS_WITH_RESERVED_MODULES') {
@@ -159,14 +186,12 @@ class AcademicYearRolloverService
             }
 
             // Find new group for the student
-            // Typically if they passed, they go to Semester N+2
-            $newGroup = Group::where('academic_year_id', $newYear->id)
-                             ->where('filiere_id', $pathway->filiere_id)
-                             ->where('semester_number', $newSemesterNumber)
-                             ->first();
+            $newGroup = $newGroups->where('filiere_id', $pathway->filiere_id)
+                                  ->where('semester_number', $newSemesterNumber)
+                                  ->first();
 
-            // 3. Create New Pathway
-            StudentPathway::create([
+            // 3. Create New Pathway payload
+            $newPathways[] = [
                 'student_id' => $pathway->student_id,
                 'filiere_id' => $pathway->filiere_id,
                 'speciality_id' => $pathway->speciality_id,
@@ -174,15 +199,27 @@ class AcademicYearRolloverService
                 'group_id' => $newGroup ? $newGroup->id : null,
                 'current_semester' => $newSemesterNumber,
                 'is_current' => true,
-            ]);
+                'created_at' => $now,
+                'updated_at' => $now
+            ];
 
             if ($newGroup) {
-                $newGroup->increment('current_count');
+                $groupIncrements[$newGroup->id] = ($groupIncrements[$newGroup->id] ?? 0) + 1;
             }
         }
 
+        // Bulk insert pathways
+        foreach (array_chunk($newPathways, 500) as $chunk) {
+            StudentPathway::insert($chunk);
+        }
+
+        // Bulk increment group counts
+        foreach ($groupIncrements as $groupId => $count) {
+            Group::where('id', $groupId)->increment('current_count', $count);
+        }
+
         return [
-            'total_processed' => count($pathways),
+            'total_processed' => $pathways->count(),
             'passed' => $passed,
             'repeated' => $repeated
         ];

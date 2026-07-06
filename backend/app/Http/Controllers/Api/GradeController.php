@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\Academic\GradeService;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\Academic\StoreGradeBatchRequest;
+use App\Http\Requests\Academic\ValidateGradesRequest;
 
 class GradeController extends Controller
 {
@@ -20,18 +22,9 @@ class GradeController extends Controller
     /**
      * Store or update a batch of grades submitted by a professor.
      */
-    public function storeBatch(Request $request): JsonResponse
+    public function storeBatch(StoreGradeBatchRequest $request): JsonResponse
     {
-        abort_unless($request->user()->can('grades.enter') || $request->user()->can('grades.edit'), 403);
-
-        $validated = $request->validate([
-            'module_id' => 'required|exists:modules,id',
-            'academic_year_id' => 'required|exists:academic_years,id',
-            'grades' => 'required|array',
-            'grades.*.student_id' => 'required|exists:students,id',
-            'grades.*.value' => 'required|numeric|min:0|max:20',
-            'grades.*.type' => 'required|in:normal,rattrapage',
-        ]);
+        $validated = $request->validated();
 
         try {
             $result = $this->gradeService->storeBatch(
@@ -58,14 +51,9 @@ class GradeController extends Controller
     /**
      * Validate draft grades (Admin only)
      */
-    public function validateGrades(Request $request): JsonResponse
+    public function validateGrades(ValidateGradesRequest $request): JsonResponse
     {
-        abort_unless($request->user()->can('grades.validate'), 403);
-
-        $validated = $request->validate([
-            'module_id' => 'required|exists:modules,id',
-            'academic_year_id' => 'required|exists:academic_years,id',
-        ]);
+        $validated = $request->validated();
 
         $updatedCount = $this->gradeService->validateGrades(
             $validated['module_id'], 
