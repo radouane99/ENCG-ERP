@@ -6,17 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDocumentRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'document_template_id' => 'required|exists:document_templates,id',
-            'language' => 'nullable|string|in:fr,ar,en',
-            'additional_data' => 'nullable|array',
+            'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
         ];
     }
 }

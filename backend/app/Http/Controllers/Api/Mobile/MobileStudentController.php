@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use App\Models\Grade;
-use App\Models\AttendanceRecord;
+use Illuminate\Http\JsonResponse;
+use App\Services\Academic\StudentPortalService;
 
 class MobileStudentController extends Controller
 {
+    protected StudentPortalService $portalService;
+
+    public function __construct(StudentPortalService $portalService)
+    {
+        $this->portalService = $portalService;
+    }
+
     /**
      * Get the student's dashboard profile overview for the mobile app
      */
@@ -29,23 +35,12 @@ class MobileStudentController extends Controller
             return response()->json(['error' => 'Profil étudiant introuvable'], 404);
         }
 
-        // Real DB aggregations
-        $avgGrade = DB::table('grades')->where('student_id', $student->id)->avg('value');
-        $absences = AttendanceRecord::where('student_id', $student->id)->where('status', 'absent')->count();
-        $filiere = $student->latestPathway ? $student->latestPathway->filiere->code : 'Non affecté';
+        $studentId = $student->id;
+        $stats = $this->portalService->getDashboardStats($studentId);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $student->id,
-                'name' => $user->name,
-                'cne' => $student->cne ?? 'N/A',
-                'program' => $filiere,
-                'semester' => 'S1', // Needs semester management implementation
-                'current_average' => $avgGrade ? round($avgGrade, 2) : 0,
-                'rank' => null, // Rank computation is complex, skipping for MVP
-                'absences' => $absences
-            ]
+            'data' => $stats
         ]);
     }
 
@@ -54,29 +49,12 @@ class MobileStudentController extends Controller
      */
     public function schedule(Request $request): JsonResponse
     {
-        // Mocked schedule response for mobile app consumption
+        $studentId = $request->user()->student->id ?? 1;
+        $schedule = $this->portalService->getSchedule($studentId);
+
         return response()->json([
             'success' => true,
-            'data' => [
-                [
-                    'id' => 1,
-                    'course' => 'Financial Accounting II',
-                    'professor' => 'Dr. Bennani',
-                    'room' => 'Amphi 1',
-                    'start_time' => '08:30',
-                    'end_time' => '10:15',
-                    'type' => 'CM', // Cours Magistral
-                ],
-                [
-                    'id' => 2,
-                    'course' => 'Corporate Finance',
-                    'professor' => 'Dr. Alaoui',
-                    'room' => 'Room 204',
-                    'start_time' => '10:30',
-                    'end_time' => '12:15',
-                    'type' => 'TD', // Travaux Dirigés
-                ],
-            ]
+            'data' => $schedule
         ]);
     }
 
@@ -92,26 +70,11 @@ class MobileStudentController extends Controller
 
         $studentId = $user->student->id;
         
-        $grades = Grade::with('gradeComponent.module')
-            ->where('student_id', $studentId)
-            ->get();
-
-        $modules = $grades->map(function ($grade) {
-            return [
-                'name' => $grade->gradeComponent->module->name ?? 'Module Inconnu',
-                'score' => $grade->value,
-                'is_validated' => $grade->value >= 10,
-            ];
-        });
-
-        $avgGrade = $grades->avg('value');
+        $grades = $this->portalService->getGrades($studentId);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'semester_average' => $avgGrade ? round($avgGrade, 2) : 0,
-                'modules' => $modules
-            ]
+            'data' => $grades
         ]);
     }
 }

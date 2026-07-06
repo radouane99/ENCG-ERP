@@ -5,46 +5,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class DocumentRequest extends Model
+class DocumentRequest extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
-        'institution_id',
-        'user_id',
-        'document_template_id',
-        'reference_number',
+        'student_id',
+        'document_type_id',
         'status',
-        'language',
-        'additional_data',
-        'rejection_reason',
-        'processed_by',
+        'requested_at',
         'processed_at',
+        'admin_notes',
     ];
 
     protected $casts = [
-        'additional_data' => 'array',
+        'requested_at' => 'datetime',
         'processed_at' => 'datetime',
+        'admin_notes' => 'array',
     ];
 
-    public function institution(): BelongsTo
+    public function student(): BelongsTo
     {
-        return $this->belongsTo(Institution::class);
+        return $this->belongsTo(Student::class);
     }
 
-    public function user(): BelongsTo
+    public function documentType(): BelongsTo
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function template(): BelongsTo
-    {
-        return $this->belongsTo(DocumentTemplate::class, 'document_template_id');
-    }
-
-    public function processor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'processed_by');
+        return $this->belongsTo(DocumentType::class);
     }
 }

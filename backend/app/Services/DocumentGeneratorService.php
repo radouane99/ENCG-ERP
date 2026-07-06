@@ -6,9 +6,16 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Student;
 use App\Models\ExamSession;
+use App\Services\Core\PdfEngineService;
 
 class DocumentGeneratorService
 {
+    protected PdfEngineService $pdfEngine;
+
+    public function __construct(PdfEngineService $pdfEngine)
+    {
+        $this->pdfEngine = $pdfEngine;
+    }
     /**
      * Generate a PDF for an exam convocation.
      */
@@ -20,15 +27,10 @@ class DocumentGeneratorService
             'qrCodeToken' => base64_encode("convocation_{$student->id}_{$session->id}") // Simple token for QR
         ];
 
-        $pdf = Pdf::loadView('pdf.convocation', $data);
+        $filename = "student_{$student->id}.pdf";
+        $directory = "convocations/session_{$session->id}";
         
-        // Define path
-        $filename = "convocations/session_{$session->id}/student_{$student->id}.pdf";
-        
-        // Save to storage
-        Storage::disk('public')->put($filename, $pdf->output());
-
-        return $filename;
+        return $this->pdfEngine->generateFromView('pdf.convocation', $data, $directory, $filename);
     }
 
     /**
@@ -47,11 +49,9 @@ class DocumentGeneratorService
             'qrCodeToken' => base64_encode("transcript_{$student->id}_{$academicYearId}")
         ];
 
-        $pdf = Pdf::loadView('pdf.releve_notes', $data);
+        $filename = "student_{$student->id}.pdf";
+        $directory = "transcripts/year_{$academicYearId}";
         
-        $filename = "transcripts/year_{$academicYearId}/student_{$student->id}.pdf";
-        Storage::disk('public')->put($filename, $pdf->output());
-
-        return $filename;
+        return $this->pdfEngine->generateFromView('pdf.releve_notes', $data, $directory, $filename);
     }
 }

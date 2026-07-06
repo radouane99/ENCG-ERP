@@ -16,11 +16,13 @@ use Spatie\Permission\Traits\HasRoles;
 use PragmaRX\Google2FA\Google2FA;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity, InteractsWithMedia;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -32,10 +34,14 @@ class User extends Authenticatable
     protected $fillable = [
         'institution_id',
         'name',
+        'first_name',
+        'last_name',
         'name_ar',
+        'first_name_ar',
+        'last_name_ar',
+        'cin',
         'email',
         'phone',
-        'avatar_path',
         'password',
         'locale',
         'is_active',

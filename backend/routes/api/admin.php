@@ -175,7 +175,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{examId}/live-stats', [\App\Http\Controllers\Api\ConvocationController::class, 'liveStats']);
         Route::get('/{examId}/details', [\App\Http\Controllers\Api\ConvocationController::class, 'getDetails']);
         Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
-        Route::post('/upload-justification', [\App\Http\Controllers\Api\ConvocationController::class, 'uploadJustification']);
+        Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
         
         // Student endpoints
         Route::get('/student/{studentId}', [\App\Http\Controllers\Api\ConvocationController::class, 'getStudentConvocations']);
@@ -208,10 +208,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);
     });
 
-    // Student Absences Justification
-    Route::prefix('student')->group(function () {
-        Route::post('/absences/upload', [\App\Http\Controllers\Api\ConvocationController::class, 'uploadJustification']);
-    });
+
 
     // Admin — Absence Justifications Management
     Route::prefix('admin/absences-justifications')->middleware('require-admin-2fa')->group(function () {
@@ -380,4 +377,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/classroom/chat/{group}/{module}/messages', [\App\Http\Controllers\Api\InternalApiController::class, 'chatMessages']);
     Route::post('/admin/schedules/makeup/suggest', [\App\Http\Controllers\Api\InternalApiController::class, 'suggestMakeup']);
     Route::post('/classroom/ai/tutor', [\App\Http\Controllers\Api\AiFeatureController::class, 'tutor']);
+    
+    // Admin Guichet & Analytics
+    Route::get('/admin/analytics', [\App\Http\Controllers\Api\AdminAnalyticsController::class, 'index']);
+    Route::get('/admin/document-requests', [\App\Http\Controllers\Api\AdminDocumentRequestController::class, 'index']);
+    Route::patch('/admin/document-requests/{documentRequest}/status', [\App\Http\Controllers\Api\AdminDocumentRequestController::class, 'updateStatus']);
 });

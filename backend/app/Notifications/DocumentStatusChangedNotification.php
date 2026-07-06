@@ -31,7 +31,7 @@ class DocumentStatusChangedNotification extends Notification implements ShouldQu
 
         $mailMessage = (new MailMessage)
             ->subject("Mise à jour de votre demande : {$documentName}")
-            ->greeting("Bonjour {$notifiable->first_name},");
+            ->greeting("Bonjour {$notifiable->name},");
 
         if ($status === 'ready') {
             $mailMessage->line("Votre demande pour le document '{$documentName}' a été traitée avec succès et le document est prêt.")

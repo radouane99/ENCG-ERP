@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AbsenceJustification extends Model
+class AbsenceJustification extends Model implements HasMedia
 {
+    use InteractsWithMedia;
     use HasFactory;
 
     protected $fillable = [
@@ -33,7 +36,7 @@ class AbsenceJustification extends Model
 
     public function attendance(): BelongsTo
     {
-        return $this->belongsTo(AttendanceSession::class, 'attendance_id');
+        return $this->belongsTo(Attendance::class, 'attendance_id');
     }
 
     public function reviewer(): BelongsTo
@@ -41,3 +44,4 @@ class AbsenceJustification extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 }
+

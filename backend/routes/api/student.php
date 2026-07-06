@@ -41,6 +41,4 @@ Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function
     });
 });
 
-Route::middleware(['auth:sanctum'])->prefix('student')->group(function () {
-    Route::post('/absences/upload', [\App\Http\Controllers\Api\ConvocationController::class, 'uploadJustification']);
-});
+

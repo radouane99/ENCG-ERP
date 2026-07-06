@@ -99,20 +99,7 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
-    public function uploadJustification(Request $request): JsonResponse
-    {
-        $request->validate([
-            'exam_id' => 'required|integer',
-            'certificate' => 'required|file|mimes:pdf,jpg,png|max:2048'
-        ]);
 
-        $result = $this->convocationService->uploadJustification(
-            $request->input('exam_id'), 
-            $request->file('certificate')
-        );
-
-        return response()->json($result);
-    }
 
     public function getStudentConvocations(int $studentId): JsonResponse
     {

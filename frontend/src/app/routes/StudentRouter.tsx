@@ -2,22 +2,22 @@ import { Routes, Route } from 'react-router-dom';
 import { lazy } from 'react';
 
 const StudentDashboard = lazy(() => import('@features/dashboard/pages/StudentDashboard'))
-const StudentGrades = lazy(() => import('@features/student-portal/pages/StudentGrades'))
-const StudentExams = lazy(() => import('@features/student-portal/pages/StudentExams'))
+const StudentGrades = lazy(() => import('@features/students/pages/StudentGrades'))
+const StudentExams = lazy(() => import('@features/students/pages/StudentExams'))
 const StudentConvocations = lazy(() => import('@features/exams/ui/pages/StudentConvocationsPage'))
-const StudentMobility = lazy(() => import('@features/student-portal/pages/StudentMobility'))
-const ConvocationPDFView = lazy(() => import('@features/student-portal/pages/ConvocationPDFView'))
+const StudentMobility = lazy(() => import('@features/students/pages/StudentMobility'))
+const ConvocationPDFView = lazy(() => import('@features/students/pages/ConvocationPDFView'))
 const StudentInternships = lazy(() => import('@features/internships/ui/pages/StudentInternshipsPage'))
-const StudentEvaluations = lazy(() => import('@features/student-portal/pages/StudentEvaluations'))
-const StudentSchedule = lazy(() => import('@features/student-portal/pages/StudentSchedule'))
+const StudentEvaluations = lazy(() => import('@features/students/pages/StudentEvaluations'))
+const StudentSchedule = lazy(() => import('@features/students/pages/StudentSchedule'))
 const TicketsPage = lazy(() => import('@features/support/pages/TicketsPage'))
-const StudentPortfolio = lazy(() => import('@features/student-portal/pages/StudentPortfolio'))
-const StudentProjectsMarket = lazy(() => import('@features/student-portal/pages/StudentProjectsMarket'))
-const StudentClubsHub = lazy(() => import('@features/student-portal/pages/StudentClubsHub'))
-const StudentDigitalLibrary = lazy(() => import('@features/student-portal/pages/StudentDigitalLibrary'))
-const StudentGamification = lazy(() => import('@features/student-portal/pages/StudentGamification'))
+const StudentPortfolio = lazy(() => import('@features/students/pages/StudentPortfolio'))
+const StudentProjectsMarket = lazy(() => import('@features/students/pages/StudentProjectsMarket'))
+const StudentClubsHub = lazy(() => import('@features/students/pages/StudentClubsHub'))
+const StudentDigitalLibrary = lazy(() => import('@features/students/pages/StudentDigitalLibrary'))
+const StudentGamification = lazy(() => import('@features/students/pages/StudentGamification'))
 const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/StudentAbsencesPage'))
-const StudentDocumentRequestsPage = lazy(() => import('@features/documents/pages/StudentDocumentRequestsPage'))
+const StudentGuichetPage = lazy(() => import('@features/guichet/pages/StudentGuichetPage'))
 
 export default function StudentRouter() {
   return (
@@ -38,7 +38,7 @@ export default function StudentRouter() {
       <Route path="library" element={<StudentDigitalLibrary />} />
       <Route path="gamification" element={<StudentGamification />} />
       <Route path="absences" element={<StudentAbsencesPage />} />
-      <Route path="documents" element={<StudentDocumentRequestsPage />} />
+      <Route path="documents" element={<StudentGuichetPage />} />
     </Routes>
   );
 }

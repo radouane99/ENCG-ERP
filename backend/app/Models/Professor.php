@@ -18,17 +18,10 @@ class Professor extends Model
         'department_id',
         'employee_number',
         'cin',
-        'first_name',
-        'last_name',
-        'first_name_ar',
-        'last_name_ar',
-        'email',
-        'phone',
         'grade',
         'specialty',
         'contract_type',
         'hire_date',
-        'photo_path',
         'is_active',
     ];
 
@@ -50,6 +43,11 @@ class Professor extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function vacationContracts(): HasMany
