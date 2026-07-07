@@ -1,22 +1,22 @@
-# Stage 1: Build Frontend
-FROM node:20-alpine as frontend-builder
-WORKDIR /app
+# ---------------------------------------------------------
+# STAGE 1: Build React Frontend
+# ---------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+
+# Copy package.json and package-lock.json
 COPY frontend/package*.json ./
 RUN npm ci
+
+# Copy the rest of the frontend source
 COPY frontend/ ./
+# Build the production React assets
 RUN npm run build
 
-# Stage 2: Build Backend Dependencies
-FROM composer:2.7 as backend-builder
-WORKDIR /app
-COPY backend/composer.json backend/composer.lock ./
-# Install dependencies optimized for production (no dev, optimize autoloader)
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-COPY backend/ ./
-RUN composer run post-autoload-dump
-
-# Stage 3: Final Production Image
-FROM php:8.3-fpm-alpine
+# ---------------------------------------------------------
+# STAGE 2: Build Laravel API
+# ---------------------------------------------------------
+FROM php:8.2-fpm-alpine AS backend-builder
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -25,38 +25,63 @@ RUN apk add --no-cache \
     libxml2-dev \
     zip \
     unzip \
-    libzip-dev \
-    freetype-dev \
-    libjpeg-turbo-dev \
+    git \
     oniguruma-dev \
-    icu-dev
+    nodejs \
+    npm
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip opcache
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl
 
-# Set working directory
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app/backend
+
+# Copy composer files
+COPY backend/composer.json backend/composer.lock ./
+# Install php dependencies without scripts first (for caching)
+RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
+
+# Copy the rest of the backend source
+COPY backend/ ./
+
+# Generate optimized autoload files and run scripts
+RUN composer dump-autoload --optimize && \
+    composer run-script post-root-package-install || true && \
+    composer run-script post-create-project-cmd || true
+
+# Copy frontend build into Laravel's public directory
+COPY --from=frontend-builder /app/frontend/dist /app/backend/public/frontend
+
+# Optimize Laravel for production
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
+# Set permissions for Laravel storage
+RUN chown -R www-data:www-data /app/backend/storage /app/backend/bootstrap/cache && \
+    chmod -R 775 /app/backend/storage /app/backend/bootstrap/cache
+
+# ---------------------------------------------------------
+# STAGE 3: Final Production Image (PHP-FPM)
+# ---------------------------------------------------------
+FROM php:8.2-fpm-alpine
+
+# Re-install extensions in the final image
+RUN apk add --no-cache libpng libxml2 oniguruma \
+    && apk add --no-cache --virtual .build-deps libpng-dev libxml2-dev oniguruma-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl \
+    && apk del .build-deps
+
 WORKDIR /var/www/html
 
-# Copy Laravel backend code from builder
-COPY --from=backend-builder /app /var/www/html
+# Copy application from builder
+COPY --from=backend-builder /app/backend /var/www/html
 
-# Copy built React frontend to Laravel public directory (or Nginx will serve it)
-# In this architecture, we put the React build inside public/app or handle via Nginx
-# For simplicity, we just copy it to public/dist
-COPY --from=frontend-builder /app/dist /var/www/html/public/dist
-
-# Set permissions for Laravel
+# Ensure permissions are correct
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Production OPcache settings
-RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
-    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
-    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
-    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
-    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
-
-# Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]

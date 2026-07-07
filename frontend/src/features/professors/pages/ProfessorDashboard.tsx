@@ -38,7 +38,7 @@ export default function ProfessorDashboard() {
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">{isRtl ? 'الوصول السريع' : 'Accès Rapide'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             {/* Classroom Card */}
             <Link to="/professors/classroom" className="group bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 hover:shadow-lg transition-all hover:-translate-y-1 block relative overflow-hidden">
               <div className="absolute top-0 end-0 p-6 opacity-5 text-[hsl(var(--color-primary))] transform group-hover:scale-110 transition-transform">

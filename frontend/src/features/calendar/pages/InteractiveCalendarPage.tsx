@@ -6,7 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCalendarEvents } from '../api/calendarApi';
 import { renderEventContent } from '../components/EventContent';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/Card';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 

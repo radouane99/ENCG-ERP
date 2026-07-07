@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { analyticsApi, AnalyticsData } from '../api/analyticsApi';
-import { 
-  PieChart, Pie, Cell, 
+import {
+  PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line 
+  LineChart, Line
 } from 'recharts';
-import { 
-  Users, 
-  FileText, 
+import {
+  Users,
+  FileText,
   Briefcase,
   AlertCircle,
   RefreshCw,
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { StatCard } from '@shared/ui/StatCard';
+import { StatCard } from "../../../shared/components/ui/StatCard";
 
 const COLORS = ['#0ea5e9', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#f97316'];
 
@@ -58,7 +58,7 @@ const AdminAnalyticsDashboard: React.FC = () => {
           <AlertCircle className="mx-auto mb-4 h-12 w-12" />
           <h3 className="mb-2 text-lg font-bold">Erreur de chargement</h3>
           <p className="mb-6">{error}</p>
-          <button 
+          <button
             onClick={fetchData}
             className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 transition-colors"
           >
@@ -144,17 +144,17 @@ const AdminAnalyticsDashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
                 <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  name="Demandes" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3} 
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Demandes"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
                   dot={{ r: 4, fill: '#3b82f6' }}
-                  activeDot={{ r: 6 }} 
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -185,7 +185,7 @@ const AdminAnalyticsDashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />
@@ -206,16 +206,16 @@ const AdminAnalyticsDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.student_activity.filiere_breakdown} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fill: '#6b7280', fontSize: 12 }} 
-                  angle={-45} 
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  angle={-45}
                   textAnchor="end"
                   interval={0}
                   height={60}
                 />
                 <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f3f4f6' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />

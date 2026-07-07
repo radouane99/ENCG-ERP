@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Users, BookOpen, Clock, FileEdit, CheckCircle 
+import {
+  Users, BookOpen, Clock, FileEdit, CheckCircle
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '@/shared/lib/api';
@@ -9,13 +9,13 @@ import { useAuthStore } from '@/stores/authStore';
 
 const attendanceData = [
   { module: 'Marketing', presence: 85 },
-  { module: 'Comptabilité', presence: 92 },
+  { module: 'Comptabilitï¿½', presence: 92 },
   { module: 'Finance', presence: 78 },
 ];
 
 const ProfessorDashboard: React.FC = () => {
   const { user } = useAuthStore();
-  
+
   const { data: stats } = useQuery({
     queryKey: ['dashboard-professor-stats'],
     queryFn: () => api.get('/dashboard/professor/stats').then(r => r.data.data),
@@ -24,7 +24,7 @@ const ProfessorDashboard: React.FC = () => {
       total_students: 120,
       pending_grades: 45,
       next_class: {
-        module: 'Marketing Stratégique',
+        module: 'Marketing Stratï¿½gique',
         time: '14:00 - 16:00',
         room: 'Salle 12'
       }
@@ -42,12 +42,12 @@ const ProfessorDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Modules Assignés</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">Modules Assignï¿½s</p>
           <p className="text-3xl font-bold text-foreground mt-1">{stats?.modules_taught}</p>
           <BookOpen className="absolute right-[-10px] bottom-[-10px] text-blue-500/10" size={80} />
         </div>
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Étudiants</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">ï¿½tudiants</p>
           <p className="text-3xl font-bold text-indigo-400 mt-1">{stats?.total_students}</p>
           <Users className="absolute right-[-10px] bottom-[-10px] text-indigo-500/10" size={80} />
         </div>
@@ -57,7 +57,7 @@ const ProfessorDashboard: React.FC = () => {
           <FileEdit className="absolute right-[-10px] bottom-[-10px] text-amber-500/10" size={80} />
         </div>
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Séances Validées</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">Sï¿½ances Validï¿½es</p>
           <p className="text-3xl font-bold text-emerald-400 mt-1">12</p>
           <CheckCircle className="absolute right-[-10px] bottom-[-10px] text-emerald-500/10" size={80} />
         </div>
@@ -65,7 +65,7 @@ const ProfessorDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl bg-muted/50 border border-border p-5">
-          <h3 className="text-foreground font-semibold mb-4">Assiduité par Module</h3>
+          <h3 className="text-foreground font-semibold mb-4">Assiduitï¿½ par Module</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={attendanceData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" horizontal={false} />

@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy ENCG-ERP to Production
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  test-and-build:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -16,27 +15,22 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
-          extensions: mbstring, pdo_mysql, bcmath, intl, gd, zip, sqlite3
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, mysql
           coverage: none
 
-      - name: Install Backend Dependencies
+      - name: Install PHP Dependencies
         working-directory: ./backend
-        run: composer install --prefer-dist --no-interaction --optimize-autoloader
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Copy .env for testing
+      - name: Generate key for testing
         working-directory: ./backend
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
-      - name: Generate Application Key
+      - name: Run PHP Tests
         working-directory: ./backend
-        run: php artisan key:generate
-
-      - name: Run Backend Tests
-        working-directory: ./backend
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
         run: php artisan test
 
       - name: Setup Node.js
@@ -44,41 +38,45 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Frontend Dependencies & Build
+      - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: |
-          npm ci
-          npm run build
-          
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
   deploy:
-    needs: build-and-test
+    needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH and Sync Files
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
+          SERVER_USER: ${{ secrets.PRODUCTION_SERVER_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
+          rsync -avz --exclude '.git' --exclude 'node_modules' --exclude 'vendor' ./ $SERVER_USER@$SERVER_IP:/opt/encg-erp/
+
+      - name: Restart Docker Services on Server
+        uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
+          host: ${{ secrets.PRODUCTION_SERVER_IP }}
+          username: ${{ secrets.PRODUCTION_SERVER_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
-            cd /var/www/encg-erp
-            
-            # Pull latest changes
-            git pull origin main
-            
-            # Rebuild containers (pulls new code into images depending on setup)
-            docker compose -f docker-compose.prod.yml build
-            
-            # Restart containers in background
-            docker compose -f docker-compose.prod.yml up -d
-            
-            # Run Migrations and Optimize
-            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
-            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
-            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize
-            docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
-            
-            echo "✅ Deployment Successful!"
+            cd /opt/encg-erp
+            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml up -d --build
+            docker exec encg_erp_prod_app php artisan migrate --force
+            docker exec encg_erp_prod_app php artisan optimize
+            docker exec encg_erp_prod_app php artisan storage:link

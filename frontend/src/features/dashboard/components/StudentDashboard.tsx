@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import {
   BarChart,
   Bar,
@@ -140,7 +140,7 @@ export default function StudentDashboard() {
                 <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 20]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                 <Radar name="Score" dataKey="A" stroke="hsl(var(--color-primary))" fill="hsl(var(--color-primary))" fillOpacity={0.5} />
-                <RechartsTooltip 
+                <RechartsTooltip
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                 />
               </RadarChart>
@@ -158,7 +158,7 @@ export default function StudentDashboard() {
           </div>
           <button className="text-sm text-primary hover:underline font-medium">Download Transcript</button>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">

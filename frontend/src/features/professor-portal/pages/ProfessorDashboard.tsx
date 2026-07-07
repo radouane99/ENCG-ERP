@@ -1,8 +1,8 @@
-﻿import React from 'react';
-import { 
-  BookOpen, 
-  TrendingUp, 
-  AlertTriangle, 
+import React from 'react';
+import {
+  BookOpen,
+  TrendingUp,
+  AlertTriangle,
   Trophy,
   Users,
   Calendar,
@@ -24,7 +24,7 @@ export default function ProfessorDashboard() {
 
   return (
     <div className="space-y-8 p-6 max-w-7xl mx-auto font-sans animate-in fade-in zoom-in duration-500">
-      
+
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-white/5">
         <div>
@@ -59,7 +59,7 @@ export default function ProfessorDashboard() {
             Bon retour parmi nous. Pilotez vos enseignements avec précision et accompagnez vos étudiants vers l'excellence.
           </p>
         </div>
-        
+
         <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center shadow-2xl min-w-[180px]">
           <div className="text-5xl font-black text-white mb-1">2</div>
           <div className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Groupes Assignés</div>
@@ -68,7 +68,7 @@ export default function ProfessorDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Taux de réussite */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-6 relative">
@@ -145,7 +145,7 @@ export default function ProfessorDashboard() {
       <div className="mt-12">
         <h2 className="text-2xl font-black text-[#001A4B] italic mb-6">Outils Pédagogiques</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          
+
           <Link to="/calendar" className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex flex-col hover:shadow-md transition-shadow group">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Calendar className="w-5 h-5" />
