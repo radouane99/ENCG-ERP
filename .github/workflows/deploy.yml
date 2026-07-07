@@ -49,33 +49,7 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: false # هذا السطر هو ما يوقف הـ Deploy job مؤقتاً
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup SSH and Sync Files
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
-          SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
-          SERVER_USER: ${{ secrets.PRODUCTION_SERVER_USER }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
-          rsync -avz -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" --exclude '.git' --exclude 'node_modules' --exclude 'vendor' ./ "$SERVER_USER@$SERVER_IP:/opt/encg-erp/"
-
-      - name: Restart Docker Services on Server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PRODUCTION_SERVER_IP }}
-          username: ${{ secrets.PRODUCTION_SERVER_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          script: |
-            cd /opt/encg-erp
-            docker-compose -f docker-compose.prod.yml down
-            docker-compose -f docker-compose.prod.yml up -d --build
-            docker exec encg_erp_prod_app php artisan migrate --force
-            docker exec encg_erp_prod_app php artisan optimize
-            docker exec encg_erp_prod_app php artisan storage:link
+      - name: Deployment Skipped
+        run: echo "Deployment skipped - No server configured."
