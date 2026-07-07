@@ -70,10 +70,12 @@ class UserSeeder extends Seeder
             'user_id' => $profUser->id,
             'institution_id' => $institution->id,
             'department_id' => $departments->random()->id,
-            'specialization' => 'Informatique',
-            'hire_date' => '2015-09-01',
-            'status' => 'active',
-            'title' => 'PES',
+            'specialty' => 'Informatique',
+            'hire_date' => now()->subYears(rand(1, 15))->format('Y-m-d'),
+            'is_active' => true,
+            'grade' => 'PES',
+            'contract_type' => 'permanent',
+            'email' => 'prof@encg.ma',
         ]);
 
         for ($i = 0; $i < 14; $i++) {
@@ -93,10 +95,12 @@ class UserSeeder extends Seeder
                 'user_id' => $u->id,
                 'institution_id' => $institution->id,
                 'department_id' => $departments->random()->id,
-                'specialization' => $faker->word,
+                'specialty' => $faker->word,
                 'hire_date' => $faker->date(),
-                'status' => 'active',
-                'title' => $faker->randomElement(['PA', 'PH', 'PES']),
+                'is_active' => true,
+                'grade' => $faker->randomElement(['PA', 'PH', 'PES']),
+                'contract_type' => 'permanent',
+                'email' => $u->email,
             ]);
         }
 
@@ -115,13 +119,13 @@ class UserSeeder extends Seeder
             'user_id' => $studentUser->id,
             'institution_id' => $institution->id,
             'cne' => 'N123456789',
-            'apogee' => '1234567',
-            'cin' => 'CB12345',
-            'date_of_birth' => '2000-01-01',
-            'place_of_birth' => 'Fès',
+            'student_number' => '1234567',
+            'birth_date' => '2000-01-01',
+            'birth_city' => 'Fès',
             'nationality' => 'Marocaine',
             'gender' => 'M',
             'status' => 'active',
+            'email' => 'student@encg.ma',
         ]);
 
         for ($i = 0; $i < 99; $i++) {
@@ -141,13 +145,13 @@ class UserSeeder extends Seeder
                 'user_id' => $u->id,
                 'institution_id' => $institution->id,
                 'cne' => 'N' . $faker->randomNumber(9, true),
-                'apogee' => (string) $faker->randomNumber(7, true),
-                'cin' => strtoupper($faker->bothify('??#####')),
-                'date_of_birth' => $faker->date('Y-m-d', '2005-01-01'),
-                'place_of_birth' => $faker->city,
+                'student_number' => (string) $faker->randomNumber(7, true),
+                'birth_date' => $faker->date('Y-m-d', '2005-01-01'),
+                'birth_city' => $faker->city,
                 'nationality' => 'Marocaine',
                 'gender' => $faker->randomElement(['M', 'F']),
                 'status' => 'active',
+                'email' => $u->email,
             ]);
         }
     }

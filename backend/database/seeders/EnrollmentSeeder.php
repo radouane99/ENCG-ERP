@@ -36,10 +36,9 @@ class EnrollmentSeeder extends Seeder
                     'filiere_id' => $filiere->id,
                     'academic_year_id' => $academicYear->id,
                     'name' => "Groupe {$groupNames[$i]} - {$filiere->code}",
-                    'code' => "G{$groupNames[$i]}-{$filiere->code}",
-                    'level' => 'S1', // Simplification
+                    'semester_number' => 1,
                     'capacity' => 30,
-                    'type' => 'td',
+                    'current_count' => 0,
                 ]));
             }
         }

@@ -16,13 +16,13 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-          extensions: mbstring, pdo_mysql, bcmath, intl, gd, zip
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, bcmath, intl, gd, zip, sqlite3
           coverage: none
 
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-interaction --optimize-autoloader
 
       - name: Copy .env for testing
         working-directory: ./backend
@@ -34,6 +34,9 @@ jobs:
 
       - name: Run Backend Tests
         working-directory: ./backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
         run: php artisan test
 
       - name: Setup Node.js
@@ -67,16 +70,15 @@ jobs:
             git pull origin main
             
             # Rebuild containers (pulls new code into images depending on setup)
-            docker-compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml build
             
             # Restart containers in background
-            docker-compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d
             
             # Run Migrations and Optimize
-            docker-compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
-            docker-compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
-            docker-compose -f docker-compose.prod.yml exec -T app php artisan config:cache
-            docker-compose -f docker-compose.prod.yml exec -T app php artisan route:cache
-            docker-compose -f docker-compose.prod.yml exec -T app php artisan view:cache
+            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize
+            docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
             
             echo "✅ Deployment Successful!"
