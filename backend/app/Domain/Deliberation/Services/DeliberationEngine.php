@@ -90,7 +90,7 @@ class DeliberationEngine
             ->join('grade_components', 'grades.grade_component_id', '=', 'grade_components.id')
             ->join('modules', 'grade_components.module_id', '=', 'modules.id')
             ->where('grades.student_id', $studentId)
-            ->where('modules.semester_id', $semesterId)
+            ->where('modules.semester_number', $semesterId)
             ->select(
                 'modules.id as module_id',
                 DB::raw('SUM(grades.score * (grade_components.weight / 100)) as final_module_score')
