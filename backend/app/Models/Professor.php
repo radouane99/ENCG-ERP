@@ -18,10 +18,17 @@ class Professor extends Model
         'department_id',
         'employee_number',
         'cin',
+        'first_name',
+        'last_name',
+        'first_name_ar',
+        'last_name_ar',
+        'email',
+        'phone',
         'grade',
         'specialty',
         'contract_type',
         'hire_date',
+        'photo_path',
         'is_active',
     ];
 

@@ -261,9 +261,14 @@ export default function AcademicYearSettingsPage() {
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
               >
                 <option value="">Sélectionner</option>
-                {professors.map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
-                ))}
+                {professors.map((p: any) => {
+                  const displayName = (p.first_name || p.last_name) 
+                    ? `${p.first_name || ''} ${p.last_name || ''}`.trim() 
+                    : `Professeur (ID: ${p.id})`;
+                  return (
+                    <option key={p.id} value={p.id}>{displayName}</option>
+                  );
+                })}
               </select>
             </div>
             <div className="flex-1 w-full">

@@ -13,7 +13,7 @@ class ProfessorService
      */
     public function getFilteredProfessors(array $filters): Collection
     {
-        $query = Professor::with('department');
+        $query = Professor::with(['department', 'user']);
 
         if (!empty($filters['search'])) {
             $s = $filters['search'];
@@ -21,7 +21,12 @@ class ProfessorService
                 $q->where('first_name', 'like', "%$s%")
                   ->orWhere('last_name', 'like', "%$s%")
                   ->orWhere('email', 'like', "%$s%")
-                  ->orWhere('employee_number', 'like', "%$s%");
+                  ->orWhere('employee_number', 'like', "%$s%")
+                  ->orWhereHas('user', function($uq) use ($s) {
+                      $uq->where('first_name', 'like', "%$s%")
+                         ->orWhere('last_name', 'like', "%$s%")
+                         ->orWhere('email', 'like', "%$s%");
+                  });
             });
         }
 
@@ -41,10 +46,10 @@ class ProfessorService
             return [
                 'id' => $p->id,
                 'employee_number' => $p->employee_number,
-                'first_name' => $p->first_name,
-                'last_name' => $p->last_name,
-                'email' => $p->email,
-                'phone' => $p->phone,
+                'first_name' => $p->first_name ?? $p->user?->first_name,
+                'last_name' => $p->last_name ?? $p->user?->last_name,
+                'email' => $p->email ?? $p->user?->email,
+                'phone' => $p->phone ?? $p->user?->phone,
                 'grade' => $p->grade,
                 'specialty' => $p->specialty,
                 'contract_type' => $p->contract_type,
