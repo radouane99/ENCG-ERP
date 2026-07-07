@@ -13,9 +13,9 @@ use App\Models\Semester;
 use App\Models\Filiere;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Tests\TestCase; // إضافة ضرورية للـ Laravel App Context
+use Tests\TestCase;
 
-// هاد السطر كيعلم Pest أنه يستعمل الـ TestCase ديال لارافيل و يدير RefreshDatabase
+// هاد السطر كيعلم Pest باش يستعمل الـ TestCase ديال لارافيل والـ RefreshDatabase
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
@@ -44,26 +44,32 @@ it('identifies eliminatory marks based on the 7.0 threshold', function () {
     $method = $reflection->getMethod('checkEliminatoryMarks');
     $method->setAccessible(true);
 
+    // 1. Create a dummy Deliberation object (Fix for ArgumentCountError)
+    $deliberation = new Deliberation();
+
     // No eliminatory marks
     $moduleAveragesPassing = collect([
         (object)['final_module_score' => 12.0],
         (object)['final_module_score' => 10.5],
         (object)['final_module_score' => 7.0], // Exactly 7 is not eliminatory
     ]);
-    expect($method->invoke($this->engine, $moduleAveragesPassing))->toBeFalse();
+    
+    // 2. Pass $deliberation as the second argument
+    expect($method->invoke($this->engine, $moduleAveragesPassing, $deliberation))->toBeFalse();
 
     // Has eliminatory mark
     $moduleAveragesEliminatory = collect([
         (object)['final_module_score' => 15.0],
         (object)['final_module_score' => 6.99], // Eliminatory
     ]);
-    expect($method->invoke($this->engine, $moduleAveragesEliminatory))->toBeTrue();
+    
+    // 3. Pass $deliberation here as well
+    expect($method->invoke($this->engine, $moduleAveragesEliminatory, $deliberation))->toBeTrue();
 });
 
 it('processes a full deliberation and correctly applies compensation (rachat)', function () {
     // 1. Setup Database State (Respecting the 99-table architecture)
     
-    // We need an Institution first
     $institution = Institution::forceCreate([
         'name' => 'ENCG Fes',
         'code' => 'ENCGF',
@@ -126,7 +132,7 @@ it('processes a full deliberation and correctly applies compensation (rachat)', 
         'filiere_id' => $filiere->id,
         'name' => 'Math',
         'code' => 'MTH01',
-        'semester_number' => 1,
+        'semester_number' => 1, // Correct column according to the DB schema
         'coefficient' => 1
     ]);
 
