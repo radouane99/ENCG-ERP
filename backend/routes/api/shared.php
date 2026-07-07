@@ -23,6 +23,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Timetable & Smart Scheduling (Shared/Admin view)
     Route::prefix('timetable')->group(function () {
+        Route::patch('/events/move', [\App\Http\Controllers\Api\CalendarController::class, 'moveEvent']);
+        Route::get('/events', [\App\Http\Controllers\Api\CalendarController::class, 'getEvents']);
         Route::get('/', [\App\Http\Controllers\Api\TimetableController::class, 'index']);
         Route::get('/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
         Route::get('/export/{type}/{id}/pdf', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportPdf']);

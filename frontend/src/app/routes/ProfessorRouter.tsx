@@ -16,9 +16,12 @@ const ProfessorAnalytics = lazy(() => import('@features/professor-portal/pages/P
 const ProfessorSmartGrading = lazy(() => import('@features/professor-portal/pages/ProfessorSmartGrading'))
 const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pages/ProfessorProjectsKanban'))
 
+const ProfessorInteractiveCalendar = lazy(() => import('@features/calendar/pages/InteractiveCalendarPage'))
+
 export default function ProfessorRouter() {
   return (
     <Routes>
+      <Route path="schedule" element={<ProfessorInteractiveCalendar />} />
       <Route path="dashboard" element={<ProfessorDashboard />} />
       <Route path="check-in/scanner" element={<ProfessorScanner />} />
       <Route path="proctor-convocations" element={<ProfessorProctoring />} />

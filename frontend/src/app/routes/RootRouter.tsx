@@ -155,7 +155,7 @@ const ViewUserPage = lazy(() => import('@features/admin/pages/ViewUserPage'))
 const AdminStudentsPage = lazy(() => import('@features/admin/pages/AdminStudentsPage'))
 const AdminStudentDetailPage = lazy(() => import('@features/admin/pages/AdminStudentDetailPage'))
 const SchedulesEnginePage = lazy(() => import('@features/admin/pages/SchedulesEnginePage'))
-const InteractiveCalendarPage = lazy(() => import('@features/admin/pages/InteractiveCalendarPage'))
+const InteractiveCalendarPage = lazy(() => import('@features/calendar/pages/InteractiveCalendarPage'))
 const CreateSchedulePage = lazy(() => import('@features/admin/pages/CreateSchedulePage'))
 const ReservationsPage = lazy(() => import('@features/admin/pages/ReservationsPage'))
 const ReservationCreatePage = lazy(() => import('@features/admin/pages/ReservationCreatePage'))
@@ -404,7 +404,7 @@ export default function RootRouter() {
           <Route path="/admin/students" element={<AdminStudentsPage />} />
           <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
           <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
-          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage />} />
+          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
           <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
           <Route path="/admin/reservations" element={<ReservationsPage />} />
           <Route path="/admin/reservations/create" element={<ReservationCreatePage />} />

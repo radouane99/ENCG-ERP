@@ -9,7 +9,7 @@ const StudentMobility = lazy(() => import('@features/students/pages/StudentMobil
 const ConvocationPDFView = lazy(() => import('@features/students/pages/ConvocationPDFView'))
 const StudentInternships = lazy(() => import('@features/internships/ui/pages/StudentInternshipsPage'))
 const StudentEvaluations = lazy(() => import('@features/students/pages/StudentEvaluations'))
-const StudentSchedule = lazy(() => import('@features/students/pages/StudentSchedule'))
+const StudentSchedule = lazy(() => import('@features/calendar/pages/InteractiveCalendarPage'))
 const TicketsPage = lazy(() => import('@features/support/pages/TicketsPage'))
 const StudentPortfolio = lazy(() => import('@features/students/pages/StudentPortfolio'))
 const StudentProjectsMarket = lazy(() => import('@features/students/pages/StudentProjectsMarket'))
