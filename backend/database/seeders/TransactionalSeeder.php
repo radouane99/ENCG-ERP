@@ -38,9 +38,9 @@ class TransactionalSeeder extends Seeder
 
         // 1. Document Types & Requests
         $docTypes = [
-            ['institution_id' => $institution->id, 'name' => 'Attestation de Scolarité', 'code' => 'ATT_SCOL', 'requires_validation' => true, 'is_active' => true],
-            ['institution_id' => $institution->id, 'name' => 'Relevé de Notes', 'code' => 'REL_NOTES', 'requires_validation' => true, 'is_active' => true],
-            ['institution_id' => $institution->id, 'name' => 'Convention de Stage', 'code' => 'CONV_STAGE', 'requires_validation' => true, 'is_active' => true],
+            ['name' => 'Attestation de Scolarité', 'code' => 'ATT_SCOL', 'view_name' => 'documents.attestation_scolarite', 'fee_amount' => 0, 'is_active' => true],
+            ['name' => 'Relevé de Notes', 'code' => 'REL_NOTES', 'view_name' => 'documents.releve_notes', 'fee_amount' => 0, 'is_active' => true],
+            ['name' => 'Convention de Stage', 'code' => 'CONV_STAGE', 'view_name' => 'documents.convention_stage', 'fee_amount' => 0, 'is_active' => true],
         ];
         
         $createdDocTypes = [];
@@ -64,10 +64,16 @@ class TransactionalSeeder extends Seeder
 
             $session = AttendanceSession::create([
                 'schedule_id' => $schedule->id,
+                'module_id' => $schedule->module_id,
+                'group_id' => $schedule->group_id,
+                'academic_year_id' => $schedule->academic_year_id,
                 'professor_id' => $schedule->professor_id,
+                'professor_type' => 'App\Models\Professor',
                 'session_date' => $sessionDate->format('Y-m-d'),
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
+                'session_type' => 'cm',
+                'is_locked' => false,
                 'status' => 'completed',
             ]);
 

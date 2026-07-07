@@ -26,7 +26,7 @@ class ScheduleSeeder extends Seeder
         $groups = Group::where('academic_year_id', $academicYear->id)->get();
         $professors = Professor::all();
         $rooms = Room::all();
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        $days = [1, 2, 3, 4, 5]; // Monday=1, Friday=5
         
         foreach ($groups as $group) {
             $filiereModules = Module::where('filiere_id', $group->filiere_id)->get();

@@ -45,6 +45,10 @@ return new class extends Migration
         }
 
         Schema::table('students', function (Blueprint $table) {
+            // 1. مسح الـ Index أولاً باش نتفاداو خطأ SQLite
+            $table->dropIndex('students_last_name_first_name_index');
+            
+            // 2. عاد نمسحو الأعمدة بأمان
             if (Schema::hasColumn('students', 'first_name')) $table->dropColumn('first_name');
             if (Schema::hasColumn('students', 'last_name')) $table->dropColumn('last_name');
             if (Schema::hasColumn('students', 'cin')) $table->dropColumn('cin');
