@@ -75,6 +75,7 @@ class TransactionalSeeder extends Seeder
                 'session_type' => 'cm',
                 'is_locked' => false,
                 'status' => 'completed',
+                'created_by' => 1,
             ]);
 
             // Get students from the group attached to the schedule
@@ -100,7 +101,7 @@ class TransactionalSeeder extends Seeder
             'type' => 'normale',
             'start_date' => now()->subDays(10),
             'end_date' => now()->addDays(5),
-            'status' => 'active',
+            'is_active' => true,
         ]);
 
         $randomSchedules = $schedules->random(min(5, $schedules->count()));
@@ -108,22 +109,31 @@ class TransactionalSeeder extends Seeder
             $exam = Exam::create([
                 'exam_session_id' => $examSession->id,
                 'module_id' => $schedule->module_id,
-                'date' => now()->subDays(rand(1, 5)),
+                'group_id' => $schedule->group_id,
+                'room_id' => $schedule->room_id,
+                'exam_date' => now()->subDays(rand(1, 5))->format('Y-m-d'),
                 'start_time' => '09:00:00',
-                'end_time' => '11:00:00',
+                'duration_minutes' => 120,
                 'type' => 'final',
-                'status' => 'completed',
-                'max_score' => 20,
+            ]);
+
+            $gradeComp = \App\Models\GradeComponent::create([
+                'module_id' => $schedule->module_id,
+                'exam_session_id' => $examSession->id,
+                'name' => 'Examen Final',
+                'code' => 'FINAL',
+                'weight' => 100,
+                'max_grade' => 20,
             ]);
 
             $groupStudents = $schedule->group->students ?? collect();
             foreach ($groupStudents as $student) {
                 Grade::create([
-                    'exam_id' => $exam->id,
+                    'grade_component_id' => $gradeComp->id,
                     'student_id' => $student->id,
+                    'exam_session_id' => $examSession->id,
                     'score' => $faker->randomFloat(2, 5, 20),
                     'is_absent' => false,
-                    'is_validated' => true,
                 ]);
             }
         }

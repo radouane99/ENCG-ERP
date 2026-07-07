@@ -12,14 +12,14 @@ return new class extends Migration
         // 1. STANDARDIZATION
 
         // A. Fix attendance_records student_id reference
-        // Originally it was referencing 'users(id)', we standardize it to 'students(id)'
-        // (Wait, actually in the previous identity merge, 'students' table no longer has identity, but it still has an 'id' which attendance_records can reference if requested, OR it was already users(id). 
-        // Based on user prompt: "Standardize them to reference 'students.id'")
-        Schema::table('attendance_records', function (Blueprint $table) {
-            $table->dropForeign(['student_id']);
-            // We assume students table still has 'id' column as PK
-            $table->foreign('student_id')->references('id')->on('students')->cascadeOnDelete();
-        });
+        // SQLite doesn't support dropping/adding Foreign Keys easily on existing tables.
+        // We only run this on MySQL/PostgreSQL.
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('attendance_records', function (Blueprint $table) {
+                $table->dropForeign(['student_id']);
+                $table->foreign('student_id')->references('id')->on('students')->cascadeOnDelete();
+            });
+        }
 
         // B. Convert all 'status' columns to VARCHAR(20)
         $tablesWithStatus = [
@@ -36,8 +36,10 @@ return new class extends Migration
 
         foreach ($tablesWithStatus as $tableName) {
             if (Schema::hasColumn($tableName, 'status')) {
-                // Change status to varchar(20)
-                DB::statement("ALTER TABLE `{$tableName}` MODIFY `status` VARCHAR(20) DEFAULT 'pending'");
+                // MODIFY is MySQL specific, we ignore it in SQLite (Testing)
+                if (DB::getDriverName() !== 'sqlite') {
+                    DB::statement("ALTER TABLE `{$tableName}` MODIFY `status` VARCHAR(20) DEFAULT 'pending'");
+                }
             }
         }
 
@@ -45,34 +47,28 @@ return new class extends Migration
 
         // A. ai_chat_messages -> Merge into messages / conversations
         if (Schema::hasTable('ai_chat_messages')) {
-            // Data Migration (Simple mapping)
-            if (Schema::hasTable('messages') && Schema::hasTable('conversations')) {
-                // Create a default AI conversation if possible, or just migrate directly if there's an ai_conversations
-                // For safety, we just drop it as requested if merge is complex, but we will try a basic merge.
-                // Assuming we can just migrate data if needed, but since it's a structural migration, dropping is the priority.
-                Schema::dropIfExists('ai_chat_messages');
-            } else {
-                Schema::dropIfExists('ai_chat_messages');
-            }
+            Schema::dropIfExists('ai_chat_messages');
         }
 
         // B. alumni_surveys -> Migrate data to academic_projects
         if (Schema::hasTable('alumni_surveys') && Schema::hasTable('academic_projects')) {
-            // Data Migration
-            DB::statement("
-                INSERT INTO academic_projects (student_id, type, title, company_name, position_title, status, description, created_at, updated_at)
-                SELECT 
-                    student_id, 
-                    'alumni_survey', 
-                    job_title, 
-                    company_name, 
-                    job_title, 
-                    employment_status, 
-                    CONCAT('Graduation: ', graduation_year, ' | Sector: ', sector, ' | Salary: ', starting_salary),
-                    created_at, 
-                    updated_at
-                FROM alumni_surveys
-            ");
+            // We only run this data migration in MySQL because SQLite doesn't support CONCAT() natively in older versions
+            if (DB::getDriverName() !== 'sqlite') {
+                DB::statement("
+                    INSERT INTO academic_projects (student_id, type, title, company_name, position_title, status, description, created_at, updated_at)
+                    SELECT 
+                        student_id, 
+                        'alumni_survey', 
+                        job_title, 
+                        company_name, 
+                        job_title, 
+                        employment_status, 
+                        CONCAT('Graduation: ', graduation_year, ' | Sector: ', sector, ' | Salary: ', starting_salary),
+                        created_at, 
+                        updated_at
+                    FROM alumni_surveys
+                ");
+            }
             Schema::dropIfExists('alumni_surveys');
         }
 
@@ -93,7 +89,8 @@ return new class extends Migration
                 }
             }
             if (!$hasIndex) {
-                $table->index(['student_id', 'status']);
+                // We explicitly name the index so we can drop it easily later
+                $table->index(['student_id', 'status'], 'document_requests_student_id_status_index');
             }
         });
 
@@ -107,7 +104,7 @@ return new class extends Migration
                 }
             }
             if (!$hasIndex) {
-                $table->index(['attendance_session_id', 'status']);
+                $table->index(['attendance_session_id', 'status'], 'attendance_records_attendance_session_id_status_index');
             }
         });
     }
@@ -116,14 +113,15 @@ return new class extends Migration
     {
         // Revert index optimization
         Schema::table('document_requests', function (Blueprint $table) {
-            $table->dropIndex(['student_id', 'status']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropIndex('document_requests_student_id_status_index');
+            }
         });
 
         Schema::table('attendance_records', function (Blueprint $table) {
-            $table->dropIndex(['attendance_session_id', 'status']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropIndex('attendance_records_attendance_session_id_status_index');
+            }
         });
-
-        // The dropped tables and altered columns are destructive and not easily revertible in down() 
-        // without recreating the entire structure. We leave it as is or empty.
     }
 };
