@@ -1,25 +1,84 @@
 import { useState } from 'react'
 import { Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, CheckCircle2, X } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import api from '@shared/lib/api'
+import { toast } from 'sonner'
 export default function AcademicYearSettingsPage() {
+  const queryClient = useQueryClient()
   const [showImportModal, setShowImportModal] = useState(false)
+  const [assignmentForm, setAssignmentForm] = useState({
+    professor_id: '',
+    module_id: '',
+    group_id: ''
+  })
+
+  // Queries
+  const { data: professorsData } = useQuery({
+    queryKey: ['professors'],
+    queryFn: () => api.get('/hr/professors').then(r => r.data)
+  })
+
+  const { data: modulesData } = useQuery({
+    queryKey: ['modules'],
+    queryFn: () => api.get('/modules').then(r => r.data)
+  })
+
+  const { data: groupsData } = useQuery({
+    queryKey: ['groups'],
+    queryFn: () => api.get('/groups').then(r => r.data)
+  })
+
+  const { data: assignmentsData, isLoading: assignmentsLoading } = useQuery({
+    queryKey: ['professor-assignments'],
+    queryFn: () => api.get('/professor-assignments').then(r => r.data)
+  })
+
+  const professors = professorsData?.data || []
+  const modules = modulesData?.data || []
+  const groups = groupsData?.data || []
+  const assignments = assignmentsData?.data || []
+
+  // Mutations
+  const createAssignmentMutation = useMutation({
+    mutationFn: (payload: any) => api.post('/professor-assignments', payload),
+    onSuccess: () => {
+      toast.success('Affectation ajoutée avec succès')
+      queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
+      setAssignmentForm({ professor_id: '', module_id: '', group_id: '' })
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de l\'ajout')
+    }
+  })
+
+  const deleteAssignmentMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/professor-assignments/${id}`),
+    onSuccess: () => {
+      toast.success('Affectation supprimée')
+      queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
+    },
+    onError: () => toast.error('Erreur lors de la suppression')
+  })
+
+  const handleCreateAssignment = () => {
+    if (!assignmentForm.professor_id || !assignmentForm.module_id || !assignmentForm.group_id) {
+      toast.error('Veuillez remplir tous les champs')
+      return
+    }
+    createAssignmentMutation.mutate(assignmentForm)
+  }
+
+  const handleDeleteAssignment = (id: number) => {
+    if (confirm('Voulez-vous vraiment supprimer cette affectation ?')) {
+      deleteAssignmentMutation.mutate(id)
+    }
+  }
 
   // Mock data for years
   const [years] = useState([
     { id: 1, label: '2025/2026', isCurrent: true },
   ])
-
-  // Mock data for assignments
-  const assignments = [
-    { id: 1, prof: 'Radouane el asri', module: 'INF-101 Introduction - Génie Informatique', group: 'Génie Informatique - Groupe 1' },
-    { id: 2, prof: 'Radouane el asri', module: 'INF-102 Avancé - Génie Informatique', group: 'Génie Informatique - Groupe 1' },
-    { id: 3, prof: 'Radouane el asri', module: 'INF-103 Développement mobile', group: 'Génie Informatique - Groupe 1' },
-    { id: 4, prof: 'Radouane el asri', module: 'INF-104 Développement mobile LARAVEL', group: 'Génie Informatique - Groupe 1' },
-    { id: 5, prof: 'Radouane el asri', module: 'INF-105 Intelligent Artificiel', group: 'Génie Informatique - Groupe 1' },
-    { id: 6, prof: 'Radouane el asri', module: 'INF-106 SQL SERVER BASE DE DONNEE', group: 'Génie Informatique - Groupe 1' },
-    { id: 7, prof: 'Radouane el asri', module: 'INF-107 GAMING', group: 'Génie Informatique - Groupe 1' },
-  ]
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">
@@ -196,27 +255,49 @@ export default function AcademicYearSettingsPage() {
           <div className="flex flex-col lg:flex-row items-end gap-4">
             <div className="flex-1 w-full">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Professeur</label>
-              <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
-                <option>Sélectionner</option>
-                <option>Radouane el asri</option>
+              <select 
+                value={assignmentForm.professor_id}
+                onChange={e => setAssignmentForm(prev => ({ ...prev, professor_id: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+              >
+                <option value="">Sélectionner</option>
+                {professors.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
+                ))}
               </select>
             </div>
             <div className="flex-1 w-full">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Module</label>
-              <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
-                <option>Sélectionner</option>
-                <option>INF-101 Introduction - Génie Informatique</option>
+              <select 
+                value={assignmentForm.module_id}
+                onChange={e => setAssignmentForm(prev => ({ ...prev, module_id: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+              >
+                <option value="">Sélectionner</option>
+                {modules.map((m: any) => (
+                  <option key={m.id} value={m.id}>{m.code} {m.name}</option>
+                ))}
               </select>
             </div>
             <div className="flex-1 w-full">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Groupe</label>
-              <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
-                <option>Sélectionner</option>
-                <option>Génie Informatique - Groupe 1</option>
+              <select 
+                value={assignmentForm.group_id}
+                onChange={e => setAssignmentForm(prev => ({ ...prev, group_id: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+              >
+                <option value="">Sélectionner</option>
+                {groups.map((g: any) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
               </select>
             </div>
-            <button className="w-full lg:w-auto px-8 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-sm shadow-sm uppercase tracking-wide">
-              + Affecter
+            <button 
+              onClick={handleCreateAssignment}
+              disabled={createAssignmentMutation.isPending}
+              className="w-full lg:w-auto px-8 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-sm shadow-sm uppercase tracking-wide disabled:opacity-50"
+            >
+              {createAssignmentMutation.isPending ? 'En cours...' : '+ Affecter'}
             </button>
           </div>
         </div>
@@ -231,16 +312,31 @@ export default function AcademicYearSettingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {assignments.map(a => (
+            {assignmentsLoading ? (
+              <tr>
+                <td colSpan={4} className="px-8 py-10 text-center text-slate-500 font-medium">Chargement...</td>
+              </tr>
+            ) : assignments.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-8 py-10 text-center text-slate-500 font-medium">Aucune affectation trouvée</td>
+              </tr>
+            ) : assignments.map((a: any) => (
               <tr key={a.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-8 py-5 font-bold text-slate-800">{a.prof}</td>
                 <td className="px-8 py-5 font-medium text-slate-600">
-                  <span className="font-bold text-slate-400 mr-2">{a.module.split(' ')[0]}</span> 
-                  {a.module.split(' ').slice(1).join(' ')}
+                  {a.module && (
+                    <>
+                      <span className="font-bold text-slate-400 mr-2">{a.module.split(' ')[0]}</span> 
+                      {a.module.split(' ').slice(1).join(' ')}
+                    </>
+                  )}
                 </td>
                 <td className="px-8 py-5 font-bold text-slate-600">{a.group}</td>
                 <td className="px-8 py-5 text-right">
-                  <button className="text-slate-300 hover:text-red-500 transition-colors">
+                  <button 
+                    onClick={() => handleDeleteAssignment(a.id)}
+                    className="text-slate-300 hover:text-red-500 transition-colors"
+                  >
                     <Trash2 className="w-4 h-4 inline-block" />
                   </button>
                 </td>

@@ -106,6 +106,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::apiResource('departments', \App\Http\Controllers\Api\DepartmentController::class);
     Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
+    Route::apiResource('professor-assignments', \App\Http\Controllers\Api\ProfessorAssignmentController::class)->except(['show', 'update']);
 
     // Exam Locking (Admin)
     Route::prefix('admin/exam-locking')->middleware('require-admin-2fa')->group(function () {

@@ -116,10 +116,10 @@ export default function ProfessorsListPage() {
     visiting: isRtl ? 'زائر' : 'Vacataire',
   }
 
-  const CONTRACT_VARIANTS: Record<string, "primary" | "warning" | "info"> = {
-    permanent: 'primary',
+  const CONTRACT_VARIANTS: Record<string, "default" | "warning" | "navy"> = {
+    permanent: 'default',
     contractual: 'warning',
-    visiting: 'info',
+    visiting: 'navy',
   }
 
   return (
@@ -132,7 +132,8 @@ export default function ProfessorsListPage() {
         </div>
         <div className="flex items-center gap-3">
           <ExcelActions model="professors" label={isRtl ? 'أساتذة' : 'Professeurs'} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['professors'] })} />
-          <Button onClick={openCreate} icon={<Plus size={18} />}>
+          <Button onClick={openCreate} className="flex items-center gap-2">
+            <Plus size={18} />
             {isRtl ? 'أستاذ جديد' : 'Nouveau Professeur'}
           </Button>
         </div>
@@ -223,7 +224,7 @@ export default function ProfessorsListPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
-                          {prof.first_name[0]}{prof.last_name[0]}
+                          {prof.first_name?.[0] || ''}{prof.last_name?.[0] || ''}
                         </div>
                         <div>
                           <p className="font-bold text-[hsl(var(--foreground))]">{prof.last_name} {prof.first_name}</p>

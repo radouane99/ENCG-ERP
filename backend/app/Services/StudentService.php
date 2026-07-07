@@ -14,27 +14,35 @@ class StudentService
      */
     public function getPaginatedStudents(array $filters, int $perPage = 20, string $sortField = 'last_name', string $sortOrder = 'asc'): LengthAwarePaginator
     {
-        $query = Student::with(['latestPathway.filiere']); // Eager loading
+        $query = Student::with(['latestPathway.filiere'])
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->select('students.*', 'users.first_name', 'users.last_name', 'users.email', 'users.phone', 'students.gender');
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('student_number', 'like', "%{$search}%")
-                  ->orWhere('cne', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->where('users.first_name', 'like', "%{$search}%")
+                  ->orWhere('users.last_name', 'like', "%{$search}%")
+                  ->orWhere('students.student_number', 'like', "%{$search}%")
+                  ->orWhere('students.cne', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%");
             });
         }
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('students.status', $filters['status']);
         }
 
         // Validate sort field to prevent SQL injection
         $allowedSorts = ['last_name', 'first_name', 'student_number', 'created_at', 'status'];
         if (!in_array($sortField, $allowedSorts)) {
-            $sortField = 'last_name';
+            $sortField = 'users.last_name';
+        } else {
+            if (in_array($sortField, ['first_name', 'last_name'])) {
+                $sortField = 'users.' . $sortField;
+            } else {
+                $sortField = 'students.' . $sortField;
+            }
         }
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
 
