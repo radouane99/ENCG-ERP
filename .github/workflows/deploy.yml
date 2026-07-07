@@ -21,8 +21,7 @@ jobs:
 
       - name: Install PHP Dependencies
         working-directory: ./backend
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist --ignore-platform-reqs
       - name: Generate key for testing
         working-directory: ./backend
         run: |

@@ -2,7 +2,13 @@
   "name": "encg/erp-backend",
   "version": "1.0.0",
   "description": "ENCG ERP — University Management Platform for Moroccan Public Universities",
-  "keywords": ["laravel", "university", "erp", "encg", "maroc"],
+  "keywords": [
+    "laravel",
+    "university",
+    "erp",
+    "encg",
+    "maroc"
+  ],
   "license": "proprietary",
   "require": {
     "php": "^8.4",
@@ -79,6 +85,9 @@
     "allow-plugins": {
       "pestphp/pest-plugin": true,
       "php-http/discovery": true
+    },
+    "platform": {
+      "php": "8.4"
     }
   },
   "minimum-stability": "stable",
