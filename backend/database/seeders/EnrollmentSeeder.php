@@ -59,14 +59,12 @@ class EnrollmentSeeder extends Seeder
                         'student_id' => $student->id,
                         'academic_year_id' => $academicYear->id,
                         'filiere_id' => $group->filiere_id,
-                        'current_semester_id' => $currentSemester->id,
-                        'level' => 'S1',
+                        'group_id' => $group->id,
+                        'semester_number' => 1,
                         'status' => 'registered',
-                        'registration_date' => now(),
+                        'registration_type' => 'initial',
                     ]);
 
-                    // Attach to group (Many to Many)
-                    $group->students()->attach($student->id, ['status' => 'active']);
                 }
             }
         });

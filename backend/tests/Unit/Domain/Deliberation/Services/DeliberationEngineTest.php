@@ -4,14 +4,19 @@ use App\Domain\Deliberation\Services\DeliberationEngine;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
 use App\Models\Student;
-use App\Models\Registration;
 use App\Models\Module;
 use App\Models\GradeComponent;
 use App\Models\Grade;
+use App\Models\Institution;
+use App\Models\AcademicYear;
+use App\Models\Semester;
+use App\Models\Filiere;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\TestCase; // إضافة ضرورية للـ Laravel App Context
 
-uses(RefreshDatabase::class);
+// هاد السطر كيعلم Pest أنه يستعمل الـ TestCase ديال لارافيل و يدير RefreshDatabase
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     $this->engine = new DeliberationEngine();
@@ -39,69 +44,118 @@ it('identifies eliminatory marks based on the 7.0 threshold', function () {
     $method = $reflection->getMethod('checkEliminatoryMarks');
     $method->setAccessible(true);
 
-    $deliberation = new Deliberation();
-
     // No eliminatory marks
     $moduleAveragesPassing = collect([
         (object)['final_module_score' => 12.0],
         (object)['final_module_score' => 10.5],
         (object)['final_module_score' => 7.0], // Exactly 7 is not eliminatory
     ]);
-    expect($method->invoke($this->engine, $moduleAveragesPassing, $deliberation))->toBeFalse();
+    expect($method->invoke($this->engine, $moduleAveragesPassing))->toBeFalse();
 
     // Has eliminatory mark
     $moduleAveragesEliminatory = collect([
         (object)['final_module_score' => 15.0],
         (object)['final_module_score' => 6.99], // Eliminatory
     ]);
-    expect($method->invoke($this->engine, $moduleAveragesEliminatory, $deliberation))->toBeTrue();
+    expect($method->invoke($this->engine, $moduleAveragesEliminatory))->toBeTrue();
 });
 
 it('processes a full deliberation and correctly applies compensation (rachat)', function () {
-    // 1. Setup minimal database state
-    $academicYearId = 1;
-    $semesterId = 1;
-    $filiereId = 1;
+    // 1. Setup Database State (Respecting the 99-table architecture)
+    
+    // We need an Institution first
+    $institution = Institution::forceCreate([
+        'name' => 'ENCG Fes',
+        'code' => 'ENCGF',
+        'slug' => 'encg-fes',
+        'type' => 'grande_ecole'
+    ]);
+
+    $academicYear = AcademicYear::forceCreate([
+        'institution_id' => $institution->id,
+        'label' => '2025-2026',
+        'start_year' => 2025,
+        'end_year' => 2026,
+        'start_date' => '2025-09-01',
+        'end_date' => '2026-07-31'
+    ]);
+
+    $semester = Semester::forceCreate([
+        'academic_year_id' => $academicYear->id,
+        'name' => 'Semester 1',
+        'number' => 1,
+        'start_date' => '2025-09-01',
+        'end_date' => '2026-01-31'
+    ]);
+
+    $filiere = Filiere::forceCreate([
+        'institution_id' => $institution->id,
+        'name' => 'Commerce',
+        'code' => 'COM',
+        'type' => 'initial'
+    ]);
 
     $deliberation = Deliberation::forceCreate([
-        'academic_year_id' => $academicYearId,
-        'semester_id' => $semesterId,
-        'filiere_id' => $filiereId,
+        'institution_id' => $institution->id,
+        'academic_year_id' => $academicYear->id,
+        'semester_id' => $semester->id,
+        'filiere_id' => $filiere->id,
+        'type' => 'normale',
         'status' => 'pending'
     ]);
 
     $student = Student::forceCreate([
+        'institution_id' => $institution->id,
+        'student_number' => 'STU12345',
         'cne' => 'N123456789',
-        'first_name' => 'Youssef',
-        'last_name' => 'El Amrani',
-        'birth_date' => '2000-01-01',
+        'gender' => 'Male'
     ]);
 
     // Register student
-    DB::table('registrations')->insert([
+    DB::table('student_registrations')->insert([
         'student_id' => $student->id,
-        'academic_year_id' => $academicYearId,
-        'filiere_id' => $filiereId,
+        'academic_year_id' => $academicYear->id,
+        'filiere_id' => $filiere->id,
+        'semester_number' => 1,
+        'registration_type' => 'initial'
     ]);
 
     // Create a module
     $module = Module::forceCreate([
-        'semester_id' => $semesterId,
+        'institution_id' => $institution->id,
+        'filiere_id' => $filiere->id,
         'name' => 'Math',
+        'code' => 'MTH01',
+        'semester_number' => 1,
         'coefficient' => 1
+    ]);
+
+    // To create GradeComponent, we need an ExamSession
+    $examSession = \App\Models\ExamSession::forceCreate([
+        'institution_id' => $institution->id,
+        'academic_year_id' => $academicYear->id,
+        'semester_id' => $semester->id,
+        'name' => 'Session Normale',
+        'type' => 'normale',
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-01-15'
     ]);
 
     $gradeComponent = GradeComponent::forceCreate([
         'module_id' => $module->id,
+        'exam_session_id' => $examSession->id,
         'name' => 'Exam',
+        'code' => 'EX',
         'weight' => 100 // 100% of the module
     ]);
 
     // Scenario: Student gets exactly 9.6 which qualifies for system Rachat (Compensation)
     Grade::forceCreate([
-        'student_id' => $student->id,
         'grade_component_id' => $gradeComponent->id,
+        'student_id' => $student->id,
+        'exam_session_id' => $examSession->id,
         'score' => 9.6,
+        'final_score' => 9.6
     ]);
 
     // 2. Process Deliberation
@@ -113,10 +167,10 @@ it('processes a full deliberation and correctly applies compensation (rachat)', 
         ->first();
 
     expect($decision)->not->toBeNull();
-    expect($decision->semester_average)->toBe(9.6);
+    expect((float) $decision->semester_average)->toEqual(9.6);
     expect($decision->decision)->toBe('admitted');
-    expect($decision->was_compensated)->toBeTrue();
-    expect($decision->compensated_average)->toBe(10.00);
+    expect((bool) $decision->was_compensated)->toBeTrue();
+    expect((float) $decision->compensated_average)->toEqual(10.00);
     expect($decision->mention)->toBe('Passable');
     
     // Status should be updated

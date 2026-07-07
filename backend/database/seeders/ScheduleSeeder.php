@@ -43,18 +43,19 @@ class ScheduleSeeder extends Seeder
                 $endTime = (clone $startTime)->addHours(2);
 
                 Schedule::create([
+                    'institution_id' => $prof->institution_id,
                     'academic_year_id' => $academicYear->id,
                     'semester_id' => $semester->id,
                     'module_id' => $module->id,
                     'professor_id' => $prof->id,
+                    'professor_type' => 'App\Models\Professor',
                     'group_id' => $group->id,
                     'room_id' => $room->id,
                     'day_of_week' => $dayOfWeek,
                     'start_time' => $startTime->format('H:i:s'),
                     'end_time' => $endTime->format('H:i:s'),
-                    'type' => 'cm', // cours magistral
-                    'is_online' => false,
-                    'status' => 'scheduled',
+                    'session_type' => 'cm', // cours magistral
+                    'is_active' => true,
                 ]);
             }
         }
