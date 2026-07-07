@@ -1,22 +1,22 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { 
-  GraduationCap, Calendar, FileText, Upload, CheckCircle2, 
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import {
+  GraduationCap, Calendar, FileText, Upload, CheckCircle2,
   Clock, AlertCircle, Sparkles, User, MapPin
-} from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import api from '@shared/lib/api'
-import { toast } from 'sonner'
-import { Button } from '@shared/components/ui/Button'
-import { Badge } from '@shared/components/ui/Badge'
-import { Input } from '@shared/components/ui/Input'
-import { cn } from '@shared/lib/utils'
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import api from '../../../shared/lib/api';
+import { toast } from 'sonner';
+import { Button } from '../../../shared/components/ui/Button';
+import { Badge } from '../../../shared/components/ui/Badge';
+import { Input } from '../../../shared/components/ui/Input';
+import { cn } from '../../../shared/lib/utils';
 
 export default function StudentDashboard() {
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [activeTab, setActiveTab] = useState<'overview' | 'grades' | 'absences' | 'revision'>('overview')
-  
+
   // Absence Form State
   const [absenceReason, setAbsenceReason] = useState('')
   const [absenceDesc, setAbsenceDesc] = useState('')
@@ -110,8 +110,8 @@ export default function StudentDashboard() {
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
                 "py-4 px-6 text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2",
-                activeTab === tab.id 
-                  ? "border-[hsl(var(--color-primary))] text-[hsl(var(--color-primary))] bg-[hsl(var(--background))]" 
+                activeTab === tab.id
+                  ? "border-[hsl(var(--color-primary))] text-[hsl(var(--color-primary))] bg-[hsl(var(--background))]"
                   : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--background))/50]"
               )}
             >
@@ -130,7 +130,7 @@ export default function StudentDashboard() {
                   <Calendar className="text-[hsl(var(--color-primary))]" />
                   {isRtl ? 'الجدول الزمني لليوم' : 'Mon emploi du temps (Aujourd\'hui)'}
                 </h3>
-                
+
                 <div className="space-y-4 relative before:absolute before:inset-0 before:ms-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[hsl(var(--border))] before:to-transparent">
                   {scheduleData?.slice(0, 2).map((cours: any, idx: number) => (
                     <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -148,8 +148,8 @@ export default function StudentDashboard() {
                           {cours.module}
                         </h4>
                         <div className="flex items-center gap-3 text-xs text-[hsl(var(--muted-foreground))] font-medium">
-                          <span className="flex items-center gap-1"><User size={12}/> {cours.professor}</span>
-                          <span className="flex items-center gap-1"><MapPin size={12}/> {cours.room}</span>
+                          <span className="flex items-center gap-1"><User size={12} /> {cours.professor}</span>
+                          <span className="flex items-center gap-1"><MapPin size={12} /> {cours.room}</span>
                         </div>
                       </div>
                     </div>
@@ -251,7 +251,7 @@ export default function StudentDashboard() {
                 <form onSubmit={(e) => { e.preventDefault(); submitAbsenceMutation.mutate(); }} className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{isRtl ? 'سبب الغياب' : 'Motif de l\'absence'}</label>
-                    <select 
+                    <select
                       value={absenceReason}
                       onChange={e => setAbsenceReason(e.target.value)}
                       className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none"
@@ -263,10 +263,10 @@ export default function StudentDashboard() {
                       <option value="other">{isRtl ? 'أخرى' : 'Autre (à préciser)'}</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{isRtl ? 'تفاصيل إضافية' : 'Détails supplémentaires'}</label>
-                    <textarea 
+                    <textarea
                       value={absenceDesc}
                       onChange={e => setAbsenceDesc(e.target.value)}
                       className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none resize-none h-24"
@@ -287,9 +287,9 @@ export default function StudentDashboard() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
+                  <Button
+                    type="submit"
+                    variant="primary"
                     className="w-full"
                     isLoading={submitAbsenceMutation.isPending}
                   >
@@ -328,7 +328,7 @@ export default function StudentDashboard() {
               <p className="text-[hsl(var(--muted-foreground))] text-sm">
                 {isRtl ? 'أدخل المواد التي ترغب في مراجعتها، وسيقوم الذكاء الاصطناعي بتنظيم جدول زمني مثالي لك.' : 'Saisissez les modules que vous souhaitez réviser, et notre IA générera un planning optimisé.'}
               </p>
-              
+
               <div className="flex gap-2 text-start">
                 <Input
                   className="flex-1"
@@ -336,8 +336,8 @@ export default function StudentDashboard() {
                   value={modulesInput}
                   onChange={(e) => setModulesInput(e.target.value)}
                 />
-                <Button 
-                  onClick={() => generateRevisionMutation.mutate()} 
+                <Button
+                  onClick={() => generateRevisionMutation.mutate()}
                   isLoading={generateRevisionMutation.isPending}
                   className="bg-purple-600 hover:bg-purple-700 text-white border-none shrink-0"
                 >
@@ -356,9 +356,9 @@ export default function StudentDashboard() {
                   <div className="prose prose-sm dark:prose-invert max-w-none text-[hsl(var(--muted-foreground))]">
                     <p>{isRtl ? 'تم تقسيم المواد بنجاح على 7 أيام مع فترات راحة.' : 'Modules répartis sur 7 jours avec la technique Pomodoro intégrée.'}</p>
                     <ul className="mt-4 space-y-2">
-                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> Jour 1: Comptabilité (Chapitres 1-3) - 2h</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> Jour 2: Algèbre (Espaces Vectoriels) - 1.5h</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> Jour 3: Marketing + Révision Croisée - 3h</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 1: Comptabilité (Chapitres 1-3) - 2h</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 2: Algèbre (Espaces Vectoriels) - 1.5h</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 3: Marketing + Révision Croisée - 3h</li>
                     </ul>
                   </div>
                 </div>
