@@ -2,8 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@stores/authStore';
 import { gradesApi } from '@shared/api/grades';
 import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
-import { cn } from '@utils/cn';
-import debounce from 'lodash/debounce';
+import { cn } from '@shared/lib/utils';
+function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, delay: number) {
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  return React.useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+}
 
 export default function GradeEntry() {
   const { user } = useAuthStore();
@@ -61,12 +72,9 @@ export default function GradeEntry() {
   };
 
   // Debounced save for auto-saving cell edits
-  const debouncedSave = useCallback(
-    debounce((updates: any[]) => {
-      handleSave(updates);
-    }, 1000),
-    []
-  );
+  const debouncedSave = useDebounceCallback((updates: any[]) => {
+    handleSave(updates);
+  }, 1000);
 
   const handleCellChange = (id: number, field: 'cc' | 'exam', value: string) => {
     const numValue = value === '' ? null : parseFloat(value);

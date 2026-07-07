@@ -1,5 +1,4 @@
-import { axiosInstance } from '@shared/api/axiosInstance';
-
+import api from '@shared/lib/api';
 export interface AnalyticsData {
   document_requests: {
     total: number;
@@ -21,7 +20,7 @@ export interface AnalyticsData {
 
 export const analyticsApi = {
   getAdminAnalytics: async (): Promise<AnalyticsData> => {
-    const response = await axiosInstance.get('/api/admin/analytics');
+    const response = await api.get('/admin/analytics');
     return response.data.data;
   },
 };

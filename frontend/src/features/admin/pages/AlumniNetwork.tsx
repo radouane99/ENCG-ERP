@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   GraduationCap, Building2, Briefcase, TrendingUp,
-  Search, Filter, MapPin, Linkedin, Mail, CheckCircle2
+  Search, Filter, MapPin, Link, Mail, CheckCircle2, Users
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
@@ -158,7 +158,7 @@ export default function AlumniNetwork() {
               </div>
 
               <div className="flex items-center gap-2 pt-4 border-t border-[hsl(var(--border))]">
-                <Button variant="outline" size="sm" className="flex-1 bg-[#0A66C2]/10 border-transparent text-[#0A66C2] hover:bg-[#0A66C2]/20 h-9" icon={<Linkedin size={16}/>}>
+                <Button variant="outline" size="sm" className="flex-1 bg-[#0A66C2]/10 border-transparent text-[#0A66C2] hover:bg-[#0A66C2]/20 h-9" icon={<Link size={16}/>}>
                   LinkedIn
                 </Button>
                 <Button variant="outline" size="sm" className="h-9 px-3 bg-[hsl(var(--muted))] border-transparent" title="Contacter">

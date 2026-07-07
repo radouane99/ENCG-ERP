@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 const attendanceData = [
   { module: 'Marketing', presence: 85 },
-  { module: 'Comptabilit�', presence: 92 },
+  { module: 'Comptabilitï¿½', presence: 92 },
   { module: 'Finance', presence: 78 },
 ];
 
@@ -24,7 +24,7 @@ const ProfessorDashboard: React.FC = () => {
       total_students: 120,
       pending_grades: 45,
       next_class: {
-        module: 'Marketing Strat�gique',
+        module: 'Marketing Stratï¿½gique',
         time: '14:00 - 16:00',
         room: 'Salle 12'
       }
@@ -35,19 +35,19 @@ const ProfessorDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Espace Professeur 👋</h1>
+          <h1 className="text-2xl font-bold text-foreground">Espace Professeur ðŸ‘‹</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Bienvenue, Prof. {user?.name}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Modules Assign�s</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">Modules Assignï¿½s</p>
           <p className="text-3xl font-bold text-foreground mt-1">{stats?.modules_taught}</p>
           <BookOpen className="absolute right-[-10px] bottom-[-10px] text-blue-500/10" size={80} />
         </div>
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">�tudiants</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">ï¿½tudiants</p>
           <p className="text-3xl font-bold text-indigo-400 mt-1">{stats?.total_students}</p>
           <Users className="absolute right-[-10px] bottom-[-10px] text-indigo-500/10" size={80} />
         </div>
@@ -57,7 +57,7 @@ const ProfessorDashboard: React.FC = () => {
           <FileEdit className="absolute right-[-10px] bottom-[-10px] text-amber-500/10" size={80} />
         </div>
         <div className="rounded-2xl bg-muted/50 border border-border p-5 relative overflow-hidden">
-          <p className="text-muted-foreground text-xs font-medium uppercase">S�ances Valid�es</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">Sï¿½ances Validï¿½es</p>
           <p className="text-3xl font-bold text-emerald-400 mt-1">12</p>
           <CheckCircle className="absolute right-[-10px] bottom-[-10px] text-emerald-500/10" size={80} />
         </div>
@@ -65,7 +65,7 @@ const ProfessorDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl bg-muted/50 border border-border p-5">
-          <h3 className="text-foreground font-semibold mb-4">Assiduit� par Module</h3>
+          <h3 className="text-foreground font-semibold mb-4">Assiduitï¿½ par Module</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={attendanceData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" horizontal={false} />
