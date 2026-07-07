@@ -14,7 +14,7 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { StatCard } from "../../../shared/components/ui/StatCard";
+import { StatCard } from "@shared/components/ui";
 
 const COLORS = ['#0ea5e9', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#f97316'];
 
