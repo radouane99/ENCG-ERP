@@ -54,7 +54,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup SSH and Sync Files
+     - name: Setup SSH and Sync Files
         env:
           SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
           SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
@@ -64,8 +64,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
-          rsync -avz --exclude '.git' --exclude 'node_modules' --exclude 'vendor' ./ $SERVER_USER@$SERVER_IP:/opt/encg-erp/
-
+          rsync -avz -e "ssh -i ~/.ssh/id_rsa" --exclude '.git' --exclude 'node_modules' --exclude 'vendor' ./ "$SERVER_USER@$SERVER_IP:/opt/encg-erp/"
       - name: Restart Docker Services on Server
         uses: appleboy/ssh-action@master
         with:
