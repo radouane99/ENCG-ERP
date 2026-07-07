@@ -27,9 +27,12 @@ class DeliberationEngine
             // 1. Fetch all students registered in this filiere/semester/group
             $students = $this->getEligibleStudents($deliberation);
 
+            // Get the semester number from the relationship to pass to our calculation method
+            $semesterNumber = $deliberation->semester->number;
+
             foreach ($students as $student) {
-                // 2. Calculate raw averages per module
-                $moduleAverages = $this->calculateModuleAverages($student->id, $deliberation->semester_id);
+                // 2. Calculate raw averages per module (Passing semesterNumber instead of ID)
+                $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber);
 
                 // 3. Check for eliminatory marks (< 7/20 or < 8/20 depending on rules)
                 $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages, $deliberation);
@@ -83,14 +86,15 @@ class DeliberationEngine
         })->get();
     }
 
-    private function calculateModuleAverages(int $studentId, int $semesterId): Collection
+    // غيرنا المتغير الثاني باش يكون هو الرقم ديال الدورة (semesterNumber)
+    private function calculateModuleAverages(int $studentId, int $semesterNumber): Collection
     {
         // Complex query to sum up (grade * weight) / sum(weight) per module
         return DB::table('grades')
             ->join('grade_components', 'grades.grade_component_id', '=', 'grade_components.id')
             ->join('modules', 'grade_components.module_id', '=', 'modules.id')
             ->where('grades.student_id', $studentId)
-            ->where('modules.semester_number', $deliberation->semester->number)
+            ->where('modules.semester_number', $semesterNumber) // هنا صلحنا الفلتر باش يخدم مع الـ Database ديالك
             ->select(
                 'modules.id as module_id',
                 DB::raw('SUM(grades.score * (grade_components.weight / 100)) as final_module_score')
