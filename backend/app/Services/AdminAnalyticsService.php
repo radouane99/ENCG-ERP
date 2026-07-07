@@ -2,75 +2,106 @@
 
 namespace App\Services;
 
-use App\Models\DocumentRequest;
 use App\Models\AcademicProject;
-use App\Models\Student;
+use App\Models\DocumentRequest;
+use App\Models\StudentRegistration;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminAnalyticsService
 {
     /**
-     * Cache duration in seconds (15 minutes)
+     * Cache duration in seconds (10 minutes)
      */
-    protected int $cacheTtl = 900;
+    private const CACHE_TTL = 600;
 
-    public function getDashboardMetrics(): array
+    /**
+     * Get statistics for Document Requests
+     */
+    public function getDocumentRequestStats(): array
     {
-        return Cache::remember('admin.analytics.dashboard', $this->cacheTtl, function () {
+        return Cache::remember('admin.analytics.document_requests', self::CACHE_TTL, function () {
+            $total = DocumentRequest::count();
+            
+            $statusBreakdown = DocumentRequest::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->map(fn($item) => ['name' => ucfirst((string)$item->status), 'value' => $item->count])
+                ->toArray();
+
+            $monthlyTrend = DocumentRequest::select(
+                DB::raw("DATE_FORMAT(requested_at, '%Y-%m') as month"),
+                DB::raw('count(*) as count')
+            )
+            ->whereNotNull('requested_at')
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->limit(12)
+            ->get()
+            ->toArray();
+
             return [
-                'kpis' => $this->getKpis(),
-                'document_trends' => $this->getDocumentTrends(),
-                'project_distribution' => $this->getProjectDistribution(),
-                'student_activity' => $this->getStudentActivity(),
+                'total' => $total,
+                'status_breakdown' => $statusBreakdown,
+                'monthly_trend' => $monthlyTrend,
+                'pending_count' => collect($statusBreakdown)->firstWhere('name', 'Pending')['value'] ?? collect($statusBreakdown)->firstWhere('name', 'pending')['value'] ?? 0,
             ];
         });
     }
 
-    protected function getKpis(): array
+    /**
+     * Get statistics for Academic Projects (Internships & PFEs)
+     */
+    public function getAcademicProjectStats(): array
     {
-        return [
-            'total_requests' => DocumentRequest::count(),
-            'pending_requests' => DocumentRequest::where('status', 'pending')->count(),
-            'active_students' => Student::has('user')->count(),
-        ];
+        return Cache::remember('admin.analytics.academic_projects', self::CACHE_TTL, function () {
+            $total = AcademicProject::count();
+
+            $typeDistribution = AcademicProject::select('type', DB::raw('count(*) as count'))
+                ->groupBy('type')
+                ->get()
+                ->map(fn($item) => [
+                    'name' => $item->type === 'internship' ? 'Stage' : ($item->type === 'final_project' ? 'PFE' : ucfirst((string)$item->type)), 
+                    'value' => $item->count
+                ])
+                ->toArray();
+
+            $completedCount = AcademicProject::whereIn('status', ['completed', 'validated', 'approved'])->count();
+            $activeCount = AcademicProject::whereIn('status', ['ongoing', 'in_progress', 'pending'])->count();
+            
+            $completionRate = $total > 0 ? round(($completedCount / $total) * 100, 2) : 0;
+
+            return [
+                'total' => $total,
+                'type_distribution' => $typeDistribution,
+                'active_count' => $activeCount,
+                'completion_rate' => $completionRate,
+            ];
+        });
     }
 
-    protected function getDocumentTrends(): array
+    /**
+     * Get statistics for Student Registrations grouped by Filiere
+     */
+    public function getStudentActivityStats(): array
     {
-        // Monthly trends for the last 6 months
-        return DocumentRequest::select(
-            DB::raw('DATE_FORMAT(requested_at, "%Y-%m") as month'),
-            DB::raw('count(*) as total'),
-            DB::raw('SUM(CASE WHEN status = "ready" THEN 1 ELSE 0 END) as ready')
-        )
-        ->where('requested_at', '>=', now()->subMonths(6))
-        ->groupBy('month')
-        ->orderBy('month', 'asc')
-        ->get()
-        ->toArray();
-    }
+        return Cache::remember('admin.analytics.student_activity', self::CACHE_TTL, function () {
+            // Get latest active registrations grouped by filiere
+            $filiereBreakdown = StudentRegistration::join('filieres', 'student_registrations.filiere_id', '=', 'filieres.id')
+                ->select('filieres.name as filiere_name', DB::raw('count(*) as student_count'))
+                ->whereIn('student_registrations.status', ['active', 'registered', 'validated', 'enrolled'])
+                ->groupBy('filieres.id', 'filieres.name')
+                ->orderByDesc('student_count')
+                ->get()
+                ->map(fn($item) => ['name' => $item->filiere_name, 'value' => $item->student_count])
+                ->toArray();
 
-    protected function getProjectDistribution(): array
-    {
-        return AcademicProject::select('type', DB::raw('count(*) as count'))
-            ->groupBy('type')
-            ->get()
-            ->toArray();
-    }
+            $totalActiveStudents = array_sum(array_column($filiereBreakdown, 'value'));
 
-    protected function getStudentActivity(): array
-    {
-        return Student::select('academic_year_id', DB::raw('count(*) as total_students'))
-            ->groupBy('academic_year_id')
-            ->with('academicYear:id,name')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'year' => $item->academicYear->name ?? 'Unknown',
-                    'total' => $item->total_students
-                ];
-            })
-            ->toArray();
+            return [
+                'total_active' => $totalActiveStudents,
+                'filiere_breakdown' => $filiereBreakdown,
+            ];
+        });
     }
 }

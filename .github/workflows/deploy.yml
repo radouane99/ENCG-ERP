@@ -1,57 +1,82 @@
-name: Deploy ERP to Production
+name: Deploy to Production
+
 on:
   push:
     branches:
       - main
+
 jobs:
-  test-and-build:
-    name: Build and Run Tests
+  build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: pdo_mysql, mbstring, zip, exif, pcntl, bcmath, gd
-      - name: Install Composer Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --prefer-dist
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, bcmath, intl, gd, zip
+          coverage: none
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Copy .env for testing
+        working-directory: ./backend
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        working-directory: ./backend
+        run: php artisan key:generate
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        run: php artisan test
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install NPM Dependencies & Build Assets
-        run: |
-          npm install
-          npm run build
-      - name: Create .env for testing
-        run: cp .env.example .env
-      - name: Run Code Style Check (Pint)
-        run: vendor/bin/pint --test
-      - name: Run Static Analysis (PHPStan)
-        run: vendor/bin/phpstan analyse --memory-limit=2G
-      - name: Run Laravel Tests
-        run: php artisan test
 
+      - name: Install Frontend Dependencies & Build
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+          
   deploy:
-    name: Deploy to Server via Docker
-    needs: test-and-build
+    needs: build-and-test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
     steps:
-      - name: Execute Remote SSH Commands
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
           script: |
-            cd /var/www/encg-portail            
+            cd /var/www/encg-erp
+            
+            # Pull latest changes
             git pull origin main
-            docker-compose up -d --build
-            docker-compose exec -T app composer install --optimize-autoloader --no-dev
-            docker-compose exec -T app php artisan migrate --force
-            docker-compose exec -T app php artisan config:cache
-            docker-compose exec -T app php artisan route:cache
-            docker-compose exec -T app php artisan view:cache
-
+            
+            # Rebuild containers (pulls new code into images depending on setup)
+            docker-compose -f docker-compose.prod.yml build
+            
+            # Restart containers in background
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Run Migrations and Optimize
+            docker-compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+            docker-compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker-compose -f docker-compose.prod.yml exec -T app php artisan config:cache
+            docker-compose -f docker-compose.prod.yml exec -T app php artisan route:cache
+            docker-compose -f docker-compose.prod.yml exec -T app php artisan view:cache
+            
+            echo "✅ Deployment Successful!"

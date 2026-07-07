@@ -256,12 +256,12 @@ class EncgFesSeeder extends Seeder
         $this->seed7ModulesForFiliere($institution, $acg, 5);
         $this->seed7ModulesForFiliere($institution, $escm, 1);
 
-        $this->seedGroupsAndStudents($institution, $academicYear, $tc, 1);
-        $this->seedGroupsAndStudents($institution, $academicYear, $gfc, 5);
-        $this->seedGroupsAndStudents($institution, $academicYear, $mcm, 5);
-        $this->seedGroupsAndStudents($institution, $academicYear, $grh, 5);
-        $this->seedGroupsAndStudents($institution, $academicYear, $acg, 5);
-        $this->seedGroupsAndStudents($institution, $academicYear, $escm, 1);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $tc, 1);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $gfc, 5);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $mcm, 5);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $grh, 5);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $acg, 5);
+        // $this->seedGroupsAndStudents($institution, $academicYear, $escm, 1);
     }
 
     private function seedTroncCommunModules(Institution $institution, Filiere $filiere): void

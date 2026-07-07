@@ -15,10 +15,21 @@ class AdminAnalyticsController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $data = $this->analyticsService->getDashboardMetrics();
-            return response()->json(['data' => $data]);
+            $documentStats = $this->analyticsService->getDocumentRequestStats();
+            $projectStats = $this->analyticsService->getAcademicProjectStats();
+            $studentStats = $this->analyticsService->getStudentActivityStats();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'document_requests' => $documentStats,
+                    'academic_projects' => $projectStats,
+                    'student_activity' => $studentStats,
+                ]
+            ]);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Error fetching analytics data.',
                 'error' => $e->getMessage()
             ], 500);

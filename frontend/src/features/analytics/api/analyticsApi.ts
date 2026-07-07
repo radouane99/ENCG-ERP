@@ -1,20 +1,27 @@
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { DashboardMetrics } from '../model/types';
+import { axiosInstance } from '@shared/api/axiosInstance';
 
-const api = axios.create({
-  baseURL: '/api',
-});
+export interface AnalyticsData {
+  document_requests: {
+    total: number;
+    pending_count: number;
+    status_breakdown: Array<{ name: string; value: number }>;
+    monthly_trend: Array<{ month: string; count: number }>;
+  };
+  academic_projects: {
+    total: number;
+    active_count: number;
+    completion_rate: number;
+    type_distribution: Array<{ name: string; value: number }>;
+  };
+  student_activity: {
+    total_active: number;
+    filiere_breakdown: Array<{ name: string; value: number }>;
+  };
+}
 
-const fetchAnalytics = async (): Promise<DashboardMetrics> => {
-  const { data } = await api.get('/admin/analytics');
-  return data.data;
-};
-
-export const useAdminAnalytics = () => {
-  return useQuery({
-    queryKey: ['admin-analytics'],
-    queryFn: fetchAnalytics,
-    staleTime: 5 * 60 * 1000, // 5 minutes stale time
-  });
+export const analyticsApi = {
+  getAdminAnalytics: async (): Promise<AnalyticsData> => {
+    const response = await axiosInstance.get('/api/admin/analytics');
+    return response.data.data;
+  },
 };
