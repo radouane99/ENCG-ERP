@@ -24,6 +24,10 @@ class FinalProject extends Model
         'report_path',
     ];
 
+    protected $casts = [
+        'status' => \App\Enums\FinalProjectStatus::class,
+    ];
+
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);

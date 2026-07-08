@@ -19,6 +19,7 @@ class Internship extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'status' => \App\Enums\InternshipStatus::class,
     ];
 
     public function student()

@@ -27,7 +27,6 @@ class Student extends Model
         'user_id',
         'student_number',
         'cne',
-        'cin',
         'massar_code',
         'birth_date',
         'birth_city',

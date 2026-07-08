@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AttendanceRecord extends Model
+class Attendance extends Model
 {
     use HasFactory;
+
+    protected $table = 'attendances';
 
     protected $fillable = [
         'attendance_session_id',
@@ -19,6 +21,7 @@ class AttendanceRecord extends Model
         'is_valid',
         'status',
         'is_justified',
+        'notes',
     ];
 
     protected $casts = [
@@ -27,6 +30,7 @@ class AttendanceRecord extends Model
         'scanned_longitude' => 'decimal:8',
         'is_valid' => 'boolean',
         'is_justified' => 'boolean',
+        'status' => \App\Enums\AttendanceStatus::class,
     ];
 
     public function session(): BelongsTo

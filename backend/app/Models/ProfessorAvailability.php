@@ -10,17 +10,22 @@ class ProfessorAvailability extends Model
 {
     use HasFactory;
 
+    protected $table = 'professor_availabilities';
+
     protected $fillable = [
         'professor_id',
         'academic_year_id',
         'semester_id',
-        'status', // pending, submitted
-        'available_slots_count',
-        'availability_data', // JSON structure of their slots
+        'day_of_week',
+        'start_time',
+        'end_time',
+        'is_available',
     ];
 
     protected $casts = [
-        'availability_data' => 'array',
+        'is_available' => 'boolean',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
     ];
 
     public function professor(): BelongsTo

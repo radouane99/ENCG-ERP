@@ -23,6 +23,7 @@ class Quiz extends Model
         'available_until',
         'is_published',
         'ai_generated',
+        'status',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class Quiz extends Model
         'is_published' => 'boolean',
         'ai_generated' => 'boolean',
         'pass_score' => 'decimal:2',
+        'status' => \App\Enums\QuizStatus::class,
     ];
 
     public function module()
