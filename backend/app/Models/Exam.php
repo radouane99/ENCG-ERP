@@ -10,23 +10,16 @@ class Exam extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'exam_session_id',
-        'module_id',
-        'group_id',
-        'room_id',
-        'exam_date',
-        'start_time',
-        'duration_minutes',
-        'type',
-        'grades_published',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'exam_date' => 'date',
         'duration_minutes' => 'integer',
         'grades_published' => 'boolean',
     ];
+    }
 
     public function session(): BelongsTo
     {

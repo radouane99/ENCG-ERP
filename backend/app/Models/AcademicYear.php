@@ -11,23 +11,17 @@ class AcademicYear extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'label',
-        'start_year',
-        'end_year',
-        'start_date',
-        'end_date',
-        'is_current',
-        'is_locked',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'start_date' => 'date',
         'end_date' => 'date',
         'is_current' => 'boolean',
         'is_locked' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

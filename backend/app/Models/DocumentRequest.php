@@ -12,20 +12,16 @@ class DocumentRequest extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-    protected $fillable = [
-        'student_id',
-        'document_type_id',
-        'status',
-        'requested_at',
-        'processed_at',
-        'admin_notes',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'requested_at' => 'datetime',
         'processed_at' => 'datetime',
         'admin_notes' => 'array',
     ];
+    }
 
     public function student(): BelongsTo
     {

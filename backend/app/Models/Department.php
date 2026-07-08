@@ -11,18 +11,14 @@ class Department extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'name',
-        'name_ar',
-        'code',
-        'head_name',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_active' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

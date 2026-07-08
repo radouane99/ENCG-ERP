@@ -15,37 +15,16 @@ class VacationContract extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'institution_id',
-        'user_id',
-        'cin',
-        'first_name',
-        'last_name',
-        'first_name_ar',
-        'last_name_ar',
-        'email',
-        'phone',
-        'rib_number',
-        'bank_name',
-        'external_institution',
-        'qualification',
-        'academic_year_id',
-        'module_id',
-        'group_id',
-        'session_type',
-        'agreed_hours',
-        'hourly_rate',
-        'status',
-        'contract_start',
-        'contract_end',
-        'contract_file_path',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'hourly_rate' => 'float',
         'contract_start' => 'date',
         'contract_end' => 'date',
     ];
+    }
 
     public function institution(): BelongsTo
     {

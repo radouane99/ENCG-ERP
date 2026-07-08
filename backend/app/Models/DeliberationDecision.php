@@ -10,21 +10,11 @@ class DeliberationDecision extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'deliberation_id',
-        'student_id',
-        'semester_average',
-        'annual_average',
-        'compensated_average',
-        'decision',
-        'was_compensated',
-        'was_rachat',
-        'mention',
-        'next_semester',
-        'jury_notes',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'semester_average' => 'float',
         'annual_average' => 'float',
         'compensated_average' => 'float',
@@ -32,6 +22,7 @@ class DeliberationDecision extends Model
         'was_rachat' => 'boolean',
         'next_semester' => 'integer',
     ];
+    }
 
     public function deliberation(): BelongsTo
     {

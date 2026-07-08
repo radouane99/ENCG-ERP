@@ -11,22 +11,7 @@ class Schedule extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'academic_year_id',
-        'semester_id',
-        'group_id',
-        'module_id',
-        'room_id',
-        'professor_id',
-        'professor_type',
-        'day_of_week',
-        'start_time',
-        'end_time',
-        'session_type',
-        'recurrence',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
     public function group(): BelongsTo
     {

@@ -9,9 +9,7 @@ class ExamSeating extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'exam_id', 'student_id', 'room_id', 'seat_number', 'is_present', 'notes'
-    ];
+    protected $guarded = ['id'];
 
     public function exam() { return $this->belongsTo(Exam::class); }
     public function student() { return $this->belongsTo(Student::class); }

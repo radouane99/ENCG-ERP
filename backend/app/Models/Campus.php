@@ -10,17 +10,14 @@ class Campus extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'name',
-        'code',
-        'address',
-        'is_main',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_main' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

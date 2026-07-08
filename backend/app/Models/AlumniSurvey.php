@@ -9,16 +9,7 @@ class AlumniSurvey extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'graduation_year',
-        'employment_status',
-        'company_name',
-        'job_title',
-        'starting_salary',
-        'months_to_hire',
-        'sector'
-    ];
+    protected $guarded = ['id'];
 
     public function student()
     {

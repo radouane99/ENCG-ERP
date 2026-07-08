@@ -9,28 +9,18 @@ class Assignment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'module_id',
-        'academic_year_id',
-        'group_id',
-        'title',
-        'description',
-        'type',
-        'file_path',
-        'due_date',
-        'max_score',
-        'coefficient',
-        'allow_late_submission',
-        'is_published',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'due_date' => 'datetime',
         'allow_late_submission' => 'boolean',
         'is_published' => 'boolean',
         'max_score' => 'decimal:2',
         'coefficient' => 'decimal:2',
     ];
+    }
 
     public function module()
     {

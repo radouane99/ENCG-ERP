@@ -11,13 +11,7 @@ class Speciality extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'filiere_id',
-        'name',
-        'name_ar',
-        'code',
-        'semester_start',
-    ];
+    protected $guarded = ['id'];
 
     public function filiere(): BelongsTo
     {

@@ -13,23 +13,16 @@ class AttendanceSession extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = [
-        'professor_id',
-        'module_name',
-        'group_name',
-        'room_name',
-        'qr_token',
-        'expires_at',
-        'latitude',
-        'longitude',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'expires_at' => 'datetime',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -13,20 +13,15 @@ class GeneratedDocument extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'document_request_id',
-        'file_path',
-        'verification_token',
-        'verification_url',
-        'qr_code_path',
-        'expires_at',
-        'download_count',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'expires_at' => 'datetime',
         'download_count' => 'integer',
     ];
+    }
 
     public function request(): BelongsTo
     {

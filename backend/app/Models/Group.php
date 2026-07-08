@@ -10,15 +10,7 @@ class Group extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'filiere_id',
-        'academic_year_id',
-        'speciality_id',
-        'name',
-        'semester_number',
-        'capacity',
-        'current_count',
-    ];
+    protected $guarded = ['id'];
 
     public function filiere(): BelongsTo
     {

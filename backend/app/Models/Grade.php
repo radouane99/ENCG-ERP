@@ -19,22 +19,11 @@ class Grade extends Model
             ->logOnlyDirty();
     }
 
-    protected $fillable = [
-        'grade_component_id',
-        'student_id',
-        'exam_session_id',
-        'score',
-        'is_absent',
-        'is_justified_absence',
-        'final_score',
-        'notes',
-        'entered_by',
-        'entered_at',
-        'validated_by',
-        'validated_at',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'score' => 'float',
         'is_absent' => 'boolean',
         'is_justified_absence' => 'boolean',
@@ -42,6 +31,7 @@ class Grade extends Model
         'entered_at' => 'datetime',
         'validated_at' => 'datetime',
     ];
+    }
 
     public function component(): BelongsTo
     {

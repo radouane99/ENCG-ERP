@@ -10,17 +10,7 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'campus_id',
-        'name',
-        'code',
-        'type',
-        'capacity',
-        'has_projector',
-        'has_ac',
-        'is_available',
-    ];
+    protected $guarded = ['id'];
 
     public function institution(): BelongsTo
     {

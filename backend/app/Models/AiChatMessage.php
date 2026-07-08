@@ -9,11 +9,7 @@ class AiChatMessage extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'role',
-        'content',
-    ];
+    protected $guarded = ['id'];
 
     public function user()
     {

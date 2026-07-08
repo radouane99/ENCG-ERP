@@ -13,13 +13,7 @@ class InternshipDocument extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'internship_id',
-        'document_type',
-        'file_path',
-        'status',
-        'feedback'
-    ];
+    protected $guarded = ['id'];
 
     public function internship(): BelongsTo
     {

@@ -9,14 +9,15 @@ class ClubMember extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'club_id', 'user_id', 'role', 'joined_at', 'is_active'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'joined_at' => 'date',
         'is_active' => 'boolean',
     ];
+    }
 
     public function club()
     {

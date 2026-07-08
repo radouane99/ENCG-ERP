@@ -10,27 +10,16 @@ class StudentRegistration extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'academic_year_id',
-        'filiere_id',
-        'group_id',
-        'semester_number',
-        'status',
-        'registration_type',
-        'tuition_amount',
-        'payment_status',
-        'academic_validated_at',
-        'academic_validated_by',
-        'admin_validated_at',
-        'admin_validated_by',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'tuition_amount' => 'float',
         'academic_validated_at' => 'datetime',
         'admin_validated_at' => 'datetime',
     ];
+    }
 
     public function student(): BelongsTo
     {

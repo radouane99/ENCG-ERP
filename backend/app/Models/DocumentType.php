@@ -9,16 +9,13 @@ class DocumentType extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'code',
-        'view_name',
-        'fee_amount',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'fee_amount' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+    }
 }

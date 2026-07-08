@@ -13,28 +13,11 @@ class VacationPayment extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'vacation_contract_id',
-        'reference_number',
-        'payment_year',
-        'payment_month',
-        'total_hours',
-        'hourly_rate',
-        'gross_amount',
-        'tax_deduction',
-        'cnss_deduction',
-        'net_amount',
-        'status',
-        'export_format',
-        'export_file_path',
-        'approved_at',
-        'approved_by',
-        'paid_at',
-        'notes',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'total_hours' => 'float',
         'hourly_rate' => 'float',
         'gross_amount' => 'float',
@@ -44,6 +27,7 @@ class VacationPayment extends Model implements HasMedia
         'approved_at' => 'datetime',
         'paid_at' => 'datetime',
     ];
+    }
 
     public function institution(): BelongsTo
     {

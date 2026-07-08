@@ -9,14 +9,14 @@ class DisciplinaryCase extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id', 'student_id', 'case_number', 'infraction_type',
-        'description', 'incident_date', 'reported_by_name', 'status', 'student_statement'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'incident_date' => 'date',
     ];
+    }
 
     public function student()
     {

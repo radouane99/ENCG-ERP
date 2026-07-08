@@ -9,11 +9,5 @@ class ContactSubmission extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'subject',
-        'message',
-        'is_read'
-    ];
+    protected $guarded = ['id'];
 }

@@ -10,17 +10,7 @@ class ScheduleChange extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'schedule_id',
-        'original_date',
-        'new_date',
-        'type',
-        'new_room_id',
-        'new_start_time',
-        'new_end_time',
-        'reason',
-        'created_by',
-    ];
+    protected $guarded = ['id'];
 
     public function schedule(): BelongsTo
     {

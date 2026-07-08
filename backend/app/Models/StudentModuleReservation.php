@@ -10,13 +10,7 @@ class StudentModuleReservation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'module_id',
-        'semester_id',
-        'academic_year_id',
-        'status', // pending, validated, failed
-    ];
+    protected $guarded = ['id'];
 
     public function student(): BelongsTo
     {

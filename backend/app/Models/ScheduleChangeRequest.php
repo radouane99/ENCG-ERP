@@ -10,21 +10,15 @@ class ScheduleChangeRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'professor_id',
-        'exam_id',
-        'old_date',
-        'old_start_time',
-        'proposed_date',
-        'proposed_start_time',
-        'reason',
-        'status', // pending, approved, rejected
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'old_date' => 'date',
         'proposed_date' => 'date',
     ];
+    }
 
     public function professor(): BelongsTo
     {

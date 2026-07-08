@@ -14,23 +14,14 @@ class Deliberation extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'academic_year_id',
-        'semester_id',
-        'filiere_id',
-        'group_id',
-        'type',
-        'status',
-        'deliberation_date',
-        'pv_content',
-        'pv_file_path',
-        'president_id',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'deliberation_date' => 'date',
     ];
+    }
 
     public function institution(): BelongsTo
     {

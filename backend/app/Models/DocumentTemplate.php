@@ -10,26 +10,17 @@ class DocumentTemplate extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'name',
-        'code',
-        'type',
-        'category',
-        'html_template',
-        'html_template_ar',
-        'has_qr',
-        'has_signature',
-        'has_stamp',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'has_qr' => 'boolean',
         'has_signature' => 'boolean',
         'has_stamp' => 'boolean',
         'is_active' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

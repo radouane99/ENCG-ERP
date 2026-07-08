@@ -12,15 +12,15 @@ class ClubEvent extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'club_id', 'title', 'description', 'start_at', 'end_at', 
-        'location', 'status', 'poster_path'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
     ];
+    }
 
     public function club()
     {

@@ -7,13 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExamLockingAudit extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'user_name',
-        'old_phase',
-        'new_phase',
-        'ip_address',
-    ];
+    protected $guarded = ['id'];
 
     public function user(): BelongsTo
     {

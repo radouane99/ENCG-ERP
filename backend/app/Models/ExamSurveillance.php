@@ -9,9 +9,7 @@ class ExamSurveillance extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'exam_id', 'room_id', 'professor_id', 'role', 'has_attended'
-    ];
+    protected $guarded = ['id'];
 
     public function exam() { return $this->belongsTo(Exam::class); }
     public function room() { return $this->belongsTo(Room::class); }

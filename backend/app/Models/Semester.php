@@ -10,24 +10,18 @@ class Semester extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'academic_year_id',
-        'name',
-        'number',
-        'start_date',
-        'end_date',
-        'exam_start_date',
-        'exam_end_date',
-        'is_current',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'start_date' => 'date',
         'end_date' => 'date',
         'exam_start_date' => 'date',
         'exam_end_date' => 'date',
         'is_current' => 'boolean',
     ];
+    }
 
     public function academicYear(): BelongsTo
     {

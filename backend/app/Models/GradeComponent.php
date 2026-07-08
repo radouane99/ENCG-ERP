@@ -11,23 +11,17 @@ class GradeComponent extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'module_id',
-        'exam_session_id',
-        'name',
-        'code',
-        'weight',
-        'max_grade',
-        'is_eliminatory',
-        'eliminatory_threshold',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'weight' => 'float',
         'max_grade' => 'float',
         'is_eliminatory' => 'boolean',
         'eliminatory_threshold' => 'float',
     ];
+    }
 
     public function module(): BelongsTo
     {

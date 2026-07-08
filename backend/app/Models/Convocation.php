@@ -10,14 +10,7 @@ class Convocation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'exam_id',
-        'student_id',
-        'room_id',
-        'seat_number',
-        'reference',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
     public function exam(): BelongsTo
     {

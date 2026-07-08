@@ -12,18 +12,14 @@ class StudentCard extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = [
-        'student_id',
-        'card_number',
-        'qr_token',
-        'academic_year',
-        'status',
-        'expires_at',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'expires_at' => 'datetime',
     ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

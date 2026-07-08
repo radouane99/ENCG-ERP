@@ -20,24 +20,17 @@ class ExamSession extends Model
             ->logOnlyDirty();
     }
 
-    protected $fillable = [
-        'institution_id',
-        'academic_year_id',
-        'semester_id',
-        'name',
-        'type',
-        'start_date',
-        'end_date',
-        'is_active',
-        'is_locked',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'start_date' => 'date',
         'end_date' => 'date',
         'is_active' => 'boolean',
         'is_locked' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

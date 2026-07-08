@@ -12,33 +12,16 @@ class AcademicProject extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-    protected $fillable = [
-        'institution_id',
-        'academic_year_id',
-        'student_id',
-        'type', // 'internship' or 'final_project'
-        'title',
-        'title_ar',
-        'description',
-        'company_name',
-        'company_address',
-        'company_city',
-        'supervisor_name',
-        'supervisor_email',
-        'supervisor_phone',
-        'position_title',
-        'start_date',
-        'end_date',
-        'status',
-        'professor_supervisor_id',
-        'metadata', // JSON for specific paths like 'agreement_file_path', 'report_path'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'start_date' => 'date',
         'end_date' => 'date',
         'metadata' => 'array',
     ];
+    }
 
     public function institution(): BelongsTo
     {

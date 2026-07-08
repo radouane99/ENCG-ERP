@@ -9,15 +9,15 @@ class DisciplinaryDecision extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'disciplinary_case_id', 'sanction_type', 'suspension_days',
-        'decision_text', 'decision_date', 'is_appealed', 'appeal_notes', 'decided_by'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'decision_date' => 'date',
         'is_appealed' => 'boolean',
     ];
+    }
 
     public function disciplinaryCase()
     {

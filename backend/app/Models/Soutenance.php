@@ -10,21 +10,15 @@ class Soutenance extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'internship_id',
-        'date_time',
-        'room_id',
-        'president_id',
-        'examiner_id',
-        'grade',
-        'status',
-        'remarks'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'date_time' => 'datetime',
         'grade' => 'decimal:2',
     ];
+    }
 
     public function internship(): BelongsTo
     {

@@ -13,21 +13,14 @@ class AbsenceJustification extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'attendance_id',
-        'student_id',
-        'reason',
-        'description',
-        'document_path',
-        'status',
-        'reviewed_by',
-        'reviewed_at',
-        'rejection_reason',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'reviewed_at' => 'datetime',
     ];
+    }
 
     public function student(): BelongsTo
     {

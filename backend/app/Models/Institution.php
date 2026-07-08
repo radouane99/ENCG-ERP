@@ -14,31 +14,15 @@ class Institution extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'name',
-        'name_ar',
-        'code',
-        'slug',
-        'type',
-        'logo_path',
-        'stamp_path',
-        'signature_path',
-        'address',
-        'city',
-        'phone',
-        'email',
-        'website',
-        'fax',
-        'rector_name',
-        'director_name',
-        'is_active',
-        'settings',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_active' => 'boolean',
         'settings' => 'array',
     ];
+    }
 
     public function campuses(): HasMany
     {

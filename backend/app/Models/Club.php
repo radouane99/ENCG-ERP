@@ -12,14 +12,14 @@ class Club extends Model implements HasMedia
     use InteractsWithMedia;
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id', 'name', 'name_ar', 'category', 'description', 
-        'logo_path', 'president_name', 'is_active'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_active' => 'boolean',
     ];
+    }
 
     public function institution()
     {

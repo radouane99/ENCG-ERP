@@ -9,22 +9,15 @@ class QuizQuestion extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'quiz_id',
-        'type', // mcq, true_false, short_answer, essay
-        'question_text',
-        'question_text_ar',
-        'options',
-        'correct_answer',
-        'explanation',
-        'points',
-        'order',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'options' => 'array',
         'points' => 'decimal:2',
     ];
+    }
 
     public function quiz()
     {

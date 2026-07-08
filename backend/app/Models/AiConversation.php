@@ -10,18 +10,14 @@ class AiConversation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'institution_id',
-        'title',
-        'context_type', // e.g. 'course_tutor', 'document_assistant'
-        'context_id',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_active' => 'boolean',
     ];
+    }
 
     public function user(): BelongsTo
     {

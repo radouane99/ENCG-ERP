@@ -11,23 +11,15 @@ class Filiere extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'department_id',
-        'name',
-        'name_ar',
-        'code',
-        'type',
-        'duration_years',
-        'accreditation_number',
-        'accreditation_expiry',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'accreditation_expiry' => 'date',
         'is_active' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {

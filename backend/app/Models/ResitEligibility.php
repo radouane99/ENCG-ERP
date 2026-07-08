@@ -10,18 +10,14 @@ class ResitEligibility extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'module_id',
-        'academic_year_id',
-        'semester_id',
-        'reason', // justified_absence, failed_ordinary
-        'is_eligible',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_eligible' => 'boolean',
     ];
+    }
 
     public function student(): BelongsTo
     {

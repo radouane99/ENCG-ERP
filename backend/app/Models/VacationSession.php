@@ -10,23 +10,16 @@ class VacationSession extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'vacation_contract_id',
-        'session_date',
-        'start_time',
-        'end_time',
-        'hours',
-        'status',
-        'validated_by',
-        'validated_at',
-        'notes',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'session_date' => 'date',
         'hours' => 'float',
         'validated_at' => 'datetime',
     ];
+    }
 
     public function contract(): BelongsTo
     {

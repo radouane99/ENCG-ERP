@@ -10,18 +10,14 @@ class AiGeneratedContent extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'ai_conversation_id',
-        'prompt',
-        'response',
-        'content_type',
-        'tokens_used',
-        'driver_used',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'tokens_used' => 'integer',
     ];
+    }
 
     public function conversation(): BelongsTo
     {

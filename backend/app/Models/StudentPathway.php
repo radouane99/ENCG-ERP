@@ -10,20 +10,15 @@ class StudentPathway extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'filiere_id',
-        'speciality_id',
-        'academic_year_id',
-        'group_id',
-        'current_semester',
-        'is_current',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'is_current'       => 'boolean',
         'current_semester' => 'integer',
     ];
+    }
 
     public function student(): BelongsTo
     {

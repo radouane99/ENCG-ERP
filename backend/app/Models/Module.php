@@ -11,29 +11,17 @@ class Module extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'filiere_id',
-        'speciality_id',
-        'name',
-        'name_ar',
-        'code',
-        'semester_number',
-        'coefficient',
-        'credit_hours',
-        'hours_cm',
-        'hours_td',
-        'hours_tp',
-        'is_elective',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
+    protected function casts(): array
+    {
+        return [
         'coefficient' => 'float',
         'credit_hours' => 'float',
         'is_elective' => 'boolean',
         'is_active' => 'boolean',
     ];
+    }
 
     public function institution(): BelongsTo
     {
