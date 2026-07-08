@@ -65,7 +65,7 @@ const STATUS_VARIANTS: Record<string, "success" | "warning" | "info" | "destruct
 
 // ── Main Page Component ─────────────────────────────────────────────
 const StudentsPage: React.FC = () => {
-  const { t, i18n } = useTranslation('common');
+  const { t, i18n } = useTranslation(['students', 'common']);
   const isRtl = i18n.language === 'ar';
   const queryClient = useQueryClient();
 
@@ -99,7 +99,7 @@ const StudentsPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: StudentForm) => api.post('/students', data),
     onSuccess: () => {
-      toast.success(isRtl ? 'تمت إضافة الطالب بنجاح' : 'Étudiant créé avec succès !');
+      toast.success(t('students:messages.create_success'));
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowModal(false);
     },
@@ -113,7 +113,7 @@ const StudentsPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: StudentForm }) => api.put(`/students/${id}`, data),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم تحديث الطالب بنجاح' : 'Étudiant mis à jour avec succès !');
+      toast.success(t('students:messages.update_success'));
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowModal(false);
       setEditingStudent(null);
@@ -128,7 +128,7 @@ const StudentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/students/${id}`),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم حذف الطالب' : 'Étudiant supprimé.');
+      toast.success(t('students:messages.delete_success'));
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
     onError: () => toast.error('Erreur lors de la suppression.')
@@ -161,7 +161,7 @@ const StudentsPage: React.FC = () => {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm(isRtl ? 'هل أنت متأكد من حذف هذا الطالب؟' : 'Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+    if (confirm(t('students:messages.delete_confirm'))) {
       deleteMutation.mutate(id);
     }
   };
@@ -213,20 +213,20 @@ const StudentsPage: React.FC = () => {
             <div className="p-2 bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] rounded-xl">
               <Users size={24} />
             </div>
-            {isRtl ? 'إدارة الطلاب' : 'Gestion des Étudiants'}
+            {t('students:list.title')}
           </h1>
           <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
-            {meta.total} {isRtl ? 'طالب في المجموع' : `étudiant${meta.total > 1 ? 's' : ''} au total`}
+            {meta.total} {t('students:list.total')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <ExcelActions
             model="students"
-            label={isRtl ? 'طلاب' : 'Étudiants'}
+            label={t('students:list.title')}
             onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['students'] })}
           />
           <Button onClick={handleOpenCreate} icon={<Plus size={18} />}>
-            {isRtl ? 'طالب جديد' : 'Nouvel étudiant'}
+            {t('students:list.add_button')}
           </Button>
         </div>
       </div>
@@ -236,7 +236,7 @@ const StudentsPage: React.FC = () => {
         <div className="relative flex-1">
           <Input
             icon={<Search size={18} className="text-[hsl(var(--muted-foreground))]" />}
-            placeholder={isRtl ? 'البحث بالاسم، CNE، رقم الطالب...' : 'Rechercher par nom, CNE, n° étudiant...'}
+            placeholder={t('students:list.search')}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="w-full bg-[hsl(var(--background))] border-transparent hover:border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]"
@@ -253,11 +253,11 @@ const StudentsPage: React.FC = () => {
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
           className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[hsl(var(--muted-foreground))/30]"
         >
-          <option value="">{isRtl ? 'جميع الحالات' : 'Tous les statuts'}</option>
-          <option value="active">{isRtl ? 'نشط' : 'Actif'}</option>
-          <option value="suspended">{isRtl ? 'موقوف' : 'Suspendu'}</option>
-          <option value="graduated">{isRtl ? 'خريج' : 'Diplômé'}</option>
-          <option value="withdrawn">{isRtl ? 'منسحب' : 'Retiré'}</option>
+          <option value="">{t('students:list.filter_all_status')}</option>
+          <option value="active">{t('students:status.active')}</option>
+          <option value="suspended">{t('students:status.suspended')}</option>
+          <option value="graduated">{t('students:status.graduated')}</option>
+          <option value="withdrawn">{t('students:status.withdrawn')}</option>
         </select>
       </div>
 
@@ -265,10 +265,10 @@ const StudentsPage: React.FC = () => {
       {selectedStudents.size > 0 && (
         <div className="flex items-center gap-3 p-3 bg-[hsl(var(--color-primary))/5] border border-[hsl(var(--color-primary))/20] rounded-xl animate-in fade-in slide-in-from-top-2">
           <span className="text-[hsl(var(--color-primary))] text-sm font-semibold px-2">
-            {selectedStudents.size} {isRtl ? 'محدد' : `sélectionné${selectedStudents.size > 1 ? 's' : ''}`}
+            {selectedStudents.size} {t('students:list.selected')}
           </span>
           <Button variant="destructive" size="sm" onClick={() => {}}>
-            {isRtl ? 'حذف المحدد' : 'Supprimer'}
+            {t('students:list.delete_selected')}
           </Button>
           <button onClick={() => setSelectedStudents(new Set())} className="ms-auto text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-2">
             <X size={16} />
@@ -295,14 +295,14 @@ const StudentsPage: React.FC = () => {
                   onClick={() => handleSort('last_name')}
                 >
                   <div className="flex items-center">
-                    {isRtl ? 'الطالب' : 'Étudiant'} <SortIcon field="last_name" />
+                    {t('students:list.columns.student')} <SortIcon field="last_name" />
                   </div>
                 </th>
-                <th className="px-4 py-4">{isRtl ? 'CNE / الرقم' : 'CNE / N°'}</th>
-                <th className="px-4 py-4">{isRtl ? 'الشعبة' : 'Filière'}</th>
-                <th className="px-4 py-4">{isRtl ? 'الحالة' : 'Statut'}</th>
-                <th className="px-4 py-4">{isRtl ? 'المنحة' : 'Bourse'}</th>
-                <th className="px-4 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
+                <th className="px-4 py-4">{t('students:list.columns.cne')}</th>
+                <th className="px-4 py-4">{t('students:list.columns.filiere')}</th>
+                <th className="px-4 py-4">{t('students:list.columns.status')}</th>
+                <th className="px-4 py-4">{t('students:list.columns.scholarship')}</th>
+                <th className="px-4 py-4 text-end">{t('students:list.columns.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -319,13 +319,13 @@ const StudentsPage: React.FC = () => {
                       <GraduationCap size={32} className="opacity-50" />
                     </div>
                     <p className="text-base font-medium text-[hsl(var(--foreground))]">
-                      {isRtl ? 'لم يتم العثور على طلاب' : 'Aucun étudiant trouvé'}
+                      {t('students:list.empty_title')}
                     </p>
                     <p className="text-sm mt-1 mb-4">
-                      {isRtl ? 'جرب تغيير مرشحات البحث.' : 'Essayez de modifier vos filtres de recherche.'}
+                      {t('students:list.empty_subtitle')}
                     </p>
                     <Button onClick={handleOpenCreate} variant="outline" icon={<Plus size={16} />}>
-                      {isRtl ? 'إضافة طالب' : 'Ajouter un étudiant'}
+                      {t('students:list.add_first')}
                     </Button>
                   </td>
                 </tr>
@@ -375,7 +375,7 @@ const StudentsPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={STATUS_VARIANTS[student.status] || 'default'} size="sm">
-                        {isRtl ? (student.status === 'active' ? 'نشط' : student.status === 'suspended' ? 'موقوف' : student.status === 'graduated' ? 'خريج' : 'منسحب') : STATUS_LABELS[student.status]}
+                        {isRtl ? t(`students:status.${student.status}`) : STATUS_LABELS[student.status]}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
@@ -420,7 +420,7 @@ const StudentsPage: React.FC = () => {
         {meta.last_page > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
             <p className="text-[hsl(var(--muted-foreground))] text-sm">
-              {isRtl ? `الصفحة ${meta.current_page} من ${meta.last_page}` : `Page ${meta.current_page} sur ${meta.last_page}`}
+              {t('students:list.page', { current: meta.current_page, total: meta.last_page })}
             </p>
             <div className="flex items-center gap-1.5">
               <Button
@@ -461,33 +461,33 @@ const StudentsPage: React.FC = () => {
       <Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setEditingStudent(null); }}
-        title={editingStudent ? (isRtl ? 'تحديث الطالب' : 'Modifier l\'étudiant') : (isRtl ? 'إضافة طالب' : 'Nouvel Étudiant')}
+        title={editingStudent ? (t('students:form.edit_title')) : (t('students:form.create_title'))}
         size="lg"
       >
         <form onSubmit={handleSave} className="space-y-6">
           {/* Section: Identité */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
-              {isRtl ? 'الهوية' : 'Identité'}
+              {t('students:form.sections.identity')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم الأول' : 'Prénom'} *</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.first_name')} *</label>
                 <Input required value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} placeholder="Fatima" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم العائلي' : 'Nom'} *</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.last_name')} *</label>
                 <Input required value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} placeholder="ALAOUI" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الجنس' : 'Genre'} *</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.gender')} *</label>
                 <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50">
-                  <option value="male">{isRtl ? 'ذكر' : 'Masculin'}</option>
-                  <option value="female">{isRtl ? 'أنثى' : 'Féminin'}</option>
+                  <option value="male">{t('students:form.gender.male')}</option>
+                  <option value="female">{t('students:form.gender.female')}</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'تاريخ الميلاد' : 'Date de naissance'}</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.birth_date')}</label>
                 <Input type="date" value={form.birth_date} onChange={e => setForm({ ...form, birth_date: e.target.value })} />
               </div>
             </div>
@@ -496,7 +496,7 @@ const StudentsPage: React.FC = () => {
           {/* Section: Administration */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
-              {isRtl ? 'الإدارة' : 'Administration'}
+              {t('students:form.sections.administration')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -512,7 +512,7 @@ const StudentsPage: React.FC = () => {
                 <Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="f.alaoui@etu.encg-fes.ma" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الهاتف' : 'Téléphone'}</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.phone')}</label>
                 <Input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+212 6xx xxx xxx" />
               </div>
             </div>
@@ -521,25 +521,25 @@ const StudentsPage: React.FC = () => {
           {/* Section: Académique */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
-              {isRtl ? 'أكاديمي' : 'Académique'}
+              {t('students:form.sections.academic')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الحالة' : 'Statut'}</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:list.columns.status')}</label>
                 <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
-                  <option value="active">{isRtl ? 'نشط' : 'Actif'}</option>
-                  <option value="suspended">{isRtl ? 'موقوف' : 'Suspendu'}</option>
-                  <option value="graduated">{isRtl ? 'خريج' : 'Diplômé'}</option>
-                  <option value="withdrawn">{isRtl ? 'منسحب' : 'Retiré'}</option>
+                  <option value="active">{t('students:status.active')}</option>
+                  <option value="suspended">{t('students:status.suspended')}</option>
+                  <option value="graduated">{t('students:status.graduated')}</option>
+                  <option value="withdrawn">{t('students:status.withdrawn')}</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'المنحة' : 'Bourse'}</label>
+                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:list.columns.scholarship')}</label>
                 <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
-                  <option value="">{isRtl ? 'بدون' : 'Aucune'}</option>
-                  <option value="excellence">{isRtl ? 'تفوق' : 'Excellence'}</option>
-                  <option value="social">{isRtl ? 'اجتماعية' : 'Social'}</option>
-                  <option value="state">{isRtl ? 'دولة' : 'État'}</option>
+                  <option value="">{t('students:scholarship.none')}</option>
+                  <option value="excellence">{t('students:scholarship.excellence')}</option>
+                  <option value="social">{t('students:scholarship.social')}</option>
+                  <option value="state">{t('students:scholarship.state')}</option>
                 </select>
               </div>
             </div>
@@ -547,10 +547,10 @@ const StudentsPage: React.FC = () => {
 
           <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-[hsl(var(--border))]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
-              {isRtl ? 'إلغاء' : 'Annuler'}
+              {t('common:buttons.cancel')}
             </Button>
             <Button type="submit" variant="primary" disabled={isMutating} isLoading={isMutating}>
-              {editingStudent ? (isRtl ? 'تحديث' : 'Mettre à jour') : (isRtl ? 'حفظ' : 'Enregistrer')}
+              {editingStudent ? (t('common:buttons.edit')) : (t('common:buttons.save'))}
             </Button>
           </div>
         </form>

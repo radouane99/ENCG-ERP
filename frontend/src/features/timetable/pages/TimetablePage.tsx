@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar as CalendarIcon, Clock, MapPin, User, Search, Filter, Plus } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { format, addDays, startOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, ar } from 'date-fns/locale';
 import { Button } from '@shared/components/ui/Button';
 import { Input } from '@shared/components/ui/Input';
 
@@ -38,8 +38,10 @@ const TYPE_COLORS = {
 };
 
 const TimetablePage: React.FC = () => {
+  const { t, i18n } = useTranslation('timetable');
   const [targetType, setTargetType] = useState<'group' | 'professor' | 'room'>('group');
   const [targetId, setTargetId] = useState<string>('GFC');
+  const dateLocale = i18n.language === 'ar' ? ar : fr;
 
   const { data } = useQuery({
     queryKey: ['timetable', targetType, targetId],
@@ -58,13 +60,13 @@ const TimetablePage: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <CalendarIcon size={20} className="text-purple-400" />
-            Emploi du temps
+            {t('title')}
           </h1>
-          <p className="text-white/40 text-sm mt-0.5">Semaine du {format(currentWeekStart, 'dd MMMM yyyy', { locale: fr })}</p>
+          <p className="text-white/40 text-sm mt-0.5">{t('week_of')} {format(currentWeekStart, 'dd MMMM yyyy', { locale: dateLocale })}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" className="bg-purple-600 hover:bg-purple-500 text-white border-none shadow-none">
-            <Plus size={14} className="mr-1.5" /> Ajouter séance
+            <Plus size={14} className="mr-1.5" /> {t('add_session')}
           </Button>
         </div>
       </div>
@@ -76,15 +78,15 @@ const TimetablePage: React.FC = () => {
           onChange={e => setTargetType(e.target.value as any)}
           className="bg-white/5 border border-white/10 rounded-xl text-sm text-white px-3 py-2 outline-none focus:border-purple-500/50"
         >
-          <option value="group">Filière / Groupe</option>
-          <option value="professor">Professeur</option>
-          <option value="room">Salle</option>
+          <option value="group">{t('filters.group')}</option>
+          <option value="professor">{t('filters.professor')}</option>
+          <option value="room">{t('filters.room')}</option>
         </select>
 
         <div className="flex-1 min-w-[200px]">
           <Input
             icon={<Search size={15} />}
-            placeholder="Rechercher..."
+            placeholder={t('filters.search')}
             value={targetId}
             onChange={e => setTargetId(e.target.value)}
           />
@@ -96,10 +98,10 @@ const TimetablePage: React.FC = () => {
         <div className="min-w-[800px]">
           {/* Header Row */}
           <div className="grid grid-cols-7 border-b border-white/10 bg-white/5">
-            <div className="p-3 text-center text-white/40 text-xs font-semibold border-r border-white/10">Heure</div>
+            <div className="p-3 text-center text-white/40 text-xs font-semibold border-r border-white/10">{t('grid.hour')}</div>
             {DAYS.map((day, i) => (
               <div key={day} className="p-3 text-center border-r border-white/10 last:border-0">
-                <p className="text-white/60 text-xs font-semibold uppercase">{format(addDays(currentWeekStart, i), 'EEEE', { locale: fr })}</p>
+                <p className="text-white/60 text-xs font-semibold uppercase">{format(addDays(currentWeekStart, i), 'EEEE', { locale: dateLocale })}</p>
                 <p className="text-white/40 text-xs">{format(addDays(currentWeekStart, i), 'dd/MM')}</p>
               </div>
             ))}

@@ -20,6 +20,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    const lng = localStorage.getItem('encg_lang') || 'fr';
+    config.headers['Accept-Language'] = lng;
+
     return config;
   },
   (error: AxiosError) => Promise.reject(error)

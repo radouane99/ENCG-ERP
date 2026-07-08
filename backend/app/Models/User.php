@@ -24,6 +24,8 @@ class User extends Authenticatable implements HasMedia
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity, InteractsWithMedia;
 
+    protected $guard_name = 'sanctum';
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

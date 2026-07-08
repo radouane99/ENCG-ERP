@@ -15,7 +15,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
-  const { i18n } = useTranslation('common')
+  const { t } = useTranslation('common')
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -50,7 +50,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               'transition-all duration-200 text-start'
             )}
           >
-            {i18n.language === 'ar' ? 'بحث (Cmd+K)...' : 'Rechercher (Cmd+K)...'}
+            {t('search')}
             <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-[hsl(var(--background))] rounded border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] shadow-sm">
               <span className="text-xs">⌘</span>K
             </kbd>
@@ -101,7 +101,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors text-start"
                 >
                   <User className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  {i18n.language === 'ar' ? 'الملف الشخصي' : 'Mon profil'}
+                  {t('profile')}
                 </button>
                 <div className="border-t border-[hsl(var(--border))] my-1.5 mx-2" />
                 <button
@@ -109,7 +109,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[hsl(var(--color-destructive))] hover:bg-[hsl(var(--color-destructive)/0.1)] transition-colors text-start"
                 >
                   <LogOut className="w-4 h-4" />
-                  {i18n.language === 'ar' ? 'تسجيل الخروج' : 'Déconnexion'}
+                  {t('logout')}
                 </button>
               </div>
             </>

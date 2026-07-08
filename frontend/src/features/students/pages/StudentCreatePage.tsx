@@ -1,49 +1,59 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, User, FileText, MapPin, GraduationCap } from 'lucide-react'
-import api from '@shared/lib/api'
+import { ArrowLeft, Save, User, FileText, Activity } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import { StudentsService } from '@/services/students.service'
+import { storeStudentSchema, type StoreStudentInput } from '@/schemas/student.schema'
 import { cn } from '@shared/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 export default function StudentCreatePage() {
+  const { t } = useTranslation('students')
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    cin: '',
-    cne: '',
-    massar_code: '',
-    birth_date: '',
-    gender: 'M',
-    address: '',
-    city: '',
-    bac_year: new Date().getFullYear(),
-    bac_series: '',
-    bac_mention: '',
-    enrollment_year: new Date().getFullYear(),
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StoreStudentInput>({
+    resolver: zodResolver(storeStudentSchema),
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      cin: '',
+      cne: '',
+      massar_code: '',
+      birth_date: '',
+      gender: 'male',
+      status: 'active',
+      scholarship_type: '',
+    },
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: StoreStudentInput) => {
     try {
       setLoading(true)
-      await api.post('/students', form)
-      toast.success('Étudiant créé avec succès')
+      await StudentsService.createStudent(data)
+      toast.success(t('create.success'))
       navigate('/students')
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erreur lors de la création')
+      if (err.response?.status === 422) {
+        toast.error(t('create.error_validation'))
+      } else {
+        toast.error(err?.response?.data?.message || t('create.error_general'))
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
-    setForm(p => ({ ...p, [k]: e.target.value }))
-
   const inputCls = "w-full px-4 py-2.5 bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+  const inputErrorCls = "border-red-500 focus:ring-red-500/20"
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1.5"
 
   return (
@@ -52,37 +62,59 @@ export default function StudentCreatePage() {
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 bg-card border rounded-lg hover:bg-muted"><ArrowLeft className="w-5 h-5" /></button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Nouvel Étudiant</h1>
-            <p className="text-sm text-muted-foreground mt-1">Saisir les informations du nouvel étudiant</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('create.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('create.subtitle')}</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Informations Personnelles */}
           <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-5">
             <div className="flex items-center gap-2 border-b pb-3 mb-4">
               <User className="w-5 h-5 text-primary" />
-              <h2 className="font-bold text-lg">Informations Personnelles</h2>
+              <h2 className="font-bold text-lg">{t('create.personal_info')}</h2>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div><label className={labelCls}>Prénom *</label><input required value={form.first_name} onChange={set('first_name')} className={inputCls} placeholder="Ahmed" /></div>
-              <div><label className={labelCls}>Nom *</label><input required value={form.last_name} onChange={set('last_name')} className={inputCls} placeholder="Alami" /></div>
+              <div>
+                <label className={labelCls}>{t('create.first_name')} *</label>
+                <input {...register('first_name')} className={cn(inputCls, errors.first_name && inputErrorCls)} placeholder={t('create.first_name_placeholder')} />
+                {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name.message}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>{t('create.last_name')} *</label>
+                <input {...register('last_name')} className={cn(inputCls, errors.last_name && inputErrorCls)} placeholder={t('create.last_name_placeholder')} />
+                {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name.message}</p>}
+              </div>
             </div>
 
-            <div><label className={labelCls}>Email *</label><input required type="email" value={form.email} onChange={set('email')} className={inputCls} placeholder="ahmed.alami@email.com" /></div>
-            <div><label className={labelCls}>Téléphone</label><input value={form.phone} onChange={set('phone')} className={inputCls} placeholder="+212 6..." /></div>
+            <div>
+              <label className={labelCls}>{t('create.email')} *</label>
+              <input type="email" {...register('email')} className={cn(inputCls, errors.email && inputErrorCls)} placeholder={t('create.email_placeholder')} />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+            </div>
+            
+            <div>
+              <label className={labelCls}>{t('create.phone')}</label>
+              <input {...register('phone')} className={cn(inputCls, errors.phone && inputErrorCls)} placeholder={t('create.phone_placeholder')} />
+              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div><label className={labelCls}>Date de naissance</label><input type="date" value={form.birth_date} onChange={set('birth_date')} className={inputCls} /></div>
               <div>
-                <label className={labelCls}>Genre</label>
-                <select value={form.gender} onChange={set('gender')} className={inputCls}>
-                  <option value="M">Masculin</option>
-                  <option value="F">Féminin</option>
+                <label className={labelCls}>{t('create.birth_date')}</label>
+                <input type="date" {...register('birth_date')} className={cn(inputCls, errors.birth_date && inputErrorCls)} />
+                {errors.birth_date && <p className="text-xs text-red-500 mt-1">{errors.birth_date.message}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>{t('create.gender')} *</label>
+                <select {...register('gender')} className={cn(inputCls, errors.gender && inputErrorCls)}>
+                  <option value="male">{t('create.male')}</option>
+                  <option value="female">{t('create.female')}</option>
                 </select>
+                {errors.gender && <p className="text-xs text-red-500 mt-1">{errors.gender.message}</p>}
               </div>
             </div>
           </div>
@@ -92,67 +124,64 @@ export default function StudentCreatePage() {
             <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-5">
               <div className="flex items-center gap-2 border-b pb-3 mb-4">
                 <FileText className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-lg">Identifiants Officiels</h2>
+                <h2 className="font-bold text-lg">{t('create.official_ids')}</h2>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>CIN *</label><input required value={form.cin} onChange={set('cin')} className={inputCls} placeholder="AB123456" /></div>
-                <div><label className={labelCls}>CNE *</label><input required value={form.cne} onChange={set('cne')} className={inputCls} placeholder="1234567890" /></div>
+                <div>
+                  <label className={labelCls}>{t('create.cin')}</label>
+                  <input {...register('cin')} className={cn(inputCls, errors.cin && inputErrorCls)} placeholder={t('create.cin_placeholder')} />
+                  {errors.cin && <p className="text-xs text-red-500 mt-1">{errors.cin.message}</p>}
+                </div>
+                <div>
+                  <label className={labelCls}>{t('create.cne')} *</label>
+                  <input {...register('cne')} className={cn(inputCls, errors.cne && inputErrorCls)} placeholder={t('create.cne_placeholder')} />
+                  {errors.cne && <p className="text-xs text-red-500 mt-1">{errors.cne.message}</p>}
+                </div>
               </div>
-              <div><label className={labelCls}>Code MASSAR</label><input value={form.massar_code} onChange={set('massar_code')} className={inputCls} placeholder="R123456789" /></div>
+              <div>
+                <label className={labelCls}>{t('create.massar_code')}</label>
+                <input {...register('massar_code')} className={cn(inputCls, errors.massar_code && inputErrorCls)} placeholder={t('create.massar_placeholder')} />
+                {errors.massar_code && <p className="text-xs text-red-500 mt-1">{errors.massar_code.message}</p>}
+              </div>
             </div>
 
             <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-5">
               <div className="flex items-center gap-2 border-b pb-3 mb-4">
-                <GraduationCap className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-lg">Dossier Académique</h2>
+                <Activity className="w-5 h-5 text-primary" />
+                <h2 className="font-bold text-lg">{t('create.status_section')}</h2>
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
-                <div><label className={labelCls}>Année Bac</label><input type="number" value={form.bac_year} onChange={set('bac_year')} className={inputCls} /></div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Série Bac</label>
-                  <select value={form.bac_series} onChange={set('bac_series')} className={inputCls}>
-                    <option value="">—</option>
-                    <option value="PC">PC</option>
-                    <option value="SVT">SVT</option>
-                    <option value="SMA">SMA</option>
-                    <option value="SMB">SMB</option>
-                    <option value="ECO">Économie</option>
+                  <label className={labelCls}>{t('create.current_status')} *</label>
+                  <select {...register('status')} className={cn(inputCls, errors.status && inputErrorCls)}>
+                    <option value="active">{t('create.active')}</option>
+                    <option value="suspended">{t('create.suspended')}</option>
+                    <option value="graduated">{t('create.graduated')}</option>
+                    <option value="withdrawn">{t('create.withdrawn')}</option>
                   </select>
+                  {errors.status && <p className="text-xs text-red-500 mt-1">{errors.status.message}</p>}
                 </div>
                 <div>
-                  <label className={labelCls}>Mention</label>
-                  <select value={form.bac_mention} onChange={set('bac_mention')} className={inputCls}>
-                    <option value="">—</option>
-                    <option value="Passable">Passable</option>
-                    <option value="Assez Bien">Assez Bien</option>
-                    <option value="Bien">Bien</option>
-                    <option value="Très Bien">Très Bien</option>
+                  <label className={labelCls}>{t('create.scholarship_type')}</label>
+                  <select {...register('scholarship_type')} className={cn(inputCls, errors.scholarship_type && inputErrorCls)}>
+                    <option value="">{t('create.none')}</option>
+                    <option value="minhaty">{t('create.minhaty')}</option>
+                    <option value="excellence">{t('create.excellence')}</option>
+                    <option value="social">{t('create.social')}</option>
                   </select>
+                  {errors.scholarship_type && <p className="text-xs text-red-500 mt-1">{errors.scholarship_type.message}</p>}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Adresse */}
-        <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-5">
-          <div className="flex items-center gap-2 border-b pb-3 mb-4">
-            <MapPin className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-lg">Adresse et Coordonnées</h2>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2"><label className={labelCls}>Adresse complète</label><input value={form.address} onChange={set('address')} className={inputCls} placeholder="N°, Rue, Quartier..." /></div>
-            <div><label className={labelCls}>Ville</label><input value={form.city} onChange={set('city')} className={inputCls} placeholder="Ex: Casablanca" /></div>
-          </div>
-        </div>
-
         <div className="flex items-center justify-end gap-4 pt-4">
-          <button type="button" onClick={() => navigate(-1)} className="px-6 py-2.5 font-medium text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
+          <button type="button" onClick={() => navigate(-1)} className="px-6 py-2.5 font-medium text-muted-foreground hover:bg-muted rounded-lg">{t('create.cancel')}</button>
           <button type="submit" disabled={loading} className="px-6 py-2.5 font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm flex items-center gap-2">
-            <Save className="w-4 h-4" /> {loading ? 'Enregistrement...' : 'Enregistrer'}
+            <Save className="w-4 h-4" /> {loading ? t('create.saving') : t('create.save')}
           </button>
         </div>
       </form>

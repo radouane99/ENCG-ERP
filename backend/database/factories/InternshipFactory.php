@@ -18,7 +18,6 @@ class InternshipFactory extends Factory
         return [
             'student_id'      => Student::factory(),
             'company_name'    => fake()->company(),
-            'company_address' => fake()->address(),
             'start_date'      => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
             'end_date'        => fake()->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
             'status'          => 'pending',

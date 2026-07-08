@@ -1,0 +1,49 @@
+{
+  "auth": {
+    "login": {
+      "title": "تسجيل الدخول",
+      "subtitle": "مرحباً بك في نظام ENCG",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "submit": "دخول",
+      "loading": "جاري تسجيل الدخول...",
+      "forgot_password": "هل نسيت كلمة المرور؟"
+    }
+  },
+  "student": {
+    "create": {
+      "title": "طالب جديد",
+      "subtitle": "إدخال معلومات الطالب الجديد",
+      "personal_info": "المعلومات الشخصية",
+      "first_name": "الاسم الشخصي",
+      "last_name": "الاسم العائلي",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "birth_date": "تاريخ الازدياد",
+      "gender": "الجنس",
+      "male": "ذكر",
+      "female": "أنثى",
+      "official_ids": "المعرفات الرسمية",
+      "cin": "رقم البطاقة الوطنية",
+      "cne": "رقم مسار (CNE)",
+      "massar_code": "رمز مسار",
+      "status_section": "الحالة",
+      "current_status": "الحالة الحالية",
+      "active": "نشط",
+      "suspended": "موقوف",
+      "graduated": "متخرج",
+      "withdrawn": "منسحب",
+      "scholarship_type": "نوع المنحة",
+      "none": "لا شيء",
+      "minhaty": "منحتي",
+      "excellence": "استحقاق",
+      "social": "اجتماعية",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "saving": "جاري الحفظ...",
+      "success": "تم إنشاء الطالب بنجاح",
+      "error_validation": "يرجى التحقق من حقول النموذج.",
+      "error_general": "حدث خطأ أثناء الإنشاء"
+    }
+  }
+}

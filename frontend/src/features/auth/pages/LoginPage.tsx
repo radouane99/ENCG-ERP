@@ -59,10 +59,10 @@ export default function LoginPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          {isAr ? 'تسجيل الدخول' : 'Connexion'}
+          {t('login_title')}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {isAr ? 'أدخل بياناتك للوصول إلى المنصة' : 'Entrez vos identifiants pour accéder à la plateforme'}
+          {t('login_subtitle')}
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
         {/* Email */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-foreground" htmlFor="email">
-            {isAr ? 'البريد الإلكتروني' : 'Adresse email'}
+            {t('email')}
           </label>
           <Input
             id="email"
@@ -89,14 +89,14 @@ export default function LoginPage() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-foreground" htmlFor="password">
-              {isAr ? 'كلمة المرور' : 'Mot de passe'}
+              {t('password')}
             </label>
             <button
               type="button"
               onClick={() => navigate('/forgot-password')}
               className="text-xs text-primary hover:underline"
             >
-              {isAr ? 'نسيت كلمة المرور؟' : 'Mot de passe oublié ?'}
+              {t('forgot_password')}
             </button>
           </div>
           <div className="relative">
@@ -129,7 +129,7 @@ export default function LoginPage() {
             className="w-4 h-4 rounded border-input accent-primary"
           />
           <span className="text-sm text-muted-foreground">
-            {isAr ? 'تذكرني' : 'Se souvenir de moi'}
+            {t('remember_me')}
           </span>
         </label>
 
@@ -141,9 +141,7 @@ export default function LoginPage() {
           className="w-full mt-2 font-semibold text-white gradient-primary hover:opacity-90 transition-all duration-200"
         >
           {!isSubmitting && <LogIn className="w-4 h-4" />}
-          {isSubmitting
-            ? (isAr ? 'جاري الدخول...' : 'Connexion en cours...')
-            : (isAr ? 'تسجيل الدخول' : 'Se connecter')}
+          {isSubmitting ? t('logging_in') : t('login_button')}
         </Button>
 
         <div className="relative my-4">

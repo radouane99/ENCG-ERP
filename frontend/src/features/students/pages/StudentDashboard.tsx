@@ -13,7 +13,7 @@ import { Input } from '../../../shared/components/ui/Input';
 import { cn } from '../../../shared/lib/utils';
 
 export default function StudentDashboard() {
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['students', 'common'])
   const isRtl = i18n.language === 'ar'
   const [activeTab, setActiveTab] = useState<'overview' | 'grades' | 'absences' | 'revision'>('overview')
 
@@ -51,22 +51,22 @@ export default function StudentDashboard() {
       })
     },
     onSuccess: (res) => {
-      toast.success(res.data.message || (isRtl ? 'تم تقديم المبرر بنجاح' : 'Justificatif soumis avec succès'))
+      toast.success(res.data.message || (t('students:dashboard.messages.absence_success')))
       setAbsenceReason('')
       setAbsenceDesc('')
       setAbsenceFile(null)
     },
     onError: () => {
-      toast.error(isRtl ? 'خطأ أثناء تقديم المبرر' : 'Erreur lors de la soumission')
+      toast.error(t('students:dashboard.messages.absence_error'))
     }
   })
 
   const generateRevisionMutation = useMutation({
     mutationFn: () => api.post('/student/ai/revision-planner', { modules: modulesInput }),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم إنشاء الخطة بنجاح' : 'Plan généré avec succès !')
+      toast.success(t('students:dashboard.messages.plan_success'))
     },
-    onError: () => toast.error(isRtl ? 'خطأ في التوليد' : 'Erreur lors de la génération')
+    onError: () => toast.error(t('students:dashboard.messages.plan_error'))
   })
 
   return (
@@ -88,7 +88,7 @@ export default function StudentDashboard() {
                 S5 - Gestion Financière et Comptable
               </span>
               <span className="bg-green-500/20 text-green-100 px-4 py-1.5 rounded-xl text-xs font-bold backdrop-blur-sm shadow-sm flex items-center gap-1 border border-green-400/30">
-                <CheckCircle2 size={14} /> {isRtl ? 'تسجيل نشط' : 'Inscrite (Active)'}
+                <CheckCircle2 size={14} /> {t('students:dashboard.header.status_active')}
               </span>
             </div>
           </div>
@@ -100,10 +100,10 @@ export default function StudentDashboard() {
         {/* Navigation Tabs */}
         <div className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/20)] flex overflow-x-auto hide-scrollbar">
           {[
-            { id: 'overview', label: isRtl ? 'نظرة عامة' : 'Vue d\'ensemble' },
-            { id: 'grades', label: isRtl ? 'النتائج والنقاط' : 'Mes Notes' },
-            { id: 'absences', label: isRtl ? 'تبرير الغياب' : 'Justification Absence' },
-            { id: 'revision', label: isRtl ? 'خطة المراجعة (ذكاء اصطناعي)' : 'Planificateur IA', icon: <Sparkles size={16} /> }
+            { id: 'overview', label: t('students:dashboard.tabs.overview') },
+            { id: 'grades', label: t('students:dashboard.tabs.grades') },
+            { id: 'absences', label: t('students:dashboard.tabs.absences') },
+            { id: 'revision', label: t('students:dashboard.tabs.revision'), icon: <Sparkles size={16} /> }
           ].map(tab => (
             <button
               key={tab.id}
@@ -128,7 +128,7 @@ export default function StudentDashboard() {
               <div className="lg:col-span-2 space-y-4">
                 <h3 className="font-bold text-lg text-[hsl(var(--foreground))] flex items-center gap-2 mb-4">
                   <Calendar className="text-[hsl(var(--color-primary))]" />
-                  {isRtl ? 'الجدول الزمني لليوم' : 'Mon emploi du temps (Aujourd\'hui)'}
+                  {t('students:dashboard.overview.timeline_title')}
                 </h3>
 
                 <div className="space-y-4 relative before:absolute before:inset-0 before:ms-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[hsl(var(--border))] before:to-transparent">
@@ -162,24 +162,24 @@ export default function StudentDashboard() {
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5">
                   <h3 className="font-bold text-amber-600 flex items-center gap-2 mb-3">
                     <AlertCircle className="w-5 h-5" />
-                    {isRtl ? 'تنبيهات هامة' : 'Alertes & Notifications'}
+                    {t('students:dashboard.overview.alerts_title')}
                   </h3>
                   <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] shadow-sm text-sm font-medium text-[hsl(var(--foreground))]">
-                    {isRtl ? 'ينتهي أجل اختيار الوحدات الاختيارية خلال 3 أيام.' : 'La période de choix des modules électifs se termine dans 3 jours.'}
+                    {t('students:dashboard.overview.alerts_text')}
                   </div>
                 </div>
 
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5">
                   <h3 className="font-bold text-blue-600 flex items-center gap-2 mb-3">
                     <FileText className="w-5 h-5" />
-                    {isRtl ? 'المستندات الإدارية' : 'Mes Documents'}
+                    {t('students:dashboard.overview.docs_title')}
                   </h3>
                   <div className="space-y-2">
                     <Button variant="outline" className="w-full justify-start text-xs bg-[hsl(var(--background))]">
-                      {isRtl ? 'طلب شهادة مدرسية' : 'Demander une attestation de scolarité'}
+                      {t('students:dashboard.overview.doc_1')}
                     </Button>
                     <Button variant="outline" className="w-full justify-start text-xs bg-[hsl(var(--background))]">
-                      {isRtl ? 'كشف النقط' : 'Relevé de notes officiel'}
+                      {t('students:dashboard.overview.doc_2')}
                     </Button>
                   </div>
                 </div>
@@ -192,10 +192,10 @@ export default function StudentDashboard() {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{isRtl ? 'النتائج والنقاط (APOGEE)' : 'Mes Résultats (Système APOGEE)'}</h2>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{isRtl ? 'تُعرض هنا فقط النقاط المصادق عليها.' : 'Seules les notes validées et publiées sont affichées ici.'}</p>
+                  <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{t('students:dashboard.grades.title')}</h2>
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('students:dashboard.grades.subtitle')}</p>
                 </div>
-                <Badge className="bg-green-500 text-white border-none">{isRtl ? 'تمت المصادقة' : 'S5 Validé'}</Badge>
+                <Badge className="bg-green-500 text-white border-none">{t('students:dashboard.grades.status_validated')}</Badge>
               </div>
 
               {loadingGrades ? (
@@ -205,10 +205,10 @@ export default function StudentDashboard() {
                   <table className="w-full text-sm text-start">
                     <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-xs">
                       <tr>
-                        <th className="px-6 py-4">{isRtl ? 'الوحدة' : 'Module'}</th>
-                        <th className="px-6 py-4">{isRtl ? 'النوع' : 'Évaluation'}</th>
-                        <th className="px-6 py-4 text-center">{isRtl ? 'النقطة' : 'Note /20'}</th>
-                        <th className="px-6 py-4 text-center">{isRtl ? 'الحالة' : 'Résultat'}</th>
+                        <th className="px-6 py-4">{t('students:dashboard.grades.columns.module')}</th>
+                        <th className="px-6 py-4">{t('students:dashboard.grades.columns.type')}</th>
+                        <th className="px-6 py-4 text-center">{t('students:dashboard.grades.columns.note')}</th>
+                        <th className="px-6 py-4 text-center">{t('students:dashboard.grades.columns.result')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -219,16 +219,16 @@ export default function StudentDashboard() {
                           <td className="px-6 py-4 text-center font-black text-lg text-[hsl(var(--foreground))]">{grade.value}</td>
                           <td className="px-6 py-4 text-center">
                             {grade.value >= 10 ? (
-                              <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">{isRtl ? 'مستوفى' : 'Validé'}</Badge>
+                              <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">{t('students:dashboard.grades.pass')}</Badge>
                             ) : (
-                              <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-none">{isRtl ? 'استدراك' : 'Rattrapage'}</Badge>
+                              <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-none">{t('students:dashboard.grades.fail')}</Badge>
                             )}
                           </td>
                         </tr>
                       )) : (
                         <tr>
                           <td colSpan={4} className="px-6 py-10 text-center text-[hsl(var(--muted-foreground))]">
-                            {isRtl ? 'لا توجد نتائج معتمدة حالياً.' : 'Aucune note publiée pour le moment.'}
+                            {t('students:dashboard.grades.empty')}
                           </td>
                         </tr>
                       )}
@@ -243,45 +243,45 @@ export default function StudentDashboard() {
           {activeTab === 'absences' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4">
               <div>
-                <h2 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{isRtl ? 'تقديم مبرر الغياب' : 'Soumettre un justificatif'}</h2>
+                <h2 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{t('students:dashboard.absences.title')}</h2>
                 <p className="text-sm text-[hsl(var(--muted-foreground))] mb-6">
-                  {isRtl ? 'يجب إيداع الشهادة الطبية في أجل أقصاه 48 ساعة بعد الغياب.' : 'Les certificats médicaux doivent être soumis dans un délai maximum de 48h après l\'absence.'}
+                  {t('students:dashboard.absences.subtitle')}
                 </p>
 
                 <form onSubmit={(e) => { e.preventDefault(); submitAbsenceMutation.mutate(); }} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{isRtl ? 'سبب الغياب' : 'Motif de l\'absence'}</label>
+                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.reason')}</label>
                     <select
                       value={absenceReason}
                       onChange={e => setAbsenceReason(e.target.value)}
                       className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none"
                       required
                     >
-                      <option value="">{isRtl ? '-- اختر --' : '-- Sélectionner --'}</option>
-                      <option value="medical">{isRtl ? 'شهادة طبية' : 'Certificat médical'}</option>
-                      <option value="convocation">{isRtl ? 'استدعاء رسمي' : 'Convocation officielle'}</option>
-                      <option value="other">{isRtl ? 'أخرى' : 'Autre (à préciser)'}</option>
+                      <option value="">{t('students:dashboard.absences.reason_select')}</option>
+                      <option value="medical">{t('students:dashboard.absences.reason_medical')}</option>
+                      <option value="convocation">{t('students:dashboard.absences.reason_convocation')}</option>
+                      <option value="other">{t('students:dashboard.absences.reason_other')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{isRtl ? 'تفاصيل إضافية' : 'Détails supplémentaires'}</label>
+                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.details')}</label>
                     <textarea
                       value={absenceDesc}
                       onChange={e => setAbsenceDesc(e.target.value)}
                       className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none resize-none h-24"
-                      placeholder={isRtl ? 'اكتب تفاصيل غيابك هنا...' : 'Précisez les circonstances...'}
+                      placeholder={t('students:dashboard.absences.details_placeholder')}
                     ></textarea>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{isRtl ? 'إرفاق المستند (PDF/JPG)' : 'Joindre le document (PDF/JPG)'}</label>
+                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.document')}</label>
                     <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-6 text-center hover:bg-[hsl(var(--muted)/20)] transition-colors cursor-pointer">
                       <input type="file" className="hidden" id="file-upload" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.png" />
                       <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
                         <Upload className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
                         <span className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
-                          {absenceFile ? absenceFile.name : (isRtl ? 'انقر لاختيار ملف أو اسحب الملف هنا' : 'Cliquez pour uploader ou glissez le fichier')}
+                          {absenceFile ? absenceFile.name : (t('students:dashboard.absences.document_placeholder'))}
                         </span>
                       </label>
                     </div>
@@ -293,7 +293,7 @@ export default function StudentDashboard() {
                     className="w-full"
                     isLoading={submitAbsenceMutation.isPending}
                   >
-                    {isRtl ? 'إرسال المبرر' : 'Soumettre le justificatif'}
+                    {t('students:dashboard.absences.submit')}
                   </Button>
                 </form>
               </div>
@@ -301,16 +301,16 @@ export default function StudentDashboard() {
               <div className="bg-[hsl(var(--muted)/30)] rounded-3xl p-6 border border-[hsl(var(--border))]">
                 <h3 className="font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-[hsl(var(--color-primary))]" />
-                  {isRtl ? 'سجل المبررات' : 'Historique des justifications'}
+                  {t('students:dashboard.absences.history_title')}
                 </h3>
                 <div className="space-y-3">
                   <div className="bg-[hsl(var(--background))] p-4 rounded-xl border border-[hsl(var(--border))] flex justify-between items-start shadow-sm">
                     <div>
-                      <p className="font-bold text-sm text-[hsl(var(--foreground))]">{isRtl ? 'غياب 12 أكتوبر (مرض)' : 'Absence du 12 Oct (Maladie)'}</p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{isRtl ? 'تم الإرسال: 13 أكتوبر' : 'Soumis le : 13 Octobre'}</p>
+                      <p className="font-bold text-sm text-[hsl(var(--foreground))]">{t('students:dashboard.absences.history_item')}</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{t('students:dashboard.absences.history_date')}</p>
                     </div>
                     <Badge variant="outline" className="text-amber-600 bg-amber-500/10 border-amber-200">
-                      {isRtl ? 'قيد المعالجة' : 'En cours'}
+                      {t('students:dashboard.absences.history_status')}
                     </Badge>
                   </div>
                 </div>
@@ -324,15 +324,15 @@ export default function StudentDashboard() {
               <div className="w-20 h-20 bg-purple-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-purple-500/20">
                 <Sparkles className="w-10 h-10 text-purple-600" />
               </div>
-              <h2 className="text-2xl font-black text-[hsl(var(--foreground))]">{isRtl ? 'مخطط المراجعة الذكي' : 'Générateur de Plan de Révision'}</h2>
+              <h2 className="text-2xl font-black text-[hsl(var(--foreground))]">{t('students:dashboard.revision.title')}</h2>
               <p className="text-[hsl(var(--muted-foreground))] text-sm">
-                {isRtl ? 'أدخل المواد التي ترغب في مراجعتها، وسيقوم الذكاء الاصطناعي بتنظيم جدول زمني مثالي لك.' : 'Saisissez les modules que vous souhaitez réviser, et notre IA générera un planning optimisé.'}
+                {t('students:dashboard.revision.subtitle')}
               </p>
 
               <div className="flex gap-2 text-start">
                 <Input
                   className="flex-1"
-                  placeholder={isRtl ? 'مثال: المحاسبة، الرياضيات المالية...' : 'Ex: Comptabilité, Algèbre, Marketing...'}
+                  placeholder={t('students:dashboard.revision.placeholder')}
                   value={modulesInput}
                   onChange={(e) => setModulesInput(e.target.value)}
                 />
@@ -341,7 +341,7 @@ export default function StudentDashboard() {
                   isLoading={generateRevisionMutation.isPending}
                   className="bg-purple-600 hover:bg-purple-700 text-white border-none shrink-0"
                 >
-                  {isRtl ? 'توليد الخطة' : 'Générer le plan'}
+                  {t('students:dashboard.revision.generate')}
                 </Button>
               </div>
 
@@ -349,12 +349,12 @@ export default function StudentDashboard() {
                 <div className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl p-6 mt-6 shadow-sm text-start">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-lg text-[hsl(var(--foreground))]">
-                      {isRtl ? 'خطتك المخصصة:' : 'Votre plan sur-mesure :'}
+                      {t('students:dashboard.revision.result_title')}
                     </h3>
                     <Badge className="bg-purple-100 text-purple-700 border-none">AI Generated</Badge>
                   </div>
                   <div className="prose prose-sm dark:prose-invert max-w-none text-[hsl(var(--muted-foreground))]">
-                    <p>{isRtl ? 'تم تقسيم المواد بنجاح على 7 أيام مع فترات راحة.' : 'Modules répartis sur 7 jours avec la technique Pomodoro intégrée.'}</p>
+                    <p>{t('students:dashboard.revision.result_text')}</p>
                     <ul className="mt-4 space-y-2">
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 1: Comptabilité (Chapitres 1-3) - 2h</li>
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 2: Algèbre (Espaces Vectoriels) - 1.5h</li>

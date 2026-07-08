@@ -1,0 +1,169 @@
+{
+  "list": {
+    "title": "Gestion des Étudiants",
+    "total": "étudiant(s) au total",
+    "add_button": "Nouvel étudiant",
+    "search": "Rechercher par nom, CNE, n° étudiant...",
+    "empty_title": "Aucun étudiant trouvé",
+    "empty_subtitle": "Essayez de modifier vos filtres de recherche.",
+    "add_first": "Ajouter un étudiant",
+    "selected": "sélectionné(s)",
+    "delete_selected": "Supprimer",
+    "page": "Page {{current}} sur {{total}}",
+    "columns": {
+      "student": "Étudiant",
+      "cne": "CNE / N°",
+      "filiere": "Filière",
+      "status": "Statut",
+      "scholarship": "Bourse",
+      "actions": "Actions"
+    },
+    "filter_all_status": "Tous les statuts"
+  },
+  "status": {
+    "active": "Actif",
+    "suspended": "Suspendu",
+    "graduated": "Diplômé",
+    "withdrawn": "Retiré"
+  },
+  "scholarship": {
+    "none": "Aucune",
+    "excellence": "Excellence",
+    "social": "Social",
+    "state": "État"
+  },
+  "form": {
+    "create_title": "Nouvel Étudiant",
+    "edit_title": "Modifier l'étudiant",
+    "sections": {
+      "identity": "Identité",
+      "administration": "Administration",
+      "academic": "Académique"
+    },
+    "fields": {
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "gender": "Genre",
+      "birth_date": "Date de naissance",
+      "phone": "Téléphone",
+      "status": "Statut",
+      "scholarship": "Bourse"
+    },
+    "gender": {
+      "male": "Masculin",
+      "female": "Féminin"
+    }
+  },
+  "messages": {
+    "create_success": "Étudiant créé avec succès !",
+    "update_success": "Étudiant mis à jour avec succès !",
+    "delete_success": "Étudiant supprimé.",
+    "delete_confirm": "Êtes-vous sûr de vouloir supprimer cet étudiant ?"
+  },
+  "dashboard": {
+    "header": {
+      "status_active": "Inscrite (Active)"
+    },
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "grades": "Mes Notes",
+      "absences": "Justification Absence",
+      "revision": "Planificateur IA"
+    },
+    "overview": {
+      "timeline_title": "Mon emploi du temps (Aujourd'hui)",
+      "alerts_title": "Alertes & Notifications",
+      "alerts_text": "La période de choix des modules électifs se termine dans 3 jours.",
+      "docs_title": "Mes Documents",
+      "doc_1": "Demander une attestation de scolarité",
+      "doc_2": "Relevé de notes officiel"
+    },
+    "grades": {
+      "title": "Mes Résultats (Système APOGEE)",
+      "subtitle": "Seules les notes validées et publiées sont affichées ici.",
+      "status_validated": "S5 Validé",
+      "columns": {
+        "module": "Module",
+        "type": "Évaluation",
+        "note": "Note /20",
+        "result": "Résultat"
+      },
+      "pass": "Validé",
+      "fail": "Rattrapage",
+      "empty": "Aucune note publiée pour le moment."
+    },
+    "absences": {
+      "title": "Soumettre un justificatif",
+      "subtitle": "Les certificats médicaux doivent être soumis dans un délai maximum de 48h après l'absence.",
+      "reason": "Motif de l'absence",
+      "reason_select": "-- Sélectionner --",
+      "reason_medical": "Certificat médical",
+      "reason_convocation": "Convocation officielle",
+      "reason_other": "Autre (à préciser)",
+      "details": "Détails supplémentaires",
+      "details_placeholder": "Précisez les circonstances...",
+      "document": "Joindre le document (PDF/JPG)",
+      "document_placeholder": "Cliquez pour uploader ou glissez le fichier",
+      "submit": "Soumettre le justificatif",
+      "history_title": "Historique des justifications",
+      "history_item": "Absence du 12 Oct (Maladie)",
+      "history_date": "Soumis le : 13 Octobre",
+      "history_status": "En cours"
+    },
+    "revision": {
+      "title": "Générateur de Plan de Révision",
+      "subtitle": "Saisissez les modules que vous souhaitez réviser, et notre IA générera un planning optimisé.",
+      "placeholder": "Ex: Comptabilité, Algèbre, Marketing...",
+      "generate": "Générer le plan",
+      "result_title": "Votre plan sur-mesure :",
+      "result_text": "Modules répartis sur 7 jours avec la technique Pomodoro intégrée."
+    },
+    "messages": {
+      "absence_success": "Justificatif soumis avec succès",
+      "absence_error": "Erreur lors de la soumission",
+      "plan_success": "Plan généré avec succès !",
+      "plan_error": "Erreur lors de la génération"
+    }
+  },
+  "create": {
+    "title": "Nouvel Étudiant",
+    "subtitle": "Ajouter un nouvel étudiant dans la base de données",
+    "personal_info": "Informations Personnelles",
+    "first_name": "Prénom",
+    "first_name_placeholder": "Fatima",
+    "last_name": "Nom",
+    "last_name_placeholder": "ALAOUI",
+    "email": "Email",
+    "email_placeholder": "f.alaoui@encg-fes.ma",
+    "phone": "Téléphone",
+    "phone_placeholder": "+212 6xx xxx xxx",
+    "birth_date": "Date de naissance",
+    "gender": "Genre",
+    "male": "Masculin",
+    "female": "Féminin",
+    "official_ids": "Identifiants Officiels",
+    "cin": "CIN",
+    "cin_placeholder": "Ex: CD12345",
+    "cne": "CNE",
+    "cne_placeholder": "Ex: N123456789",
+    "massar_code": "Code Massar",
+    "massar_placeholder": "Ex: G123456789",
+    "status_section": "Statut et Bourse",
+    "current_status": "Statut actuel",
+    "active": "Actif",
+    "suspended": "Suspendu",
+    "graduated": "Diplômé",
+    "withdrawn": "Retiré",
+    "scholarship_type": "Type de Bourse",
+    "none": "Aucune",
+    "minhaty": "Minhaty",
+    "excellence": "Excellence",
+    "social": "Social",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "success": "Étudiant créé avec succès !",
+    "error_validation": "Erreur de validation des données",
+    "error_general": "Erreur lors de la création de l'étudiant"
+  }
+}

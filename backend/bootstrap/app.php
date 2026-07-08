@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ensure Sanctum is stateful if needed, though usually handled via config
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\SetLocale::class,
         ]);
         
         $middleware->api(append: [

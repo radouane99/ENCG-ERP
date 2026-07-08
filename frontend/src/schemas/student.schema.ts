@@ -5,30 +5,30 @@ import type { StudentStatus, Gender } from '@/types/models';
 
 export const storeStudentSchema = z.object({
   first_name: z
-    .string({ required_error: 'Le prénom est requis.' })
+    .string({ message: 'Le prénom est requis.' })
     .min(1, 'Le prénom est requis.')
     .max(100),
   last_name: z
-    .string({ required_error: 'Le nom est requis.' })
+    .string({ message: 'Le nom est requis.' })
     .min(1, 'Le nom est requis.')
     .max(100),
   email: z
-    .string({ required_error: "L'email est requis." })
+    .string({ message: "L'email est requis." })
     .email("L'adresse email est invalide."),
   phone: z.string().max(20).optional().nullable(),
   cin: z.string().max(20).optional().nullable(),
   cne: z
-    .string({ required_error: 'Le CNE est requis.' })
+    .string({ message: 'Le CNE est requis.' })
     .min(1, 'Le CNE est requis.')
     .max(20),
   massar_code: z.string().max(30).optional().nullable(),
   gender: z.enum(['male', 'female'] as [Gender, Gender], {
-    required_error: 'Le genre est requis.',
+    message: 'Le genre est requis.',
   }),
   birth_date: z.string().optional().nullable(),
   status: z.enum(
     ['active', 'suspended', 'graduated', 'withdrawn'] as [StudentStatus, ...StudentStatus[]],
-    { required_error: 'Le statut est requis.' }
+    { message: 'Le statut est requis.' }
   ),
   scholarship_type: z.string().max(50).optional().nullable(),
 });

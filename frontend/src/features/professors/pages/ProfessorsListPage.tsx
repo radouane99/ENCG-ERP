@@ -35,7 +35,7 @@ const EMPTY_FORM = {
 };
 
 export default function ProfessorsListPage() {
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['professors', 'common'])
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
 
@@ -61,19 +61,19 @@ export default function ProfessorsListPage() {
   const saveMutation = useMutation({
     mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم الحفظ بنجاح' : 'Sauvegardé avec succès !')
+      toast.success(t('common:messages.success'))
       queryClient.invalidateQueries({ queryKey: ['professors'] })
       setShowModal(false)
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || (isRtl ? 'خطأ في الحفظ' : 'Erreur lors de la sauvegarde.'))
+      toast.error(err?.response?.data?.message || (t('common:messages.error')))
     }
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/hr/professors/${id}`),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم الحذف' : 'Supprimé avec succès.')
+      toast.success(t('common:messages.success'))
       queryClient.invalidateQueries({ queryKey: ['professors'] })
     }
   })
@@ -97,7 +97,7 @@ export default function ProfessorsListPage() {
   }
 
   const handleDelete = (id: number) => {
-    if (confirm(isRtl ? 'هل تريد حذف هذا الأستاذ؟' : 'Supprimer ce professeur ?')) {
+    if (confirm(t('common:messages.confirm_delete'))) {
       deleteMutation.mutate(id)
     }
   }
@@ -111,9 +111,9 @@ export default function ProfessorsListPage() {
   )
 
   const CONTRACT_LABELS: Record<string, string> = {
-    permanent: isRtl ? 'دائم' : 'Permanent',
-    contractual: isRtl ? 'متعاقد' : 'Contractuel',
-    visiting: isRtl ? 'زائر' : 'Vacataire',
+    permanent: t('professors:contracts.permanent', { defaultValue: 'Permanent' }),
+    contractual: t('professors:contracts.contractual', { defaultValue: 'Contractuel' }),
+    visiting: t('professors:contracts.visiting', { defaultValue: 'Vacataire' }),
   }
 
   const CONTRACT_VARIANTS: Record<string, "default" | "warning" | "navy"> = {
@@ -127,14 +127,14 @@ export default function ProfessorsListPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--foreground))]">{isRtl ? 'هيئة التدريس' : 'Corps Professoral'}</h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 text-sm">{isRtl ? 'إدارة الأساتذة الدائمين، المتعاقدين، والزوار' : 'Gérez les professeurs permanents, contractuels et vacataires.'}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--foreground))]">{t('professors:list.title')}</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 text-sm">{t('professors:list.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <ExcelActions model="professors" label={isRtl ? 'أساتذة' : 'Professeurs'} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['professors'] })} />
+          <ExcelActions model="professors" label={t('professors:list.title')} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['professors'] })} />
           <Button onClick={openCreate} className="flex items-center gap-2">
             <Plus size={18} />
-            {isRtl ? 'أستاذ جديد' : 'Nouveau Professeur'}
+            {t('professors:list.add_button')}
           </Button>
         </div>
       </div>
@@ -143,28 +143,28 @@ export default function ProfessorsListPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{isRtl ? 'الإجمالي' : 'Total'}</p>
+            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('common:total')}</p>
             <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] flex items-center justify-center"><Users className="w-6 h-6" /></div>
         </div>
         <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{isRtl ? 'دائمون' : 'Permanents'}</p>
+            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:contracts.permanent_pl', { defaultValue: 'Permanents' })}</p>
             <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.contract_type === 'permanent').length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] flex items-center justify-center"><Briefcase className="w-6 h-6" /></div>
         </div>
         <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{isRtl ? 'متعاقدون' : 'Contractuels'}</p>
+            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:contracts.contractual_pl', { defaultValue: 'Contractuels' })}</p>
             <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.contract_type === 'contractual').length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center"><GraduationCap className="w-6 h-6" /></div>
         </div>
         <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{isRtl ? 'نشط' : 'Actifs'}</p>
+            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:status.active')}</p>
             <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.is_active).length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center"><CheckCircle className="w-6 h-6" /></div>
@@ -177,7 +177,7 @@ export default function ProfessorsListPage() {
           <div className="relative w-full flex-1">
             <Input 
               icon={<Search size={16} />}
-              placeholder={isRtl ? 'البحث عن أستاذ...' : 'Rechercher un professeur...'} 
+              placeholder={t('professors:list.search')} 
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="bg-[hsl(var(--background))]"
@@ -188,10 +188,10 @@ export default function ProfessorsListPage() {
             onChange={e => setContractFilter(e.target.value)}
             className="px-4 py-2.5 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] min-w-[180px]"
           >
-            <option value="">{isRtl ? 'جميع العقود' : 'Tous les contrats'}</option>
-            <option value="permanent">{isRtl ? 'دائم' : 'Permanent'}</option>
-            <option value="contractual">{isRtl ? 'متعاقد' : 'Contractuel'}</option>
-            <option value="visiting">{isRtl ? 'زائر' : 'Vacataire'}</option>
+            <option value="">{t('professors:contracts.all', { defaultValue: 'Tous les contrats' })}</option>
+            <option value="permanent">{t('professors:contracts.permanent', { defaultValue: 'Permanent' })}</option>
+            <option value="contractual">{t('professors:contracts.contractual', { defaultValue: 'Contractuel' })}</option>
+            <option value="visiting">{t('professors:contracts.visiting', { defaultValue: 'Vacataire' })}</option>
           </select>
         </div>
 
@@ -202,12 +202,12 @@ export default function ProfessorsListPage() {
             <table className="w-full text-sm text-start">
               <thead className="text-xs text-[hsl(var(--muted-foreground))] uppercase bg-[hsl(var(--muted)/50)] border-b border-[hsl(var(--border))]">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">{isRtl ? 'الأستاذ' : 'Professeur'}</th>
-                  <th className="px-6 py-4 font-semibold">{isRtl ? 'الدرجة / التخصص' : 'Grade / Spécialité'}</th>
-                  <th className="px-6 py-4 font-semibold">{isRtl ? 'نوع العقد' : 'Type de contrat'}</th>
-                  <th className="px-6 py-4 font-semibold">{isRtl ? 'القسم' : 'Département'}</th>
-                  <th className="px-6 py-4 font-semibold text-center">{isRtl ? 'الحالة' : 'Statut'}</th>
-                  <th className="px-6 py-4 font-semibold text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
+                  <th className="px-6 py-4 font-semibold">{t('professors:list.columns.professor')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('professors:list.columns.specialty')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('professors:contracts.type', { defaultValue: 'Type de contrat' })}</th>
+                  <th className="px-6 py-4 font-semibold">{t('professors:list.columns.department')}</th>
+                  <th className="px-6 py-4 font-semibold text-center">{t('professors:list.columns.status')}</th>
+                  <th className="px-6 py-4 font-semibold text-end">{t('professors:list.columns.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -216,8 +216,8 @@ export default function ProfessorsListPage() {
                     <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mx-auto mb-4">
                       <GraduationCap size={32} className="opacity-50" />
                     </div>
-                    <p className="font-medium text-[hsl(var(--foreground))]">{isRtl ? 'لم يتم العثور على أساتذة' : 'Aucun professeur trouvé.'}</p>
-                    <Button variant="link" onClick={openCreate} className="mt-2">{isRtl ? '+ إضافة الأستاذ الأول' : '+ Ajouter le premier professeur'}</Button>
+                    <p className="font-medium text-[hsl(var(--foreground))]">{t('professors:list.empty')}</p>
+                    <Button variant="link" onClick={openCreate} className="mt-2">{t('professors:list.add_button')}</Button>
                   </td></tr>
                 ) : filtered.map((prof) => (
                   <tr key={prof.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
@@ -244,7 +244,7 @@ export default function ProfessorsListPage() {
                     <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] text-sm">{prof.department}</td>
                     <td className="px-6 py-4 text-center">
                       <Badge variant={prof.is_active ? 'success' : 'outline'} size="sm">
-                        {prof.is_active ? (isRtl ? 'نشط' : 'Actif') : (isRtl ? 'غير نشط' : 'Inactif')}
+                        {prof.is_active ? t('professors:status.active') : t('professors:status.inactive')}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-end">
@@ -269,71 +269,71 @@ export default function ProfessorsListPage() {
       <Modal 
         open={showModal} 
         onClose={() => setShowModal(false)}
-        title={editingId ? (isRtl ? 'تحديث بيانات الأستاذ' : 'Modifier le professeur') : (isRtl ? 'أستاذ جديد' : 'Nouveau Professeur')}
+        title={editingId ? (t('professors:create.title')) : (t('professors:list.add_button'))}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم الأول' : 'Prénom'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:name', { defaultValue: 'Prénom' })} *</label>
               <Input required value={form.first_name} onChange={setF('first_name')} placeholder="Ahmed" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم العائلي' : 'Nom'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:name', { defaultValue: 'Nom' })} *</label>
               <Input required value={form.last_name} onChange={setF('last_name')} placeholder="BENSOUDA" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'البريد الإلكتروني' : 'Email'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:email', { defaultValue: 'Email' })} *</label>
               <Input required type="email" value={form.email} onChange={setF('email')} placeholder="prof@encg-fes.ma" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الهاتف' : 'Téléphone'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:phone', { defaultValue: 'Téléphone' })}</label>
               <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الدرجة الأكاديمية' : 'Grade académique'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:form.grade', { defaultValue: 'Grade académique' })}</label>
               <Input value={form.grade} onChange={setF('grade')} placeholder="Professeur Habilité, PES..." />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'التخصص' : 'Spécialité'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:list.columns.specialty')}</label>
               <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance, Management..." />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'نوع العقد' : 'Type de contrat'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:contracts.type', { defaultValue: 'Type de contrat' })} *</label>
               <select 
                 value={form.contract_type} 
                 onChange={setF('contract_type')} 
                 className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
               >
-                <option value="permanent">{isRtl ? 'دائم' : 'Permanent'}</option>
-                <option value="contractual">{isRtl ? 'متعاقد' : 'Contractuel'}</option>
-                <option value="visiting">{isRtl ? 'زائر' : 'Vacataire'}</option>
+                <option value="permanent">{t('professors:contracts.permanent', { defaultValue: 'Permanent' })}</option>
+                <option value="contractual">{t('professors:contracts.contractual', { defaultValue: 'Contractuel' })}</option>
+                <option value="visiting">{t('professors:contracts.visiting', { defaultValue: 'Vacataire' })}</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'تاريخ التوظيف' : 'Date d\'embauche'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:form.hire_date', { defaultValue: 'Date d\'embauche' })}</label>
               <Input type="date" value={form.hire_date} onChange={setF('hire_date')} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'القسم' : 'Département'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:list.columns.department')}</label>
               <select 
                 value={form.department_id} 
                 onChange={setF('department_id')} 
                 className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
               >
-                <option value="">{isRtl ? '-- اختيار القسم --' : '-- Choisir un département --'}</option>
+                <option value="">{t('professors:form.select_dept', { defaultValue: '-- Choisir un département --' })}</option>
                 {departments.map((dept: any) => (
                   <option key={dept.id} value={dept.id}>{dept.name}</option>
                 ))}
@@ -346,16 +346,16 @@ export default function ProfessorsListPage() {
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
               className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]" />
             <label htmlFor="is_active" className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              {isRtl ? 'أستاذ نشط' : 'Professeur actif'}
+              {t('professors:form.is_active', { defaultValue: 'Professeur actif' })}
             </label>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-6 border-t border-[hsl(var(--border))]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
-              {isRtl ? 'إلغاء' : 'Annuler'}
+              {t('common:buttons.cancel')}
             </Button>
             <Button type="submit" variant="primary" isLoading={saveMutation.isPending}>
-              {editingId ? (isRtl ? 'تحديث' : 'Mettre à jour') : (isRtl ? 'حفظ' : 'Enregistrer')}
+              {editingId ? (t('common:buttons.edit')) : (t('common:buttons.save'))}
             </Button>
           </div>
         </form>

@@ -1,12 +1,15 @@
-﻿import React from 'react';
+import React from 'react';
 import { Target, Users, LayoutGrid, CheckCircle2, AlertCircle, Search, Download, FileText, Wand2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminTafem() {
+  const { t } = useTranslation('dashboard');
+
   const stats = [
-    { label: 'Candidats Inscrits', value: '4,852', subtext: 'Dossiers complets', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-    { label: 'Capacité Amphis', value: '5,000', subtext: '12 Salles / 4 Amphis', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { label: 'Répartition Auto', value: '100%', subtext: 'Placement terminé', color: 'text-[#e6007e]', bg: 'bg-[#e6007e]/10', border: 'border-[#e6007e]/20' },
+    { label: t('tafem.stats.candidates'), value: '4,852', subtext: t('tafem.stats.candidates_sub'), color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { label: t('tafem.stats.capacity'), value: '5,000', subtext: t('tafem.stats.capacity_sub'), color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { label: t('tafem.stats.repartition'), value: '100%', subtext: t('tafem.stats.repartition_sub'), color: 'text-[#e6007e]', bg: 'bg-[#e6007e]/10', border: 'border-[#e6007e]/20' },
   ];
 
   const amphis = [
@@ -29,16 +32,16 @@ export default function AdminTafem() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <div className="inline-flex items-center gap-2 bg-[#e6007e]/20 text-[#ff66b2] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-[#e6007e]/30">
-              <Target className="w-3.5 h-3.5" /> Admissibilité
+              <Target className="w-3.5 h-3.5" /> {t('tafem.badge')}
             </div>
-            <h1 className="text-4xl font-black text-white mb-2">Concours TAFEM 2026</h1>
+            <h1 className="text-4xl font-black text-white mb-2">{t('tafem.title')}</h1>
             <p className="text-blue-200 text-lg max-w-2xl">
-              Gestion de masse des candidats, répartition intelligente dans les centres d'examens et génération des listes principales.
+              {t('tafem.desc')}
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-4">
             <button className="bg-[#e6007e] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#cc0070] transition-colors shadow-lg flex items-center gap-2">
-              <Wand2 className="w-5 h-5" /> Répartition Automatique IA
+              <Wand2 className="w-5 h-5" /> {t('tafem.ai_btn')}
             </button>
           </div>
         </div>
@@ -64,8 +67,8 @@ export default function AdminTafem() {
                 <LayoutGrid className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white">Logistique Salles</h2>
-                <p className="text-sm font-medium text-white/50">Occupation et Surveillance</p>
+                <h2 className="text-xl font-black text-white">{t('tafem.logistics.title')}</h2>
+                <p className="text-sm font-medium text-white/50">{t('tafem.logistics.subtitle')}</p>
               </div>
             </div>
           </div>
@@ -87,7 +90,7 @@ export default function AdminTafem() {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-bold text-indigo-600">
-                  <Users className="w-3.5 h-3.5" /> {amphi.surveillants} Surveillants Affectés
+                  <Users className="w-3.5 h-3.5" /> {amphi.surveillants} {t('tafem.logistics.surveillants')}
                 </div>
               </div>
             ))}
@@ -101,33 +104,33 @@ export default function AdminTafem() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white">Résultats & Délibération</h2>
-              <p className="text-sm font-medium text-white/50">Post-correction OMR</p>
+              <h2 className="text-xl font-black text-white">{t('tafem.results.title')}</h2>
+              <p className="text-sm font-medium text-white/50">{t('tafem.results.subtitle')}</p>
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="p-6 rounded-2xl border-2 border-dashed border-white/10 text-center hover:border-emerald-400 hover:bg-emerald-50 transition-colors cursor-pointer group">
               <Download className="w-10 h-10 text-gray-400 mx-auto mb-3 group-hover:text-emerald-500" />
-              <h3 className="font-bold text-white mb-1">Importer Fichier Scanners OMR</h3>
-              <p className="text-xs text-white/50">Format .csv ou .xlsx (Notes des QCM)</p>
+              <h3 className="font-bold text-white mb-1">{t('tafem.results.import')}</h3>
+              <p className="text-xs text-white/50">{t('tafem.results.import_sub')}</p>
             </div>
 
             <div className="space-y-3 pt-4 border-t border-white/5">
               <button className="w-full bg-[#001A4B] text-white py-3 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-[#003a8c] transition-colors shadow-sm">
-                <span>Générer Liste Principale (Top 350)</span>
-                <FileText className="w-5 h-5" />
+                <span>{t('tafem.results.gen_main')}</span>
+                <FileText className="w-5 h-5 rtl:rotate-180" />
               </button>
               <button className="w-full bg-white border border-white/10 text-white/80 py-3 rounded-xl font-bold flex items-center justify-between px-6 hover:bg-white/[0.02] transition-colors">
-                <span>Générer Liste d'Attente</span>
-                <FileText className="w-5 h-5" />
+                <span>{t('tafem.results.gen_wait')}</span>
+                <FileText className="w-5 h-5 rtl:rotate-180" />
               </button>
             </div>
 
             <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
               <div className="text-sm text-rose-800 font-medium">
-                Attention : La publication des résultats enverra un SMS automatique aux 350 admis. Veuillez vérifier les seuils de coupure avant validation.
+                {t('tafem.results.warning')}
               </div>
             </div>
           </div>

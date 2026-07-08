@@ -1,0 +1,49 @@
+{
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Bienvenue sur l'ERP ENCG",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "loading": "Connexion en cours...",
+      "forgot_password": "Mot de passe oublié ?"
+    }
+  },
+  "student": {
+    "create": {
+      "title": "Nouvel Étudiant",
+      "subtitle": "Saisir les informations du nouvel étudiant",
+      "personal_info": "Informations Personnelles",
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "birth_date": "Date de naissance",
+      "gender": "Genre",
+      "male": "Masculin",
+      "female": "Féminin",
+      "official_ids": "Identifiants Officiels",
+      "cin": "CIN",
+      "cne": "CNE",
+      "massar_code": "Code MASSAR",
+      "status_section": "Statut",
+      "current_status": "Statut Actuel",
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "graduated": "Diplômé",
+      "withdrawn": "Retiré",
+      "scholarship_type": "Type de Bourse",
+      "none": "Aucune",
+      "minhaty": "Minhaty",
+      "excellence": "Excellence",
+      "social": "Sociale",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "success": "Étudiant créé avec succès",
+      "error_validation": "Veuillez vérifier les champs du formulaire.",
+      "error_general": "Erreur lors de la création"
+    }
+  }
+}

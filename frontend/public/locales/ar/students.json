@@ -1,0 +1,169 @@
+{
+  "list": {
+    "title": "إدارة الطلاب",
+    "total": "طالب في المجموع",
+    "add_button": "طالب جديد",
+    "search": "البحث بالاسم، CNE، رقم الطالب...",
+    "empty_title": "لم يتم العثور على طلاب",
+    "empty_subtitle": "جرب تغيير مرشحات البحث.",
+    "add_first": "إضافة طالب",
+    "selected": "محدد",
+    "delete_selected": "حذف المحدد",
+    "page": "الصفحة {{current}} من {{total}}",
+    "columns": {
+      "student": "الطالب",
+      "cne": "CNE / الرقم",
+      "filiere": "الشعبة",
+      "status": "الحالة",
+      "scholarship": "المنحة",
+      "actions": "إجراءات"
+    },
+    "filter_all_status": "جميع الحالات"
+  },
+  "status": {
+    "active": "نشط",
+    "suspended": "موقوف",
+    "graduated": "خريج",
+    "withdrawn": "منسحب"
+  },
+  "scholarship": {
+    "none": "بدون",
+    "excellence": "تفوق",
+    "social": "اجتماعية",
+    "state": "دولة"
+  },
+  "form": {
+    "create_title": "إضافة طالب",
+    "edit_title": "تحديث الطالب",
+    "sections": {
+      "identity": "الهوية",
+      "administration": "الإدارة",
+      "academic": "أكاديمي"
+    },
+    "fields": {
+      "first_name": "الاسم الأول",
+      "last_name": "الاسم العائلي",
+      "gender": "الجنس",
+      "birth_date": "تاريخ الميلاد",
+      "phone": "الهاتف",
+      "status": "الحالة",
+      "scholarship": "المنحة"
+    },
+    "gender": {
+      "male": "ذكر",
+      "female": "أنثى"
+    }
+  },
+  "messages": {
+    "create_success": "تمت إضافة الطالب بنجاح",
+    "update_success": "تم تحديث الطالب بنجاح",
+    "delete_success": "تم حذف الطالب",
+    "delete_confirm": "هل أنت متأكد من حذف هذا الطالب؟"
+  },
+  "dashboard": {
+    "header": {
+      "status_active": "تسجيل نشط"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "grades": "النتائج والنقاط",
+      "absences": "تبرير الغياب",
+      "revision": "خطة المراجعة (ذكاء اصطناعي)"
+    },
+    "overview": {
+      "timeline_title": "الجدول الزمني لليوم",
+      "alerts_title": "تنبيهات هامة",
+      "alerts_text": "ينتهي أجل اختيار الوحدات الاختيارية خلال 3 أيام.",
+      "docs_title": "المستندات الإدارية",
+      "doc_1": "طلب شهادة مدرسية",
+      "doc_2": "كشف النقط"
+    },
+    "grades": {
+      "title": "النتائج والنقاط (APOGEE)",
+      "subtitle": "تُعرض هنا فقط النقاط المصادق عليها.",
+      "status_validated": "تمت المصادقة",
+      "columns": {
+        "module": "الوحدة",
+        "type": "النوع",
+        "note": "النقطة",
+        "result": "الحالة"
+      },
+      "pass": "مستوفى",
+      "fail": "استدراك",
+      "empty": "لا توجد نتائج معتمدة حالياً."
+    },
+    "absences": {
+      "title": "تقديم مبرر الغياب",
+      "subtitle": "يجب إيداع الشهادة الطبية في أجل أقصاه 48 ساعة بعد الغياب.",
+      "reason": "سبب الغياب",
+      "reason_select": "-- اختر --",
+      "reason_medical": "شهادة طبية",
+      "reason_convocation": "استدعاء رسمي",
+      "reason_other": "أخرى",
+      "details": "تفاصيل إضافية",
+      "details_placeholder": "اكتب تفاصيل غيابك هنا...",
+      "document": "إرفاق المستند (PDF/JPG)",
+      "document_placeholder": "انقر لاختيار ملف أو اسحب الملف هنا",
+      "submit": "إرسال المبرر",
+      "history_title": "سجل المبررات",
+      "history_item": "غياب 12 أكتوبر (مرض)",
+      "history_date": "تم الإرسال: 13 أكتوبر",
+      "history_status": "قيد المعالجة"
+    },
+    "revision": {
+      "title": "مخطط المراجعة الذكي",
+      "subtitle": "أدخل المواد التي ترغب في مراجعتها، وسيقوم الذكاء الاصطناعي بتنظيم جدول زمني مثالي لك.",
+      "placeholder": "مثال: المحاسبة، الرياضيات المالية...",
+      "generate": "توليد الخطة",
+      "result_title": "خطتك المخصصة:",
+      "result_text": "تم تقسيم المواد بنجاح على 7 أيام مع فترات راحة."
+    },
+    "messages": {
+      "absence_success": "تم تقديم المبرر بنجاح",
+      "absence_error": "خطأ أثناء تقديم المبرر",
+      "plan_success": "تم إنشاء الخطة بنجاح",
+      "plan_error": "خطأ في التوليد"
+    }
+  },
+  "create": {
+    "title": "إضافة طالب",
+    "subtitle": "إضافة طالب جديد إلى قاعدة البيانات",
+    "personal_info": "المعلومات الشخصية",
+    "first_name": "الاسم الأول",
+    "first_name_placeholder": "فاطمة",
+    "last_name": "الاسم العائلي",
+    "last_name_placeholder": "العلوي",
+    "email": "البريد الإلكتروني",
+    "email_placeholder": "f.alaoui@encg-fes.ma",
+    "phone": "الهاتف",
+    "phone_placeholder": "+212 6xx xxx xxx",
+    "birth_date": "تاريخ الميلاد",
+    "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى",
+    "official_ids": "المعرفات الرسمية",
+    "cin": "رقم البطاقة الوطنية",
+    "cin_placeholder": "مثال: CD12345",
+    "cne": "رقم مسار (CNE)",
+    "cne_placeholder": "مثال: N123456789",
+    "massar_code": "رمز مسار",
+    "massar_placeholder": "مثال: G123456789",
+    "status_section": "الحالة والمنحة",
+    "current_status": "الحالة الحالية",
+    "active": "نشط",
+    "suspended": "موقوف",
+    "graduated": "خريج",
+    "withdrawn": "منسحب",
+    "scholarship_type": "نوع المنحة",
+    "none": "بدون",
+    "minhaty": "منحتي",
+    "excellence": "تفوق",
+    "social": "اجتماعية",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
+    "success": "تمت إضافة الطالب بنجاح",
+    "error_validation": "خطأ في التحقق من البيانات",
+    "error_general": "خطأ أثناء إضافة الطالب"
+  }
+}

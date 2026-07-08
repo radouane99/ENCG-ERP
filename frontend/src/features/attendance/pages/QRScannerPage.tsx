@@ -1,11 +1,11 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScanLine, CheckCircle2, XCircle, Camera, Navigation, AlertCircle } from 'lucide-react';
 import api from '@/shared/lib/api';
 import toast from 'react-hot-toast';
 
 export default function QRScannerPage() {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['attendance', 'common']);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [message, setMessage] = useState('');
@@ -27,12 +27,12 @@ export default function QRScannerPage() {
       });
       
       setScanResult('success');
-      setMessage(res.data.message || 'Présence enregistrée !');
-      toast.success('Présence enregistrée avec succès');
+      setMessage(res.data.message || t('attendance:scanner.success_msg'));
+      toast.success(t('attendance:scanner.success_msg'));
     } catch (e: any) {
       setScanResult('error');
-      setMessage(e.response?.data?.message || 'Erreur lors du scan.');
-      toast.error('Échec de la validation');
+      setMessage(e.response?.data?.message || t('attendance:scanner.error_msg'));
+      toast.error(t('attendance:scanner.fail'));
     } finally {
       setIsScanning(false);
     }
@@ -41,9 +41,9 @@ export default function QRScannerPage() {
   return (
     <div className="max-w-md mx-auto space-y-6 pt-4">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">Scanner de Présence</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('attendance:scanner.title')}</h1>
         <p className="text-white/50 text-sm">
-          Scannez le QR Code affiché par votre professeur pour enregistrer votre présence.
+          {t('attendance:scanner.subtitle')}
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function QRScannerPage() {
 
           <div className="relative z-0 text-white/50 flex flex-col items-center gap-4">
             <Camera className="w-12 h-12" />
-            <span className="text-sm">En attente de la caméra...</span>
+            <span className="text-sm">{t('attendance:scanner.waiting_cam')}</span>
           </div>
 
           {/* Result Overlay */}
@@ -82,14 +82,14 @@ export default function QRScannerPage() {
                   <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
                     <CheckCircle2 className="w-12 h-12 text-emerald-500" />
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Succès !</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">{t('attendance:scanner.success')}</h3>
                 </>
               ) : (
                 <>
                   <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
                     <XCircle className="w-12 h-12 text-red-500" />
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Échec</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">{t('attendance:scanner.fail')}</h3>
                 </>
               )}
               <p className="text-white/80">{message}</p>
@@ -98,7 +98,7 @@ export default function QRScannerPage() {
                 onClick={() => setScanResult(null)}
                 className="mt-8 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors"
               >
-                Scanner Ã  nouveau
+                {t('attendance:scanner.scan_again')}
               </button>
             </div>
           )}
@@ -108,23 +108,23 @@ export default function QRScannerPage() {
         <div className="bg-white/5 p-4 flex items-center justify-between text-xs font-medium text-white/50 border-b border-white/10">
           <div className="flex items-center gap-2">
             <Navigation className="w-4 h-4 text-emerald-500" />
-            <span>Position GPS: Précise (4m)</span>
+            <span>{t('attendance:scanner.gps.status')}</span>
           </div>
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-primary" />
-            <span>Requis</span>
+            <span>{t('attendance:scanner.gps.required')}</span>
           </div>
         </div>
 
         {/* Mock Input for Testing */}
         <div className="p-6">
           <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
-            Simulation de Scan (Démo)
+            {t('attendance:scanner.simulation.title')}
           </label>
           <div className="flex gap-2">
             <input 
               type="text" 
-              placeholder="Coller le token QR..."
+              placeholder={t('attendance:scanner.simulation.placeholder')}
               value={manualToken}
               onChange={e => setManualToken(e.target.value)}
               className="flex-1 bg-background border border-white/10 rounded-xl px-4 text-sm"
@@ -134,7 +134,7 @@ export default function QRScannerPage() {
               disabled={!manualToken || isScanning}
               className="bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
             >
-              <ScanLine className="w-4 h-4" /> Simuler
+              <ScanLine className="w-4 h-4" /> {t('attendance:scanner.simulation.btn')}
             </button>
           </div>
         </div>

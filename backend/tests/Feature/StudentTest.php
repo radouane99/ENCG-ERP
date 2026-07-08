@@ -82,9 +82,11 @@ it('creates a student with valid data', function () {
         'status'        => 'active',
     ];
 
+    $this->withoutExceptionHandling();
     $response = $this->actingAs($user, 'sanctum')
         ->postJson('/api/students', $payload);
 
+    $response->dump();
     $response->assertStatus(201)
         ->assertJsonPath('message', 'Étudiant créé avec succès.');
 });

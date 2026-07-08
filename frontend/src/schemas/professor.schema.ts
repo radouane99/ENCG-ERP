@@ -3,15 +3,15 @@ import type { ContractType } from '@/types/models';
 
 export const storeProfessorSchema = z.object({
   first_name: z
-    .string({ required_error: 'Le prénom est requis.' })
+    .string({ message: 'Le prénom est requis.' })
     .min(1, 'Le prénom est requis.')
     .max(100),
   last_name: z
-    .string({ required_error: 'Le nom est requis.' })
+    .string({ message: 'Le nom est requis.' })
     .min(1, 'Le nom est requis.')
     .max(100),
   email: z
-    .string({ required_error: "L'email est requis." })
+    .string({ message: "L'email est requis." })
     .email("L'adresse email est invalide."),
   phone: z.string().max(20).optional().nullable(),
   cin: z.string().max(20).optional().nullable(),
@@ -20,7 +20,7 @@ export const storeProfessorSchema = z.object({
   specialty: z.string().max(100).optional().nullable(),
   contract_type: z.enum(
     ['permanent', 'contractual', 'visiting'] as [ContractType, ...ContractType[]],
-    { required_error: 'Le type de contrat est requis.' }
+    { message: 'Le type de contrat est requis.' }
   ),
   hire_date: z.string().optional().nullable(),
   is_active: z.boolean().default(true),

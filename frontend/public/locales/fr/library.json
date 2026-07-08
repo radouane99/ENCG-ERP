@@ -1,0 +1,17 @@
+{
+  "title": "Bibliothèque Universitaire",
+  "subtitle": "Consultez le catalogue et gérez les emprunts.",
+  "search": "Rechercher un livre, auteur, ISBN...",
+  "columns": {
+    "title": "Titre",
+    "author": "Auteur",
+    "category": "Catégorie",
+    "availability": "Disponibilité",
+    "actions": "Actions"
+  },
+  "status": {
+    "available": "En rayon",
+    "out_of_stock": "Rupture"
+  },
+  "details": "Détails"
+}

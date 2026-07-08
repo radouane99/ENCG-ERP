@@ -1,0 +1,26 @@
+{
+  "list": {
+    "title": "الأساتذة",
+    "subtitle": "إدارة قائمة وتعيينات هيئة التدريس",
+    "search": "البحث عن أستاذ...",
+    "add_button": "أستاذ جديد",
+    "empty": "لم يتم العثور على أي أستاذ",
+    "columns": {
+      "employee_number": "رقم الموظف",
+      "professor": "الأستاذ",
+      "department": "القسم",
+      "specialty": "التخصص",
+      "contact": "جهة الاتصال",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    }
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط"
+  },
+  "create": {
+    "title": "أستاذ جديد",
+    "subtitle": "أدخل معلومات الأستاذ"
+  }
+}

@@ -1,19 +1,33 @@
-﻿import React from 'react';
-import { Briefcase, MapPin, Calendar as CalendarIcon, User, Mail, Download, Crown, FileText } from 'lucide-react';
+import React from 'react';
+import { Briefcase, MapPin, Calendar as CalendarIcon, User, Mail, Download, Crown, FileText, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function StudentInternships() {
+  const navigate = useNavigate();
+  const { t } = useTranslation('internship');
+
   return (
     <div className="max-w-[1000px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 bg-blue-50 text-[#003a8c] rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm">
-          <Briefcase className="w-6 h-6" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-50 text-[#003a8c] rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-[#003a8c] italic">Mon Espace Stage</h1>
+            <p className="text-white/50 font-medium">Suivi complet de votre expérience professionnelle, conventions et rapports mensuels.</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-black text-[#003a8c] italic">Mon Espace Stage</h1>
-          <p className="text-white/50 font-medium">Suivi complet de votre expérience professionnelle, conventions et rapports mensuels.</p>
-        </div>
+        <button 
+          onClick={() => navigate('/students/internships/apply')}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Nouvelle Demande
+        </button>
       </div>
 
       {/* Stage Actuel Details */}

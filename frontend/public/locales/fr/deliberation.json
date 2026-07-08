@@ -1,0 +1,23 @@
+{
+  "title": "Délibérations & Résultats",
+  "subtitle": "Gérez les jurys, calculez les moyennes et validez les semestres.",
+  "engine": "Moteur Apogée",
+  "grades": "Notes",
+  "validation": "Validation",
+  "columns": {
+    "session": "Session de Délibération",
+    "date": "Date Prévue",
+    "students": "Étudiants",
+    "success_rate": "Taux de réussite",
+    "status": "Statut",
+    "actions": "Actions"
+  },
+  "status": {
+    "validated": "Validé",
+    "failed": "Non Validé",
+    "catch_up": "Rattrapage",
+    "completed": "Clôturée",
+    "pending": "En attente"
+  },
+  "open_jury": "Ouvrir le jury"
+}

@@ -1,0 +1,25 @@
+{
+  "apply": {
+    "title": "طلب تدريب جديد",
+    "subtitle": "يرجى ملء النموذج أدناه لتقديم طلبك",
+    "form_title": "معلومات التدريب",
+    "subject": "موضوع / عنوان التدريب",
+    "subject_placeholder": "مثال: تطوير تطبيق إدارة...",
+    "company": "الشركة / المؤسسة",
+    "company_placeholder": "اسم الشركة المستقبلة",
+    "company_address": "عنوان الشركة (اختياري)",
+    "company_address_placeholder": "مثال: تكنوبارك، الدار البيضاء",
+    "type": "نوع التدريب",
+    "type_initiation": "تدريب استكشافي",
+    "type_application": "تدريب تطبيقي",
+    "type_fin_etudes": "مشروع نهاية الدراسة (PFE)",
+    "start_date": "تاريخ البدء",
+    "end_date": "تاريخ الانتهاء",
+    "cancel": "إلغاء",
+    "submit": "تقديم الطلب",
+    "submitting": "جاري التقديم...",
+    "success": "تم تقديم طلب التدريب الخاص بك بنجاح",
+    "error_validation": "يرجى التحقق من حقول النموذج.",
+    "error_general": "حدث خطأ أثناء تقديم الطلب"
+  }
+}

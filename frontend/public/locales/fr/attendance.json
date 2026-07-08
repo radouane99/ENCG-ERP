@@ -1,0 +1,67 @@
+{
+  "title": "Gestion des Absences",
+  "subtitle": "Vue globale des sessions d'émargement et d'enregistrement des présences.",
+  "scan": "Scanner QR Code",
+  "manual": "Saisie Manuelle",
+  "kpis": {
+    "total_sessions": "Total Sessions",
+    "active_sessions": "Sessions Actives"
+  },
+  "search": "Rechercher par module ou groupe...",
+  "empty": "Aucune session d'absence.",
+  "columns": {
+    "datetime": "Date & Heure",
+    "module": "Module",
+    "professor": "Professeur",
+    "presents": "Présents",
+    "status": "Statut",
+    "actions": "Actions"
+  },
+  "status": {
+    "present": "Présent",
+    "absent": "Absent",
+    "late": "En retard",
+    "active": "En cours",
+    "completed": "Terminée",
+    "cancelled": "Annulée"
+  },
+  "delete_confirm": "Supprimer cette session d'absence et tout son historique ?",
+  "delete_success": "Session supprimée.",
+  "professor_view": {
+    "subtitle": "Générez un code QR dynamique pour enregistrer la présence.",
+    "new_session": "Nouvelle Session",
+    "fields": {
+      "module": "Module",
+      "group": "Groupe / Classe",
+      "room": "Salle",
+      "duration": "Durée de validité (minutes)"
+    },
+    "minutes": "minutes",
+    "start_btn": "Démarrer la session",
+    "session_active": "Session Active",
+    "expires_at": "Expire à",
+    "instructions": "Demandez aux étudiants de scanner ce code depuis leur application.",
+    "end_btn": "Clôturer la session",
+    "presents_list": "Présences",
+    "waiting": "En attente de scans..."
+  },
+  "scanner": {
+    "title": "Scanner de Présence",
+    "subtitle": "Scannez le QR Code affiché par votre professeur pour enregistrer votre présence.",
+    "success_msg": "Présence enregistrée !",
+    "error_msg": "Erreur lors du scan.",
+    "waiting_cam": "En attente de la caméra...",
+    "success": "Succès !",
+    "fail": "Échec",
+    "scan_again": "Scanner à nouveau",
+    "gps": {
+      "status": "Position GPS: Précise (4m)",
+      "required": "Requis"
+    },
+    "simulation": {
+      "title": "Simulation de Scan (Démo)",
+      "placeholder": "Coller le token QR...",
+      "btn": "Simuler"
+    }
+  }
+}
