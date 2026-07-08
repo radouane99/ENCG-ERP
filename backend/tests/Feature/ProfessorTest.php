@@ -8,18 +8,29 @@ use Spatie\Permission\Models\Permission;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+function ensureProfInstitution()
+{
+    \App\Models\Institution::firstOrCreate(
+        ['id' => 1],
+        ['name' => 'ENCG Test', 'code' => 'ENCG']
+    );
+}
+
 function makeProfAdmin(): User
 {
+    ensureProfInstitution();
     $user = User::factory()->create();
+    $permModels = [];
     foreach (['professors.view', 'professors.create', 'professors.edit', 'professors.delete'] as $perm) {
-        Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
+        $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
-    $user->givePermissionTo(['professors.view', 'professors.create', 'professors.edit', 'professors.delete']);
+    $user->givePermissionTo($permModels);
     return $user;
 }
 
 function makeProfRestricted(): User
 {
+    ensureProfInstitution();
     return User::factory()->create();
 }
 

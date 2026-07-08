@@ -7,7 +7,16 @@ use App\Models\User;
 
 // ── Index ────────────────────────────────────────────────────────────────────
 
+function ensureAttendanceInstitution()
+{
+    \App\Models\Institution::firstOrCreate(
+        ['id' => 1],
+        ['name' => 'ENCG Test', 'code' => 'ENCG']
+    );
+}
+
 it('returns a list of attendance sessions', function () {
+    ensureAttendanceInstitution();
     $user = User::factory()->create();
     AttendanceSession::factory()->count(2)->create();
 

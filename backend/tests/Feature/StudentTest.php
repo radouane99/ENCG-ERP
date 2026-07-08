@@ -9,24 +9,33 @@ use Spatie\Permission\Models\Role;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+function ensureInstitution()
+{
+    \App\Models\Institution::firstOrCreate(
+        ['id' => 1],
+        ['name' => 'ENCG Test', 'code' => 'ENCG']
+    );
+}
+
 function makeAdminUser(): User
 {
+    ensureInstitution();
     $user = User::factory()->create();
     $permissions = [
         'students.view', 'students.create', 'students.edit', 'students.delete',
     ];
+    $permModels = [];
     foreach ($permissions as $perm) {
-        Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
+        $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
-    $user->givePermissionTo($permissions);
+    $user->givePermissionTo($permModels);
     return $user;
 }
 
 function makeRestrictedUser(): User
 {
-    $user = User::factory()->create();
-    // No permissions granted
-    return $user;
+    ensureInstitution();
+    return User::factory()->create();
 }
 
 // ── Index ────────────────────────────────────────────────────────────────────

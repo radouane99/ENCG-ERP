@@ -9,13 +9,23 @@ use Spatie\Permission\Models\Permission;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+function ensureInternshipInstitution()
+{
+    \App\Models\Institution::firstOrCreate(
+        ['id' => 1],
+        ['name' => 'ENCG Test', 'code' => 'ENCG']
+    );
+}
+
 function makeInternshipAdmin(): User
 {
+    ensureInternshipInstitution();
     $user = User::factory()->create();
+    $permModels = [];
     foreach (['internships.view', 'internships.edit'] as $perm) {
-        Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
+        $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
-    $user->givePermissionTo(['internships.view', 'internships.edit']);
+    $user->givePermissionTo($permModels);
     return $user;
 }
 
