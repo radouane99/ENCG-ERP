@@ -9,7 +9,7 @@ import { Spinner } from '@shared/components/ui/Spinner'
 
 export default function AdminGradesPage() {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['admin', 'common'])
   const isRtl = i18n.language === 'ar'
   
   const [filiere, setFiliere] = useState('')
@@ -74,8 +74,8 @@ export default function AdminGradesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">{isRtl ? 'إدارة النقاط (لوحة التحكم)' : 'Gestion Globale des Notes'}</h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-2">{isRtl ? 'نظام المداولات والتنقيط' : 'Système de délibération et de notation APOGEE'}</p>
+          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">{t('admin:grades.title')}</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mt-2">{t('admin:grades.subtitle')}</p>
         </div>
       </div>
 
@@ -84,12 +84,10 @@ export default function AdminGradesPage() {
         <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
         <h2 className="text-2xl font-bold mb-3 flex items-center gap-3 relative z-10">
           <Target className="w-7 h-7 text-white/90" />
-          {isRtl ? 'وحدة اختيار الفوج' : 'Sélecteur de Cohorte'}
+          {t('admin:grades.selector_title')}
         </h2>
         <p className="text-white/80 text-sm font-medium leading-relaxed max-w-2xl relative z-10">
-          {isRtl 
-            ? 'قم بتحديد الشعبة، ثم الفوج، وأخيرًا الوحدة الدراسية لفتح دفتر النقاط الخاص بها.' 
-            : 'Sélectionnez une filière, un groupe puis un module pour ouvrir le registre de notes.'}
+          {t('admin:grades.selector_desc')}
         </p>
       </div>
 
@@ -100,7 +98,7 @@ export default function AdminGradesPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[hsl(var(--color-primary))] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">1</div>
-            <h3 className="text-xs font-bold text-[hsl(var(--color-primary))] uppercase tracking-wider">{isRtl ? 'اختيار الشعبة' : 'Choisir la Filière'}</h3>
+            <h3 className="text-xs font-bold text-[hsl(var(--color-primary))] uppercase tracking-wider">{t('admin:grades.steps.filiere')}</h3>
           </div>
           <div className="relative ps-11">
             <Building className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", filiere ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")} />
@@ -110,7 +108,7 @@ export default function AdminGradesPage() {
               className={getSelectStyle(filiere !== '')}
               style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
             >
-              <option value="">{isRtl ? '— جميع الشعب —' : '— Toutes les filières —'}</option>
+              <option value="">{t('admin:grades.steps.filiere_empty')}</option>
               {filieres.map((f: any) => (
                 <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
               ))}
@@ -123,7 +121,7 @@ export default function AdminGradesPage() {
           <div className={cn("space-y-4 transition-all duration-300", !filiere && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
               <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", filiere ? "bg-[hsl(var(--color-primary))]" : "bg-[hsl(var(--muted-foreground))]")}>2</div>
-              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", filiere ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")}>{isRtl ? 'اختيار الفوج' : 'Choisir le Groupe'}</h3>
+              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", filiere ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")}>{t('admin:grades.steps.groupe')}</h3>
             </div>
             <div className="relative ps-11">
               <Users className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", groupe ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")} />
@@ -134,7 +132,7 @@ export default function AdminGradesPage() {
                 className={getSelectStyle(groupe !== '')}
                 style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
               >
-                <option value="">{isRtl ? '— يرجى الاختيار —' : '— Veuillez choisir —'}</option>
+                <option value="">{t('admin:grades.steps.groupe_empty')}</option>
                 {groupes.map((g: any) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
@@ -146,7 +144,7 @@ export default function AdminGradesPage() {
           <div className={cn("space-y-4 transition-all duration-300", !groupe && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
               <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", groupe ? "bg-[hsl(var(--color-primary))]" : "bg-[hsl(var(--muted-foreground))]")}>3</div>
-              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", groupe ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")}>{isRtl ? 'اختيار الوحدة' : 'Choisir le Module'}</h3>
+              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", groupe ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")}>{t('admin:grades.steps.module')}</h3>
             </div>
             <div className="relative ps-11">
               <BookOpen className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", module ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--muted-foreground))]")} />
@@ -157,7 +155,7 @@ export default function AdminGradesPage() {
                 className={getSelectStyle(module !== '')}
                 style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
               >
-                <option value="">{isRtl ? '— يرجى الاختيار —' : '— Veuillez choisir —'}</option>
+                <option value="">{t('admin:grades.steps.groupe_empty')}</option>
                 {modules.map((m: any) => (
                   <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
                 ))}
@@ -176,7 +174,7 @@ export default function AdminGradesPage() {
             className={cn("px-8 py-6 text-base font-bold shadow-lg transition-all", isFormComplete ? "hover:scale-105" : "")}
             icon={isRtl ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
           >
-            {isRtl ? 'فتح دفتر النقاط' : 'Ouvrir le Registre de Notes'}
+            {t('admin:grades.open_registry')}
           </Button>
         </div>
 

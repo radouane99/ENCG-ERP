@@ -1,0 +1,40 @@
+{
+  "requests": {
+    "title": "Gestion des Demandes Administratives",
+    "subtitle": "Tableau Kanban",
+    "description": "Glissez-déposez les cartes pour traiter les demandes des étudiants et professeurs.",
+    "kanban": {
+      "pending": "EN ATTENTE",
+      "approved": "APPROUVÉ",
+      "rejected": "REFUSÉ"
+    },
+    "empty_pending": "Aucune demande en attente",
+    "messages": {
+      "approve_success": "Demande approuvée",
+      "reject_success": "Demande rejetée",
+      "error": "Erreur lors du traitement de la demande",
+      "rejection_prompt": "Motif de refus (optionnel):"
+    },
+    "actions": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "preview": "Aperçu",
+      "download": "Télécharger"
+    }
+  },
+  "grades": {
+    "title": "Gestion Globale des Notes",
+    "subtitle": "Système de délibération et de notation APOGEE",
+    "selector_title": "Sélecteur de Cohorte",
+    "selector_desc": "Sélectionnez une filière, un groupe puis un module pour ouvrir le registre de notes.",
+    "steps": {
+      "filiere": "Choisir la Filière",
+      "filiere_empty": "— Toutes les filières —",
+      "groupe": "Choisir le Groupe",
+      "groupe_empty": "— Veuillez choisir —",
+      "module": "Choisir le Module",
+      "module_empty": "— Veuillez choisir —"
+    },
+    "open_registry": "Ouvrir le Registre de Notes"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "exams": {
+    "title": "Gestion des Examens & Convocations",
+    "subtitle": "Planification des sessions et génération des convocations.",
+    "filters": {
+      "filiere": "FILIÈRE",
+      "filiere_empty": "Toutes les filières",
+      "session": "SESSION",
+      "session_empty": "-- Session --"
+    },
+    "actions": {
+      "overwrite": "Écraser",
+      "auto_generate": "AUTO-GÉNÉRER",
+      "manual": "+ MANUEL"
+    },
+    "manual_modal": {
+      "title": "Créer un examen manuellement",
+      "module": "Module",
+      "group": "Groupe",
+      "room": "Salle",
+      "date": "Date",
+      "time": "Heure",
+      "check_loading": "Vérification de la disponibilité...",
+      "cancel": "Annuler",
+      "create": "Créer l'examen"
+    },
+    "card": {
+      "supervisors": "SURVEILLANTS :",
+      "generated": "CONVOCAT.\\nGÉNÉRÉES",
+      "sent": "ENVOYÉES",
+      "pending": "EN ATTENTE",
+      "btn_generate": "Générer",
+      "btn_mail": "Envoyer mails",
+      "btn_notify": "Notifier Absents",
+      "btn_pdf": "PDF global",
+      "btn_display": "Affichage",
+      "btn_attendance": "Émargement",
+      "btn_live": "Live Présences"
+    },
+    "messages": {
+      "auto_success": "Planification et convocations générées automatiquement avec succès.",
+      "auto_error": "Erreur lors de la génération automatique.",
+      "room_available": "Salle disponible !",
+      "manual_success": "Examen créé manuellement avec succès.",
+      "manual_error": "Erreur lors de la création de l'examen.",
+      "mail_success": "Emails envoyés avec succès",
+      "notify_success": "Notification envoyée aux absents",
+      "demo_success": "Convocations générées pour l'examen {{id}} (Mode démo)."
+    }
+  }
+}
