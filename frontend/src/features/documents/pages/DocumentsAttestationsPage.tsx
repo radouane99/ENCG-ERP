@@ -38,8 +38,8 @@ export default function DocumentsAttestationsPage() {
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'processed': return <Badge className="bg-emerald-500/10 text-emerald-600 border-none"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'مُعالج' : 'Traité'}</Badge>
-      case 'rejected': return <Badge className="bg-red-500/10 text-red-600 border-none"><XCircle size={12} className="me-1"/> {isRtl ? 'مرفوض' : 'Rejeté'}</Badge>
-      default: return <Badge className="bg-amber-500/10 text-amber-600 border-none"><Clock size={12} className="me-1"/> {isRtl ? 'قيد الانتظار' : 'En attente'}</Badge>
+      case 'rejected': return <Badge className="bg-red-500/10 text-red-600 border-none"><XCircle size={12} className="me-1"/> {t('modules:documents_attest.status.rejected')}</Badge>
+      default: return <Badge className="bg-amber-500/10 text-amber-600 border-none"><Clock size={12} className="me-1"/> {t('modules:documents_attest.status.pending')}</Badge>
     }
   }
 
@@ -72,7 +72,7 @@ export default function DocumentsAttestationsPage() {
             <div className="absolute -end-4 -top-4 opacity-10 pointer-events-none"><ShieldCheck size={120} className="text-emerald-500" /></div>
             <h3 className="font-bold text-lg mb-2 text-emerald-800 dark:text-emerald-400 flex items-center gap-2 relative z-10">
               <ShieldCheck size={20} />
-              {isRtl ? 'نظام الحماية من التزوير' : 'Système Anti-Fraude'}
+              {t('modules:documents_attest.anti_fraud')}
             </h3>
             <p className="text-sm text-emerald-700/80 dark:text-emerald-400/80 mb-6 relative z-10">
               {isRtl ? 'جميع الوثائق الصادرة تحمل رمز استجابة سريعة (QR Code) مشفرًا لضمان صحتها.' : 'Tous les documents émis incluent un QR Code certifié garantissant leur authenticité lors d\'une vérification externe.'}
@@ -83,11 +83,11 @@ export default function DocumentsAttestationsPage() {
           </div>
 
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm">
-            <h3 className="font-bold text-[hsl(var(--foreground))] mb-4">{isRtl ? 'إصدار سريع' : 'Édition Rapide'}</h3>
+            <h3 className="font-bold text-[hsl(var(--foreground))] mb-4">{t('modules:documents_attest.quick_edit')}</h3>
             <div className="space-y-3">
               <Input placeholder={isRtl ? 'CNE أو رقم الطالب...' : 'CNE ou Numéro Étudiant...'} />
               <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
-                <option value="scolarite">{isRtl ? 'شهادة مدرسية' : 'Attestation de scolarité'}</option>
+                <option value="scolarite">{t('modules:documents_attest.type_scolarite')}</option>
                 <option value="releve">{isRtl ? 'كشف النقط' : 'Relevé de notes global'}</option>
               </select>
               <Button 
@@ -97,7 +97,7 @@ export default function DocumentsAttestationsPage() {
                 isLoading={generatePdfMutation.isPending}
                 icon={<Printer size={16} />}
               >
-                {isRtl ? 'إنشاء PDF' : 'Générer le PDF'}
+                {t('modules:documents_attest.generate_pdf')}
               </Button>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function DocumentsAttestationsPage() {
               </h2>
               <div className="w-64">
                 <Input 
-                  placeholder={isRtl ? 'بحث...' : 'Rechercher...'} 
+                  placeholder={t('modules:documents_attest.search')} 
                   value={search} 
                   onChange={e => setSearch(e.target.value)} 
                   icon={<Search size={16}/>}
@@ -124,11 +124,11 @@ export default function DocumentsAttestationsPage() {
               <table className="w-full text-sm text-start">
                 <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="px-6 py-4">{isRtl ? 'الطالب' : 'Étudiant'}</th>
-                    <th className="px-6 py-4">{isRtl ? 'الوثيقة المطلوبة' : 'Document Demandé'}</th>
-                    <th className="px-6 py-4">{isRtl ? 'التاريخ' : 'Date'}</th>
-                    <th className="px-6 py-4">{isRtl ? 'الحالة' : 'Statut'}</th>
-                    <th className="px-6 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
+                    <th className="px-6 py-4">{t('modules:documents_attest.table.student')}</th>
+                    <th className="px-6 py-4">{t('modules:documents_attest.table.doc')}</th>
+                    <th className="px-6 py-4">{t('modules:documents_attest.table.date')}</th>
+                    <th className="px-6 py-4">{t('modules:documents_attest.table.status')}</th>
+                    <th className="px-6 py-4 text-end">{t('modules:documents_attest.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">

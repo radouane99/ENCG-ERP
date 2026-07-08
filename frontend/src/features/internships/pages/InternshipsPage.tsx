@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Search, Briefcase, MapPin, Calendar, Plus } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { useTranslation } from 'react-i18next'
 
-export default function InternshipsPage() {
+export default function InternshipsPage() { 
+  const { t } = useTranslation('modules');
+
   const [internships] = useState([
     { id: 1, student: 'Ahmed Alami', company: 'Bank of Africa', city: 'Casablanca', type: 'Stage d\'initiation', status: 'approved' },
     { id: 2, student: 'Sara Tazi', company: 'OCP Group', city: 'Khouribga', type: 'Stage technique', status: 'pending' },
@@ -13,23 +16,22 @@ export default function InternshipsPage() {
     <div className="space-y-6 animate-in p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestion des Stages</h1>
-          <p className="text-muted-foreground text-sm mt-1">Suivi des conventions, affectations et évaluations de stages.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('internships.title')}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t('internships.subtitle')}</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
-          <Plus className="w-4 h-4" /> Nouvelle Convention
-        </button>
+          <Plus className="w-4 h-4" /> {t('internships.new_btn')}</button>
       </div>
 
       <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 font-semibold">Étudiant</th>
-              <th className="px-6 py-3 font-semibold">Entreprise</th>
-              <th className="px-6 py-3 font-semibold">Type de stage</th>
-              <th className="px-6 py-3 font-semibold text-center">Statut</th>
-              <th className="px-6 py-3 font-semibold text-right">Actions</th>
+              <th className="px-6 py-3 font-semibold">{t('internships.table.student')}</th>
+              <th className="px-6 py-3 font-semibold">{t('internships.table.company')}</th>
+              <th className="px-6 py-3 font-semibold">{t('internships.table.type')}</th>
+              <th className="px-6 py-3 font-semibold text-center">{t('internships.table.status')}</th>
+              <th className="px-6 py-3 font-semibold text-right">{t('internships.table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -46,13 +48,13 @@ export default function InternshipsPage() {
                      i.status === 'approved' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
                      i.status === 'active' ? 'bg-green-50 text-green-600 border-green-200' : 
                      'bg-amber-50 text-amber-600 border-amber-200')}>
-                      {i.status === 'approved' ? 'Convention signée' : i.status === 'active' ? 'En cours' : 'En attente'}
+                      {i.status === 'approved' ? t('internships.status.approved') : i.status === 'active' ? t('internships.status.active') : t('internships.status.pending')}
                    </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 transition-colors">
-                    Détails
-                  </button>
+{t('internships.table.details')}
+</button>
                 </td>
               </tr>
             ))}

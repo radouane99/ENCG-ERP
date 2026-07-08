@@ -5,8 +5,11 @@ import {
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next'
 
-export default function VacatairesManager() {
+export default function VacatairesManager() { 
+  const { t } = useTranslation('modules');
+
   const [activeTab, setActiveTab] = useState<'contracts' | 'payments'>('contracts');
 
   // Mock data for UI demonstration
@@ -22,9 +25,9 @@ export default function VacatairesManager() {
         month: 6,
         tax_rate: 17
       });
-      toast.success('Fiche de paiement générée avec succès.');
+      toast.success(t('vacataires.messages.success'));
     } catch (error) {
-      toast.error('Erreur lors de la génération du paiement. Vérifiez qu\'il y a des sessions validées.');
+      toast.error(t('vacataires.messages.error'));
     }
   };
 
@@ -33,12 +36,8 @@ export default function VacatairesManager() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Briefcase className="w-6 h-6 text-primary" />
-            Gestion des Vacataires
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Contrats, suivi des heures et génération des bordereaux de paiement.
-          </p>
+            <Briefcase className="w-6 h-6 text-primary" />{t('vacataires.title')}</h1>
+          <p className="text-muted-foreground mt-1">{t('vacataires.subtitle')}</p>
         </div>
       </div>
 
@@ -54,9 +53,7 @@ export default function VacatairesManager() {
               }`}
             >
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Contrats Actifs
-              </div>
+                <FileText className="w-4 h-4" /> {t('vacataires.tabs.contracts')} </div>
             </button>
             <button
               onClick={() => setActiveTab('payments')}
@@ -67,9 +64,7 @@ export default function VacatairesManager() {
               }`}
             >
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Bordereaux de Paiement
-              </div>
+                <DollarSign className="w-4 h-4" /> {t('vacataires.tabs.payments')} </div>
             </button>
           </div>
         </div>
@@ -82,14 +77,12 @@ export default function VacatairesManager() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Chercher un contrat..."
+                    placeholder={t('vacataires.search')}
                     className="w-full pl-9 pr-4 py-2 rounded-xl border border-input bg-background text-sm"
                   />
                 </div>
                 <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium">
-                  <Plus className="w-4 h-4" />
-                  Nouveau Contrat
-                </button>
+                  <Plus className="w-4 h-4" /> {t('vacataires.new_btn')}</button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -101,30 +94,28 @@ export default function VacatairesManager() {
                         <p className="text-sm text-muted-foreground">{contract.module}</p>
                       </div>
                       <span className="bg-emerald-500/10 text-emerald-600 text-xs px-2 py-1 rounded-full font-medium">
-                        Actif
-                      </span>
+{t('vacataires.card.active')}
+</span>
                     </div>
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <div className="flex justify-between">
-                        <span>Volume Horaire:</span>
+                        <span>{t('vacataires.card.hours')}</span>
                         <span className="font-medium text-foreground">{contract.agreed_hours}h</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Taux Horaire:</span>
+                        <span>{t('vacataires.card.rate')}</span>
                         <span className="font-medium text-foreground">{contract.hourly_rate} DH/h</span>
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
                       <button className="flex-1 bg-background border border-border hover:bg-muted text-foreground py-1.5 rounded-lg text-sm transition-colors">
-                        Voir Heures
-                      </button>
+{t('vacataires.card.btn_hours')}
+</button>
                       <button 
                         onClick={() => generatePayment(contract.id)}
                         className="flex-1 flex items-center justify-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary py-1.5 rounded-lg text-sm transition-colors"
                       >
-                        <Calculator className="w-3 h-3" />
-                        Générer Paie
-                      </button>
+                        <Calculator className="w-3 h-3" /> {t('vacataires.card.btn_pay')}</button>
                     </div>
                   </div>
                 ))}
@@ -135,10 +126,8 @@ export default function VacatairesManager() {
           {activeTab === 'payments' && (
             <div className="text-center py-12">
               <DollarSign className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground">Bordereaux Mensuels</h3>
-              <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                Les fiches de paiement générées avec calcul automatique du Net Ã  Payer (Heures validées Ã— Taux horaire - 17% IR) apparaîtront ici.
-              </p>
+              <h3 className="text-lg font-medium text-foreground">{t('vacataires.payments_empty.title')}</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto mt-2">{t('vacataires.payments_empty.desc')}</p>
             </div>
           )}
         </div>

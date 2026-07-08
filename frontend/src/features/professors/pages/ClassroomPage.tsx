@@ -28,7 +28,7 @@ export default function ClassroomPage() {
             onClick={() => setActiveTab('ai')}
             className={cn("flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all", activeTab === 'ai' ? "bg-purple-600 text-white shadow-md" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]")}
           >
-            <BrainCircuit size={16} /> {isRtl ? 'مساعد الذكاء الاصطناعي' : 'Assistant IA'}
+            <BrainCircuit size={16} /> {t('modules:classroom.ai_assistant')}
           </button>
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function ClassroomPage() {
               </div>
               <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2 relative z-10">{isRtl ? 'امسح لتسجيل الحضور' : 'Scannez pour valider votre présence'}</h2>
               <p className="text-[hsl(var(--muted-foreground))] mb-10 text-center relative z-10 max-w-sm">
-                {isRtl ? 'اطلب من الطلاب فتح تطبيق ENCG Portail ومسح هذا الرمز.' : 'Demandez aux étudiants d\'ouvrir l\'application ENCG Portail et de scanner ce code.'}
+                {t('modules:classroom.scan_desc')}
               </p>
               
               <div className="relative z-10 bg-white p-6 rounded-[2rem] shadow-xl border-4 border-slate-100 mb-8 transform transition-transform hover:scale-105">
@@ -71,7 +71,7 @@ export default function ClassroomPage() {
             <div className="w-full lg:w-96 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl flex flex-col overflow-hidden shadow-lg">
               <div className="p-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
                 <h3 className="font-bold flex items-center gap-2 text-[hsl(var(--foreground))]">
-                  <Users className="w-5 h-5 text-[hsl(var(--color-primary))]" /> {isRtl ? 'الطلاب الحاضرون' : 'Étudiants Présents'}
+                  <Users className="w-5 h-5 text-[hsl(var(--color-primary))]" /> {t('modules:classroom.present_students')}
                 </h3>
                 <div className="mt-4 flex items-end gap-2">
                   <span className="text-4xl font-black text-[hsl(var(--color-primary))]">42</span>
@@ -105,7 +105,7 @@ export default function ClassroomPage() {
                 </div>
                 <div>
                   <h2 className="font-bold text-lg">{isRtl ? 'مولد QCM والمساعد' : 'Générateur de QCM & Assistant'}</h2>
-                  <p className="text-white/70 text-sm">{isRtl ? 'مدعوم من Google Gemini' : 'Propulsé par Google Gemini'}</p>
+                  <p className="text-white/70 text-sm">{t('modules:classroom.ai_powered')}</p>
                 </div>
               </div>
               <Button variant="ghost" className="text-white hover:bg-white/10" icon={<Settings size={18} />}>
@@ -172,7 +172,7 @@ export default function ClassroomPage() {
                 </button>
                 <input 
                   type="text" 
-                  placeholder={isRtl ? 'اسأل المساعد...' : 'Demandez à l\'assistant...'}
+                  placeholder={t('modules:classroom.ask_ai')}
                   className="flex-1 bg-transparent border-none focus:outline-none px-2 text-sm text-[hsl(var(--foreground))]"
                 />
                 <button className="p-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors shadow-md transform hover:scale-105 active:scale-95">

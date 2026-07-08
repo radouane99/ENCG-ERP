@@ -35,7 +35,7 @@ const TYPE_COLORS: Record<string, { bg: string, border: string }> = {
 };
 
 export default function ModernTimetable() {
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['modules', 'common'])
   const isRtl = i18n.language === 'ar'
   const [targetType, setTargetType] = useState<'group' | 'professor' | 'room'>('group')
   const [targetId, setTargetId] = useState<string>('1') // default group ID
@@ -126,15 +126,15 @@ export default function ModernTimetable() {
             <div className="w-10 h-10 bg-[hsl(var(--color-primary))/10] rounded-xl flex items-center justify-center text-[hsl(var(--color-primary))]">
               <CalendarIcon className="w-5 h-5" />
             </div>
-            {isRtl ? 'الجدول الزمني العام' : 'Consultation des Emplois du Temps'}
+            {t('modules:timetable.title')}
           </h1>
           <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1 font-medium">
-            {isRtl ? 'عرض شامل للجداول الزمنية حسب الفوج، الأستاذ أو القاعة' : 'Vue unifiée des plannings (Groupes, Professeurs, Salles)'}
+            {t('modules:timetable.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" icon={<Download size={16} />}>
-            {isRtl ? 'تحميل PDF' : 'Exporter PDF'}
+            {t('modules:timetable.export')}
           </Button>
         </div>
       </div>
@@ -142,22 +142,22 @@ export default function ModernTimetable() {
       {/* Toolbar */}
       <div className="flex flex-wrap gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-4 rounded-3xl shrink-0 shadow-sm items-center">
         <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))] font-bold text-sm bg-[hsl(var(--muted)/30)] px-4 py-2 rounded-xl">
-          <Filter size={16} /> {isRtl ? 'تصفية حسب:' : 'Filtrer par:'}
+          <Filter size={16} /> {t('modules:timetable.filter')}
         </div>
         <select 
           value={targetType} 
           onChange={e => setTargetType(e.target.value as any)}
           className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-bold text-[hsl(var(--foreground))] px-4 py-2 outline-none focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all min-w-[160px]"
         >
-          <option value="group">{isRtl ? 'فوج دراسي' : 'Filière / Groupe'}</option>
-          <option value="professor">{isRtl ? 'أستاذ' : 'Professeur'}</option>
-          <option value="room">{isRtl ? 'قاعة' : 'Salle'}</option>
+          <option value="group">{t('modules:timetable.type_group')}</option>
+          <option value="professor">{t('modules:timetable.type_prof')}</option>
+          <option value="room">{t('modules:timetable.type_room')}</option>
         </select>
 
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Input
             icon={<Search size={16} />}
-            placeholder={isRtl ? 'ابحث عن الرمز التعريفي...' : 'Saisir l\'identifiant...'}
+            placeholder={t('modules:timetable.search')}
             value={targetId}
             onChange={e => setTargetId(e.target.value)}
             className="bg-[hsl(var(--background))]"

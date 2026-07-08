@@ -18,13 +18,13 @@ export default function ProfessorDashboard() {
             {isRtl ? 'مرحباً، أستاذ بنسودة' : 'Bonjour, Pr. BENSOUDA'}
           </h1>
           <p className="text-white/80 font-medium">
-            {isRtl ? 'مساحة العمل الأكاديمية الخاصة بك (الفصل الدراسي الثاني)' : 'Votre espace de travail académique (Semestre 2)'}
+            {t('modules:prof_dash.subtitle')}
           </p>
         </div>
         <div className="relative z-10 flex items-center gap-4">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
             <p className="text-3xl font-bold leading-none">3</p>
-            <p className="text-[10px] uppercase tracking-wider text-white/70 mt-1">{isRtl ? 'حصص اليوم' : 'Séances du jour'}</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/70 mt-1">{t('modules:prof_dash.today_sessions')}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
             <p className="text-3xl font-bold leading-none">120</p>
@@ -64,7 +64,7 @@ export default function ProfessorDashboard() {
               <div className="w-12 h-12 bg-purple-500/10 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
                 <BrainCircuit size={24} />
               </div>
-              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{isRtl ? 'مساعد الذكاء الاصطناعي' : 'Assistant IA'}</h3>
+              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{t('modules:prof_dash.ai_title')}</h3>
               <p className="text-[hsl(var(--muted-foreground))] text-sm mb-4">
                 {isRtl ? 'توليد أسئلة QCM، تحليل نتائج الطلاب، تلخيص' : 'Générateur de QCM, analyse prédictive des résultats.'}
               </p>
@@ -75,7 +75,7 @@ export default function ProfessorDashboard() {
 
           </div>
 
-          <h2 className="text-lg font-bold text-[hsl(var(--foreground))] pt-4">{isRtl ? 'الجدول الزمني لليوم' : 'Emploi du temps d\'aujourd\'hui'}</h2>
+          <h2 className="text-lg font-bold text-[hsl(var(--foreground))] pt-4">{t('modules:prof_dash.today_timetable')}</h2>
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-2 shadow-sm">
             <div className="flex items-center p-4 hover:bg-[hsl(var(--muted)/50)] rounded-2xl transition-colors">
               <div className="w-16 text-center font-bold text-[hsl(var(--color-primary))]">08:30</div>
@@ -101,7 +101,7 @@ export default function ProfessorDashboard() {
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm">
             <h3 className="font-bold flex items-center gap-2 mb-4 text-[hsl(var(--foreground))]">
               <MessageSquare className="w-5 h-5 text-pink-500" />
-              {isRtl ? 'تنبيهات الإدارة' : 'Alertes Administration'}
+              {t('modules:prof_dash.admin_alerts')}
             </h3>
             <div className="space-y-4">
               <div className="bg-pink-500/10 text-pink-700 dark:text-pink-400 p-4 rounded-2xl text-sm font-medium">

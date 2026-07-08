@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Search, Users, Calendar, Award } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-export default function ClubsPage() {
+export default function ClubsPage() { 
+  const { t } = useTranslation('modules');
+
   const [clubs] = useState([
     { id: 1, name: 'BDE ENCG', category: 'Bureau', members: 45, status: 'Actif' },
     { id: 2, name: 'Club Enactus', category: 'Social', members: 120, status: 'Actif' },
@@ -13,8 +16,8 @@ export default function ClubsPage() {
     <div className="space-y-6 animate-in p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vie Estudiantine & Clubs</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gérez les clubs, bureaux et associations d'étudiants.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('clubs.title')}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t('clubs.subtitle')}</p>
         </div>
       </div>
 

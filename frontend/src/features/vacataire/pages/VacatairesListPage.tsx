@@ -22,7 +22,7 @@ const EMPTY_FORM = {
 };
 
 export default function VacatairesListPage() {
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['modules', 'common'])
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
 
@@ -45,19 +45,19 @@ export default function VacatairesListPage() {
   const saveMutation = useMutation({
     mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم الحفظ بنجاح' : 'Sauvegardé avec succès !')
+      toast.success(t('modules:vacataires_list.messages.save_success'))
       queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
       setShowModal(false)
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || (isRtl ? 'حدث خطأ' : 'Erreur lors de la sauvegarde.'))
+      toast.error(err?.response?.data?.message || t('modules:vacataires_list.messages.save_error'))
     }
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/hr/professors/${id}`),
     onSuccess: () => {
-      toast.success(isRtl ? 'تم الحذف' : 'Supprimé avec succès.')
+      toast.success(t('modules:vacataires_list.messages.delete_success'))
       queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
     }
   })
@@ -75,7 +75,7 @@ export default function VacatairesListPage() {
   }
 
   const handleDelete = (id: number) => {
-    if (confirm(isRtl ? 'حذف هذا الزائر؟' : 'Supprimer ce vacataire ?')) {
+    if (confirm(t('modules:vacataires_list.messages.delete_confirm'))) {
       deleteMutation.mutate(id)
     }
   }
@@ -101,17 +101,17 @@ export default function VacatairesListPage() {
           </div>
           <div>
             <h1 className="text-3xl font-black mb-1 tracking-tight">
-              {isRtl ? 'إدارة الأساتذة الزائرين' : 'Gestion des Vacataires'}
+              {t('modules:vacataires_list.title')}
             </h1>
             <p className="text-white/80 font-medium text-sm">
-              {isRtl ? 'الموارد البشرية، العقود والمدفوعات' : 'Ressources Humaines, contrats et paiements'}
+              {t('modules:vacataires_list.subtitle')}
             </p>
           </div>
         </div>
         <div className="relative z-10 flex gap-3">
-          <ExcelActions model="vacataires" label={isRtl ? 'استيراد/تصدير' : 'Excel'} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })} />
+          <ExcelActions model="vacataires" label={t('modules:vacataires_list.import')} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })} />
           <Button onClick={openCreate} variant="primary" leadingIcon={<Plus size={16} />} className="bg-emerald-500 hover:bg-emerald-600 border-none">
-            {isRtl ? 'إضافة أستاذ زائر' : 'Nouveau Vacataire'}
+            {t('modules:vacataires_list.new_btn')}
           </Button>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function VacatairesListPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{isRtl ? 'إجمالي الزائرين' : 'Total Vacataires'}</p>
+            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_total')}</p>
             <p className="text-3xl font-black text-[hsl(var(--foreground))]">{vacatairesData?.length || 0}</p>
           </div>
           <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
@@ -129,7 +129,7 @@ export default function VacatairesListPage() {
         </div>
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{isRtl ? 'العقود النشطة' : 'Contrats Actifs'}</p>
+            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_active')}</p>
             <p className="text-3xl font-black text-[hsl(var(--foreground))]">{vacatairesData?.filter((v: any) => v.vacation_contracts?.length > 0)?.length || 0}</p>
           </div>
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
@@ -138,7 +138,7 @@ export default function VacatairesListPage() {
         </div>
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{isRtl ? 'المدفوعات المعلقة' : 'Paiements en attente'}</p>
+            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_pending')}</p>
             <p className="text-3xl font-black text-[hsl(var(--foreground))] text-amber-600">3</p>
           </div>
           <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-xl flex items-center justify-center">
@@ -151,11 +151,11 @@ export default function VacatairesListPage() {
       <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden">
         <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/30)]">
           <h2 className="font-bold text-[hsl(var(--foreground))] text-lg px-2">
-            {isRtl ? 'قائمة الأساتذة الزائرين' : 'Liste des Intervenants'}
+            {t('modules:vacataires_list.list_title')}
           </h2>
           <div className="w-72">
             <Input
-              placeholder={isRtl ? 'بحث عن أستاذ...' : 'Rechercher un professeur...'}
+              placeholder={t('modules:vacataires_list.search')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               icon={<Search size={16} />}
@@ -172,11 +172,11 @@ export default function VacatairesListPage() {
             <table className="w-full text-sm text-start">
               <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th className="px-6 py-4">{isRtl ? 'الاسم' : 'Intervenant'}</th>
-                  <th className="px-6 py-4">{isRtl ? 'القسم' : 'Département'}</th>
-                  <th className="px-6 py-4">{isRtl ? 'حالة العقد (الحالي)' : 'Statut Contrat'}</th>
-                  <th className="px-6 py-4 text-center">{isRtl ? 'المدفوعات' : 'Paiement'}</th>
-                  <th className="px-6 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
+                  <th className="px-6 py-4">{t('modules:vacataires_list.table.name')}</th>
+                  <th className="px-6 py-4">{t('modules:vacataires_list.table.dept')}</th>
+                  <th className="px-6 py-4">{t('modules:vacataires_list.table.status')}</th>
+                  <th className="px-6 py-4 text-center">{t('modules:vacataires_list.table.payment')}</th>
+                  <th className="px-6 py-4 text-end">{t('modules:vacataires_list.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -202,22 +202,22 @@ export default function VacatairesListPage() {
                         {latestContract ? (
                           latestContract.status === 'pending' ? (
                             <Badge variant="outline" className="text-amber-600 bg-amber-500/10 border-amber-200">
-                              {isRtl ? 'عقد قيد الانتظار' : 'En attente de signature'}
+                              {t('modules:vacataires_list.status.pending')}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-emerald-600 bg-emerald-500/10 border-emerald-200">
-                              <CheckCircle2 size={12} className="me-1" /> {isRtl ? 'مُوَقَّع' : 'Signé'}
+                              <CheckCircle2 size={12} className="me-1" /> {t('modules:vacataires_list.status.signed')}
                             </Badge>
                           )
                         ) : (
                           <Badge variant="outline" className="text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] border-none">
-                            {isRtl ? 'بدون عقد' : 'Pas de contrat actif'}
+                            {t('modules:vacataires_list.status.none')}
                           </Badge>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <Button variant="outline" className="text-xs h-7 px-3 bg-[hsl(var(--background))]" icon={<DollarSign size={14} />}>
-                          {isRtl ? 'دفع' : 'Payer'}
+                          {t('modules:vacataires_list.pay')}
                         </Button>
                       </td>
                       <td className="px-6 py-4 text-end">
@@ -240,7 +240,7 @@ export default function VacatairesListPage() {
                     <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
                       <div className="flex flex-col items-center gap-2">
                         <Users className="w-8 h-8 opacity-20" />
-                        {isRtl ? 'لم يتم العثور على أي أساتذة' : 'Aucun vacataire trouvé.'}
+                        {t('modules:vacataires_list.table.empty')}
                       </div>
                     </td>
                   </tr>
@@ -254,52 +254,52 @@ export default function VacatairesListPage() {
       <Modal 
         open={showModal} 
         onClose={() => setShowModal(false)}
-        title={editingId ? (isRtl ? 'تحديث الزائر' : 'Modifier le vacataire') : (isRtl ? 'زائر جديد' : 'Nouveau Vacataire')}
+        title={editingId ? t('modules:vacataires_list.modal.edit_title') : t('modules:vacataires_list.modal.create_title')}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الاسم' : 'Prénom'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.first_name')} *</label>
               <Input required value={form.first_name} onChange={setF('first_name')} placeholder="Ahmed" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'النسب' : 'Nom'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.last_name')} *</label>
               <Input required value={form.last_name} onChange={setF('last_name')} placeholder="BENSOUDA" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'البريد' : 'Email'} *</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.email')} *</label>
               <Input required type="email" value={form.email} onChange={setF('email')} placeholder="prof@encg-fes.ma" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الهاتف' : 'Téléphone'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.phone')}</label>
               <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'الدرجة' : 'Grade académique'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.grade')}</label>
               <Input value={form.grade} onChange={setF('grade')} placeholder="Professeur, Expert..." />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'التخصص' : 'Spécialité'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.specialty')}</label>
               <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance, Management..." />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{isRtl ? 'القسم' : 'Département'}</label>
+              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.table.dept')}</label>
               <select 
                 value={form.department_id} 
                 onChange={setF('department_id')} 
                 className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
               >
-                <option value="">{isRtl ? '-- اختيار القسم --' : '-- Choisir un département --'}</option>
+                <option value="">{t('modules:vacataires_list.modal.dept_placeholder')}</option>
                 {departments.map((dept: any) => (
                   <option key={dept.id} value={dept.id}>{dept.name}</option>
                 ))}
@@ -312,16 +312,16 @@ export default function VacatairesListPage() {
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
               className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]" />
             <label htmlFor="is_active" className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              {isRtl ? 'زائر نشط' : 'Vacataire actif'}
+              {t('modules:vacataires_list.modal.active')}
             </label>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-6 border-t border-[hsl(var(--border))]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
-              {isRtl ? 'إلغاء' : 'Annuler'}
+              {t('modules:vacataires_list.modal.cancel')}
             </Button>
             <Button type="submit" variant="primary" isLoading={saveMutation.isPending}>
-              {editingId ? (isRtl ? 'تحديث' : 'Mettre à jour') : (isRtl ? 'حفظ' : 'Enregistrer')}
+              {editingId ? t('modules:vacataires_list.modal.update') : t('modules:vacataires_list.modal.save')}
             </Button>
           </div>
         </form>

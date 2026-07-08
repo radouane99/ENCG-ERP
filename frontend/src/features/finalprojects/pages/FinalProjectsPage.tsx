@@ -3,6 +3,7 @@ import { Search, Plus, Edit2, Trash2, X, Briefcase, Building, CheckCircle, Clock
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface FinalProject {
   id: number;
@@ -34,7 +35,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 const EMPTY = { title: '', type: 'pfe', company_name: '', company_city: '', status: 'draft', student_id: '' }
 
-export default function FinalProjectsPage() {
+export default function FinalProjectsPage() { 
+  const { t } = useTranslation('modules');
+
   const [projects, setProjects] = useState<FinalProject[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -82,17 +85,17 @@ export default function FinalProjectsPage() {
     try {
       const payload = { ...form, student_id: parseInt(form.student_id) }
       editingId ? await api.put(`/final-projects/${editingId}`, payload) : await api.post('/final-projects', payload)
-      toast.success(editingId ? 'Projet mis à jour !' : 'Projet enregistré !')
+      toast.success(editingId ? t('final_projects.messages.update_success') : t('final_projects.messages.create_success'))
       setShowModal(false); fetchData()
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erreur.')
+      toast.error(err?.response?.data?.message || t('final_projects.messages.error'))
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Supprimer ce projet ?')) return
-    try { await api.delete(`/final-projects/${id}`); toast.success('Projet supprimé.'); fetchData() }
-    catch { toast.error('Erreur.') }
+    if (!confirm(t('final_projects.messages.delete_confirm'))) return
+    try { await api.delete(`/final-projects/${id}`); toast.success(t('final_projects.messages.delete_success')); fetchData() }
+    catch { toast.error(t('final_projects.messages.error')) }
   }
 
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -102,43 +105,42 @@ export default function FinalProjectsPage() {
     <div className="space-y-6 animate-in p-6 relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Projets de Fin d'Études (PFE/PFA)</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Gérez les sujets, les affectations et le suivi des projets.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('final_projects.title')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('final_projects.subtitle')}</p>
         </div>
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
-          <Plus className="w-4 h-4" /> Nouveau Projet
-        </button>
+          <Plus className="w-4 h-4" /> {t('final_projects.new_btn')}</button>
       </div>
 
       <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b bg-muted/20 flex flex-col sm:flex-row gap-3">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input type="text" placeholder="Rechercher par sujet, étudiant, entreprise..." value={search} onChange={e => setSearch(e.target.value)}
+            <input type="text" placeholder={t('final_projects.search')} value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none">
-            <option value="">Tous les statuts</option>
+            <option value="">{t('final_projects.filter_status')}</option>
             {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
         
         <div className="overflow-x-auto min-h-[250px]">
-          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div> : (
+          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">{t('final_projects.messages.loading')}</div> : (
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                 <tr>
-                  <th className="px-6 py-3 font-semibold">Sujet du Projet</th>
-                  <th className="px-6 py-3 font-semibold text-center">Type</th>
-                  <th className="px-6 py-3 font-semibold">Étudiant</th>
-                  <th className="px-6 py-3 font-semibold">Entreprise</th>
-                  <th className="px-6 py-3 font-semibold text-center">Statut</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <th className="px-6 py-3 font-semibold">{t('final_projects.table.subject')}</th>
+                  <th className="px-6 py-3 font-semibold text-center">{t('final_projects.table.type')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('final_projects.table.student')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('final_projects.table.company')}</th>
+                  <th className="px-6 py-3 font-semibold text-center">{t('final_projects.table.status')}</th>
+                  <th className="px-6 py-3 font-semibold text-right">{t('final_projects.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {projects.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">Aucun projet trouvé.</td></tr>
+                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">{t('final_projects.table.empty')}</td></tr>
                 ) : projects.map(p => (
                   <tr key={p.id} className="hover:bg-muted/50 group">
                     <td className="px-6 py-4">
@@ -160,7 +162,7 @@ export default function FinalProjectsPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border", STATUS_COLORS[p.status])}>
-                        {STATUS_LABELS[p.status]}
+                        {t(`final_projects.status.${p.status}`)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -181,26 +183,26 @@ export default function FinalProjectsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-card border rounded-2xl shadow-xl w-full max-w-lg">
             <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <h3 className="font-bold text-lg">{editingId ? 'Modifier le projet' : 'Nouveau Projet'}</h3>
+              <h3 className="font-bold text-lg">{editingId ? t('final_projects.modal.edit') : t('final_projects.modal.create')}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
             </div>
             
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className={labelCls}>Sujet du projet *</label>
-                <textarea required value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} className={cn(inputCls, "min-h-[80px] resize-none")} placeholder="Titre complet du projet..." />
+                <label className={labelCls}>{t('final_projects.modal.subject')}</label>
+                <textarea required value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} className={cn(inputCls, "min-h-[80px] resize-none")} placeholder={t('final_projects.modal.subject_placeholder')} />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Type *</label>
+                  <label className={labelCls}>{t('final_projects.modal.type')}</label>
                   <select value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))} className={inputCls}>
-                    <option value="pfe">PFE (Projet de Fin d'Études)</option>
-                    <option value="pfa">PFA (Projet de Fin d'Année)</option>
+                    <option value="pfe">{t('final_projects.modal.type_pfe')}</option>
+                    <option value="pfa">{t('final_projects.modal.type_pfa')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Statut *</label>
+                  <label className={labelCls}>{t('final_projects.modal.status')}</label>
                   <select value={form.status} onChange={e => setForm(p => ({...p, status: e.target.value}))} className={inputCls}>
                     {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
@@ -208,27 +210,27 @@ export default function FinalProjectsPage() {
               </div>
 
               <div>
-                <label className={labelCls}>Étudiant affecté *</label>
+                <label className={labelCls}>{t('final_projects.modal.student')}</label>
                 <select required value={form.student_id} onChange={e => setForm(p => ({...p, student_id: e.target.value}))} className={inputCls}>
-                  <option value="">— Sélectionner l'étudiant —</option>
+                  <option value="">{t('final_projects.modal.student_placeholder')}</option>
                   {students.map((s: any) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.cne})</option>)}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
-                  <label className={labelCls}>Entreprise d'accueil</label>
-                  <input value={form.company_name} onChange={e => setForm(p => ({...p, company_name: e.target.value}))} className={inputCls} placeholder="Nom de l'entreprise" />
+                  <label className={labelCls}>{t('final_projects.modal.company')}</label>
+                  <input value={form.company_name} onChange={e => setForm(p => ({...p, company_name: e.target.value}))} className={inputCls} placeholder={t('final_projects.modal.company_placeholder')} />
                 </div>
                 <div>
-                  <label className={labelCls}>Ville</label>
-                  <input value={form.company_city} onChange={e => setForm(p => ({...p, company_city: e.target.value}))} className={inputCls} placeholder="Ex: Casablanca" />
+                  <label className={labelCls}>{t('final_projects.modal.city')}</label>
+                  <input value={form.company_city} onChange={e => setForm(p => ({...p, company_city: e.target.value}))} className={inputCls} placeholder={t('final_projects.modal.city_placeholder')} />
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">{t('final_projects.modal.cancel')}</button>
+                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? t('final_projects.modal.update') : t('final_projects.modal.save')}</button>
               </div>
             </form>
           </div>
