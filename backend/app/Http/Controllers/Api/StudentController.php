@@ -45,29 +45,21 @@ class StudentController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(\App\Http\Requests\Student\StoreStudentRequest $request, \App\Actions\Student\CreateStudentAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('students.create'), 403);
+        try {
+            $student = $action->execute($request->validated());
 
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name'  => 'required|string|max:100',
-            'email'      => 'required|email|unique:students,email',
-            'cne'        => 'required|string|max:20|unique:students,cne',
-            'massar_code'=> 'nullable|string|max:30',
-            'phone'      => 'nullable|string|max:20',
-            'gender'     => 'required|in:male,female',
-            'birth_date' => 'nullable|date',
-            'status'     => 'required|in:active,suspended,graduated,withdrawn',
-            'scholarship_type' => 'nullable|string|max:50',
-        ]);
-
-        $student = $this->studentService->createStudent($validated, 1); // Default institution_id
-
-        return response()->json([
-            'message' => 'Étudiant créé avec succès.',
-            'data' => $student
-        ], 201);
+            return response()->json([
+                'message' => 'Étudiant créé avec succès.',
+                'data' => $student
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la création de l\'étudiant.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(Student $student): JsonResponse
@@ -77,41 +69,38 @@ class StudentController extends Controller
         return response()->json(['data' => $student->load('latestPathway.filiere')]);
     }
 
-    public function update(Request $request, Student $student): JsonResponse
+    public function update(\App\Http\Requests\Student\UpdateStudentRequest $request, Student $student, \App\Actions\Student\UpdateStudentAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('students.edit'), 403);
+        try {
+            $student = $action->execute($student, $request->validated());
 
-        $validated = $request->validate([
-            'first_name' => 'sometimes|required|string|max:100',
-            'last_name'  => 'sometimes|required|string|max:100',
-            'email'      => 'sometimes|required|email|unique:students,email,' . $student->id,
-            'cne'        => 'sometimes|required|string|max:20|unique:students,cne,' . $student->id,
-            'massar_code'=> 'nullable|string|max:30',
-            'phone'      => 'nullable|string|max:20',
-            'gender'     => 'sometimes|required|in:male,female',
-            'birth_date' => 'nullable|date',
-            'status'     => 'sometimes|required|in:active,suspended,graduated,withdrawn',
-            'scholarship_type' => 'nullable|string|max:50',
-            'current_filiere' => 'nullable|string',
-            'current_semester' => 'nullable|integer',
-        ]);
-
-        $student = $this->studentService->updateStudent($student, $validated);
-
-        return response()->json([
-            'message' => 'Étudiant mis à jour avec succès.',
-            'data' => $student
-        ]);
+            return response()->json([
+                'message' => 'Étudiant mis à jour avec succès.',
+                'data' => $student
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour de l\'étudiant.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function destroy(Student $student): JsonResponse
+    public function destroy(Student $student, \App\Actions\Student\DeleteStudentAction $action): JsonResponse
     {
         abort_unless(request()->user()->can('students.delete'), 403);
 
-        $student->delete(); // Uses SoftDelete
+        try {
+            $action->execute($student);
 
-        return response()->json([
-            'message' => 'Étudiant supprimé avec succès.'
-        ]);
+            return response()->json([
+                'message' => 'Étudiant supprimé avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la suppression de l\'étudiant.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

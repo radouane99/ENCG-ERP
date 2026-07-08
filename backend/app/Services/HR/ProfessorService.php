@@ -67,6 +67,20 @@ class ProfessorService
     public function createProfessor(array $data, int $institutionId = 1): Professor
     {
         return DB::transaction(function () use ($data, $institutionId) {
+            // Create user first
+            $user = \App\Models\User::create([
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'cin' => $data['cin'] ?? null,
+                'password' => bcrypt('password'), // default password
+                'is_active' => $data['is_active'] ?? true,
+            ]);
+
+            // Clean up professor data
+            unset($data['first_name'], $data['last_name'], $data['email'], $data['phone'], $data['cin']);
+
             $year = date('Y');
             
             // Get the maximum employee number for this year to avoid duplicates on soft deletes
@@ -83,6 +97,7 @@ class ProfessorService
             
             $data['employee_number'] = 'PROF-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
             $data['institution_id'] = $institutionId;
+            $data['user_id'] = $user->id;
 
             return Professor::create($data);
         });
@@ -93,7 +108,25 @@ class ProfessorService
      */
     public function updateProfessor(Professor $professor, array $data): Professor
     {
-        $professor->update($data);
-        return $professor;
+        return DB::transaction(function () use ($professor, $data) {
+            // Extract user fields
+            $userData = [];
+            foreach (['first_name', 'last_name', 'email', 'phone', 'cin', 'is_active'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $userData[$field] = $data[$field];
+                    unset($data[$field]);
+                }
+            }
+
+            if (!empty($userData)) {
+                $professor->user()->update($userData);
+            }
+
+            if (!empty($data)) {
+                $professor->update($data);
+            }
+            
+            return $professor->refresh();
+        });
     }
 }

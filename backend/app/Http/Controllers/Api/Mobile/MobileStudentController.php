@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\JsonResponse;
 use App\Services\Academic\StudentPortalService;
 
 class MobileStudentController extends Controller

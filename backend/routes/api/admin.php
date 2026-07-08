@@ -135,8 +135,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // HR & Vacataires
     Route::prefix('hr/vacations')->group(function () {
-        Route::post('/contracts/{contract}/generate-payment', [\App\Http\Controllers\Api\VacationController::class, 'generatePayment']);
-        Route::post('/payments/export', [\App\Http\Controllers\Api\VacationController::class, 'exportBankFile']);
+        // Route::post('/contracts/{contract}/generate-payment', [VacationController::class, 'generatePayment']);
+        // Route::post('/payments/export', [VacationController::class, 'exportBankFile']);
     });
 
     // Exports
@@ -262,11 +262,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // HR & Vacataires
-    Route::prefix('hr/vacataires')->group(function () {
-        Route::get('/contracts', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getContracts']);
-        Route::get('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getSessions']);
-        Route::post('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'logSession']);
-        Route::post('/contracts/{id}/payments', [\App\Http\Controllers\Api\VacataireManagerController::class, 'generatePayment']);
+    Route::prefix('vacataire-manager')->group(function () {
+        // Route::get('/contracts', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getContracts']);
+        // Route::get('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getSessions']);
+        // Route::post('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'logSession']);
+        // Route::post('/contracts/{id}/payments', [\App\Http\Controllers\Api\VacataireManagerController::class, 'generatePayment']);
     });
 
     // Student Portal

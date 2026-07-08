@@ -83,6 +83,20 @@ class StudentService
     public function createStudent(array $data, int $institutionId = 1): Student
     {
         return DB::transaction(function () use ($data, $institutionId) {
+            // Create user first
+            $user = \App\Models\User::create([
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'cin' => $data['cin'] ?? null,
+                'password' => bcrypt('password'), // default password, should trigger reset email
+                'is_active' => true,
+            ]);
+
+            // Clean up student data
+            unset($data['first_name'], $data['last_name'], $data['email'], $data['phone'], $data['cin']);
+
             // Auto-generate student number
             $year = date('Y');
             // This count could have race conditions in high-concurrency, but DB locks or redis sequence would be overkill for now
@@ -90,6 +104,7 @@ class StudentService
             
             $data['student_number'] = $year . str_pad($count, 4, '0', STR_PAD_LEFT);
             $data['institution_id'] = $institutionId;
+            $data['user_id'] = $user->id;
 
             return Student::create($data);
         });
@@ -101,12 +116,27 @@ class StudentService
     public function updateStudent(Student $student, array $data): Student
     {
         return DB::transaction(function () use ($student, $data) {
+            // Extract user fields
+            $userData = [];
+            foreach (['first_name', 'last_name', 'email', 'phone', 'cin'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $userData[$field] = $data[$field];
+                    unset($data[$field]);
+                }
+            }
+
+            if (!empty($userData)) {
+                $student->user()->update($userData);
+            }
+
             $filiereCode = $data['current_filiere'] ?? null;
             $semester = $data['current_semester'] ?? null;
             
             unset($data['current_filiere'], $data['current_semester']);
             
-            $student->update($data);
+            if (!empty($data)) {
+                $student->update($data);
+            }
 
             if ($filiereCode !== null || $semester !== null) {
                 $pathway = $student->latestPathway()->first();
@@ -136,7 +166,7 @@ class StudentService
                 }
             }
 
-            return $student;
+            return $student->refresh();
         });
     }
 }

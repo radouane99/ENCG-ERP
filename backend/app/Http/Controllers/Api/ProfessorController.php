@@ -27,71 +27,62 @@ class ProfessorController extends Controller
         return response()->json(['data' => $mapped]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(\App\Http\Requests\Professor\StoreProfessorRequest $request, \App\Actions\Professor\CreateProfessorAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('professors.create'), 403);
+        try {
+            $professor = $action->execute($request->validated());
 
-        $validated = $request->validate([
-            'first_name'    => 'required|string|max:100',
-            'last_name'     => 'required|string|max:100',
-            'email'         => 'required|email|unique:professors,email',
-            'phone'         => 'nullable|string|max:20',
-            'grade'         => 'nullable|string|max:100',
-            'specialty'     => 'nullable|string|max:255',
-            'contract_type' => 'required|in:permanent,contractual,visiting',
-            'hire_date'     => 'nullable|date',
-            'department_id' => 'nullable|exists:departments,id',
-            'is_active'     => 'boolean',
-        ]);
-
-        $professor = $this->professorService->createProfessor($validated, 1);
-
-        return response()->json([
-            'message' => 'Professeur créé avec succès.',
-            'data' => $professor
-        ], 201);
+            return response()->json([
+                'message' => 'Professeur créé avec succès.',
+                'data' => $professor
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la création du professeur.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function show(Request $request, Professor $professor): JsonResponse
+    public function show(Professor $professor): JsonResponse
     {
-        abort_unless($request->user()->can('professors.view'), 403);
+        abort_unless(request()->user()->can('professors.view'), 403);
         
         return response()->json(['data' => $professor->load('department')]);
     }
 
-    public function update(Request $request, Professor $professor): JsonResponse
+    public function update(\App\Http\Requests\Professor\UpdateProfessorRequest $request, Professor $professor, \App\Actions\Professor\UpdateProfessorAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('professors.edit'), 403);
+        try {
+            $professor = $action->execute($professor, $request->validated());
 
-        $validated = $request->validate([
-            'first_name'    => 'sometimes|required|string|max:100',
-            'last_name'     => 'sometimes|required|string|max:100',
-            'email'         => 'sometimes|required|email|unique:professors,email,' . $professor->id,
-            'phone'         => 'nullable|string|max:20',
-            'grade'         => 'nullable|string|max:100',
-            'specialty'     => 'nullable|string|max:255',
-            'contract_type' => 'sometimes|required|in:permanent,contractual,visiting',
-            'hire_date'     => 'nullable|date',
-            'department_id' => 'nullable|exists:departments,id',
-            'is_active'     => 'boolean',
-        ]);
-
-        $professor = $this->professorService->updateProfessor($professor, $validated);
-
-        return response()->json([
-            'message' => 'Professeur mis à jour avec succès.',
-            'data' => $professor
-        ]);
+            return response()->json([
+                'message' => 'Professeur mis à jour avec succès.',
+                'data' => $professor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour du professeur.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function destroy(Request $request, Professor $professor): JsonResponse
+    public function destroy(Professor $professor, \App\Actions\Professor\DeleteProfessorAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('professors.delete'), 403);
+        abort_unless(request()->user()->can('professors.delete'), 403);
 
-        $professor->delete();
+        try {
+            $action->execute($professor);
 
-        return response()->json([
-            'message' => 'Professeur supprimé avec succès.'
-        ]);
+            return response()->json([
+                'message' => 'Professeur supprimé avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la suppression du professeur.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -19,8 +19,10 @@ class InternshipController extends Controller
     /**
      * Display a listing of the internships.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('internships.view'), 403);
+
         $internships = $this->careerService->getAllInternships();
         
         return response()->json([
@@ -30,21 +32,28 @@ class InternshipController extends Controller
     }
 
     /**
-     * Validate the specified internship.
+     * Update the specified internship.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(\App\Http\Requests\Internship\UpdateInternshipRequest $request, \App\Models\Internship $internship, \App\Actions\Internship\UpdateInternshipAction $action): JsonResponse
     {
-        // Simple update wrapper (e.g. status validation)
-        if ($request->input('action') === 'validate') {
-            $internship = $this->careerService->validateInternship((int) $id);
-            return response()->json(['success' => true, 'data' => $internship]);
-        }
+        try {
+            $updatedInternship = $action->execute($internship, $request->validated());
 
-        if ($request->has('supervisor_id')) {
-            $internship = $this->careerService->assignSupervisor((int) $id, $request->supervisor_id);
-            return response()->json(['success' => true, 'data' => $internship]);
+            return response()->json([
+                'success' => true, 
+                'data' => $updatedInternship
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erreur lors de la mise à jour du stage.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json(['success' => false, 'message' => 'Action non supportée.'], 400);
     }
 }
