@@ -14,9 +14,13 @@ use Tests\TestCase;
 */
 uses(TestCase::class, RefreshDatabase::class)
     ->beforeEach(function () {
-        \App\Models\Institution::firstOrCreate(
-            ['id' => 1],
-            ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
-        );
+        \Illuminate\Support\Facades\DB::table('institutions')->insertOrIgnore([
+            'id' => 1,
+            'name' => 'ENCG Test',
+            'code' => 'ENCG',
+            'slug' => 'encg-test',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     })
     ->in('Feature');
