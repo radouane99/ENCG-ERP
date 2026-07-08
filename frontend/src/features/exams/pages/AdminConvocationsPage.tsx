@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom'
 import { FileText, Mail, Printer, CheckCircle, Download, Clock, Zap, FileDown, CheckCircle2, Loader2, Users } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
+import { useTranslation } from 'react-i18next'
 
 export default function AdminConvocationsPage() {
+  const { t, i18n } = useTranslation('exams')
+  const isRtl = i18n.language === 'ar'
+
   const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'disponibilites'>('students')
   const [showBanner, setShowBanner] = useState(false)
   const [bannerMessage, setBannerMessage] = useState('')
@@ -35,11 +39,11 @@ export default function AdminConvocationsPage() {
     try {
       // Assuming session ID 1 for MVP
       const res = await examsApi.autoAssignProctors(1)
-      setBannerMessage(res.message || 'Affectation automatique réussie.')
+      setBannerMessage(res.message || t('exams:convocations.messages.assign_success'))
       setShowBanner(true)
       setTimeout(() => setShowBanner(false), 5000)
     } catch (error: any) {
-      setBannerMessage(error.response?.data?.message || 'Erreur lors de l\'affectation automatique.')
+      setBannerMessage(error.response?.data?.message || t('exams:convocations.messages.assign_error'))
       setShowBanner(true)
       setTimeout(() => setShowBanner(false), 5000)
     } finally {
@@ -76,9 +80,7 @@ export default function AdminConvocationsPage() {
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
       
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#0f2863] italic flex items-center gap-3">
-          📋 Gestion des Convocations d'Examens
-        </h1>
+        <h1 className="text-2xl font-bold text-[#0f2863] italic flex items-center gap-3">📋 {t('exams:convocations.title')}</h1>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
           01/07/2026
         </div>
@@ -94,21 +96,21 @@ export default function AdminConvocationsPage() {
       {/* Filters */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6 mb-6 flex gap-6">
         <div className="flex-1 space-y-1">
-          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">SESSION D'EXAMENS</label>
+          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('exams:convocations.filters.session')}</label>
           <select className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 font-bold outline-none">
             <option>Normale Automne — 2025/2026</option>
           </select>
         </div>
         <div className="flex-1 space-y-1">
-          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">FILIÈRE</label>
+          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('exams:convocations.filters.filiere')}</label>
           <select className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 font-bold outline-none">
-            <option>Toutes les filières</option>
+            <option>{t('exams:convocations.filters.filiere_empty')}</option>
           </select>
         </div>
         <div className="flex-1 space-y-1">
-          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">STATUT</label>
+          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('exams:convocations.filters.status')}</label>
           <select className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 font-bold outline-none">
-            <option>Tous les statuts</option>
+            <option>{t('exams:convocations.filters.status_empty')}</option>
           </select>
         </div>
       </div>
@@ -118,22 +120,22 @@ export default function AdminConvocationsPage() {
         <div className="bg-[#0f2863] rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <FileText className="absolute top-4 left-4 w-6 h-6 text-white/20" />
           <p className="text-4xl font-black mb-1 relative z-10">750</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">TOTAL ÉTUDIANTS</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.students')}</p>
         </div>
         <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <FileText className="absolute top-4 left-4 w-6 h-6 text-white/20" />
           <p className="text-4xl font-black mb-1 relative z-10">728</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">GÉNÉRÉES</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.generated')}</p>
         </div>
         <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <Mail className="absolute top-4 left-4 w-6 h-6 text-white/20" />
           <p className="text-4xl font-black mb-1 relative z-10">21</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">ENVOYÉES</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.sent')}</p>
         </div>
         <div className="bg-purple-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <CheckCircle2 className="absolute top-4 left-4 w-6 h-6 text-white/20" />
           <p className="text-4xl font-black mb-1 relative z-10">1</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">TÉLÉCHARGÉES</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.downloaded')}</p>
         </div>
       </div>
 
@@ -145,27 +147,21 @@ export default function AdminConvocationsPage() {
             "px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors",
             activeTab === 'students' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
-        >
-          🎓 ÉTUDIANTS (750)
-        </button>
+        >🎓 {t('exams:convocations.tabs.students')} (750)</button>
         <button 
           onClick={() => setActiveTab('surveillants')}
           className={cn(
             "px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors",
             activeTab === 'surveillants' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
-        >
-          🧑‍🏫 SURVEILLANTS (28)
-        </button>
+        >🧑‍🏫 {t('exams:convocations.tabs.surveillants')} (28)</button>
         <button 
           onClick={() => setActiveTab('disponibilites')}
           className={cn(
             "px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors",
             activeTab === 'disponibilites' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
-        >
-          📅 DISPONIBILITÉS ({professeurs.length > 0 ? professeurs.length : 5})
-        </button>
+        >📅 {t('exams:convocations.tabs.disponibilites')} ({professeurs.length > 0 ? professeurs.length : 5})</button>
       </div>
 
       {activeTab === 'students' && (
@@ -173,23 +169,19 @@ export default function AdminConvocationsPage() {
           {/* Actions & Progress */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-amber-500" /> Actions rapides — Étudiants
-            </h3>
+              <Zap className="w-4 h-4 text-amber-500" /> {t('exams:convocations.students.actions_title')}</h3>
             <div className="flex gap-3 mb-6">
               <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
-                <FileText className="w-3.5 h-3.5" /> GÉNÉRER TOUTES LES CONVOCATIONS
-              </button>
+                <FileText className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_generate_all')}</button>
               <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
-                <Mail className="w-3.5 h-3.5" /> ENVOYER TOUS LES EMAILS
-              </button>
+                <Mail className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_send_all')}</button>
               <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors ml-2">
-                <Printer className="w-3.5 h-3.5" /> IMPRIMER TOUTES LES CONVOCATIONS
-              </button>
+                <Printer className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_print_all')}</button>
             </div>
             
             <div className="space-y-1">
               <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
-                <span>Progression des envois</span>
+                <span>{t('exams:convocations.students.progress')}</span>
                 <span>8%</span>
               </div>
               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -200,18 +192,18 @@ export default function AdminConvocationsPage() {
 
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-800">Liste des convocations étudiants</h2>
-              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">750 au total</span>
+              <h2 className="text-base font-bold text-slate-800">{t('exams:convocations.students.list_title')}</h2>
+              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.students.total_badge', { total: 750 })}</span>
             </div>
             <table className="w-full text-sm text-left">
               <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 font-bold">ÉTUDIANT</th>
-                  <th className="px-6 py-4 font-bold">FILIÈRE / GROUPE</th>
-                  <th className="px-6 py-4 font-bold">EXAMEN</th>
-                  <th className="px-6 py-4 font-bold">DATE</th>
-                  <th className="px-6 py-4 font-bold text-center">STATUT</th>
-                  <th className="px-6 py-4 font-bold">RÉFÉRENCE</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.student')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.filiere')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.exam')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.date')}</th>
+                  <th className="px-6 py-4 font-bold text-center">{t('exams:convocations.students.table.status')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.ref')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -230,12 +222,12 @@ export default function AdminConvocationsPage() {
                 ) : students.map((st, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-bold text-slate-800">{st.first_name} {st.last_name}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.room_name} (Place: {st.seat_number})</td>
-                    <td className="px-6 py-4 font-bold text-slate-700">Détails Examen</td>
+                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.room_name} ({t('exams:convocations.students.table.room')}: {st.seat_number})</td>
+                    <td className="px-6 py-4 font-bold text-slate-700">{t('exams:convocations.students.table.exam_details')}</td>
                     <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn("inline-flex px-3 py-1 rounded-full text-[10px] font-bold", st.qr_token ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600")}>
-                        {st.qr_token ? 'Générée' : 'En attente'}
+                        {st.qr_token ? t('exams:convocations.students.table.status_generated') : t('exams:convocations.students.table.status_pending')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-[10px] text-slate-400 font-bold">{st.qr_token?.substring(0, 8) || '-'}</td>
@@ -253,56 +245,51 @@ export default function AdminConvocationsPage() {
           <div className="grid grid-cols-4 gap-4">
              <div className="bg-indigo-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
               <p className="text-3xl font-black mb-1">{surveillants.length}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider">TOTAL PROFS</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.profs')}</p>
             </div>
             <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
               <p className="text-3xl font-black mb-1">{surveillants.length}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider">GÉNÉRÉES</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.generated')}</p>
             </div>
             <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
               <p className="text-3xl font-black mb-1">0</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider">ENVOYÉES</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.sent')}</p>
             </div>
             <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
               <p className="text-3xl font-black mb-1">0</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider">CONFIRMÉES</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.confirmed')}</p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded bg-blue-100 text-blue-600 flex items-center justify-center"><CheckCircle2 className="w-3 h-3" /></span> 
-              Actions — Surveillance
-            </h3>
+              <span className="w-5 h-5 rounded bg-blue-100 text-blue-600 flex items-center justify-center"><CheckCircle2 className="w-3 h-3" /></span> {t('exams:convocations.surveillants.actions_title')}</h3>
             <div className="flex flex-wrap gap-3">
               <button disabled={isAssigning} onClick={handleAutoAssign} className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
                 {isAssigning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} AFFECTATION AUTO DES SURVEILLANTS
               </button>
               <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
-                <FileText className="w-3.5 h-3.5" /> GÉNÉRER CONVOCATIONS PROFS
-              </button>
+                <FileText className="w-3.5 h-3.5" /> {t('exams:convocations.surveillants.btn_generate')}</button>
               <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
-                <Mail className="w-3.5 h-3.5" /> ENVOYER EMAILS PROFS
-              </button>
+                <Mail className="w-3.5 h-3.5" /> {t('exams:convocations.surveillants.btn_send')}</button>
               <Link to="/admin/convocations/print-professors?session_id=1" className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors ml-2">
-                <Printer className="w-3.5 h-3.5" /> IMPRIMER CONVOCATIONS PROFS
-              </Link>
+                <Printer className="w-3.5 h-3.5" /> {t('exams:convocations.surveillants.btn_print')}</Link>
             </div>
           </div>
 
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-800">Convocations de surveillance</h2>
+              <h2 className="text-base font-bold text-slate-800">{t('exams:convocations.surveillants.list_title')}</h2>
             </div>
             <table className="w-full text-sm text-left">
               <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 font-bold">PROFESSEUR</th>
-                  <th className="px-6 py-4 font-bold">EXAMEN</th>
-                  <th className="px-6 py-4 font-bold">DATE / HEURE</th>
-                  <th className="px-6 py-4 font-bold">SALLE</th>
-                  <th className="px-6 py-4 font-bold text-center">RÔLE</th>
-                  <th className="px-6 py-4 font-bold text-center">STATUT</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.surveillants.table.prof')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.students.table.exam')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.surveillants.table.datetime')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.surveillants.table.room')}</th>
+                  <th className="px-6 py-4 font-bold text-center">{t('exams:convocations.surveillants.table.role')}</th>
+                  <th className="px-6 py-4 font-bold text-center">{t('exams:convocations.students.table.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -321,7 +308,7 @@ export default function AdminConvocationsPage() {
                 ) : surveillants.map((sv, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-bold text-slate-800">Prof. {sv.first_name} {sv.last_name}</td>
-                    <td className="px-6 py-4 font-bold text-slate-700 w-48">Détails Examen</td>
+                    <td className="px-6 py-4 font-bold text-slate-700 w-48">{t('exams:convocations.students.table.exam_details')}</td>
                     <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{sv.room_name}</td>
                     <td className="px-6 py-4 text-center">
@@ -346,18 +333,18 @@ export default function AdminConvocationsPage() {
         <div className="space-y-6 animate-in fade-in">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-800">Disponibilités déclarées par les professeurs</h2>
+              <h2 className="text-base font-bold text-slate-800">{t('exams:convocations.disponibilites.title')}</h2>
               <button className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:underline">
-                VUE DÉTAILLÉE →
-              </button>
+{t('exams:convocations.disponibilites.view_details')}
+</button>
             </div>
             <table className="w-full text-sm text-left">
               <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 font-bold">PROFESSEUR</th>
-                  <th className="px-6 py-4 font-bold">DÉPARTEMENT</th>
-                  <th className="px-6 py-4 font-bold text-center">JOURS DISPONIBLES</th>
-                  <th className="px-6 py-4 font-bold">DATES</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.surveillants.table.prof')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.disponibilites.table.dept')}</th>
+                  <th className="px-6 py-4 font-bold text-center">{t('exams:convocations.disponibilites.table.days')}</th>
+                  <th className="px-6 py-4 font-bold">{t('exams:convocations.disponibilites.table.dates')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -376,7 +363,7 @@ export default function AdminConvocationsPage() {
                 ) : professeurs.map((prof, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-bold text-slate-800">{prof.nom}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{prof.dept || 'Département non spécifié'}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{prof.dept || t('exams:convocations.disponibilites.table.no_dept')}</td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-bold">
                         {prof.creneaux}

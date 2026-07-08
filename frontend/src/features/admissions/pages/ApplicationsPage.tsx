@@ -3,6 +3,7 @@ import { Search, Edit2, Trash2, X, FileText, CheckCircle, Clock, AlertCircle, Tr
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface Application {
   id: number;
@@ -45,6 +46,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ApplicationsPage() {
+  const { t } = useTranslation('admissions')
+
   const [applications, setApplications] = useState<Application[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, accepted: 0, rejected: 0 })
   const [loading, setLoading] = useState(true)
@@ -94,22 +97,22 @@ export default function ApplicationsPage() {
         selection_score: form.selection_score ? parseFloat(form.selection_score) : null,
         rejection_reason: form.status === 'rejected' ? form.rejection_reason : null
       })
-      toast.success('Statut de la candidature mis à jour.')
+      toast.success(t('applications.messages.update_success'))
       setShowModal(false)
       fetchData()
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erreur lors de la mise à jour.')
+      toast.error(err?.response?.data?.message || t('applications.messages.update_error'))
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Supprimer définitivement cette candidature ?')) return
+    if (!confirm(t('applications.messages.delete_confirm'))) return
     try {
       await api.delete(`/applications/${id}`)
-      toast.success('Candidature supprimée.')
+      toast.success(t('applications.messages.delete_success'))
       fetchData()
     } catch {
-      toast.error('Erreur lors de la suppression.')
+      toast.error(t('applications.messages.delete_error'))
     }
   }
 
@@ -120,18 +123,18 @@ export default function ApplicationsPage() {
     <div className="space-y-6 animate-in p-6 relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dossiers de Candidature</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Gérez les demandes d'admission, étudiez les dossiers et affectez les scores.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('applications.title')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('applications.subtitle')}</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Candidatures', value: stats.total, icon: <FileText className="w-5 h-5" />, color: 'bg-primary/10 text-primary' },
-          { label: 'En attente', value: stats.pending, icon: <Clock className="w-5 h-5" />, color: 'bg-amber-500/10 text-amber-600' },
-          { label: 'Admis', value: stats.accepted, icon: <CheckCircle className="w-5 h-5" />, color: 'bg-green-500/10 text-green-600' },
-          { label: 'Refusés', value: stats.rejected, icon: <AlertCircle className="w-5 h-5" />, color: 'bg-red-500/10 text-red-600' },
+          { label: t('applications.kpis.total'), value: stats.total, icon: <FileText className="w-5 h-5" />, color: 'bg-primary/10 text-primary' },
+          { label: t('applications.kpis.pending'), value: stats.pending, icon: <Clock className="w-5 h-5" />, color: 'bg-amber-500/10 text-amber-600' },
+          { label: t('applications.kpis.accepted'), value: stats.accepted, icon: <CheckCircle className="w-5 h-5" />, color: 'bg-green-500/10 text-green-600' },
+          { label: t('applications.kpis.rejected'), value: stats.rejected, icon: <AlertCircle className="w-5 h-5" />, color: 'bg-red-500/10 text-red-600' },
         ].map((c, i) => (
           <div key={i} className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
             <div>
@@ -148,31 +151,31 @@ export default function ApplicationsPage() {
         <div className="p-4 border-b bg-muted/20 flex flex-col sm:flex-row gap-3">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input type="text" placeholder="Rechercher (Nom, CNE, CIN, Réf)..." value={search} onChange={e => setSearch(e.target.value)}
+            <input type="text" placeholder={t('applications.filters.search')} value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none">
-            <option value="">Tous les statuts</option>
+            <option value="">{t('applications.filters.all_status')}</option>
             {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
         
         <div className="overflow-x-auto min-h-[250px]">
-          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div> : (
+          {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">{t('applications.messages.loading')}</div> : (
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                 <tr>
-                  <th className="px-6 py-3 font-semibold">Candidat</th>
-                  <th className="px-6 py-3 font-semibold">Identifiants</th>
-                  <th className="px-6 py-3 font-semibold text-center">Baccalauréat</th>
-                  <th className="px-6 py-3 font-semibold text-center">Score</th>
-                  <th className="px-6 py-3 font-semibold text-center">Statut</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <th className="px-6 py-3 font-semibold">{t('applications.table.candidate')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('applications.table.ids')}</th>
+                  <th className="px-6 py-3 font-semibold text-center">{t('applications.table.bac')}</th>
+                  <th className="px-6 py-3 font-semibold text-center">{t('applications.table.score')}</th>
+                  <th className="px-6 py-3 font-semibold text-center">{t('applications.table.status')}</th>
+                  <th className="px-6 py-3 font-semibold text-right">{t('applications.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {applications.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">Aucune candidature trouvée.</td></tr>
+                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">{t('applications.table.empty')}</td></tr>
                 ) : applications.map(app => (
                   <tr key={app.id} className="hover:bg-muted/50 group">
                     <td className="px-6 py-4">
@@ -196,14 +199,12 @@ export default function ApplicationsPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border", STATUS_COLORS[app.status])}>
-                        {STATUS_LABELS[app.status]}
+                        {t(`applications.status_labels.${app.status}`)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openReview(app)} className="px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors border border-primary/20">
-                          Examiner
-                        </button>
+                        <button onClick={() => openReview(app)} className="px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors border border-primary/20"> {t('applications.table.review')} </button>
                         <button onClick={() => handleDelete(app.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -219,42 +220,42 @@ export default function ApplicationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-              <h3 className="font-bold text-lg">Examiner le dossier</h3>
+              <h3 className="font-bold text-lg">{t('applications.modal.title')}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
             </div>
             
             <div className="p-4 bg-muted/30 border-b">
               <p className="font-semibold text-foreground text-center text-lg">{editingApp.last_name} {editingApp.first_name}</p>
-              <p className="text-xs text-muted-foreground text-center mb-2">Réf: {editingApp.reference_number}</p>
+              <p className="text-xs text-muted-foreground text-center mb-2">{t('applications.modal.ref')}: {editingApp.reference_number}</p>
               <div className="flex justify-center gap-4 text-sm mt-3">
-                <div className="text-center"><p className="text-muted-foreground text-xs">Moy. Bac</p><p className="font-bold">{editingApp.bac_average}</p></div>
-                <div className="text-center"><p className="text-muted-foreground text-xs">Année Bac</p><p className="font-bold">{editingApp.bac_year}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-xs">{t('applications.modal.bac_avg')}</p><p className="font-bold">{editingApp.bac_average}</p></div>
+                <div className="text-center"><p className="text-muted-foreground text-xs">{t('applications.modal.bac_year')}</p><p className="font-bold">{editingApp.bac_year}</p></div>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className={labelCls}>Statut de la candidature *</label>
+                <label className={labelCls}>{t('applications.modal.status_label')}</label>
                 <select value={form.status} onChange={e => setForm(p => ({...p, status: e.target.value}))} className={inputCls}>
                   {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className={labelCls}>Score de sélection / Concours (Sur 20)</label>
-                <input type="number" step="0.01" min="0" max="20" value={form.selection_score} onChange={e => setForm(p => ({...p, selection_score: e.target.value}))} className={inputCls} placeholder="Ex: 14.50" />
+                <label className={labelCls}>{t('applications.modal.score_label')}</label>
+                <input type="number" step="0.01" min="0" max="20" value={form.selection_score} onChange={e => setForm(p => ({...p, selection_score: e.target.value}))} className={inputCls} placeholder={t('applications.modal.score_placeholder')} />
               </div>
 
               {form.status === 'rejected' && (
                 <div>
-                  <label className={labelCls}>Motif du refus *</label>
-                  <input required value={form.rejection_reason} onChange={e => setForm(p => ({...p, rejection_reason: e.target.value}))} className={inputCls} placeholder="Ex: Dossier incomplet, note insuffisante..." />
+                  <label className={labelCls}>{t('applications.modal.reason_label')}</label>
+                  <input required value={form.rejection_reason} onChange={e => setForm(p => ({...p, rejection_reason: e.target.value}))} className={inputCls} placeholder={t('applications.modal.reason_placeholder')} />
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">Valider la décision</button>
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">{t('applications.modal.cancel')}</button>
+                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{t('applications.modal.submit')}</button>
               </div>
             </form>
           </div>

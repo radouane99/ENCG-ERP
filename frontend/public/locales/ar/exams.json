@@ -47,5 +47,85 @@
       "notify_success": "تم إرسال إشعار للغائبين",
       "demo_success": "تم إنشاء الاستدعاءات للامتحان {{id}} (وضع تجريبي)."
     }
+  },
+  "convocations": {
+    "title": "إدارة استدعاءات الامتحانات",
+    "filters": {
+      "session": "دورة الامتحانات",
+      "filiere": "الشعبة",
+      "status": "الحالة",
+      "filiere_empty": "جميع الشعب",
+      "status_empty": "جميع الحالات"
+    },
+    "kpi": {
+      "students": "إجمالي الطلاب",
+      "generated": "المنشأة",
+      "sent": "المرسلة",
+      "downloaded": "المحملة",
+      "profs": "إجمالي الأساتذة",
+      "confirmed": "المؤكدة"
+    },
+    "tabs": {
+      "students": "الطلاب",
+      "surveillants": "المراقبون",
+      "disponibilites": "فترات التوفر"
+    },
+    "students": {
+      "actions_title": "إجراءات سريعة — الطلاب",
+      "btn_generate_all": "إنشاء جميع الاستدعاءات",
+      "btn_send_all": "إرسال جميع الإيميلات",
+      "btn_print_all": "طباعة جميع الاستدعاءات",
+      "progress": "تقدم الإرسال",
+      "list_title": "قائمة استدعاءات الطلاب",
+      "total_badge": "{{total}} إجمالاً",
+      "table": {
+        "student": "الطالب",
+        "filiere": "الشعبة / الفوج",
+        "exam": "الامتحان",
+        "date": "التاريخ",
+        "status": "الحالة",
+        "ref": "المرجع",
+        "room": "المقعد",
+        "exam_details": "تفاصيل الامتحان",
+        "status_generated": "مُنشأة",
+        "status_pending": "في الانتظار",
+        "empty": "لا توجد أي استدعاءات."
+      }
+    },
+    "surveillants": {
+      "actions_title": "إجراءات — المراقبة",
+      "btn_auto": "توزيع تلقائي للمراقبين",
+      "btn_generate": "إنشاء استدعاءات الأساتذة",
+      "btn_send": "إرسال إيميلات الأساتذة",
+      "btn_print": "طباعة استدعاءات الأساتذة",
+      "list_title": "استدعاءات المراقبة",
+      "table": {
+        "prof": "الأستاذ",
+        "exam": "الامتحان",
+        "datetime": "التاريخ / الساعة",
+        "room": "القاعة",
+        "role": "الدور",
+        "status": "الحالة",
+        "role_badge": "مراقب",
+        "status_generated": "مُنشأة",
+        "empty": "لا يوجد أي مراقبين."
+      }
+    },
+    "disponibilites": {
+      "title": "فترات التوفر المصرح بها",
+      "view_details": "عرض مفصل →",
+      "table": {
+        "prof": "الأستاذ",
+        "dept": "القسم",
+        "days": "الأيام المتاحة",
+        "dates": "التواريخ",
+        "no_dept": "القسم غير محدد",
+        "empty": "لا توجد فترات توفر."
+      }
+    },
+    "messages": {
+      "assign_success": "نجاح التوزيع التلقائي.",
+      "assign_error": "خطأ أثناء التوزيع التلقائي."
+    }
   }
 }

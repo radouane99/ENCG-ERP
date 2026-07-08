@@ -47,5 +47,85 @@
       "notify_success": "Notification envoyée aux absents",
       "demo_success": "Convocations générées pour l'examen {{id}} (Mode démo)."
     }
+  },
+  "convocations": {
+    "title": "Gestion des Convocations d'Examens",
+    "filters": {
+      "session": "SESSION D'EXAMENS",
+      "filiere": "FILIÈRE",
+      "status": "STATUT",
+      "filiere_empty": "Toutes les filières",
+      "status_empty": "Tous les statuts"
+    },
+    "kpi": {
+      "students": "TOTAL ÉTUDIANTS",
+      "generated": "GÉNÉRÉES",
+      "sent": "ENVOYÉES",
+      "downloaded": "TÉLÉCHARGÉES",
+      "profs": "TOTAL PROFS",
+      "confirmed": "CONFIRMÉES"
+    },
+    "tabs": {
+      "students": "ÉTUDIANTS",
+      "surveillants": "SURVEILLANTS",
+      "disponibilites": "DISPONIBILITÉS"
+    },
+    "students": {
+      "actions_title": "Actions rapides — Étudiants",
+      "btn_generate_all": "GÉNÉRER TOUTES LES CONVOCATIONS",
+      "btn_send_all": "ENVOYER TOUS LES EMAILS",
+      "btn_print_all": "IMPRIMER TOUTES LES CONVOCATIONS",
+      "progress": "Progression des envois",
+      "list_title": "Liste des convocations étudiants",
+      "total_badge": "{{total}} au total",
+      "table": {
+        "student": "ÉTUDIANT",
+        "filiere": "FILIÈRE / GROUPE",
+        "exam": "EXAMEN",
+        "date": "DATE",
+        "status": "STATUT",
+        "ref": "RÉFÉRENCE",
+        "room": "Place",
+        "exam_details": "Détails Examen",
+        "status_generated": "Générée",
+        "status_pending": "En attente",
+        "empty": "Aucune convocation trouvée."
+      }
+    },
+    "surveillants": {
+      "actions_title": "Actions — Surveillance",
+      "btn_auto": "AFFECTATION AUTO DES SURVEILLANTS",
+      "btn_generate": "GÉNÉRER CONVOCATIONS PROFS",
+      "btn_send": "ENVOYER EMAILS PROFS",
+      "btn_print": "IMPRIMER CONVOCATIONS PROFS",
+      "list_title": "Convocations de surveillance",
+      "table": {
+        "prof": "PROFESSEUR",
+        "exam": "EXAMEN",
+        "datetime": "DATE / HEURE",
+        "room": "SALLE",
+        "role": "RÔLE",
+        "status": "STATUT",
+        "role_badge": "Surveillant",
+        "status_generated": "Générée",
+        "empty": "Aucun surveillant affecté."
+      }
+    },
+    "disponibilites": {
+      "title": "Disponibilités déclarées par les professeurs",
+      "view_details": "VUE DÉTAILLÉE →",
+      "table": {
+        "prof": "PROFESSEUR",
+        "dept": "DÉPARTEMENT",
+        "days": "JOURS DISPONIBLES",
+        "dates": "DATES",
+        "no_dept": "Département non spécifié",
+        "empty": "Aucune disponibilité trouvée."
+      }
+    },
+    "messages": {
+      "assign_success": "Affectation automatique réussie.",
+      "assign_error": "Erreur lors de l'affectation automatique."
+    }
   }
 }

@@ -13,7 +13,7 @@ import { Input } from '@shared/components/ui/Input'
 import { toast } from 'sonner'
 
 export default function AdmissionCampaignManager() {
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['admissions', 'common'])
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
 
@@ -31,22 +31,22 @@ export default function AdmissionCampaignManager() {
     mutationFn: ({ id, status }: { id: number, status: string }) => 
       api.patch(`/admissions/applications/${id}/status`, { status }),
     onSuccess: (res) => {
-      toast.success(res.data.message || (isRtl ? 'تم تحديث الحالة' : 'Statut mis à jour avec succès'))
+      toast.success(res.data.message || t('admissions:campaign.messages.update_success'))
       queryClient.invalidateQueries({ queryKey: ['applications', campaignId] })
     },
-    onError: () => toast.error(isRtl ? 'خطأ في التحديث' : 'Erreur lors de la mise à jour')
+    onError: () => toast.error(t('admissions:campaign.messages.update_error'))
   })
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'accepted':
-        return <Badge className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'مقبول' : 'Accepté'}</Badge>
+        return <Badge className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20"><CheckCircle2 size={12} className="me-1"/> {t('admissions:campaign.status.accepted')}</Badge>
       case 'rejected':
-        return <Badge className="bg-red-500/10 text-red-600 border-none hover:bg-red-500/20"><XCircle size={12} className="me-1"/> {isRtl ? 'مرفوض' : 'Rejeté'}</Badge>
+        return <Badge className="bg-red-500/10 text-red-600 border-none hover:bg-red-500/20"><XCircle size={12} className="me-1"/> {t('admissions:campaign.status.rejected')}</Badge>
       case 'waitlisted':
-        return <Badge className="bg-amber-500/10 text-amber-600 border-none hover:bg-amber-500/20"><Clock size={12} className="me-1"/> {isRtl ? 'لائحة الانتظار' : 'Liste d\'attente'}</Badge>
+        return <Badge className="bg-amber-500/10 text-amber-600 border-none hover:bg-amber-500/20"><Clock size={12} className="me-1"/> {t('admissions:campaign.status.waitlisted')}</Badge>
       default:
-        return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none hover:bg-[hsl(var(--muted))/80]">{isRtl ? 'قيد الانتظار' : 'En attente'}</Badge>
+        return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none hover:bg-[hsl(var(--muted))/80]">{t('admissions:campaign.status.pending')}</Badge>
     }
   }
 
@@ -68,10 +68,10 @@ export default function AdmissionCampaignManager() {
           </div>
           <div>
             <h1 className="text-3xl font-black mb-1 tracking-tight">
-              {isRtl ? 'إدارة القبول (TAFEM)' : 'Moteur de Présélection (TAFEM)'}
+              {t('admissions:campaign.title')}
             </h1>
             <p className="text-white/80 font-medium text-sm">
-              {isRtl ? 'فرز وإدارة المترشحين لولوج المدرسة' : 'Calcul du seuil, tri par mérite et gestion des admissions.'}
+              {t('admissions:campaign.subtitle')}
             </p>
           </div>
         </div>
@@ -83,26 +83,26 @@ export default function AdmissionCampaignManager() {
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm relative overflow-hidden group">
             <div className="absolute -end-6 -top-6 w-24 h-24 bg-[hsl(var(--color-primary))/5] rounded-full blur-2xl transition-transform group-hover:scale-150"></div>
             <h2 className="font-black text-lg mb-6 text-[hsl(var(--foreground))] relative z-10">
-              {isRtl ? 'حملة 2026-2027' : 'Campagne 2026-2027'}
+              {t('admissions:campaign.card.title')}
             </h2>
             
             <div className="space-y-4 text-sm text-[hsl(var(--muted-foreground))] relative z-10">
               <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
-                <span className="font-bold">{isRtl ? 'الصيغة المعتمدة:' : 'Formule :'}</span>
+                <span className="font-bold">{t('admissions:campaign.card.formula')}</span>
                 <Badge variant="outline" className="bg-[hsl(var(--background))]">75% Nat + 25% Reg</Badge>
               </div>
               <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
-                <span className="font-bold">{isRtl ? 'الطاقة الاستيعابية:' : 'Capacité Cible :'}</span>
-                <span className="font-black text-[hsl(var(--foreground))]">450 {isRtl ? 'مقعد' : 'places'}</span>
+                <span className="font-bold">{t('admissions:campaign.card.capacity')}</span>
+                <span className="font-black text-[hsl(var(--foreground))]">450 {t('admissions:campaign.card.places')}</span>
               </div>
               <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
-                <span className="font-bold">{isRtl ? 'المسجلون:' : 'Inscrits :'}</span>
+                <span className="font-bold">{t('admissions:campaign.card.enrolled')}</span>
                 <span className="font-black text-[hsl(var(--foreground))]">12,500</span>
               </div>
             </div>
 
             <Button className="w-full mt-6 bg-[#A80A0B] hover:bg-[#A80A0B]/90 text-white font-bold h-12 shadow-md shadow-[#A80A0B]/20" icon={<Calculator size={18}/>}>
-              {isRtl ? 'احتساب عتبة الانتقاء' : 'Calculer le Seuil (Rank)'}
+              {t('admissions:campaign.card.calculate')}
             </Button>
           </div>
         </div>
@@ -113,20 +113,20 @@ export default function AdmissionCampaignManager() {
             <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
               <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
                 <div className="p-2 bg-[hsl(var(--color-primary))/10] rounded-lg text-[hsl(var(--color-primary))]"><Users size={18} /></div>
-                {isRtl ? 'لائحة المترشحين' : 'Dossiers de candidature'}
+                {t('admissions:campaign.list.title')}
               </h2>
               
               <div className="flex gap-3">
                 <div className="w-64">
                   <Input 
-                    placeholder={isRtl ? 'بحث...' : 'Rechercher...'} 
+                    placeholder={t('admissions:campaign.list.search')} 
                     value={search} 
                     onChange={e => setSearch(e.target.value)} 
                     icon={<Search size={16}/>}
                   />
                 </div>
                 <Button variant="outline" icon={<Download size={16}/>} className="bg-[hsl(var(--background))]">
-                  {isRtl ? 'تصدير' : 'Exporter'}
+                  {t('admissions:campaign.list.export')}
                 </Button>
               </div>
             </div>
@@ -140,11 +140,11 @@ export default function AdmissionCampaignManager() {
                 <table className="w-full text-sm text-start">
                   <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="px-6 py-4">{isRtl ? 'الترتيب' : 'Rang'}</th>
-                      <th className="px-6 py-4">{isRtl ? 'الاسم الكامل' : 'Nom Complet'}</th>
-                      <th className="px-6 py-4 text-center">{isRtl ? 'المعدل المحسوب' : 'Score Calculé'}</th>
-                      <th className="px-6 py-4 text-center">{isRtl ? 'الحالة' : 'Statut'}</th>
-                      <th className="px-6 py-4 text-end">{isRtl ? 'تحديث الحالة' : 'Actions (Statut)'}</th>
+                      <th className="px-6 py-4">{t('admissions:campaign.list.table.rank')}</th>
+                      <th className="px-6 py-4">{t('admissions:campaign.list.table.name')}</th>
+                      <th className="px-6 py-4 text-center">{t('admissions:campaign.list.table.score')}</th>
+                      <th className="px-6 py-4 text-center">{t('admissions:campaign.list.table.status')}</th>
+                      <th className="px-6 py-4 text-end">{t('admissions:campaign.list.table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -188,7 +188,7 @@ export default function AdmissionCampaignManager() {
                         <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
                           <div className="flex flex-col items-center gap-2">
                             <Target className="w-8 h-8 opacity-20" />
-                            {isRtl ? 'لا يوجد مترشحين' : 'Aucune candidature trouvée.'}
+                            {t('admissions:campaign.list.empty')}
                           </div>
                         </td>
                       </tr>

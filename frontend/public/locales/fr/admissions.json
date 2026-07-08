@@ -1,0 +1,89 @@
+{
+  "campaign": {
+    "title": "Moteur de Présélection (TAFEM)",
+    "subtitle": "Calcul du seuil, tri par mérite et gestion des admissions.",
+    "card": {
+      "title": "Campagne 2026-2027",
+      "formula": "Formule :",
+      "capacity": "Capacité Cible :",
+      "enrolled": "Inscrits :",
+      "places": "places",
+      "calculate": "Calculer le Seuil (Rank)"
+    },
+    "list": {
+      "title": "Dossiers de candidature",
+      "search": "Rechercher...",
+      "export": "Exporter",
+      "empty": "Aucune candidature trouvée.",
+      "table": {
+        "rank": "Rang",
+        "name": "Nom Complet",
+        "score": "Score Calculé",
+        "status": "Statut",
+        "actions": "Actions (Statut)"
+      }
+    },
+    "status": {
+      "accepted": "Accepté",
+      "rejected": "Rejeté",
+      "waitlisted": "Liste d'attente",
+      "pending": "En attente"
+    },
+    "messages": {
+      "update_success": "Statut mis à jour avec succès",
+      "update_error": "Erreur lors de la mise à jour"
+    }
+  },
+  "applications": {
+    "title": "Dossiers de Candidature",
+    "subtitle": "Gérez les demandes d'admission, étudiez les dossiers et affectez les scores.",
+    "kpis": {
+      "total": "Total Candidatures",
+      "pending": "En attente",
+      "accepted": "Admis",
+      "rejected": "Refusés"
+    },
+    "filters": {
+      "search": "Rechercher (Nom, CNE, CIN, Réf)...",
+      "all_status": "Tous les statuts"
+    },
+    "table": {
+      "candidate": "Candidat",
+      "ids": "Identifiants",
+      "bac": "Baccalauréat",
+      "score": "Score",
+      "status": "Statut",
+      "actions": "Actions",
+      "empty": "Aucune candidature trouvée.",
+      "review": "Examiner"
+    },
+    "modal": {
+      "title": "Examiner le dossier",
+      "ref": "Réf",
+      "bac_avg": "Moy. Bac",
+      "bac_year": "Année Bac",
+      "status_label": "Statut de la candidature *",
+      "score_label": "Score de sélection / Concours (Sur 20)",
+      "score_placeholder": "Ex: 14.50",
+      "reason_label": "Motif du refus *",
+      "reason_placeholder": "Ex: Dossier incomplet, note insuffisante...",
+      "cancel": "Annuler",
+      "submit": "Valider la décision"
+    },
+    "status_labels": {
+      "pending": "En attente",
+      "under_review": "En cours d'examen",
+      "accepted": "Admis",
+      "rejected": "Refusé",
+      "waitlisted": "Sur liste d'attente"
+    },
+    "messages": {
+      "update_success": "Statut de la candidature mis à jour.",
+      "update_error": "Erreur lors de la mise à jour.",
+      "delete_confirm": "Supprimer définitivement cette candidature ?",
+      "delete_success": "Candidature supprimée.",
+      "delete_error": "Erreur lors de la suppression.",
+      "loading": "Chargement..."
+    }
+  }
+}
