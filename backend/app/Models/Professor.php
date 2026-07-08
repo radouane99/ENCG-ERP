@@ -12,22 +12,50 @@ class Professor extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'institution_id',
-        'user_id',
-        'department_id',
-        'employee_number',
-        'grade',
-        'specialty',
-        'contract_type',
-        'hire_date',
-        'is_active',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'hire_date' => 'date',
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'hire_date' => 'date',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->first_name ?? null,
+        );
+    }
+
+    protected function lastName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->last_name ?? null,
+        );
+    }
+
+    protected function email(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->email ?? null,
+        );
+    }
+
+    protected function phone(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->phone ?? null,
+        );
+    }
+
+    protected function cin(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->cin ?? null,
+        );
+    }
 
     public function institution(): BelongsTo
     {

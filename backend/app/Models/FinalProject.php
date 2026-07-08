@@ -10,23 +10,19 @@ class FinalProject extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id',
-        'academic_year_id',
-        'student_id',
-        'title',
-        'title_ar',
-        'description',
-        'type',
-        'company_name',
-        'company_city',
-        'status',
-        'report_path',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'status' => \App\Enums\FinalProjectStatus::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => \App\Enums\FinalProjectStatus::class,
+        ];
+    }
+
+    public function projectDefenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectDefense::class);
+    }
 
     public function institution(): BelongsTo
     {

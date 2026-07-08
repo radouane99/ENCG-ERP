@@ -9,21 +9,34 @@ class Internship extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'institution_id', 'student_id', 'academic_year_id', 'type', 'company_name', 
-        'company_address', 'company_city', 'supervisor_name', 'supervisor_email', 
-        'supervisor_phone', 'position_title', 'start_date', 'end_date', 
-        'agreement_file_path', 'status', 'professor_supervisor_id'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'status' => \App\Enums\InternshipStatus::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'status' => \App\Enums\InternshipStatus::class,
+        ];
+    }
 
-    public function student()
+    public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function internshipDocuments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InternshipDocument::class);
+    }
+
+    public function internshipReports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InternshipReport::class);
+    }
+
+    public function internshipEvaluations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InternshipEvaluation::class);
     }
 }

@@ -12,24 +12,19 @@ class ProfessorAvailability extends Model
 
     protected $table = 'professor_availabilities';
 
-    protected $fillable = [
-        'professor_id',
-        'academic_year_id',
-        'semester_id',
-        'day_of_week',
-        'start_time',
-        'end_time',
-        'is_available',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'is_available' => 'boolean',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
-    ];
-
-    public function professor(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class, 'professor_id');
+        return [
+            'is_available' => 'boolean',
+            'start_time' => 'datetime:H:i',
+            'end_time' => 'datetime:H:i',
+        ];
+    }
+
+    public function professor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Professor::class, 'professor_id');
     }
 }

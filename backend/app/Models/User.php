@@ -31,27 +31,7 @@ class User extends Authenticatable implements HasMedia
             ->logOnlyDirty();
     }
 
-    protected $fillable = [
-        'institution_id',
-        'name',
-        'first_name',
-        'last_name',
-        'name_ar',
-        'first_name_ar',
-        'last_name_ar',
-        'cin',
-        'email',
-        'phone',
-        'password',
-        'locale',
-        'is_active',
-        'last_login_at',
-        'last_login_ip',
-        'two_factor_enabled',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'two_factor_confirmed_at',
-    ];
+    protected $guarded = ['id'];
 
     protected $hidden = [
         'password',
@@ -82,8 +62,13 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsTo(Institution::class);
     }
 
-    public function student()
+    public function student(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Student::class);
+    }
+
+    public function professor(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Professor::class);
     }
 }

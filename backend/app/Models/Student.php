@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\StudentPathway;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,30 +24,50 @@ class Student extends Model
             ->logOnlyDirty();
     }
 
-    protected $fillable = [
-        'institution_id',
-        'user_id',
-        'student_number',
-        'cne',
-        'massar_code',
-        'birth_date',
-        'birth_city',
-        'city',
-        'region',
-        'postal_code',
-        'emergency_contact_name',
-        'emergency_contact_phone',
-        'emergency_contact_relation',
-        'status',
-        'scholarship_type',
-        'has_disability',
-        'disability_details',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'birth_date' => 'date',
-        'has_disability' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'birth_date' => 'date',
+            'has_disability' => 'boolean',
+        ];
+    }
+
+    protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->first_name ?? null,
+        );
+    }
+
+    protected function lastName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->last_name ?? null,
+        );
+    }
+
+    protected function email(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->email ?? null,
+        );
+    }
+
+    protected function phone(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->phone ?? null,
+        );
+    }
+
+    protected function cin(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->user->cin ?? null,
+        );
+    }
 
     public function institution(): BelongsTo
     {

@@ -9,50 +9,38 @@ class Quiz extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'module_id',
-        'academic_year_id',
-        'title',
-        'instructions',
-        'duration_minutes',
-        'max_attempts',
-        'pass_score',
-        'randomize_questions',
-        'show_results_immediately',
-        'available_from',
-        'available_until',
-        'is_published',
-        'ai_generated',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'available_from' => 'datetime',
-        'available_until' => 'datetime',
-        'randomize_questions' => 'boolean',
-        'show_results_immediately' => 'boolean',
-        'is_published' => 'boolean',
-        'ai_generated' => 'boolean',
-        'pass_score' => 'decimal:2',
-        'status' => \App\Enums\QuizStatus::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'available_from' => 'datetime',
+            'available_until' => 'datetime',
+            'randomize_questions' => 'boolean',
+            'show_results_immediately' => 'boolean',
+            'is_published' => 'boolean',
+            'ai_generated' => 'boolean',
+            'pass_score' => 'decimal:2',
+            'status' => \App\Enums\QuizStatus::class,
+        ];
+    }
 
-    public function module()
+    public function module(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Module::class);
     }
 
-    public function academicYear()
+    public function academicYear(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function questions()
+    public function questions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(QuizQuestion::class);
     }
 
-    public function attempts()
+    public function attempts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(QuizAttempt::class);
     }
