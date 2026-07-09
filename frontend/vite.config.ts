@@ -43,11 +43,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://nginx',
         changeOrigin: true,
       },
       '/broadcasting': {
-        target: 'http://localhost:8080',
+        target: 'http://reverb:8080',
         ws: true,
         changeOrigin: true,
       },
