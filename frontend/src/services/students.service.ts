@@ -2,11 +2,21 @@ import { api } from '@/api/axios';
 import type { Student, PaginatedResponse, ApiResponse } from '@/types/models';
 import type { StoreStudentInput, UpdateStudentInput } from '@/schemas/student.schema';
 
+// [FE-01] Typed query parameters — replaces Record<string, any>
+export interface StudentQueryParams {
+  search?: string;
+  status?: string;
+  page?: number;
+  per_page?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
+}
+
 export const StudentsService = {
   /**
    * Get paginated list of students
    */
-  async getStudents(params?: Record<string, any>): Promise<PaginatedResponse<Student>> {
+  async getStudents(params?: StudentQueryParams): Promise<PaginatedResponse<Student>> {
     const response = await api.get('/students', { params });
     return response.data;
   },

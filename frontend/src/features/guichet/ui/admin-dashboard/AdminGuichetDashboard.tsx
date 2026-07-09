@@ -130,3 +130,6 @@ export const AdminGuichetDashboard: React.FC = () => {
     </div>
   );
 };
+
+// [Phase 8] Default export required for React.lazy() dynamic import
+export default AdminGuichetDashboard;

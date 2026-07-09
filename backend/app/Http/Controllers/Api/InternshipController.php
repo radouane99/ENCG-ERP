@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\InternshipResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\Academic\CareerService;
 
+/**
+ * [Phase 8] InternshipController — refactored to use InternshipResource.
+ */
 class InternshipController extends Controller
 {
     protected CareerService $careerService;
@@ -24,10 +28,10 @@ class InternshipController extends Controller
         abort_unless($request->user()->can('internships.view'), 403);
 
         $internships = $this->careerService->getAllInternships();
-        
+
+        // [Phase 8] Return InternshipResource collection
         return response()->json([
-            'success' => true,
-            'data' => $internships
+            'data' => InternshipResource::collection($internships),
         ]);
     }
 
@@ -37,22 +41,20 @@ class InternshipController extends Controller
     public function update(\App\Http\Requests\Internship\UpdateInternshipRequest $request, \App\Models\Internship $internship, \App\Actions\Internship\UpdateInternshipAction $action): JsonResponse
     {
         try {
-            $updatedInternship = $action->execute($internship, $request->validated());
+            $updated = $action->execute($internship, $request->validated());
 
             return response()->json([
-                'success' => true, 
-                'data' => $updatedInternship
+                'success' => true,
+                // [Phase 8] Wrap in Resource
+                'data'    => new InternshipResource($updated->load(['student', 'supervisor'])),
             ]);
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false, 
-                'message' => $e->getMessage()
-            ], 400);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Erreur lors de la mise à jour du stage.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

@@ -17,7 +17,10 @@ class RequireAdmin2FA
     {
         $user = $request->user();
 
-        if ($user && $user->hasRole('admin')) {
+        // [AUDIT SEC-05] Fixed: check all admin roles, not just non-existent 'admin' role
+        $adminRoles = ['super-admin', 'institution-admin', 'director'];
+
+        if ($user && $user->hasAnyRole($adminRoles)) {
             if (!$user->two_factor_confirmed_at) {
                 return response()->json([
                     'message' => '2FA is required for administrator accounts. Please complete 2FA setup.',

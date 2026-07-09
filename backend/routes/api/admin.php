@@ -133,13 +133,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/applications/{application}', [\App\Http\Controllers\Api\AdmissionController::class, 'destroy']);
     });
 
-    // HR & Vacataires
-    Route::prefix('hr/vacations')->group(function () {
-        // Route::post('/contracts/{contract}/generate-payment', [VacationController::class, 'generatePayment']);
-        // Route::post('/payments/export', [VacationController::class, 'exportBankFile']);
-    });
-
-    // Exports
+    // Exports (admin-only Excel export)
     Route::get('/export/students', function (\Illuminate\Http\Request $request) {
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\StudentsExport(), 'etudiants.xlsx');
     });
@@ -175,7 +169,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Old endpoints are replaced by the /convocations group below
         Route::get('/{examId}/live-stats', [\App\Http\Controllers\Api\ConvocationController::class, 'liveStats']);
         Route::get('/{examId}/details', [\App\Http\Controllers\Api\ConvocationController::class, 'getDetails']);
-        Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
+        // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
         Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
         
         // Student endpoints
@@ -250,25 +244,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/campaigns/{campaignId}/calculate-seuil', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'calculateSeuil']);
     });
 
-    // AI Assistant & Features
-    Route::get('/chatbot/history', [\App\Http\Controllers\Api\AiAssistantController::class, 'history']);
-    Route::post('/chatbot/message', [\App\Http\Controllers\Api\AiAssistantController::class, 'chat']);
-    Route::post('/chatbot/transcribe', [\App\Http\Controllers\Api\AiAssistantController::class, 'transcribe']);
-    Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
-
-    // Alumni / Insertion Pro
-    Route::prefix('alumni')->group(function () {
-        Route::get('/dashboard-stats', [\App\Http\Controllers\Api\AlumniController::class, 'getDashboardStats']);
-    });
-
-    // HR & Vacataires
-    Route::prefix('vacataire-manager')->group(function () {
-        // Route::get('/contracts', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getContracts']);
-        // Route::get('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'getSessions']);
-        // Route::post('/contracts/{id}/sessions', [\App\Http\Controllers\Api\VacataireManagerController::class, 'logSession']);
-        // Route::post('/contracts/{id}/payments', [\App\Http\Controllers\Api\VacataireManagerController::class, 'generatePayment']);
-    });
-
+    // [AUDIT ROUTE-01] Chatbot, alumni, REST, and dashboard routes moved to shared.php
+    // [AUDIT ROUTE-02] Dead vacataire-manager group (all-commented) removed
     // Student Portal
     Route::prefix('student-portal')->group(function () {
         Route::get('/grades', [\App\Http\Controllers\Api\StudentPortalController::class, 'getGrades']);
@@ -276,31 +253,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/absences', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsence']);
     });
 
+    // [AUDIT ROUTE-01] Dashboard routes (stats, search, timeline, pilotage) live in shared.php
+    // Admin-exclusive APOGEE Academic Engine routes kept here:
     Route::prefix('dashboard')->group(function () {
-    // Dashboard & Pilotage
-    Route::get('/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStats']);
-    Route::get('/pilotage/metrics', [\App\Http\Controllers\Api\PilotageController::class, 'getGlobalMetrics']);
-        Route::get('/admin/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getAdminStats']);
-        Route::get('/executive/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getExecutiveStats']);
-        Route::get('/student/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStudentStats']);
-        Route::get('/professor/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
-        // For the generic dashboard fetch
-        Route::get('/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getAdminStats']); 
-        
-        // Activity Timeline
-        Route::get('/timeline', [\App\Http\Controllers\Api\TimelineController::class, 'index']);
-        
-        // Global Search
-        Route::get('/search', [\App\Http\Controllers\Api\SearchController::class, 'search']);
-        
-        // APOGEE Academic Engine
         Route::post('/academic/grade-periods', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'openGradePeriod']);
         Route::post('/academic/deliberation/run', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'runDeliberation']);
         Route::get('/academic/reports/{type}', [\App\Http\Controllers\Api\AcademicReportController::class, 'generate']);
     });
 
-    // Timetable
-    Route::get('/timetable/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
+    // [AUDIT ROUTE-01] /timetable/export duplicate removed (already in shared.php)
     // ---------------------------------------------------------
     // GENERATION DE DOCUMENTS PDF (DomPDF)
     // ---------------------------------------------------------
@@ -318,9 +279,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
 });
 
-// Public Documents & Cards Verification
-Route::get('/verify/document/{documentId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyDocument']);
-Route::get('/verify/card/{token}', [\App\Http\Controllers\Api\StudentCardController::class, 'verify']);
+// [AUDIT ROUTE-01] Public verify routes are already in shared.php — removed duplicates here.
 
 // Mobile App Student Portal API
 // Authenticated Routes

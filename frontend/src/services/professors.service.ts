@@ -2,13 +2,21 @@ import { api } from '@/api/axios';
 import type { Professor, PaginatedResponse, ApiResponse } from '@/types/models';
 import type { StoreProfessorInput, UpdateProfessorInput } from '@/schemas/professor.schema';
 
+// [FE-01] Typed query parameters — replaces Record<string, any>
+export interface ProfessorQueryParams {
+  search?: string;
+  contract_type?: 'permanent' | 'contractual' | 'visiting';
+  page?: number;
+  per_page?: number;
+}
+
 export const BASE_URL = '/hr/professors';
 
 export const ProfessorsService = {
   /**
    * Get paginated list of professors
    */
-  async getProfessors(params?: Record<string, any>): Promise<PaginatedResponse<Professor>> {
+  async getProfessors(params?: ProfessorQueryParams): Promise<PaginatedResponse<Professor>> {
     const response = await api.get(BASE_URL, { params });
     return response.data;
   },

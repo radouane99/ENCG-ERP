@@ -26,6 +26,9 @@ class VacataireController extends Controller
      */
     public function index(): JsonResponse
     {
+        // [AUDIT SEC-02] Authorization guard
+        abort_unless(request()->user()->can('hr.view'), 403);
+
         $professors = $this->vacataireService->getAllVacataires();
         
         $mapped = $professors->map(function ($p) {
@@ -80,6 +83,9 @@ class VacataireController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // [AUDIT SEC-02] Authorization guard
+        abort_unless($request->user()->can('hr.manage'), 403);
+
         $validated = $request->validate([
             'first_name'    => 'required|string|max:100',
             'last_name'     => 'required|string|max:100',
@@ -108,7 +114,7 @@ class VacataireController extends Controller
             'is_active' => true,
         ];
 
-        $professor = $this->professorService->createProfessor($profData, 1);
+        $professor = $this->professorService->createProfessor($profData, $request->user()->institution_id ?? 1);
 
         $contractData = [
             'professor_id' => $professor->id,
@@ -127,6 +133,9 @@ class VacataireController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
+        // [AUDIT SEC-02] Authorization guard
+        abort_unless($request->user()->can('hr.manage'), 403);
+
         $professor = Professor::findOrFail($id);
 
         $validated = $request->validate([
@@ -183,6 +192,9 @@ class VacataireController extends Controller
 
     public function destroy($id): JsonResponse
     {
+        // [AUDIT SEC-02] Authorization guard
+        abort_unless(request()->user()->can('hr.manage'), 403);
+
         $professor = Professor::findOrFail($id);
         
         // Delete related contracts

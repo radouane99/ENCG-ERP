@@ -12,8 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            // Modularized API Routes
-            Route::middleware('api')
+            // Modularized API Routes — [AUDIT PERF-04] throttle:api applied globally
+            Route::middleware(['api', 'throttle:api'])
                 ->prefix('api')
                 ->group(function () {
                     require base_path('routes/api/auth.php');

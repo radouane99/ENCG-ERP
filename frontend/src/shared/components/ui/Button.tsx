@@ -101,6 +101,12 @@ export interface ButtonProps
   leadingIcon?: React.ReactNode
   /** Icon placed at the END of the button (RTL-aware). */
   trailingIcon?: React.ReactNode
+  /**
+   * Alias for `leadingIcon` — accepted for backwards compatibility with
+   * pages written before the leadingIcon/trailingIcon split.
+   * @deprecated Use `leadingIcon` instead.
+   */
+  icon?: React.ReactNode
 }
 
 // ── Component ────────────────────────────────────────────────────
@@ -114,6 +120,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       loadingText,
       leadingIcon,
       trailingIcon,
+      // icon is accepted as an alias for leadingIcon
+      icon,
       children,
       disabled,
       ...props
@@ -139,10 +147,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           />
         )}
 
-        {/* Leading icon (when not loading) — RTL-safe spacing */}
-        {!isLoading && leadingIcon && (
+        {/* Leading icon / icon alias (when not loading) — RTL-safe spacing */}
+        {!isLoading && (leadingIcon ?? icon) && (
           <span className="shrink-0 me-0.5" aria-hidden="true">
-            {leadingIcon}
+            {leadingIcon ?? icon}
           </span>
         )}
 

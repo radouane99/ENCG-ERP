@@ -131,7 +131,7 @@ export default function AdminRequestsPage() {
   )
 }
 
-function RequestCard({ request, onPreview, onApprove, onReject, t }: { request: any, onPreview: () => void, onApprove?: () => void, onReject?: () => void, t: any }) {: { request: any, onPreview: () => void, onApprove?: () => void, onReject?: () => void }) {
+function RequestCard({ request, onPreview, onApprove, onReject, t }: { request: any, onPreview: () => void, onApprove?: () => void, onReject?: () => void, t: (key: string) => string }) {
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col transition-all hover:shadow-md cursor-grab active:cursor-grabbing">
       <div className="flex items-start justify-between mb-4">
