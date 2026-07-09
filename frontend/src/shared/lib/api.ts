@@ -39,7 +39,7 @@ api.interceptors.response.use(
     }
 
     if (status === 403) {
-      toast.error('Accès non autorisé')
+      toast.error('Accès Refusé : Vous n\'avez pas les permissions nécessaires.')
       return Promise.reject(error)
     }
 

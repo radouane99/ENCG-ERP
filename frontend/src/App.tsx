@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
 import RootRouter from './app/routes/RootRouter'
+import { GlobalErrorBoundary } from '@shared/components/GlobalErrorBoundary'
 
 /**
  * App.tsx - Root Application Entry Point
@@ -21,7 +22,9 @@ export default function App() {
         In a real scenario, Global Context Providers (QueryClient, Toaster, AuthProvider) 
         would wrap the RootRouter here. For now, we keep it minimal.
       */}
-      <RootRouter />
+      <GlobalErrorBoundary>
+        <RootRouter />
+      </GlobalErrorBoundary>
     </Suspense>
   )
 }

@@ -5,7 +5,7 @@ import { Button } from '@shared/components/ui/Button'
 import { toast } from 'sonner'
 import { gradeEntrySchema } from '../../../schemas/grade.schema'
 import { ZodError } from 'zod'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/Select'
+
 import { Badge } from '@shared/components/ui/Badge'
 
 // Dummy data for scaffolding
@@ -66,15 +66,14 @@ export default function GradeEntryTable() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-4">
           <CardTitle>Saisie des Notes (CC - Management)</CardTitle>
-          <Select value={sessionType} onValueChange={(val: any) => setSessionType(val)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Session" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="NORMALE">Session Normale</SelectItem>
-              <SelectItem value="RATTRAPAGE">Session Rattrapage</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            value={sessionType}
+            onChange={(e) => setSessionType(e.target.value as any)}
+            className="w-[180px] p-2 border rounded"
+          >
+            <option value="NORMALE">Session Normale</option>
+            <option value="RATTRAPAGE">Session Rattrapage</option>
+          </select>
         </div>
         <Button onClick={handleSave}>Save All Grades</Button>
       </CardHeader>

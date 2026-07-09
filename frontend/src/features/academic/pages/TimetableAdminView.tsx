@@ -23,6 +23,12 @@ export default function TimetableAdminView() {
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
   const [conflictDetails, setConflictDetails] = useState<any>(null)
 
+  // State for selectors
+  const [academicYearId, setAcademicYearId] = useState(1)
+  const [semesterId, setSemesterId] = useState(1)
+  const [filiereId, setFiliereId] = useState(1)
+  const institutionId = 1 // Default institution
+
   // MOCK DATA for Demo purposes (Replace with actual queries later)
   const [events, setEvents] = useState([
     {
@@ -47,17 +53,32 @@ export default function TimetableAdminView() {
 
   const generateMutation = useMutation({
     mutationFn: () => api.post('/timetable/generate', {
-      institution_id: 1,
-      academic_year_id: 1,
-      semester_id: 1,
-      filiere_id: 1
+      institution_id: institutionId,
+      academic_year_id: academicYearId,
+      semester_id: semesterId,
+      filiere_id: filiereId
     }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       toast.success(res.data.message || (isRtl ? 'تم إنشاء الجدول بنجاح!' : 'Emploi du temps généré avec succès !'))
       queryClient.invalidateQueries({ queryKey: ['timetable'] })
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || (isRtl ? 'خطأ أثناء الإنشاء' : 'Erreur lors de la génération.'))
+    }
+  })
+
+  const publishMutation = useMutation({
+    mutationFn: () => api.post('/timetable/publish', {
+      academic_year_id: academicYearId,
+      semester_id: semesterId,
+      filiere_id: filiereId
+    }),
+    onSuccess: (res: any) => {
+      toast.success(res.data.message || (isRtl ? 'تم نشر الجداول بنجاح!' : 'Emplois du temps publiés avec succès !'))
+      queryClient.invalidateQueries({ queryKey: ['timetable'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || (isRtl ? 'خطأ أثناء النشر' : 'Erreur lors de la publication.'))
     }
   })
 
@@ -75,7 +96,7 @@ export default function TimetableAdminView() {
 
     try {
       const res = await conflictCheckMutation.mutateAsync({
-        schedule_id: parseInt(event.id),
+        schedule_id: event.id, // String UUID
         new_day: newDay,
         new_start_time: newStart,
         new_end_time: newEnd,
@@ -189,14 +210,22 @@ export default function TimetableAdminView() {
         
         <div className="relative z-10 flex flex-wrap items-center gap-3">
           <div className="flex bg-[hsl(var(--muted)/30)] p-1 rounded-xl border border-[hsl(var(--border))]">
-            <select className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8">
-              <option>S6 - Génie Info</option>
-              <option>S4 - Tronc Commun</option>
+            <select 
+              value={filiereId}
+              onChange={(e) => setFiliereId(Number(e.target.value))}
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8"
+            >
+              <option value={1}>S6 - Génie Info</option>
+              <option value={2}>S4 - Tronc Commun</option>
             </select>
             <div className="w-px bg-[hsl(var(--border))] mx-2 my-1"></div>
-            <select className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8">
-              <option>{isRtl ? 'المجموعة 1' : 'Groupe 1'}</option>
-              <option>{isRtl ? 'المجموعة 2' : 'Groupe 2'}</option>
+            <select 
+              value={semesterId}
+              onChange={(e) => setSemesterId(Number(e.target.value))}
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8"
+            >
+              <option value={1}>Semestre 1</option>
+              <option value={2}>Semestre 2</option>
             </select>
           </div>
           
@@ -204,10 +233,20 @@ export default function TimetableAdminView() {
             onClick={() => generateMutation.mutate()}
             isLoading={generateMutation.isPending}
             variant="primary"
-            className="rounded-xl px-6 bg-[#A80A0B] hover:bg-[#7D0809] text-white border-none shadow-lg shadow-red-900/20"
+            className="rounded-xl px-6 bg-[#0f2863] hover:bg-[#1a387e] text-white border-none shadow-lg shadow-blue-900/20"
             icon={<Cpu size={18} />}
           >
-            {isRtl ? 'توليد ذكي (IA)' : 'Génération Automatique IA'}
+            {isRtl ? 'توليد ذكي (IA)' : 'Génération IA (Brouillon)'}
+          </Button>
+
+          <Button
+            onClick={() => publishMutation.mutate()}
+            isLoading={publishMutation.isPending}
+            variant="primary"
+            className="rounded-xl px-6 bg-[#A80A0B] hover:bg-[#7D0809] text-white border-none shadow-lg shadow-red-900/20"
+            icon={<CheckCircle2 size={18} />}
+          >
+            {isRtl ? 'نشر' : 'Publier'}
           </Button>
         </div>
       </div>
