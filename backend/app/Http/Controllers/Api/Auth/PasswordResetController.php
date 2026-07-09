@@ -57,17 +57,23 @@ class PasswordResetController extends Controller
             return response()->json(['success' => false, 'message' => 'Token expire.'], 400);
         }
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Token invalide ou expire.'], 400);
+        try {
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Token invalide ou expire.'], 400);
+            }
+
+            // The User model has a 'hashed' cast for password, so we don't need Hash::make
+            $user->password = $request->password;
+            $user->save();
+
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+            return response()->json(['success' => true, 'message' => 'Mot de passe reinitialise avec succes.']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Reset password error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
         }
-
-        $user->password = Hash::make($request->password);
-        $user->save();
-
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-
-        return response()->json(['success' => true, 'message' => 'Mot de passe reinitialise avec succes.']);
     }
 
     private function genericResetResponse()
