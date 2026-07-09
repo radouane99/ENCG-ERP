@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Mobile\MobileStudentController;
 
 // Mobile App Student Portal API
-Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
+Route::middleware(['auth:sanctum', 'role:student', \App\Http\Middleware\EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
     Route::get('/profile', [MobileStudentController::class, 'profile']);
     Route::get('/schedule', [MobileStudentController::class, 'schedule']);
     Route::get('/grades', [MobileStudentController::class, 'grades']);
@@ -13,7 +13,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureInstitutionContext
 });
 
 // Web App Student Portal API
-Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function () {
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Api\StudentPortalController::class, 'getDashboardStats']);
     Route::get('/schedule', [\App\Http\Controllers\Api\StudentPortalController::class, 'getSchedule']);
     Route::get('/grades', [\App\Http\Controllers\Api\StudentPortalController::class, 'getGrades']);

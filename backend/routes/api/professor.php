@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Professor API
-Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
+Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/professor')->group(function () {
     Route::post('/attendance/session', [\App\Http\Controllers\Api\AttendanceController::class, 'createSession']);
     Route::get('/attendance/session/{id}/stats', [\App\Http\Controllers\Api\AttendanceController::class, 'sessionStats']);
     
@@ -16,7 +16,7 @@ Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
     Route::get('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
 });
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function () {
     // Professor Availability
     Route::prefix('professor-availability')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);

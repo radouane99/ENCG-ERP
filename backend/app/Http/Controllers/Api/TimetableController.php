@@ -64,7 +64,7 @@ class TimetableController extends Controller
     public function checkConflict(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'schedule_id' => 'required|integer',
+            'schedule_id' => 'required|string',
             'new_day' => 'required|integer',
             'new_start_time' => 'required',
             'new_end_time' => 'required',
@@ -90,5 +90,33 @@ class TimetableController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /**
+     * Publish drafted schedules for a specific filiere and semester
+     */
+    public function publish(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'academic_year_id' => 'required|integer',
+            'semester_id' => 'required|integer',
+            'filiere_id' => 'required|integer'
+        ]);
+
+        $groupIds = \App\Models\Group::where('filiere_id', $validated['filiere_id'])
+                       ->where('academic_year_id', $validated['academic_year_id'])
+                       ->pluck('id');
+
+        $updated = DB::table('schedules')
+            ->where('academic_year_id', $validated['academic_year_id'])
+            ->where('semester_id', $validated['semester_id'])
+            ->whereIn('group_id', $groupIds)
+            ->where('is_active', false)
+            ->update(['is_active' => true, 'updated_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$updated} emplois du temps publiés avec succès."
+        ]);
     }
 }

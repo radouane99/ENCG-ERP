@@ -19,7 +19,7 @@ class ConflictResolutionService
      * Used when Admin Drags & Drops a schedule block.
      * Returns true if valid, or a conflict message and alternative suggestions.
      */
-    public function validateAndSuggestMove(int $scheduleId, int $newDay, string $newStart, string $newEnd, int $newRoomId): array
+    public function validateAndSuggestMove(string $scheduleId, int $newDay, string $newStart, string $newEnd, int $newRoomId): array
     {
         $schedule = DB::table('schedules')->where('id', $scheduleId)->first();
         if (!$schedule) return ['success' => false, 'message' => 'Schedule not found'];

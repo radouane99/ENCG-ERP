@@ -13,9 +13,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+use App\Domain\Auth\Services\RegisterUserService;
+
 class AuthController extends Controller
 {
-    public function __construct(protected TwoFactorAuthService $twoFactorService) {}
+    public function __construct(
+        protected TwoFactorAuthService $twoFactorService,
+        protected RegisterUserService $registerUserService
+    ) {}
 
 
     /**
@@ -169,68 +174,7 @@ class AuthController extends Controller
         ]);
 
         try {
-            \Illuminate\Support\Facades\DB::beginTransaction();
-
-            // 1. Create User
-            $user = \App\Models\User::create([
-                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'phone' => $validated['phone'],
-                'is_active' => true,
-            ]);
-
-            // 2. Find an active Admission Campaign or create a default one
-            $campaign = \App\Models\AdmissionCampaign::where('status', 'open')->first();
-            
-            if (!$campaign) {
-                // Get default institution and filiere (Tronc Commun or the chosen one)
-                $institution = \App\Models\Institution::first();
-                $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
-                // Map filiere name to code (simple matching or default to TC)
-                $filiereModel = \App\Models\Filiere::where('name', 'like', '%' . $validated['filiere'] . '%')->first() 
-                                ?? \App\Models\Filiere::first();
-
-                if ($institution && $academicYear && $filiereModel) {
-                    $campaign = \App\Models\AdmissionCampaign::create([
-                        'institution_id' => $institution->id,
-                        'academic_year_id' => $academicYear->id,
-                        'filiere_id' => $filiereModel->id,
-                        'name' => 'Campagne d\'Admission ' . $academicYear->label,
-                        'status' => 'open',
-                        'open_date' => now(),
-                        'close_date' => now()->addMonths(2),
-                        'target_capacity' => 500,
-                    ]);
-                }
-            }
-
-            if ($campaign) {
-                // 3. Create Application
-                $application = \App\Models\Application::create([
-                    'admission_campaign_id' => $campaign->id,
-                    'reference_number' => 'ENCG-APP-' . date('Y') . '-' . strtoupper(uniqid()),
-                    'first_name' => $validated['first_name'],
-                    'last_name' => $validated['last_name'],
-                    'email' => $validated['email'],
-                    'phone' => $validated['phone'],
-                    'cin' => $validated['cin'],
-                    'cne' => $validated['cne'],
-                    'birth_date' => $validated['birth_date'],
-                    'bac_average' => $validated['bac_average'],
-                    'bac_year' => $validated['bac_year'],
-                    'bac_series' => $validated['bac_series'],
-                    'status' => 'submitted',
-                ]);
-            }
-
-            \Illuminate\Support\Facades\DB::commit();
-
-            // Auto-login
-            $user->update([
-                'last_login_at' => now(),
-                'last_login_ip' => $request->ip()
-            ]);
+            $user = $this->registerUserService->registerUser($validated, $request->ip());
 
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
@@ -244,7 +188,6 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
             return response()->json([
                 'message' => 'Une erreur est survenue lors de l\'inscription.',
             ], 500);

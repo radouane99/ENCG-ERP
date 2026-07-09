@@ -50,8 +50,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStats']);
         Route::get('/pilotage/metrics', [\App\Http\Controllers\Api\PilotageController::class, 'getGlobalMetrics']);
-        Route::get('/admin/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getAdminStats']);
-        Route::get('/executive/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getExecutiveStats']);
+        Route::middleware(['role:super-admin|institution-admin|director|department-head'])->group(function () {
+            Route::get('/admin/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getAdminStats']);
+            Route::get('/executive/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getExecutiveStats']);
+        });
         Route::get('/student/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getStudentStats']);
         Route::get('/professor/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
         

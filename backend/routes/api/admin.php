@@ -12,28 +12,9 @@ use App\Http\Controllers\Api\ContactController;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::prefix('v1/auth')->group(function () {
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:5,1');
-    
-    // Google Socialite Auth
-    Route::get('/google/redirect', [AuthController::class, 'redirectToGoogle']);
-    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback']);
-    
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/me', [AuthController::class, 'me']);
-        // 2FA management routes (authenticated user)
-        Route::post('/two-factor/setup', [AuthController::class, 'setup2FA']);
-        Route::post('/two-factor/confirm', [AuthController::class, 'confirm2FA']);
-        Route::delete('/two-factor/disable', [AuthController::class, 'disable2FA']);
-    });
-});
 
-Route::middleware(['auth:sanctum'])->group(function () {
+
+Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -145,6 +126,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/export/{type}/{id}/pdf', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportPdf']);
         Route::get('/export/{type}/{id}/ics', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportIcs']);
         Route::post('/generate', [\App\Http\Controllers\Api\TimetableController::class, 'generate']);
+        Route::post('/publish', [\App\Http\Controllers\Api\TimetableController::class, 'publish']);
         Route::post('/check-conflict', [\App\Http\Controllers\Api\TimetableController::class, 'checkConflict']);
     });
 
@@ -281,33 +263,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // [AUDIT ROUTE-01] Public verify routes are already in shared.php — removed duplicates here.
 
-// Mobile App Student Portal API
-// Authenticated Routes
-Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
-    Route::get('/profile', [MobileStudentController::class, 'profile']);
-    Route::get('/schedule', [MobileStudentController::class, 'schedule']);
-    Route::get('/grades', [MobileStudentController::class, 'grades']);
-    Route::get('/card', [\App\Http\Controllers\Api\StudentCardController::class, 'show']);
-    Route::post('/attendance/scan', [\App\Http\Controllers\Api\AttendanceController::class, 'scanQr']);
-});
 
-// Web App Student Portal API
-Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Api\StudentPortalController::class, 'getDashboardStats']);
-    Route::get('/schedule', [\App\Http\Controllers\Api\StudentPortalController::class, 'getSchedule']);
-    Route::get('/grades', [\App\Http\Controllers\Api\StudentPortalController::class, 'getGrades']);
-    Route::post('/absences/justify', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsenceJustification']);
-});
-
-// Professor API
-Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
-    Route::post('/attendance/session', [\App\Http\Controllers\Api\AttendanceController::class, 'createSession']);
-    Route::get('/attendance/session/{id}/stats', [\App\Http\Controllers\Api\AttendanceController::class, 'sessionStats']);
-    
-    // Grade Grid Entry
-    Route::get('/grades/grid', [\App\Http\Controllers\Api\GradeGridController::class, 'getGrid']);
-    Route::post('/grades/save', [\App\Http\Controllers\Api\GradeGridController::class, 'saveGrades']);
-});
 
 // ---------------------------------------------------------
 // REST API (Protected endpoints for third-party integrations)
@@ -327,7 +283,7 @@ Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
 // ---------------------------------------------------------
 // INTERNAL DYNAMIC ENDPOINTS (Admin Web Auth)
 // ---------------------------------------------------------
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head'])->group(function () {
     Route::get('/admin/api/filieres/{id}/groups', [\App\Http\Controllers\Api\InternalApiController::class, 'filiereGroups']);
     Route::get('/admin/api/groups/{id}/modules', [\App\Http\Controllers\Api\InternalApiController::class, 'groupModules']);
     Route::get('/admin/api/rooms/{id}/availability', [\App\Http\Controllers\Api\InternalApiController::class, 'roomAvailability']);
