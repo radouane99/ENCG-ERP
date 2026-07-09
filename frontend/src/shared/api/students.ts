@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { PaginationParams, Student } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 export const api = axios.create({
@@ -21,21 +22,21 @@ api.interceptors.request.use(
 );
 
 export const studentsApi = {
-  getStudents: async (params?: any) => {
+  getStudents: async (params?: PaginationParams) => {
     const response = await api.get('/students', { params });
-    return response.data;
+    return response.data as ApiResponse<Student[]>;
   },
   getStudent: async (id: number) => {
     const response = await api.get(`/students/${id}`);
     return response.data.data;
   },
-  createStudent: async (data: any) => {
+  createStudent: async (data: Student) => {
     const response = await api.post('/students', data);
-    return response.data;
+    return response.data as ApiResponse<Student>;
   },
-  updateStudent: async (id: number, data: any) => {
+  updateStudent: async (id: number, data: Partial<Student>) => {
     const response = await api.put(`/students/${id}`, data);
-    return response.data;
+    return response.data as ApiResponse<Student>;
   },
   deleteStudent: async (id: number) => {
     const response = await api.delete(`/students/${id}`);

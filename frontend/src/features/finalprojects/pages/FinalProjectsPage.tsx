@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Briefcase, Building, CheckCircle, Clock } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Search, Plus, Edit2, Trash2, X, Building } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+
+interface StudentOption {
+  id: number;
+  first_name: string;
+  last_name: string;
+  cne: string;
+}
 
 interface FinalProject {
   id: number;
@@ -35,7 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const EMPTY = { title: '', type: 'pfe', company_name: '', company_city: '', status: 'draft', student_id: '' }
 
-export default function FinalProjectsPage() { 
+export default function FinalProjectsPage() {
   const { t } = useTranslation('modules');
 
   const [projects, setProjects] = useState<FinalProject[]>([])
@@ -45,14 +52,13 @@ export default function FinalProjectsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<StudentOption[]>([])
 
   const fetchData = async () => {
     try {
       setLoading(true)
       const res = await api.get('/final-projects', { params: { search, status: statusFilter } })
       setProjects(res.data.data || [])
-      
       if (students.length === 0) {
         const sRes = await api.get('/students')
         setStudents(sRes.data?.data || [])
@@ -84,18 +90,26 @@ export default function FinalProjectsPage() {
     e.preventDefault()
     try {
       const payload = { ...form, student_id: parseInt(form.student_id) }
-      editingId ? await api.put(`/final-projects/${editingId}`, payload) : await api.post('/final-projects', payload)
+      editingId
+        ? await api.put(`/final-projects/${editingId}`, payload)
+        : await api.post('/final-projects', payload)
       toast.success(editingId ? t('final_projects.messages.update_success') : t('final_projects.messages.create_success'))
       setShowModal(false); fetchData()
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || t('final_projects.messages.error'))
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || t('final_projects.messages.error'))
     }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('final_projects.messages.delete_confirm'))) return
-    try { await api.delete(`/final-projects/${id}`); toast.success(t('final_projects.messages.delete_success')); fetchData() }
-    catch { toast.error(t('final_projects.messages.error')) }
+    try {
+      await api.delete(`/final-projects/${id}`)
+      toast.success(t('final_projects.messages.delete_success'))
+      fetchData()
+    } catch {
+      toast.error(t('final_projects.messages.error'))
+    }
   }
 
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -109,7 +123,8 @@ export default function FinalProjectsPage() {
           <p className="text-muted-foreground mt-1 text-sm">{t('final_projects.subtitle')}</p>
         </div>
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
-          <Plus className="w-4 h-4" /> {t('final_projects.new_btn')}</button>
+          <Plus className="w-4 h-4" /> {t('final_projects.new_btn')}
+        </button>
       </div>
 
       <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
@@ -124,7 +139,7 @@ export default function FinalProjectsPage() {
             {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
-        
+
         <div className="overflow-x-auto min-h-[250px]">
           {loading ? <div className="flex justify-center items-center p-12 text-muted-foreground">{t('final_projects.messages.loading')}</div> : (
             <table className="w-full text-sm text-left">
@@ -186,13 +201,13 @@ export default function FinalProjectsPage() {
               <h3 className="font-bold text-lg">{editingId ? t('final_projects.modal.edit') : t('final_projects.modal.create')}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
                 <label className={labelCls}>{t('final_projects.modal.subject')}</label>
                 <textarea required value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} className={cn(inputCls, "min-h-[80px] resize-none")} placeholder={t('final_projects.modal.subject_placeholder')} />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>{t('final_projects.modal.type')}</label>
@@ -213,7 +228,7 @@ export default function FinalProjectsPage() {
                 <label className={labelCls}>{t('final_projects.modal.student')}</label>
                 <select required value={form.student_id} onChange={e => setForm(p => ({...p, student_id: e.target.value}))} className={inputCls}>
                   <option value="">{t('final_projects.modal.student_placeholder')}</option>
-                  {students.map((s: any) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.cne})</option>)}
+                  {students.map((s: StudentOption) => <option key={s.id} value={s.id}>{s.last_name} {s.first_name} ({s.cne})</option>)}
                 </select>
               </div>
 

@@ -11,6 +11,7 @@ import { Input } from '@shared/components/ui/Input'
 import { Badge } from '@shared/components/ui/Badge'
 import { Modal } from '@shared/components/ui/Modal'
 import { Spinner } from '@shared/components/ui/Spinner'
+import type { Department } from '@/types/models'
 
 interface Professor {
   id: number;
@@ -56,17 +57,18 @@ export default function ProfessorsListPage() {
   })
 
   const professors: Professor[] = data?.data || []
-  const departments: any[] = deptsData?.data || []
+  const departments: Department[] = deptsData?.data || []
 
   const saveMutation = useMutation({
-    mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
+    mutationFn: (payload: Partial<Professor>) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
     onSuccess: () => {
       toast.success(t('common:messages.success'))
       queryClient.invalidateQueries({ queryKey: ['professors'] })
       setShowModal(false)
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || (t('common:messages.error')))
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || (t('common:messages.error')))
     }
   })
 
@@ -334,7 +336,7 @@ export default function ProfessorsListPage() {
                 className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
               >
                 <option value="">{t('professors:form.select_dept', { defaultValue: '-- Choisir un département --' })}</option>
-                {departments.map((dept: any) => (
+                {departments.map((dept: Department) => (
                   <option key={dept.id} value={dept.id}>{dept.name}</option>
                 ))}
               </select>

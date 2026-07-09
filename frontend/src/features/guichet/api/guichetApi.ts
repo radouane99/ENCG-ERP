@@ -43,7 +43,7 @@ const updateRequestStatus = async ({
 }: {
   id: number;
   status: string;
-  admin_notes?: any;
+  admin_notes?: string | null;
 }) => {
   const { data } = await api.patch(`/admin/document-requests/${id}/status`, {
     status,

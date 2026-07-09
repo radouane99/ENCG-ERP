@@ -75,7 +75,6 @@ class UserSeeder extends Seeder
             'is_active' => true,
             'grade' => 'PES',
             'contract_type' => 'permanent',
-            'email' => 'prof@encg.ma',
         ]);
 
         for ($i = 0; $i < 14; $i++) {
@@ -100,7 +99,6 @@ class UserSeeder extends Seeder
                 'is_active' => true,
                 'grade' => $faker->randomElement(['PA', 'PH', 'PES']),
                 'contract_type' => 'permanent',
-                'email' => $u->email,
             ]);
         }
 
@@ -112,6 +110,7 @@ class UserSeeder extends Seeder
             'email' => 'student@encg.ma',
             'password' => $password,
             'email_verified_at' => now(),
+            'birth_date' => '2000-01-01',
         ]);
         $studentUser->assignRole('student');
 
@@ -120,12 +119,9 @@ class UserSeeder extends Seeder
             'institution_id' => $institution->id,
             'cne' => 'N123456789',
             'student_number' => '1234567',
-            'birth_date' => '2000-01-01',
-            'birth_city' => 'Fès',
             'nationality' => 'Marocaine',
             'gender' => 'M',
             'status' => 'active',
-            'email' => 'student@encg.ma',
         ]);
 
         for ($i = 0; $i < 99; $i++) {
@@ -138,21 +134,21 @@ class UserSeeder extends Seeder
                 'email' => "student{$i}@encg.ma",
                 'password' => $password,
                 'email_verified_at' => now(),
+                'birth_date' => $faker->date('Y-m-d', '2005-01-01'),
             ]);
             $u->assignRole('student');
 
+            static $uCounter = 1;
             Student::create([
                 'user_id' => $u->id,
                 'institution_id' => $institution->id,
-                'cne' => 'N' . $faker->randomNumber(9, true),
-                'student_number' => (string) $faker->randomNumber(7, true),
-                'birth_date' => $faker->date('Y-m-d', '2005-01-01'),
-                'birth_city' => $faker->city,
+                'cne' => 'N99' . str_pad($uCounter, 7, '0', STR_PAD_LEFT),
+                'student_number' => '99' . str_pad($uCounter, 5, '0', STR_PAD_LEFT),
                 'nationality' => 'Marocaine',
                 'gender' => $faker->randomElement(['M', 'F']),
                 'status' => 'active',
-                'email' => $u->email,
             ]);
+            $uCounter++;
         }
     }
 }

@@ -113,9 +113,10 @@ export default function ModulesListPage() {
       }
       handleCloseModal();
       fetchData(); // Refresh list
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const e = error as { response?: { status?: number } };
       console.error("Erreur de sauvegarde", error);
-      if (error.response?.status === 422) {
+      if (e.response?.status === 422) {
         alert("Erreur de validation: Le code module existe déjà ou les données sont invalides.");
       } else {
         alert("Une erreur est survenue lors de la sauvegarde.");

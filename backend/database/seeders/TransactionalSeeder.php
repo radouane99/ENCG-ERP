@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\AcademicProject;
 use App\Models\AcademicYear;
-use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
@@ -18,6 +17,7 @@ use App\Models\Semester;
 use App\Models\Student;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Faker\Factory as Faker;
 
 class TransactionalSeeder extends Seeder
@@ -37,16 +37,11 @@ class TransactionalSeeder extends Seeder
         }
 
         // 1. Document Types & Requests
-        $docTypes = [
-            ['name' => 'Attestation de Scolarité', 'code' => 'ATT_SCOL', 'view_name' => 'documents.attestation_scolarite', 'fee_amount' => 0, 'is_active' => true],
-            ['name' => 'Relevé de Notes', 'code' => 'REL_NOTES', 'view_name' => 'documents.releve_notes', 'fee_amount' => 0, 'is_active' => true],
-            ['name' => 'Convention de Stage', 'code' => 'CONV_STAGE', 'view_name' => 'documents.convention_stage', 'fee_amount' => 0, 'is_active' => true],
+        $createdDocTypes = [
+            DocumentType::firstOrCreate(['code' => 'ATT_SCOL'], ['name' => 'Attestation de Scolarité', 'view_name' => 'documents.attestation_scolarite', 'fee_amount' => 0, 'is_active' => true]),
+            DocumentType::firstOrCreate(['code' => 'REL_NOTES'], ['name' => 'Relevé de Notes', 'view_name' => 'documents.releve_notes', 'fee_amount' => 0, 'is_active' => true]),
+            DocumentType::firstOrCreate(['code' => 'CONV_STAGE'], ['name' => 'Convention de Stage', 'view_name' => 'documents.convention_stage', 'fee_amount' => 0, 'is_active' => true]),
         ];
-        
-        $createdDocTypes = [];
-        foreach ($docTypes as $dt) {
-            $createdDocTypes[] = DocumentType::create($dt);
-        }
 
         for ($i = 0; $i < 50; $i++) {
             DocumentRequest::create([
@@ -57,12 +52,12 @@ class TransactionalSeeder extends Seeder
             ]);
         }
 
-        // 2. Attendances
+        // 2. Attendance Sessions (no attendance_records table exists)
         for ($i = 0; $i < 40; $i++) {
             $schedule = $schedules->random();
             $sessionDate = now()->subDays(rand(1, 30));
 
-            $session = AttendanceSession::create([
+            AttendanceSession::create([
                 'schedule_id' => $schedule->id,
                 'module_id' => $schedule->module_id,
                 'group_id' => $schedule->group_id,
@@ -74,22 +69,8 @@ class TransactionalSeeder extends Seeder
                 'end_time' => $schedule->end_time,
                 'session_type' => 'cm',
                 'is_locked' => false,
-                'status' => 'completed',
                 'created_by' => 1,
             ]);
-
-            // Get students from the group attached to the schedule
-            $groupStudents = $schedule->group->students ?? collect();
-            
-            foreach ($groupStudents as $student) {
-                $status = $faker->randomElement(['present', 'present', 'present', 'absent', 'late']);
-                AttendanceRecord::create([
-                    'attendance_session_id' => $session->id,
-                    'student_id' => $student->id,
-                    'status' => $status,
-                    'is_justified' => ($status === 'absent' && rand(0, 1) === 1),
-                ]);
-            }
         }
 
         // 3. Exams & Grades
@@ -117,23 +98,22 @@ class TransactionalSeeder extends Seeder
                 'type' => 'final',
             ]);
 
-            $gradeComp = \App\Models\GradeComponent::create([
+            // Use assessments table
+            $assessment = \App\Models\Assessment::create([
                 'module_id' => $schedule->module_id,
-                'exam_session_id' => $examSession->id,
-                'name' => 'Examen Final',
-                'code' => 'FINAL',
+                'type' => 'Exam',
                 'weight' => 100,
-                'max_grade' => 20,
+                'date' => now()->subDays(rand(1, 5))->format('Y-m-d'),
             ]);
 
-            $groupStudents = $schedule->group->students ?? collect();
-            foreach ($groupStudents as $student) {
+            // Get students via StudentRegistration
+            $registrations = \App\Models\StudentRegistration::where('group_id', $schedule->group_id)->get();
+            foreach ($registrations as $reg) {
                 Grade::create([
-                    'grade_component_id' => $gradeComp->id,
-                    'student_id' => $student->id,
-                    'exam_session_id' => $examSession->id,
-                    'score' => $faker->randomFloat(2, 5, 20),
-                    'is_absent' => false,
+                    'assessment_id' => $assessment->id,
+                    'student_id' => $reg->student_id,
+                    'value' => $faker->randomFloat(2, 5, 20),
+                    'absent' => false,
                 ]);
             }
         }

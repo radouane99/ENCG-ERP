@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ExamPayload, RoomConflictPayload } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 const api = axios.create({
@@ -41,11 +42,11 @@ export const examsApi = {
     const response = await api.post('/exam-planning/generate-session');
     return response.data;
   },
-  createExam: async (data: any) => {
+  createExam: async (data: ExamPayload) => {
     const response = await api.post('/exam-planning/store', data);
     return response.data;
   },
-  checkRoomConflict: async (data: any) => {
+  checkRoomConflict: async (data: RoomConflictPayload) => {
     const response = await api.post('/exam-planning/check-conflict', data);
     return response.data;
   },

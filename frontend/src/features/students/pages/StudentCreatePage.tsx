@@ -41,11 +41,12 @@ export default function StudentCreatePage() {
       await StudentsService.createStudent(data)
       toast.success(t('create.success'))
       navigate('/students')
-    } catch (err: any) {
-      if (err.response?.status === 422) {
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: { message?: string } } };
+      if (e.response?.status === 422) {
         toast.error(t('create.error_validation'))
       } else {
-        toast.error(err?.response?.data?.message || t('create.error_general'))
+        toast.error(e?.response?.data?.message || t('create.error_general'))
       }
     } finally {
       setLoading(false)

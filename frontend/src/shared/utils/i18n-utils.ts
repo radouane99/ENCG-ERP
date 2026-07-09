@@ -10,7 +10,7 @@ import i18n from '@/app/i18n';
  * @param fieldName The base field name (e.g., 'first_name', 'name')
  * @returns The localized string
  */
-export function getLocalizedField(model: any, fieldName: string): string {
+export function getLocalizedField(model: Record<string, unknown>, fieldName: string): string {
   if (!model) return '';
 
   const currentLang = i18n.language;
@@ -18,9 +18,9 @@ export function getLocalizedField(model: any, fieldName: string): string {
   if (currentLang === 'ar') {
     const arField = `${fieldName}_ar`;
     if (model[arField]) {
-      return model[arField];
+      return model[arField] as string;
     }
   }
 
-  return model[fieldName] || '';
+  return (model[fieldName] as string) || '';
 }

@@ -9,7 +9,7 @@ export const AdminGuichetDashboard: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  const handleStatusChange = (id: number, status: DocumentRequestStatus, admin_notes?: any) => {
+  const handleStatusChange = (id: number, status: DocumentRequestStatus, admin_notes?: string | null) => {
     updateStatus({ id, status, admin_notes });
     setSelectedRequest(null);
     setRejectionReason('');

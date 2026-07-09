@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { PaginationParams } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 const api = axios.create({
@@ -21,7 +22,7 @@ api.interceptors.request.use(
 );
 
 export const analyticsApi = {
-  getAtRiskStudents: async (params?: any) => {
+  getAtRiskStudents: async (params?: PaginationParams) => {
     const response = await api.get('/analytics/at-risk-students', { params });
     return response.data;
   },

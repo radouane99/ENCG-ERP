@@ -24,47 +24,56 @@ class EnrollmentSeeder extends Seeder
         $semesters = Semester::where('academic_year_id', $academicYear->id)->get();
         $currentSemester = $semesters->where('is_current', true)->first() ?? $semesters->first();
 
-        // Create 10 Groups distributed across filieres
-        $groups = collect();
-        $groupNames = ['A', 'B', 'C', 'D'];
+        // Get existing groups or create new ones
+        $groups = Group::where('academic_year_id', $academicYear->id)->get();
         
-        foreach ($filieres as $index => $filiere) {
-            for ($i = 0; $i < 2; $i++) {
-                if ($groups->count() >= 10) break;
-                
-                $groups->push(Group::create([
-                    'filiere_id' => $filiere->id,
-                    'academic_year_id' => $academicYear->id,
-                    'name' => "Groupe {$groupNames[$i]} - {$filiere->code}",
-                    'semester_number' => 1,
-                    'capacity' => 30,
-                    'current_count' => 0,
-                ]));
+        if ($groups->isEmpty()) {
+            $groupNames = ['A', 'B', 'C', 'D'];
+            $groups = collect();
+            foreach ($filieres as $index => $filiere) {
+                for ($i = 0; $i < 2; $i++) {
+                    if ($groups->count() >= 10) break;
+                    
+                    $groups->push(Group::create([
+                        'filiere_id' => $filiere->id,
+                        'academic_year_id' => $academicYear->id,
+                        'name' => "Groupe {$groupNames[$i]} - {$filiere->code}",
+                        'semester_number' => 1,
+                        'capacity' => 30,
+                    ]));
+                }
             }
         }
 
-        // Enroll students
-        $students = Student::all();
-        $studentsPerGroup = ceil($students->count() / $groups->count());
+        // Get students that are NOT already registered for this academic year
+        $alreadyRegistered = StudentRegistration::where('academic_year_id', $academicYear->id)
+            ->pluck('student_id')
+            ->toArray();
+        
+        $students = Student::whereNotIn('id', $alreadyRegistered)->get();
+        
+        if ($students->isEmpty()) {
+            return; // All students already enrolled
+        }
 
+        $studentsPerGroup = max(1, ceil($students->count() / $groups->count()));
         $studentChunks = $students->chunk($studentsPerGroup);
 
-        DB::transaction(function () use ($studentChunks, $groups, $academicYear, $currentSemester) {
+        DB::transaction(function () use ($studentChunks, $groups, $academicYear) {
             foreach ($groups as $index => $group) {
                 if (!isset($studentChunks[$index])) continue;
                 
                 foreach ($studentChunks[$index] as $student) {
-                    // Create Student Registration
-                    StudentRegistration::create([
+                    StudentRegistration::firstOrCreate([
                         'student_id' => $student->id,
                         'academic_year_id' => $academicYear->id,
+                        'semester_number' => 1,
+                    ], [
                         'filiere_id' => $group->filiere_id,
                         'group_id' => $group->id,
-                        'semester_number' => 1,
                         'status' => 'registered',
                         'registration_type' => 'initial',
                     ]);
-
                 }
             }
         });

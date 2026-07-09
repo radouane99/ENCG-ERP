@@ -16,7 +16,7 @@ export interface DocumentRequest {
     reference_number: string;
     status: DocumentRequestStatus;
     language: string;
-    additional_data?: any;
+    additional_data?: Record<string, unknown>;
     rejection_reason?: string;
     processed_by?: number;
     processed_at?: string;

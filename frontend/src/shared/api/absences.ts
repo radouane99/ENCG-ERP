@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { PaginationParams } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 const api = axios.create({
@@ -13,7 +14,7 @@ api.interceptors.request.use((config) => {
 }, (error) => Promise.reject(error));
 
 export const absencesApi = {
-  getJustifications: async (params?: any) => {
+  getJustifications: async (params?: PaginationParams) => {
     const response = await api.get('/admin/absences-justifications', { params });
     return response.data;
   },

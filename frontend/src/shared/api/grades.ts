@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { GradeUpdate } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 const api = axios.create({
@@ -28,7 +29,7 @@ export const gradesApi = {
     return response.data;
   },
   
-  saveGrades: async (moduleId: number, groupId: number, updates: any[]) => {
+  saveGrades: async (moduleId: number, groupId: number, updates: GradeUpdate[]) => {
     const response = await api.post(`/v1/professor/grades/save`, {
       module_id: moduleId,
       group_id: groupId,

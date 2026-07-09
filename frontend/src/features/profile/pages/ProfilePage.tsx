@@ -78,9 +78,10 @@ export default function ProfilePage() {
         setSuccessMessage('Profil mis à jour avec succès')
         setFormData(prev => ({ ...prev, password: '', password_confirmation: '' }))
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
       console.error(error)
-      setErrorMessage(error.response?.data?.message || 'Une erreur s\'est produite lors de la mise à jour')
+      setErrorMessage(e.response?.data?.message || 'Une erreur s\'est produite lors de la mise à jour')
     } finally {
       setIsLoading(false)
     }

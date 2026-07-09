@@ -3,6 +3,7 @@ import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Loader2, C
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
+import type { ImportResult } from '../../../types/models'
 
 interface ExcelActionsProps {
   /** API model slug: 'students' | 'professors' | 'filieres' | 'modules' | 'groups' | 'rooms' | 'vacataires' */
@@ -23,7 +24,7 @@ export default function ExcelActions({ model, label, onImportSuccess }: ExcelAct
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{ success: boolean; count?: number; errors?: any[] } | null>(null)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
 
   // ── Export ──────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ export default function ExcelActions({ model, label, onImportSuccess }: ExcelAct
       link.remove()
       window.URL.revokeObjectURL(url)
       toast.success(`Export réussi — ${label ?? model}.xlsx téléchargé !`)
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error('Erreur lors de l\'export Excel')
     } finally {
       setExporting(false)
@@ -85,9 +86,10 @@ export default function ExcelActions({ model, label, onImportSuccess }: ExcelAct
       setImportResult({ success: true, count })
       toast.success(`${count} enregistrement(s) importé(s) avec succès !`)
       onImportSuccess?.()
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'Erreur d\'importation'
-      const failures = err?.response?.data?.failures ?? []
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string; failures?: ImportResult['errors'] } } };
+      const msg = e?.response?.data?.message ?? 'Erreur d\'importation'
+      const failures = e?.response?.data?.failures ?? []
       setImportResult({ success: false, errors: failures })
       toast.error(msg)
     } finally {

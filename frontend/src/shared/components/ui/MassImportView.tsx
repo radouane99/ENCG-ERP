@@ -3,6 +3,7 @@ import { Upload, FileSpreadsheet, ArrowLeft, Info, CheckCircle, AlertCircle, Loa
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import type { ImportResult } from '../../../types/models'
 
 interface MassImportViewProps {
   title: string
@@ -32,7 +33,7 @@ export default function MassImportView({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-  const [result, setResult] = useState<{ success: boolean; count?: number; errors?: any[] } | null>(null)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
 
   const handleTemplate = async () => {
     try {
@@ -61,20 +62,21 @@ export default function MassImportView({
     formData.append('file', file)
 
     setIsImporting(true)
-    setResult(null)
+    setImportResult(null)
 
     try {
       const res = await api.post(`/import/${apiModel}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       const count = res.data.imported ?? 0
-      setResult({ success: true, count })
+      setImportResult({ success: true, count })
       toast.success(`${count} enregistrement(s) importé(s) avec succès !`)
       onSuccess()
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'Erreur d\'importation'
-      const failures = err?.response?.data?.failures ?? []
-      setResult({ success: false, errors: failures })
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string; failures?: ImportResult['errors'] } } };
+      const msg = e?.response?.data?.message ?? 'Erreur d\'importation'
+      const failures = e?.response?.data?.failures ?? []
+      setImportResult({ success: false, errors: failures })
       toast.error(msg)
     } finally {
       setIsImporting(false)
@@ -155,16 +157,16 @@ export default function MassImportView({
             </div>
           </div>
 
-          {result && (
+          {importResult && (
             <div className={cn(
               "p-4 rounded-xl border flex gap-3",
-              result.success ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"
+              importResult.success ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"
             )}>
-              {result.success ? <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" /> : <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />}
+              {importResult.success ? <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" /> : <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />}
               <div>
-                <h4 className="text-sm font-bold">{result.success ? "Importation réussie" : "Erreur d'importation"}</h4>
+                <h4 className="text-sm font-bold">{importResult.success ? "Importation réussie" : "Erreur d'importation"}</h4>
                 <p className="text-sm opacity-90">
-                  {result.success ? `${result.count} enregistrement(s) ont été importés.` : `${result.errors?.length || 0} erreur(s) détectée(s).`}
+                  {importResult.success ? `${importResult.count} enregistrement(s) ont été importés.` : `${importResult.errors?.length || 0} erreur(s) détectée(s).`}
                 </p>
               </div>
             </div>

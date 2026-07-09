@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { AcademicYearPayload } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 const api = axios.create({
@@ -26,11 +27,11 @@ export const academicApi = {
     const response = await api.get('/academic-years');
     return response.data.data;
   },
-  createAcademicYear: async (data: any) => {
+  createAcademicYear: async (data: AcademicYearPayload) => {
     const response = await api.post('/academic-years', data);
     return response.data;
   },
-  updateAcademicYear: async (id: number, data: any) => {
+  updateAcademicYear: async (id: number, data: Partial<AcademicYearPayload>) => {
     const response = await api.put(`/academic-years/${id}`, data);
     return response.data;
   },

@@ -256,12 +256,12 @@ class EncgFesSeeder extends Seeder
         $this->seed7ModulesForFiliere($institution, $acg, 5);
         $this->seed7ModulesForFiliere($institution, $escm, 1);
 
-        // $this->seedGroupsAndStudents($institution, $academicYear, $tc, 1);
-        // $this->seedGroupsAndStudents($institution, $academicYear, $gfc, 5);
-        // $this->seedGroupsAndStudents($institution, $academicYear, $mcm, 5);
-        // $this->seedGroupsAndStudents($institution, $academicYear, $grh, 5);
-        // $this->seedGroupsAndStudents($institution, $academicYear, $acg, 5);
-        // $this->seedGroupsAndStudents($institution, $academicYear, $escm, 1);
+        $this->seedGroupsAndStudents($institution, $academicYear, $tc, 1);
+        $this->seedGroupsAndStudents($institution, $academicYear, $gfc, 5);
+        $this->seedGroupsAndStudents($institution, $academicYear, $mcm, 5);
+        $this->seedGroupsAndStudents($institution, $academicYear, $grh, 5);
+        $this->seedGroupsAndStudents($institution, $academicYear, $acg, 5);
+        $this->seedGroupsAndStudents($institution, $academicYear, $escm, 1);
     }
 
     private function seedTroncCommunModules(Institution $institution, Filiere $filiere): void
@@ -400,11 +400,13 @@ class EncgFesSeeder extends Seeder
                 'name' => "{$filiere->code}-S{$semesterNumber}-G{$i}",
                 'semester_number' => $semesterNumber,
                 'capacity' => 35,
-                'current_count' => 12,
             ]);
 
+            static $studentCounter = 1;
             for ($j = 1; $j <= 12; $j++) {
-                $studentNumber = "2024" . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                $studentNumber = "2024" . str_pad($studentCounter, 5, '0', STR_PAD_LEFT);
+                $cne = 'N' . str_pad($studentCounter, 9, '0', STR_PAD_LEFT);
+                $studentCounter++;
                 $firstName = "Prenom{$j}";
                 $lastName = "Nom{$j}";
                 $email = strtolower("{$firstName}.{$lastName}_{$filiere->code}{$i}@student.encg.ma");
@@ -420,16 +422,15 @@ class EncgFesSeeder extends Seeder
                     'is_active' => true,
                 ]);
 
-                $role = Role::findOrCreate('student');
+                $role = Role::findOrCreate('student', 'sanctum');
                 $user->assignRole($role);
 
                 $student = Student::create([
                     'institution_id' => $institution->id,
                     'user_id' => $user->id,
                     'student_number' => $studentNumber,
-                    'cne' => 'N' . rand(100000000, 999999999),
+                    'cne' => $cne,
                     'gender' => rand(0, 1) ? 'male' : 'female',
-                    'email' => $email,
                     'status' => 'active',
                 ]);
 

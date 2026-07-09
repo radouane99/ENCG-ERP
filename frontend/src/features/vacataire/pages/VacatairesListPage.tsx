@@ -14,6 +14,22 @@ import { Badge } from '@shared/components/ui/Badge'
 import { Input } from '@shared/components/ui/Input'
 import { Modal } from '@shared/components/ui/Modal'
 import { toast } from 'sonner'
+import type { Department } from '@/types/models'
+
+interface Vacataire {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  grade: string;
+  specialty: string;
+  contract_type: string;
+  hire_date: string | null;
+  is_active: boolean;
+  department_id: number | null;
+  vacation_contracts?: unknown[];
+}
 
 const EMPTY_FORM = {
   first_name: '', last_name: '', email: '', phone: '',
@@ -40,17 +56,18 @@ export default function VacatairesListPage() {
     queryKey: ['departments'],
     queryFn: () => api.get('/departments').then(r => r.data)
   })
-  const departments: any[] = deptsData?.data || []
+  const departments: Department[] = deptsData?.data || []
 
   const saveMutation = useMutation({
-    mutationFn: (payload: any) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
+    mutationFn: (payload: Partial<Vacataire>) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
     onSuccess: () => {
       toast.success(t('modules:vacataires_list.messages.save_success'))
       queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
       setShowModal(false)
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || t('modules:vacataires_list.messages.save_error'))
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || t('modules:vacataires_list.messages.save_error'))
     }
   })
 
@@ -63,7 +80,7 @@ export default function VacatairesListPage() {
   })
 
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY_FORM }); setShowModal(true) }
-  const openEdit = (p: any) => {
+  const openEdit = (p: Vacataire) => {
     setEditingId(p.id)
     setForm({
       first_name: p.first_name, last_name: p.last_name, email: p.email,

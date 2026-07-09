@@ -10,7 +10,7 @@ export type DocumentRequestStatus = 'pending' | 'processing' | 'ready' | 'reject
 
 export interface AdminNotes {
   reason?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface DocumentRequest {

@@ -20,6 +20,14 @@ export type AttendanceSessionStatus = 'active' | 'closed' | 'cancelled';
 
 export type AttendanceSessionType = 'cm' | 'td' | 'tp';
 
+// ── Role ─────────────────────────────────────────────────────────────────────
+
+export interface Role {
+  id: number;
+  name: string;
+  guard_name?: string;
+}
+
 // ── Core Identity ─────────────────────────────────────────────────────────────
 
 export interface User {
@@ -34,6 +42,7 @@ export interface User {
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
+  roles?: Role[];
 }
 
 // ── Student ───────────────────────────────────────────────────────────────────
@@ -172,4 +181,45 @@ export interface PaginatedResponse<T> {
 export interface ApiResponse<T> {
   data: T;
   message?: string;
+}
+
+export interface ImportResult {
+  success: boolean;
+  count?: number;
+  errors?: Array<{ row?: number; message?: string; [key: string]: unknown }>;
+}
+
+// ── Additional API payload types ───────────────────────────────────────────────
+
+export interface AcademicYearPayload {
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active?: boolean;
+}
+
+export interface ExamPayload {
+  module_id: number;
+  group_id: number;
+  room_id: number;
+  date: string;
+  start_time: string;
+  duration_minutes: number;
+  type?: string;
+  surveillant_ids?: number[];
+}
+
+export interface RoomConflictPayload {
+  room_id: number;
+  date: string;
+  start_time: string;
+  duration_minutes: number;
+  exclude_exam_id?: number;
+}
+
+export interface PaginationParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  [key: string]: string | number | boolean | undefined;
 }
