@@ -20,6 +20,9 @@ Route::middleware(['auth:sanctum'])->prefix('v1/student-portal')->group(function
     Route::post('/absences', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsence']);
     Route::post('/absences/justify', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsenceJustification']);
     
+    // Apogée Deliberation Engine - Transcript
+    Route::get('/transcript', [\App\Http\Controllers\Api\DeliberationController::class, 'getStudentTranscript']);
+
     // Internships
     Route::prefix('internships')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'index']);

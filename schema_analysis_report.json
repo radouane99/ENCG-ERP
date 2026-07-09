@@ -1,0 +1,116 @@
+{
+  "missingIndexes": [
+    {
+      "table": "attendance_sessions",
+      "column": "professor_id",
+      "reason": "Foreign key missing index"
+    },
+    {
+      "table": "defense_juries",
+      "column": "professor_id",
+      "reason": "Foreign key missing index"
+    },
+    {
+      "table": "learning_materials",
+      "column": "professor_id",
+      "reason": "Foreign key missing index"
+    },
+    {
+      "table": "module_professor",
+      "column": "professor_id",
+      "reason": "Foreign key missing index"
+    }
+  ],
+  "redundantColumns": [
+    {
+      "table": "attendance_sessions",
+      "columns": [
+        "module_id",
+        "group_id",
+        "professor_id"
+      ],
+      "reason": "Can be fetched via schedule_id"
+    },
+    {
+      "table": "attendances",
+      "columns": [
+        "is_justified"
+      ],
+      "reason": "Inferred from absence_justifications table"
+    }
+  ],
+  "orphans": [],
+  "normalizationIssues": [
+    {
+      "table": "groups",
+      "column": "current_count",
+      "reason": "Should be calculated dynamically"
+    },
+    {
+      "table": "students",
+      "columns": [
+        "address",
+        "city"
+      ],
+      "reason": "Belongs in users table"
+    }
+  ],
+  "missingForeignKeys": [
+    {
+      "table": "activity_log",
+      "column": "subject_id"
+    },
+    {
+      "table": "activity_log",
+      "column": "causer_id"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "professor_id"
+    },
+    {
+      "table": "data_access_logs",
+      "column": "subject_id"
+    },
+    {
+      "table": "defense_juries",
+      "column": "professor_id"
+    },
+    {
+      "table": "learning_materials",
+      "column": "professor_id"
+    },
+    {
+      "table": "media",
+      "column": "model_id"
+    },
+    {
+      "table": "model_has_permissions",
+      "column": "model_id"
+    },
+    {
+      "table": "model_has_roles",
+      "column": "model_id"
+    },
+    {
+      "table": "module_professor",
+      "column": "professor_id"
+    },
+    {
+      "table": "notifications",
+      "column": "notifiable_id"
+    },
+    {
+      "table": "personal_access_tokens",
+      "column": "tokenable_id"
+    },
+    {
+      "table": "schedules",
+      "column": "professor_id"
+    },
+    {
+      "table": "sessions",
+      "column": "user_id"
+    }
+  ]
+}

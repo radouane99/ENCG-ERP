@@ -42,4 +42,9 @@ class Module extends Model
     {
         return $this->belongsToMany(Module::class, 'module_prerequisites', 'module_id', 'prerequisite_module_id');
     }
+
+    public function assessments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Assessment::class);
+    }
 }

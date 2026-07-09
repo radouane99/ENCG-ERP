@@ -78,6 +78,16 @@ class Student extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function internships(): HasMany
+    {
+        return $this->hasMany(Internship::class);
+    }
+
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
+
     public function pathways(): HasMany
     {
         return $this->hasMany(StudentPathway::class);

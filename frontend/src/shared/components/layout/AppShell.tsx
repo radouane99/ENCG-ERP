@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import CommandPalette from './CommandPalette'
 import StudentChatbot from '../chat/StudentChatbot'
+import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
 
 export default function AppShell() {
   const fetchUser = useAuthStore((s) => s.fetchUser)
@@ -56,7 +57,9 @@ export default function AppShell() {
         
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 scroll-smooth">
           <div className="mx-auto max-w-7xl animate-fade-in">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

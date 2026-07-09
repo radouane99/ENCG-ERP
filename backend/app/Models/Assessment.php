@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Grade extends Model
+class Assessment extends Model
 {
     use HasFactory;
 
@@ -15,18 +16,18 @@ class Grade extends Model
     protected function casts(): array
     {
         return [
-            'value' => 'float',
-            'absent' => 'boolean',
+            'weight' => 'float',
+            'date' => 'date',
         ];
     }
 
-    public function student(): BelongsTo
+    public function module(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Module::class);
     }
 
-    public function assessment(): BelongsTo
+    public function grades(): HasMany
     {
-        return $this->belongsTo(Assessment::class);
+        return $this->hasMany(Grade::class);
     }
 }

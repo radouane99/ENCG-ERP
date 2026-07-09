@@ -10,6 +10,10 @@ Route::middleware(['auth:sanctum'])->prefix('v1/professor')->group(function () {
     // Grade Grid Entry
     Route::get('/grades/grid', [\App\Http\Controllers\Api\GradeGridController::class, 'getGrid']);
     Route::post('/grades/save', [\App\Http\Controllers\Api\GradeGridController::class, 'saveGrades']);
+
+    // Apogée Deliberation Engine - Grade Entry
+    Route::post('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
+    Route::get('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
