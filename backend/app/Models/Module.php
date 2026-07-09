@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Module extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $guarded = ['id'];
 
@@ -46,5 +47,15 @@ class Module extends Model
     public function assessments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Assessment::class);
+    }
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }

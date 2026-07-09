@@ -11,10 +11,11 @@ use App\Models\StudentPathway;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Student extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, SoftDeletes, LogsActivity, HasUuids;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -101,5 +102,20 @@ class Student extends Model
     public function registrations(): HasMany
     {
         return $this->hasMany(StudentRegistration::class);
+    }
+
+    public function resitEligibilities(): HasMany
+    {
+        return $this->hasMany(ResitEligibility::class, 'student_id');
+    }
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }

@@ -4,6 +4,7 @@ import { Badge } from '@shared/components/ui/Badge'
 
 type ModuleResult = {
   average: number
+  rattrapage_average?: number
   status: 'V' | 'RAT' | 'NV'
   missing_grades: boolean
 }
@@ -33,7 +34,7 @@ export default function TranscriptView() {
           module_id: 2,
           module_name: 'Management des Organisations',
           coefficient: 4,
-          result: { average: 9.75, status: 'RAT', missing_grades: false },
+          result: { average: 9.75, rattrapage_average: 12.5, status: 'V', missing_grades: false }, // Passed in Rattrapage
         },
         {
           module_id: 3,
@@ -74,10 +75,11 @@ export default function TranscriptView() {
           <div className="w-full overflow-x-auto">
             <div className="min-w-[600px]">
               <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium text-muted-foreground border-b">
-                <div className="col-span-6">Module</div>
-                <div className="col-span-2 text-center">Coef</div>
-                <div className="col-span-2 text-center">Moyenne</div>
-                <div className="col-span-2 text-right">Statut</div>
+                <div className="col-span-5">Module</div>
+                <div className="col-span-1 text-center">Coef</div>
+                <div className="col-span-2 text-center">N. Normale</div>
+                <div className="col-span-2 text-center">N. Rattrapage</div>
+                <div className="col-span-2 text-right">Statut Final</div>
               </div>
               
               <div className="divide-y">
@@ -93,12 +95,20 @@ export default function TranscriptView() {
                 ) : (
                   transcript.map((row) => (
                     <div key={row.module_id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-muted/50 transition-colors">
-                      <div className="col-span-6 font-medium">{row.module_name}</div>
-                      <div className="col-span-2 text-center text-muted-foreground">{row.coefficient}</div>
-                      <div className="col-span-2 text-center font-bold">
-                        {row.result.average.toFixed(2)}
+                      <div className="col-span-5 font-medium">{row.module_name}</div>
+                      <div className="col-span-1 text-center text-muted-foreground">{row.coefficient}</div>
+                      <div className="col-span-2 text-center">
+                        <span className={row.result.rattrapage_average ? 'text-muted-foreground line-through' : 'font-bold'}>
+                          {row.result.average.toFixed(2)}
+                        </span>
                       </div>
-                      <div className="col-span-2 text-right">
+                      <div className="col-span-2 text-center font-bold text-amber-600">
+                        {row.result.rattrapage_average ? row.result.rattrapage_average.toFixed(2) : '-'}
+                      </div>
+                      <div className="col-span-2 text-right flex justify-end items-center gap-2">
+                        {row.result.rattrapage_average && row.result.status === 'V' && (
+                          <Badge variant="outline" className="text-[10px]">Validé par compensation</Badge>
+                        )}
                         {getStatusBadge(row.result.status)}
                       </div>
                     </div>

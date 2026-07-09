@@ -5,18 +5,23 @@ import { Button } from '@shared/components/ui/Button'
 import { toast } from 'sonner'
 import { gradeEntrySchema } from '../../../schemas/grade.schema'
 import { ZodError } from 'zod'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/Select'
+import { Badge } from '@shared/components/ui/Badge'
 
 // Dummy data for scaffolding
 const MOCK_STUDENTS = [
-  { id: 1, name: 'Amina Bennis', apogee: '19000123' },
-  { id: 2, name: 'Karim Tazi', apogee: '19000124' },
-  { id: 3, name: 'Sara Lahlou', apogee: '19000125' },
+  { id: 1, name: 'Amina Bennis', apogee: '19000123', is_rattrapage: false },
+  { id: 2, name: 'Karim Tazi', apogee: '19000124', is_rattrapage: true },
+  { id: 3, name: 'Sara Lahlou', apogee: '19000125', is_rattrapage: false },
 ]
 
 export default function GradeEntryTable() {
+  const [sessionType, setSessionType] = useState<'NORMALE' | 'RATTRAPAGE'>('NORMALE')
   const [grades, setGrades] = useState<Record<number, { value: number | ''; absent: boolean }>>(
     MOCK_STUDENTS.reduce((acc, student) => ({ ...acc, [student.id]: { value: '', absent: false } }), {})
   )
+
+  const displayedStudents = MOCK_STUDENTS.filter(s => sessionType === 'NORMALE' || (sessionType === 'RATTRAPAGE' && s.is_rattrapage))
 
   const handleValueChange = (studentId: number, val: string) => {
     let numericVal: number | '' = val === '' ? '' : parseFloat(val)
@@ -59,7 +64,18 @@ export default function GradeEntryTable() {
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Saisie des Notes (CC - Management)</CardTitle>
+        <div className="flex items-center gap-4">
+          <CardTitle>Saisie des Notes (CC - Management)</CardTitle>
+          <Select value={sessionType} onValueChange={(val: any) => setSessionType(val)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Session" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NORMALE">Session Normale</SelectItem>
+              <SelectItem value="RATTRAPAGE">Session Rattrapage</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={handleSave}>Save All Grades</Button>
       </CardHeader>
       <CardContent>
@@ -74,10 +90,15 @@ export default function GradeEntryTable() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_STUDENTS.map((student) => (
+              {displayedStudents.map((student) => (
                 <tr key={student.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                   <td className="p-3 font-mono">{student.apogee}</td>
-                  <td className="p-3 font-medium">{student.name}</td>
+                  <td className="p-3 font-medium flex items-center gap-2">
+                    {student.name}
+                    {sessionType === 'RATTRAPAGE' && (
+                      <Badge variant="destructive" className="text-[10px]">Rattrapage</Badge>
+                    )}
+                  </td>
                   <td className="p-3">
                     <Input
                       type="number"

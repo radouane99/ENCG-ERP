@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Group extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $guarded = ['id'];
 
@@ -25,5 +26,15 @@ class Group extends Model
     public function speciality(): BelongsTo
     {
         return $this->belongsTo(Speciality::class);
+    }
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }

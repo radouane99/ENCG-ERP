@@ -21,11 +21,16 @@ class ResitEligibility extends Model
 
     public function student(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id');
     }
 
     public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function examSession(): BelongsTo
+    {
+        return $this->belongsTo(ExamSession::class);
     }
 }

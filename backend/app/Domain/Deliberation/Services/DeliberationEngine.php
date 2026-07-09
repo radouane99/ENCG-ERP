@@ -5,14 +5,13 @@ namespace App\Domain\Deliberation\Services;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
 use App\Models\Student;
-use App\Models\Grade;
-use App\Models\GradeComponent;
+use App\Models\ResitEligibility;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 /**
  * Enterprise Service for processing academic deliberations (Apogée style).
- * Handles average calculations, elimination rules, and rachat (compensation).
+ * Handles average calculations, elimination rules, rachat, and Rattrapage eligibility.
  */
 class DeliberationEngine
 {
@@ -26,22 +25,26 @@ class DeliberationEngine
 
             // 1. Fetch all students registered in this filiere/semester/group
             $students = $this->getEligibleStudents($deliberation);
-
-            // Get the semester number from the relationship to pass to our calculation method
             $semesterNumber = $deliberation->semester->number;
+            $isRattrapage = ($deliberation->type === 'RATTRAPAGE');
 
             foreach ($students as $student) {
-                // 2. Calculate raw averages per module (Passing semesterNumber instead of ID)
-                $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber);
+                // 2. Calculate raw averages per module (Handles MAX of Normale vs Rattrapage)
+                $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber, $isRattrapage);
 
-                // 3. Check for eliminatory marks (< 7/20 or < 8/20 depending on rules)
-                $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages, $deliberation);
+                // 3. Grant Rattrapage Eligibility for failed modules (If this is NORMALE deliberation)
+                if (!$isRattrapage) {
+                    $this->grantResitEligibility($student->id, $moduleAverages, $deliberation);
+                }
 
-                // 4. Calculate semester average
+                // 4. Check for eliminatory marks (< 7/20)
+                $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages);
+
+                // 5. Calculate semester average
                 $semesterAverage = $moduleAverages->avg('final_module_score');
 
-                // 5. Apply Compensation (Rachat) rules if applicable
-                $decision = 'retake';
+                // 6. Apply Compensation (Rachat) rules if applicable
+                $decision = 'retake'; // Assume retake by default
                 $wasCompensated = false;
                 $compensatedAverage = null;
 
@@ -54,7 +57,7 @@ class DeliberationEngine
                     $compensatedAverage = 10.00;
                 }
 
-                // 6. Record Decision
+                // 7. Record Decision
                 DeliberationDecision::updateOrCreate(
                     [
                         'deliberation_id' => $deliberation->id,
@@ -86,26 +89,64 @@ class DeliberationEngine
         })->get();
     }
 
-    // غيرنا المتغير الثاني باش يكون هو الرقم ديال الدورة (semesterNumber)
-    private function calculateModuleAverages(int $studentId, int $semesterNumber): Collection
+    private function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
     {
-        // Complex query to sum up (grade * weight) / sum(weight) per module
-        return DB::table('grades')
-            ->join('grade_components', 'grades.grade_component_id', '=', 'grade_components.id')
-            ->join('modules', 'grade_components.module_id', '=', 'modules.id')
+        // To handle MAX(Normale, Rattrapage), we group by grade_component_id and max the score
+        // Then we sum up (max_score * weight / 100) per module.
+        // If it's NOT a Rattrapage deliberation, we ONLY fetch NORMALE grades.
+        
+        $gradesQuery = DB::table('grades')
+            ->join('exam_sessions', 'grades.exam_session_id', '=', 'exam_sessions.id')
             ->where('grades.student_id', $studentId)
-            ->where('modules.semester_number', $semesterNumber) // هنا صلحنا الفلتر باش يخدم مع الـ Database ديالك
+            ->select('grades.grade_component_id', 'grades.score', 'exam_sessions.id as session_id');
+
+        if (!$includeRattrapage) {
+            $gradesQuery->where('exam_sessions.type', 'NORMALE');
+        }
+
+        // Subquery: Get the highest score per component (merges Normale and Rattrapage)
+        $bestScores = DB::table(DB::raw("({$gradesQuery->toSql()}) as raw_grades"))
+            ->mergeBindings($gradesQuery)
+            ->select('grade_component_id', DB::raw('MAX(score) as best_score'), DB::raw('MAX(session_id) as session_id'))
+            ->groupBy('grade_component_id');
+
+        // Sum the best scores per module
+        return DB::table(DB::raw("({$bestScores->toSql()}) as best_components"))
+            ->mergeBindings($bestScores)
+            ->join('grade_components', 'best_components.grade_component_id', '=', 'grade_components.id')
+            ->join('modules', 'grade_components.module_id', '=', 'modules.id')
+            ->where('modules.semester_number', $semesterNumber)
             ->select(
                 'modules.id as module_id',
-                DB::raw('SUM(grades.score * (grade_components.weight / 100)) as final_module_score')
+                'best_components.session_id as session_id',
+                DB::raw('SUM(best_components.best_score * (grade_components.weight / 100)) as final_module_score')
             )
-            ->groupBy('modules.id')
+            ->groupBy('modules.id', 'best_components.session_id')
             ->get();
     }
 
-    private function checkEliminatoryMarks(Collection $moduleAverages, Deliberation $deliberation): bool
+    private function grantResitEligibility(int $studentId, Collection $moduleAverages, Deliberation $deliberation): void
     {
-        // Moroccan university standard: < 7/20 or < 5/20 is often eliminatory
+        // Standard rule: < 10 grants rattrapage eligibility
+        foreach ($moduleAverages as $module) {
+            if ($module->final_module_score < 10.0) {
+                ResitEligibility::updateOrCreate(
+                    [
+                        'student_id' => $studentId,
+                        'module_id' => $module->module_id,
+                        'exam_session_id' => $module->session_id ?? $deliberation->semester->examSessions()->where('type', 'NORMALE')->first()->id ?? 0,
+                    ],
+                    [
+                        'is_eligible' => true
+                    ]
+                );
+            }
+        }
+    }
+
+    private function checkEliminatoryMarks(Collection $moduleAverages): bool
+    {
+        // Moroccan university standard: < 7/20 is often eliminatory for the whole semester
         $threshold = 7.0; 
         
         foreach ($moduleAverages as $module) {

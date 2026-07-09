@@ -16,13 +16,14 @@ use Spatie\Permission\Traits\HasRoles;
 use PragmaRX\Google2FA\Google2FA;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity, InteractsWithMedia;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity, InteractsWithMedia, HasUuids;
 
     protected $guard_name = 'sanctum';
 
@@ -72,5 +73,15 @@ class User extends Authenticatable implements HasMedia
     public function professor(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Professor::class);
+    }
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }
