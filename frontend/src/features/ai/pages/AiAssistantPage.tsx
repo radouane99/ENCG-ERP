@@ -34,15 +34,19 @@ export default function AiAssistantPage() {
   }, [messages])
 
   // Fetch History
-  useQuery({
+  // Fetch History
+  const { data: historyData, isSuccess } = useQuery({
     queryKey: ['chat-history'],
     queryFn: async () => {
       const res = await aiApi.getHistory()
-      return res.messages
-    },
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        setMessages(data)
+      return res.messages as Array<{role: 'user' | 'assistant', content: string}>
+    }
+  })
+
+  useEffect(() => {
+    if (isSuccess) {
+      if (historyData && historyData.length > 0) {
+        setMessages(historyData)
       } else {
         setMessages([{ 
           role: 'assistant', 
@@ -52,7 +56,7 @@ export default function AiAssistantPage() {
         }])
       }
     }
-  })
+  }, [isSuccess, historyData, isRtl])
 
   // Chat Mutation
   const chatMutation = useMutation({

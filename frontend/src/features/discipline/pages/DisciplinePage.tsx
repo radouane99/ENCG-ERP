@@ -37,13 +37,22 @@ export default function DisciplinePage() {
   })
 
   // MOCK DATA Fallback
-  const dataList = disciplineCases?.length > 0 ? disciplineCases : [
+  type DisciplineItem = {
+    id: number;
+    student?: { first_name: string; last_name: string; cne: string };
+    type: string;
+    severity: string;
+    status: string;
+    decision?: string;
+    incident_date: string;
+  };
+  const dataList: DisciplineItem[] = disciplineCases?.length > 0 ? disciplineCases : [
     { id: 1, student: { first_name: 'Karim', last_name: 'EL FASSI', cne: 'N111222333' }, type: 'Triche à l\'examen', severity: 'high', status: 'pending', incident_date: '2026-06-25' },
     { id: 2, student: { first_name: 'Nadia', last_name: 'BENALI', cne: 'M444555666' }, type: 'Absences répétées', severity: 'medium', status: 'resolved', decision: 'warning', incident_date: '2026-06-20' },
     { id: 3, student: { first_name: 'Omar', last_name: 'CHAKIR', cne: 'K777888999' }, type: 'Comportement', severity: 'low', status: 'pending', incident_date: '2026-06-28' },
   ]
 
-  const filteredList = dataList.filter(item => 
+  const filteredList = dataList.filter((item: DisciplineItem) => 
     item.student?.last_name.toLowerCase().includes(search.toLowerCase()) || 
     item.type.toLowerCase().includes(search.toLowerCase())
   )

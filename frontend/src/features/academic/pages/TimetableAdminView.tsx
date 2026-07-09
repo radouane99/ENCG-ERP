@@ -239,7 +239,7 @@ export default function TimetableAdminView() {
 
       {/* Conflict Modal */}
       <Modal
-        isOpen={conflictModalOpen}
+        open={conflictModalOpen}
         onClose={() => setConflictModalOpen(false)}
         title={isRtl ? 'تعارض في الجدول الزمني' : 'Conflit Détecté'}
         size="md"

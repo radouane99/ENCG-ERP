@@ -36,16 +36,26 @@ export default function InternshipManager() {
   })
 
   // MOCK DATA Fallback
-  const dataList = internships?.length > 0 ? internships : [
+  type InternshipListItem = {
+    id: number;
+    student?: { first_name: string; last_name: string };
+    type: string;
+    company?: { name: string };
+    city?: string;
+    status: string;
+    duration?: string;
+  };
+  const dataList: InternshipListItem[] = internships?.length > 0 ? internships : [
     { id: 1, student: { first_name: 'Anass', last_name: 'EL WALI' }, type: 'Stage d\'application', company: { name: 'Royal Air Maroc' }, city: 'Casablanca', status: 'pending', duration: '2 mois' },
     { id: 2, student: { first_name: 'Salma', last_name: 'BENNIS' }, type: 'PFE', company: { name: 'Bank of Africa' }, city: 'Rabat', status: 'validated', duration: '6 mois' },
     { id: 3, student: { first_name: 'Youssef', last_name: 'TAZI' }, type: 'Stage d\'initiation', company: { name: 'OCP Group' }, city: 'Khouribga', status: 'pending', duration: '1 mois' },
   ]
 
-  const filteredList = dataList.filter(item => 
+  const filteredList = dataList.filter((item: InternshipListItem) => 
     item.student?.last_name.toLowerCase().includes(search.toLowerCase()) || 
     item.company?.name.toLowerCase().includes(search.toLowerCase())
   )
+
 
   const getStatusBadge = (status: string) => {
     if (status === 'validated') {

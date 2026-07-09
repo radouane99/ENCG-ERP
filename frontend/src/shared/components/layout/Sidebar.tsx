@@ -125,7 +125,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupKey: 'nav.group_9',
     items: [
       { labelKey: 'nav.item_44', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
-      { label: 'Journal d\'Activité', labelAr: 'سجل النشاط', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
+      { labelKey: 'nav.item_activity_logs', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_45', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_46', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
     ]

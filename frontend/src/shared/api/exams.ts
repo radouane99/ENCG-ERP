@@ -33,7 +33,7 @@ export const examsApi = {
   },
 
   // Convocations
-  getStudentConvocations: async (examId: number) => {
+  getExamLiveStats: async (examId: number) => {
     const response = await api.get(`/exam-planning/${examId}/live-stats`); // Temp reuse
     return response.data;
   },

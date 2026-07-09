@@ -10,6 +10,7 @@ export interface AttendanceSession {
   status: 'active' | 'completed' | 'cancelled';
   qr_token?: string;
   created_at: string;
+  module?: { name: string };
 }
 
 export interface AttendanceRecord {
@@ -20,6 +21,8 @@ export interface AttendanceRecord {
   is_justified: boolean;
   scanned_at?: string;
   is_valid: boolean;
+  attendanceSession?: AttendanceSession;
+  absenceJustification?: AbsenceJustification;
 }
 
 export interface AbsenceJustification {
@@ -33,6 +36,17 @@ export interface AbsenceJustification {
   reviewed_by?: number;
   reviewed_at?: string;
   rejection_reason?: string;
+  // Relations (from API eager loading)
+  student?: {
+    id: number;
+    student_number: string;
+    first_name?: string;
+    last_name?: string;
+    user?: { first_name: string; last_name: string; email: string; cin?: string };
+  };
+  attendance?: AttendanceRecord;
+  media?: Array<{ id: number; url: string; file_name: string; mime_type: string; original_url?: string }>;
+  created_at?: string;
 }
 
 export interface GlobalAbsenceStats {
@@ -41,3 +55,6 @@ export interface GlobalAbsenceStats {
   late: number;
   present: number;
 }
+
+// [Phase 8] Attendance is an alias for AttendanceRecord — used in StudentAbsencesPage
+export type Attendance = AttendanceRecord;

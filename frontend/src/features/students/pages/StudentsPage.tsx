@@ -59,8 +59,8 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Actif', suspended: 'Suspendu', graduated: 'Diplômé', withdrawn: 'Retiré',
 };
 
-const STATUS_VARIANTS: Record<string, "success" | "warning" | "info" | "destructive" | "default"> = {
-  active: 'success', suspended: 'warning', graduated: 'info', withdrawn: 'destructive',
+const STATUS_VARIANTS: Record<string, "success" | "warning" | "default" | "destructive"> = {
+  active: 'success', suspended: 'warning', graduated: 'default', withdrawn: 'destructive',
 };
 
 // ── Main Page Component ─────────────────────────────────────────────
@@ -380,7 +380,7 @@ const StudentsPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-3">
                       {student.scholarship_type ? (
-                        <Badge variant="info" size="sm" className="capitalize bg-purple-500/10 text-purple-600 dark:text-purple-400 border-transparent">
+                        <Badge variant="default" size="sm" className="capitalize bg-purple-500/10 text-purple-600 dark:text-purple-400 border-transparent">
                           {student.scholarship_type}
                         </Badge>
                       ) : (
@@ -459,7 +459,7 @@ const StudentsPage: React.FC = () => {
 
       {/* Custom Modal for Create / Edit */}
       <Modal
-        isOpen={showModal}
+        open={showModal}
         onClose={() => { setShowModal(false); setEditingStudent(null); }}
         title={editingStudent ? (t('students:form.edit_title')) : (t('students:form.create_title'))}
         size="lg"

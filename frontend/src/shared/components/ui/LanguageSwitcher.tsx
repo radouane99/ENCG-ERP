@@ -1,42 +1,31 @@
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
+  const changeLanguage = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    i18n.changeLanguage(e.target.value);
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className={cn("p-2 rounded-lg hover:bg-muted transition-colors flex items-center gap-2 outline-none", className)}>
-        <Languages className="w-5 h-5" />
-        <span className="text-sm font-medium uppercase">{i18n.language}</span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-32">
-        <DropdownMenuItem 
-          onClick={() => changeLanguage('fr')} 
-          className={cn("cursor-pointer flex justify-between", i18n.language === 'fr' && "bg-muted font-bold")}
-        >
-          Français
-          {i18n.language === 'fr' && <span>✓</span>}
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => changeLanguage('ar')}
-          className={cn("cursor-pointer flex justify-between", i18n.language === 'ar' && "bg-muted font-bold")}
-        >
-          العربية
-          {i18n.language === 'ar' && <span>✓</span>}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className={cn("relative inline-flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:hover:bg-slate-800", className)}>
+      <Languages className="w-4 h-4 text-slate-500" />
+      <select
+        value={i18n.language}
+        onChange={changeLanguage}
+        className="appearance-none bg-transparent outline-none text-sm font-medium uppercase text-slate-700 dark:text-slate-300 cursor-pointer pr-4"
+        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+      >
+        <option value="fr">FR</option>
+        <option value="ar">AR</option>
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
   );
 }

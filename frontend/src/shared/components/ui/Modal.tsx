@@ -22,6 +22,11 @@ type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 export interface ModalProps {
   /** Controls open/closed state */
   open: boolean
+  /**
+   * Alias for `open` — accepted for backwards compatibility.
+   * @deprecated Use `open` instead.
+   */
+  isOpen?: boolean
   /** Called when modal should close */
   onClose: () => void
   /** Modal title — rendered in header, linked to aria-labelledby */
@@ -59,7 +64,8 @@ const FOCUSABLE =
 
 // ── Component ────────────────────────────────────────────────────
 const Modal: React.FC<ModalProps> = ({
-  open,
+  open: openProp,
+  isOpen,
   onClose,
   title,
   description,
@@ -71,6 +77,8 @@ const Modal: React.FC<ModalProps> = ({
   className,
   hideCloseButton = false,
 }) => {
+  // Support isOpen alias for backwards compatibility
+  const open = openProp ?? isOpen ?? false
   const titleId = useId()
   const descId  = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
