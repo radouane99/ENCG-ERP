@@ -1,0 +1,493 @@
+{
+  "missingIndexes": [
+    {
+      "table": "attendance_sessions",
+      "column": "professor_id"
+    },
+    {
+      "table": "defense_juries",
+      "column": "professor_id"
+    },
+    {
+      "table": "learning_materials",
+      "column": "professor_id"
+    },
+    {
+      "table": "module_professor",
+      "column": "professor_id"
+    }
+  ],
+  "redundantColumns": [
+    {
+      "table": "attendances",
+      "column": "is_justified",
+      "reason": "Can be inferred from absence_justifications relation"
+    },
+    {
+      "table": "groups",
+      "column": "current_count",
+      "reason": "Can be calculated via student_registrations withCount()"
+    }
+  ],
+  "normalizationViolations": [
+    {
+      "table": "students",
+      "columns": [
+        "address",
+        "city",
+        "birth_date"
+      ],
+      "issue": "Personal data should be moved to users table (3NF)"
+    }
+  ],
+  "missingForeignKeys": [
+    {
+      "table": "attendance_sessions",
+      "column": "professor_id"
+    },
+    {
+      "table": "defense_juries",
+      "column": "professor_id"
+    },
+    {
+      "table": "learning_materials",
+      "column": "professor_id"
+    },
+    {
+      "table": "module_professor",
+      "column": "professor_id"
+    },
+    {
+      "table": "notifications",
+      "column": "notifiable_id"
+    },
+    {
+      "table": "personal_access_tokens",
+      "column": "tokenable_id"
+    },
+    {
+      "table": "schedules",
+      "column": "professor_id"
+    },
+    {
+      "table": "sessions",
+      "column": "user_id"
+    }
+  ],
+  "inconsistentTypes": [
+    {
+      "table": "academic_years",
+      "column": "is_current",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "academic_years",
+      "column": "is_locked",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "admission_campaigns",
+      "column": "requires_entrance_exam",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "announcements",
+      "column": "is_pinned",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "announcements",
+      "column": "is_published",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "attendance_sessions",
+      "column": "is_locked",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "attendances",
+      "column": "is_justified",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "attendances",
+      "column": "is_valid",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "book_copies",
+      "column": "is_available",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "borrowings",
+      "column": "penalty_paid",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "campuses",
+      "column": "is_main",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "club_members",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "clubs",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "compensation_rules",
+      "column": "eliminatory_blocks",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "compensation_rules",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "consent_logs",
+      "column": "is_granted",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "conversation_user",
+      "column": "is_admin",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "defense_juries",
+      "column": "is_external",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "deliberation_decisions",
+      "column": "was_compensated",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "deliberation_decisions",
+      "column": "was_rachat",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "departments",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "diplomas",
+      "column": "is_issued",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "disciplinary_decisions",
+      "column": "is_appealed",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "document_types",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "exam_seatings",
+      "column": "is_present",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "exam_sessions",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "exam_sessions",
+      "column": "is_locked",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "exam_surveillances",
+      "column": "has_attended",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "exams",
+      "column": "grades_published",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "filieres",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "grade_components",
+      "column": "is_eliminatory",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "grade_entry_periods",
+      "column": "is_open",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "grades",
+      "column": "is_absent",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "grades",
+      "column": "is_justified_absence",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "institutions",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "learning_materials",
+      "column": "is_published",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "messages",
+      "column": "is_read",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "modules",
+      "column": "is_elective",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "modules",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "professor_availabilities",
+      "column": "is_available",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "professors",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "retention_policies",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "rooms",
+      "column": "has_projector",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "rooms",
+      "column": "has_ac",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "rooms",
+      "column": "is_available",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "schedules",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "semesters",
+      "column": "is_current",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "student_pathways",
+      "column": "is_current",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "students",
+      "column": "has_disability",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "ticket_replies",
+      "column": "is_internal",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "users",
+      "column": "is_active",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    },
+    {
+      "table": "users",
+      "column": "two_factor_enabled",
+      "type": "tinyint(1)",
+      "expected": "boolean"
+    }
+  ],
+  "businessRuleSuggestions": [
+    {
+      "table": "attendance_sessions",
+      "issue": "attendance_sessions has schedule_id AND [module_id, group_id, professor_id]. If schedules change, are these meant as immutable historical snapshots or are they 100% redundant? Recommendation: If redundant, DROP. If snapshot, keep as historical record."
+    }
+  ],
+  "timetableTablesMissing": [
+    "holidays",
+    "buildings",
+    "floors",
+    "room_maintenance",
+    "room_unavailabilities",
+    "professor_unavailabilities",
+    "teacher_constraints",
+    "room_constraints",
+    "student_constraints",
+    "equipment_constraints",
+    "course_constraints",
+    "schedule_constraints",
+    "schedule_preferences",
+    "schedule_versions",
+    "schedule_conflicts",
+    "professor_workloads",
+    "room_equipments",
+    "equipment_types"
+  ],
+  "models": {
+    "unused": [],
+    "existing": [
+      "AbsenceJustification",
+      "AcademicProject",
+      "AcademicYear",
+      "AdmissionCampaign",
+      "AiChatMessage",
+      "AiConversation",
+      "AiGeneratedContent",
+      "AlumniSurvey",
+      "Application",
+      "Assessment",
+      "Assignment",
+      "AssignmentSubmission",
+      "Attendance",
+      "AttendanceSession",
+      "Campus",
+      "Club",
+      "ClubEvent",
+      "ClubMember",
+      "Complaint",
+      "ContactSubmission",
+      "Convocation",
+      "Deliberation",
+      "DeliberationDecision",
+      "Department",
+      "DisciplinaryCase",
+      "DisciplinaryDecision",
+      "DocumentRequest",
+      "DocumentTemplate",
+      "DocumentType",
+      "Exam",
+      "ExamLockingAudit",
+      "ExamSeating",
+      "ExamSession",
+      "ExamSurveillance",
+      "Filiere",
+      "FinalProject",
+      "GeneratedDocument",
+      "Grade",
+      "GradeComponent",
+      "GradeEntryPeriod",
+      "Group",
+      "Institution",
+      "Internship",
+      "InternshipDocument",
+      "InternshipEvaluation",
+      "InternshipReport",
+      "LearningMaterial",
+      "Module",
+      "Professor",
+      "ProfessorAvailability",
+      "ProjectDefense",
+      "Quiz",
+      "QuizAttempt",
+      "QuizQuestion",
+      "ResitEligibility",
+      "Room",
+      "Schedule",
+      "ScheduleChange",
+      "ScheduleChangeRequest",
+      "Semester",
+      "Soutenance",
+      "Speciality",
+      "Student",
+      "StudentCard",
+      "StudentModuleReservation",
+      "StudentPathway",
+      "StudentRegistration",
+      "User",
+      "VacationContract",
+      "VacationPayment",
+      "VacationSession"
+    ]
+  }
+}
