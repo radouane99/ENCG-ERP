@@ -25,8 +25,7 @@ class SearchController extends Controller
         $results = [];
 
         // 1. Search Users (Students, Professors)
-        $users = User::where('name', 'ILIKE', "%{$query}%")
-            ->orWhere('email', 'ILIKE', "%{$query}%")
+        $users = User::whereRaw('MATCH(first_name, last_name, email) AGAINST(? IN BOOLEAN MODE)', ["*{$query}*"])
             ->take(5)
             ->get();
 
