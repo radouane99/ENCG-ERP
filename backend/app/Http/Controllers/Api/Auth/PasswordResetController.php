@@ -70,7 +70,7 @@ class PasswordResetController extends Controller
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
             return response()->json(['success' => true, 'message' => 'Mot de passe reinitialise avec succes.']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Reset password error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
         }
