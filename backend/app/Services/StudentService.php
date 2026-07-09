@@ -21,11 +21,15 @@ class StudentService
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('users.first_name', 'like', "%{$search}%")
-                  ->orWhere('users.last_name', 'like', "%{$search}%")
-                  ->orWhere('students.student_number', 'like', "%{$search}%")
-                  ->orWhere('students.cne', 'like', "%{$search}%")
-                  ->orWhere('users.email', 'like', "%{$search}%");
+                if (DB::connection()->getDriverName() === 'sqlite') {
+                    $q->where('users.first_name', 'like', "%{$search}%")
+                      ->orWhere('users.last_name', 'like', "%{$search}%")
+                      ->orWhere('users.email', 'like', "%{$search}%");
+                } else {
+                    $q->whereRaw('MATCH(users.first_name, users.last_name, users.email) AGAINST (? IN BOOLEAN MODE)', [$search . '*']);
+                }
+                $q->orWhere('students.student_number', 'like', "%{$search}%")
+                  ->orWhere('students.cne', 'like', "%{$search}%");
             });
         }
 
