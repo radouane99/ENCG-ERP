@@ -20,9 +20,10 @@ class ModuleController extends Controller
     public function index(): JsonResponse
     {
         $modules = $this->moduleService->getAllModules();
-        $mapped = $this->moduleService->mapModuleCollection($modules);
 
-        return response()->json(['data' => $mapped]);
+        return response()->json([
+            'data' => \App\Http\Resources\ModuleResource::collection($modules)
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -41,7 +42,7 @@ class ModuleController extends Controller
 
         return response()->json([
             'message' => 'Module créé avec succès.',
-            'data' => $module
+            'data' => new \App\Http\Resources\ModuleResource($module)
         ], 201);
     }
 

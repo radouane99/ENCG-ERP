@@ -26,9 +26,15 @@ class AttendanceSessionResource extends JsonResource
             'started_at'   => $this->started_at?->toDateTimeString(),
             'qr_token'     => $this->qr_token,
             'qr_expires_at'=> $this->qr_expires_at?->toDateTimeString(),
+            'created_at'   => $this->created_at?->format('Y-m-d H:i'),
 
             // Aggregates
-            'records_count' => $this->whenCounted('attendanceRecords'),
+            'records_count' => $this->records_count ?? $this->whenCounted('attendanceRecords', null, 0),
+
+            // Compatibility properties for specific admin views
+            'professor_name' => $this->professor && $this->professor->user 
+                ? trim($this->professor->user->first_name . ' ' . $this->professor->user->last_name) 
+                : '—',
 
             // Related professor (conditionally embedded)
             'professor' => $this->whenLoaded('professor', fn() => [

@@ -20,9 +20,10 @@ class FiliereController extends Controller
     public function index(): JsonResponse
     {
         $filieres = $this->filiereService->getAllFilieres();
-        $mapped = $this->filiereService->mapFiliereCollection($filieres);
 
-        return response()->json(['data' => $mapped]);
+        return response()->json([
+            'data' => \App\Http\Resources\FiliereResource::collection($filieres)
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -40,7 +41,7 @@ class FiliereController extends Controller
 
         return response()->json([
             'message' => 'Filière créée avec succès.',
-            'data' => $filiere
+            'data' => new \App\Http\Resources\FiliereResource($filiere)
         ], 201);
     }
 

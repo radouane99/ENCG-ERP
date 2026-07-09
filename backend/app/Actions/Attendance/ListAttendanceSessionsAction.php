@@ -21,16 +21,7 @@ class ListAttendanceSessionsAction
         $sessions = $query->latest()->get();
 
         return [
-            'data' => $sessions->map(fn ($s) => [
-                'id' => $s->id,
-                'module_name' => $s->module_name,
-                'group_name' => $s->group_name,
-                'room_name' => $s->room_name,
-                'status' => $s->status,
-                'professor_name' => $s->professor && $s->professor->user ? $s->professor->user->first_name . ' ' . $s->professor->user->last_name : '—',
-                'records_count' => $s->records_count,
-                'created_at' => $s->created_at->format('Y-m-d H:i'),
-            ])->toArray(),
+            'data' => \App\Http\Resources\AttendanceSessionResource::collection($sessions),
             'stats' => [
                 'total_sessions' => $sessions->count(),
                 'active_sessions' => $sessions->where('status', 'active')->count(),
