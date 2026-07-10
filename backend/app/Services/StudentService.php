@@ -14,7 +14,7 @@ class StudentService
      */
     public function getPaginatedStudents(array $filters, int $perPage = 20, string $sortField = 'last_name', string $sortOrder = 'asc'): LengthAwarePaginator
     {
-        $query = Student::with(['latestPathway.filiere'])
+        $query = Student::with(['latestPathway.filiere', 'user'])
             ->join('users', 'students.user_id', '=', 'users.id')
             ->select('students.*', 'users.first_name', 'users.last_name', 'users.email', 'users.phone', 'students.gender');
 

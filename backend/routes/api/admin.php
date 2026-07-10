@@ -23,7 +23,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
 
-    // Notifications
+
+
+// Notifications
     Route::prefix('notifications')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
         Route::post('/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
