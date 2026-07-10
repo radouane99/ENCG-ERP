@@ -6,7 +6,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/api/test-doc', function() {
+Route::get('/api/debug-attestation', function() {
     try {
         $student = \App\Models\Student::first();
         if (!$student) return 'No student found';
