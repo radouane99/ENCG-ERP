@@ -66,6 +66,7 @@ export interface Student {
   phone?: string | null;
   current_filiere?: string;
   current_semester?: number;
+  current_group?: string;
   pathways?: StudentPathway[];
   latest_pathway?: StudentPathway;
   created_at: string;
