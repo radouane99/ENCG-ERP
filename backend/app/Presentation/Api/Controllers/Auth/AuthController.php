@@ -51,7 +51,7 @@ class AuthController extends Controller
         ]);
 
         // 🔒 2FA Check for admins
-        if ($user->two_factor_enabled && $user->hasRole('admin')) {
+        if ($user->two_factor_enabled && $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             // Create a temporary challenge token (valid 10 min)
             $challengeToken = Str::uuid()->toString();
             Cache::put('2fa_challenge_' . $challengeToken, $user->id, now()->addMinutes(10));
@@ -202,7 +202,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('admin')) {
+        if (!$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             return response()->json(['message' => 'Non autorisé. Réservé aux administrateurs.'], 403);
         }
 
