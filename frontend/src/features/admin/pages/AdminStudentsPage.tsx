@@ -5,16 +5,7 @@ import { studentsApi } from '@shared/api/students'
 import { academicApi } from '@shared/api/academic'
 import EditStudentModal from '../components/EditStudentModal'
 
-interface Student {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  current_filiere: string;
-  current_semester: number;
-  student_number: string;
-  cne: string;
-}
+import { Student } from '@/types/models'
 
 export default function AdminStudentsPage() {
   const [students, setStudents] = useState<Student[]>([])
@@ -60,7 +51,7 @@ export default function AdminStudentsPage() {
     }
   }
 
-  const getInitials = (name: string) => name ? name.charAt(0).toUpperCase() : '?'
+  const getInitials = (name?: string) => name ? name.charAt(0).toUpperCase() : '?'
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">

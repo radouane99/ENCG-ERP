@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PaginationParams, Student, ApiResponse } from '../../types/models';
+import { PaginationParams, Student, ApiResponse, PaginatedResponse } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 export const api = axios.create({
@@ -24,7 +24,7 @@ api.interceptors.request.use(
 export const studentsApi = {
   getStudents: async (params?: PaginationParams) => {
     const response = await api.get('/students', { params });
-    return response.data as ApiResponse<Student[]>;
+    return response.data as PaginatedResponse<Student>;
   },
   getStudent: async (id: string | number) => {
     const response = await api.get(`/students/${id}`);

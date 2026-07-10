@@ -3,23 +3,14 @@ import { X, Loader2, Save } from 'lucide-react'
 import { studentsApi } from '@shared/api/students'
 import { academicApi } from '@shared/api/academic'
 
-interface Student {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  current_filiere: string;
-  current_semester: number;
-  student_number: string;
-  cne: string;
-}
+import { Student } from '@/types/models'
 
 export default function EditStudentModal({ 
   student, 
   onClose, 
   onRefresh 
 }: { 
-  student: any; 
+  student: Student; 
   onClose: () => void; 
   onRefresh: () => void; 
 }) {
