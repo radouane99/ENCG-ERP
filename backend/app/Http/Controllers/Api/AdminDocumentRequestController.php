@@ -18,9 +18,40 @@ class AdminDocumentRequestController extends Controller
     {
         $requests = DocumentRequest::with(['student.user', 'documentType', 'media'])
             ->latest()
-            ->paginate(15);
+            ->get()
+            ->map(function ($req) {
+                // Map DB status to frontend status ('ready' -> 'approved')
+                $status = $req->status;
+                if ($status === 'ready' || $status === 'processing') {
+                    $status = 'approved';
+                }
 
-        return response()->json($requests);
+                $media = $req->getFirstMedia('document_files');
+                
+                $adminNotes = $req->admin_notes ?? [];
+                
+                return [
+                    'id' => $req->id,
+                    'person' => $req->student?->user?->name ?? 'Inconnu',
+                    'role' => 'Étudiant',
+                    'type' => $req->documentType?->name ?? 'Document',
+                    'motif' => 'Demande de document administratif',
+                    'time' => $req->requested_at?->diffForHumans() ?? $req->created_at?->diffForHumans(),
+                    'status' => $status,
+                    'reason' => $adminNotes['rejection_reason'] ?? null,
+                    'url' => $media ? $media->getUrl() : null,
+                    'preview_url' => $media ? $media->getUrl() : null,
+                ];
+            });
+
+        return response()->json([
+            'data' => $requests,
+            'stats' => [
+                'pending' => $requests->where('status', 'pending')->count(),
+                'approved' => $requests->where('status', 'approved')->count(),
+                'rejected' => $requests->where('status', 'rejected')->count(),
+            ]
+        ]);
     }
 
     public function updateStatus(UpdateDocumentRequestStatus $request, DocumentRequest $documentRequest): JsonResponse

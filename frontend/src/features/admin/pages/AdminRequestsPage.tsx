@@ -38,7 +38,10 @@ export default function AdminRequestsPage() {
       rejection_reason = prompt(t('requests.messages.rejection_prompt')) || undefined
     }
     try {
-      await api.patch(`/admin/document-requests/${id}/status`, { status, rejection_reason })
+      await api.patch(`/admin/document-requests/${id}/status`, { 
+        status: status === 'approved' ? 'ready' : 'rejected', 
+        admin_notes: status === 'rejected' ? { reason: rejection_reason } : undefined 
+      })
       toast.success(status === 'approved' ? t('requests.messages.approve_success') : t('requests.messages.reject_success'))
       fetchRequests()
     } catch { toast.error(t('requests.messages.error')) }
