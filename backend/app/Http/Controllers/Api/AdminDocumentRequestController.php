@@ -26,7 +26,7 @@ class AdminDocumentRequestController extends Controller
                     $status = 'approved';
                 }
 
-                $media = $req->getFirstMedia('document_files');
+                $media = $req->getFirstMedia('generated_documents');
                 
                 $adminNotes = $req->admin_notes ?? [];
                 
