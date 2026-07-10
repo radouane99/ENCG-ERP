@@ -135,7 +135,11 @@ export default function AdminStudentsPage() {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <div className="font-bold text-slate-700 text-xs mb-1">{s.current_filiere ? `${s.current_filiere} - S${s.current_semester}` : 'Non affecté'}</div>
+                    <div className="font-bold text-slate-700 text-xs mb-1">
+                      {s.current_filiere 
+                        ? `${s.current_filiere}${s.current_group ? ` - ${s.current_group.split(' - ')[0]}` : ''} - S${s.current_semester}` 
+                        : 'Non affecté'}
+                    </div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MATRICULE: {s.student_number}</div>
                   </td>
                   <td className="px-8 py-5 text-right">
