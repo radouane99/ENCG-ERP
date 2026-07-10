@@ -268,6 +268,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 // ---------------------------------------------------------
 // REST API (Protected endpoints for third-party integrations)
 // ---------------------------------------------------------
+
 Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
     Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
     Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);

@@ -70,16 +70,32 @@ class DocumentRequestService
         $student = $request->student;
         $type = $request->documentType;
 
+        // Map DB view_names to actual blade views in resources/views/pdf
+        $viewMap = [
+            'documents.attestation_scolarite' => 'pdf.attestation',
+            'documents.convention_stage' => 'pdf.convention_stage',
+            'documents.releve_notes' => 'pdf.releve_notes',
+            'documents.attestation_travail' => 'pdf.attestation_travail',
+            'documents.ordre_mission' => 'pdf.ordre_mission',
+        ];
+
+        // Fallback to str_replace if not in map
+        $viewName = $viewMap[$type->view_name] ?? str_replace('documents.', 'pdf.', $type->view_name);
+
         // Ensure the Blade view exists
-        if (!View::exists($type->view_name)) {
-            throw new Exception("Blade view [{$type->view_name}] does not exist for this document type.");
+        if (!View::exists($viewName)) {
+            throw new Exception("Blade view [{$viewName}] does not exist for this document type (Original: {$type->view_name}).");
         }
+
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        $year = $academicYear ? $academicYear->name : (now()->year . '-' . (now()->year + 1));
 
         // The View variables
         $data = [
             'student' => $student,
             'documentRequest' => $request,
             'date' => now()->format('d/m/Y'),
+            'year' => $year,
         ];
 
         // Unique filename for storage
@@ -88,7 +104,7 @@ class DocumentRequestService
         // Use the PdfEngineService to render the view and save it locally
         // generateFromView handles Pdf::loadView()->output() and Storage::disk('public')->put()
         $pdfPath = $this->pdfEngine->generateFromView(
-            $type->view_name, 
+            $viewName, 
             $data, 
             'temp_documents', 
             $filename
