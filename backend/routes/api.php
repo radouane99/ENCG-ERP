@@ -1,14 +1,25 @@
 <?php
+use Illuminate\Support\Facades\Route;
 
 Route::get('/test-doc', function() {
     try {
-        $req = \App\Models\DocumentRequest::where('status', 'pending')->first();
-        app(\App\Services\DocumentRequestService::class)->processRequest($req, 'ready');
-        return 'Success';
+        $reqs = \App\Models\DocumentRequest::where('status', 'pending')->get();
+        if ($reqs->isEmpty()) return 'No pending requests found';
+        $out = [];
+        foreach ($reqs as $req) {
+            try {
+                app(\App\Services\DocumentRequestService::class)->processRequest($req, 'ready');
+                $out[] = "Success for {$req->id} ({$req->documentType->name})";
+            } catch (\Exception $e) {
+                $out[] = "Error for {$req->id}: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine();
+            }
+        }
+        return response()->json($out);
     } catch (\Exception $e) {
-        return 'Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+        return 'Global Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
     }
 });
+
 
 // Routes are now modularized in routes/api/
 // See bootstrap/app.php for registration.

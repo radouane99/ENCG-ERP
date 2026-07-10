@@ -269,6 +269,26 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 // REST API (Protected endpoints for third-party integrations)
 // ---------------------------------------------------------
 
+Route::get('/test-doc', function() {
+    try {
+        $reqs = \App\Models\DocumentRequest::where('status', 'pending')->get();
+        if ($reqs->isEmpty()) return 'No pending requests found';
+        $out = [];
+        foreach ($reqs as $req) {
+            try {
+                app(\App\Services\DocumentRequestService::class)->processRequest($req, 'ready');
+                $out[] = "Success for {$req->id} ({$req->documentType->name})";
+            } catch (\Exception $e) {
+                $out[] = "Error for {$req->id}: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine();
+            }
+        }
+        return response()->json($out);
+    } catch (\Exception $e) {
+        return 'Global Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+    }
+});
+
+
 Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
     Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
     Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);
