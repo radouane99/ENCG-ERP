@@ -34,6 +34,14 @@ export default function StaffProfessorsPage() {
     } catch { toast.error('Erreur lors de la suppression') }
   }
 
+  const isAdmin = (u: any) => u.type === 'admin'
+  const getPrimaryRole = (u: any) => {
+    if (u.role_label && u.role_label !== 'Non assigné') {
+      return u.role_label.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    }
+    return u.department || u.speciality || 'Non assigné'
+  }
+
   const filteredUsers = professors.filter(u => {
     if (activeTab === 'TOUS') return true
     if (activeTab === 'ADMINISTRATEURS') return u.type === 'admin'
@@ -118,17 +126,17 @@ export default function StaffProfessorsPage() {
                   <td className="px-8 py-5">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-bold tracking-wider border",
-                      u.type === 'admin' ? "border-blue-500 text-blue-600 bg-blue-50" : "border-green-500 text-green-600 bg-green-50"
+                      isAdmin(u) ? "border-blue-500 text-blue-600 bg-blue-50" : "border-green-500 text-green-600 bg-green-50"
                     )}>
-                      {u.type === 'admin' ? 'ADMINISTRATEUR' : 'PROFESSEUR'}
+                      {isAdmin(u) ? 'ADMINISTRATEUR' : 'PROFESSEUR'}
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <div className="font-bold text-slate-700 text-xs">{u.department || u.speciality || 'Non assigné'}</div>
+                    <div className="font-bold text-slate-700 text-xs">{getPrimaryRole(u)}</div>
                     <div className={cn(
                       "text-[10px] font-bold uppercase tracking-wider mt-1",
-                      u.type === 'admin' ? "text-blue-500" : "text-emerald-500"
-                    )}>{u.role_label || (u.type === 'admin' ? 'ADMIN' : 'PROFESSOR')}</div>
+                      isAdmin(u) ? "text-blue-500" : "text-emerald-500"
+                    )}>{isAdmin(u) ? 'ADMIN' : 'PROFESSOR'}</div>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <div className="flex items-center justify-end gap-3">

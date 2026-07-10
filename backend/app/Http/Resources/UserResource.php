@@ -22,8 +22,10 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'is_active' => (bool)$this->is_active,
             'roles' => $this->whenLoaded('roles', function () {
-                return $this->roles->pluck('name');
-            }),
+                return $this->roles->pluck('name')->values()->toArray();
+            }, []),
+            'type' => $this->relationLoaded('roles') && $this->roles->whereNotIn('name', ['professor', 'student'])->isNotEmpty() ? 'admin' : 'professor',
+            'role_label' => $this->relationLoaded('roles') && $this->roles->isNotEmpty() ? $this->roles->first()->name : 'Non assigné',
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

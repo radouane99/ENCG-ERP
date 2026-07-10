@@ -39,6 +39,14 @@ api.interceptors.response.use(
     }
 
     if (status === 403) {
+      if (error.response?.data?.requires_2fa_setup) {
+        toast.error('La double authentification (2FA) est obligatoire pour les administrateurs. Veuillez la configurer.')
+        // Redirect to profile or 2FA setup page
+        setTimeout(() => {
+          window.location.href = '/profile'
+        }, 2000)
+        return Promise.reject(error)
+      }
       toast.error('Accès Refusé : Vous n\'avez pas les permissions nécessaires.')
       return Promise.reject(error)
     }

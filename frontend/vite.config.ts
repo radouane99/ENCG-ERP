@@ -43,7 +43,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://nginx',
+        target: 'http://encg_nginx:80',
         changeOrigin: true,
       },
       '/broadcasting': {

@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Implicitly grant "Super Admin" role all permissions
+        // This works in the app by using gate-related functions like auth()->user->can() and @can()
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->hasRole('super-admin') ? true : null;
+        });
+
         // [AUDIT PERF-03] Enable lazy loading prevention in non-production to catch N+1 queries
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(!app()->isProduction());
 

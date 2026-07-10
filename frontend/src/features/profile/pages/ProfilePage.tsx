@@ -4,6 +4,7 @@ import { useAuthStore } from '@stores/authStore'
 import { Camera, Save, User as UserIcon, Lock, Mail, Phone, Loader2, Upload, ShieldCheck } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation('common')
@@ -24,6 +25,11 @@ export default function ProfilePage() {
     user?.avatar_path ? `${import.meta.env.VITE_API_URL}/storage/${user.avatar_path}` : null
   )
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+
+  const [setupData, setSetupData] = useState<any>(null)
+  const [totpCode, setTotpCode] = useState('')
+  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false)
+  const [isConfirming2FA, setIsConfirming2FA] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -84,6 +90,52 @@ export default function ProfilePage() {
       setErrorMessage(e.response?.data?.message || 'Une erreur s\'est produite lors de la mise à jour')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSetup2FA = async () => {
+    setIsSettingUp2FA(true)
+    setErrorMessage('')
+    try {
+      const res = await api.post('/v1/auth/two-factor/setup')
+      setSetupData(res.data)
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.message || 'Erreur lors de la configuration 2FA')
+    } finally {
+      setIsSettingUp2FA(false)
+    }
+  }
+
+  const handleConfirm2FA = async () => {
+    if (!totpCode || totpCode.length !== 6) return
+    setIsConfirming2FA(true)
+    setErrorMessage('')
+    try {
+      const res = await api.post('/v1/auth/two-factor/confirm', { code: totpCode })
+      setSuccessMessage(res.data.message)
+      setSetupData(null)
+      setTotpCode('')
+      const meRes = await api.get('/v1/auth/me')
+      updateUser(meRes.data.data)
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.message || 'Code incorrect')
+    } finally {
+      setIsConfirming2FA(false)
+    }
+  }
+
+  const handleDisable2FA = async () => {
+    const password = prompt('Veuillez entrer votre mot de passe pour désactiver la 2FA:')
+    if (!password) return
+    
+    setErrorMessage('')
+    try {
+      const res = await api.delete('/v1/auth/two-factor/disable', { data: { password } })
+      setSuccessMessage(res.data.message)
+      const meRes = await api.get('/v1/auth/me')
+      updateUser(meRes.data.data)
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.message || 'Erreur lors de la désactivation')
     }
   }
 
@@ -261,39 +313,90 @@ export default function ProfilePage() {
             </p>
           </div>
           
-          {/* Simulated 2FA State */}
+          {/* Real 2FA State */}
           <div className="space-y-6 max-w-3xl">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex items-start gap-4">
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-slate-800 mb-2">Statut : Non configuré</h3>
+                <h3 className="text-sm font-bold text-slate-800 mb-2">
+                  Statut : {user?.two_factor_enabled ? <span className="text-emerald-600">Configuré et Actif</span> : <span className="text-slate-500">Non configuré</span>}
+                </h3>
                 <p className="text-sm text-slate-600 mb-4">
                   Lorsque la double authentification est activée, vous serez invité à saisir un jeton aléatoire sécurisé lors de l'authentification.
                 </p>
-                <button
-                  type="button"
-                  className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-xs uppercase tracking-wide shadow-sm"
-                  onClick={() => alert("Appel API : /api/v1/auth/two-factor/setup\nEnsuite, afficher le QRCode SVG retourné par le backend.")}
-                >
-                  Activer 2FA
-                </button>
+                
+                {user?.two_factor_enabled ? (
+                  <button
+                    type="button"
+                    onClick={handleDisable2FA}
+                    className="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors text-xs uppercase tracking-wide shadow-sm border border-red-200"
+                  >
+                    Désactiver 2FA
+                  </button>
+                ) : (
+                  !setupData && (
+                    <button
+                      type="button"
+                      disabled={isSettingUp2FA}
+                      onClick={handleSetup2FA}
+                      className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors text-xs uppercase tracking-wide shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isSettingUp2FA && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Activer 2FA
+                    </button>
+                  )
+                )}
               </div>
             </div>
 
-            {/* Simulated QR Code Display (Hidden by default, shown during setup) */}
-            <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-6 hidden">
-              <h3 className="text-sm font-bold text-slate-800 mb-2">1. Scannez le QR Code</h3>
-              <p className="text-sm text-slate-500 mb-4">
-                Scannez ce QR Code avec Google Authenticator ou saisissez la clé manuellement.
-              </p>
-              <div className="w-40 h-40 bg-slate-100 border border-slate-200 rounded-xl mb-4 flex items-center justify-center text-xs text-slate-400">
-                [SVG QR Code]
+            {setupData && (
+              <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-800 mb-2">1. Scannez le QR Code</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Scannez ce QR Code avec Google Authenticator, Authy ou saisissez la clé manuellement: <strong className="select-all">{setupData.secret}</strong>
+                </p>
+                
+                <div className="w-48 h-48 bg-white border border-slate-200 rounded-xl mb-6 flex items-center justify-center overflow-hidden">
+                  <QRCodeSVG value={setupData.qr_code_url} size={160} level="M" />
+                </div>
+                
+                <h3 className="text-sm font-bold text-slate-800 mb-2">2. Confirmez le code</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Entrez le code à 6 chiffres généré par votre application pour confirmer la configuration.
+                </p>
+                <div className="flex gap-3">
+                  <input 
+                    type="text" 
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Ex: 123456" 
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-lg font-mono tracking-widest outline-none focus:border-blue-500 w-40 text-center" 
+                  />
+                  <button 
+                    type="button" 
+                    disabled={isConfirming2FA || totpCode.length !== 6}
+                    onClick={handleConfirm2FA}
+                    className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isConfirming2FA && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Confirmer
+                  </button>
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-800 mb-2">Codes de secours (Recovery Codes)</h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Sauvegardez ces codes en lieu sûr. Ils vous permettront de vous connecter si vous perdez accès à votre appareil.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 max-w-sm">
+                    {setupData.recovery_codes.map((code: string, i: number) => (
+                      <div key={i} className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs font-mono font-bold text-slate-700 select-all">
+                        {code}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-2">2. Confirmez le code</h3>
-              <div className="flex gap-2">
-                <input type="text" placeholder="Code à 6 chiffres" className="rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-blue-500" />
-                <button type="button" className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-sm">Confirmer</button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
