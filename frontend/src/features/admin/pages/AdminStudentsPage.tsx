@@ -23,6 +23,7 @@ export default function AdminStudentsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [filieres, setFilieres] = useState<any[]>([])
+  const [groups, setGroups] = useState<any[]>([])
   
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
 
@@ -46,6 +47,7 @@ export default function AdminStudentsPage() {
 
   useEffect(() => {
     academicApi.getFilieres().then(setFilieres).catch(console.error)
+    academicApi.getGroups().then(setGroups).catch(console.error)
   }, [])
 
   const handleDelete = async (id: number) => {
@@ -97,7 +99,10 @@ export default function AdminStudentsPage() {
         <div className="flex-1 max-w-sm">
           <label className="block text-xs font-bold text-slate-500 mb-2">Filtrer par Groupe</label>
           <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
-            <option>Tous les groupes</option>
+            <option value="">Tous les groupes</option>
+            {groups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
           </select>
         </div>
       </div>
