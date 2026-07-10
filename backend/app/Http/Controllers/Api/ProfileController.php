@@ -47,9 +47,14 @@ class ProfileController extends Controller
 
         $user->save();
 
+        $user->loadMissing('roles', 'permissions');
+        $userData = $user->toArray();
+        $userData['roles'] = $user->roles->pluck('name')->toArray();
+        $userData['permissions'] = $user->permissions->pluck('name')->toArray();
+
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => $user
+            'user' => $userData
         ]);
     }
 }
