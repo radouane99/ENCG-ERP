@@ -10,6 +10,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (\Illuminate\Http\Request $request) {
         return $request->user();
     });
+
+    Route::get('/server-time', function () {
+        return response()->json([
+            'server_time_utc' => now()->timezone('UTC')->toDateTimeString(),
+            'server_timestamp' => time(),
+        ]);
+    });
     
     Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
 

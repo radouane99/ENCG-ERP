@@ -55,7 +55,15 @@ class TwoFactorAuthService
         }
 
         $secret = decrypt($user->two_factor_secret);
-        $valid = $this->google2fa->verifyKey($secret, $code);
+        // Extend the window temporarily to 40 (20 minutes) to account for WSL time drift
+        $valid = $this->google2fa->verifyKey($secret, $code, 40);
+        
+        \Log::info("2FA Validation Attempt", [
+            'user' => $user->email,
+            'code_provided' => $code,
+            'valid' => $valid,
+            'server_time' => now()->toDateTimeString(),
+        ]);
 
         if ($valid) {
             $user->update([
