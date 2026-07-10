@@ -86,7 +86,7 @@ class TwoFactorAuthService
 
         // Check TOTP code
         $secret = decrypt($user->two_factor_secret);
-        if ($this->google2fa->verifyKey($secret, $code)) {
+        if ($this->google2fa->verifyKey($secret, $code, 40)) {
             return true;
         }
 
