@@ -75,7 +75,7 @@ class AdminDocumentRequestController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error processing request: ' . $e->getMessage()
+                'message' => 'Error processing request: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine()
             ], 500);
         }
     }

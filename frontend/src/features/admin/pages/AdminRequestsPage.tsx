@@ -44,7 +44,9 @@ export default function AdminRequestsPage() {
       })
       toast.success(status === 'approved' ? t('requests.messages.approve_success') : t('requests.messages.reject_success'))
       fetchRequests()
-    } catch { toast.error(t('requests.messages.error')) }
+    } catch (error: any) { 
+      toast.error(error.response?.data?.message || t('requests.messages.error')) 
+    }
   }
 
   const pendingRequests = requests.filter(r => r.status === 'pending')
