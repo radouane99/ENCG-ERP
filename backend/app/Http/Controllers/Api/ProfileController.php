@@ -22,39 +22,41 @@ class ProfileController extends Controller
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $user->name = $validated['name'];
-        if (isset($validated['name_ar'])) {
-            $user->name_ar = $validated['name_ar'];
-        }
-        $user->email = $validated['email'];
-        if (isset($validated['phone'])) {
-            $user->phone = $validated['phone'];
-        }
-
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
-
-        if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
+        try {
+            $user->name = $validated['name'];
+            if (isset($validated['name_ar'])) {
+                $user->name_ar = $validated['name_ar'];
             }
-            
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar_path = $path;
+            $user->email = $validated['email'];
+            if (isset($validated['phone'])) {
+                $user->phone = $validated['phone'];
+            }
+
+            if (!empty($validated['password'])) {
+                $user->password = Hash::make($validated['password']);
+            }
+
+            if ($request->hasFile('avatar')) {
+                if ($user->avatar_path) {
+                    Storage::disk('public')->delete($user->avatar_path);
+                }
+                $path = $request->file('avatar')->store('avatars', 'public');
+                $user->avatar_path = $path;
+            }
+
+            $user->save();
+
+            $user->loadMissing('roles', 'permissions');
+            $userData = $user->toArray();
+            $userData['roles'] = $user->roles->pluck('name')->toArray();
+            $userData['permissions'] = $user->permissions->pluck('name')->toArray();
+
+            return response()->json([
+                'message' => 'Profile updated successfully.',
+                'user' => $userData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Exception: ' . $e->getMessage() . ' at line ' . $e->getLine()], 500);
         }
-
-        $user->save();
-
-        $user->loadMissing('roles', 'permissions');
-        $userData = $user->toArray();
-        $userData['roles'] = $user->roles->pluck('name')->toArray();
-        $userData['permissions'] = $user->permissions->pluck('name')->toArray();
-
-        return response()->json([
-            'message' => 'Profile updated successfully.',
-            'user' => $userData
-        ]);
     }
 }
