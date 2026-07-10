@@ -25,7 +25,10 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
 
 
-// Notifications
+Route::get('/check-students', function() {
+    $count = \App\Models\StudentPathway::count();
+    return "Total assigned students: " . $count;
+});
     Route::prefix('notifications')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
         Route::post('/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
