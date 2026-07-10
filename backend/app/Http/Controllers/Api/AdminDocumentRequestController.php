@@ -30,6 +30,12 @@ class AdminDocumentRequestController extends Controller
                 
                 $adminNotes = $req->admin_notes ?? [];
                 
+                $pdfUrl = null;
+                if ($media) {
+                    // Make URL relative by removing APP_URL so Vite can proxy it and iframe stays same-origin
+                    $pdfUrl = str_replace(config('app.url'), '', $media->getUrl());
+                }
+
                 return [
                     'id' => $req->id,
                     'person' => $req->student?->user?->name ?? 'Inconnu',
@@ -39,8 +45,8 @@ class AdminDocumentRequestController extends Controller
                     'time' => $req->requested_at?->diffForHumans() ?? $req->created_at?->diffForHumans(),
                     'status' => $status,
                     'reason' => $adminNotes['rejection_reason'] ?? null,
-                    'url' => $media ? $media->getUrl() : null,
-                    'preview_url' => $media ? $media->getUrl() : null,
+                    'url' => $pdfUrl,
+                    'preview_url' => $pdfUrl,
                 ];
             });
 

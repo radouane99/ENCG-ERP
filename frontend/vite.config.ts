@@ -46,6 +46,10 @@ export default defineConfig({
         target: 'http://encg_nginx:80',
         changeOrigin: true,
       },
+      '/storage': {
+        target: 'http://encg_nginx:80',
+        changeOrigin: true,
+      },
       '/broadcasting': {
         target: 'http://reverb:8080',
         ws: true,
