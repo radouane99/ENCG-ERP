@@ -79,8 +79,9 @@ export default function ProfilePage() {
         }
       })
 
-      if (response.data.user) {
-        updateUser(response.data.user)
+      if (response.status === 200) {
+        const meRes = await api.get('/v1/auth/me')
+        updateUser(meRes.data.data)
         setSuccessMessage('Profil mis à jour avec succès')
         setFormData(prev => ({ ...prev, password: '', password_confirmation: '' }))
       }
