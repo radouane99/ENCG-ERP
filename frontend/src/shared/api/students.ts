@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PaginationParams, Student } from '../../types/models';
+import { PaginationParams, Student, ApiResponse } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
 
 export const api = axios.create({
