@@ -13,8 +13,9 @@ export default function AdminStudentDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const fetchStudent = async () => {
+    if (!id) return;
     try {
-      const data = await studentsApi.getStudent(Number(id))
+      const data = await studentsApi.getStudent(id)
       setStudent(data)
     } catch (error) {
       toast.error('Erreur lors du chargement de l\'étudiant')

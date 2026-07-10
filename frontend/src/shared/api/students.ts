@@ -26,7 +26,7 @@ export const studentsApi = {
     const response = await api.get('/students', { params });
     return response.data as ApiResponse<Student[]>;
   },
-  getStudent: async (id: number) => {
+  getStudent: async (id: string | number) => {
     const response = await api.get(`/students/${id}`);
     return response.data.data;
   },
@@ -34,11 +34,11 @@ export const studentsApi = {
     const response = await api.post('/students', data);
     return response.data as ApiResponse<Student>;
   },
-  updateStudent: async (id: number, data: Partial<Student>) => {
+  updateStudent: async (id: string | number, data: Partial<Student>) => {
     const response = await api.put(`/students/${id}`, data);
     return response.data as ApiResponse<Student>;
   },
-  deleteStudent: async (id: number) => {
+  deleteStudent: async (id: string | number) => {
     const response = await api.delete(`/students/${id}`);
     return response.data;
   },

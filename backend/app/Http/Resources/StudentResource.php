@@ -32,6 +32,18 @@ class StudentResource extends JsonResource
             'user' => $this->whenLoaded('user', function () {
                 return new UserResource($this->user);
             }),
+            'latest_pathway' => $this->whenLoaded('latestPathway', function () {
+                return [
+                    'id' => $this->latestPathway->id,
+                    'current_semester' => $this->latestPathway->current_semester,
+                    'academic_year_id' => $this->latestPathway->academic_year_id,
+                    'filiere' => $this->latestPathway->relationLoaded('filiere') ? [
+                        'id' => $this->latestPathway->filiere?->id,
+                        'name' => $this->latestPathway->filiere?->name,
+                        'code' => $this->latestPathway->filiere?->code,
+                    ] : null,
+                ];
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
