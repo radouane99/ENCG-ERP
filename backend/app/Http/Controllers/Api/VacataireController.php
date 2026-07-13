@@ -89,7 +89,7 @@ class VacataireController extends Controller
         $validated = $request->validate([
             'first_name'    => 'required|string|max:100',
             'last_name'     => 'required|string|max:100',
-            'email'         => 'required|email|unique:professors,email',
+            'email'         => 'required|email|unique:users,email',
             'phone'         => 'nullable|string|max:20',
             'qualification' => 'nullable|string|max:100',
             'department_id' => 'nullable|exists:departments,id',
@@ -141,7 +141,7 @@ class VacataireController extends Controller
         $validated = $request->validate([
             'first_name'    => 'sometimes|required|string|max:100',
             'last_name'     => 'sometimes|required|string|max:100',
-            'email'         => 'sometimes|required|email|unique:professors,email,' . $professor->id,
+            'email'         => 'sometimes|required|email|unique:users,email,' . $professor->user_id,
             'phone'         => 'nullable|string|max:20',
             'qualification' => 'nullable|string|max:100',
             'department_id' => 'nullable|exists:departments,id',

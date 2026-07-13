@@ -131,18 +131,30 @@ export default function VacataireList() {
 
   return (
     <div className="space-y-6 animate-in relative">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Gestion des Vacataires</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Gérez les contrats, les heures d'enseignement et les paiements.</p>
+      {/* Premium Header */}
+      <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2A4D7C] rounded-[2rem] p-8 text-white shadow-xl shadow-[#1F3A5F]/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-white/20">
+            <UserCheck className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black mb-1 tracking-tight">
+              Gestion des Vacataires
+            </h1>
+            <p className="text-white/80 font-medium text-sm">
+              Gérez les contrats, les heures d'enseignement et les paiements.
+            </p>
+          </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 transition-colors text-sm"
-        >
-          <Plus className="w-4 h-4" /> Nouveau Vacataire
-        </button>
+        <div className="relative z-10 flex gap-3">
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-bold shadow-sm hover:bg-emerald-600 transition-colors text-sm"
+          >
+            <Plus className="w-5 h-5" /> Nouveau Vacataire
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
