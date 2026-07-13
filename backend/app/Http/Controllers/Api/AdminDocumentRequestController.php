@@ -20,7 +20,6 @@ class AdminDocumentRequestController extends Controller
             ->latest()
             ->get()
             ->map(function ($req) {
-                // Map DB status to frontend status ('ready' -> 'approved')
                 $status = $req->status;
                 if ($status === 'ready' || $status === 'processing') {
                     $status = 'approved';
@@ -32,7 +31,6 @@ class AdminDocumentRequestController extends Controller
                 
                 $pdfUrl = null;
                 if ($media) {
-                    // Make URL relative by removing APP_URL so Vite can proxy it and iframe stays same-origin
                     $pdfUrl = str_replace(config('app.url'), '', $media->getUrl());
                 }
 
