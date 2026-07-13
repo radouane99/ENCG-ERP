@@ -87,6 +87,7 @@ Route::get('/check-students', function() {
     // HR & Personnel
     Route::prefix('hr')->group(function () {
         Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
+        Route::get('vacataires/{vacataire}/contract-pdf', [\App\Http\Controllers\Api\VacataireController::class, 'downloadContract']);
         Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
     });
 

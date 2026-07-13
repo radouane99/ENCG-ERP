@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, UserCheck, Clock, FileSignature, CheckCircle2, FileText, Banknote, Plus, Edit2, Trash2, X } from 'lucide-react'
+import { Search, UserCheck, Clock, FileSignature, CheckCircle2, FileText, Banknote, Plus, Edit2, Trash2, X, Download, LayoutGrid, List, XCircle } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 
 interface Vacataire {
   id: number;
@@ -17,7 +18,7 @@ interface Vacataire {
   agreed_hours: number;
   hours_completed: number;
   hourly_rate: number;
-  status: 'pending' | 'signed' | 'completed';
+  status: 'pending' | 'signed' | 'completed' | 'rejected';
   payment_status: 'paid' | 'partial' | 'unpaid';
   payment_amount: number;
 }
@@ -42,6 +43,13 @@ const EMPTY_FORM = {
   hourly_rate: 400, status: 'pending', contract_start: '', contract_end: ''
 };
 
+const KANBAN_COLUMNS = [
+  { id: 'pending', title: 'En attente', icon: FileSignature, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+  { id: 'signed', title: 'Approuvé (Signé)', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { id: 'rejected', title: 'Refusé', icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+  { id: 'completed', title: 'Terminé', icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' }
+];
+
 export default function VacataireList() {
   const { t } = useTranslation('common')
   const [vacataires, setVacataires] = useState<Vacataire[]>([])
@@ -54,6 +62,8 @@ export default function VacataireList() {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY_FORM })
+  
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban')
 
   const fetchData = async () => {
     try {
@@ -122,6 +132,67 @@ export default function VacataireList() {
       } catch (err) { toast.error('Erreur lors de la suppression.') }
     }
   }
+  
+  const handleDownloadPdf = async (id: number) => {
+    try {
+        const response = await api.get(`/hr/vacataires/${id}/contract-pdf`, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('href');
+        link.href = url;
+        link.setAttribute('download', `Contrat_Vacataire_${id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        toast.error('Erreur lors du téléchargement du contrat PDF');
+    }
+  }
+
+  const exportData = () => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Prénom,Nom,Email,Téléphone,Qualification,Module,Heures,Statut\n"
+      + vacataires.map(v => `${v.first_name},${v.last_name},${v.email},${v.phone},${v.qualification},${v.module},${v.agreed_hours},${v.status}`).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "vacataires.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  const downloadTemplate = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Prénom,Nom,Email,Téléphone,Qualification,Heures Convenues,Taux Horaire\nJean,Dupont,jean.dupont@encg.ma,0600000000,Expert,30,400\n";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "modele_import_vacataires.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const vacataireId = parseInt(draggableId.replace('vac-', ''));
+    const newStatus = destination.droppableId as Vacataire['status'];
+
+    // Optimistic UI update
+    setVacataires(prev => prev.map(v => v.id === vacataireId ? { ...v, status: newStatus } : v));
+
+    try {
+        await api.put(`/hr/vacataires/${vacataireId}`, { status: newStatus });
+        toast.success('Statut mis à jour avec succès');
+        fetchData();
+    } catch (err) {
+        toast.error('Erreur lors de la mise à jour du statut');
+        fetchData(); // Revert
+    }
+  }
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [key]: e.target.value }))
@@ -147,11 +218,14 @@ export default function VacataireList() {
             </p>
           </div>
         </div>
-        <div className="relative z-10 flex gap-3">
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-bold shadow-sm hover:bg-emerald-600 transition-colors text-sm"
-          >
+        <div className="relative z-10 flex gap-3 flex-wrap">
+          <button onClick={downloadTemplate} className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl font-bold transition-colors text-sm flex items-center gap-2">
+            Modèle Import
+          </button>
+          <button onClick={exportData} className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl font-bold transition-colors text-sm flex items-center gap-2">
+            <Download className="w-4 h-4" /> Exporter
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-bold shadow-sm hover:bg-emerald-600 transition-colors text-sm">
             <Plus className="w-5 h-5" /> Nouveau Vacataire
           </button>
         </div>
@@ -181,113 +255,215 @@ export default function VacataireList() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b flex gap-4 items-center bg-muted/20">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text" placeholder="Rechercher (Nom, Module)..."
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+      {/* View Toggle & Search */}
+      <div className="flex items-center justify-between bg-card border p-2 rounded-xl shadow-sm">
+        <div className="relative w-full sm:w-72 md:ml-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text" placeholder="Rechercher (Nom, Module)..."
+            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
         </div>
-
-        <div className="overflow-x-auto min-h-[300px]">
-          {loading ? (
-            <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div>
-          ) : (
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                <tr>
-                  <th className="px-6 py-3 font-semibold">Vacataire</th>
-                  <th className="px-6 py-3 font-semibold">Module Assigné</th>
-                  <th className="px-6 py-3 font-semibold">Progression (Heures)</th>
-                  <th className="px-6 py-3 font-semibold">Contrat</th>
-                  <th className="px-6 py-3 font-semibold">Paiement</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {vacataires.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Aucun vacataire trouvé.</td></tr>
-                ) : vacataires.map((vac) => {
-                  const progress = vac.agreed_hours > 0 ? (vac.hours_completed / vac.agreed_hours) * 100 : 0
-                  return (
-                    <tr key={vac.id} className="bg-card hover:bg-muted/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-xs shrink-0">
-                            {vac.first_name[0]}{vac.last_name[0]}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{vac.last_name} {vac.first_name}</p>
-                            <p className="text-xs text-muted-foreground">{vac.qualification || vac.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                        <td className="px-6 py-4">
-                          {vac.module ? (
-                            <span className="font-medium text-foreground">{vac.module}</span>
-                          ) : (
-                            <span className="text-muted-foreground italic text-sm">Non assignǸ</span>
-                          )}
-                        </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5 w-36">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-foreground">{vac.hours_completed}h</span>
-                            <span className="text-muted-foreground">/ {vac.agreed_hours}h</span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-1.5">
-                            <div
-                              className={cn("h-1.5 rounded-full transition-all", progress >= 100 ? "bg-green-500" : "bg-primary")}
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {vac.status === 'signed' || vac.status === 'completed' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/20">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Signé
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-600 border border-orange-500/20">
-                            <FileSignature className="w-3.5 h-3.5" /> En attente
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {vac.payment_status === 'paid' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/20">Réglé</span>
-                        )}
-                        {vac.payment_status === 'partial' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">Partiel</span>
-                        )}
-                        {vac.payment_status === 'unpaid' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">Non calculé</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(vac)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Modifier">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDelete(vac.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Supprimer">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+            <button onClick={() => setViewMode('kanban')} className={cn("px-3 py-1.5 flex items-center gap-2 rounded-md text-sm font-medium transition-colors", viewMode === 'kanban' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                <LayoutGrid className="w-4 h-4" /> Kanban
+            </button>
+            <button onClick={() => setViewMode('list')} className={cn("px-3 py-1.5 flex items-center gap-2 rounded-md text-sm font-medium transition-colors", viewMode === 'list' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                <List className="w-4 h-4" /> Liste
+            </button>
         </div>
       </div>
+
+      {/* Kanban Board View */}
+      {viewMode === 'kanban' && !loading && (
+        <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                {KANBAN_COLUMNS.map(column => {
+                    const columnItems = vacataires.filter(v => v.status === column.id);
+                    return (
+                        <Droppable droppableId={column.id} key={column.id}>
+                            {(provided) => (
+                                <div {...provided.droppableProps} ref={provided.innerRef} className="bg-muted/30 rounded-2xl p-4 min-h-[400px] border border-transparent hover:border-border transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", column.bg, column.color)}>
+                                                <column.icon className="w-4 h-4" />
+                                            </div>
+                                            <h3 className="font-bold text-foreground text-sm">{column.title}</h3>
+                                        </div>
+                                        <div className="px-2.5 py-0.5 rounded-full bg-background border text-xs font-bold text-muted-foreground shadow-sm">
+                                            {columnItems.length}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {columnItems.map((vac, index) => (
+                                            <Draggable draggableId={`vac-${vac.id}`} index={index} key={`vac-${vac.id}`}>
+                                                {(provided, snapshot) => (
+                                                    <div 
+                                                        ref={provided.innerRef} 
+                                                        {...provided.draggableProps} 
+                                                        {...provided.dragHandleProps}
+                                                        className={cn("bg-card border rounded-xl p-4 shadow-sm hover:shadow-md transition-all group", snapshot.isDragging && "shadow-lg border-primary/50 ring-2 ring-primary/20 rotate-2")}
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                                                                    {vac.first_name[0]}{vac.last_name[0]}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-foreground text-sm">{vac.last_name} {vac.first_name}</p>
+                                                                    <p className="text-xs text-muted-foreground line-clamp-1">{vac.qualification || 'Aucune qualification'}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-2 mb-4">
+                                                            <div className="flex items-center justify-between text-xs bg-muted/50 px-2 py-1.5 rounded-md">
+                                                                <span className="text-muted-foreground">Module:</span>
+                                                                <span className="font-semibold text-foreground text-right max-w-[120px] truncate" title={vac.module}>{vac.module}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs bg-muted/50 px-2 py-1.5 rounded-md">
+                                                                <span className="text-muted-foreground">Heures:</span>
+                                                                <span className="font-semibold text-foreground">{vac.agreed_hours}h</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between pt-3 border-t">
+                                                            <button onClick={() => handleDownloadPdf(vac.id)} className="flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md transition-colors">
+                                                                <FileText className="w-3.5 h-3.5" /> PDF
+                                                            </button>
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button onClick={() => openEdit(vac)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Modifier">
+                                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button onClick={() => handleDelete(vac.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Supprimer">
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
+                                </div>
+                            )}
+                        </Droppable>
+                    )
+                })}
+            </div>
+        </DragDropContext>
+      )}
+
+      {/* Table View */}
+      {viewMode === 'list' && (
+        <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto min-h-[300px]">
+            {loading ? (
+                <div className="flex justify-center items-center p-12 text-muted-foreground">Chargement...</div>
+            ) : (
+                <table className="w-full text-sm text-left">
+                <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+                    <tr>
+                    <th className="px-6 py-3 font-semibold">Vacataire</th>
+                    <th className="px-6 py-3 font-semibold">Module Assigné</th>
+                    <th className="px-6 py-3 font-semibold">Progression (Heures)</th>
+                    <th className="px-6 py-3 font-semibold">Contrat</th>
+                    <th className="px-6 py-3 font-semibold">Paiement</th>
+                    <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                    {vacataires.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Aucun vacataire trouvé.</td></tr>
+                    ) : vacataires.map((vac) => {
+                    const progress = vac.agreed_hours > 0 ? (vac.hours_completed / vac.agreed_hours) * 100 : 0
+                    return (
+                        <tr key={vac.id} className="bg-card hover:bg-muted/50 transition-colors group">
+                        <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-xs shrink-0">
+                                {vac.first_name[0]}{vac.last_name[0]}
+                            </div>
+                            <div>
+                                <p className="font-semibold text-foreground">{vac.last_name} {vac.first_name}</p>
+                                <p className="text-xs text-muted-foreground">{vac.qualification || vac.email}</p>
+                            </div>
+                            </div>
+                        </td>
+                            <td className="px-6 py-4">
+                            {vac.module ? (
+                                <span className="font-medium text-foreground">{vac.module}</span>
+                            ) : (
+                                <span className="text-muted-foreground italic text-sm">Non assigné</span>
+                            )}
+                            </td>
+                        <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1.5 w-36">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-foreground">{vac.hours_completed}h</span>
+                                <span className="text-muted-foreground">/ {vac.agreed_hours}h</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-1.5">
+                                <div
+                                className={cn("h-1.5 rounded-full transition-all", progress >= 100 ? "bg-green-500" : "bg-primary")}
+                                style={{ width: `${Math.min(progress, 100)}%` }}
+                                />
+                            </div>
+                            </div>
+                        </td>
+                        <td className="px-6 py-4">
+                            {vac.status === 'signed' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/20">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Signé
+                            </span>
+                            ) : vac.status === 'rejected' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-600 border border-red-500/20">
+                                <XCircle className="w-3.5 h-3.5" /> Refusé
+                            </span>
+                            ) : vac.status === 'completed' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <Clock className="w-3.5 h-3.5" /> Terminé
+                            </span>
+                            ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                                <FileSignature className="w-3.5 h-3.5" /> En attente
+                            </span>
+                            )}
+                        </td>
+                        <td className="px-6 py-4">
+                            {vac.payment_status === 'paid' && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/20">Réglé</span>
+                            )}
+                            {vac.payment_status === 'partial' && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">Partiel</span>
+                            )}
+                            {vac.payment_status === 'unpaid' && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">Non calculé</span>
+                            )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => handleDownloadPdf(vac.id)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="PDF">
+                                <FileText className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => openEdit(vac)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Modifier">
+                                <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDelete(vac.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Supprimer">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                            </div>
+                        </td>
+                        </tr>
+                    )
+                    })}
+                </tbody>
+                </table>
+            )}
+            </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
@@ -349,7 +525,8 @@ export default function VacataireList() {
               <div><label className={labelCls}>Statut du contrat</label>
                 <select value={form.status} onChange={set('status')} className={inputCls}>
                   <option value="pending">En attente de signature</option>
-                  <option value="signed">Signé</option>
+                  <option value="signed">Approuvé (Signé)</option>
+                  <option value="rejected">Refusé</option>
                   <option value="completed">Terminé</option>
                 </select>
               </div>

@@ -75,6 +75,7 @@ class ProfessorService
             $user = \App\Models\User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
+                'name' => $data['first_name'] . ' ' . $data['last_name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
                 'cin' => $data['cin'] ?? null,
@@ -120,6 +121,12 @@ class ProfessorService
                     $userData[$field] = $data[$field];
                     unset($data[$field]);
                 }
+            }
+
+            if (isset($userData['first_name']) || isset($userData['last_name'])) {
+                $firstName = $userData['first_name'] ?? $professor->first_name;
+                $lastName = $userData['last_name'] ?? $professor->last_name;
+                $userData['name'] = trim($firstName . ' ' . $lastName);
             }
 
             if (!empty($userData)) {

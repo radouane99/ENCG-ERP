@@ -256,13 +256,14 @@ export default function ModulesListPage() {
                   <th scope="col" className="px-6 py-4 font-bold tracking-wider">Code Module</th>
                   <th scope="col" className="px-6 py-4 font-bold tracking-wider">Désignation</th>
                   <th scope="col" className="px-6 py-4 font-bold tracking-wider text-center">Coefficient</th>
+                  <th scope="col" className="px-6 py-4 font-bold tracking-wider text-center">Heures de Crédit</th>
                   <th scope="col" className="px-6 py-4 font-bold tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredModules.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-12 text-slate-400 font-medium">Aucun module trouvé.</td>
+                    <td colSpan={5} className="text-center py-12 text-slate-400 font-medium">Aucun module trouvé.</td>
                   </tr>
                 ) : (
                   filteredModules.map((mod) => (
@@ -277,6 +278,12 @@ export default function ModulesListPage() {
                       <td className="px-6 py-4 text-center">
                         <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
                           x{mod.coefficient.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {mod.credit_hours || 0}h
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

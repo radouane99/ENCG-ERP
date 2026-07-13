@@ -98,7 +98,7 @@ class VacataireController extends Controller
             'module_id'     => 'nullable|exists:modules,id',
             'agreed_hours'  => 'required|numeric|min:1',
             'hourly_rate'   => 'required|numeric|min:1',
-            'status'        => 'required|in:pending,signed,completed',
+            'status'        => 'required|in:pending,signed,completed,rejected',
             'contract_start'=> 'required|date',
             'contract_end'  => 'required|date|after_or_equal:contract_start',
         ]);
@@ -150,7 +150,7 @@ class VacataireController extends Controller
             'module_id'     => 'nullable|exists:modules,id',
             'agreed_hours'  => 'sometimes|required|numeric|min:1',
             'hourly_rate'   => 'sometimes|required|numeric|min:1',
-            'status'        => 'sometimes|required|in:pending,signed,completed',
+            'status'        => 'sometimes|required|in:pending,signed,completed,rejected',
             'contract_start'=> 'sometimes|required|date',
             'contract_end'  => 'sometimes|required|date|after_or_equal:contract_start',
         ]);
@@ -243,5 +243,36 @@ class VacataireController extends Controller
             'message' => 'Paiement calculé et enregistré',
             'data'    => $payment
         ]);
+    }
+
+    /**
+     * Generate and download the PDF contract for a vacataire.
+     */
+    public function downloadContract($id)
+    {
+        // [AUDIT SEC-02] Authorization guard
+        abort_unless(request()->user()->can('hr.manage'), 403);
+
+        $professor = Professor::with('vacationContracts.module')->findOrFail($id);
+        $contract = $professor->vacationContracts()->latest()->first();
+
+        if (!$contract) {
+            return response()->json(['success' => false, 'message' => 'Aucun contrat trouvé pour ce vacataire'], 404);
+        }
+
+        $verificationUrl = url("/verify-contract/{$contract->id}");
+        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verificationUrl));
+
+        // Use base64 for the logo if we have one, otherwise ignore or use placeholder
+        // Normally, we'd use public_path('images/logo.png') but base64 is safer for DOMPDF
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.vacation_contract', [
+            'professor' => $professor,
+            'contract' => $contract,
+            'qrCode' => $qrCode,
+            'date' => now()->format('d/m/Y')
+        ]);
+
+        return $pdf->download("Contrat_Vacation_{$professor->last_name}_{$professor->first_name}.pdf");
     }
 }
