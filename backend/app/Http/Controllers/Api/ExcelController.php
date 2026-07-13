@@ -16,20 +16,26 @@ class ExcelController extends Controller
         $this->exportService = $exportService;
     }
 
-    public function export($model, Request $request): JsonResponse
+    public function export($model, Request $request)
     {
-        // E.g., model = 'students', 'vacataires'
         $result = $this->exportService->exportToExcel($model, $request->all());
         
+        if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+            return $result;
+        }
+
         return response()->json($result);
     }
 
-    public function template($model): JsonResponse
+    public function template($model)
     {
-        return response()->json([
-            'success' => true,
-            'url' => "/downloads/templates/{$model}_template.xlsx"
-        ]);
+        $result = $this->exportService->templateToExcel($model);
+        
+        if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+            return $result;
+        }
+
+        return response()->json($result);
     }
 
     public function import(Request $request, $model): JsonResponse

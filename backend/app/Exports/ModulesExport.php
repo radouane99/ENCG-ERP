@@ -13,16 +13,34 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
 {
+    protected bool $isTemplate;
+
+    public function __construct(bool $isTemplate = false)
+    {
+        $this->isTemplate = $isTemplate;
+    }
+
     public function title(): string { return 'Modules'; }
 
     public function collection()
     {
+        if ($this->isTemplate) {
+            return collect([]);
+        }
         return Module::with('filiere')->get();
     }
 
     public function headings(): array
     {
-        return ['Code', 'Intitulé', 'Filière (ID)', 'Semestre', 'Crédits', 'Heures CM', 'Heures TD', 'Heures TP', 'Type', 'Coefficient'];
+        return [
+            'Code Module',
+            'Intitule du Module',
+            'ID Filiere',
+            'Numero Semestre',
+            'Coefficient',
+            'Heures de Credit',
+            'Actif (1 ou 0)'
+        ];
     }
 
     public function map($module): array
@@ -31,13 +49,10 @@ class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $module->code,
             $module->name,
             $module->filiere_id,
-            $module->semester,
-            $module->credits,
-            $module->hours_cm,
-            $module->hours_td,
-            $module->hours_tp,
-            $module->type,
+            $module->semester_number,
             $module->coefficient,
+            $module->credit_hours,
+            $module->is_active ? 1 : 0,
         ];
     }
 
@@ -46,7 +61,7 @@ class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithSt
         return [
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '0ea5e9']],
+                'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '0f2863']],
             ],
         ];
     }
