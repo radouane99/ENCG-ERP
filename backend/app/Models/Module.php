@@ -49,13 +49,6 @@ class Module extends Model
         return $this->hasMany(Assessment::class);
     }
 
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
-    }
+    // getRouteKeyName and uniqueIds removed to use default 'id' for API resource routing
 
-    public function getRouteKeyName()
-    {
-        return 'uuid';
-    }
 }
