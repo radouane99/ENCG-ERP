@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, MoreHorizontal, BookOpen, Edit2, Users, Plus, Trash2, X, GraduationCap } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, BookOpen, Edit2, Users, Plus, Trash2, X, GraduationCap, Download, Upload } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
-import ExcelActions from '@shared/components/ui/ExcelActions'
+import MassImportView from '@shared/components/ui/MassImportView'
 
 interface Filiere {
   id: number;
@@ -33,6 +33,8 @@ export default function ModulesListPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [exporting, setExporting] = useState(false)
   
   // Modal state
   const [showModal, setShowModal] = useState(false)
@@ -69,6 +71,25 @@ export default function ModulesListPage() {
   }, [])
 
   // Actions
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const response = await api.get(`/export/modules`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Modules_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      console.error('Erreur lors de l\'export Excel')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const handleOpenModal = (mod?: Module) => {
     if (mod) {
       setEditingId(mod.id);
@@ -147,6 +168,27 @@ export default function ModulesListPage() {
     );
   })
 
+  if (isImporting) {
+    return (
+      <MassImportView
+        title="Importation Massive de Modules (Excel/CSV)"
+        bannerTitle="Importateur de Modules"
+        bannerSubtitle="Gérez le catalogue académique de l'UPF en ajoutant l'ensemble de vos modules en un instant."
+        modelName="Modules"
+        templateName="Fichier Modèle des Modules"
+        templateDesc={
+          <>Téléchargez et remplissez le gabarit pré-formaté. Il contient les colonnes requises : <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">Code Module</span>, <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">Intitule du Module</span>, etc.</>
+        }
+        instructions={<>Assurez-vous que l'ID Filiere correspond exactement à un ID existant dans la plateforme, ou laissez-le vide si non applicable.</>}
+        apiModel="modules"
+        onBack={() => setIsImporting(false)}
+        onSuccess={() => {
+          fetchData()
+        }}
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 animate-in relative p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -161,7 +203,19 @@ export default function ModulesListPage() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <ExcelActions model="modules" label="CSV/EXCEL" onImportSuccess={fetchData} />
+          <button 
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" /> {exporting ? 'Export...' : 'Exporter Excel'}
+          </button>
+          <button 
+            onClick={() => setIsImporting(true)} 
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide"
+          >
+            <Upload className="w-4 h-4" /> Importer CSV/Excel
+          </button>
           <button 
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white rounded-lg font-bold shadow-sm hover:bg-[#1a387e] transition-colors text-sm uppercase tracking-wide"
