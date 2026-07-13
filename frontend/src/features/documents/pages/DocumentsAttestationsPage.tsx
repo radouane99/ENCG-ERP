@@ -16,6 +16,7 @@ export default function DocumentsAttestationsPage() {
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [search, setSearch] = useState('')
+  const [selectedDoc, setSelectedDoc] = useState<{url: string, title: string} | null>(null)
 
   // Mutations
   const generatePdfMutation = useMutation({
@@ -23,20 +24,23 @@ export default function DocumentsAttestationsPage() {
       api.post('/documents/generate-attestation', { student_id: studentId, type }),
     onSuccess: (res) => {
       toast.success(res.data.message || (isRtl ? 'تم إنشاء الوثيقة بنجاح' : 'Document PDF généré avec succès'))
-      // In a real app, trigger a file download from res.data.url
+      refetch()
     },
     onError: () => toast.error(isRtl ? 'حدث خطأ أثناء الإنشاء' : 'Erreur lors de la génération du document')
   })
 
-  // Mock Data for the list of requests
-  const requests = [
-    { id: 1, student: 'Fatima ALAOUI', cne: 'N123456789', type: 'Attestation de scolarité', status: 'pending', date: 'Aujourd\'hui' },
-    { id: 2, student: 'Youssef BENALI', cne: 'M987654321', type: 'Relevé de notes S5', status: 'processed', date: 'Hier' },
-    { id: 3, student: 'Sara TAZI', cne: 'L456789123', type: 'Attestation de réussite', status: 'rejected', date: 'Il y a 2 jours' },
-  ]
+  // Fetch requests from backend
+  const { data: fetchRequestsRes, isLoading, refetch } = useQuery({
+    queryKey: ['admin-document-requests'],
+    queryFn: () => api.get('/admin/document-requests').then(res => res.data)
+  })
+
+  const requests = fetchRequestsRes?.data || []
 
   const getStatusBadge = (status: string) => {
     switch(status) {
+      case 'approved':
+      case 'ready': 
       case 'processed': return <Badge className="bg-emerald-500/10 text-emerald-600 border-none"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'مُعالج' : 'Traité'}</Badge>
       case 'rejected': return <Badge className="bg-red-500/10 text-red-600 border-none"><XCircle size={12} className="me-1"/> {isRtl ? 'مرفوض' : 'Rejeté'}</Badge>
       default: return <Badge className="bg-amber-500/10 text-amber-600 border-none"><Clock size={12} className="me-1"/> {isRtl ? 'قيد الانتظار' : 'En attente'}</Badge>
@@ -132,17 +136,29 @@ export default function DocumentsAttestationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {requests.map(req => (
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-[hsl(var(--muted-foreground))]">
+                        Chargement des demandes...
+                      </td>
+                    </tr>
+                  ) : requests.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-[hsl(var(--muted-foreground))]">
+                        Aucune demande trouvée
+                      </td>
+                    </tr>
+                  ) : requests.map((req: any) => (
                     <tr key={req.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-[hsl(var(--foreground))]">{req.student}</p>
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">{req.cne}</p>
+                        <p className="font-bold text-[hsl(var(--foreground))]">{req.person}</p>
+                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">{req.role}</p>
                       </td>
                       <td className="px-6 py-4 font-medium text-[hsl(var(--foreground))]">
                         {req.type}
                       </td>
                       <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] text-xs">
-                        {req.date}
+                        {req.time}
                       </td>
                       <td className="px-6 py-4">
                         {getStatusBadge(req.status)}
@@ -159,9 +175,14 @@ export default function DocumentsAttestationsPage() {
                               </button>
                             </>
                           ) : (
-                            <button className="p-2 text-emerald-600 hover:bg-emerald-50 bg-emerald-500/10 rounded-lg transition-colors" title="Télécharger copie">
-                              <Download size={16} />
-                            </button>
+                            <>
+                              <button onClick={() => setSelectedDoc({url: req.url || '', title: req.type})} className="p-2 text-blue-600 hover:bg-blue-50 bg-blue-500/10 rounded-lg transition-colors" title="Aperçu">
+                                <Search size={16} />
+                              </button>
+                              <a href={req.url} download className="p-2 text-emerald-600 hover:bg-emerald-50 bg-emerald-500/10 rounded-lg transition-colors" title="Télécharger copie">
+                                <Download size={16} />
+                              </a>
+                            </>
                           )}
                         </div>
                       </td>
@@ -173,6 +194,18 @@ export default function DocumentsAttestationsPage() {
           </div>
         </div>
       </div>
+      
+      {selectedDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-4xl h-[80vh] flex flex-col rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-bold">{selectedDoc.title}</h3>
+              <button onClick={() => setSelectedDoc(null)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"><XCircle size={20}/></button>
+            </div>
+            <iframe src={selectedDoc.url} className="flex-1 w-full h-full" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

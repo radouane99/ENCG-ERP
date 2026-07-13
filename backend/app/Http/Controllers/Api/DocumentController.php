@@ -20,7 +20,7 @@ class DocumentController extends Controller
     /**
      * Generate an attestation for a given student
      */
-    public function generateAttestation(Request $request): JsonResponse
+    public function generateAttestation(Request $request, \App\Services\DocumentRequestService $reqService): JsonResponse
     {
         $request->validate([
             'student_id' => 'required|integer|exists:students,id',
@@ -29,9 +29,27 @@ class DocumentController extends Controller
 
         $student = Student::findOrFail($request->student_id);
         
-        $result = $this->documentService->generateAttestation($student, $request->type);
+        // Map frontend type to document_type_id
+        $typeMap = [
+            'scolarite' => 1,
+            'releve' => 2,
+        ];
         
-        return response()->json($result);
+        $typeId = $typeMap[$request->type] ?? 1;
+
+        // Create the request
+        $docReq = $reqService->createRequest($student, ['document_type_id' => $typeId]);
+        
+        // Process it (generates PDF and marks as ready)
+        $docReq = $reqService->processRequest($docReq, 'ready', ['reason' => 'Généré via Édition Rapide par Admin']);
+        
+        // Return same structure as before so frontend toast works
+        $media = $docReq->getFirstMedia('generated_documents');
+        return response()->json([
+            'success' => true,
+            'url' => $media ? $media->getUrl() : null,
+            'message' => 'Document PDF sécurisé généré avec succès.'
+        ]);
     }
 
     /**
