@@ -3,8 +3,9 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FileText, ShieldCheck, Printer, Download, Clock,
-  Search, CheckCircle2, XCircle, FileBadge
+  Search, CheckCircle2, XCircle, FileBadge, GripVertical
 } from 'lucide-react'
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
@@ -35,7 +36,41 @@ export default function DocumentsAttestationsPage() {
     queryFn: () => api.get('/admin/document-requests').then(res => res.data)
   })
 
-  const requests = fetchRequestsRes?.data || []
+  const requests = fetchRequestsRes?.data || [];
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId) return;
+
+    const reqId = parseInt(draggableId.split('-')[1]);
+    const newStatus = destination.droppableId; // 'approved' or 'rejected'
+
+    let rejection_reason;
+    if (newStatus === 'rejected') {
+      rejection_reason = prompt(isRtl ? 'سبب الرفض:' : 'Raison du rejet:') || undefined;
+      if (!rejection_reason && newStatus === 'rejected') {
+        toast.error("Raison de rejet obligatoire");
+        return;
+      }
+    }
+
+    try {
+      await api.patch('/admin/document-requests/' + reqId + '/status', {
+        status: newStatus === 'approved' ? 'ready' : 'rejected',
+        admin_notes: newStatus === 'rejected' ? { rejection_reason } : undefined
+      });
+      toast.success(isRtl ? 'تم التحديث بنجاح' : 'Mis à jour avec succès');
+      refetch();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erreur');
+    }
+  };
+
+  const pendingRequests = requests.filter((r: any) => r.status === 'pending');
+  const approvedRequests = requests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed');
+  const rejectedRequests = requests.filter((r: any) => r.status === 'rejected');
+
 
   const getStatusBadge = (status: string) => {
     switch(status) {

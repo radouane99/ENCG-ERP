@@ -92,12 +92,29 @@ class DocumentRequestService
         $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
         $year = $academicYear ? $academicYear->name : (now()->year . '-' . (now()->year + 1));
 
+        // Generate tracking code and verification URL
+        $trackingCode = strtoupper($type->code) . '_' . $student->user->cin . '_' . time();
+        $verifyUrl = config('app.url') . '/verify-document/' . $trackingCode;
+
+        // Generate QR Code
+        $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->generate($verifyUrl);
+        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
+
+        // Load Logo
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
         // The View variables
         $data = [
             'student' => $student,
             'documentRequest' => $request,
             'date' => now()->format('d/m/Y'),
             'year' => $year,
+            'qrBase64' => $qrBase64,
+            'logoBase64' => $logoBase64,
         ];
 
         if ($viewName === 'pdf.releve_notes') {
@@ -123,7 +140,18 @@ class DocumentRequestService
         );
 
         // Retrieve the file from public disk and attach it to MediaLibrary
-        $request->addMedia(storage_path('app/public/' . ltrim($pdfPath, '/')))
+        $media = $request->addMedia(storage_path('app/public/' . ltrim($pdfPath, '/')))
                 ->toMediaCollection('generated_documents');
+        
+        // Also insert into generated_documents to support public verification
+        \Illuminate\Support\Facades\DB::table('generated_documents')->insert([
+            'document_request_id' => $request->id,
+            'file_path' => str_replace(config('app.url'), '', $media->getUrl()),
+            'verification_token' => $trackingCode,
+            'verification_url' => $verifyUrl,
+            'expires_at' => now()->addYears(1),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
     }
 }
