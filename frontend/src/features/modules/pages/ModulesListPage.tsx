@@ -317,6 +317,15 @@ export default function ModulesListPage() {
                     className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" 
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Heures de Crédit</label>
+                  <input 
+                    type="number" step="1" min="0" required 
+                    value={formData.credit_hours} 
+                    onChange={e => setFormData({...formData, credit_hours: parseFloat(e.target.value)})}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 text-slate-700" 
+                  />
+                </div>
                 
                 <div className="flex items-center justify-end pt-6">
                   <button 
