@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, Download, ArrowLeft, Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import api from '@/shared/lib/api';
@@ -10,8 +10,7 @@ export default function ExamLivePresence() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // In a real app we'd fetch for examId, here mock 1
-        const res = await api.get(`/exam-planning/1/live-stats`);
+        const res = await api.get(`/admin/exam-planning/${examId || 1}/live-stats`);
         setStats(res.data.data);
       } catch (error) {
         console.error(error);

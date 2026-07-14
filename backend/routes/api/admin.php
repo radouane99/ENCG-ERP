@@ -78,16 +78,21 @@ Route::get('/check-students', function() {
         Route::post('/justifications/{id}/review', [\App\Http\Controllers\Api\Admin\AdminAbsenceController::class, 'review']);
     });
     
-    // Grades
+    // Grades & Deliberation
     Route::prefix('grades')->group(function () {
         Route::post('/batch', [\App\Http\Controllers\Api\GradeController::class, 'storeBatch']);
         Route::post('/validate', [\App\Http\Controllers\Api\GradeController::class, 'validateGrades']);
     });
+    Route::get('modules/{module}/assessments', [\App\Http\Controllers\Api\AssessmentController::class, 'getForModule']);
+    Route::get('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
+    Route::post('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
+    Route::get('academic/deliberate', [\App\Http\Controllers\Api\DeliberationController::class, 'run']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {
         Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
         Route::get('vacataires/{vacataire}/contract-pdf', [\App\Http\Controllers\Api\VacataireController::class, 'downloadContract']);
+        Route::post('vacataires/contracts/{contractId}/payments', [\App\Http\Controllers\Api\VacataireController::class, 'processPayment']);
         Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
     });
 
@@ -159,7 +164,7 @@ Route::get('/check-students', function() {
         // New Convocations & Live routes
         Route::post('/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
         // Old endpoints are replaced by the /convocations group below
-        Route::get('/{examId}/live-stats', [\App\Http\Controllers\Api\ConvocationController::class, 'liveStats']);
+        Route::get('/{examId}/live-stats', [\App\Http\Controllers\Api\ExamAttendanceController::class, 'getLiveStats']);
         Route::get('/{examId}/details', [\App\Http\Controllers\Api\ConvocationController::class, 'getDetails']);
         // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
         Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);

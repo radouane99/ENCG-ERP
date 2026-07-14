@@ -42,6 +42,12 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
         Route::post('/', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'store']);
         Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'download']);
     });
+    
+    // International Mobility
+    Route::prefix('mobility')->group(function () {
+        Route::get('/partners', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'getPartners']);
+        Route::post('/voeux', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'saveVoeux']);
+    });
 });
 
 

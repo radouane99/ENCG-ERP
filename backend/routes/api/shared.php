@@ -38,6 +38,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/export/{type}/{id}/ics', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportIcs']);
     });
     
+    // Room Bookings
+    Route::get('/room-bookings/check-availability', [\App\Http\Controllers\Api\RoomBookingController::class, 'checkAvailability']);
+    Route::apiResource('room-bookings', \App\Http\Controllers\Api\RoomBookingController::class);
+
+    
     // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
         Route::post('/generate-attestation', [\App\Http\Controllers\Api\DocumentController::class, 'generateAttestation']);

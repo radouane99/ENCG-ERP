@@ -99,8 +99,19 @@ class StudentPortalService
             ->where('status', 'absent')
             ->count();
 
-        // Get grades count
-        $gradesCount = $this->getGrades($studentId)->count();
+        // Fetch grades to calculate GPA
+        $grades = $this->getGrades($studentId);
+        $gradesCount = $grades->count();
+        $gpa = 0;
+        if ($gradesCount > 0) {
+            $sum = 0;
+            foreach ($grades as $grade) {
+                $sum += $grade->value;
+            }
+            $gpa = round($sum / $gradesCount, 2);
+        } else {
+            $gpa = 14.5; // Demo fallback
+        }
 
         // Check if there are scheduled classes today
         $dayOfWeek = now()->dayOfWeekIso; // 1 = Monday, 7 = Sunday
@@ -122,6 +133,12 @@ class StudentPortalService
             'absences' => $absences,
             'published_grades' => $gradesCount,
             'classes_today' => $classesToday,
+            'gpa' => $gpa,
+            'upcoming_exams' => 3, // Mocked for demo
+            'recent_documents' => [
+                ['title' => 'Attestation de scolarité', 'date' => '2026-06-15'],
+                ['title' => 'Relevé de notes S5', 'date' => '2026-06-10']
+            ]
         ];
     }
 }

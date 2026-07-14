@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\GradeComponent;
+use App\Models\Assessment;
 use App\Models\Grade;
-use App\Models\ExamSession;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,31 +12,24 @@ use Illuminate\Http\JsonResponse;
 class GradeController extends Controller
 {
     /**
-     * Fetch students and their current grades for a specific component and session.
+     * Fetch students and their current grades for a specific assessment.
      */
-    public function getStudentsForGrading(GradeComponent $component, Request $request): JsonResponse
+    public function getForAssessment($assessmentId, Request $request): JsonResponse
     {
-        $examSessionId = $request->query('exam_session_id');
-        $examSession = ExamSession::findOrFail($examSessionId);
+        $assessment = Assessment::with('module')->findOrFail($assessmentId);
+        
+        // We find all students registered to the module's filiere for the current active academic year
+        // We'll assume academic_year_id = 1 for this implementation, or extract from request if provided
+        $academicYearId = $request->query('academic_year_id', 1);
 
-        // Fetch students belonging to this module's group/filiere
-        // For simplicity in this endpoint, we'll fetch all students registered to the module's semester/filiere
-        $studentsQuery = Student::whereHas('registrations', function ($q) use ($component, $examSession) {
-            $q->where('filiere_id', $component->module->filiere_id)
-              ->where('academic_year_id', $examSession->academic_year_id);
+        $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId) {
+            $q->where('filiere_id', $assessment->module->filiere_id)
+              ->where('academic_year_id', $academicYearId);
         });
 
-        // Filter Rattrapage: only fetch students who are eligible for Rattrapage
-        if ($examSession->type === 'RATTRAPAGE') {
-            $studentsQuery->whereHas('resitEligibilities', function ($q) use ($component) {
-                $q->where('module_id', $component->module_id)
-                  ->where('is_eligible', true);
-            });
-        }
-
-        $students = $studentsQuery->with(['grades' => function ($q) use ($component, $examSession) {
-            $q->where('grade_component_id', $component->id)
-              ->where('exam_session_id', $examSession->id);
+        // Eager load grades for this specific assessment
+        $students = $studentsQuery->with(['grades' => function ($q) use ($assessmentId) {
+            $q->where('assessment_id', $assessmentId);
         }])->get();
 
         $data = $students->map(function ($student) {
@@ -47,8 +39,9 @@ class GradeController extends Controller
                 'first_name' => $student->first_name,
                 'last_name' => $student->last_name,
                 'student_number' => $student->student_number,
-                'score' => $grade ? $grade->score : null,
-                'is_absent' => $grade ? $grade->is_absent : false,
+                'apogee' => $student->cne_cme ?? $student->student_number, // Fallback
+                'value' => $grade ? (float) $grade->value : null,
+                'is_absent' => $grade ? (bool) $grade->absent : false,
             ];
         });
 
@@ -56,34 +49,32 @@ class GradeController extends Controller
     }
 
     /**
-     * Bulk save grades.
+     * Bulk save grades for an assessment.
      */
-    public function storeBulk(Request $request, GradeComponent $component): JsonResponse
+    public function storeBulk(Request $request, $assessmentId): JsonResponse
     {
+        $assessment = Assessment::findOrFail($assessmentId);
+
         $validated = $request->validate([
-            'exam_session_id' => 'required|exists:exam_sessions,id',
             'grades' => 'required|array',
             'grades.*.student_id' => 'required|exists:students,id',
-            'grades.*.score' => 'nullable|numeric|min:0|max:20',
-            'grades.*.is_absent' => 'boolean',
+            'grades.*.value' => 'nullable|numeric|min:0|max:20',
+            'grades.*.absent' => 'boolean',
         ]);
 
         foreach ($validated['grades'] as $gradeData) {
             Grade::updateOrCreate(
                 [
                     'student_id' => $gradeData['student_id'],
-                    'grade_component_id' => $component->id,
-                    'exam_session_id' => $validated['exam_session_id'],
+                    'assessment_id' => $assessment->id,
                 ],
                 [
-                    'score' => $gradeData['is_absent'] ? null : ($gradeData['score'] ?? null),
-                    'is_absent' => $gradeData['is_absent'] ?? false,
-                    'entered_by' => auth()->id() ?? 1, // Fallback to 1 if not authed for dev
-                    'entered_at' => now(),
+                    'value' => !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null),
+                    'absent' => $gradeData['absent'] ?? false,
                 ]
             );
         }
 
-        return response()->json(['message' => 'Grades saved successfully.']);
+        return response()->json(['message' => 'Notes enregistrées avec succès.']);
     }
 }

@@ -1,9 +1,55 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Download, Link as LinkIcon, FileText, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentSchedule() {
   const [view, setView] = useState<'MOIS' | 'SEMAINE' | 'JOUR' | 'LISTE'>('SEMAINE');
+
+  const { data: scheduleData, isLoading } = useQuery({
+    queryKey: ['student-schedule'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/schedule');
+      return res.data.data;
+    }
+  });
+
+  const getTop = (timeStr: string) => {
+    try {
+      const [start] = timeStr.split(' - ');
+      const [h, m] = start.trim().split(':').map(Number);
+      return (h - 8) * 60 + (m / 60) * 60;
+    } catch {
+      return 0;
+    }
+  };
+
+  const getHeight = (timeStr: string) => {
+    try {
+      const [start, end] = timeStr.split(' - ');
+      const [h1, m1] = start.trim().split(':').map(Number);
+      const [h2, m2] = end.trim().split(':').map(Number);
+      return ((h2 - h1) * 60) + (m2 - m1);
+    } catch {
+      return 60;
+    }
+  };
+
+  const getLeft = (dayOfWeek: number) => {
+    // dayOfWeek: 1 = Lundi, 6 = Samedi
+    // Time column takes 14.28% (index 0). So Lundi starts at 14.28%.
+    return `${dayOfWeek * 14.28}%`;
+  };
+
+  const colors = [
+    { bg: 'bg-blue-100', border: 'border-blue-500', textTitle: 'text-blue-900', textRoom: 'text-blue-700', textTime: 'text-blue-600' },
+    { bg: 'bg-emerald-100', border: 'border-emerald-500', textTitle: 'text-emerald-900', textRoom: 'text-emerald-700', textTime: 'text-emerald-600' },
+    { bg: 'bg-purple-100', border: 'border-purple-500', textTitle: 'text-purple-900', textRoom: 'text-purple-700', textTime: 'text-purple-600' },
+    { bg: 'bg-rose-100', border: 'border-rose-500', textTitle: 'text-rose-900', textRoom: 'text-rose-700', textTime: 'text-rose-600' },
+    { bg: 'bg-amber-100', border: 'border-amber-500', textTitle: 'text-amber-900', textRoom: 'text-amber-700', textTime: 'text-amber-600' },
+  ];
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -16,7 +62,7 @@ export default function StudentSchedule() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-[#003a8c] italic">Mon Emploi du Temps</h1>
-            <p className="text-white/50 font-medium">Semaine du 22/06 au 28/06/2026</p>
+            <p className="text-gray-500 font-medium">Semaine en cours</p>
           </div>
         </div>
         
@@ -26,9 +72,6 @@ export default function StudentSchedule() {
           </button>
           <button className="flex items-center gap-2 bg-[#003a8c] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-800 transition-colors shadow-sm">
             <CalendarIcon className="w-4 h-4" /> Télécharger iCal
-          </button>
-          <button className="flex items-center gap-2 bg-[#003a8c] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-800 transition-colors shadow-sm">
-            <LinkIcon className="w-4 h-4" /> Lien de Synchro
           </button>
         </div>
       </div>
@@ -42,46 +85,42 @@ export default function StudentSchedule() {
         <div className="relative z-10 flex-1">
           <div className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">EMPLOI DU TEMPS PERSONNEL</div>
           <h2 className="text-3xl font-black text-white mb-2 flex items-center gap-3">
-            <CalendarIcon className="w-8 h-8 text-blue-400" /> Génie Informatique - Groupe 1
+            <CalendarIcon className="w-8 h-8 text-blue-400" /> Mon Groupe
           </h2>
           <div className="flex items-center gap-2 text-gray-300 font-medium text-sm">
-            <BookOpen className="w-4 h-4" /> Génie Informatique
+            <BookOpen className="w-4 h-4" /> Session Actuelle
           </div>
-          <p className="text-gray-400 mt-2 text-sm">Planning hebdomadaire récurrent â€” mis Ã  jour par l'administration.</p>
+          <p className="text-gray-400 mt-2 text-sm">Planning hebdomadaire récurrent — mis à jour par l'administration.</p>
         </div>
 
         <div className="relative z-10 flex items-center gap-4">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-center min-w-[100px] backdrop-blur-md">
-            <div className="text-3xl font-black text-white">6</div>
+            <div className="text-3xl font-black text-white">{scheduleData?.length || 0}</div>
             <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-1">SÉANCES / SEM.</div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center min-w-[100px] backdrop-blur-md">
-            <div className="text-3xl font-black text-white/80">6</div>
-            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">MODULES</div>
           </div>
         </div>
       </div>
 
       {/* Calendar UI */}
-      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-white/5">
+      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
         
         {/* Calendar Toolbar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-2">
-            <button className="p-2 bg-white/[0.02] border border-white/10 rounded-lg hover:bg-white/[0.05] transition-colors">
-              <ChevronLeft className="w-5 h-5 text-white/70" />
+            <button className="p-2 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition-colors">
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="p-2 bg-white/[0.02] border border-white/10 rounded-lg hover:bg-white/[0.05] transition-colors">
-              <ChevronRight className="w-5 h-5 text-white/70" />
+            <button className="p-2 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition-colors">
+              <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="px-4 py-2 bg-white/[0.02] border border-white/10 rounded-lg text-xs font-bold text-white/80 hover:bg-white/[0.05] transition-colors uppercase tracking-widest">
+            <button className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors uppercase tracking-widest">
               AUJOURD'HUI
             </button>
           </div>
           
-          <h2 className="text-xl font-black text-[#001A4B] italic">22 â€“ 27 juin 2026</h2>
+          <h2 className="text-xl font-black text-[#001A4B] italic">Semaine Actuelle</h2>
           
-          <div className="flex bg-white/[0.02] p-1 rounded-xl border border-white/10">
+          <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
             {['MOIS', 'SEMAINE', 'JOUR', 'LISTE'].map((v) => (
               <button
                 key={v}
@@ -90,7 +129,7 @@ export default function StudentSchedule() {
                   "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
                   view === v 
                     ? "bg-[#003a8c] text-white shadow-sm" 
-                    : "text-white/50 hover:text-white/80 hover:bg-white/[0.05]"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                 )}
               >
                 {v}
@@ -99,64 +138,71 @@ export default function StudentSchedule() {
           </div>
         </div>
 
-        {/* Calendar Grid (Mockup) */}
-        <div className="border border-white/10 rounded-2xl overflow-hidden overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* Header Row */}
-            <div className="grid grid-cols-7 border-b border-white/10 bg-white/[0.02]">
-              <div className="p-3"></div> {/* Time Column */}
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-white/70">LUN. 22/06</div>
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-white/70">MAR. 23/06</div>
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-white/70">MER. 24/06</div>
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-[#003a8c] bg-blue-50/50">JEU. 25/06</div>
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-white/70">VEN. 26/06</div>
-              <div className="p-3 text-center border-l border-white/10 text-xs font-bold text-white/70">SAM. 27/06</div>
-            </div>
-            
-            {/* Time Grid */}
-            <div className="relative h-[600px] bg-white">
-              {/* Background Lines */}
-              {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((hour) => (
-                <div key={hour} className="absolute w-full border-t border-white/5 flex h-[60px]" style={{ top: `${(hour - 8) * 60}px` }}>
-                  <div className="w-[14.28%] text-xs font-bold text-gray-400 -mt-2.5 pl-2">{hour}:00</div>
-                  <div className="w-[14.28%] border-l border-white/5"></div>
-                  <div className="w-[14.28%] border-l border-white/5"></div>
-                  <div className="w-[14.28%] border-l border-white/5"></div>
-                  <div className="w-[14.28%] border-l border-white/5 bg-amber-50/30"></div> {/* Today Highlight */}
-                  <div className="w-[14.28%] border-l border-white/5"></div>
-                  <div className="w-[14.28%] border-l border-white/5"></div>
-                </div>
-              ))}
-
-              {/* Mock Events */}
-              <div className="absolute top-[60px] left-[14.28%] w-[14.28%] h-[90px] p-1">
-                <div className="bg-blue-100 border-l-4 border-blue-500 w-full h-full rounded p-2 text-xs overflow-hidden">
-                  <div className="font-bold text-blue-900">Programmation C</div>
-                  <div className="text-blue-700">Amphi A</div>
-                  <div className="text-blue-600">09:00 - 10:30</div>
-                </div>
+        {/* Calendar Grid */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>
+        ) : (
+          <div className="border border-gray-100 rounded-2xl overflow-hidden overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header Row */}
+              <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
+                <div className="p-3"></div> {/* Time Column */}
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">LUNDI</div>
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">MARDI</div>
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">MERCREDI</div>
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">JEUDI</div>
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">VENDREDI</div>
+                <div className="p-3 text-center border-l border-gray-100 text-xs font-bold text-gray-500">SAMEDI</div>
               </div>
               
-              <div className="absolute top-[180px] left-[28.56%] w-[14.28%] h-[120px] p-1">
-                <div className="bg-emerald-100 border-l-4 border-emerald-500 w-full h-full rounded p-2 text-xs overflow-hidden">
-                  <div className="font-bold text-emerald-900">Bases de données</div>
-                  <div className="text-emerald-700">Salle T1</div>
-                  <div className="text-emerald-600">11:00 - 13:00</div>
-                </div>
-              </div>
+              {/* Time Grid */}
+              <div className="relative h-[660px] bg-white">
+                {/* Background Lines */}
+                {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((hour) => (
+                  <div key={hour} className="absolute w-full border-t border-gray-100 flex h-[60px]" style={{ top: `${(hour - 8) * 60}px` }}>
+                    <div className="w-[14.28%] text-xs font-bold text-gray-400 -mt-2.5 pl-2">{hour}:00</div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                    <div className="w-[14.28%] border-l border-gray-100"></div>
+                  </div>
+                ))}
 
-              <div className="absolute top-[300px] left-[57.12%] w-[14.28%] h-[90px] p-1">
-                <div className="bg-purple-100 border-l-4 border-purple-500 w-full h-full rounded p-2 text-xs overflow-hidden">
-                  <div className="font-bold text-purple-900">Réseaux Informatiques</div>
-                  <div className="text-purple-700">Labo 3</div>
-                  <div className="text-purple-600">13:00 - 14:30</div>
-                </div>
+                {/* API Events */}
+                {scheduleData?.map((event: any, index: number) => {
+                  const top = getTop(event.time);
+                  const height = getHeight(event.time);
+                  const left = getLeft(event.day); // event.day is 1 for Lundi, 2 for Mardi
+                  const color = colors[index % colors.length];
+
+                  return (
+                    <div 
+                      key={event.id}
+                      className="absolute p-1 transition-all hover:z-10 hover:scale-[1.02]"
+                      style={{ 
+                        top: `${top}px`, 
+                        left: left, 
+                        width: '14.28%', 
+                        height: `${height}px` 
+                      }}
+                    >
+                      <div className={cn(
+                        "w-full h-full rounded p-2 text-xs overflow-hidden border-l-4",
+                        color.bg, color.border
+                      )}>
+                        <div className={cn("font-bold truncate", color.textTitle)}>{event.module}</div>
+                        <div className={cn("truncate", color.textRoom)}>{event.room} - {event.type}</div>
+                        <div className={cn("truncate", color.textTime)}>{event.time}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              
             </div>
           </div>
-        </div>
-
+        )}
       </div>
 
     </div>

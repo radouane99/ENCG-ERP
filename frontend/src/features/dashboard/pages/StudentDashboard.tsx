@@ -35,10 +35,10 @@ export default function StudentDashboard() {
   });
 
   const stats = statsData || {
-    gpa: 14.5,
-    attendance: 100,
-    absences: { total: 0, justified: 0, unjustified: 0 },
-    upcoming_classes: [],
+    gpa: 0,
+    classes_today: 0,
+    absences: 0,
+    upcoming_exams: 0,
     recent_documents: []
   };
 

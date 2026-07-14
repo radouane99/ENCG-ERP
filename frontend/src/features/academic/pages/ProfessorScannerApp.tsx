@@ -1,41 +1,55 @@
-﻿import React, { useState } from 'react';
-import { Scan, Users, Clock, MapPin, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Scan, Users, Clock, MapPin, CheckCircle2, RefreshCw } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfessorScannerApp() {
   const [scanning, setScanning] = useState(false);
   const [lastScan, setLastScan] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
+  
+  // Stats
+  const [scanned, setScanned] = useState(0);
+  const totalExpected = 45; // Default for demo
 
-  // Mock data for today's assignment
-  const assignment = {
-    examId: 1,
-    module: 'Avancé - Génie Informatique',
-    group: 'Génie Informatique - Groupe 2',
-    time: '11:00 - 12:30',
-    room: 'Amphi Al Khwarizmi',
-    role: 'Principal',
-    totalExpected: 45,
-    scanned: 32
-  };
+  // Fetch or create an attendance session on mount
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const res = await api.post('/professor/attendance/start', {
+          schedule_id: 1, // Assume a schedule ID for the current class
+          type: 'EXAM',
+          duration: 90
+        });
+        setSession(res.data.data || { id: 1 });
+      } catch (err) {
+        // Fallback for demo if endpoint fails
+        setSession({ id: 1 });
+      }
+    };
+    initSession();
+  }, []);
 
   const simulateScan = async () => {
     setScanning(true);
     // Simulate camera delay
     setTimeout(async () => {
       try {
-        const res = await api.post('/exam-planning/scan-qr', {
-          qr_token: 'MOCK-UUID-' + Math.random(),
-          exam_id: assignment.examId
+        // Call the real manual call endpoint
+        const sessionId = session?.id || 1;
+        const res = await api.post(`/professor/attendance/${sessionId}/manual-call`, {
+          student_id: Math.floor(Math.random() * 10) + 1, // random student ID for demo
+          status: 'present'
         });
         
         setLastScan({
-          name: res.data.student_name,
-          time: res.data.time,
+          name: res.data.data?.student?.first_name || 'Étudiant',
+          time: new Date().toLocaleTimeString(),
           status: 'success'
         });
         
-        toast.success(res.data.message);
+        setScanned(s => s + 1);
+        toast.success("Présence enregistrée !");
       } catch (error) {
         toast.error('Erreur de scan. Veuillez réessayer.');
       } finally {
@@ -62,12 +76,12 @@ export default function ProfessorScannerApp() {
           <div className="flex items-center gap-2 text-pink-400 font-bold text-xs uppercase mb-2">
             <Clock className="w-4 h-4" /> En cours
           </div>
-          <h2 className="text-lg font-bold leading-tight mb-1">{assignment.module}</h2>
-          <p className="text-sm text-blue-100 mb-4">{assignment.group}</p>
+          <h2 className="text-lg font-bold leading-tight mb-1">Session Live</h2>
+          <p className="text-sm text-blue-100 mb-4">Génie Informatique - Groupe 2</p>
           
           <div className="flex justify-between text-xs font-medium">
-            <div className="flex items-center gap-1"><MapPin className="w-3 h-3 text-pink-400"/> {assignment.room}</div>
-            <div className="flex items-center gap-1"><Users className="w-3 h-3 text-pink-400"/> {assignment.role}</div>
+            <div className="flex items-center gap-1"><MapPin className="w-3 h-3 text-pink-400"/> Amphi Al Khwarizmi</div>
+            <div className="flex items-center gap-1"><Users className="w-3 h-3 text-pink-400"/> Principal</div>
           </div>
         </div>
       </div>
@@ -76,10 +90,10 @@ export default function ProfessorScannerApp() {
       <div className="px-6">
         <div className="bg-white rounded-3xl p-6 shadow-xl text-center relative overflow-hidden">
           
-          <h3 className="text-white/90 font-bold mb-4">Scanner QR Code Étudiant</h3>
+          <h3 className="text-gray-800 font-bold mb-4">Scanner QR Code Étudiant</h3>
           
           {/* Simulated Camera Viewfinder */}
-          <div className="relative w-48 h-48 mx-auto bg-white/[0.05] rounded-xl mb-6 flex items-center justify-center overflow-hidden border-2 border-white/10">
+          <div className="relative w-48 h-48 mx-auto bg-gray-50 rounded-xl mb-6 flex items-center justify-center overflow-hidden border-2 border-gray-100">
             {/* Viewfinder Corners */}
             <div className="absolute top-4 left-4 w-6 h-6 border-t-4 border-l-4 border-pink-500 rounded-tl-lg"></div>
             <div className="absolute top-4 right-4 w-6 h-6 border-t-4 border-r-4 border-pink-500 rounded-tr-lg"></div>
@@ -95,9 +109,9 @@ export default function ProfessorScannerApp() {
 
           <button 
             onClick={simulateScan}
-            disabled={scanning}
+            disabled={scanning || !session}
             className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all ${
-              scanning ? 'bg-gray-200 text-white/50 cursor-not-allowed' : 'bg-[#e91e63] text-white hover:bg-[#c2185b] shadow-lg shadow-pink-500/30'
+              scanning || !session ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#e91e63] text-white hover:bg-[#c2185b] shadow-lg shadow-pink-500/30'
             }`}
           >
             {scanning ? (
@@ -113,7 +127,7 @@ export default function ProfessorScannerApp() {
               <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
               <div className="text-left text-sm">
                 <div className="font-bold text-emerald-800">{lastScan.name}</div>
-                <div className="text-emerald-600 text-xs">Présence validée Ã  {lastScan.time}</div>
+                <div className="text-emerald-600 text-xs">Présence validée à {lastScan.time}</div>
               </div>
             </div>
           )}
@@ -123,11 +137,11 @@ export default function ProfessorScannerApp() {
         {/* Live Stats */}
         <div className="mt-6 flex gap-4">
           <div className="flex-1 bg-white/10 rounded-2xl p-4 text-center backdrop-blur-sm border border-white/5">
-            <div className="text-2xl font-black text-emerald-400">{assignment.scanned}</div>
+            <div className="text-2xl font-black text-emerald-400">{scanned}</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-blue-200 mt-1">Présents</div>
           </div>
           <div className="flex-1 bg-white/10 rounded-2xl p-4 text-center backdrop-blur-sm border border-white/5">
-            <div className="text-2xl font-black text-red-400">{assignment.totalExpected - assignment.scanned}</div>
+            <div className="text-2xl font-black text-red-400">{totalExpected - scanned}</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-blue-200 mt-1">En attente</div>
           </div>
         </div>

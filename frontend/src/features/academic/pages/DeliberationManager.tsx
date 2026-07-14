@@ -18,9 +18,9 @@ export default function DeliberationManager() {
   const runDeliberation = async () => {
     setIsDeliberating(true);
     try {
-      // Calling the mock deliberation endpoint we created earlier
-      const res = await api.get('/academic/mock-deliberation');
-      setDeliberationResults(res.data.data);
+      // Call the real deliberation endpoint we created
+      const res = await api.get(`/admin/academic/deliberate?semester=${selectedSemester}&session=${selectedSession}`);
+      setDeliberationResults(res.data.data.stats);
       toast.success('Délibération générée avec succès selon le modèle APOGEE.');
     } catch (error) {
       toast.error('Erreur lors de la délibération.');

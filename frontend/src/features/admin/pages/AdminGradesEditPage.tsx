@@ -1,53 +1,80 @@
-import { useState, FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save, FileText, CheckCircle2 } from 'lucide-react'
+import { useState, FormEvent, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Badge } from '@shared/components/ui/Badge'
 import { Spinner } from '@shared/components/ui/Spinner'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 
 export default function AdminGradesEditPage() {
-  const navigate = useNavigate()
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [searchParams] = useSearchParams()
-  const groupId = searchParams.get('group_id')
   const moduleId = searchParams.get('module_id')
   const queryClient = useQueryClient()
 
-  // MOCK DATA (In real app, fetch from API via useQuery using groupId and moduleId)
-  const [students, setStudents] = useState([
-    { id: 1, name: 'Aniss el alaoui', matricule: 'S20260001', cc1: '13.10', cc2: '11.50', examen: '7.60', final: '10.00' },
-    { id: 2, name: 'Ahmed Naciri', matricule: 'S20260002', cc1: '9.70', cc2: '19.70', examen: '8.90', final: '11.22' },
-    { id: 3, name: 'Ilyas Alaoui', matricule: 'S20260003', cc1: '13.70', cc2: '11.20', examen: '3.40', final: '11.62' },
-    { id: 4, name: 'Youssef Chraibi', matricule: 'S20260004', cc1: '13.70', cc2: '18.60', examen: '16.10', final: '14.40' },
-    { id: 5, name: 'Aya Bennis', matricule: 'S20260005', cc1: '17.80', cc2: '12.30', examen: '13.20', final: '13.94' },
-  ])
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null)
+  const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
 
-  const getFinalColor = (noteStr: string) => {
-    const note = parseFloat(noteStr)
-    if (isNaN(note)) return 'text-[hsl(var(--foreground))]'
-    return note >= 10 ? 'text-emerald-500' : 'text-[hsl(var(--color-destructive))]'
+  // Fetch assessments for the given module
+  const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
+    queryKey: ['assessments', moduleId],
+    queryFn: () => api.get(`/admin/modules/${moduleId}/assessments`).then(res => res.data.data),
+    enabled: !!moduleId,
+  })
+
+  // Select the first assessment by default if available
+  useEffect(() => {
+    if (assessmentsData && assessmentsData.length > 0 && !selectedAssessmentId) {
+      setSelectedAssessmentId(assessmentsData[0].id)
+    }
+  }, [assessmentsData, selectedAssessmentId])
+
+  // Fetch students & grades for the selected assessment
+  const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ['grades', selectedAssessmentId],
+    queryFn: () => api.get(`/admin/assessments/${selectedAssessmentId}/grades`).then(res => res.data.data),
+    enabled: !!selectedAssessmentId,
+  })
+
+  // Initialize local state when students are loaded
+  useEffect(() => {
+    if (studentsData) {
+      const initialGrades: Record<number, { value: string; absent: boolean }> = {}
+      studentsData.forEach((student: any) => {
+        initialGrades[student.student_id] = {
+          value: student.value !== null ? String(student.value) : '',
+          absent: student.is_absent || false,
+        }
+      })
+      setGrades(initialGrades)
+    }
+  }, [studentsData])
+
+  const handleInputChange = (id: number, field: 'value' | 'absent', val: string | boolean) => {
+    setGrades(prev => {
+      const studentData = prev[id] || { value: '', absent: false }
+      if (field === 'absent') {
+        return { ...prev, [id]: { ...studentData, absent: val as boolean, value: val ? '' : studentData.value } }
+      } else {
+        const cleanValue = (val as string).replace(',', '.')
+        return { ...prev, [id]: { ...studentData, value: cleanValue } }
+      }
+    })
   }
 
-  const handleInputChange = (id: number, field: string, value: string) => {
-    // Allows comma to dot replacement on the fly
-    const cleanValue = value.replace(',', '.')
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, [field]: cleanValue } : s))
-  }
-
-  // Mutation to save grades in batch
+  // Mutation to save grades
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
-      return api.post('/academic/grades/batch', payload)
+      return api.post(`/admin/assessments/${selectedAssessmentId}/grades`, payload)
     },
     onSuccess: () => {
       toast.success(isRtl ? 'تم حفظ النقاط بنجاح' : 'Notes enregistrées avec succès')
-      queryClient.invalidateQueries({ queryKey: ['grades'] })
+      queryClient.invalidateQueries({ queryKey: ['grades', selectedAssessmentId] })
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || (isRtl ? 'حدث خطأ أثناء الحفظ' : 'Erreur lors de la sauvegarde'))
@@ -57,18 +84,27 @@ export default function AdminGradesEditPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     
-    // Format payload for the backend API we just created
+    if (!selectedAssessmentId) return;
+
     const payload = {
-      module_id: moduleId,
-      academic_year_id: 1, // Static for now
-      grades: students.map(s => ({
-        student_id: s.id,
-        value: parseFloat(s.final) || 0,
-        type: 'normal'
-      }))
+      grades: Object.keys(grades).map(studentIdStr => {
+        const studentId = parseInt(studentIdStr, 10)
+        const data = grades[studentId]
+        return {
+          student_id: studentId,
+          value: data.value === '' ? null : parseFloat(data.value),
+          absent: data.absent
+        }
+      })
     }
     
     saveMutation.mutate(payload)
+  }
+
+  const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
+
+  if (!moduleId) {
+    return <div className="p-8 text-center text-red-500">Erreur : module_id manquant.</div>
   }
 
   return (
@@ -81,123 +117,124 @@ export default function AdminGradesEditPage() {
         </div>
         <Link to="/admin/grades" className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors uppercase tracking-wide">
           <ArrowLeft className={cn("w-4 h-4", isRtl && "rotate-180")} /> 
-          {isRtl ? 'العودة للمحدد' : 'Retour au sélecteur'}
+          {isRtl ? 'العودة' : 'Retour'}
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm overflow-hidden flex flex-col items-center">
-        {/* Banner */}
-        <div className="bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] p-8 text-white m-4 rounded-[1.5rem] shadow-md relative overflow-hidden w-[calc(100%-2rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="relative z-10">
-            <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider mb-2 block">
-              {isRtl ? 'مجموعة دراسية' : 'Groupe Académique'}
-            </span>
-            <h2 className="text-2xl font-bold mb-1">Génie Informatique - Groupe 1</h2>
-            <div className="flex items-center gap-3">
-              <p className="text-white/90 text-sm">GAMING (INF-107)</p>
-              <Badge variant="success" className="bg-white/20 text-white border-none">{isRtl ? 'دورة عادية' : 'Session Ordinaire'}</Badge>
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm p-6 mb-6">
+        <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-2">
+          {isRtl ? 'اختر التقييم' : 'Sélectionner l\'Évaluation'}
+        </label>
+        {isLoadingAssessments ? (
+          <Spinner />
+        ) : (
+          <select 
+            value={selectedAssessmentId || ''} 
+            onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
+            className="w-full md:w-1/3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--color-primary))] outline-none"
+          >
+            <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
+            {assessmentsData?.map((a: any) => (
+              <option key={a.id} value={a.id}>
+                {a.type} (Poids: {a.weight}%)
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {!selectedAssessmentId ? (
+        <div className="text-center text-[hsl(var(--muted-foreground))] py-8">
+          Veuillez sélectionner une évaluation pour saisir les notes.
+        </div>
+      ) : isLoadingStudents ? (
+        <div className="flex justify-center p-12"><Spinner /></div>
+      ) : (
+        <form onSubmit={handleSubmit} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm overflow-hidden flex flex-col items-center">
+          {/* Banner */}
+          <div className="bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] p-8 text-white m-4 rounded-[1.5rem] shadow-md relative overflow-hidden w-[calc(100%-2rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="relative z-10">
+              <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider mb-2 block">
+                {isRtl ? 'تقييم' : 'Évaluation'}
+              </span>
+              <h2 className="text-2xl font-bold mb-1">{selectedAssessment?.type}</h2>
+              <div className="flex items-center gap-3">
+                <p className="text-white/90 text-sm">Poids : {selectedAssessment?.weight}%</p>
+                <Badge variant="success" className="bg-white/20 text-white border-none">{isRtl ? 'دورة عادية' : 'Session Ordinaire'}</Badge>
+              </div>
+            </div>
+            <div className="relative z-10 flex flex-col items-center justify-center bg-white/10 border border-white/20 rounded-2xl p-4 min-w-[120px] backdrop-blur-md">
+              <span className="text-3xl font-bold text-white mb-1">{studentsData?.length || 0}</span>
+              <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest text-center">
+                {isRtl ? 'الطلاب' : 'Étudiants'}
+              </span>
             </div>
           </div>
-          <div className="relative z-10 flex flex-col items-center justify-center bg-white/10 border border-white/20 rounded-2xl p-4 min-w-[120px] backdrop-blur-md">
-            <span className="text-3xl font-bold text-white mb-1">{students.length}</span>
-            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest text-center">
-              {isRtl ? 'الطلاب المسجلين' : 'Étudiants Inscrits'}
-            </span>
-          </div>
-        </div>
 
-        {/* Table */}
-        <div className="w-full px-4 overflow-x-auto pb-4">
-          <table className="w-full text-sm text-start border-collapse min-w-[800px]">
-            <thead className="bg-[hsl(var(--muted)/50)] text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-y border-[hsl(var(--border))]">
-              <tr>
-                <th className="px-6 py-4">{isRtl ? 'الطالب' : 'Étudiant'}</th>
-                <th className="px-6 py-4 text-center">CC 1 (20%)</th>
-                <th className="px-6 py-4 text-center">CC 2 (20%)</th>
-                <th className="px-6 py-4 text-center">{isRtl ? 'الامتحان' : 'Examen'} (60%)</th>
-                <th className="px-6 py-4 text-center">{isRtl ? 'النتيجة النهائية' : 'Note Finale'}</th>
-                <th className="px-6 py-4 text-center">{isRtl ? 'الحالة' : 'Statut'}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[hsl(var(--border))]">
-              {students.map((student) => (
-                <tr key={student.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
-                        {student.name.substring(0, 2)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-[hsl(var(--foreground))] text-sm">{student.name}</div>
-                        <div className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider">
-                          {student.matricule}
+          {/* Table */}
+          <div className="w-full px-4 overflow-x-auto pb-4">
+            <table className="w-full text-sm text-start border-collapse min-w-[800px]">
+              <thead className="bg-[hsl(var(--muted)/50)] text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-y border-[hsl(var(--border))]">
+                <tr>
+                  <th className="px-6 py-4 text-start">{isRtl ? 'الطالب' : 'Étudiant'}</th>
+                  <th className="px-6 py-4 text-center">Note (/20)</th>
+                  <th className="px-6 py-4 text-center">Absent(e)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[hsl(var(--border))]">
+                {studentsData?.map((student: any) => (
+                  <tr key={student.student_id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                          {student.first_name.substring(0, 1)}{student.last_name.substring(0, 1)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-[hsl(var(--foreground))] text-sm">{student.first_name} {student.last_name}</div>
+                          <div className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider">
+                            {student.apogee || student.student_number}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <input 
-                      type="text"
-                      value={student.cc1}
-                      onChange={(e) => handleInputChange(student.id, 'cc1', e.target.value)}
-                      className="w-20 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all outline-none"
-                    />
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <input 
-                      type="text"
-                      value={student.cc2}
-                      onChange={(e) => handleInputChange(student.id, 'cc2', e.target.value)}
-                      className="w-20 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all outline-none"
-                    />
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <input 
-                      type="text"
-                      value={student.examen}
-                      onChange={(e) => handleInputChange(student.id, 'examen', e.target.value)}
-                      className="w-20 text-center rounded-xl border border-[hsl(var(--color-primary))/30] bg-[hsl(var(--color-primary))/5] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/30] transition-all outline-none"
-                    />
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={cn("text-base font-black px-4 py-1.5 rounded-lg bg-[hsl(var(--muted)/50)]", getFinalColor(student.final))}>
-                      {student.final}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {parseFloat(student.final) >= 10 ? (
-                      <Badge variant="success" size="sm">{isRtl ? 'ناجح' : 'Validé'}</Badge>
-                    ) : (
-                      <Badge variant="destructive" size="sm">{isRtl ? 'استدراكية' : 'Rattrapage'}</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <input 
+                        type="number"
+                        step="0.25"
+                        min="0"
+                        max="20"
+                        value={grades[student.student_id]?.value ?? ''}
+                        disabled={grades[student.student_id]?.absent}
+                        onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
+                        className="w-24 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all outline-none disabled:opacity-50"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <input 
+                        type="checkbox"
+                        checked={grades[student.student_id]?.absent ?? false}
+                        onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
+                        className="w-5 h-5 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        {/* Action Footer */}
-        <div className="w-full bg-[hsl(var(--muted)/30)] border-t border-[hsl(var(--border))] p-6 flex items-center justify-between mt-auto">
-          <p className="text-[hsl(var(--muted-foreground))] text-sm">
-            {isRtl ? 'تأكد من مراجعة النقاط قبل الحفظ.' : 'Vérifiez les notes avant de sauvegarder.'}
-          </p>
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate('/admin/grades')}>
-              {isRtl ? 'إلغاء' : 'Annuler'}
-            </Button>
+          <div className="p-6 w-full flex justify-end border-t border-[hsl(var(--border))]">
             <Button 
               type="submit" 
-              variant="primary" 
-              icon={<Save size={16} />}
-              isLoading={saveMutation.isPending}
+              className="bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary))/90] text-white font-bold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-3"
               disabled={saveMutation.isPending}
             >
-              {isRtl ? 'حفظ النقاط' : 'Enregistrer les notes'}
+              {saveMutation.isPending ? <Spinner className="text-white" /> : <Save className="w-5 h-5" />}
+              {isRtl ? 'حفظ النقاط' : 'Enregistrer les Notes'}
             </Button>
           </div>
-        </div>
-      </form>
+        </form>
+      )}
     </div>
   )
 }
