@@ -6,7 +6,7 @@ import { GlobalSearchModal } from './GlobalSearchModal'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import CommandPalette from './CommandPalette'
-import StudentChatbot from '../chat/StudentChatbot'
+import GlobalAIChatbot from '../ai/GlobalAIChatbot'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
 
 export default function AppShell() {
@@ -77,8 +77,8 @@ export default function AppShell() {
         }}
       />
       
-      {/* Global AI Assistant Widget */}
-      <StudentChatbot />
+      {/* Global AI Assistant Widget — Gemini-powered, role-aware */}
+      <GlobalAIChatbot />
     </div>
   )
 }

@@ -31,7 +31,12 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/exams/analytics', [\App\Http\Controllers\Api\AdminExamController::class, 'analytics']);
     Route::post('/documents/generate', [\App\Http\Controllers\Api\DocumentCenterController::class, 'generate']);
     Route::apiResource('holidays', \App\Http\Controllers\Api\HolidayController::class);
+
+    // AI Predictive Analytics
+    Route::get('/predictive-analytics', [\App\Http\Controllers\Api\AdminPredictiveAnalyticsController::class, 'index']);
+    Route::post('/predictive-analytics/refresh', [\App\Http\Controllers\Api\AdminPredictiveAnalyticsController::class, 'refresh']);
     
+
     Route::prefix('discipline')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\DisciplineController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Api\DisciplineController::class, 'store']);
