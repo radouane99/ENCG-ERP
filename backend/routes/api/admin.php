@@ -22,8 +22,24 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     // Removed db-test route from here
 
     Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+    
+    // Dashboard Stats
+    Route::get('/dashboard/stats', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getStats']);
 
-
+    // Admin Custom Routes
+    Route::post('/documents/generate', [\App\Http\Controllers\Api\DocumentCenterController::class, 'generate']);
+    Route::apiResource('holidays', \App\Http\Controllers\Api\HolidayController::class);
+    
+    Route::prefix('discipline')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\DisciplineController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\DisciplineController::class, 'store']);
+        Route::post('/{id}/decide', [\App\Http\Controllers\Api\DisciplineController::class, 'decide']);
+    });
+    
+    Route::prefix('internships')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\AdminInternshipController::class, 'index']);
+        Route::put('/{id}/status', [\App\Http\Controllers\Api\AdminInternshipController::class, 'updateStatus']);
+    });
 
 Route::get('/check-students', function() {
     $count = \App\Models\StudentPathway::count();

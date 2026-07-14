@@ -75,10 +75,12 @@ export default function AcademicYearSettingsPage() {
     }
   }
 
-  // Mock data for years
-  const [years] = useState([
-    { id: 1, label: '2025/2026', isCurrent: true },
-  ])
+  const { data: yearsData, isLoading: yearsLoading } = useQuery({
+    queryKey: ['academic-years'],
+    queryFn: () => api.get('/academic-years').then(r => r.data)
+  });
+
+  const years = yearsData?.data || [];
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">
@@ -111,7 +113,7 @@ export default function AcademicYearSettingsPage() {
               <div key={y.id} className="flex items-center justify-between p-4 border border-blue-200 rounded-xl bg-blue-50/30">
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-slate-800">{y.label}</span>
-                  {y.isCurrent && (
+                  {y.is_current && (
                     <span className="px-2 py-1 bg-[#0f2863] text-white text-[10px] font-bold rounded-md tracking-wider">
                       COURANTE
                     </span>

@@ -112,7 +112,7 @@ const BarChartSVG: React.FC<{ data: { day: string; rate: number }[] }> = ({ data
 };
 
 // ── Donut Chart ──────────────────────────────────────────────────────
-const DonutChart: React.FC<{ data: typeof filiereDistribution }> = ({ data }) => {
+const DonutChart: React.FC<{ data: any[] }> = ({ data }) => {
   const total = data.reduce((s, d) => s + d.value, 0);
   const cx = 50; const cy = 50; const r = 35; const ir = 22;
   const circumference = 2 * Math.PI * r;
@@ -195,6 +195,26 @@ const AdminDashboard: React.FC = () => {
   const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
   const now = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+  const { data: statsData, isLoading } = useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: async () => {
+      const res = await api.get('/admin/dashboard/stats');
+      return res.data.data;
+    }
+  });
+
+  const studentsCount = statsData?.studentsCount ?? 0;
+  const professorsCount = statsData?.professorsCount ?? 0;
+  const permanentsCount = statsData?.permanentsCount ?? 0;
+  const vacatairesCount = statsData?.vacatairesCount ?? 0;
+  const attendanceRate = statsData?.attendanceRate ?? 0;
+  const alertsCount = statsData?.alertsCount ?? 0;
+  const filiereDist = statsData?.filiereDistribution ?? [];
+
+  if (isLoading) {
+    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003a8c]"></div></div>;
+  }
+
   return (
     <div className="space-y-6">
 
@@ -212,8 +232,8 @@ const AdminDashboard: React.FC = () => {
             Système opérationnel
           </div>
           <div className="flex items-center gap-2 text-muted-foreground text-xs bg-muted/50 border border-border px-3 py-2 rounded-xl">
-            <Zap size={12} className="text-amber-400" />
-            <span>12 alertes</span>
+            <Zap size={12} className={alertsCount > 0 ? "text-amber-400" : "text-emerald-400"} />
+            <span>{alertsCount} alertes</span>
           </div>
         </div>
       </div>
@@ -223,17 +243,17 @@ const AdminDashboard: React.FC = () => {
         <StatCard
           icon={<Users size={20} className="text-blue-300" />}
           label="Étudiants inscrits"
-          value="2 400"
-          sub="819 actifs ce semestre"
-          trend={2.8}
+          value={studentsCount.toLocaleString()}
+          sub="Actifs ce semestre"
+          trend={0}
           gradient="bg-gradient-to-br from-blue-600/20 to-blue-900/10 border-blue-500/20"
           iconBg="bg-blue-500/25"
         />
         <StatCard
           icon={<GraduationCap size={20} className="text-indigo-300" />}
           label="Corps enseignant"
-          value="180"
-          sub="32 permanents · 15 vacataires"
+          value={professorsCount}
+          sub={`${permanentsCount} permanents · ${vacatairesCount} vacataires`}
           trend={0}
           gradient="bg-gradient-to-br from-indigo-600/20 to-indigo-900/10 border-indigo-500/20"
           iconBg="bg-indigo-500/25"
@@ -241,9 +261,9 @@ const AdminDashboard: React.FC = () => {
         <StatCard
           icon={<Activity size={20} className="text-emerald-300" />}
           label="Taux de présence"
-          value="87.3%"
-          sub="Moyenne semaine en cours"
-          trend={-1.2}
+          value={`${attendanceRate}%`}
+          sub="Moyenne globale enregistrée"
+          trend={0}
           gradient="bg-gradient-to-br from-emerald-600/20 to-emerald-900/10 border-emerald-500/20"
           iconBg="bg-emerald-500/25"
         />
@@ -305,9 +325,9 @@ const AdminDashboard: React.FC = () => {
             </div>
             <Layers size={15} className="text-foreground/20" />
           </div>
-          <DonutChart data={filiereDistribution} />
+          <DonutChart data={filiereDist} />
           <div className="space-y-2 mt-1">
-            {filiereDistribution.map((f) => (
+            {filiereDist.map((f: any) => (
               <div key={f.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-sm" style={{ background: f.color }} />

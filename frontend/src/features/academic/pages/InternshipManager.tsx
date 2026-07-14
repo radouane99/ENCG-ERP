@@ -22,12 +22,12 @@ export default function InternshipManager() {
   // Fetch Internships
   const { data: internships, isLoading } = useQuery({
     queryKey: ['admin-internships'],
-    queryFn: () => api.get('/internships').then(res => res.data.data)
+    queryFn: () => api.get('/admin/internships').then(res => res.data.data)
   })
 
   // Validate Convention Mutation
   const validateMutation = useMutation({
-    mutationFn: (id: number) => api.put(`/internships/${id}`, { action: 'validate' }),
+    mutationFn: (id: number) => api.put(`/admin/internships/${id}/status`, { status: 'validated' }),
     onSuccess: () => {
       toast.success(isRtl ? 'تم التصديق على الاتفاقية' : 'Convention validée avec succès')
       queryClient.invalidateQueries({ queryKey: ['admin-internships'] })
@@ -35,25 +35,11 @@ export default function InternshipManager() {
     onError: () => toast.error(isRtl ? 'خطأ' : 'Erreur de validation')
   })
 
-  // MOCK DATA Fallback
-  type InternshipListItem = {
-    id: number;
-    student?: { first_name: string; last_name: string };
-    type: string;
-    company?: { name: string };
-    city?: string;
-    status: string;
-    duration?: string;
-  };
-  const dataList: InternshipListItem[] = internships?.length > 0 ? internships : [
-    { id: 1, student: { first_name: 'Anass', last_name: 'EL WALI' }, type: 'Stage d\'application', company: { name: 'Royal Air Maroc' }, city: 'Casablanca', status: 'pending', duration: '2 mois' },
-    { id: 2, student: { first_name: 'Salma', last_name: 'BENNIS' }, type: 'PFE', company: { name: 'Bank of Africa' }, city: 'Rabat', status: 'validated', duration: '6 mois' },
-    { id: 3, student: { first_name: 'Youssef', last_name: 'TAZI' }, type: 'Stage d\'initiation', company: { name: 'OCP Group' }, city: 'Khouribga', status: 'pending', duration: '1 mois' },
-  ]
+  const dataList = internships || [];
 
-  const filteredList = dataList.filter((item: InternshipListItem) => 
-    item.student?.last_name.toLowerCase().includes(search.toLowerCase()) || 
-    item.company?.name.toLowerCase().includes(search.toLowerCase())
+  const filteredList = dataList.filter((item: any) => 
+    item.student?.last_name?.toLowerCase().includes(search.toLowerCase()) || 
+    item.company?.toLowerCase().includes(search.toLowerCase())
   )
 
 

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { FileText, QrCode, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
@@ -6,13 +6,15 @@ import { toast } from 'sonner';
 export default function DocumentCenter() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [document, setDocument] = useState<any>(null);
+  const [docType, setDocType] = useState('Certificat de Scolarité');
+  const [studentId, setStudentId] = useState('1'); // Still default 1 but bound to input
 
   const generateDocument = async () => {
     setIsGenerating(true);
     try {
-      const res = await api.post('/documents/generate', {
-        student_id: 1, // Mock
-        document_type: 'Certificat de Scolarité'
+      const res = await api.post('/admin/documents/generate', {
+        student_id: parseInt(studentId, 10),
+        document_type: docType
       });
       setDocument(res.data.data);
       toast.success(res.data.data.message);
@@ -43,7 +45,7 @@ export default function DocumentCenter() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Type de document</label>
-              <select className="w-full border-input bg-background rounded-lg p-2.5 text-sm">
+              <select value={docType} onChange={e => setDocType(e.target.value)} className="w-full border-input bg-background rounded-lg p-2.5 text-sm">
                 <option>Certificat de Scolarité</option>
                 <option>Relevé de Notes</option>
                 <option>Attestation de Réussite</option>
@@ -51,8 +53,8 @@ export default function DocumentCenter() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Étudiant</label>
-              <input type="text" placeholder="Rechercher par CNE, Nom..." className="w-full border-input bg-background rounded-lg p-2.5 text-sm" />
+              <label className="block text-sm font-medium mb-1">ID Étudiant</label>
+              <input type="number" value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="ID de l'étudiant (ex: 1)" className="w-full border-input bg-background rounded-lg p-2.5 text-sm" />
             </div>
 
             <button

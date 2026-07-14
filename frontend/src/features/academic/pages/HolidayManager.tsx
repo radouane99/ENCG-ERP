@@ -51,15 +51,11 @@ export default function HolidayManager() {
   const fetchHolidays = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/holidays');
+      const res = await api.get('/admin/holidays');
       setHolidays(res.data.data || res.data || []);
     } catch {
-      // Use mock data if endpoint not available
-      setHolidays([
-        { id: 1, name: 'Fête du Trône', start_date: '2025-07-30', end_date: '2025-07-31', type: 'national' },
-        { id: 2, name: 'Aïd Al-Adha', start_date: '2025-06-06', end_date: '2025-06-08', type: 'religious' },
-        { id: 3, name: 'Vacances de mi-semestre', start_date: '2025-11-01', end_date: '2025-11-09', type: 'academic', description: 'Pause pédagogique de mi-semestre' },
-      ]);
+      toast.error('Erreur lors du chargement des jours fériés.');
+      setHolidays([]);
     } finally {
       setLoading(false);
     }
@@ -87,10 +83,10 @@ export default function HolidayManager() {
     }
     try {
       if (editingId) {
-        await api.put(`/holidays/${editingId}`, form);
+        await api.put(`/admin/holidays/${editingId}`, form);
         toast.success('Période modifiée avec succès !');
       } else {
-        await api.post('/holidays', form);
+        await api.post('/admin/holidays', form);
         toast.success('Période ajoutée avec succès !');
       }
       setShowModal(false);
@@ -103,7 +99,7 @@ export default function HolidayManager() {
   const handleDelete = async (id: number) => {
     if (!confirm('Supprimer cette période ?')) return;
     try {
-      await api.delete(`/holidays/${id}`);
+      await api.delete(`/admin/holidays/${id}`);
       toast.success('Période supprimée.');
       fetchHolidays();
     } catch {

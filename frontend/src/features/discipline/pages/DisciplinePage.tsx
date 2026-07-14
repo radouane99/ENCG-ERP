@@ -22,13 +22,13 @@ export default function DisciplinePage() {
   // Fetch Cases
   const { data: disciplineCases, isLoading } = useQuery({
     queryKey: ['discipline-cases'],
-    queryFn: () => api.get('/discipline').then(res => res.data.data)
+    queryFn: () => api.get('/admin/discipline').then(res => res.data.data)
   })
 
   // Mutate Decision
   const decideMutation = useMutation({
     mutationFn: ({ id, decision }: { id: number, decision: string }) => 
-      api.post(`/discipline/${id}/decide`, { decision }),
+      api.post(`/admin/discipline/${id}/decide`, { decision }),
     onSuccess: () => {
       toast.success(isRtl ? 'تم تسجيل القرار' : 'Décision enregistrée avec succès')
       queryClient.invalidateQueries({ queryKey: ['discipline-cases'] })
@@ -36,26 +36,13 @@ export default function DisciplinePage() {
     onError: () => toast.error(isRtl ? 'خطأ' : 'Erreur lors de l\'enregistrement')
   })
 
-  // MOCK DATA Fallback
-  type DisciplineItem = {
-    id: number;
-    student?: { first_name: string; last_name: string; cne: string };
-    type: string;
-    severity: string;
-    status: string;
-    decision?: string;
-    incident_date: string;
-  };
-  const dataList: DisciplineItem[] = disciplineCases?.length > 0 ? disciplineCases : [
-    { id: 1, student: { first_name: 'Karim', last_name: 'EL FASSI', cne: 'N111222333' }, type: 'Triche à l\'examen', severity: 'high', status: 'pending', incident_date: '2026-06-25' },
-    { id: 2, student: { first_name: 'Nadia', last_name: 'BENALI', cne: 'M444555666' }, type: 'Absences répétées', severity: 'medium', status: 'resolved', decision: 'warning', incident_date: '2026-06-20' },
-    { id: 3, student: { first_name: 'Omar', last_name: 'CHAKIR', cne: 'K777888999' }, type: 'Comportement', severity: 'low', status: 'pending', incident_date: '2026-06-28' },
-  ]
+  const dataList = disciplineCases || [];
 
-  const filteredList = dataList.filter((item: DisciplineItem) => 
-    item.student?.last_name.toLowerCase().includes(search.toLowerCase()) || 
-    item.type.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredList = dataList.filter((c: any) => 
+    (c.student?.first_name?.toLowerCase().includes(search.toLowerCase()) || 
+     c.student?.last_name?.toLowerCase().includes(search.toLowerCase()) || 
+     c.type?.toLowerCase().includes(search.toLowerCase()))
+  );
 
   const getSeverityBadge = (severity: string) => {
     switch(severity) {
