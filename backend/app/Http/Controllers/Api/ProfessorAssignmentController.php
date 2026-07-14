@@ -47,9 +47,9 @@ class ProfessorAssignmentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'professor_id' => 'required|integer|exists:professors,id',
-            'module_id' => 'required|integer|exists:modules,id',
-            'group_id' => 'required|integer|exists:groups,id',
+            'professor_id' => 'required', // Can be UUID or ID
+            'module_id' => 'required',
+            'group_id' => 'required',
         ]);
 
         $currentYear = AcademicYear::where('is_current', true)->first();
@@ -57,12 +57,21 @@ class ProfessorAssignmentController extends Controller
             return response()->json(['message' => 'Aucune année universitaire courante.'], 400);
         }
 
+        // Resolve IDs from UUIDs if they are strings
+        $profId = \App\Models\Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
+        $modId = \App\Models\Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
+        $grpId = \App\Models\Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
+
+        if (!$profId || !$modId || !$grpId) {
+            return response()->json(['message' => 'Entités invalides fournies.'], 400);
+        }
+
         // Check if assignment already exists
         $exists = DB::table('module_professor')
             ->where('academic_year_id', $currentYear->id)
-            ->where('module_id', $validated['module_id'])
-            ->where('group_id', $validated['group_id'])
-            ->where('professor_id', $validated['professor_id'])
+            ->where('module_id', $modId)
+            ->where('group_id', $grpId)
+            ->where('professor_id', $profId)
             ->exists();
 
         if ($exists) {
@@ -71,9 +80,9 @@ class ProfessorAssignmentController extends Controller
 
         $id = DB::table('module_professor')->insertGetId([
             'academic_year_id' => $currentYear->id,
-            'module_id' => $validated['module_id'],
-            'group_id' => $validated['group_id'],
-            'professor_id' => $validated['professor_id'],
+            'module_id' => $modId,
+            'group_id' => $grpId,
+            'professor_id' => $profId,
             'professor_type' => 'App\Models\Professor',
             'session_type' => 'cm', // Defaulting to CM
             'created_at' => now(),
