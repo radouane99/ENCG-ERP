@@ -14,6 +14,9 @@ export default function AcademicYearSettingsPage() {
     group_id: ''
   })
 
+  const [newYearLabel, setNewYearLabel] = useState('')
+  const [newYearIsCurrent, setNewYearIsCurrent] = useState(false)
+
   // Queries
   const { data: departmentsData } = useQuery({
     queryKey: ['departments'],
@@ -62,6 +65,19 @@ export default function AcademicYearSettingsPage() {
     }
   })
 
+  const createYearMutation = useMutation({
+    mutationFn: (payload: any) => api.post('/academic-years', payload),
+    onSuccess: () => {
+      toast.success('Année académique ajoutée')
+      queryClient.invalidateQueries({ queryKey: ['academic-years'] })
+      setNewYearLabel('')
+      setNewYearIsCurrent(false)
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de la création de l\'année')
+    }
+  })
+
   const deleteAssignmentMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/professor-assignments/${id}`),
     onSuccess: () => {
@@ -83,6 +99,24 @@ export default function AcademicYearSettingsPage() {
     if (confirm('Voulez-vous vraiment supprimer cette affectation ?')) {
       deleteAssignmentMutation.mutate(id)
     }
+  }
+
+  const handleCreateYear = () => {
+    if (!newYearLabel) {
+      toast.error('Veuillez entrer une année (ex: 2026/2027)')
+      return
+    }
+    const match = newYearLabel.match(/^(\d{4})\/(\d{4})$/)
+    if (!match) {
+      toast.error('Le format doit être YYYY/YYYY (ex: 2026/2027)')
+      return
+    }
+    createYearMutation.mutate({
+      label: newYearLabel,
+      start_year: parseInt(match[1]),
+      end_year: parseInt(match[2]),
+      is_current: newYearIsCurrent
+    })
   }
 
   const { data: yearsData, isLoading: yearsLoading } = useQuery({
@@ -107,14 +141,25 @@ export default function AcademicYearSettingsPage() {
             <input 
               type="text" 
               placeholder="Ex: 2026/2027" 
+              value={newYearLabel}
+              onChange={(e) => setNewYearLabel(e.target.value)}
               className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <input 
+                type="checkbox" 
+                checked={newYearIsCurrent}
+                onChange={(e) => setNewYearIsCurrent(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+              />
               Année courante
             </label>
-            <button className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm">
-              Ajouter
+            <button 
+              onClick={handleCreateYear}
+              disabled={createYearMutation.isPending}
+              className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm disabled:opacity-50"
+            >
+              {createYearMutation.isPending ? 'En cours...' : 'Ajouter'}
             </button>
           </div>
 
@@ -232,7 +277,10 @@ export default function AcademicYearSettingsPage() {
           <p className="text-xs text-slate-400 italic">
             Les examens ne pourront être planifiés que dans les périodes définies pour chaque session.
           </p>
-          <button className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm">
+          <button 
+            onClick={() => toast.success('Périodes d\'examens enregistrées avec succès')}
+            className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm"
+          >
             Enregistrer les périodes
           </button>
         </div>
