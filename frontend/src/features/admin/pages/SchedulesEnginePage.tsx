@@ -29,6 +29,7 @@ export default function SchedulesEnginePage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all')
   
   const [formData, setFormData] = useState({
     module_id: '',
@@ -181,6 +182,9 @@ export default function SchedulesEnginePage() {
       const d = new Date(item.start)
       const itemDay = d.getDay()
       const itemTime = d.toISOString().substring(11, 16)
+      const status = item.extendedProps?.status || 'published';
+      
+      if (filterStatus !== 'all' && status !== filterStatus) return false;
       return itemDay === dayIndex && itemTime.startsWith(timeSlotStr.substring(0, 2))
     })
 
@@ -191,46 +195,74 @@ export default function SchedulesEnginePage() {
     return (
       <td key={`${dayStr}-${timeSlotStr}`} className="p-4 border-b border-slate-100 border-r align-top">
         <div className="space-y-2">
-          {cellItems.map((item, idx) => (
-            <div key={idx} className="relative group rounded-2xl border p-4 transition-all duration-300 hover:shadow-lg bg-white border-blue-100 shadow-blue-100/50 hover:-translate-y-1">
-              <div className="flex justify-between items-start mb-3">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600">
-                   {item.extendedProps?.type || 'CM'}
+          {cellItems.map((item, idx) => {
+            const isLocked = item.extendedProps?.is_locked;
+            const isDraft = item.extendedProps?.status === 'draft';
+            
+            if (isLocked) {
+              return (
+                <div key={idx} className="relative rounded-2xl p-4 flex items-center justify-center min-h-[120px] bg-emerald-50/50 border border-emerald-100">
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+                     <Lock className="w-3.5 h-3.5" /> VERROUILLÉ
+                   </div>
+                </div>
+              );
+            }
+
+            const borderColorClass = isDraft ? 'border-amber-300 shadow-amber-100/50' : 'border-emerald-300 shadow-emerald-100/50';
+            const badgeBgClass = 'bg-blue-50 text-blue-600';
+
+            return (
+              <div key={idx} className={`relative group rounded-2xl border p-4 transition-all duration-300 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 ${borderColorClass}`}>
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold ${badgeBgClass}`}>
+                     {item.extendedProps?.module_code || item.extendedProps?.type || 'CM'}
+                  </div>
+                  {!isDraft && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                </div>
+                <h4 className="text-xs font-black text-[#0f2863] leading-snug mb-3 uppercase">
+                  {item.title}
+                </h4>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <User className="w-3 h-3" /> {item.extendedProps?.professor || 'Inconnu'}
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <MapPin className="w-3 h-3" /> {item.extendedProps?.room || 'Non assigné'}
+                  </div>
+                </div>
+                
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button onClick={() => toast.info('Validation non implémentée')} className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors shadow-sm" title="Valider">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => toast.info('Swap non implémenté')} className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors shadow-sm" title="Swap">
+                    <ArrowLeftRight className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => openEditModal(item)} className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center hover:bg-amber-200 transition-colors shadow-sm" title="Éditer">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(item)} className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors shadow-sm" title="Supprimer">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-              <h4 className="text-sm font-black text-[#0f2863] leading-snug mb-3 line-clamp-2">
-                {item.title}
-              </h4>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <User className="w-3.5 h-3.5" /> {item.extendedProps?.professor || 'Inconnu'}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <MapPin className="w-3.5 h-3.5" /> {item.extendedProps?.room || 'Non assigné'}
-                </div>
-              </div>
-              
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                <button onClick={() => openEditModal(item)} className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center hover:bg-amber-200 transition-colors" title="Éditer">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDelete(item)} className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors" title="Supprimer">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </td>
     )
   }
 
+  const selectedGroupName = groupes.find(g => g.id.toString() === selectedGroupe)?.name || `Group ${selectedGroupe}`
+  const gridTitle = selectedGroupe ? `Grille Hebdomadaire (${selectedGroupName})` : 'Grille Hebdomadaire'
+
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex-1 text-center md:text-left md:flex md:flex-col md:items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#0f2863] italic">Moteur de Gestion des Emplois du Temps</h1>
+        <div className="flex-1 text-center md:text-left md:flex md:flex-col md:items-start">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0f2863] italic tracking-tight">Moteur de Gestion des Emplois du Temps</h1>
           <p className="text-slate-500 mt-1 text-sm font-medium">Grille Intelligente, Smart Swaps et Publication Automatique</p>
         </div>
         <div className="flex items-center justify-center shrink-0">
@@ -241,7 +273,7 @@ export default function SchedulesEnginePage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8">
+      <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] p-8">
         <h3 className="text-lg font-bold text-[#0f2863] italic mb-6">Filtration Hiérarchique Stricte</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
           <div>
@@ -304,7 +336,7 @@ export default function SchedulesEnginePage() {
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-colors text-xs uppercase tracking-wide shadow-md disabled:opacity-70"
+            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-colors text-xs uppercase tracking-wide shadow-md disabled:opacity-70"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? 'Génération...' : 'Générer la Matrice'}
@@ -314,17 +346,34 @@ export default function SchedulesEnginePage() {
 
       {/* Grid */}
       {isGenerated && (
-        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-4">
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] overflow-hidden animate-in slide-in-from-bottom-4">
           <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-[#0f2863] italic">Grille Hebdomadaire</h2>
+            <h2 className="text-xl font-bold text-[#0f2863] italic">{gridTitle}</h2>
             <div className="flex items-center gap-3">
-              <span className="px-4 py-1.5 border border-emerald-200 text-emerald-600 bg-emerald-50/30 font-bold rounded-lg text-xs uppercase tracking-wide">
+              <button 
+                onClick={() => setFilterStatus(filterStatus === 'published' ? 'all' : 'published')}
+                className={`px-4 py-1.5 border font-bold rounded-lg text-xs uppercase tracking-wide transition-colors ${
+                  filterStatus === 'published' || filterStatus === 'all' 
+                  ? 'border-emerald-200 text-emerald-600 bg-emerald-50/50' 
+                  : 'border-slate-200 text-slate-400 bg-slate-50 opacity-50'
+                }`}
+              >
                 Publié
-              </span>
+              </button>
+              <button 
+                onClick={() => setFilterStatus(filterStatus === 'draft' ? 'all' : 'draft')}
+                className={`px-4 py-1.5 border font-bold rounded-lg text-xs uppercase tracking-wide transition-colors ${
+                  filterStatus === 'draft' || filterStatus === 'all' 
+                  ? 'border-amber-200 text-amber-600 bg-amber-50/50' 
+                  : 'border-slate-200 text-slate-400 bg-slate-50 opacity-50'
+                }`}
+              >
+                Brouillon
+              </button>
             </div>
           </div>
           
-          <div className="overflow-x-auto p-4 md:p-8 pt-0">
+          <div className="overflow-x-auto p-4 md:p-8 pt-0 mt-4">
             <table className="w-full border-collapse">
               <thead>
                 <tr>

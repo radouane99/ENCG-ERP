@@ -31,6 +31,9 @@ class TimetableExportController extends Controller
                     'room' => $session->room_name,
                     'type' => $session->session_type,
                     'group' => $session->group_name ?? 'N/A',
+                    'status' => $session->is_active ? 'published' : 'draft',
+                    'module_code' => $session->module_code ?? 'N/A',
+                    'is_locked' => false // For UI placeholder, as we don't have locked status yet
                 ],
                 'backgroundColor' => '#3b82f6',
                 'borderColor' => '#2563eb',
@@ -91,6 +94,7 @@ class TimetableExportController extends Controller
             ->select(
                 'schedules.*',
                 'modules.name as module_name',
+                'modules.code as module_code',
                 \Illuminate\Support\Facades\DB::raw("CONCAT(users.first_name, ' ', users.last_name) as prof_name"),
                 'rooms.name as room_name',
                 'groups.name as group_name'
