@@ -85,18 +85,21 @@ class TimetableExportController extends Controller
         $query = \Illuminate\Support\Facades\DB::table('schedules')
             ->join('modules', 'schedules.module_id', '=', 'modules.id')
             ->join('professors', 'schedules.professor_id', '=', 'professors.id')
+            ->join('users', 'professors.user_id', '=', 'users.id')
             ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
             ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
             ->select(
                 'schedules.*',
                 'modules.name as module_name',
-                \Illuminate\Support\Facades\DB::raw("CONCAT(professors.first_name, ' ', professors.last_name) as prof_name"),
+                \Illuminate\Support\Facades\DB::raw("CONCAT(users.first_name, ' ', users.last_name) as prof_name"),
                 'rooms.name as room_name',
                 'groups.name as group_name'
             );
 
         if ($type === 'group') {
             $query->where('schedules.group_id', $id);
+        } elseif ($type === 'filiere') {
+            $query->where('groups.filiere_id', $id);
         } elseif ($type === 'professor') {
             $query->where('schedules.professor_id', $id);
         } elseif ($type === 'room') {
