@@ -2,17 +2,20 @@ import React from 'react';
 import { BrainCircuit, TrendingUp, AlertTriangle, Users, Activity, Target, Zap, ChevronDown, BellRing } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
-export default function AdminPredictiveAnalytics() {
-  const dropoutRisks = [
-    { name: 'Youssef B.', id: 'ENCG-2024-089', risk: 85, reason: 'Baisse soudaine des notes + 4 absences consécutives', trend: 'down' },
-    { name: 'Sara M.', id: 'ENCG-2024-112', risk: 72, reason: 'Échec au S1 + Non-participation', trend: 'down' },
-    { name: 'Karim L.', id: 'ENCG-2024-045', risk: 68, reason: 'Absences répétées aux TD', trend: 'stable' },
-  ];
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 
-  const predictions = [
-    { label: 'Prévision Inscriptions 2026-2027', value: '+12%', subtext: 'Forte demande prévue en Audit & Contrôle', icon: <TrendingUp className="w-5 h-5 text-emerald-400" />, color: 'bg-emerald-400/10 border-emerald-400/20' },
-    { label: 'Taux de Réussite S1 Estimé', value: '78.5%', subtext: 'Basé sur les notes des CC actuels', icon: <Target className="w-5 h-5 text-blue-400" />, color: 'bg-blue-400/10 border-blue-400/20' },
-    { label: 'Charge Professeurs S2', value: '110%', subtext: 'Risque de surcharge en Marketing Digital', icon: <Activity className="w-5 h-5 text-amber-400" />, color: 'bg-amber-400/10 border-amber-400/20' },
+export default function AdminPredictiveAnalytics() {
+  const { data: analyticsData } = useQuery({
+    queryKey: ['admin-predictive-analytics'],
+    queryFn: () => api.get('/admin/predictive-analytics').then(res => res.data.data)
+  });
+
+  const dropoutRisks = analyticsData?.dropoutRisks || [];
+  const predictions = analyticsData?.predictions || [
+    { label: 'Prévision Inscriptions', value: '+0%', subtext: 'En attente des données', color: 'bg-emerald-400/10 border-emerald-400/20' },
+    { label: 'Taux de Réussite', value: '0%', subtext: 'En attente des données', color: 'bg-blue-400/10 border-blue-400/20' },
+    { label: 'Charge Professeurs', value: '0%', subtext: 'En attente des données', color: 'bg-amber-400/10 border-amber-400/20' },
   ];
 
   return (
@@ -53,7 +56,7 @@ export default function AdminPredictiveAnalytics() {
           <div key={idx} className={cn("rounded-2xl p-6 shadow-sm border relative overflow-hidden transition-all hover:scale-[1.02] cursor-pointer bg-card", pred.color)}>
             <div className="flex justify-between items-start mb-4">
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", pred.color.replace('border-', 'border border-').replace('/10', '/20'))}>
-                {pred.icon}
+                {pred.icon || <Activity className="w-5 h-5" />}
               </div>
             </div>
             <div className="text-3xl font-black text-foreground mb-1">{pred.value}</div>
@@ -120,20 +123,22 @@ export default function AdminPredictiveAnalytics() {
           </div>
         </div>
 
-        {/* Semantic Analysis (Mock Chart) */}
-        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-foreground">Analyse du Climat Étudiant</h2>
-              <p className="text-xs font-medium text-muted-foreground">Sentiment global issu des évaluations</p>
+        {/* Semantic Analysis */}
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                <BrainCircuit className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Analyse Sémantique</h2>
+                <p className="text-xs font-medium text-muted-foreground">Sentiments des évaluations (NLP)</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center items-center relative py-6">
-            {/* Mock Donut Chart */}
+          <div className="flex items-center justify-center py-6">
+            {/* Donut Chart */}
             <div className="w-40 h-40 rounded-full border-[12px] border-emerald-500/20 relative flex items-center justify-center mb-8" style={{ borderRightColor: '#f43f5e33', borderBottomColor: '#facc1533', transform: 'rotate(-45deg)' }}>
               <div className="w-[116px] h-[116px] rounded-full border-[12px] border-emerald-500 absolute" style={{ borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }} />
               <div className="text-center" style={{ transform: 'rotate(45deg)' }}>

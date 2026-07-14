@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@shared/components/ui/Card'
 import { Input } from '@shared/components/ui/Input'
 import { Button } from '@shared/components/ui/Button'
@@ -8,20 +8,31 @@ import { ZodError } from 'zod'
 
 import { Badge } from '@shared/components/ui/Badge'
 
-// Dummy data for scaffolding
-const MOCK_STUDENTS = [
-  { id: 1, name: 'Amina Bennis', apogee: '19000123', is_rattrapage: false },
-  { id: 2, name: 'Karim Tazi', apogee: '19000124', is_rattrapage: true },
-  { id: 3, name: 'Sara Lahlou', apogee: '19000125', is_rattrapage: false },
-]
+import { useQuery, useMutation } from '@tanstack/react-query'
+import api from '@shared/lib/api'
 
 export default function GradeEntryTable() {
   const [sessionType, setSessionType] = useState<'NORMALE' | 'RATTRAPAGE'>('NORMALE')
-  const [grades, setGrades] = useState<Record<number, { value: number | ''; absent: boolean }>>(
-    MOCK_STUDENTS.reduce((acc, student) => ({ ...acc, [student.id]: { value: '', absent: false } }), {})
-  )
+  const [grades, setGrades] = useState<Record<number, { value: number | ''; absent: boolean }>>({})
 
-  const displayedStudents = MOCK_STUDENTS.filter(s => sessionType === 'NORMALE' || (sessionType === 'RATTRAPAGE' && s.is_rattrapage))
+  // Fetch Students
+  const { data: studentsList = [] } = useQuery({
+    queryKey: ['students-for-grades'],
+    queryFn: () => api.get('/students').then(res => res.data.data || res.data || [])
+  })
+
+  // Initialize grades when students load
+  useEffect(() => {
+    if (studentsList.length > 0 && Object.keys(grades).length === 0) {
+      const initialGrades = studentsList.reduce((acc: any, student: any) => ({ 
+        ...acc, 
+        [student.id]: { value: '', absent: false } 
+      }), {})
+      setGrades(initialGrades)
+    }
+  }, [studentsList])
+
+  const displayedStudents = studentsList.filter((s: any) => sessionType === 'NORMALE' || (sessionType === 'RATTRAPAGE' && s.is_rattrapage))
 
   const handleValueChange = (studentId: number, val: string) => {
     let numericVal: number | '' = val === '' ? '' : parseFloat(val)

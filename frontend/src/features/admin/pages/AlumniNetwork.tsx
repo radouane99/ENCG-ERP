@@ -24,14 +24,12 @@ export default function AlumniNetwork() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // MOCK DATA for Alumni Directory
-  const alumniList = [
-    { id: 1, first_name: 'Yassine', last_name: 'EL FASSI', promotion: '2022', filiere: 'Finance', company: 'Deloitte', role: 'Auditeur Senior', city: 'Casablanca', verified: true },
-    { id: 2, first_name: 'Sara', last_name: 'BENNIS', promotion: '2023', filiere: 'Marketing', company: 'L\'Oréal', role: 'Brand Manager', city: 'Paris', verified: true },
-    { id: 3, first_name: 'Omar', last_name: 'TAZI', promotion: '2020', filiere: 'Audit', company: 'KPMG', role: 'Manager', city: 'Rabat', verified: true },
-    { id: 4, first_name: 'Nadia', last_name: 'CHAKIR', promotion: '2024', filiere: 'Commerce', company: 'P&G', role: 'Key Account Manager', city: 'Casablanca', verified: false },
-    { id: 5, first_name: 'Mehdi', last_name: 'ALAOUI', promotion: '2021', filiere: 'Logistique', company: 'Maersk', role: 'Supply Chain Analyst', city: 'Tanger', verified: true },
-  ]
+  const { data: alumniData } = useQuery({
+    queryKey: ['alumni-directory'],
+    queryFn: () => api.get('/alumni').then(res => res.data.data),
+  })
+
+  const alumniList = alumniData || []
 
   const filteredAlumni = alumniList.filter(a => 
     a.last_name.toLowerCase().includes(search.toLowerCase()) ||

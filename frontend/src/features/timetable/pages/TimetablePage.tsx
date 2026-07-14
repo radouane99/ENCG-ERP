@@ -20,14 +20,7 @@ interface ScheduleSession {
   type: 'CM' | 'TD' | 'TP' | 'EXAM';
 }
 
-const MOCK_SCHEDULE: ScheduleSession[] = [
-  { id: 1, module_name: 'Comptabilité Approfondie', professor_name: 'Pr. BENCHEKROUN', room_name: 'Amphi A', group_name: 'GFC', day_of_week: 1, start_time: '08:00', end_time: '10:00', type: 'CM' },
-  { id: 2, module_name: 'Marketing Stratégique', professor_name: 'Pr. ALAOUI', room_name: 'Salle 201', group_name: 'MCM-G1', day_of_week: 1, start_time: '10:15', end_time: '12:15', type: 'TD' },
-  { id: 3, module_name: 'Finance d\'Entreprise', professor_name: 'Dr. TAZI', room_name: 'Amphi B', group_name: 'GFC', day_of_week: 2, start_time: '14:00', end_time: '16:00', type: 'CM' },
-  { id: 4, module_name: 'Droit du Travail', professor_name: 'Me. BENNIS', room_name: 'Salle 105', group_name: 'GRH-G1', day_of_week: 3, start_time: '08:00', end_time: '10:00', type: 'TD' },
-];
-
-const DAYS = [1, 2, 3, 4, 5, 6]; // Lundi Ã  Samedi
+const DAYS = [1, 2, 3, 4, 5, 6]; // Lundi à Samedi
 const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
 const TYPE_COLORS = {
@@ -40,16 +33,15 @@ const TYPE_COLORS = {
 const TimetablePage: React.FC = () => {
   const { t, i18n } = useTranslation('timetable');
   const [targetType, setTargetType] = useState<'group' | 'professor' | 'room'>('group');
-  const [targetId, setTargetId] = useState<string>('GFC');
+  const [targetId, setTargetId] = useState<string>('1');
   const dateLocale = i18n.language === 'ar' ? ar : fr;
 
   const { data } = useQuery({
     queryKey: ['timetable', targetType, targetId],
-    queryFn: () => api.get(`/timetable/${targetType}/${targetId}`).then(r => r.data),
-    placeholderData: { data: MOCK_SCHEDULE }
+    queryFn: () => api.get(`/timetable/${targetType}/${targetId}`).then(r => r.data)
   });
 
-  const sessions: ScheduleSession[] = data?.data ?? MOCK_SCHEDULE;
+  const sessions: ScheduleSession[] = data?.data ?? [];
 
   const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
 

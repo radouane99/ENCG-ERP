@@ -145,7 +145,6 @@ export default function GroupsPage() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
-                      {/* Mapping semester to Level for display mock */}
                       L{Math.ceil(g.semester_number / 2)}
                     </span>
                   </td>

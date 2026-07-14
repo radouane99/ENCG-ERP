@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Network, Plus, Play, Settings, Save, AlertCircle, Check, GitBranch, ArrowRight, Bell, Database } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -27,22 +27,21 @@ export default function AdminWorkflowBuilder() {
           <button className="flex items-center gap-2 bg-white border border-white/10 text-white/80 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/[0.02] transition-colors shadow-sm">
             <Settings className="w-4 h-4" /> Paramètres
           </button>
-          <button className="flex items-center gap-2 bg-[#001A4B] text-white px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-[#003a8c] transition-colors shadow-sm">
+          <button className="flex items-center gap-2 bg-[#003a8c] text-white px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-[#002a66] transition-colors shadow-sm">
             <Save className="w-4 h-4" /> ENREGISTRER
           </button>
         </div>
       </div>
 
       {/* Builder Workspace */}
-      <div className="flex-1 bg-[#f8fafc] rounded-[2rem] border border-white/10 overflow-hidden shadow-inner flex relative">
+      <div className="flex-1 bg-gray-50 rounded-[2rem] border border-gray-200 overflow-hidden shadow-inner flex relative">
         
         {/* Sidebar Components */}
-        <div className="w-72 bg-white border-r border-white/10 p-6 flex flex-col h-full shadow-sm z-10 shrink-0">
+        <div className="w-72 bg-white border-r border-gray-200 p-6 flex flex-col h-full shadow-sm z-10 shrink-0">
           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">DÉCLENCHEURS (TRIGGERS)</h3>
           <div className="space-y-3 mb-8">
-            <div className="p-3 border border-dashed border-gray-300 rounded-xl bg-white/[0.02] flex items-center gap-3 cursor-grab hover:border-blue-400 hover:bg-blue-50 transition-colors">
+            <div className="p-3 border border-dashed border-gray-300 rounded-xl bg-gray-50 flex items-center gap-3 cursor-grab hover:border-blue-400 hover:bg-blue-50 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><AlertCircle className="w-4 h-4" /></div>
-              <span className="text-sm font-bold text-white/80">Justificatif Reçu</span>
             </div>
             <div className="p-3 border border-dashed border-gray-300 rounded-xl bg-white/[0.02] flex items-center gap-3 cursor-grab hover:border-emerald-400 hover:bg-emerald-50 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><Plus className="w-4 h-4" /></div>
@@ -67,10 +66,10 @@ export default function AdminWorkflowBuilder() {
           </div>
         </div>
 
-        {/* Canvas Area (Mockup) */}
+        {/* Canvas Area */}
         <div className="flex-1 relative overflow-hidden bg-[#f8fafc]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #e2e8f0 1px, transparent 0)', backgroundSize: '32px 32px' }}>
           
-          {/* Mockup Nodes */}
+          {/* Nodes */}
           <div className="absolute top-20 left-20 w-72 bg-white rounded-2xl shadow-lg border-2 border-blue-500 overflow-hidden">
             <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white"><AlertCircle className="w-4 h-4" /></div>

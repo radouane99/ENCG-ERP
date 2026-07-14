@@ -17,8 +17,10 @@ export default function QRScannerPage() {
     setIsScanning(true);
     setScanResult(null);
     try {
-      // Mock getting geolocation
-      const position = { coords: { latitude: 34.0042, longitude: -4.9998 } };
+      // Get real geolocation
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
       
       const res = await api.post('/v1/mobile/student/attendance/scan', {
         qr_token: token,
@@ -48,7 +50,7 @@ export default function QRScannerPage() {
       </div>
 
       <div className="bg-card border border-white/10 shadow-xl rounded-3xl overflow-hidden relative">
-        {/* Mock Scanner Viewport */}
+        {/* Scanner Viewport */}
         <div className="relative aspect-[4/5] bg-slate-900 flex items-center justify-center overflow-hidden">
           {/* Scanning frame overlay */}
           <div className="absolute inset-0 z-10 pointer-events-none flex flex-col">
@@ -116,7 +118,7 @@ export default function QRScannerPage() {
           </div>
         </div>
 
-        {/* Mock Input for Testing */}
+        {/* Input for Testing */}
         <div className="p-6">
           <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
             {t('attendance:scanner.simulation.title')}

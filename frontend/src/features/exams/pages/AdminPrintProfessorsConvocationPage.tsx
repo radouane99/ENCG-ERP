@@ -114,7 +114,7 @@ export default function AdminPrintProfessorsConvocationPage() {
         <div className="flex justify-between items-end mt-auto pt-8">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-slate-800 rounded">
-               {/* Mock QR Code */}
+               {/* QR Code */}
                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UPF-SURV-2026-000001`} alt="QR" className="w-full h-full object-cover" />
             </div>
             <div>

@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom'
 import { Printer, ArrowLeft } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
 
 export default function AdminExamLiveAttendanceReportPage() {
-  const students: any[] = [] // Empty for the mockup as in screenshot
-
+  const { data: studentsData } = useQuery({
+    queryKey: ['exam-attendance-report'],
+    queryFn: () => api.get(`/students`).then(res => res.data.data || [])
+  })
+  
+  const students = studentsData || []
   return (
     <div className="min-h-screen bg-slate-100 p-8 pb-20 flex flex-col items-center font-sans">
       <div className="w-full max-w-[210mm] mb-6 flex justify-between items-center print:hidden">

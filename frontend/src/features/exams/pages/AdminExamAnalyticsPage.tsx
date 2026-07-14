@@ -1,6 +1,15 @@
 import { BarChart3, TrendingUp, Users, FileText, Target, Award, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
 
 export default function AdminExamAnalyticsPage() {
+  const { data: analyticsData } = useQuery({
+    queryKey: ['admin-exam-analytics'],
+    queryFn: () => api.get('/admin/exams/analytics').then(res => res.data.data)
+  })
+
+  const chartData = analyticsData?.chart || []
+
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
       
@@ -102,43 +111,17 @@ export default function AdminExamAnalyticsPage() {
             </div>
           </div>
           
-          {/* CSS based mock chart */}
+          {/* Dynamic Chart rendering */}
           <div className="h-64 flex items-end justify-between gap-4 px-4">
-            <div className="w-full flex flex-col items-center gap-2 group">
-              <div className="w-full flex items-end justify-center gap-1 h-48">
-                <div className="w-8 bg-blue-500 rounded-t-lg h-[60%] group-hover:opacity-80 transition-opacity"></div>
-                <div className="w-8 bg-indigo-200 rounded-t-lg h-[75%] group-hover:opacity-80 transition-opacity"></div>
+            {chartData.map((d: any, idx: number) => (
+              <div key={idx} className="w-full flex flex-col items-center gap-2 group">
+                <div className="w-full flex items-end justify-center gap-1 h-48 relative">
+                  <div className={`w-8 bg-blue-500 rounded-t-lg group-hover:opacity-80 transition-opacity`} style={{ height: `${d.s6}%` }}></div>
+                  <div className={`w-8 bg-indigo-200 rounded-t-lg group-hover:opacity-80 transition-opacity`} style={{ height: `${d.s7}%` }}></div>
+                </div>
+                <span className="text-xs font-bold text-slate-500">{d.name}</span>
               </div>
-              <span className="text-xs font-bold text-slate-500">G. Info</span>
-            </div>
-            <div className="w-full flex flex-col items-center gap-2 group">
-              <div className="w-full flex items-end justify-center gap-1 h-48">
-                <div className="w-8 bg-blue-500 rounded-t-lg h-[80%] group-hover:opacity-80 transition-opacity"></div>
-                <div className="w-8 bg-indigo-200 rounded-t-lg h-[85%] group-hover:opacity-80 transition-opacity"></div>
-              </div>
-              <span className="text-xs font-bold text-slate-500">G. Civil</span>
-            </div>
-            <div className="w-full flex flex-col items-center gap-2 group">
-              <div className="w-full flex items-end justify-center gap-1 h-48">
-                <div className="w-8 bg-blue-500 rounded-t-lg h-[50%] group-hover:opacity-80 transition-opacity"></div>
-                <div className="w-8 bg-indigo-200 rounded-t-lg h-[60%] group-hover:opacity-80 transition-opacity"></div>
-              </div>
-              <span className="text-xs font-bold text-slate-500">Marketing</span>
-            </div>
-            <div className="w-full flex flex-col items-center gap-2 group">
-              <div className="w-full flex items-end justify-center gap-1 h-48">
-                <div className="w-8 bg-blue-500 rounded-t-lg h-[90%] group-hover:opacity-80 transition-opacity"></div>
-                <div className="w-8 bg-indigo-200 rounded-t-lg h-[80%] group-hover:opacity-80 transition-opacity"></div>
-              </div>
-              <span className="text-xs font-bold text-slate-500">Économie</span>
-            </div>
-            <div className="w-full flex flex-col items-center gap-2 group">
-              <div className="w-full flex items-end justify-center gap-1 h-48">
-                <div className="w-8 bg-blue-500 rounded-t-lg h-[70%] group-hover:opacity-80 transition-opacity"></div>
-                <div className="w-8 bg-indigo-200 rounded-t-lg h-[65%] group-hover:opacity-80 transition-opacity"></div>
-              </div>
-              <span className="text-xs font-bold text-slate-500">G. Élec</span>
-            </div>
+            ))}
           </div>
         </div>
 

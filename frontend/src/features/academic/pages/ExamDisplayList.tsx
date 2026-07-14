@@ -1,16 +1,18 @@
-﻿import React from 'react';
+import React from 'react';
 import { ArrowLeft, Download, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 
 export default function ExamDisplayList() {
   const { examId } = useParams();
 
-  // Mock data matching the screenshot "Liste d'Affichage"
-  const students = [
-    { id: 1, matricule: '20230001', name: 'ALI EL FASSI', status: 'Générée' },
-    { id: 2, matricule: '20230002', name: 'AMINE TAHIRI', status: 'Générée' },
-    { id: 3, matricule: '20230003', name: 'AYA ALAOUI', status: 'Générée' },
-  ];
+  const { data: studentsData } = useQuery({
+    queryKey: ['exam-students', examId],
+    queryFn: () => api.get(`/students`).then(res => res.data.data || res.data || [])
+  });
+
+  const students = studentsData || [];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
@@ -69,13 +71,15 @@ export default function ExamDisplayList() {
           </thead>
           <tbody className="divide-y divide-border">
             {students.length > 0 ? (
-              students.map((s, index) => (
-                <tr key={s.id} className="hover:bg-white/5/10">
-                  <td className="px-6 py-4 font-bold text-white/50">{index + 1}</td>
-                  <td className="px-6 py-4">{s.matricule}</td>
-                  <td className="px-6 py-4 font-medium">{s.name}</td>
+              students.map((student, index) => (
+                <tr key={student.id} className="border-b border-white/5 bg-white/5/5">
+                  <td className="px-6 py-4 font-mono font-medium">{index + 1}</td>
+                  <td className="px-6 py-4 font-mono font-medium">{student.cne || student.matricule || `2026${student.id}`}</td>
+                  <td className="px-6 py-4 font-bold">{student.user?.first_name} {student.user?.last_name} {student.name || ''}</td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-xs font-bold text-white/50">{s.status}</span>
+                    <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-xs font-bold uppercase border border-emerald-500/20">
+                      Générée
+                    </span>
                   </td>
                 </tr>
               ))

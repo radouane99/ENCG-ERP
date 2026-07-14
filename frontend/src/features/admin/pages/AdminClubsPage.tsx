@@ -40,19 +40,9 @@ export default function AdminClubsPage() {
   type ClubItem = {
     id: number;
     name: string;
-    description?: string;
-    president?: { first_name: string; last_name: string };
-    status: string;
-    members_count?: number;
-  };
-  const dataList: ClubItem[] = clubs?.length > 0 ? clubs : [
-    { id: 1, name: 'ADE (BDE)', description: 'Association des Etudiants ENCG', president: { first_name: 'Amine', last_name: 'RADI' }, status: 'active', members_count: 120 },
-    { id: 2, name: 'Enactus ENCG', description: 'Entrepreneuriat Social', president: { first_name: 'Sara', last_name: 'ALAMI' }, status: 'active', members_count: 45 },
-    { id: 3, name: 'Club Art & Culture', description: 'Théâtre, musique et arts plastiques.', president: { first_name: 'Youssef', last_name: 'TAZI' }, status: 'pending', members_count: 15 },
-    { id: 4, name: 'Rotaract ENCG', description: 'Action sociale et humanitaire', president: { first_name: 'Kenza', last_name: 'BENNIS' }, status: 'inactive', members_count: 30 },
-  ]
+  const displayedClubs = clubs || []
 
-  const filteredList = dataList.filter((item: ClubItem) => 
+  const filteredList = displayedClubs.filter((item: any) => 
     item.name.toLowerCase().includes(search.toLowerCase()) || 
     item.president?.last_name.toLowerCase().includes(search.toLowerCase())
   )

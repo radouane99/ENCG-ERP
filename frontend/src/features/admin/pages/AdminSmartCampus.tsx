@@ -1,15 +1,19 @@
-﻿import React from 'react';
+import React from 'react';
 import { Map, Cpu, Zap, Thermometer, Wifi, Users, AlertCircle, Video, Maximize } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
+
 export default function AdminSmartCampus() {
-  const rooms = [
-    { name: 'Amphi Al Khwarizmi', type: 'Amphi', occupancy: '85%', status: 'occupy', temp: '22Â°C', energy: 'High' },
-    { name: 'Amphi Ibn Sina', type: 'Amphi', occupancy: '0%', status: 'empty', temp: '19Â°C', energy: 'Low' },
-    { name: 'Labo Informatique 3', type: 'Lab', occupancy: '100%', status: 'occupy', temp: '24Â°C', energy: 'High', alert: 'Projecteur défectueux' },
-    { name: 'Salle B12', type: 'TD', occupancy: '40%', status: 'occupy', temp: '21Â°C', energy: 'Medium' },
-    { name: 'Bibliothèque Centrale', type: 'Commun', occupancy: '60%', status: 'occupy', temp: '20Â°C', energy: 'Medium' },
-  ];
+  const { data: campusData } = useQuery({
+    queryKey: ['admin-smart-campus'],
+    queryFn: () => api.get('/admin/smart-campus').then(res => res.data.data)
+  });
+
+  const rooms = campusData?.rooms || [];
+  const energy = campusData?.energy || '0 kWh';
+  const occupants = campusData?.occupants || 0;
 
   return (
     <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24 h-[calc(100vh-80px)] flex flex-col">
@@ -38,14 +42,14 @@ export default function AdminSmartCampus() {
               <Zap className="w-5 h-5 text-yellow-400" />
               <div>
                 <div className="text-[9px] font-bold text-gray-400 uppercase">Consommation</div>
-                <div className="text-white font-black">450 kWh</div>
+                <div className="text-white font-black">{energy}</div>
               </div>
             </div>
             <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-md flex items-center gap-3">
               <Users className="w-5 h-5 text-emerald-400" />
               <div>
                 <div className="text-[9px] font-bold text-gray-400 uppercase">Sur Campus</div>
-                <div className="text-white font-black">1,240 pers.</div>
+                <div className="text-white font-black">{occupants} pers.</div>
               </div>
             </div>
           </div>
@@ -54,7 +58,7 @@ export default function AdminSmartCampus() {
 
       <div className="flex flex-col md:flex-row gap-8 flex-1 min-h-0">
         
-        {/* Interactive Map (Mockup) */}
+        {/* Interactive Map */}
         <div className="flex-1 bg-white rounded-[2rem] border border-white/10 shadow-sm relative overflow-hidden flex items-center justify-center">
           <div className="absolute top-4 right-4 bg-white shadow-md rounded-lg p-2 flex flex-col gap-2 z-10">
             <button className="p-2 hover:bg-white/[0.05] rounded-md transition-colors"><Maximize className="w-4 h-4 text-white/80" /></button>

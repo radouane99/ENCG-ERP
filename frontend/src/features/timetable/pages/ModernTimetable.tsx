@@ -53,7 +53,7 @@ export default function ModernTimetable() {
     // This is a naive formatter assuming rawSchedules has repeating day_of_week
     // A real implementation would map `day_of_week` and `start_time`/`end_time` to actual dates in the current week
     return rawSchedules.map(schedule => {
-      // Mocking the date assignment for current week based on day_of_week (1 = Monday)
+      // Map day_of_week to actual dates in the current week (1 = Monday)
       const currentDay = new Date().getDay() || 7 // 1-7
       const diff = schedule.day_of_week - currentDay
       const targetDate = new Date()

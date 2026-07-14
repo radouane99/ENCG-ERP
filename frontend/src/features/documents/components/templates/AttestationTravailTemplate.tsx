@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function AttestationTravailTemplate() {
   return (
@@ -18,7 +18,7 @@ export default function AttestationTravailTemplate() {
           </div>
           
           <div className="w-1/3 flex flex-col items-center">
-            {/* Mock Logo placeholder since we don't have the image file in the codebase, or we can use an img tag if it exists */}
+            {/* Logo placeholder */ }
             <div className="font-black text-3xl tracking-tight text-[#002a7a] mb-1 flex items-baseline">
               UPF<span className="text-[#e6007e]">.</span>
             </div>
@@ -96,7 +96,7 @@ export default function AttestationTravailTemplate() {
           </div>
           
           <div className="w-1/3 flex justify-center">
-            {/* Mock Seal */}
+            {/* Seal */}
             <div className="w-24 h-24 border-2 border-[#002a7a] rounded-full flex flex-col items-center justify-center p-2 opacity-80">
               <div className="w-full h-full border border-[#002a7a] rounded-full flex flex-col items-center justify-center text-[8px] text-[#002a7a] font-bold text-center leading-tight">
                 <p>UNIVERSITÉ PRIVÉE<br/>DE FÈS</p>

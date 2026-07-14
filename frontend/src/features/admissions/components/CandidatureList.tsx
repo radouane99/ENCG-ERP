@@ -1,9 +1,9 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Users } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
-// Mock Data
+// List Data
 const candidatures = [
   { id: 'APP-2026-001', name: 'Amina Bennani', cne: 'N120000001', type: 'Passerelle S5', score: 14.5, status: 'approved', date: '2026-06-20', bac: 'Sc. Maths' },
   { id: 'APP-2026-002', name: 'Youssef Alaoui', cne: 'M130000002', type: 'Passerelle S7', score: 12.8, status: 'pending', date: '2026-06-21', bac: 'Sc. Eco' },

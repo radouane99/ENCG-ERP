@@ -27,6 +27,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/dashboard/stats', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getStats']);
 
     // Admin Custom Routes
+    Route::get('/smart-campus', [\App\Http\Controllers\Api\AdminSmartCampusController::class, 'getCampusData']);
+    Route::get('/exams/analytics', [\App\Http\Controllers\Api\AdminExamController::class, 'analytics']);
     Route::post('/documents/generate', [\App\Http\Controllers\Api\DocumentCenterController::class, 'generate']);
     Route::apiResource('holidays', \App\Http\Controllers\Api\HolidayController::class);
     

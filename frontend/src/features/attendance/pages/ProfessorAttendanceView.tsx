@@ -18,14 +18,18 @@ export default function ProfessorAttendanceView() {
 
   const startSession = async () => {
     try {
-      // In a real scenario, we'd get current coords if GPS validation is needed
+      // Get real geolocation
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
       const res = await api.post('/v1/professor/attendance/session', {
         module_name: moduleName,
         group_name: groupName,
         room_name: roomName,
         duration_minutes: parseInt(duration),
-        latitude: 34.0042, // Mock Fès coords
-        longitude: -4.9998,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
       });
       setSession(res.data.data);
       setIsSessionActive(true);

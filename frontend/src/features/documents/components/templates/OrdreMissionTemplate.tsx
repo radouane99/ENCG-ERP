@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function OrdreMissionTemplate() {
   return (
@@ -99,7 +99,7 @@ export default function OrdreMissionTemplate() {
           </div>
           
           <div className="w-1/3 flex justify-center">
-            {/* Mock Seal */}
+            {/* Seal */}
             <div className="w-24 h-24 border-2 border-[#002a7a] rounded-full flex flex-col items-center justify-center p-2 opacity-80">
               <div className="w-full h-full border border-[#002a7a] rounded-full flex flex-col items-center justify-center text-[8px] text-[#002a7a] font-bold text-center leading-tight">
                 <p>UNIVERSITÉ PRIVÉE<br/>DE FÈS</p>

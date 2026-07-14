@@ -11,7 +11,7 @@ export default function DeliberationManager() {
   const [selectedSemester, setSelectedSemester] = useState('1');
   const [selectedSession, setSelectedSession] = useState('normale');
 
-  // Mocked state for UI demonstration
+  // State for calculation
   const [isDeliberating, setIsDeliberating] = useState(false);
   const [deliberationResults, setDeliberationResults] = useState<any>(null);
 

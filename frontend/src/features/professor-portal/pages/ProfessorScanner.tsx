@@ -1,10 +1,25 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Camera, QrCode, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 
 export default function ProfessorScanner() {
   const [exam, setExam] = useState('');
   const [room, setRoom] = useState('');
   const [camera, setCamera] = useState('');
+
+  const { data: examsData } = useQuery({
+    queryKey: ['professor-exams'],
+    queryFn: () => api.get('/academic/exams').then(res => res.data.data || [])
+  });
+  
+  const { data: roomsData } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: () => api.get('/academic/rooms').then(res => res.data.data || [])
+  });
+
+  const examsList = examsData || [];
+  const roomsList = roomsData || [];
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
@@ -49,11 +64,12 @@ export default function ProfessorScanner() {
               className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Sélectionner l'examen --</option>
-              <option value="1">Introduction - Génie Civil CC1</option>
-              <option value="2">GAMING CC1</option>
+              {examsList.map((e: any) => (
+                <option key={e.id} value={e.id}>{e.name || `Examen #${e.id}`}</option>
+              ))}
             </select>
             <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1">
-              <AlertTriangle className="w-3 h-3" /> Requis pour associer l'étudiant Ã  cet examen.
+              <AlertTriangle className="w-3 h-3" /> Requis pour associer l'étudiant à cet examen.
             </p>
           </div>
 
@@ -65,8 +81,9 @@ export default function ProfessorScanner() {
               className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Sélectionner la salle --</option>
-              <option value="1">Amphi Ibn Khaldoun</option>
-              <option value="2">Labo Info 1</option>
+              {roomsList.map((r: any) => (
+                <option key={r.id} value={r.id}>{r.name || `Salle #${r.id}`}</option>
+              ))}
             </select>
             <p className="text-[10px] text-gray-400 font-medium mt-1">Optionnel - Anti-collision.</p>
           </div>
@@ -83,7 +100,7 @@ export default function ProfessorScanner() {
           </div>
         </div>
 
-        {/* Camera Viewfinder (Mock) */}
+        {/* Camera Viewfinder */}
         <div className="w-full h-[400px] bg-[#0f172a] rounded-2xl border-2 border-dashed border-gray-700 relative flex items-center justify-center overflow-hidden">
           <div className="absolute inset-4 border border-blue-500/30 rounded-xl"></div>
           <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-blue-500 rounded-tl-xl m-4"></div>

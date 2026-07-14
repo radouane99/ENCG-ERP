@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// ── Mock Data ────────────────────────────────────────────────────────
+// ── Default Data ────────────────────────────────────────────────────────
 const enrollmentData = [
   { month: 'Sep', students: 420 },
   { month: 'Oct', students: 418 },

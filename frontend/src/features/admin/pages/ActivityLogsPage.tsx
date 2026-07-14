@@ -1,23 +1,19 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
-// Mock data reflecting the screenshot
-const mockLogs = [
-  { id: 1, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.81', date: '24/06/2026 22:25' },
-  { id: 2, user: 'Radouane El Asri', action: 'Updated', type: 'Student', description: 'Affectation automatique équilibrée de 1...', ip: '79.127.178.81', date: '24/06/2026 14:05' },
-  { id: 3, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.82', date: '24/06/2026 13:48' },
-  { id: 4, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.82', date: '22/06/2026 22:24' },
-  { id: 5, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.81', date: '11/06/2026 10:20' },
-  { id: 6, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.81', date: '10/06/2026 11:11' },
-  { id: 7, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.81', date: '10/06/2026 09:16' },
-  { id: 8, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.81', date: '10/06/2026 08:18' },
-  { id: 9, user: 'Radouane El Asri', action: 'Login', type: 'User', description: 'Double authentification 2FA réussie pour...', ip: '79.127.178.82', date: '10/06/2026 08:14' },
-  { id: 10, user: 'Radouane El Asri', action: 'Updated', type: 'Setting', description: 'La campagne d\'évaluation anonyme de...', ip: '79.127.178.82', date: '09/06/2026 12:25' },
-];
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 
 export default function ActivityLogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+
+  const { data: logsData } = useQuery({
+    queryKey: ['activity-logs'],
+    queryFn: () => api.get('/admin/activity-logs').then(res => res.data.data || res.data || [])
+  })
+
+  const logs = logsData || [];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
@@ -39,7 +35,7 @@ export default function ActivityLogsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockLogs.map((log) => (
+              {logs.map((log: any) => (
                 <tr key={log.id} className="border-b border-gray-50 last:border-0 hover:bg-white/[0.02]/50 transition-colors">
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">

@@ -40,8 +40,8 @@ export default function StudentDashboard() {
   const submitAbsenceMutation = useMutation({
     mutationFn: async () => {
       const formData = new FormData()
-      formData.append('student_id', '1') // Mock
-      formData.append('attendance_id', '1') // Mock
+      formData.append('student_id', '1') // TO DO: get real user ID
+      formData.append('attendance_id', '1') // TO DO: get real attendance ID
       formData.append('reason', absenceReason)
       formData.append('description', absenceDesc)
       if (absenceFile) formData.append('document', absenceFile)

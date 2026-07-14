@@ -29,27 +29,29 @@ export default function TimetableAdminView() {
   const [filiereId, setFiliereId] = useState(1)
   const institutionId = 1 // Default institution
 
-  // MOCK DATA for Demo purposes (Replace with actual queries later)
-  const [events, setEvents] = useState([
-    {
-      id: '1',
-      title: 'Fiscalité d\'Entreprise\nAmphi A\nPr. El Fassi',
-      start: '2026-10-12T08:30:00',
-      end: '2026-10-12T10:30:00',
-      backgroundColor: 'hsl(var(--color-primary))',
+  const { data: scheduleData } = useQuery({
+    queryKey: ['timetable-admin', filiereId],
+    queryFn: () => api.get(`/timetable/group/${filiereId}`).then(r => r.data)
+  })
+
+  // Format the events
+  const events = (scheduleData?.data || []).map((schedule: any) => {
+    const currentDay = new Date().getDay() || 7;
+    const diff = schedule.day_of_week - currentDay;
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + diff);
+    const dateStr = targetDate.toISOString().split('T')[0];
+
+    return {
+      id: String(schedule.id),
+      title: `${schedule.module_name}\n${schedule.room_name}\n${schedule.professor_name}`,
+      start: `${dateStr}T${schedule.start_time}`,
+      end: `${dateStr}T${schedule.end_time}`,
+      backgroundColor: schedule.type === 'TD' ? '#10b981' : schedule.type === 'TP' ? '#f59e0b' : 'hsl(var(--color-primary))',
       borderColor: 'transparent',
-      extendedProps: { roomId: 1, profId: 1, groupId: 1 }
-    },
-    {
-      id: '2',
-      title: 'Algèbre Linéaire\nSalle 302\nPr. Bennani',
-      start: '2026-10-13T10:45:00',
-      end: '2026-10-13T12:45:00',
-      backgroundColor: '#A80A0B',
-      borderColor: 'transparent',
-      extendedProps: { roomId: 2, profId: 2, groupId: 1 }
+      extendedProps: { roomId: schedule.room_id, profId: schedule.professor_id, groupId: schedule.group_id }
     }
-  ])
+  });
 
   const generateMutation = useMutation({
     mutationFn: () => api.post('/timetable/generate', {

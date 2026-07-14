@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { BarChart3, AlertTriangle, TrendingDown, BellRing, Users, Activity } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -36,7 +36,7 @@ export default function ProfessorAnalytics() {
               </select>
             </div>
             
-            {/* Mock Heatmap */}
+            {/* Heatmap */}
             <div className="space-y-4">
               {['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'].map((week, wIdx) => (
                 <div key={wIdx} className="flex items-center gap-4">

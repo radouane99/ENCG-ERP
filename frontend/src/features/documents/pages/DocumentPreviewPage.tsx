@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Printer, ChevronLeft, Download } from 'lucide-react';
 
@@ -11,7 +11,6 @@ export default function DocumentPreviewPage() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
 
-  // For demonstration, if no type is provided, we default to 'attestation'
   const currentType = type || 'attestation';
 
   const renderTemplate = () => {
@@ -51,20 +50,7 @@ export default function DocumentPreviewPage() {
           </div>
         </div>
 
-        {/* Template Selector for Demo Purposes */}
-        <div className="flex gap-2">
-          <select 
-            value={currentType} 
-            onChange={(e) => navigate(`/admin/documents/preview/${e.target.value}`)}
-            className="bg-white/[0.02] border border-white/10 rounded-xl px-4 py-2 text-sm font-semibold text-white/80 outline-none focus:ring-2 focus:ring-[#e6007e]"
-          >
-            <option value="attestation">Attestation de Travail</option>
-            <option value="mission">Ordre de Mission</option>
-            <option value="releve">Relevé de Notes S1</option>
-            <option value="convention">Convention de Stage</option>
-          </select>
-
-          <button 
+        <div className="flex gap-2">          <button 
             onClick={() => window.print()}
             className="flex items-center gap-2 bg-[#e6007e] hover:bg-[#c5006c] text-white px-6 py-2 rounded-xl font-bold text-sm uppercase tracking-wider transition-colors shadow-md shadow-[#e6007e]/30"
           >

@@ -1,23 +1,19 @@
-﻿import React from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Printer, ArrowLeft } from 'lucide-react';
+
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 
 export default function ExamAttendanceSheet() {
   const { examId } = useParams();
 
-  // Mock data matching the screenshot "Fiche d'émargement"
-  const students = [
-    { id: 1, cne: 'R130000001', name: 'ALI EL FASSI' },
-    { id: 2, cne: 'R130000002', name: 'AMINE TAHIRI' },
-    { id: 3, cne: 'R130000003', name: 'AYA ALAOUI' },
-    { id: 4, cne: 'R130000004', name: 'AYOUB BOUJIDA' },
-    { id: 5, cne: 'R130000005', name: 'CHAIMAE BENANI' },
-    { id: 6, cne: 'R130000006', name: 'FATIMA SEKKAT' },
-    { id: 7, cne: 'R130000007', name: 'KHADIJA IDRISSI' },
-    { id: 8, cne: 'R130000008', name: 'MEHDI TAZI' },
-    { id: 9, cne: 'R130000009', name: 'MOHAMMED BENNIS' },
-    { id: 10, cne: 'R130000010', name: 'NADA ALAOUI' },
-  ];
+  const { data: studentsData } = useQuery({
+    queryKey: ['exam-attendance', examId],
+    queryFn: () => api.get(`/students`).then(res => res.data.data || res.data || [])
+  });
+
+  const students = studentsData || [];
 
   const handlePrint = () => {
     window.print();
@@ -65,23 +61,29 @@ export default function ExamAttendanceSheet() {
         <table className="w-full text-xs text-left border-collapse border border-white/10 mb-8">
           <thead className="bg-white/5/10">
             <tr>
-              <th className="border border-white/10 p-3 w-12 text-center">NÂ°</th>
-              <th className="border border-white/10 p-3 w-32">CNE / MASSAR</th>
-              <th className="border border-white/10 p-3">NOM ET PRÉNOM</th>
-              <th className="border border-white/10 p-3 w-24 text-center">NÂ° PLACE</th>
-              <th className="border border-white/10 p-3 w-48 text-center">SIGNATURE</th>
+              <th className="border border-black/10 p-3 w-12 text-center">N°</th>
+              <th className="border border-black/10 p-3 w-32">CNE / MASSAR</th>
+              <th className="border border-black/10 p-3">NOM ET PRÉNOM</th>
+              <th className="border border-black/10 p-3 w-24 text-center">N° PLACE</th>
+              <th className="border border-black/10 p-3 w-48 text-center">SIGNATURE</th>
             </tr>
           </thead>
           <tbody>
-            {students.map((student, idx) => (
-              <tr key={student.id}>
-                <td className="border border-white/10 p-3 text-center">{idx + 1}</td>
-                <td className="border border-white/10 p-3">{student.cne}</td>
-                <td className="border border-white/10 p-3">{student.name}</td>
-                <td className="border border-white/10 p-3 text-center font-bold text-white/50">â€”</td>
-                <td className="border border-white/10 p-4"></td> {/* Empty space for signature */}
+            {students.length > 0 ? (
+              students.map((student: any, index: number) => (
+                <tr key={student.id} className="border-b border-[#1F3A5F]/20">
+                  <td className="p-3 text-center text-sm font-bold border-r border-[#1F3A5F]/20">{index + 1}</td>
+                  <td className="p-3 font-mono text-sm border-r border-[#1F3A5F]/20">{student.cne || student.matricule || `2026${student.id}`}</td>
+                  <td className="p-3 font-bold text-sm uppercase border-r border-[#1F3A5F]/20">{student.user?.last_name || ''} {student.user?.first_name || ''} {student.name || ''}</td>
+                  <td className="p-3 border-r border-[#1F3A5F]/20"></td>
+                  <td className="p-3"></td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="p-4 text-center text-black/50">Aucun étudiant trouvé</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
 
