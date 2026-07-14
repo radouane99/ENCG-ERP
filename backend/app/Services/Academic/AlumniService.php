@@ -13,18 +13,28 @@ class AlumniService
      */
     public function getDashboardStats(): array
     {
-        // Mocked statistics for the dashboard
+        // Real statistics from DB
+        $totalAlumni = \App\Models\Student::where('status', 'graduated')->count();
+        // Fallback if nobody is graduated yet
+        if ($totalAlumni === 0) {
+            $totalAlumni = \App\Models\Student::count();
+        }
+
+        // Employment stats from alumni profiles if available
+        $employedCount = \DB::table('alumni')
+            ->whereNotNull('current_company')
+            ->where('current_company', '!=', '')
+            ->count();
+
+        $employedPct = $totalAlumni > 0
+            ? (int) round(($employedCount / $totalAlumni) * 100)
+            : 0;
+
         return [
-            'total_alumni' => 8500,
-            'employed_percentage' => 92, // 92% employed within 6 months
-            'top_sectors' => [
-                ['name' => 'Audit & Conseil', 'percentage' => 35],
-                ['name' => 'Finance de Marché', 'percentage' => 25],
-                ['name' => 'Marketing Digital', 'percentage' => 20],
-                ['name' => 'Entrepreneuriat', 'percentage' => 10],
-                ['name' => 'Autres', 'percentage' => 10],
-            ],
-            'average_starting_salary' => '12 000 MAD'
+            'total_alumni'            => $totalAlumni,
+            'employed_percentage'     => $employedPct ?: null,
+            'top_sectors'             => [], // Will be populated when alumni sector data is collected
+            'average_starting_salary' => null, // Will be populated when salary data is collected
         ];
     }
 

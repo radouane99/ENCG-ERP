@@ -36,10 +36,10 @@ class AdminDashboardController extends Controller
             $q->where('name', 'vacataire');
         })->where('is_active', true)->count();
 
-        // Attendance rate (mocked logic or real if we have records for this week)
-        $totalRecords = AttendanceRecord::count();
+        // Real attendance rate from actual records
+        $totalRecords   = AttendanceRecord::count();
         $presentRecords = AttendanceRecord::where('status', 'present')->count();
-        $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : 87.3; // Fallback to 87.3 if no records
+        $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : null;
 
         // Alerts (e.g. pending documents, pending justifications)
         $alertsCount = DB::table('document_requests')->where('status', 'pending')->count()
@@ -71,12 +71,7 @@ class AdminDashboardController extends Controller
                 $fd['value'] = round(($fd['count'] / $totalFiliereStudents) * 100);
             }
         } else {
-            // Mock if empty database
-            $filiereDistribution = [
-                ['name' => 'ENCG', 'value' => 50, 'color' => '#10b981'],
-                ['name' => 'Master', 'value' => 30, 'color' => '#3b82f6'],
-                ['name' => 'Doctorat', 'value' => 20, 'color' => '#f59e0b'],
-            ];
+            $filiereDistribution = [];
         }
 
         return response()->json([

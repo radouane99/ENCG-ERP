@@ -129,16 +129,33 @@ class StudentPortalService
                 ->count();
         }
 
+        // Real upcoming exams count
+        $upcomingExams = 0;
+        if ($pathway) {
+            $upcomingExams = DB::table('exam_sessions')
+                ->where('group_id', $pathway->group_id)
+                ->where('date', '>=', now()->toDateString())
+                ->count();
+        }
+
+        // Recent approved documents
+        $recentDocuments = DB::table('document_requests')
+            ->where('student_id', $student->user_id ?? $student->id)
+            ->where('status', 'approved')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get(['type as title', 'created_at as date'])
+            ->map(fn ($d) => ['title' => $d->title, 'date' => substr($d->date, 0, 10)])
+            ->toArray();
+
         return [
-            'absences' => $absences,
+            'absences'         => $absences,
             'published_grades' => $gradesCount,
-            'classes_today' => $classesToday,
-            'gpa' => $gpa,
-            'upcoming_exams' => 3, // Mocked for demo
-            'recent_documents' => [
-                ['title' => 'Attestation de scolarité', 'date' => '2026-06-15'],
-                ['title' => 'Relevé de notes S5', 'date' => '2026-06-10']
-            ]
+            'classes_today'    => $classesToday,
+            'gpa'              => $gpa,
+            'upcoming_exams'   => $upcomingExams,
+            'recent_documents' => $recentDocuments,
         ];
     }
 }
+

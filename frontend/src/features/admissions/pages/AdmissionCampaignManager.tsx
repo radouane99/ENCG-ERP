@@ -18,13 +18,22 @@ export default function AdmissionCampaignManager() {
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
-  const campaignId = 1 // Mock campaign ID
+
+  // Fetch active campaign ID dynamically
+  const { data: activeCampaign } = useQuery({
+    queryKey: ['active-admission-campaign'],
+    queryFn: () => api.get('/admissions/campaigns?status=active').then(res => res.data.data?.[0]),
+    staleTime: 1000 * 60 * 5,
+  })
+  const campaignId = activeCampaign?.id
 
   // Fetch Applications
   const { data: applications, isLoading } = useQuery({
     queryKey: ['applications', campaignId],
-    queryFn: () => api.get(`/admissions/campaigns/${campaignId}/applications`).then(res => res.data.data)
+    queryFn: () => api.get(`/admissions/campaigns/${campaignId}/applications`).then(res => res.data.data),
+    enabled: !!campaignId,
   })
+
 
   // Mutate Application Status
   const updateStatusMutation = useMutation({

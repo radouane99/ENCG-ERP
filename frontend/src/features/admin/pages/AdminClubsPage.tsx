@@ -36,10 +36,6 @@ export default function AdminClubsPage() {
     onError: () => toast.error(isRtl ? 'خطأ' : 'Erreur de mise à jour')
   })
 
-  // MOCK DATA Fallback
-  type ClubItem = {
-    id: number;
-    name: string;
   const displayedClubs = clubs || []
 
   const filteredList = displayedClubs.filter((item: any) => 
