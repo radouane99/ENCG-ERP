@@ -16,7 +16,7 @@ class ModuleResource extends JsonResource
             'semester' => 'S' . $this->semester_number,
             'coefficient' => $this->coefficient,
             'filiere' => $this->relationLoaded('filiere') && $this->filiere ? $this->filiere->code : 'TC',
-            'professor' => $this->whenLoaded('professorAssignments', fn () => optional($this->professorAssignments->first()?->professor?->user)->name ?? 'Non assigné', 'Non assigné'),
+            'professor' => 'Non assigné', // Will be linked via Schedules in the future
             'studentsCount' => $this->whenCounted('students', fn () => $this->students_count, 0),
             'active' => (bool) $this->is_active,
             'filiere_id' => $this->filiere_id,
