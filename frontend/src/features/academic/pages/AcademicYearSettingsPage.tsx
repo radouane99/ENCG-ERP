@@ -8,12 +8,18 @@ export default function AcademicYearSettingsPage() {
   const queryClient = useQueryClient()
   const [showImportModal, setShowImportModal] = useState(false)
   const [assignmentForm, setAssignmentForm] = useState({
+    department_id: '',
     professor_id: '',
     module_id: '',
     group_id: ''
   })
 
   // Queries
+  const { data: departmentsData } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then(r => r.data)
+  })
+
   const { data: professorsData } = useQuery({
     queryKey: ['professors'],
     queryFn: () => api.get('/hr/professors').then(r => r.data)
@@ -34,7 +40,11 @@ export default function AcademicYearSettingsPage() {
     queryFn: () => api.get('/professor-assignments').then(r => r.data)
   })
 
-  const professors = professorsData?.data || []
+  const departments = departmentsData?.data || []
+  const allProfessors = professorsData?.data || []
+  const professors = assignmentForm.department_id 
+    ? allProfessors.filter((p: any) => p.department_id == assignmentForm.department_id) 
+    : []
   const modules = modulesData?.data || []
   const groups = groupsData?.data || []
   const assignments = assignmentsData?.data || []
@@ -45,7 +55,7 @@ export default function AcademicYearSettingsPage() {
     onSuccess: () => {
       toast.success('Affectation ajoutée avec succès')
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
-      setAssignmentForm({ professor_id: '', module_id: '', group_id: '' })
+      setAssignmentForm(prev => ({ ...prev, professor_id: '', module_id: '', group_id: '' }))
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Erreur lors de l\'ajout')
@@ -109,7 +119,7 @@ export default function AcademicYearSettingsPage() {
           </div>
 
           <div className="space-y-3">
-            {years.map(y => (
+            {years.map((y: any) => (
               <div key={y.id} className="flex items-center justify-between p-4 border border-blue-200 rounded-xl bg-blue-50/30">
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-slate-800">{y.label}</span>
@@ -256,13 +266,33 @@ export default function AcademicYearSettingsPage() {
         <div className="p-8 bg-slate-50/50">
           <div className="flex flex-col lg:flex-row items-end gap-4">
             <div className="flex-1 w-full">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Département</label>
+              <select 
+                value={assignmentForm.department_id}
+                onChange={e => {
+                  setAssignmentForm(prev => ({ 
+                    ...prev, 
+                    department_id: e.target.value,
+                    professor_id: '' // Reset professor when department changes
+                  }))
+                }}
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+              >
+                <option value="">Sélectionner</option>
+                {departments.map((d: any) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 w-full">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Professeur</label>
               <select 
                 value={assignmentForm.professor_id}
                 onChange={e => setAssignmentForm(prev => ({ ...prev, professor_id: e.target.value }))}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+                disabled={!assignmentForm.department_id}
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 disabled:opacity-50 disabled:bg-slate-50"
               >
-                <option value="">Sélectionner</option>
+                <option value="">{assignmentForm.department_id ? 'Sélectionner' : 'Choisissez un département d\'abord'}</option>
                 {professors.map((p: any) => {
                   const displayName = (p.first_name || p.last_name) 
                     ? `${p.first_name || ''} ${p.last_name || ''}`.trim() 
