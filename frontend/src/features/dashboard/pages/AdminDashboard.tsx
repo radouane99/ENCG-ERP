@@ -1,4 +1,6 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import {
   Users, GraduationCap, BookOpen, CalendarCheck,
