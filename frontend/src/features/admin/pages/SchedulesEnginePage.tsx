@@ -1,25 +1,50 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, CheckCircle2, Lock, ArrowLeftRight, Edit2, Trash2, Check, User, MapPin, Loader2, Calendar } from 'lucide-react'
+import { Plus, Search, CheckCircle2, Lock, ArrowLeftRight, Edit2, Trash2, Check, User, MapPin, Loader2, Calendar, X } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { Modal } from '@shared/components/ui/Modal'
 
 export default function SchedulesEnginePage() {
   const [isGenerated, setIsGenerated] = useState(false)
-  const [hoveredCell, setHoveredCell] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  
+  // Filters state
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [academicYears, setAcademicYears] = useState<any[]>([])
+  
   const [selectedFiliere, setSelectedFiliere] = useState('')
   const [selectedGroupe, setSelectedGroupe] = useState('')
   const [selectedYear, setSelectedYear] = useState('')
   const [selectedSemester, setSelectedSemester] = useState('')
+  
   const [timetableItems, setTimetableItems] = useState<any[]>([])
+  
+  // Data for Form
+  const [modules, setModules] = useState<any[]>([])
+  const [professors, setProfessors] = useState<any[]>([])
+  const [rooms, setRooms] = useState<any[]>([])
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  
+  const [formData, setFormData] = useState({
+    module_id: '',
+    professor_id: '',
+    room_id: '',
+    day_of_week: '1',
+    start_time: '08:30',
+    end_time: '10:15',
+    session_type: 'CM'
+  })
 
   useEffect(() => {
     api.get('/filieres').then(r => setFilieres(r.data.data || r.data)).catch(console.error)
     api.get('/academic-years').then(r => setAcademicYears(r.data.data || r.data)).catch(console.error)
+    api.get('/professors').then(r => setProfessors(r.data.data || r.data)).catch(console.error)
+    api.get('/rooms').then(r => setRooms(r.data.data || r.data)).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -30,7 +55,13 @@ export default function SchedulesEnginePage() {
     }
   }, [selectedFiliere])
 
-  const handleGenerate = async () => {
+  useEffect(() => {
+    if (selectedGroupe) {
+      api.get('/modules').then(r => setModules(r.data.data || r.data)).catch(console.error)
+    }
+  }, [selectedGroupe])
+
+  const fetchTimetable = async () => {
     if (!selectedGroupe && !selectedFiliere) {
       toast.warning('Veuillez sélectionner au moins une filière')
       return
@@ -40,131 +71,155 @@ export default function SchedulesEnginePage() {
       const typeParam = selectedGroupe ? 'group' : 'filiere'
       const idParam = selectedGroupe || selectedFiliere
       const res = await api.get(`/timetable/export/${typeParam}/${idParam}`)
-      setTimetableItems(res.data.events || res.data || [])
+      setTimetableItems(res.data.data || res.data || [])
       setIsGenerated(true)
     } catch (error) {
       console.error('Timetable error:', error)
-      // Generate with mock data for demo
-      setIsGenerated(true)
+      toast.error('Erreur lors du chargement de la matrice')
     } finally {
       setLoading(false)
     }
   }
 
-  // Mock data for the grid cells
-  const gridData: Record<string, Record<string, any>> = {
-    'LUNDI': {
-      '10:30': { type: 'locked' } // Group 1 has DÉVELOPPEMENT MOBILE, but let's mix states
-    },
-    'MARDI': {
-      '08:30': { 
-        id: 'INF-107', title: 'GAMING', prof: 'Radouane el asri', room: 'Salle Amphi Al Khwarizmi', state: 'valid' 
-      }
-    },
-    'MERCREDI': {
-      '10:30': { 
-        id: 'INF-101', title: 'INTRODUCTION - GÉNIE INFORMATI...', prof: 'Prof', room: 'Salle Amphi Ibn Khaldoun', state: 'valid' 
-      }
-    },
-    'JEUDI': {
-      '08:30': {
-        id: 'INF-103', title: 'DÉVELOPPEMENT MOBILE', prof: 'Prof', room: 'Salle Amphi Al Khwarizmi', state: 'draft'
-      },
-      '16:30': { 
-        id: 'INF-102', title: 'AVANCÉ - GÉNIE INFORMATIQUE', prof: 'Prof', room: 'Salle Amphi Ibn Khaldoun', state: 'valid' 
-      }
-    },
-    'VENDREDI': {
-      '08:30': { 
-        id: 'INF-104', title: 'DÉVELOPPEMENT MOBILE LARAVEL', prof: 'Prof', room: 'Salle Amphi Ibn Khaldoun', state: 'draft' 
-      },
-      '10:30': { 
-        id: 'INF-106', title: 'SQL SERVER BASE DE DONNEE', prof: 'Prof', room: 'Salle Amphi Ibn Khaldoun', state: 'valid' 
+  const handleGenerate = () => fetchTimetable()
+
+  const openCreateModal = () => {
+    setEditingId(null)
+    setFormData({
+      module_id: '',
+      professor_id: '',
+      room_id: '',
+      day_of_week: '1',
+      start_time: '08:30',
+      end_time: '10:15',
+      session_type: 'CM'
+    })
+    setIsModalOpen(true)
+  }
+
+  const openEditModal = (item: any) => {
+    // extract ID from full id string like session-1@encg-erp.com
+    const idMatch = String(item.id).match(/session-(\d+)/)
+    const dbId = idMatch ? parseInt(idMatch[1]) : item.id
+    setEditingId(dbId)
+    
+    // Convert ISO start to day and time
+    const startObj = new Date(item.start)
+    const endObj = new Date(item.end)
+    const dayOfWeek = startObj.getDay() || 7 // 1=Mon...7=Sun
+    
+    const formatTime = (d: Date) => d.toISOString().substring(11, 16)
+    
+    setFormData({
+      module_id: item.extendedProps?.module_id || '', 
+      professor_id: item.extendedProps?.professor_id || '',
+      room_id: item.extendedProps?.room_id || '',
+      day_of_week: dayOfWeek.toString(),
+      start_time: formatTime(startObj),
+      end_time: formatTime(endObj),
+      session_type: item.extendedProps?.type || 'CM'
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = async (item: any) => {
+    const idMatch = String(item.id).match(/session-(\d+)/)
+    const dbId = idMatch ? parseInt(idMatch[1]) : item.id
+
+    if (confirm('Voulez-vous vraiment supprimer cette affectation ?')) {
+      try {
+        await api.delete(`/timetable/${dbId}`)
+        toast.success('Affectation supprimée')
+        fetchTimetable()
+      } catch (e) {
+        toast.error('Erreur lors de la suppression')
       }
     }
   }
 
-  const renderCell = (day: string, time: string) => {
-    const cellId = `${day}-${time}`
-    const cell = gridData[day]?.[time]
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     
-    if (!cell) return <td key={time} className="p-2 border border-slate-100/50 min-w-[200px] h-32 relative group" />
-
-    if (cell.type === 'locked') {
-      return (
-        <td key={time} className="p-2 border border-slate-100/50 min-w-[200px] h-32 relative bg-slate-50/50 rounded-xl">
-          <div className="w-full h-full rounded-xl border border-slate-100 flex items-center justify-center">
-            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-1">
-              <Lock className="w-3 h-3" /> VERROUILLÉ
-            </span>
-          </div>
-        </td>
-      )
+    if (!selectedYear || !selectedSemester || !selectedGroupe) {
+      toast.error('Veuillez sélectionner l\\'année, semestre et groupe d\\'abord')
+      return
     }
 
-    const isValid = cell.state === 'valid'
-    const borderColor = isValid ? 'border-emerald-200' : 'border-amber-200'
-    const bgColor = isValid ? 'bg-white' : 'bg-amber-50/30'
+    const payload = {
+      ...formData,
+      academic_year_id: selectedYear,
+      semester_id: selectedSemester,
+      group_id: selectedGroupe,
+      institution_id: 1 // Default
+    }
+
+    try {
+      if (editingId) {
+        await api.put(`/timetable/${editingId}`, payload)
+        toast.success('Affectation mise à jour')
+      } else {
+        await api.post('/timetable', payload)
+        toast.success('Affectation créée')
+      }
+      setIsModalOpen(false)
+      fetchTimetable()
+    } catch (err) {
+      console.error(err)
+      toast.error('Erreur de sauvegarde')
+    }
+  }
+
+  const daysMapping = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI']
+  const timeSlots = ['08:30', '10:30', '14:30', '16:30']
+
+  const renderCell = (dayStr: string, timeSlotStr: string) => {
+    // Map dayStr to day index (1-6)
+    const dayIndex = daysMapping.indexOf(dayStr) + 1
+    
+    // Find matching items
+    const cellItems = timetableItems.filter(item => {
+      const d = new Date(item.start)
+      const itemDay = d.getDay()
+      const itemTime = d.toISOString().substring(11, 16)
+      return itemDay === dayIndex && itemTime.startsWith(timeSlotStr.substring(0, 2))
+    })
+
+    if (cellItems.length === 0) {
+      return <td key={`${dayStr}-${timeSlotStr}`} className="p-4 border-b border-slate-100 border-r align-top min-h-[140px]"></td>
+    }
 
     return (
-      <td 
-        key={time} 
-        className="p-2 border border-slate-100/50 min-w-[200px] h-32 relative"
-        onMouseEnter={() => setHoveredCell(cellId)}
-        onMouseLeave={() => setHoveredCell(null)}
-      >
-        <div className={cn("w-full h-full rounded-xl p-3 border shadow-sm flex flex-col justify-between transition-all", borderColor, bgColor)}>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold", isValid ? "bg-blue-100 text-blue-700" : "bg-blue-100 text-blue-700")}>
-                {cell.id}
-              </span>
-              {isValid ? (
-                <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-white" />
-                </div>
-              ) : (
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              )}
-            </div>
-            <h4 className="font-bold text-slate-800 text-[11px] leading-tight mb-2 line-clamp-2 uppercase">
-              {cell.title}
-            </h4>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <User className="w-3 h-3" />
-              <span className="text-[10px] font-medium">{cell.prof}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <MapPin className="w-3 h-3" />
-              <span className="text-[10px] font-medium line-clamp-1">{cell.room}</span>
-            </div>
-          </div>
-
-          {/* Hover Actions */}
-          {hoveredCell === cellId && (
-            <div className="absolute inset-0 bg-white/90 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 shadow-lg border border-slate-100 z-10">
-              <button className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors" title="Valider">
-                <Check className="w-4 h-4" />
-              </button>
-              <div className="relative group/swap">
-                <button className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors">
-                  <ArrowLeftRight className="w-4 h-4" />
-                </button>
-                {/* Tooltip */}
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white border border-slate-200 shadow-sm text-xs font-medium text-slate-700 whitespace-nowrap opacity-0 group-hover/swap:opacity-100 transition-opacity pointer-events-none rounded">
-                  Smart Swap Engine
+      <td key={`${dayStr}-${timeSlotStr}`} className="p-4 border-b border-slate-100 border-r align-top">
+        <div className="space-y-2">
+          {cellItems.map((item, idx) => (
+            <div key={idx} className="relative group rounded-2xl border p-4 transition-all duration-300 hover:shadow-lg bg-white border-blue-100 shadow-blue-100/50 hover:-translate-y-1">
+              <div className="flex justify-between items-start mb-3">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600">
+                   {item.extendedProps?.type || 'CM'}
                 </div>
               </div>
-              <button className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center hover:bg-amber-200 transition-colors" title="Éditer">
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors" title="Supprimer">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <h4 className="text-sm font-black text-[#0f2863] leading-snug mb-3 line-clamp-2">
+                {item.title}
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                  <User className="w-3.5 h-3.5" /> {item.extendedProps?.professor || 'Inconnu'}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                  <MapPin className="w-3.5 h-3.5" /> {item.extendedProps?.room || 'Non assigné'}
+                </div>
+              </div>
+              
+              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <button onClick={() => openEditModal(item)} className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center hover:bg-amber-200 transition-colors" title="Éditer">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleDelete(item)} className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors" title="Supprimer">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </td>
     )
@@ -179,7 +234,7 @@ export default function SchedulesEnginePage() {
           <p className="text-slate-500 mt-1 text-sm font-medium">Grille Intelligente, Smart Swaps et Publication Automatique</p>
         </div>
         <div className="flex items-center justify-center shrink-0">
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-full hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wide shadow-sm">
+          <button onClick={openCreateModal} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-full hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wide shadow-sm">
             <Plus className="w-4 h-4" /> Nouvelle Affectation
           </button>
         </div>
@@ -261,13 +316,10 @@ export default function SchedulesEnginePage() {
       {isGenerated && (
         <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden animate-in slide-in-from-bottom-4">
           <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-[#0f2863] italic">Grille Hebdomadaire (Group 1)</h2>
+            <h2 className="text-xl font-bold text-[#0f2863] italic">Grille Hebdomadaire</h2>
             <div className="flex items-center gap-3">
               <span className="px-4 py-1.5 border border-emerald-200 text-emerald-600 bg-emerald-50/30 font-bold rounded-lg text-xs uppercase tracking-wide">
                 Publié
-              </span>
-              <span className="px-4 py-1.5 border border-amber-200 text-amber-600 bg-amber-50 font-bold rounded-lg text-xs uppercase tracking-wide">
-                Brouillon
               </span>
             </div>
           </div>
@@ -277,19 +329,18 @@ export default function SchedulesEnginePage() {
               <thead>
                 <tr>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 w-32">Jour</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 min-w-[200px]">08:30 - 10:15</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 min-w-[200px]">10:30 - 12:15</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 min-w-[200px]">14:30 - 16:15</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 min-w-[200px]">16:30 - 18:15</th>
+                  {timeSlots.map(t => (
+                     <th key={t} className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-100 min-w-[200px]">{t}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'].map(day => (
+                {daysMapping.map(day => (
                   <tr key={day}>
                     <td className="p-4 text-xs font-bold text-[#0f2863] uppercase tracking-wider text-center border-b border-slate-100 border-r align-middle bg-slate-50/30">
                       {day}
                     </td>
-                    {['08:30', '10:30', '14:30', '16:30'].map(time => renderCell(day, time))}
+                    {timeSlots.map(time => renderCell(day, time))}
                   </tr>
                 ))}
               </tbody>
@@ -297,6 +348,75 @@ export default function SchedulesEnginePage() {
           </div>
         </div>
       )}
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Modifier l'affectation" : "Nouvelle Affectation"}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Module</label>
+            <select required value={formData.module_id} onChange={e => setFormData({...formData, module_id: e.target.value})} className="w-full border p-2 rounded">
+              <option value="">Sélectionner un module</option>
+              {modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Professeur</label>
+            <select required value={formData.professor_id} onChange={e => setFormData({...formData, professor_id: e.target.value})} className="w-full border p-2 rounded">
+              <option value="">Sélectionner un professeur</option>
+              {professors.map(p => <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Salle (optionnel)</label>
+            <select value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})} className="w-full border p-2 rounded">
+              <option value="">Aucune</option>
+              {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Jour</label>
+              <select value={formData.day_of_week} onChange={e => setFormData({...formData, day_of_week: e.target.value})} className="w-full border p-2 rounded">
+                <option value="1">Lundi</option>
+                <option value="2">Mardi</option>
+                <option value="3">Mercredi</option>
+                <option value="4">Jeudi</option>
+                <option value="5">Vendredi</option>
+                <option value="6">Samedi</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Type</label>
+              <select value={formData.session_type} onChange={e => setFormData({...formData, session_type: e.target.value})} className="w-full border p-2 rounded">
+                <option value="CM">CM (Cours Magistral)</option>
+                <option value="TD">TD (Travaux Dirigés)</option>
+                <option value="TP">TP (Travaux Pratiques)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Heure Début</label>
+              <input type="time" required value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} className="w-full border p-2 rounded" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Heure Fin</label>
+              <input type="time" required value={formData.end_time} onChange={e => setFormData({...formData, end_time: e.target.value})} className="w-full border p-2 rounded" />
+            </div>
+          </div>
+
+          <div className="pt-4 flex justify-end gap-2">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-md text-sm font-bold">Annuler</button>
+            <button type="submit" className="px-4 py-2 bg-[#0f2863] text-white rounded-md text-sm font-bold">Enregistrer</button>
+          </div>
+
+        </form>
+      </Modal>
+
     </div>
   )
 }

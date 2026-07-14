@@ -128,6 +128,9 @@ Route::get('/check-students', function() {
     // Timetable & Smart Scheduling
     Route::prefix('timetable')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\TimetableController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\TimetableController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Api\TimetableController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Api\TimetableController::class, 'destroy']);
         Route::get('/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
         Route::get('/export/{type}/{id}/pdf', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportPdf']);
         Route::get('/export/{type}/{id}/ics', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportIcs']);
@@ -135,6 +138,7 @@ Route::get('/check-students', function() {
         Route::post('/publish', [\App\Http\Controllers\Api\TimetableController::class, 'publish']);
         Route::post('/check-conflict', [\App\Http\Controllers\Api\TimetableController::class, 'checkConflict']);
     });
+
 
     // Smart Scheduling
     Route::post('/schedules/auto-generate', [\App\Http\Controllers\Api\SmartSchedulingController::class, 'autoGenerate']);

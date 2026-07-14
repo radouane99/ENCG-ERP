@@ -119,4 +119,77 @@ class TimetableController extends Controller
             'message' => "{$updated} emplois du temps publiés avec succès."
         ]);
     }
+
+    /**
+     * Create a new schedule entry
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'institution_id' => 'required|integer',
+            'academic_year_id' => 'required|integer',
+            'semester_id' => 'required|integer',
+            'group_id' => 'required|integer',
+            'module_id' => 'required|integer',
+            'room_id' => 'nullable|integer',
+            'professor_id' => 'required|integer',
+            'professor_type' => 'nullable|string',
+            'day_of_week' => 'required|integer|min:1|max:7',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'session_type' => 'required|string',
+            'recurrence' => 'nullable|string',
+        ]);
+
+        $validated['professor_type'] = $validated['professor_type'] ?? 'App\\Models\\User';
+        $validated['recurrence'] = $validated['recurrence'] ?? 'weekly';
+        $validated['is_active'] = true;
+
+        $scheduleId = DB::table('schedules')->insertGetId(array_merge($validated, [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation créée avec succès',
+            'data' => DB::table('schedules')->where('id', $scheduleId)->first()
+        ]);
+    }
+
+    /**
+     * Update an existing schedule
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'room_id' => 'nullable|integer',
+            'professor_id' => 'nullable|integer',
+            'day_of_week' => 'nullable|integer|min:1|max:7',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'session_type' => 'nullable|string',
+        ]);
+
+        $validated['updated_at'] = now();
+
+        DB::table('schedules')->where('id', $id)->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation mise à jour avec succès'
+        ]);
+    }
+
+    /**
+     * Delete a schedule
+     */
+    public function destroy($id): JsonResponse
+    {
+        DB::table('schedules')->where('id', $id)->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation supprimée avec succès'
+        ]);
+    }
 }
