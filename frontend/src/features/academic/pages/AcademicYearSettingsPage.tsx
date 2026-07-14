@@ -115,6 +115,8 @@ export default function AcademicYearSettingsPage() {
       label: newYearLabel,
       start_year: parseInt(match[1]),
       end_year: parseInt(match[2]),
+      start_date: `${match[1]}-09-01`,
+      end_date: `${match[2]}-07-31`,
       is_current: newYearIsCurrent
     })
   }
