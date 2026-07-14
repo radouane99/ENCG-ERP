@@ -141,7 +141,7 @@ export default function SchedulesEnginePage() {
     e.preventDefault()
     
     if (!selectedYear || !selectedSemester || !selectedGroupe) {
-      toast.error('Veuillez sélectionner l\\'année, semestre et groupe d\\'abord')
+      toast.error("Veuillez sélectionner l'année, semestre et groupe d'abord")
       return
     }
 
@@ -349,7 +349,7 @@ export default function SchedulesEnginePage() {
         </div>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Modifier l'affectation" : "Nouvelle Affectation"}>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Modifier l'affectation" : "Nouvelle Affectation"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           
           <div>
