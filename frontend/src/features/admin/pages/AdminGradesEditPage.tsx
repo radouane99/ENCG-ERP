@@ -23,7 +23,7 @@ export default function AdminGradesEditPage() {
   // Fetch assessments for the given module
   const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
     queryKey: ['assessments', moduleId],
-    queryFn: () => api.get(`/admin/modules/${moduleId}/assessments`).then(res => res.data.data),
+    queryFn: () => api.get(`/modules/${moduleId}/assessments`).then(res => res.data.data),
     enabled: !!moduleId,
   })
 
@@ -37,7 +37,7 @@ export default function AdminGradesEditPage() {
   // Fetch students & grades for the selected assessment
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['grades', selectedAssessmentId],
-    queryFn: () => api.get(`/admin/assessments/${selectedAssessmentId}/grades`).then(res => res.data.data),
+    queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`).then(res => res.data.data),
     enabled: !!selectedAssessmentId,
   })
 
@@ -70,7 +70,7 @@ export default function AdminGradesEditPage() {
   // Mutation to save grades
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
-      return api.post(`/admin/assessments/${selectedAssessmentId}/grades`, payload)
+      return api.post(`/assessments/${selectedAssessmentId}/grades`, payload)
     },
     onSuccess: () => {
       toast.success(isRtl ? 'تم حفظ النقاط بنجاح' : 'Notes enregistrées avec succès')
