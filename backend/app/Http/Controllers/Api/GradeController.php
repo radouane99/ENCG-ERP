@@ -516,6 +516,33 @@ class GradeController extends Controller
         ]);
 
         $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+        $user = $request->user();
+
+        // 1. Admins should not enter grades directly, only professors
+        if ($user->hasRole(['super-admin', 'institution-admin', 'director'])) {
+            return response()->json([
+                'message' => 'Opération refusée : Les administrateurs ne sont pas autorisés à importer les notes directement. Cela doit être fait par le professeur depuis son portail.'
+            ], 403);
+        }
+
+        // 2. Professor must be assigned to this module
+        if ($user->hasRole('professeur')) {
+            $prof = \App\Models\Professor::where('user_id', $user->id)->first();
+            if (!$prof) {
+                return response()->json(['message' => 'Profil professeur introuvable.'], 403);
+            }
+
+            $isAssigned = \Illuminate\Support\Facades\DB::table('module_professor')
+                ->where('professor_id', $prof->id)
+                ->where('module_id', $module->id)
+                ->exists();
+
+            if (!$isAssigned) {
+                return response()->json([
+                    'message' => 'Opération refusée : Vous n\'êtes pas assigné à ce module.'
+                ], 403);
+            }
+        }
 
         // Verify exam locking phases
         $institution = \App\Models\Institution::first();

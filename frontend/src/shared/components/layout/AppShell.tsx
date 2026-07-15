@@ -8,6 +8,7 @@ import { useAuthStore } from '@stores/authStore'
 import CommandPalette from './CommandPalette'
 import GlobalAIChatbot from '../ai/GlobalAIChatbot'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
+import InstallPrompt from '../pwa/InstallPrompt'
 
 export default function AppShell() {
   const fetchUser = useAuthStore((s) => s.fetchUser)
@@ -79,6 +80,9 @@ export default function AppShell() {
       
       {/* Global AI Assistant Widget — Gemini-powered, role-aware */}
       <GlobalAIChatbot />
+
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </div>
   )
 }

@@ -11,6 +11,10 @@ import { ErrorBoundary } from './shared/components/ui/ErrorBoundary'
 import './index.css'
 import './app/i18n'
 
+// Register PWA Service Worker
+import { registerSW } from 'virtual:pwa-register'
+registerSW({ immediate: true })
+
 // ─────────────────────────────────────────────────────────────────────────────
 // React Query client
 // [FE-01] Replaced `any` in retry callback with typed AxiosError

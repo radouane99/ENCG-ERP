@@ -627,8 +627,19 @@ export default function AdminGradesPVPage() {
           </div>
         </div>
         {pvData.signature && pvData.signature.digital_seal && (
-          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-[8px] font-mono text-slate-400">
-            <span>EMPREINTE DU PV (SHA-256) : {pvData.signature.digital_seal}</span>
+          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between items-end text-[8px] font-mono text-slate-400">
+            <div className="flex items-center gap-4">
+              <QRCodeSVG 
+                value={`${window.location.origin}/verify-pv?seal=${pvData.signature.digital_seal}`}
+                size={64}
+                level="M"
+                includeMargin={false}
+              />
+              <div className="flex flex-col gap-1">
+                <span className="font-bold text-slate-800 text-[10px]">SCANNABLE QR POUR VÉRIFICATION</span>
+                <span>EMPREINTE DU PV (SHA-256) : {pvData.signature.digital_seal}</span>
+              </div>
+            </div>
             <span>CERTIFICATION NUMÉRIQUE ENCG FÈS</span>
           </div>
         )}

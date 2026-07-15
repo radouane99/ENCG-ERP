@@ -2,18 +2,18 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
-import { useAuth } from '@shared/hooks/useAuth'
-import { api } from '@shared/api'
+import { useAuthStore } from '@stores/authStore'
+import api from '@shared/lib/api'
 
 // Make Pusher available globally for Laravel Echo
 window.Pusher = Pusher
 
 export function useReverbNotifications() {
-  const { user } = useAuth()
+  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
     // Only connect if the user is a professor
-    if (!user || user.role !== 'professeur') return
+    if (!user || !user.roles.includes('professeur')) return
 
     // Get Reverb config from environment
     const echo = new Echo({
