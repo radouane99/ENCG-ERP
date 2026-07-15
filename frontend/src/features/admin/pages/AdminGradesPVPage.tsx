@@ -207,41 +207,24 @@ export default function AdminGradesPVPage() {
   // Get CC and Exam assessments list for column headers
   const displayAssessments = pvData.assessments.filter((a: any) => a.type.toLowerCase() !== 'rattrapage')
 
-  // Calculate statistics from loaded pvData
-  const students = pvData?.data || []
-  const totalStudents = students.length
-
-  const valCount = students.filter((s: any) => s.decision_finale === 'V' || s.decision_finale === 'VAR').length
-  const ratCount = students.filter((s: any) => s.decision_finale === 'R').length
-  const nvCount = students.filter((s: any) => s.decision_finale === 'NV').length
-
-  const passRate = totalStudents > 0 ? Math.round((valCount / totalStudents) * 100) : 0
-  const avgGrade = totalStudents > 0 
-    ? (students.reduce((acc: number, s: any) => acc + (s.moyenne_finale || 0), 0) / totalStudents).toFixed(2) 
-    : '0.00'
-
-  // Grade distribution buckets: [0-6[, [6-10[, [10-12[, [12-14[, [14-16[, [16-20]
-  const d1 = students.filter((s: any) => s.moyenne_finale < 6).length
-  const d2 = students.filter((s: any) => s.moyenne_finale >= 6 && s.moyenne_finale < 10).length
-  const d3 = students.filter((s: any) => s.moyenne_finale >= 10 && s.moyenne_finale < 12).length
-  const d4 = students.filter((s: any) => s.moyenne_finale >= 12 && s.moyenne_finale < 14).length
-  const d5 = students.filter((s: any) => s.moyenne_finale >= 14 && s.moyenne_finale < 16).length
-  const d6 = students.filter((s: any) => s.moyenne_finale >= 16).length
+  // Use server-computed analytics (more reliable than client-side)
+  const analytics = pvData?.analytics ?? {}
+  const totalStudents = analytics.total ?? 0
+  const valCount   = analytics.admis ?? 0
+  const ratCount   = analytics.rattrapage ?? 0
+  const nvCount    = analytics.elimines ?? 0
+  const passRate   = analytics.pass_rate ?? 0
+  const avgGrade   = analytics.avg != null ? Number(analytics.avg).toFixed(2) : '–'
+  const medianGrade = analytics.median != null ? Number(analytics.median).toFixed(2) : '–'
 
   const pieData = [
-    { name: 'Validés', value: valCount, color: '#10B981' }, // emerald-500
-    { name: 'Rattrapage', value: ratCount, color: '#F59E0B' }, // amber-500
-    { name: 'Éliminés', value: nvCount, color: '#EF4444' }, // red-500
+    { name: 'Validés',    value: valCount, color: '#10B981' },
+    { name: 'Rattrapage', value: ratCount, color: '#F59E0B' },
+    { name: 'Éliminés',  value: nvCount,  color: '#EF4444' },
   ].filter(d => d.value > 0)
 
-  const barData = [
-    { name: '[0-6[', count: d1 },
-    { name: '[6-10[', count: d2 },
-    { name: '[10-12[', count: d3 },
-    { name: '[12-14[', count: d4 },
-    { name: '[14-16[', count: d5 },
-    { name: '[16-20]', count: d6 },
-  ]
+  // Use server-side 10-bucket distribution
+  const barData = (analytics.distribution ?? []) as { range: string; count: number }[]
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto pb-24">
@@ -288,12 +271,16 @@ export default function AdminGradesPVPage() {
       </div>
 
       {/* Analytics Dashboard (Jury Analytics) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden animate-in fade-in duration-300">
-        {/* Metric Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden animate-in fade-in duration-300">
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Moyenne Générale</span>
           <span className="text-3xl font-black text-[#0f2863] mt-2">{avgGrade} <span className="text-xs text-slate-400">/20</span></span>
           <span className="text-[10px] text-slate-500 mt-1 font-semibold">Moyenne de la promotion</span>
+        </div>
+        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Médiane</span>
+          <span className="text-3xl font-black text-violet-600 mt-2">{medianGrade} <span className="text-xs text-slate-400">/20</span></span>
+          <span className="text-[10px] text-slate-500 mt-1 font-semibold">Note médiane de la promo</span>
         </div>
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Taux de Réussite</span>
@@ -303,12 +290,12 @@ export default function AdminGradesPVPage() {
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Élèves au Rattrapage</span>
           <span className="text-3xl font-black text-amber-500 mt-2">{ratCount}</span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{Math.round((ratCount / totalStudents) * 100) || 0}% de la promotion</span>
+          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{totalStudents > 0 ? Math.round((ratCount / totalStudents) * 100) : 0}% de la promotion</span>
         </div>
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Non Validés (Exclus)</span>
           <span className="text-3xl font-black text-red-500 mt-2">{nvCount}</span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{Math.round((nvCount / totalStudents) * 100) || 0}% note éliminatoire</span>
+          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{totalStudents > 0 ? Math.round((nvCount / totalStudents) * 100) : 0}% note éliminatoire</span>
         </div>
       </div>
 
@@ -363,12 +350,15 @@ export default function AdminGradesPVPage() {
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ReBarChart data={barData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" />
+                <XAxis dataKey="range" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" />
+                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" allowDecimals={false} />
                 <Tooltip formatter={(value) => [`${value} étudiants`, 'Effectif']} cursor={{ fill: 'rgba(15, 40, 99, 0.03)' }} />
                 <Bar dataKey="count" fill="#0f2863" radius={[8, 8, 0, 0]} />
               </ReBarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="text-[10px] text-slate-400 text-right font-medium">
+            Distribution sur 10 tranches — calculée côté serveur
           </div>
         </div>
       </div>

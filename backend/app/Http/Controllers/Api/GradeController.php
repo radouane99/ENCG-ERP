@@ -55,6 +55,33 @@ class GradeController extends Controller
     public function storeBulk(Request $request, $assessmentId): JsonResponse
     {
         $assessment = Assessment::findOrFail($assessmentId);
+        $user = $request->user();
+
+        // 1. Admins should not enter grades directly, only professors
+        if ($user->hasRole(['super-admin', 'institution-admin', 'director'])) {
+            return response()->json([
+                'message' => 'Opération refusée : Les administrateurs ne sont pas autorisés à saisir les notes directement. Cela doit être fait par le professeur depuis son portail.'
+            ], 403);
+        }
+
+        // 2. Professor must be assigned to this module
+        if ($user->hasRole('professeur')) {
+            $prof = \App\Models\Professor::where('user_id', $user->id)->first();
+            if (!$prof) {
+                return response()->json(['message' => 'Profil professeur introuvable.'], 403);
+            }
+
+            $isAssigned = \Illuminate\Support\Facades\DB::table('module_professor')
+                ->where('professor_id', $prof->id)
+                ->where('module_id', $assessment->module_id)
+                ->exists();
+
+            if (!$isAssigned) {
+                return response()->json([
+                    'message' => 'Opération refusée : Vous n\'êtes pas assigné à ce module.'
+                ], 403);
+            }
+        }
 
         // [AUDIT SEC-04] Verify exam locking phases
         $institution = \App\Models\Institution::first();
@@ -354,21 +381,61 @@ class GradeController extends Controller
             }
         }
 
+        // ── Jury Analytics ────────────────────────────────────────────────────
+        $moyennesFinales = $data->pluck('moyenne_finale')->filter(fn($v) => $v !== null)->values();
+        $totalStudents   = $data->count();
+
+        $admis      = $data->whereIn('decision_finale', ['V', 'VAR'])->count();
+        $rattrapage = $data->where('decision_finale', 'R')->count();
+        $elimines   = $data->where('decision_finale', 'NV')->count();
+        $nonSaisi   = $data->where('moyenne_finale', null)->count();
+
+        $avg    = $moyennesFinales->isNotEmpty() ? round($moyennesFinales->avg(), 2) : null;
+        $sorted = $moyennesFinales->sort()->values();
+        $n      = $sorted->count();
+        $median = $n > 0
+            ? ($n % 2 === 0 ? round(($sorted[$n / 2 - 1] + $sorted[$n / 2]) / 2, 2) : $sorted[(int)($n / 2)])
+            : null;
+
+        // Grade distribution — 10 buckets: [0-2[, [2-4[, ..., [18-20]
+        $distribution = [];
+        for ($i = 0; $i < 10; $i++) {
+            $low  = $i * 2;
+            $high = $low + 2;
+            $label = "{$low}-{$high}";
+            $count = $moyennesFinales->filter(fn($m) => $m >= $low && ($i === 9 ? $m <= 20 : $m < $high))->count();
+            $distribution[] = ['range' => $label, 'count' => $count];
+        }
+
+        $analytics = [
+            'total'        => $totalStudents,
+            'admis'        => $admis,
+            'rattrapage'   => $rattrapage,
+            'elimines'     => $elimines,
+            'non_saisi'    => $nonSaisi,
+            'avg'          => $avg,
+            'median'       => $median,
+            'pass_rate'    => $totalStudents > 0 ? round(($admis / $totalStudents) * 100, 1) : 0,
+            'distribution' => $distribution,
+        ];
+        // ── End Analytics ─────────────────────────────────────────────────────
+
         return response()->json([
             'module' => [
-                'id' => $module->id,
+                'id'   => $module->id,
                 'name' => $module->name,
                 'code' => $module->code
             ],
             'assessments' => $assessments->map(function($a) {
                 return [
-                    'id' => $a->id,
-                    'type' => $a->type,
+                    'id'     => $a->id,
+                    'type'   => $a->type,
                     'weight' => $a->weight
                 ];
             }),
-            'data' => $data,
-            'signature' => $signature
+            'data'      => $data,
+            'signature' => $signature,
+            'analytics' => $analytics,
         ]);
     }
 

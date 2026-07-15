@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { CheckCircle2, FlaskConical, Beaker, MessageSquare } from 'lucide-react';
+import React from 'react';
+import { CheckCircle2, FlaskConical, Beaker, MessageSquare, Download } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function StudentGrades() {
@@ -25,9 +25,35 @@ export default function StudentGrades() {
         <div className="relative z-10">
           <h1 className="text-3xl font-black text-white mb-2">Performance Académique</h1>
           <p className="text-teal-100">Suivez vos notes validées et vos résultats finaux par semestre.</p>
-          <button className="mt-6 bg-white text-teal-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 hover:bg-teal-50 transition-colors">
-            <FlaskConical className="w-4 h-4" /> ACTIVER LE SIMULATEUR
-          </button>
+          <div className="flex gap-3 mt-6">
+            <button className="bg-white text-teal-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 hover:bg-teal-50 transition-colors">
+              <FlaskConical className="w-4 h-4" /> ACTIVER LE SIMULATEUR
+            </button>
+            <button 
+              onClick={() => {
+                import('@shared/lib/api').then(({ default: api }) => {
+                  import('sonner').then(({ toast }) => {
+                    const tid = toast.loading('Génération du relevé en cours...')
+                    api.get('/student-portal/transcript/pdf', { responseType: 'blob' })
+                      .then(res => {
+                        const url = window.URL.createObjectURL(new Blob([res.data]))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', 'Releve_Notes.pdf')
+                        document.body.appendChild(link)
+                        link.click()
+                        link.remove()
+                        toast.success('Relevé téléchargé avec succès !', { id: tid })
+                      })
+                      .catch(() => toast.error('Erreur lors du téléchargement.', { id: tid }))
+                  })
+                })
+              }}
+              className="bg-teal-800 text-teal-50 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 hover:bg-teal-900 border border-teal-700 transition-colors"
+            >
+              <Download className="w-4 h-4" /> RELEVÉ OFFICIEL (PDF)
+            </button>
+          </div>
         </div>
 
         <div className="relative z-10 text-right">

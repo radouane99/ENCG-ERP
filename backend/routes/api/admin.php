@@ -117,6 +117,9 @@ Route::get('/check-students', function() {
     Route::post('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
     Route::get('academic/deliberate', [\App\Http\Controllers\Api\DeliberationController::class, 'run']);
 
+    // Student Transcript PDF
+    Route::get('students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
+
     // HR & Personnel
     Route::prefix('hr')->group(function () {
         Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);

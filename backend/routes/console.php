@@ -66,7 +66,7 @@ Schedule::call(function () {
 
         foreach ($professors as $prof) {
             try {
-                Mail::to($prof->email)->send(
+                Mail::to($prof->email)->queue(
                     new GradeDeadlineReminder(
                         professorName: $prof->name ?? ($prof->first_name . ' ' . $prof->last_name),
                         endDate: $deadline->end_date,
@@ -77,6 +77,9 @@ Schedule::call(function () {
                 \Illuminate\Support\Facades\Log::warning('Grade deadline reminder failed for ' . $prof->email . ': ' . $e->getMessage());
             }
         }
+        
+        // Broadcast the warning via Reverb
+        event(new \App\Events\GradeDeadlineWarning($deadline->end_date, $sessionLabel));
     }
 })->dailyAt('09:00');
 

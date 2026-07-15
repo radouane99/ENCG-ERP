@@ -48,6 +48,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
         Route::get('/partners', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'getPartners']);
         Route::post('/voeux', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'saveVoeux']);
     });
+
+    // Official Transcript (Relevé de Notes) PDF
+    Route::get('/transcript/pdf', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForStudent']);
 });
 
 

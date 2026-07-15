@@ -38,7 +38,7 @@ export default function AdminStudentDetailPage() {
     
     let url = '';
     if (type === 'releve') {
-      url = `/admin/students/${student.id}/releve-notes/${encodedYear}`;
+      url = `/admin/students/${student.id}/transcript?academic_year_id=${student.latest_pathway?.academic_year_id || 1}`;
     } else {
       url = `/admin/students/${student.id}/attestation-reussite/${encodedYear}`;
     }

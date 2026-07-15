@@ -18,7 +18,11 @@ const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pa
 
 const ProfessorInteractiveCalendar = lazy(() => import('@features/calendar/pages/InteractiveCalendarPage'))
 
+import { useReverbNotifications } from '@features/professors/hooks/useReverbNotifications'
+
 export default function ProfessorRouter() {
+  useReverbNotifications()
+
   return (
     <Routes>
       <Route path="schedule" element={<ProfessorInteractiveCalendar />} />

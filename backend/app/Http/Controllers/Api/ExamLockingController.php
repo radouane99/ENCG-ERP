@@ -93,6 +93,9 @@ class ExamLockingController extends Controller
                     \Illuminate\Support\Facades\Log::error("Failed to send phase update emails: " . $e->getMessage());
                 }
             }
+            
+            // Broadcast via Reverb
+            event(new \App\Events\GradeEntryPeriodChanged($newPhase));
         }
 
         return $this->index();
