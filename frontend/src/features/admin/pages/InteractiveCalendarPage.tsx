@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-export default function InteractiveCalendarPage() {
+export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine')
   const [showRattrapageModal, setShowRattrapageModal] = useState(false)
   const [loading, setLoading] = useState(false)

@@ -56,5 +56,42 @@ class PublicVerificationController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Verifies a module PV signature.
+     */
+    public function verifyModulePv(Request $request, $moduleId, $groupId): JsonResponse
+    {
+        $module = \App\Models\Module::with('filiere')->findOrFail($moduleId);
+        $group = \App\Models\Group::findOrFail($groupId);
+
+        $signature = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+            ->where('group_id', $groupId)
+            ->with('signer')
+            ->first();
+
+        if (!$signature) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce procès-verbal de délibération n\'a pas encore été signé électroniquement ou validé.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'document_type' => 'Procès-Verbal de Délibération (Module)',
+                'institution'   => 'ENCG Fès',
+                'module'        => "{$module->code} - {$module->name}",
+                'filiere'       => $module->filiere->name ?? 'N/A',
+                'group'         => $group->name,
+                'signed_by'     => $signature->signer->name ?? $signature->signer->email,
+                'signed_at'     => $signature->signed_at->toIso8601String(),
+                'ip_address'    => $signature->ip_address,
+                'status'        => 'Authentique & Sécurisé (Signé)',
+                'fingerprint'   => hash('sha256', "pv-{$moduleId}-{$groupId}-{$signature->signed_at}")
+            ],
+        ]);
+    }
 }
 

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public Documents & Cards Verification
 Route::get('/verify/document/{documentId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyDocument']);
+Route::get('/verify/pv/{moduleId}/{groupId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [\App\Http\Controllers\Api\StudentCardController::class, 'verify']);
 
 Route::middleware(['auth:sanctum'])->group(function () {

@@ -10,6 +10,7 @@ const TwoFactorPage = lazy(() => import('@features/auth/pages/TwoFactorPage'))
 const ForgotPasswordPage = lazy(() => import('@features/auth/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@features/auth/pages/ResetPasswordPage'))
 const VerifyDocument = lazy(() => import('@features/documents/pages/VerifyDocument'))
+const VerifyPv = lazy(() => import('@features/documents/pages/VerifyPv'))
 const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
 const InscriptionPage = lazy(() => import('@features/public/pages/InscriptionPage'))
 const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage')) // Fallback for now if it doesn't exist
@@ -256,6 +257,7 @@ export default function RootRouter() {
 
         {/* Public Utility Routes */}
         <Route path="/verify/document/:id" element={<VerifyDocument />} />
+        <Route path="/verify/pv/:moduleId/:groupId" element={<VerifyPv />} />
 
         {/* Printable Document Preview (No Sidebar) */}
         <Route path="/admin/documents/preview/:type?" element={<RequireAuth><DocumentPreviewPage /></RequireAuth>} />

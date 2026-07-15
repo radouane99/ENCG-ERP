@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function AdminGradesPVPage() {
   const { t, i18n } = useTranslation('common')
@@ -437,10 +438,24 @@ export default function AdminGradesPVPage() {
         <div className="text-center space-y-6 mb-8">
           <div className="flex justify-between items-start">
             <div className="text-left space-y-1">
-              <p className="font-bold text-xs uppercase text-slate-800">Université Hassan II de Casablanca</p>
+              <p className="font-bold text-xs uppercase text-slate-800">Université Sidi Mohamed Ben Abdellah de Fès</p>
               <p className="font-bold text-xs uppercase text-slate-600">Ecole Nationale de Commerce et de Gestion</p>
-              <p className="text-[10px] text-slate-400 font-semibold">ENCG - Casablanca</p>
+              <p className="text-[10px] text-slate-400 font-semibold">ENCG - Fès</p>
             </div>
+
+            {/* Dynamic QR Code for Verification */}
+            {pvData.signature && (
+              <div className="flex flex-col items-center gap-1">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/verify/pv/${moduleId}/${groupId}`} 
+                  size={64} 
+                  level="H" 
+                  className="border border-slate-100 p-1 bg-white rounded-md shadow-sm"
+                />
+                <span className="text-[7px] text-slate-400 font-mono tracking-widest uppercase">SCAN TO VERIFY</span>
+              </div>
+            )}
+
             <div className="text-right space-y-1">
               <p className="text-xs font-bold text-slate-500">Année Universitaire : 2026/2027</p>
               <p className="text-xs font-bold text-slate-500">Semestre : S5</p>
