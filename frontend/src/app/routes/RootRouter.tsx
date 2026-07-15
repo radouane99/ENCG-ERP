@@ -164,6 +164,7 @@ const StudentsCreditsPage = lazy(() => import('@features/admin/pages/StudentsCre
 const ManageStudentCreditPage = lazy(() => import('@features/admin/pages/ManageStudentCreditPage'))
 const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
 const AdminGradesEditPage = lazy(() => import('@features/admin/pages/AdminGradesEditPage'))
+const AdminGradesPVPage = lazy(() => import('@features/admin/pages/AdminGradesPVPage'))
 const AdminAbsencesPage = lazy(() => import('@features/absences/ui/pages/AdminAbsencesPage'))
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
 const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
@@ -413,6 +414,7 @@ export default function RootRouter() {
           <Route path="/admin/students-credits/:id/manage" element={<ManageStudentCreditPage />} />
           <Route path="/admin/grades" element={<AdminGradesPage />} />
           <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+          <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
           <Route path="/admin/absences" element={<AdminAbsencesPage />} />
           <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
           <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />

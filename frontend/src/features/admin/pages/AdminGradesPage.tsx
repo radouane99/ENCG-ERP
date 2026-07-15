@@ -165,16 +165,24 @@ export default function AdminGradesPage() {
         </div>
 
         {/* Action Bar */}
-        <div className="pt-8 border-t border-[hsl(var(--border))] flex justify-end">
+        <div className="pt-8 border-t border-[hsl(var(--border))] flex flex-col sm:flex-row justify-end gap-4">
+          <Button
+            size="lg"
+            variant="outline"
+            disabled={!isFormComplete}
+            onClick={() => isFormComplete && navigate(`/admin/grades/pv?group_id=${groupe}&module_id=${module}`)}
+            className={cn("px-8 py-6 text-base font-bold shadow-sm transition-all", isFormComplete ? "hover:scale-105" : "")}
+          >
+            📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV de Module'}
+          </Button>
           <Button
             size="lg"
             variant={isFormComplete ? 'primary' : 'outline'}
             disabled={!isFormComplete}
             onClick={handleOpenRegistry}
-            className={cn("px-8 py-6 text-base font-bold shadow-lg transition-all", isFormComplete ? "hover:scale-105" : "")}
-            icon={isRtl ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
+            className={cn("px-8 py-6 text-base font-bold shadow-lg transition-all", isFormComplete ? "hover:scale-105 text-white bg-[hsl(var(--color-primary))]" : "")}
           >
-            {t('admin:grades.open_registry')}
+            ✏️ {isRtl ? 'إدخال النقاط' : 'Saisir les Notes'}
           </Button>
         </div>
 
