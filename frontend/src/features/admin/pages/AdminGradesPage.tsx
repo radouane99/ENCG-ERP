@@ -21,7 +21,7 @@ export default function AdminGradesPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/academic/filieres').then(r => {
+    api.get('/filieres').then(r => {
       setFilieres(r.data.data || r.data)
       setIsLoading(false)
     }).catch(() => setIsLoading(false))
@@ -33,7 +33,7 @@ export default function AdminGradesPage() {
       setModule('')
       setGroupes([])
       setModules([])
-      api.get('/academic/groups', { params: { filiere_id: filiere } })
+      api.get('/groups', { params: { filiere_id: filiere } })
         .then(r => setGroupes(r.data.data || r.data)).catch(console.error)
     }
   }, [filiere])
@@ -42,7 +42,7 @@ export default function AdminGradesPage() {
     if (groupe) {
       setModule('')
       setModules([])
-      api.get('/academic/modules', { params: { group_id: groupe } })
+      api.get('/modules', { params: { group_id: groupe } })
         .then(r => setModules(r.data.data || r.data)).catch(console.error)
     }
   }, [groupe])
