@@ -19,6 +19,7 @@ export default function AdminGradesEditPage() {
 
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null)
   const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
+  const [viewAllGroups, setViewAllGroups] = useState(false)
 
   const [showModalityModal, setShowModalityModal] = useState(false)
   const [modalityAssessments, setModalityAssessments] = useState<{ id: number | null; type: string; weight: number }[]>([])
@@ -32,8 +33,10 @@ export default function AdminGradesEditPage() {
 
   // Fetch students & grades for the selected assessment
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ['grades', selectedAssessmentId],
-    queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`).then(res => res.data.data),
+    queryKey: ['grades', selectedAssessmentId, searchParams.get('group_id'), viewAllGroups],
+    queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`, {
+      params: { group_id: viewAllGroups ? 'all' : searchParams.get('group_id') }
+    }).then(res => res.data.data),
     enabled: !!selectedAssessmentId,
   })
 
@@ -166,42 +169,86 @@ export default function AdminGradesEditPage() {
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">{isRtl ? 'إدخال النقاط' : 'Édition des Notes'}</h1>
           <p className="text-[hsl(var(--muted-foreground))] mt-2">{isRtl ? 'الرجاء إدخال النقاط بدقة' : 'Veuillez saisir les notes avec précision'}</p>
         </div>
-        <Link to="/admin/grades" className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors uppercase tracking-wide">
-          <ArrowLeft className={cn("w-4 h-4", isRtl && "rotate-180")} /> 
-          {isRtl ? 'العودة' : 'Retour'}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link 
+            to={`/admin/grades/pv?group_id=${searchParams.get('group_id')}&module_id=${moduleId}`}
+            className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-sm"
+          >
+            📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV'}
+          </Link>
+          <Link to="/admin/grades" className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors bg-slate-50 px-4 py-2.5 rounded-xl uppercase tracking-wider">
+            <ArrowLeft className={cn("w-3.5 h-3.5", isRtl && "rotate-180")} /> 
+            {isRtl ? 'العودة' : 'Retour'}
+          </Link>
+        </div>
       </div>
 
       <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm p-6 mb-6">
-        <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-2">
-          {isRtl ? 'اختر التقييم' : 'Sélectionner l\'Évaluation'}
-        </label>
-        {isLoadingAssessments ? (
-          <Spinner />
-        ) : (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <select 
-              value={selectedAssessmentId || ''} 
-              onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
-              className="w-full sm:w-1/3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--color-primary))] outline-none text-sm font-semibold text-[hsl(var(--foreground))]"
-            >
-              <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
-              {assessmentsData?.map((a: any) => (
-                <option key={a.id} value={a.id}>
-                  {a.type} (Poids: {a.weight}%)
-                </option>
-              ))}
-            </select>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowModalityModal(true)}
-              className="rounded-xl font-bold uppercase tracking-wider text-xs px-4"
-            >
-              ⚙️ Configurer les modalités
-            </Button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex-1">
+            <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-2">
+              {isRtl ? 'اختر التقييم' : 'Sélectionner l\'Évaluation'}
+            </label>
+            {isLoadingAssessments ? (
+              <Spinner />
+            ) : (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <select 
+                  value={selectedAssessmentId || ''} 
+                  onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
+                  className="w-full sm:w-1/3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--color-primary))] outline-none text-sm font-semibold text-[hsl(var(--foreground))]"
+                >
+                  <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
+                  {assessmentsData?.map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {a.type} (Poids: {a.weight}%)
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowModalityModal(true)}
+                  className="rounded-xl font-bold uppercase tracking-wider text-xs px-4"
+                >
+                  ⚙️ Configurer les modalités
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="border-t md:border-t-0 md:border-l border-[hsl(var(--border))] pt-4 md:pt-0 md:ps-6 flex flex-col justify-center">
+            <span className="block text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">
+              Périmètre de saisie
+            </span>
+            <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+              <button
+                type="button"
+                onClick={() => setViewAllGroups(false)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                  !viewAllGroups
+                    ? "bg-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Par Groupe
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewAllGroups(true)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                  viewAllGroups
+                    ? "bg-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Module Complet
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {!selectedAssessmentId ? (
@@ -284,7 +331,13 @@ export default function AdminGradesEditPage() {
             </table>
           </div>
 
-          <div className="p-6 w-full flex justify-end border-t border-[hsl(var(--border))]">
+          <div className="p-6 w-full flex justify-between items-center border-t border-[hsl(var(--border))]">
+            <Link 
+              to={`/admin/grades/pv?group_id=${searchParams.get('group_id')}&module_id=${moduleId}`}
+              className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-5 py-3.5 rounded-2xl transition-all uppercase tracking-wider shadow-sm"
+            >
+              📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV de Module'}
+            </Link>
             <Button 
               type="submit" 
               className="bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary))/90] text-white font-bold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-3"

@@ -19,11 +19,14 @@ export default function AdminGradesPVPage() {
 
   const [session, setSession] = useState<'normale' | 'rattrapage'>('normale')
   const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
+  const [viewAllGroups, setViewAllGroups] = useState(false)
 
   // Fetch consolidated PV data
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
-    queryKey: ['module-pv', moduleId, groupId],
-    queryFn: () => api.get(`/modules/${moduleId}/pv`, { params: { group_id: groupId } }).then(res => res.data),
+    queryKey: ['module-pv', moduleId, groupId, viewAllGroups],
+    queryFn: () => api.get(`/modules/${moduleId}/pv`, {
+      params: { group_id: viewAllGroups ? 'all' : groupId }
+    }).then(res => res.data),
     enabled: !!moduleId && !!groupId,
   })
 
@@ -150,30 +153,62 @@ export default function AdminGradesPVPage() {
         </div>
       </div>
 
-      {/* Tabs selector: Hidden during print */}
-      <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit print:hidden">
-        <button
-          onClick={() => setSession('normale')}
-          className={cn(
-            "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-            session === 'normale'
-              ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-slate-600 hover:bg-slate-200"
-          )}
-        >
-          Session Ordinaire (Normale)
-        </button>
-        <button
-          onClick={() => setSession('rattrapage')}
-          className={cn(
-            "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-            session === 'rattrapage'
-              ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-slate-600 hover:bg-slate-200"
-          )}
-        >
-          Session de Rattrapage
-        </button>
+      {/* Tabs and Toggles selector: Hidden during print */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+        {/* Session Tabs */}
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+          <button
+            onClick={() => setSession('normale')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              session === 'normale'
+                ? "bg-[#0f2863] text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Session Ordinaire (Normale)
+          </button>
+          <button
+            onClick={() => setSession('rattrapage')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              session === 'rattrapage'
+                ? "bg-[#0f2863] text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Session de Rattrapage
+          </button>
+        </div>
+
+        {/* View Scope Toggle */}
+        <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider ps-2">Périmètre :</span>
+          <div className="flex gap-1 bg-slate-200/50 p-1 rounded-xl">
+            <button
+              onClick={() => setViewAllGroups(false)}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all",
+                !viewAllGroups
+                  ? "bg-[#0f2863] text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              )}
+            >
+              Ce Groupe
+            </button>
+            <button
+              onClick={() => setViewAllGroups(true)}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all",
+                viewAllGroups
+                  ? "bg-[#0f2863] text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              )}
+            >
+              Module Complet
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* PV Printable Document Container */}

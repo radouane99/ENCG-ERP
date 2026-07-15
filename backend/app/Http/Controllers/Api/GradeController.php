@@ -22,9 +22,13 @@ class GradeController extends Controller
         // We'll assume academic_year_id = 1 for this implementation, or extract from request if provided
         $academicYearId = $request->query('academic_year_id', 1);
 
-        $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId) {
+        $groupId = $request->query('group_id');
+        $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId, $groupId) {
             $q->where('filiere_id', $assessment->module->filiere_id)
               ->where('academic_year_id', $academicYearId);
+            if ($groupId) {
+                $q->where('group_id', $groupId);
+            }
         });
 
         // Eager load grades for this specific assessment
@@ -48,12 +52,35 @@ class GradeController extends Controller
         return response()->json(['data' => $data]);
     }
 
-    /**
-     * Bulk save grades for an assessment.
-     */
     public function storeBulk(Request $request, $assessmentId): JsonResponse
     {
         $assessment = Assessment::findOrFail($assessmentId);
+
+        // [AUDIT SEC-04] Verify exam locking phases
+        $institution = \App\Models\Institution::first();
+        $settings = $institution->settings ?? [];
+        $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
+
+        if ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé') {
+            return response()->json([
+                'message' => 'Opération refusée : Toutes les saisies de notes sont actuellement verrouillées par l\'administration.'
+            ], 403);
+        }
+
+        $isRattrapageAssessment = strtolower($assessment->type) === 'rattrapage';
+        $isRattrapagePhase = str_contains(strtolower($currentPhase), 'rattrapage');
+
+        if ($isRattrapageAssessment && !$isRattrapagePhase) {
+            return response()->json([
+                'message' => 'Opération refusée : La session de rattrapage n\'est pas encore ouverte.'
+            ], 403);
+        }
+
+        if (!$isRattrapageAssessment && $isRattrapagePhase) {
+            return response()->json([
+                'message' => 'Opération refusée : La session ordinaire est verrouillée. Seules les notes de rattrapage peuvent être modifiées.'
+            ], 403);
+        }
 
         $validated = $request->validate([
             'grades' => 'required|array',
@@ -63,14 +90,58 @@ class GradeController extends Controller
         ]);
 
         foreach ($validated['grades'] as $gradeData) {
+            $newValue = !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null);
+            $newAbsent = $gradeData['absent'] ?? false;
+
+            // Audit change
+            $oldGrade = Grade::where('student_id', $gradeData['student_id'])
+                ->where('assessment_id', $assessment->id)
+                ->first();
+
+            $changed = false;
+            $oldValDesc = 'Néant';
+            
+            if (!$oldGrade) {
+                if ($newValue !== null || $newAbsent) {
+                    $changed = true;
+                }
+            } else {
+                if ($oldGrade->value != $newValue || $oldGrade->absent != $newAbsent) {
+                    $changed = true;
+                    $oldValDesc = $oldGrade->absent ? 'ABI' : ($oldGrade->value !== null ? $oldGrade->value . '/20' : 'Néant');
+                }
+            }
+
+            if ($changed) {
+                $student = \App\Models\Student::find($gradeData['student_id']);
+                $newValDesc = $newAbsent ? 'ABI' : ($newValue !== null ? $newValue . '/20' : 'Néant');
+                $user = $request->user();
+                $userName = $user ? ($user->name ?? $user->email) : 'Système/Enseignant';
+
+                if (class_exists('Spatie\Activitylog\Models\Activity')) {
+                    activity()
+                        ->performedOn($assessment)
+                        ->event('grade_modified')
+                        ->withProperties([
+                            'student' => $student->last_name . ' ' . $student->first_name,
+                            'student_number' => $student->student_number,
+                            'old_value' => $oldValDesc,
+                            'new_value' => $newValDesc,
+                            'ip' => $request->ip(),
+                            'author' => $userName
+                        ])
+                        ->log("Note modifiée pour l'étudiant {$student->last_name} {$student->first_name} : {$oldValDesc} -> {$newValDesc} par {$userName}");
+                }
+            }
+
             Grade::updateOrCreate(
                 [
                     'student_id' => $gradeData['student_id'],
                     'assessment_id' => $assessment->id,
                 ],
                 [
-                    'value' => !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null),
-                    'absent' => $gradeData['absent'] ?? false,
+                    'value' => $newValue,
+                    'absent' => $newAbsent,
                 ]
             );
         }
@@ -84,16 +155,18 @@ class GradeController extends Controller
     public function getModulePv(Request $request, $moduleId): JsonResponse
     {
         $groupId = $request->query('group_id');
-        if (!$groupId) {
-            return response()->json(['message' => 'Le paramètre group_id est requis.'], 400);
-        }
-
         $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
         
-        // Get all students registered in this group
-        $registrations = \App\Models\StudentRegistration::where('group_id', $groupId)
-            ->with('student')
-            ->get();
+        $query = \App\Models\StudentRegistration::query();
+
+        if ($groupId && $groupId !== 'all') {
+            $query->where('group_id', $groupId);
+        } else {
+            $query->where('filiere_id', $module->filiere_id)
+                  ->where('academic_year_id', $request->query('academic_year_id', 1));
+        }
+
+        $registrations = $query->with('student')->get();
 
         $students = $registrations->map(function ($reg) {
             return $reg->student;
