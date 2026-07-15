@@ -31,6 +31,7 @@ return new class extends Migration
             $table->foreignId('assessment_id')->constrained()->cascadeOnDelete();
             $table->decimal('value', 4, 2)->nullable(); // 0 to 20
             $table->boolean('absent')->default(false);
+            $table->unsignedInteger('version')->default(1);
             $table->timestamps();
 
             $table->unique(['student_id', 'assessment_id']);
