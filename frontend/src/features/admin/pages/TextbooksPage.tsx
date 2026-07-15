@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { Search } from 'lucide-react';
 
 export default function TextbooksPage() {
   const { data: textbooksData } = useQuery({
@@ -35,19 +36,20 @@ export default function TextbooksPage() {
           </select>
         </div>
         <div className="flex-1 min-w-[200px]">
-        <h1 className="text-2xl font-bold text-[#e6007e]">Cahiers de Textes</h1>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Rechercher..." 
-              className="pl-10 pr-4 py-2 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:ring-2 focus:ring-[#e6007e]"
-            />
+          <h1 className="text-2xl font-bold text-[#e6007e]">Cahiers de Textes</h1>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input 
+                type="text" 
+                placeholder="Rechercher..." 
+                className="pl-10 pr-4 py-2 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:ring-2 focus:ring-[#e6007e]"
+              />
+            </div>
+            <button className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors">
+              Filtrer
+            </button>
           </div>
-          <button className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors">
-            Filtrer
-          </button>
         </div>
       </div>
 

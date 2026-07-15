@@ -24,9 +24,6 @@ export default function ProfessorAIChatbot() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Only render if user is a professor
-  if (!hasAnyRole(['professor', 'vacataire'])) return null;
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -73,6 +70,9 @@ export default function ProfessorAIChatbot() {
       setIsTyping(false);
     }
   };
+
+  // Only render if user is a professor
+  if (!hasAnyRole(['professor', 'vacataire'])) return null;
 
   return (
     <>
