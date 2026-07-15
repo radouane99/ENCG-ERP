@@ -55,7 +55,7 @@ export default function AdminExamsPage() {
     setIsCheckingConflict(true)
     setConflictMsg('')
     try {
-      const res = await examsApi.checkRoomConflict(manualForm)
+      const res = await examsApi.checkRoomConflict({ ...manualForm, date: manualForm.exam_date })
       if (res.has_conflict) {
         setConflictMsg(res.message)
       } else {
@@ -70,7 +70,7 @@ export default function AdminExamsPage() {
 
   const handleCreateManual = async () => {
     try {
-      await examsApi.createExam(manualForm)
+      await examsApi.createExam({ ...manualForm, date: manualForm.exam_date })
       setShowManualModal(false)
       handleNotify(t('exams.messages.manual_success'))
     } catch (error) {

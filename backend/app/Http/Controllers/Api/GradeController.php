@@ -349,6 +349,7 @@ class GradeController extends Controller
                     'signed_at' => $sigRecord->signed_at->toIso8601String(),
                     'signature_data' => $sigRecord->signature_data,
                     'ip_address' => $sigRecord->ip_address,
+                    'digital_seal' => $sigRecord->digital_seal,
                 ];
             }
         }
@@ -621,6 +622,27 @@ class GradeController extends Controller
             return response()->json(['message' => 'Non autorisé.'], 401);
         }
 
+        // Query grades details to build a SHA-256 digital seal hash
+        $registrations = \App\Models\StudentRegistration::where('group_id', $groupId)
+            ->where('filiere_id', $module->filiere_id)
+            ->with(['student.grades' => function($q) use ($module) {
+                $q->whereIn('assessment_id', $module->assessments->pluck('id'));
+            }])
+            ->get();
+        
+        $sealData = [];
+        foreach ($registrations as $reg) {
+            if ($reg->student) {
+                $sealData[$reg->student_id] = $reg->student->grades->pluck('value', 'assessment_id')->toArray();
+            }
+        }
+        
+        $digitalSeal = hash('sha256', json_encode([
+            'module_id' => $module->id,
+            'group_id' => $groupId,
+            'grades' => $sealData
+        ]));
+
         // Save or update signature
         $signature = \App\Models\ModulePvSignature::updateOrCreate(
             [
@@ -633,6 +655,7 @@ class GradeController extends Controller
                 'signature_data' => $validated['signature_data'],
                 'ip_address' => $request->ip(),
                 'signed_at' => now(),
+                'digital_seal' => $digitalSeal,
             ]
         );
 
@@ -641,7 +664,7 @@ class GradeController extends Controller
             activity()
                 ->performedOn($signature)
                 ->event('pv_signed')
-                ->log("Le PV de délibération pour le module {$module->code} (Groupe ID {$groupId}) a été signé électroniquement par {$user->name}.");
+                ->log("Le PV de délibération pour le module {$module->code} (Groupe ID {$groupId}) a été signé électroniquement par {$user->name}. Empreinte : " . substr($digitalSeal, 0, 10));
         }
 
         return response()->json([
@@ -651,8 +674,35 @@ class GradeController extends Controller
                 'signed_at' => $signature->signed_at->toIso8601String(),
                 'signature_data' => $signature->signature_data,
                 'ip_address' => $signature->ip_address,
+                'digital_seal' => $signature->digital_seal,
             ]
         ]);
+    }
+
+    /**
+     * Get recent grade audit logs for a module.
+     */
+    public function getModuleAuditLogs($moduleId): JsonResponse
+    {
+        $module = \App\Models\Module::findOrFail($moduleId);
+        
+        $logs = \Spatie\Activitylog\Models\Activity::where(function($query) use ($module) {
+            $query->where('description', 'like', "%{$module->code}%")
+                  ->orWhere('description', 'like', "%{$module->name}%");
+        })
+        ->orderBy('created_at', 'desc')
+        ->take(30)
+        ->get()
+        ->map(function($log) {
+            return [
+                'id' => $log->id,
+                'description' => $log->description,
+                'causer_name' => $log->causer->name ?? ($log->causer->email ?? 'Système'),
+                'created_at' => $log->created_at->toIso8601String(),
+            ];
+        });
+
+        return response()->json($logs);
     }
 }
 

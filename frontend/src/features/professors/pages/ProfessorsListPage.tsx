@@ -95,7 +95,7 @@ export default function ProfessorsListPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     const payload = { ...form, department_id: form.department_id ? parseInt(form.department_id as string) : null }
-    saveMutation.mutate(payload)
+    saveMutation.mutate(payload as any)
   }
 
   const handleDelete = (id: number) => {

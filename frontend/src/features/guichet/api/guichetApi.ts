@@ -98,7 +98,7 @@ export const useUpdateDocumentRequestStatus = () => {
           guichetKeys.adminRequests(),
           previousRequests.map((req) =>
             req.id === newStatusUpdate.id
-              ? { ...req, status: newStatusUpdate.status as any, admin_notes: newStatusUpdate.admin_notes }
+              ? { ...req, status: newStatusUpdate.status as any, admin_notes: (newStatusUpdate.admin_notes ?? null) as any }
               : req
           )
         );

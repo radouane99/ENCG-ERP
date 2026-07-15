@@ -100,7 +100,7 @@ export default function GradeEntryTable() {
               </tr>
             </thead>
             <tbody>
-              {displayedStudents.map((student) => (
+              {displayedStudents.map((student: any) => (
                 <tr key={student.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                   <td className="p-3 font-mono">{student.apogee}</td>
                   <td className="p-3 font-medium flex items-center gap-2">

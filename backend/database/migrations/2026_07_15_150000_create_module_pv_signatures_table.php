@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('academic_year_id')->default(1);
             $table->foreignId('signed_by')->constrained('users')->cascadeOnDelete();
             $table->longText('signature_data'); // Base64 signature image
+            $table->string('digital_seal', 64)->nullable(); // SHA-256 seal
             $table->string('ip_address', 45)->nullable();
             $table->timestamp('signed_at')->useCurrent();
             $table->timestamps();

@@ -89,7 +89,7 @@ class PublicVerificationController extends Controller
                 'signed_at'     => $signature->signed_at->toIso8601String(),
                 'ip_address'    => $signature->ip_address,
                 'status'        => 'Authentique & Sécurisé (Signé)',
-                'fingerprint'   => hash('sha256', "pv-{$moduleId}-{$groupId}-{$signature->signed_at}")
+                'fingerprint'   => $signature->digital_seal ?? hash('sha256', "pv-{$moduleId}-{$groupId}-{$signature->signed_at}")
             ],
         ]);
     }

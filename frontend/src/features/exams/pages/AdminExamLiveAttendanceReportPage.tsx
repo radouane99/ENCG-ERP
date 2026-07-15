@@ -93,7 +93,7 @@ export default function AdminExamLiveAttendanceReportPage() {
                   <td colSpan={5} className="py-8 text-center text-slate-400">Aucun étudiant scanné</td>
                 </tr>
               ) : (
-                students.map((student, idx) => (
+                students.map((student: any, idx: number) => (
                   <tr key={idx} className="border-b border-slate-200">
                     <td className="py-3 px-4 font-black">{idx + 1}</td>
                     <td className="py-3 px-4 font-bold">{student.nom}</td>

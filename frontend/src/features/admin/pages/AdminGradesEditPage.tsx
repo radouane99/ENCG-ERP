@@ -22,9 +22,17 @@ export default function AdminGradesEditPage() {
   const [grades2, setGrades2] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [isDoubleSaisie, setIsDoubleSaisie] = useState(false)
   const [viewAllGroups, setViewAllGroups] = useState(false)
+  const [showAuditLogsDrawer, setShowAuditLogsDrawer] = useState(false)
 
   const [showModalityModal, setShowModalityModal] = useState(false)
   const [modalityAssessments, setModalityAssessments] = useState<{ id: number | null; type: string; weight: number }[]>([])
+
+  // Query audit logs
+  const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
+    queryKey: ['module-audit-logs', moduleId],
+    queryFn: () => api.get(`/modules/${moduleId}/audit-logs`).then(res => res.data),
+    enabled: !!moduleId && showAuditLogsDrawer,
+  })
 
   // Fetch assessments for the given module
   const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
@@ -249,14 +257,22 @@ export default function AdminGradesEditPage() {
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">{isRtl ? 'إدخال النقاط' : 'Édition des Notes'}</h1>
           <p className="text-[hsl(var(--muted-foreground))] mt-2">{isRtl ? 'الرجاء إدخال النقاط بدقة' : 'Veuillez saisir les notes avec précision'}</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowAuditLogsDrawer(true)}
+            className="rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider h-10 shadow-sm"
+          >
+            📋 Historique d'Audit
+          </Button>
           <Link 
             to={`/admin/grades/pv?group_id=${searchParams.get('group_id')}&module_id=${moduleId}`}
-            className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-sm"
+            className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-sm h-10"
           >
             📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV'}
           </Link>
-          <Link to="/admin/grades" className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors bg-slate-50 px-4 py-2.5 rounded-xl uppercase tracking-wider">
+          <Link to="/admin/grades" className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors bg-slate-50 px-4 py-2.5 rounded-xl uppercase tracking-wider h-10">
             <ArrowLeft className={cn("w-3.5 h-3.5", isRtl && "rotate-180")} /> 
             {isRtl ? 'العودة' : 'Retour'}
           </Link>
@@ -635,6 +651,56 @@ export default function AdminGradesEditPage() {
                   Enregistrer (100%)
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sliding Audit Logs Drawer */}
+      {showAuditLogsDrawer && (
+        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end print:hidden animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+            onClick={() => setShowAuditLogsDrawer(false)}
+          />
+          {/* Panel */}
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="p-6 border-b border-[hsl(var(--border))] flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+              <div>
+                <h3 className="text-base font-bold text-[#0f2863] dark:text-white">📋 Historique d'Audit</h3>
+                <p className="text-slate-400 text-[9px] uppercase font-bold tracking-wider mt-0.5">Traçabilité des opérations de notes</p>
+              </div>
+              <button 
+                onClick={() => setShowAuditLogsDrawer(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold bg-slate-100 dark:bg-slate-800 p-2 rounded-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {isLoadingLogs ? (
+                <div className="flex justify-center p-12"><Spinner /></div>
+              ) : auditLogs && auditLogs.length > 0 ? (
+                <div className="space-y-4">
+                  {auditLogs.map((log: any) => (
+                    <div key={log.id} className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
+                      <p className="text-xs text-slate-800 dark:text-slate-200 font-bold">{log.description}</p>
+                      <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 font-medium">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md font-bold text-slate-600 dark:text-slate-400">✓ {log.causer_name}</span>
+                        <span>{new Date(log.created_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-400 text-xs italic">
+                  Aucun historique d'audit disponible pour ce module.
+                </div>
+              )}
             </div>
           </div>
         </div>

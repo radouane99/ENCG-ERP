@@ -636,6 +636,12 @@ export default function AdminGradesPVPage() {
             <div className="h-20 w-48 border-b border-dashed border-slate-300"></div>
           </div>
         </div>
+        {pvData.signature && pvData.signature.digital_seal && (
+          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-[8px] font-mono text-slate-400">
+            <span>EMPREINTE DU PV (SHA-256) : {pvData.signature.digital_seal}</span>
+            <span>CERTIFICATION NUMÉRIQUE ENCG FÈS</span>
+          </div>
+        )}
       </div>
 
       {/* Signature drawing Canvas Modal */}

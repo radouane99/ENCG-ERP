@@ -1,6 +1,11 @@
 import axios from 'axios';
-import { GradeUpdate } from '../../types/models';
 import { useAuthStore } from '@stores/authStore';
+
+export interface GradeUpdate {
+  student_id: number;
+  value: number | null;
+  absent: boolean;
+}
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

@@ -71,7 +71,7 @@ export default function ExamDisplayList() {
           </thead>
           <tbody className="divide-y divide-border">
             {students.length > 0 ? (
-              students.map((student, index) => (
+              students.map((student: any, index: number) => (
                 <tr key={student.id} className="border-b border-white/5 bg-white/5/5">
                   <td className="px-6 py-4 font-mono font-medium">{index + 1}</td>
                   <td className="px-6 py-4 font-mono font-medium">{student.cne || student.matricule || `2026${student.id}`}</td>

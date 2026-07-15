@@ -14,6 +14,8 @@ Schedule::command('backup:clean')->daily();
 Schedule::command('backup:run')->daily();
 
 use App\Models\GradeEntryPeriod;
+use App\Mail\GradeDeadlineReminder;
+use Illuminate\Support\Facades\Mail;
 
 Schedule::call(function () {
     // Find all active periods whose end date has passed
@@ -48,4 +50,33 @@ Schedule::call(function () {
         }
     }
 })->hourly();
+
+Schedule::call(function () {
+    // Find active periods ending within the next 24 hours
+    $upcomingDeadlines = GradeEntryPeriod::where('is_open', true)
+        ->whereBetween('end_date', [now()->toDateString(), now()->addDay()->toDateString()])
+        ->get();
+
+    if ($upcomingDeadlines->isNotEmpty()) {
+        $deadline = $upcomingDeadlines->first();
+        $sessionLabel = $deadline->session_type ?? 'Saisie des Notes';
+
+        // Get all professors (users with professor role via Spatie)
+        $professors = \App\Models\User::role('professor')->get();
+
+        foreach ($professors as $prof) {
+            try {
+                Mail::to($prof->email)->send(
+                    new GradeDeadlineReminder(
+                        professorName: $prof->name ?? ($prof->first_name . ' ' . $prof->last_name),
+                        endDate: $deadline->end_date,
+                        sessionLabel: $sessionLabel,
+                    )
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Grade deadline reminder failed for ' . $prof->email . ': ' . $e->getMessage());
+            }
+        }
+    }
+})->dailyAt('09:00');
 

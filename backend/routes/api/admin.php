@@ -112,6 +112,7 @@ Route::get('/check-students', function() {
     Route::post('modules/{module}/pv/sign', [\App\Http\Controllers\Api\GradeController::class, 'signModulePv']);
     Route::get('modules/{module}/export-grades', [\App\Http\Controllers\Api\GradeController::class, 'exportGradesTemplate']);
     Route::post('modules/{module}/import-grades', [\App\Http\Controllers\Api\GradeController::class, 'importGrades']);
+    Route::get('modules/{module}/audit-logs', [\App\Http\Controllers\Api\GradeController::class, 'getModuleAuditLogs']);
     Route::get('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
     Route::get('academic/deliberate', [\App\Http\Controllers\Api\DeliberationController::class, 'run']);

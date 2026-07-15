@@ -31,7 +31,7 @@ export default function AlumniNetwork() {
 
   const alumniList = alumniData || []
 
-  const filteredAlumni = alumniList.filter(a => 
+  const filteredAlumni = alumniList.filter((a: any) => 
     a.last_name.toLowerCase().includes(search.toLowerCase()) ||
     a.company.toLowerCase().includes(search.toLowerCase())
   )
@@ -121,7 +121,7 @@ export default function AlumniNetwork() {
         </div>
 
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-[hsl(var(--muted)/10)]">
-          {filteredAlumni.map((alumni) => (
+          {filteredAlumni.map((alumni: any) => (
             <div key={alumni.id} className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
               <div className="absolute top-0 end-0 w-16 h-16 bg-gradient-to-bl from-amber-500/10 to-transparent pointer-events-none"></div>
               

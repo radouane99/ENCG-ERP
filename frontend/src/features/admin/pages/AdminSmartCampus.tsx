@@ -109,7 +109,7 @@ export default function AdminSmartCampus() {
           <h3 className="text-lg font-black text-white mb-6">État des Infrastructures</h3>
           
           <div className="space-y-4">
-            {rooms.map((room, idx) => (
+            {rooms.map((room: any, idx: number) => (
               <div key={idx} className={cn(
                 "p-4 rounded-2xl border transition-all cursor-pointer hover:shadow-md",
                 room.alert ? "border-rose-200 bg-rose-50/50" : "border-white/5 hover:border-blue-200"

@@ -137,7 +137,7 @@ export default function VacataireList() {
     try {
         const response = await api.get(`/hr/vacataires/${id}/contract-pdf`, { responseType: 'blob' });
         const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('href');
+        const link = document.createElement('a') as HTMLAnchorElement;
         link.href = url;
         link.setAttribute('download', `Contrat_Vacataire_${id}.pdf`);
         document.body.appendChild(link);
