@@ -19,6 +19,8 @@ export default function AdminGradesEditPage() {
 
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null)
   const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
+  const [grades2, setGrades2] = useState<Record<number, { value: string; absent: boolean }>>({})
+  const [isDoubleSaisie, setIsDoubleSaisie] = useState(false)
   const [viewAllGroups, setViewAllGroups] = useState(false)
 
   const [showModalityModal, setShowModalityModal] = useState(false)
@@ -99,13 +101,15 @@ export default function AdminGradesEditPage() {
   useEffect(() => {
     if (studentsData) {
       const initialGrades: Record<number, { value: string; absent: boolean }> = {}
+      const initialGrades2: Record<number, { value: string; absent: boolean }> = {}
       studentsData.forEach((student: any) => {
-        initialGrades[student.student_id] = {
-          value: student.value !== null ? String(student.value) : '',
-          absent: student.is_absent || false,
-        }
+        const val = student.value !== null ? String(student.value) : ''
+        const abs = student.is_absent || false
+        initialGrades[student.student_id] = { value: val, absent: abs }
+        initialGrades2[student.student_id] = { value: val, absent: abs }
       })
       setGrades(initialGrades)
+      setGrades2(initialGrades2)
     }
   }, [studentsData])
 
@@ -119,6 +123,68 @@ export default function AdminGradesEditPage() {
         return { ...prev, [id]: { ...studentData, value: cleanValue } }
       }
     })
+  }
+
+  const handleInputChange2 = (id: number, field: 'value' | 'absent', val: string | boolean) => {
+    setGrades2(prev => {
+      const studentData = prev[id] || { value: '', absent: false }
+      if (field === 'absent') {
+        return { ...prev, [id]: { ...studentData, absent: val as boolean, value: val ? '' : studentData.value } }
+      } else {
+        const cleanValue = (val as string).replace(',', '.')
+        return { ...prev, [id]: { ...studentData, value: cleanValue } }
+      }
+    })
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await api.get(`/modules/${moduleId}/export-grades`, {
+        params: { group_id: viewAllGroups ? 'all' : searchParams.get('group_id') },
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Canevas_Notes_Module_${moduleId}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toast.success(isRtl ? 'تم تحميل ملف الاكسل' : 'Canevas Excel téléchargé avec succès')
+    } catch (err) {
+      toast.error(isRtl ? 'حدث خطأ أثناء تحميل الملف' : 'Erreur lors du téléchargement du canevas Excel.')
+    }
+  }
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const toastId = toast.loading(isRtl ? 'جاري استيراد النقاط...' : 'Importation des notes en cours...')
+    try {
+      const res = await api.post(`/modules/${moduleId}/import-grades`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      toast.dismiss(toastId)
+      toast.success(res.data.message || "Notes importées avec succès !")
+      if (res.data.warnings && res.data.warnings.length > 0) {
+        res.data.warnings.forEach((warn: string) => {
+          toast.warning(warn, { duration: 6000 })
+        })
+      }
+      queryClient.invalidateQueries({ queryKey: ['grades', selectedAssessmentId] })
+    } catch (err: any) {
+      toast.dismiss(toastId)
+      toast.error(err.response?.data?.message || "Erreur lors de l'importation du fichier Excel.")
+      if (err.response?.data?.details) {
+        toast.error(err.response.data.details, { duration: 6000 })
+      }
+    }
   }
 
   // Mutation to save grades
@@ -139,6 +205,20 @@ export default function AdminGradesEditPage() {
     e.preventDefault()
     
     if (!selectedAssessmentId) return;
+
+    if (isDoubleSaisie) {
+      const hasDifferences = Object.keys(grades).some(studentIdStr => {
+        const studentId = parseInt(studentIdStr, 10)
+        const g1 = grades[studentId]
+        const g2 = grades2[studentId]
+        return g1?.value !== g2?.value || g1?.absent !== g2?.absent
+      })
+
+      if (hasDifferences) {
+        toast.error(isRtl ? 'يرجى تصحيح الفروقات بين السطرين قبل الحفظ' : "Veuillez résoudre les écarts de Saisie 1 et Saisie 2 avant d'enregistrer.")
+        return
+      }
+    }
 
     const payload = {
       grades: Object.keys(grades).map(studentIdStr => {
@@ -217,34 +297,54 @@ export default function AdminGradesEditPage() {
             )}
           </div>
 
-          <div className="border-t md:border-t-0 md:border-l border-[hsl(var(--border))] pt-4 md:pt-0 md:ps-6 flex flex-col justify-center">
-            <span className="block text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">
-              Périmètre de saisie
-            </span>
-            <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+          <div className="border-t md:border-t-0 md:border-l border-[hsl(var(--border))] pt-4 md:pt-0 md:ps-6 flex flex-wrap gap-6 items-center">
+            <div>
+              <span className="block text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">
+                Périmètre de saisie
+              </span>
+              <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setViewAllGroups(false)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                    !viewAllGroups
+                      ? "bg-[#0f2863] text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  )}
+                >
+                  Par Groupe
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewAllGroups(true)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                    viewAllGroups
+                      ? "bg-[#0f2863] text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  )}
+                >
+                  Module Complet
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="block text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">
+                Saisie Double
+              </span>
               <button
                 type="button"
-                onClick={() => setViewAllGroups(false)}
+                onClick={() => setIsDoubleSaisie(!isDoubleSaisie)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-                  !viewAllGroups
-                    ? "bg-[#0f2863] text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider w-fit border flex items-center justify-center gap-1.5 h-10",
+                  isDoubleSaisie
+                    ? "bg-red-50 text-red-700 border-red-200 shadow-sm animate-pulse"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                 )}
               >
-                Par Groupe
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewAllGroups(true)}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-                  viewAllGroups
-                    ? "bg-[#0f2863] text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                )}
-              >
-                Module Complet
+                {isDoubleSaisie ? '🛑 Activée (Double Saisie)' : '🗂️ Mode Double Saisie'}
               </button>
             </div>
           </div>
@@ -271,6 +371,27 @@ export default function AdminGradesEditPage() {
                 <Badge variant="success" className="bg-white/20 text-white border-none">{isRtl ? 'دورة عادية' : 'Session Ordinaire'}</Badge>
               </div>
             </div>
+
+            {/* Import / Export Action Buttons */}
+            <div className="relative z-10 flex flex-wrap items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                className="bg-white/10 text-white hover:bg-white/20 border border-white/20 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
+              >
+                📥 {isRtl ? 'تحميل كشف Excel' : 'Canevas Excel'}
+              </button>
+              <label className="cursor-pointer bg-white text-[#0f2863] hover:bg-white/90 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+                📤 {isRtl ? 'استيراد النقاط' : 'Importer Excel'}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
             <div className="relative z-10 flex flex-col items-center justify-center bg-white/10 border border-white/20 rounded-2xl p-4 min-w-[120px] backdrop-blur-md">
               <span className="text-3xl font-bold text-white mb-1">{studentsData?.length || 0}</span>
               <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest text-center">
@@ -285,48 +406,127 @@ export default function AdminGradesEditPage() {
               <thead className="bg-[hsl(var(--muted)/50)] text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-y border-[hsl(var(--border))]">
                 <tr>
                   <th className="px-6 py-4 text-start">{isRtl ? 'الطالب' : 'Étudiant'}</th>
-                  <th className="px-6 py-4 text-center">Note (/20)</th>
-                  <th className="px-6 py-4 text-center">Absent(e)</th>
+                  {isDoubleSaisie ? (
+                    <>
+                      <th className="px-6 py-4 text-center">Note 1 (Prof)</th>
+                      <th className="px-6 py-4 text-center">Absent(e) 1</th>
+                      <th className="px-6 py-4 text-center">Note 2 (Vérif)</th>
+                      <th className="px-6 py-4 text-center">Absent(e) 2</th>
+                      <th className="px-6 py-4 text-center">Statut</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-6 py-4 text-center">Note (/20)</th>
+                      <th className="px-6 py-4 text-center">Absent(e)</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
-                {studentsData?.map((student: any) => (
-                  <tr key={student.student_id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
-                          {student.first_name.substring(0, 1)}{student.last_name.substring(0, 1)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-[hsl(var(--foreground))] text-sm">{student.first_name} {student.last_name}</div>
-                          <div className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider">
-                            {student.apogee || student.student_number}
+                {studentsData?.map((student: any) => {
+                  const s1 = grades[student.student_id];
+                  const s2 = grades2[student.student_id];
+                  const hasConflict = isDoubleSaisie && (s1?.value !== s2?.value || s1?.absent !== s2?.absent);
+
+                  return (
+                    <tr key={student.student_id} className={cn("hover:bg-[hsl(var(--muted)/30)] transition-colors group", hasConflict && "bg-red-50/70 hover:bg-red-100/70 dark:bg-red-950/20 border-l-4 border-l-red-500")}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                            {student.first_name.substring(0, 1)}{student.last_name.substring(0, 1)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-[hsl(var(--foreground))] text-sm">{student.first_name} {student.last_name}</div>
+                            <div className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider">
+                              {student.apogee || student.student_number}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <input 
-                        type="number"
-                        step="0.25"
-                        min="0"
-                        max="20"
-                        value={grades[student.student_id]?.value ?? ''}
-                        disabled={grades[student.student_id]?.absent}
-                        onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                        className="w-24 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all outline-none disabled:opacity-50"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <input 
-                        type="checkbox"
-                        checked={grades[student.student_id]?.absent ?? false}
-                        onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                        className="w-5 h-5 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      {isDoubleSaisie ? (
+                        <>
+                          {/* Saisie 1 */}
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="number"
+                              step="0.25"
+                              min="0"
+                              max="20"
+                              value={grades[student.student_id]?.value ?? ''}
+                              disabled={grades[student.student_id]?.absent}
+                              onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
+                              className="w-24 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] outline-none disabled:opacity-50"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="checkbox"
+                              checked={grades[student.student_id]?.absent ?? false}
+                              onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
+                              className="w-5 h-5 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))]"
+                            />
+                          </td>
+                          {/* Saisie 2 */}
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="number"
+                              step="0.25"
+                              min="0"
+                              max="20"
+                              value={grades2[student.student_id]?.value ?? ''}
+                              disabled={grades2[student.student_id]?.absent}
+                              onChange={(e) => handleInputChange2(student.student_id, 'value', e.target.value)}
+                              className="w-24 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] outline-none disabled:opacity-50"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="checkbox"
+                              checked={grades2[student.student_id]?.absent ?? false}
+                              onChange={(e) => handleInputChange2(student.student_id, 'absent', e.target.checked)}
+                              className="w-5 h-5 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))]"
+                            />
+                          </td>
+                          {/* Conflict Status */}
+                          <td className="px-6 py-4 text-center font-bold">
+                            {hasConflict ? (
+                              <span className="text-red-600 bg-red-100/80 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 w-fit mx-auto border border-red-200">
+                                ⚠️ Écart
+                              </span>
+                            ) : (
+                              <span className="text-emerald-600 bg-emerald-100/80 px-2.5 py-1 rounded-lg text-xs w-fit mx-auto">
+                                ✓ Conforme
+                              </span>
+                            )}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="number"
+                              step="0.25"
+                              min="0"
+                              max="20"
+                              value={grades[student.student_id]?.value ?? ''}
+                              disabled={grades[student.student_id]?.absent}
+                              onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
+                              className="w-24 text-center rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm font-bold text-[hsl(var(--foreground))] focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all outline-none disabled:opacity-50"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <input 
+                              type="checkbox"
+                              checked={grades[student.student_id]?.absent ?? false}
+                              onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
+                              className="w-5 h-5 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
+                            />
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

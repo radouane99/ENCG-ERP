@@ -89,6 +89,26 @@ class GradeController extends Controller
             'grades.*.absent' => 'boolean',
         ]);
 
+        // [AUDIT SEC-05] Block updates if the PV is already digitally signed
+        $studentId = $validated['grades'][0]['student_id'] ?? null;
+        if ($studentId) {
+            $registration = \App\Models\StudentRegistration::where('student_id', $studentId)
+                ->where('filiere_id', $assessment->module->filiere_id)
+                ->first();
+            $groupId = $registration ? $registration->group_id : null;
+            
+            if ($groupId) {
+                $isSigned = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)
+                    ->where('group_id', $groupId)
+                    ->exists();
+                if ($isSigned) {
+                    return response()->json([
+                        'message' => 'Opération refusée : Le PV de délibération pour ce groupe a été signé électroniquement et verrouillé.'
+                    ], 403);
+                }
+            }
+        }
+
         foreach ($validated['grades'] as $gradeData) {
             $newValue = !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null);
             $newAbsent = $gradeData['absent'] ?? false;
@@ -317,6 +337,22 @@ class GradeController extends Controller
             ];
         });
 
+        $signature = null;
+        if ($groupId && $groupId !== 'all') {
+            $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+                ->where('group_id', $groupId)
+                ->with('signer')
+                ->first();
+            if ($sigRecord) {
+                $signature = [
+                    'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
+                    'signed_at' => $sigRecord->signed_at->toIso8601String(),
+                    'signature_data' => $sigRecord->signature_data,
+                    'ip_address' => $sigRecord->ip_address,
+                ];
+            }
+        }
+
         return response()->json([
             'module' => [
                 'id' => $module->id,
@@ -330,7 +366,334 @@ class GradeController extends Controller
                     'weight' => $a->weight
                 ];
             }),
-            'data' => $data
+            'data' => $data,
+            'signature' => $signature
         ]);
+    }
+
+    /**
+     * Export Excel template for entering grades.
+     */
+    public function exportGradesTemplate(Request $request, $moduleId)
+    {
+        $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+        $groupId = $request->query('group_id');
+        
+        $query = \App\Models\StudentRegistration::query();
+        if ($groupId && $groupId !== 'all') {
+            $query->where('group_id', $groupId);
+        } else {
+            $query->where('filiere_id', $module->filiere_id)
+                  ->where('academic_year_id', $request->query('academic_year_id', 1));
+        }
+
+        $registrations = $query->with('student')->get();
+        $students = $registrations->map(function ($reg) {
+            return $reg->student;
+        })->filter();
+
+        // Get assessments for this module, excluding Rattrapage
+        $assessments = $module->assessments->filter(function ($a) {
+            return strtolower($a->type) !== 'rattrapage';
+        })->values();
+
+        $headings = ['Code Apogée', 'Nom', 'Prénom'];
+        foreach ($assessments as $a) {
+            $headings[] = "{$a->type} (Poids: {$a->weight}%)";
+        }
+
+        $rows = [];
+        foreach ($students as $student) {
+            $row = [
+                $student->student_number ?? $student->id,
+                $student->last_name,
+                $student->first_name,
+            ];
+
+            foreach ($assessments as $a) {
+                // Fetch existing grade if any
+                $grade = Grade::where('student_id', $student->id)
+                    ->where('assessment_id', $a->id)
+                    ->first();
+
+                if ($grade) {
+                    $row[] = $grade->absent ? 'ABI' : ($grade->value !== null ? $grade->value : '');
+                } else {
+                    $row[] = '';
+                }
+            }
+            $rows[] = $row;
+        }
+
+        $groupName = 'Module';
+        if ($groupId && $groupId !== 'all') {
+            $group = \Illuminate\Support\Facades\DB::table('groups')->where('id', $groupId)->first();
+            if ($group) {
+                $groupName = $group->name;
+            }
+        }
+
+        $fileName = "Canevas_Notes_{$module->code}_{$groupName}.xlsx";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new GradesTemplateExport($headings, $rows, "Canevas Notes"), $fileName);
+    }
+
+    /**
+     * Import grades from completed Excel sheet.
+     */
+    public function importGrades(Request $request, $moduleId): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+
+        // Verify exam locking phases
+        $institution = \App\Models\Institution::first();
+        $settings = $institution->settings ?? [];
+        $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
+
+        if ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé') {
+            return response()->json([
+                'message' => 'Opération refusée : Toutes les saisies de notes sont actuellement verrouillées par l\'administration.'
+            ], 403);
+        }
+
+        $sheets = \Maatwebsite\Excel\Facades\Excel::toArray(new class {}, $request->file('file'));
+        if (empty($sheets) || empty($sheets[0])) {
+            return response()->json(['message' => 'Le fichier Excel est vide ou invalide.'], 400);
+        }
+
+        $rows = $sheets[0];
+        $headings = array_map('trim', $rows[0]);
+
+        // Find which columns map to which assessments
+        $colMap = []; // index => assessment
+        $lockedColumns = [];
+
+        foreach ($headings as $index => $heading) {
+            if ($index < 3) continue; // Skip Code Apogee, Nom, Prenom
+
+            // Find matching assessment for module
+            foreach ($module->assessments as $assessment) {
+                $typeLower = strtolower($assessment->type);
+                if (str_contains(strtolower($heading), $typeLower)) {
+                    // Check locking rules for this assessment
+                    $isRattrapageAssessment = $typeLower === 'rattrapage';
+                    $isRattrapagePhase = str_contains(strtolower($currentPhase), 'rattrapage');
+
+                    if ($isRattrapageAssessment && !$isRattrapagePhase) {
+                        $lockedColumns[] = "{$assessment->type} (Session rattrapage non ouverte)";
+                    } elseif (!$isRattrapageAssessment && $isRattrapagePhase) {
+                        $lockedColumns[] = "{$assessment->type} (Session ordinaire verrouillée)";
+                    } else {
+                        $colMap[$index] = $assessment;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (empty($colMap)) {
+            return response()->json([
+                'message' => 'Aucune colonne correspondante aux évaluations actives et déverrouillées n\'a été trouvée dans le fichier Excel.',
+                'details' => !empty($lockedColumns) ? 'Colonnes verrouillées: ' . implode(', ', $lockedColumns) : 'Veuillez vérifier les entêtes des colonnes.'
+            ], 400);
+        }
+
+        $updatedCount = 0;
+        $warnings = [];
+
+        for ($i = 1; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            if (empty($row[0])) continue; // Skip empty rows
+
+            $apogeeCode = trim($row[0]);
+            $student = \App\Models\Student::where('student_number', $apogeeCode)
+                ->orWhere('id', $apogeeCode)
+                ->first();
+
+            if (!$student) {
+                $warnings[] = "Ligne " . ($i + 1) . " : Étudiant introuvable avec le matricule/code '{$apogeeCode}'";
+                continue;
+            }
+
+            foreach ($colMap as $colIdx => $assessment) {
+                $rawValue = isset($row[$colIdx]) ? trim($row[$colIdx]) : '';
+                if ($rawValue === '') continue; // Skip empty cells
+
+                $value = null;
+                $absent = false;
+
+                if (in_array(strtoupper($rawValue), ['ABI', 'ABS', 'ABSENT'])) {
+                    $absent = true;
+                } elseif (is_numeric($rawValue)) {
+                    $valFloat = floatval($rawValue);
+                    if ($valFloat >= 0 && $valFloat <= 20) {
+                        $value = $valFloat;
+                    } else {
+                        $warnings[] = "{$student->last_name} {$student->first_name} : Note '{$rawValue}' invalide (doit être entre 0 et 20). Ignorée.";
+                        continue;
+                    }
+                } else {
+                    $warnings[] = "{$student->last_name} {$student->first_name} : Valeur '{$rawValue}' non reconnue. Ignorée.";
+                    continue;
+                }
+
+                // Check changes for auditing
+                $oldGrade = Grade::where('student_id', $student->id)
+                    ->where('assessment_id', $assessment->id)
+                    ->first();
+
+                $changed = false;
+                $oldValDesc = 'Néant';
+
+                if (!$oldGrade) {
+                    if ($value !== null || $absent) {
+                        $changed = true;
+                    }
+                } else {
+                    if ($oldGrade->value != $value || $oldGrade->absent != $absent) {
+                        $changed = true;
+                        $oldValDesc = $oldGrade->absent ? 'ABI' : ($oldGrade->value !== null ? $oldGrade->value . '/20' : 'Néant');
+                    }
+                }
+
+                if ($changed) {
+                    $newValDesc = $absent ? 'ABI' : ($value !== null ? $value . '/20' : 'Néant');
+                    $user = $request->user();
+                    $userName = $user ? ($user->name ?? $user->email) : 'Système/Import Excel';
+
+                    if (class_exists('Spatie\Activitylog\Models\Activity')) {
+                        activity()
+                            ->performedOn($assessment)
+                            ->event('grade_modified')
+                            ->withProperties([
+                                'student' => $student->last_name . ' ' . $student->first_name,
+                                'student_number' => $student->student_number,
+                                'old_value' => $oldValDesc,
+                                'new_value' => $newValDesc,
+                                'ip' => $request->ip(),
+                                'author' => $userName
+                            ])
+                            ->log("Note modifiée par import Excel pour {$student->last_name} {$student->first_name} : {$oldValDesc} -> {$newValDesc} par {$userName}");
+                    }
+                }
+
+                Grade::updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'assessment_id' => $assessment->id,
+                    ],
+                    [
+                        'value' => $value,
+                        'absent' => $absent,
+                    ]
+                );
+
+                $updatedCount++;
+            }
+        }
+
+        return response()->json([
+            'message' => "Importation terminée avec succès. {$updatedCount} notes mises à jour.",
+            'warnings' => $warnings,
+            'locked_skipped' => $lockedColumns
+        ]);
+    }
+
+    /**
+     * Digitally sign a module PV for a specific group.
+     */
+    public function signModulePv(Request $request, $moduleId): JsonResponse
+    {
+        $validated = $request->validate([
+            'group_id' => 'required|exists:groups,id',
+            'signature_data' => 'required|string', // Base64 data URI
+        ]);
+
+        $module = \App\Models\Module::findOrFail($moduleId);
+        $groupId = $validated['group_id'];
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Non autorisé.'], 401);
+        }
+
+        // Save or update signature
+        $signature = \App\Models\ModulePvSignature::updateOrCreate(
+            [
+                'module_id' => $module->id,
+                'group_id' => $groupId,
+                'academic_year_id' => $request->query('academic_year_id', 1),
+            ],
+            [
+                'signed_by' => $user->id,
+                'signature_data' => $validated['signature_data'],
+                'ip_address' => $request->ip(),
+                'signed_at' => now(),
+            ]
+        );
+
+        // Audit Log signature
+        if (class_exists('Spatie\Activitylog\Models\Activity')) {
+            activity()
+                ->performedOn($signature)
+                ->event('pv_signed')
+                ->log("Le PV de délibération pour le module {$module->code} (Groupe ID {$groupId}) a été signé électroniquement par {$user->name}.");
+        }
+
+        return response()->json([
+            'message' => 'Le PV a été signé et verrouillé avec succès.',
+            'signature' => [
+                'signed_by' => $user->name ?? $user->email,
+                'signed_at' => $signature->signed_at->toIso8601String(),
+                'signature_data' => $signature->signature_data,
+                'ip_address' => $signature->ip_address,
+            ]
+        ]);
+    }
+}
+
+class GradesTemplateExport implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithTitle, \Maatwebsite\Excel\Concerns\WithStyles
+{
+    protected $headings;
+    protected $rows;
+    protected $title;
+
+    public function __construct(array $headings, array $rows, string $title)
+    {
+        $this->headings = $headings;
+        $this->rows = $rows;
+        $this->title = $title;
+    }
+
+    public function headings(): array
+    {
+        return $this->headings;
+    }
+
+    public function array(): array
+    {
+        return $this->rows;
+    }
+
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '0F2863']
+                ]
+            ],
+        ];
     }
 }
