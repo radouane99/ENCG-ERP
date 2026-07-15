@@ -121,6 +121,18 @@ export default function AcademicYearSettingsPage() {
     })
   }
 
+  const handleDownloadTemplate = () => {
+    const csvContent = "email_professeur,module_code,groupe\nprof@encg.ma,MOD01,G1\n"
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "modele_affectations.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const { data: yearsData, isLoading: yearsLoading } = useQuery({
     queryKey: ['academic-years'],
     queryFn: () => api.get('/academic-years').then(r => r.data)
@@ -479,7 +491,10 @@ export default function AcademicYearSettingsPage() {
                   <p className="text-[11px] font-mono font-bold text-amber-700 bg-amber-100/50 inline-block px-2 py-1 rounded">
                     email_professeur | module_code | groupe
                   </p>
-                  <button className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 mt-3 transition-colors">
+                  <button 
+                    onClick={handleDownloadTemplate}
+                    className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 mt-3 transition-colors"
+                  >
                     <Download className="w-3 h-3" /> Télécharger le modèle
                   </button>
                 </div>
