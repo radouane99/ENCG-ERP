@@ -107,6 +107,7 @@ Route::get('/check-students', function() {
         Route::post('/validate', [\App\Http\Controllers\Api\GradeController::class, 'validateGrades']);
     });
     Route::get('modules/{module}/assessments', [\App\Http\Controllers\Api\AssessmentController::class, 'getForModule']);
+    Route::post('modules/{module}/assessments', [\App\Http\Controllers\Api\AssessmentController::class, 'storeForModule']);
     Route::get('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
     Route::get('academic/deliberate', [\App\Http\Controllers\Api\DeliberationController::class, 'run']);

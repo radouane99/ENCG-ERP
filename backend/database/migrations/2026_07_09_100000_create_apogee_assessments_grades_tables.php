@@ -17,7 +17,7 @@ return new class extends Migration
         Schema::create('assessments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('module_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['CC', 'Exam', 'TP', 'Project']);
+            $table->string('type', 50);
             $table->decimal('weight', 5, 2); // percentage 0-100
             $table->date('date')->nullable();
             $table->timestamps();

@@ -48,6 +48,19 @@ export default function ModulesListPage() {
     filiere_id: '',
     is_active: true
   })
+  const [assessmentsList, setAssessmentsList] = useState<{ id?: number | null, type: string, weight: number }[]>([])
+
+  const addAssessmentRow = () => {
+    setAssessmentsList(prev => [...prev, { type: 'CC', weight: 0 }])
+  }
+
+  const removeAssessmentRow = (index: number) => {
+    setAssessmentsList(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateAssessmentRow = (index: number, field: 'type' | 'weight', value: any) => {
+    setAssessmentsList(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item))
+  }
 
   // Fetch data
   const fetchData = async () => {
@@ -90,7 +103,7 @@ export default function ModulesListPage() {
     }
   }
 
-  const handleOpenModal = (mod?: Module) => {
+  const handleOpenModal = async (mod?: Module) => {
     if (mod) {
       setEditingId(mod.id);
       setFormData({
@@ -102,11 +115,23 @@ export default function ModulesListPage() {
         filiere_id: mod.filiere_id ? mod.filiere_id.toString() : '',
         is_active: mod.active
       });
+      try {
+        const response = await api.get(`/modules/${mod.id}/assessments`);
+        setAssessmentsList(response.data.data.map((a: any) => ({
+          id: a.id,
+          type: a.type,
+          weight: a.weight
+        })));
+      } catch (err) {
+        console.error("Error fetching assessments", err);
+        setAssessmentsList([{ type: 'Exam', weight: 100 }]);
+      }
     } else {
       setEditingId(null);
       setFormData({ 
         code: '', name: '', semester_number: 1, coefficient: 1, credit_hours: 45, filiere_id: '', is_active: true 
       });
+      setAssessmentsList([{ type: 'Exam', weight: 100 }]);
     }
     setShowModal(true);
   }
@@ -119,6 +144,13 @@ export default function ModulesListPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    const sum = assessmentsList.reduce((acc, curr) => acc + curr.weight, 0);
+    if (assessmentsList.length > 0 && Math.abs(sum - 100) > 0.01) {
+      alert(`La somme des poids des évaluations doit être égale à 100% (Actuellement: ${sum}%)`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Convert filiere_id to null if empty string
@@ -127,11 +159,21 @@ export default function ModulesListPage() {
         filiere_id: formData.filiere_id === '' ? null : parseInt(formData.filiere_id)
       };
 
+      let targetModuleId = editingId;
       if (editingId) {
         await api.put(`/modules/${editingId}`, payload);
       } else {
-        await api.post('/modules', payload);
+        const res = await api.post('/modules', payload);
+        targetModuleId = res.data.data.id;
       }
+
+      // Sync assessments/modalities
+      if (targetModuleId) {
+        await api.post(`/modules/${targetModuleId}/assessments`, {
+          assessments: assessmentsList
+        });
+      }
+
       handleCloseModal();
       fetchData(); // Refresh list
     } catch (error: unknown) {
@@ -388,6 +430,56 @@ export default function ModulesListPage() {
                   />
                 </div>
                 
+                {/* Modality block */}
+                <div className="border-t border-slate-100 pt-6">
+                  <label className="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-wide">Modalités d'évaluation (Requis - Total: 100%)</label>
+                  <div className="space-y-3">
+                    {assessmentsList.map((item, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <select
+                            value={item.type}
+                            onChange={(e) => updateAssessmentRow(index, 'type', e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none bg-white"
+                          >
+                            <option value="CC">Contrôle Continu</option>
+                            <option value="CC1">CC1</option>
+                            <option value="CC2">CC2</option>
+                            <option value="Exam">Examen</option>
+                            <option value="TP">TP</option>
+                            <option value="Oral">Oral</option>
+                            <option value="Project">Projet</option>
+                          </select>
+                        </div>
+                        <div className="w-28">
+                          <input
+                            type="number"
+                            placeholder="Poids %"
+                            value={item.weight}
+                            onChange={(e) => updateAssessmentRow(index, 'weight', parseFloat(e.target.value) || 0)}
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 text-center outline-none"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAssessmentRow(index)}
+                          className="p-2.5 text-red-500 bg-red-50/50 hover:bg-red-50 rounded-lg border border-transparent transition-colors text-xs"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addAssessmentRow}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 pt-1"
+                    >
+                      ➕ Ajouter une évaluation
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-end pt-6">
                   <button 
                     type="submit" 

@@ -20,6 +20,9 @@ export default function AdminGradesEditPage() {
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null)
   const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
 
+  const [showModalityModal, setShowModalityModal] = useState(false)
+  const [modalityAssessments, setModalityAssessments] = useState<{ id: number | null; type: string; weight: number }[]>([])
+
   // Fetch assessments for the given module
   const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
     queryKey: ['assessments', moduleId],
@@ -27,19 +30,67 @@ export default function AdminGradesEditPage() {
     enabled: !!moduleId,
   })
 
-  // Select the first assessment by default if available
-  useEffect(() => {
-    if (assessmentsData && assessmentsData.length > 0 && !selectedAssessmentId) {
-      setSelectedAssessmentId(assessmentsData[0].id)
-    }
-  }, [assessmentsData, selectedAssessmentId])
-
   // Fetch students & grades for the selected assessment
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['grades', selectedAssessmentId],
     queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`).then(res => res.data.data),
     enabled: !!selectedAssessmentId,
   })
+
+  useEffect(() => {
+    if (assessmentsData) {
+      setModalityAssessments(
+        assessmentsData.map((a: any) => ({
+          id: a.id,
+          type: a.type,
+          weight: a.weight
+        }))
+      )
+    }
+  }, [assessmentsData, showModalityModal])
+
+  const addModalityRow = () => {
+    setModalityAssessments(prev => [...prev, { id: null, type: 'CC', weight: 0 }])
+  }
+
+  const removeModalityRow = (index: number) => {
+    setModalityAssessments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateModalityField = (index: number, field: 'type' | 'weight', value: any) => {
+    setModalityAssessments(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item))
+  }
+
+  const handleSaveModality = async () => {
+    const sum = modalityAssessments.reduce((acc, curr) => acc + curr.weight, 0)
+    if (modalityAssessments.length > 0 && Math.abs(sum - 100) > 0.01) {
+      toast.error(isRtl ? 'يجب أن يكون مجموع الأوزان 100%' : 'La somme des poids doit être égale à 100%')
+      return
+    }
+
+    try {
+      const response = await api.post(`/modules/${moduleId}/assessments`, {
+        assessments: modalityAssessments
+      })
+      toast.success(isRtl ? 'تم حفظ نظام التقييم بنجاح' : 'Modalités d\'évaluation enregistrées avec succès')
+      queryClient.invalidateQueries({ queryKey: ['assessments', moduleId] })
+      setShowModalityModal(false)
+      if (response.data.data && response.data.data.length > 0) {
+        setSelectedAssessmentId(response.data.data[0].id)
+      } else {
+        setSelectedAssessmentId(null)
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la configuration')
+    }
+  }
+
+  // Select the first assessment by default if available
+  useEffect(() => {
+    if (assessmentsData && assessmentsData.length > 0 && !selectedAssessmentId) {
+      setSelectedAssessmentId(assessmentsData[0].id)
+    }
+  }, [assessmentsData, selectedAssessmentId])
 
   // Initialize local state when students are loaded
   useEffect(() => {
@@ -128,18 +179,28 @@ export default function AdminGradesEditPage() {
         {isLoadingAssessments ? (
           <Spinner />
         ) : (
-          <select 
-            value={selectedAssessmentId || ''} 
-            onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
-            className="w-full md:w-1/3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--color-primary))] outline-none"
-          >
-            <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
-            {assessmentsData?.map((a: any) => (
-              <option key={a.id} value={a.id}>
-                {a.type} (Poids: {a.weight}%)
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <select 
+              value={selectedAssessmentId || ''} 
+              onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
+              className="w-full sm:w-1/3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--color-primary))] outline-none text-sm font-semibold text-[hsl(var(--foreground))]"
+            >
+              <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
+              {assessmentsData?.map((a: any) => (
+                <option key={a.id} value={a.id}>
+                  {a.type} (Poids: {a.weight}%)
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowModalityModal(true)}
+              className="rounded-xl font-bold uppercase tracking-wider text-xs px-4"
+            >
+              ⚙️ Configurer les modalités
+            </Button>
+          </div>
         )}
       </div>
 
@@ -234,6 +295,96 @@ export default function AdminGradesEditPage() {
             </Button>
           </div>
         </form>
+      )}
+
+      {/* Modality Settings Modal */}
+      {showModalityModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2 flex items-center gap-2">
+              ⚙️ {isRtl ? 'تهيئة نظام التقييم' : 'Configuration des Modalités'}
+            </h3>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mb-6 font-medium">
+              Définissez les évaluations (CC1, CC2, Examen...) et leurs coefficients. La somme totale des poids doit être égale à 100%.
+            </p>
+
+            <div className="space-y-4 max-h-[300px] overflow-y-auto mb-6 pr-2">
+              {modalityAssessments.map((a, index) => (
+                <div key={index} className="flex items-center gap-3 bg-[hsl(var(--muted)/5)] p-3 rounded-xl border border-[hsl(var(--border))]">
+                  <div className="flex-1">
+                    <label className="block text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] mb-1">Type d'évaluation</label>
+                    <select
+                      value={a.type}
+                      onChange={(e) => updateModalityField(index, 'type', e.target.value)}
+                      className="w-full p-2 text-sm font-semibold rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] outline-none"
+                    >
+                      <option value="CC">Contrôle Continu</option>
+                      <option value="CC1">CC1</option>
+                      <option value="CC2">CC2</option>
+                      <option value="Exam">Examen</option>
+                      <option value="TP">Travaux Pratiques</option>
+                      <option value="Oral">Oral</option>
+                      <option value="Projet">Projet</option>
+                      <option value="Rattrapage">Rattrapage</option>
+                    </select>
+                  </div>
+                  <div className="w-28">
+                    <label className="block text-[9px] font-bold uppercase text-[hsl(var(--muted-foreground))] mb-1">Poids (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={a.weight}
+                      onChange={(e) => updateModalityField(index, 'weight', parseFloat(e.target.value) || 0)}
+                      className="w-full p-2 text-sm font-bold text-center rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeModalityRow(index)}
+                    className="self-end p-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg transition-colors border border-red-100/50 mt-1"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+
+              {modalityAssessments.length === 0 && (
+                <div className="text-center text-xs text-[hsl(var(--muted-foreground))] py-6 italic">
+                  Aucune évaluation configurée. Cliquez sur ajouter pour commencer.
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-t border-[hsl(var(--border))] pt-4 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addModalityRow}
+                className="rounded-xl text-xs font-bold py-3"
+              >
+                ➕ Ajouter
+              </Button>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowModalityModal(false)}
+                  className="rounded-xl text-xs font-bold"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSaveModality}
+                  className="rounded-xl text-xs font-bold text-white bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary))/90]"
+                >
+                  Enregistrer (100%)
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
