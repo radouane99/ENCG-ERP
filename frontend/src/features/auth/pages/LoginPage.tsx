@@ -146,10 +146,10 @@ export default function LoginPage() {
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[hsl(var(--border))]"></span>
+            <span className="w-full border-t border-[var(--border)]"></span>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[hsl(var(--background))] px-2 text-muted-foreground">
+            <span className="bg-[var(--background)] px-2 text-muted-foreground">
               {isAr ? 'أو' : 'Ou'}
             </span>
           </div>

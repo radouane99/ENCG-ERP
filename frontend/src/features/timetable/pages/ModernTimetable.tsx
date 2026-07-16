@@ -28,7 +28,7 @@ interface TimetableEvent {
 }
 
 const TYPE_COLORS: Record<string, { bg: string, border: string }> = {
-  CM: { bg: 'hsl(var(--color-primary))', border: 'transparent' },
+  CM: { bg: 'var(--color-primary)', border: 'transparent' },
   TD: { bg: '#10b981', border: 'transparent' },
   TP: { bg: '#f59e0b', border: 'transparent' },
   EXAM: { bg: '#ef4444', border: 'transparent' },
@@ -102,17 +102,17 @@ export default function ModernTimetable() {
 
   const customStyles = `
     .fc { font-family: inherit; }
-    .fc-theme-standard .fc-scrollgrid { border-color: hsl(var(--border)); border-radius: 1.5rem; overflow: hidden; }
-    .fc-theme-standard th { background: hsl(var(--muted)/50); border-color: hsl(var(--border)); padding: 0.75rem 0; font-weight: 700; color: hsl(var(--foreground)); }
-    .fc-theme-standard td { border-color: hsl(var(--border)); }
+    .fc-theme-standard .fc-scrollgrid { border-color: var(--border); border-radius: 1.5rem; overflow: hidden; }
+    .fc-theme-standard th { background: color-mix(in srgb, var(--muted) 5000%, transparent); border-color: var(--border); padding: 0.75rem 0; font-weight: 700; color: var(--foreground); }
+    .fc-theme-standard td { border-color: var(--border); }
     .fc-timegrid-slot { height: 3.5rem !important; }
-    .fc-timegrid-slot-label { font-size: 0.75rem; font-weight: bold; color: hsl(var(--muted-foreground)); }
+    .fc-timegrid-slot-label { font-size: 0.75rem; font-weight: bold; color: var(--muted-foreground); }
     .fc-v-event { border-radius: 1rem; border: none; box-shadow: 0 4px 10px rgb(0 0 0 / 0.1); transition: transform 0.2s, z-index 0s; }
     .fc-v-event:hover { transform: scale(1.02); z-index: 50 !important; }
-    .fc-button-primary { background: hsl(var(--background)) !important; border: 1px solid hsl(var(--border)) !important; color: hsl(var(--foreground)) !important; border-radius: 0.75rem !important; font-weight: 600 !important; text-transform: capitalize !important; }
-    .fc-button-primary:hover { background: hsl(var(--muted)) !important; }
-    .fc-button-active { background: hsl(var(--color-primary)) !important; color: white !important; border-color: hsl(var(--color-primary)) !important; }
-    .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 800 !important; color: hsl(var(--foreground)) !important; }
+    .fc-button-primary { background: var(--background) !important; border: 1px solid var(--border) !important; color: var(--foreground) !important; border-radius: 0.75rem !important; font-weight: 600 !important; text-transform: capitalize !important; }
+    .fc-button-primary:hover { background: var(--muted) !important; }
+    .fc-button-active { background: var(--color-primary) !important; color: white !important; border-color: var(--color-primary) !important; }
+    .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--foreground) !important; }
   `
 
   return (
@@ -122,13 +122,13 @@ export default function ModernTimetable() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3">
-            <div className="w-10 h-10 bg-[hsl(var(--color-primary))/10] rounded-xl flex items-center justify-center text-[hsl(var(--color-primary))]">
+          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
+            <div className="w-10 h-10 bg-[var(--color-primary)/10] rounded-xl flex items-center justify-center text-[var(--color-primary)]">
               <CalendarIcon className="w-5 h-5" />
             </div>
             {t('modules:timetable.title')}
           </h1>
-          <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1 font-medium">
+          <p className="text-[var(--muted-foreground)] text-sm mt-1 font-medium">
             {t('modules:timetable.subtitle')}
           </p>
         </div>
@@ -140,14 +140,14 @@ export default function ModernTimetable() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-4 rounded-3xl shrink-0 shadow-sm items-center">
-        <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))] font-bold text-sm bg-[hsl(var(--muted)/30)] px-4 py-2 rounded-xl">
+      <div className="flex flex-wrap gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shrink-0 shadow-sm items-center">
+        <div className="flex items-center gap-2 text-[var(--muted-foreground)] font-bold text-sm bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] px-4 py-2 rounded-xl">
           <Filter size={16} /> {t('modules:timetable.filter')}
         </div>
         <select 
           value={targetType} 
           onChange={e => setTargetType(e.target.value as any)}
-          className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-bold text-[hsl(var(--foreground))] px-4 py-2 outline-none focus:border-[hsl(var(--color-primary))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] transition-all min-w-[160px]"
+          className="bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm font-bold text-[var(--foreground)] px-4 py-2 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all min-w-[160px]"
         >
           <option value="group">{t('modules:timetable.type_group')}</option>
           <option value="professor">{t('modules:timetable.type_prof')}</option>
@@ -160,13 +160,13 @@ export default function ModernTimetable() {
             placeholder={t('modules:timetable.search')}
             value={targetId}
             onChange={e => setTargetId(e.target.value)}
-            className="bg-[hsl(var(--background))]"
+            className="bg-[var(--background)]"
           />
         </div>
       </div>
 
       {/* FullCalendar Container */}
-      <div className="flex-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

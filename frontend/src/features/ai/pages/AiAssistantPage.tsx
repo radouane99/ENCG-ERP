@@ -184,15 +184,15 @@ export default function AiAssistantPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         
         {/* Chatbot Section */}
-        <div className="xl:col-span-2 flex flex-col h-[700px] bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-lg overflow-hidden relative">
-          <div className="p-4 border-b border-[hsl(var(--border))] bg-gradient-to-r from-[hsl(var(--muted)/30)] to-transparent flex items-center justify-between">
+        <div className="xl:col-span-2 flex flex-col h-[700px] bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-lg overflow-hidden relative">
+          <div className="p-4 border-b border-[var(--border)] bg-gradient-to-r from-[color-mix(in srgb, var(--muted) 3000%, transparent)] to-transparent flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 relative">
                 <MessageSquareText size={20} />
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[hsl(var(--card))] rounded-full"></span>
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[var(--card)] rounded-full"></span>
               </div>
               <div>
-                <h2 className="font-bold text-[hsl(var(--foreground))] text-lg">{isRtl ? 'المساعد الافتراضي' : 'Assistant IA'}</h2>
+                <h2 className="font-bold text-[var(--foreground)] text-lg">{isRtl ? 'المساعد الافتراضي' : 'Assistant IA'}</h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {isRtl ? 'جاهز للمساعدة' : 'Prêt à vous aider'}
                 </p>
@@ -219,7 +219,7 @@ export default function AiAssistantPage() {
                   "max-w-[85%] rounded-[1.5rem] p-5 shadow-sm relative group",
                   msg.role === 'user' 
                     ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-br-sm" 
-                    : "bg-[hsl(var(--background))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-bl-sm"
+                    : "bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-bl-sm"
                 )}>
                   {msg.role === 'assistant' && (
                     <div className="flex justify-between items-center mb-2">
@@ -241,7 +241,7 @@ export default function AiAssistantPage() {
             ))}
             {chatMutation.isPending && (
               <div className="flex justify-start">
-                <div className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl rounded-bl-sm p-5 shadow-sm flex items-center gap-2">
+                <div className="bg-[var(--background)] border border-[var(--border)] rounded-2xl rounded-bl-sm p-5 shadow-sm flex items-center gap-2">
                   <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                   <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
@@ -251,8 +251,8 @@ export default function AiAssistantPage() {
             <div ref={chatEndRef} />
           </div>
 
-          <div className="p-4 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <form onSubmit={handleSend} className="relative flex items-center gap-2 bg-[hsl(var(--muted)/50)] p-2 rounded-2xl border border-[hsl(var(--border))] focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all">
+          <div className="p-4 bg-[var(--card)] border-t border-[var(--border)] relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            <form onSubmit={handleSend} className="relative flex items-center gap-2 bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] p-2 rounded-2xl border border-[var(--border)] focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all">
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -298,15 +298,15 @@ export default function AiAssistantPage() {
 
         {/* QCM Generator Section */}
         <div className="xl:col-span-1 space-y-6">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm">
-            <h3 className="font-bold text-lg mb-4 text-[hsl(var(--foreground))] flex items-center gap-2">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm">
+            <h3 className="font-bold text-lg mb-4 text-[var(--foreground)] flex items-center gap-2">
               <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg"><FileQuestion size={18} /></div>
               {isRtl ? 'مولد الاختبارات (QCM)' : 'Générateur de QCM'}
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1.5 block">
+                <label className="text-sm font-semibold text-[var(--foreground)] mb-1.5 block">
                   {isRtl ? 'موضوع الاختبار' : 'Sujet du QCM'}
                 </label>
                 <Input 
@@ -318,7 +318,7 @@ export default function AiAssistantPage() {
                 />
               </div>
               <Button 
-                className="w-full rounded-xl bg-[hsl(var(--card))] border-2 border-purple-500/20 hover:border-purple-500 text-purple-600 transition-colors"
+                className="w-full rounded-xl bg-[var(--card)] border-2 border-purple-500/20 hover:border-purple-500 text-purple-600 transition-colors"
                 onClick={() => qcmMutation.mutate(qcmTopic)}
                 isLoading={qcmMutation.isPending}
                 disabled={!qcmTopic}
@@ -331,9 +331,9 @@ export default function AiAssistantPage() {
 
           {/* QCM Result Area */}
           {qcmResult && (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm overflow-hidden relative group">
-              <div className="flex justify-between items-center mb-4 border-b border-[hsl(var(--border))] pb-3">
-                <h4 className="font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm overflow-hidden relative group">
+              <div className="flex justify-between items-center mb-4 border-b border-[var(--border)] pb-3">
+                <h4 className="font-bold text-[var(--foreground)] flex items-center gap-2">
                   <Lightbulb size={16} className="text-amber-500" />
                   {isRtl ? 'النتيجة' : 'Résultat Généré'}
                 </h4>

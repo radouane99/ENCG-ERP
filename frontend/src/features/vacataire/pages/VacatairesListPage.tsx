@@ -135,28 +135,28 @@ export default function VacatairesListPage() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_total')}</p>
-            <p className="text-3xl font-black text-[hsl(var(--foreground))]">{vacatairesData?.length || 0}</p>
+            <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_total')}</p>
+            <p className="text-3xl font-black text-[var(--foreground)]">{vacatairesData?.length || 0}</p>
           </div>
           <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
             <Users size={24} />
           </div>
         </div>
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_active')}</p>
-            <p className="text-3xl font-black text-[hsl(var(--foreground))]">{vacatairesData?.filter((v: any) => v.vacation_contracts?.length > 0)?.length || 0}</p>
+            <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_active')}</p>
+            <p className="text-3xl font-black text-[var(--foreground)]">{vacatairesData?.filter((v: any) => v.vacation_contracts?.length > 0)?.length || 0}</p>
           </div>
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
             <FileText size={24} />
           </div>
         </div>
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_pending')}</p>
-            <p className="text-3xl font-black text-[hsl(var(--foreground))] text-amber-600">3</p>
+            <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_pending')}</p>
+            <p className="text-3xl font-black text-[var(--foreground)] text-amber-600">3</p>
           </div>
           <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-xl flex items-center justify-center">
             <AlertCircle size={24} />
@@ -165,9 +165,9 @@ export default function VacatairesListPage() {
       </div>
 
       {/* Main List */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--muted)/30)]">
-          <h2 className="font-bold text-[hsl(var(--foreground))] text-lg px-2">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+          <h2 className="font-bold text-[var(--foreground)] text-lg px-2">
             {t('modules:vacataires_list.list_title')}
           </h2>
           <div className="w-72">
@@ -182,12 +182,12 @@ export default function VacatairesListPage() {
 
         {isLoading ? (
           <div className="p-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--color-primary))]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-start">
-              <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+              <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-6 py-4">{t('modules:vacataires_list.table.name')}</th>
                   <th className="px-6 py-4">{t('modules:vacataires_list.table.dept')}</th>
@@ -196,24 +196,24 @@ export default function VacatairesListPage() {
                   <th className="px-6 py-4 text-end">{t('modules:vacataires_list.table.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {vacatairesData?.length > 0 ? vacatairesData.map((v: any) => {
                   const latestContract = v.vacation_contracts?.[0];
                   return (
-                    <tr key={v.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                    <tr key={v.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
                             {v.first_name[0]}{v.last_name[0]}
                           </div>
                           <div>
-                            <p className="font-bold text-[hsl(var(--foreground))]">{v.last_name} {v.first_name}</p>
-                            <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">{v.email}</p>
+                            <p className="font-bold text-[var(--foreground)]">{v.last_name} {v.first_name}</p>
+                            <p className="text-[11px] text-[var(--muted-foreground)] font-medium">{v.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-medium text-[hsl(var(--muted-foreground))]">{v.department?.name || 'Général'}</span>
+                        <span className="font-medium text-[var(--muted-foreground)]">{v.department?.name || 'Général'}</span>
                       </td>
                       <td className="px-6 py-4">
                         {latestContract ? (
@@ -227,25 +227,25 @@ export default function VacatairesListPage() {
                             </Badge>
                           )
                         ) : (
-                          <Badge variant="outline" className="text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] border-none">
+                          <Badge variant="outline" className="text-[var(--muted-foreground)] bg-[var(--muted)] border-none">
                             {t('modules:vacataires_list.status.none')}
                           </Badge>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <Button variant="outline" className="text-xs h-7 px-3 bg-[hsl(var(--background))]" icon={<DollarSign size={14} />}>
+                        <Button variant="outline" className="text-xs h-7 px-3 bg-[var(--background)]" icon={<DollarSign size={14} />}>
                           {t('modules:vacataires_list.pay')}
                         </Button>
                       </td>
                       <td className="px-6 py-4 text-end">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-2 text-[hsl(var(--muted-foreground))] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                          <button className="p-2 text-[var(--muted-foreground)] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                             <FileText size={16} />
                           </button>
-                          <button onClick={() => openEdit(v)} className="p-2 text-[hsl(var(--muted-foreground))] hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <button onClick={() => openEdit(v)} className="p-2 text-[var(--muted-foreground)] hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
                             <Edit2 size={16} />
                           </button>
-                          <button onClick={() => handleDelete(v.id)} className="p-2 text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <button onClick={() => handleDelete(v.id)} className="p-2 text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -254,7 +254,7 @@ export default function VacatairesListPage() {
                   )
                 }) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted-foreground)] font-medium">
                       <div className="flex flex-col items-center gap-2">
                         <Users className="w-8 h-8 opacity-20" />
                         {t('modules:vacataires_list.table.empty')}
@@ -277,44 +277,44 @@ export default function VacatairesListPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.first_name')} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.first_name')} *</label>
               <Input required value={form.first_name} onChange={setF('first_name')} placeholder="Ahmed" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.last_name')} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.last_name')} *</label>
               <Input required value={form.last_name} onChange={setF('last_name')} placeholder="BENSOUDA" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.email')} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.email')} *</label>
               <Input required type="email" value={form.email} onChange={setF('email')} placeholder="prof@encg-fes.ma" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.phone')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.phone')}</label>
               <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.grade')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.grade')}</label>
               <Input value={form.grade} onChange={setF('grade')} placeholder="Professeur, Expert..." />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.modal.specialty')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.modal.specialty')}</label>
               <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance, Management..." />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('modules:vacataires_list.table.dept')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('modules:vacataires_list.table.dept')}</label>
               <select 
                 value={form.department_id} 
                 onChange={setF('department_id')} 
-                className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+                className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
                 <option value="">{t('modules:vacataires_list.modal.dept_placeholder')}</option>
                 {departments.map((dept: any) => (
@@ -327,13 +327,13 @@ export default function VacatairesListPage() {
           <div className="flex items-center gap-3 pt-2">
             <input type="checkbox" id="is_active" checked={form.is_active as boolean}
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
-              className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]" />
-            <label htmlFor="is_active" className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              className="w-4 h-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+            <label htmlFor="is_active" className="text-sm font-semibold text-[var(--foreground)]">
               {t('modules:vacataires_list.modal.active')}
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[hsl(var(--border))]">
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[var(--border)]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
               {t('modules:vacataires_list.modal.cancel')}
             </Button>

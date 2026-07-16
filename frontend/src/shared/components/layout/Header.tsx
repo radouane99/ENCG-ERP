@@ -26,12 +26,12 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
   }
 
   return (
-    <header className="h-16 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))/80] backdrop-blur-xl flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300">
+    <header className="h-16 border-b border-[var(--border)] bg-[var(--background)/80] backdrop-blur-xl flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300">
       
       {/* Mobile Hamburger Menu */}
       <button 
         onClick={onOpenSidebar}
-        className="lg:hidden p-2 -ms-2 rounded-md text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors"
+        className="lg:hidden p-2 -ms-2 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
         aria-label="Ouvrir le menu"
       >
         <Menu className="w-5 h-5" />
@@ -40,18 +40,18 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
       {/* Search */}
       <div className="flex-1 max-w-md">
         <div className="relative group">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--color-primary))] transition-colors" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--color-primary)] transition-colors" />
           <button
             onClick={onOpenCommand}
             className={cn(
               'w-full flex items-center justify-between ps-9 pe-4 py-2 text-sm rounded-xl',
-              'bg-[hsl(var(--input))] border border-transparent text-[hsl(var(--muted-foreground))]',
-              'hover:bg-[hsl(var(--background))] hover:border-[hsl(var(--border))] hover:shadow-sm',
+              'bg-[var(--input)] border border-transparent text-[var(--muted-foreground)]',
+              'hover:bg-[var(--background)] hover:border-[var(--border)] hover:shadow-sm',
               'transition-all duration-200 text-start'
             )}
           >
             {t('search')}
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-[hsl(var(--background))] rounded border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] shadow-sm">
+            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-[var(--background)] rounded border border-[var(--border)] text-[var(--muted-foreground)] shadow-sm">
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
@@ -71,16 +71,16 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         <div className="relative ms-1 md:ms-2">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 p-1 pe-2 md:px-2 md:py-1.5 rounded-full md:rounded-xl hover:bg-[hsl(var(--muted))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+            className="flex items-center gap-2 p-1 pe-2 md:px-2 md:py-1.5 rounded-full md:rounded-xl hover:bg-[var(--muted)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white text-xs font-bold shadow-inner">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center text-white text-xs font-bold shadow-inner">
             {user?.avatar_path ? (
               <img src={`${import.meta.env.VITE_API_URL}/storage/${user.avatar_path}`} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               user?.name?.charAt(0).toUpperCase()
             )}
             </div>
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))] max-w-[100px] truncate hidden md:block">
+            <span className="text-sm font-semibold text-[var(--foreground)] max-w-[100px] truncate hidden md:block">
               {user?.name}
             </span>
           </button>
@@ -90,23 +90,23 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               {/* Invisible backdrop to close menu */}
               <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
               
-              <div className="absolute end-0 top-[calc(100%+0.5rem)] w-56 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-xl shadow-black/5 z-50 py-1.5 motion-safe:animate-scale-in origin-top-right">
-                <div className="px-4 py-2 mb-1 border-b border-[hsl(var(--border))] md:hidden">
-                  <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{user?.name}</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{user?.email}</p>
+              <div className="absolute end-0 top-[calc(100%+0.5rem)] w-56 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl shadow-black/5 z-50 py-1.5 motion-safe:animate-scale-in origin-top-right">
+                <div className="px-4 py-2 mb-1 border-b border-[var(--border)] md:hidden">
+                  <p className="text-sm font-semibold text-[var(--foreground)] truncate">{user?.name}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] truncate">{user?.email}</p>
                 </div>
                 
                 <button
                   onClick={() => { navigate('/profile'); setShowUserMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors text-start"
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors text-start"
                 >
-                  <User className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                  <User className="w-4 h-4 text-[var(--muted-foreground)]" />
                   {t('profile')}
                 </button>
-                <div className="border-t border-[hsl(var(--border))] my-1.5 mx-2" />
+                <div className="border-t border-[var(--border)] my-1.5 mx-2" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[hsl(var(--color-destructive))] hover:bg-[hsl(var(--color-destructive)/0.1)] transition-colors text-start"
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[var(--color-destructive)] hover:bg-[color-mix(in srgb, var(--color-destructive) 0.100%, transparent)] transition-colors text-start"
                 >
                   <LogOut className="w-4 h-4" />
                   {t('logout')}

@@ -116,16 +116,16 @@ export default function DocumentsAttestationsPage() {
             <p className="text-sm text-emerald-700/80 dark:text-emerald-400/80 mb-6 relative z-10">
               {isRtl ? 'جميع الوثائق الصادرة تحمل رمز استجابة سريعة (QR Code) مشفرًا لضمان صحتها.' : 'Tous les documents émis incluent un QR Code certifié garantissant leur authenticité lors d\'une vérification externe.'}
             </p>
-            <Button variant="outline" className="w-full bg-[hsl(var(--background))] border-emerald-200 text-emerald-700 hover:bg-emerald-50 relative z-10">
+            <Button variant="outline" className="w-full bg-[var(--background)] border-emerald-200 text-emerald-700 hover:bg-emerald-50 relative z-10">
               {isRtl ? 'تجربة التحقق من وثيقة' : 'Tester la vérification PDF'}
             </Button>
           </div>
 
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm">
-            <h3 className="font-bold text-[hsl(var(--foreground))] mb-4">{isRtl ? 'إصدار سريع' : 'Édition Rapide'}</h3>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm">
+            <h3 className="font-bold text-[var(--foreground)] mb-4">{isRtl ? 'إصدار سريع' : 'Édition Rapide'}</h3>
             <div className="space-y-3">
               <Input placeholder={isRtl ? 'CNE أو رقم الطالب...' : 'CNE ou Numéro Étudiant...'} />
-              <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+              <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
                 <option value="scolarite">{isRtl ? 'شهادة مدرسية' : 'Attestation de scolarité'}</option>
                 <option value="releve">{isRtl ? 'كشف النقط' : 'Relevé de notes global'}</option>
               </select>
@@ -144,9 +144,9 @@ export default function DocumentsAttestationsPage() {
 
         {/* Requests List */}
         <div className="lg:col-span-2">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
-              <h2 className="font-bold text-lg text-[hsl(var(--foreground))] px-2">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden h-full flex flex-col">
+            <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+              <h2 className="font-bold text-lg text-[var(--foreground)] px-2">
                 {isRtl ? 'الطلبات الواردة من بوابة الطالب' : 'Demandes entrantes (Portail Étudiant)'}
               </h2>
               <div className="w-64">
@@ -161,7 +161,7 @@ export default function DocumentsAttestationsPage() {
 
             <div className="flex-1 overflow-x-auto">
               <table className="w-full text-sm text-start">
-                <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+                <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="px-6 py-4">{isRtl ? 'الطالب' : 'Étudiant'}</th>
                     <th className="px-6 py-4">{isRtl ? 'الوثيقة' : 'Document'}</th>
@@ -170,29 +170,29 @@ export default function DocumentsAttestationsPage() {
                     <th className="px-6 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">
+                <tbody className="divide-y divide-[var(--border)]">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-[hsl(var(--muted-foreground))]">
+                      <td colSpan={5} className="p-8 text-center text-[var(--muted-foreground)]">
                         Chargement des demandes...
                       </td>
                     </tr>
                   ) : requests.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-[hsl(var(--muted-foreground))]">
+                      <td colSpan={5} className="p-8 text-center text-[var(--muted-foreground)]">
                         Aucune demande trouvée
                       </td>
                     </tr>
                   ) : requests.map((req: any) => (
-                    <tr key={req.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                    <tr key={req.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-[hsl(var(--foreground))]">{req.person}</p>
-                        <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">{req.role}</p>
+                        <p className="font-bold text-[var(--foreground)]">{req.person}</p>
+                        <p className="text-[11px] text-[var(--muted-foreground)] font-medium">{req.role}</p>
                       </td>
-                      <td className="px-6 py-4 font-medium text-[hsl(var(--foreground))]">
+                      <td className="px-6 py-4 font-medium text-[var(--foreground)]">
                         {req.type}
                       </td>
-                      <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] text-xs">
+                      <td className="px-6 py-4 text-[var(--muted-foreground)] text-xs">
                         {req.time}
                       </td>
                       <td className="px-6 py-4">

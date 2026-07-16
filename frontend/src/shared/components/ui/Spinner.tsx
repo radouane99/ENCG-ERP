@@ -25,9 +25,9 @@ export interface SpinnerProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const colorMap = {
-  primary: 'border-[hsl(var(--color-primary)/0.2)] border-t-[hsl(var(--color-primary))]',
+  primary: 'border-[color-mix(in srgb, var(--color-primary) 0.200%, transparent)] border-t-[var(--color-primary)]',
   white:   'border-white/30 border-t-white',
-  muted:   'border-[hsl(var(--border))] border-t-[hsl(var(--muted-foreground))]',
+  muted:   'border-[var(--border)] border-t-[var(--muted-foreground)]',
 }
 
 const Spinner: React.FC<SpinnerProps> = ({
@@ -87,7 +87,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   ...props
 }) => {
   const base = cn(
-    'animate-pulse bg-[hsl(var(--muted))] rounded',
+    'animate-pulse bg-[var(--muted)] rounded',
     variant === 'circle' && 'rounded-full',
     variant === 'text'   && 'h-4 rounded-sm',
     className

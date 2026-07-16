@@ -209,13 +209,13 @@ const StudentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-            <div className="p-2 bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] rounded-xl">
+          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-2">
+            <div className="p-2 bg-[var(--color-primary)/10] text-[var(--color-primary)] rounded-xl">
               <Users size={24} />
             </div>
             {t('students:list.title')}
           </h1>
-          <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
+          <p className="text-[var(--muted-foreground)] text-sm mt-1">
             {meta.total} {t('students:list.total')}
           </p>
         </div>
@@ -232,17 +232,17 @@ const StudentsPage: React.FC = () => {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
         <div className="relative flex-1">
           <Input
-            icon={<Search size={18} className="text-[hsl(var(--muted-foreground))]" />}
+            icon={<Search size={18} className="text-[var(--muted-foreground)]" />}
             placeholder={t('students:list.search')}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full bg-[hsl(var(--background))] border-transparent hover:border-[hsl(var(--border))] focus:border-[hsl(var(--ring))]"
+            className="w-full bg-[var(--background)] border-transparent hover:border-[var(--border)] focus:border-[var(--ring)]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
+            <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
               <X size={16} />
             </button>
           )}
@@ -251,7 +251,7 @@ const StudentsPage: React.FC = () => {
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[hsl(var(--muted-foreground))/30]"
+          className="bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm text-[var(--foreground)] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[var(--muted-foreground)/30]"
         >
           <option value="">{t('students:list.filter_all_status')}</option>
           <option value="active">{t('students:status.active')}</option>
@@ -263,35 +263,35 @@ const StudentsPage: React.FC = () => {
 
       {/* Bulk actions */}
       {selectedStudents.size > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-[hsl(var(--color-primary))/5] border border-[hsl(var(--color-primary))/20] rounded-xl animate-in fade-in slide-in-from-top-2">
-          <span className="text-[hsl(var(--color-primary))] text-sm font-semibold px-2">
+        <div className="flex items-center gap-3 p-3 bg-[var(--color-primary)/5] border border-[var(--color-primary)/20] rounded-xl animate-in fade-in slide-in-from-top-2">
+          <span className="text-[var(--color-primary)] text-sm font-semibold px-2">
             {selectedStudents.size} {t('students:list.selected')}
           </span>
           <Button variant="destructive" size="sm" onClick={() => {}}>
             {t('students:list.delete_selected')}
           </Button>
-          <button onClick={() => setSelectedStudents(new Set())} className="ms-auto text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-2">
+          <button onClick={() => setSelectedStudents(new Set())} className="ms-auto text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-2">
             <X size={16} />
           </button>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-start text-sm">
-            <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] uppercase text-xs tracking-wider font-semibold border-b border-[hsl(var(--border))]">
+            <thead className="bg-[var(--muted)] text-[var(--muted-foreground)] uppercase text-xs tracking-wider font-semibold border-b border-[var(--border)]">
               <tr>
                 <th className="px-4 py-4 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={selectedStudents.size === students.length && students.length > 0}
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
+                    className="w-4 h-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                   />
                 </th>
                 <th 
-                  className="px-4 py-4 cursor-pointer hover:text-[hsl(var(--foreground))] transition-colors"
+                  className="px-4 py-4 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                   onClick={() => handleSort('last_name')}
                 >
                   <div className="flex items-center">
@@ -305,7 +305,7 @@ const StudentsPage: React.FC = () => {
                 <th className="px-4 py-4 text-end">{t('students:list.columns.actions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[hsl(var(--border))]">
+            <tbody className="divide-y divide-[var(--border)]">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="p-12 text-center">
@@ -314,11 +314,11 @@ const StudentsPage: React.FC = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-16 text-center text-[hsl(var(--muted-foreground))]">
-                    <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <td colSpan={7} className="p-16 text-center text-[var(--muted-foreground)]">
+                    <div className="w-16 h-16 bg-[var(--muted)] rounded-full flex items-center justify-center mx-auto mb-4">
                       <GraduationCap size={32} className="opacity-50" />
                     </div>
-                    <p className="text-base font-medium text-[hsl(var(--foreground))]">
+                    <p className="text-base font-medium text-[var(--foreground)]">
                       {t('students:list.empty_title')}
                     </p>
                     <p className="text-sm mt-1 mb-4">
@@ -331,46 +331,46 @@ const StudentsPage: React.FC = () => {
                 </tr>
               ) : (
                 students.map((student) => (
-                  <tr key={student.id} className="hover:bg-[hsl(var(--muted)/50)] transition-colors group">
+                  <tr key={student.id} className="hover:bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] transition-colors group">
                     <td className="px-4 py-3 text-center">
                       <input
                         type="checkbox"
                         checked={selectedStudents.has(student.id)}
                         onChange={() => toggleSelect(student.id)}
-                        className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
+                        className="w-4 h-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                       />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center text-white text-sm font-bold shadow-sm">
                           {student.first_name[0]}{student.last_name[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                          <p className="text-sm font-semibold text-[var(--foreground)]">
                             {student.last_name} {student.first_name}
                           </p>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-0.5 flex items-center gap-1">
+                          <p className="text-[var(--muted-foreground)] text-xs mt-0.5 flex items-center gap-1">
                             <Mail size={12} /> {student.email}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm font-mono font-medium text-[hsl(var(--foreground))]">{student.cne}</p>
-                      <p className="text-[hsl(var(--muted-foreground))] text-xs mt-0.5">{student.student_number}</p>
+                      <p className="text-sm font-mono font-medium text-[var(--foreground)]">{student.cne}</p>
+                      <p className="text-[var(--muted-foreground)] text-xs mt-0.5">{student.student_number}</p>
                     </td>
                     <td className="px-4 py-3">
                       {student.current_filiere ? (
                         <div>
-                          <Badge variant="outline" className="font-semibold bg-[hsl(var(--background))] border-[hsl(var(--border))]">
+                          <Badge variant="outline" className="font-semibold bg-[var(--background)] border-[var(--border)]">
                             {student.current_filiere}
                           </Badge>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-1.5 ms-1">
+                          <p className="text-[var(--muted-foreground)] text-xs mt-1.5 ms-1">
                             S{student.current_semester} · {student.current_group ?? '—'}
                           </p>
                         </div>
                       ) : (
-                        <span className="text-[hsl(var(--muted-foreground))] text-sm">—</span>
+                        <span className="text-[var(--muted-foreground)] text-sm">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -384,7 +384,7 @@ const StudentsPage: React.FC = () => {
                           {student.scholarship_type}
                         </Badge>
                       ) : (
-                        <span className="text-[hsl(var(--muted-foreground))] text-sm">—</span>
+                        <span className="text-[var(--muted-foreground)] text-sm">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-end">
@@ -393,7 +393,7 @@ const StudentsPage: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(student)}
-                          className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-amber-600 hover:bg-amber-500/10"
+                          className="h-8 w-8 p-0 text-[var(--muted-foreground)] hover:text-amber-600 hover:bg-amber-500/10"
                           aria-label="Modifier"
                         >
                           <Edit2 size={16} />
@@ -402,7 +402,7 @@ const StudentsPage: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(student.id)}
-                          className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-destructive))] hover:bg-[hsl(var(--color-destructive))/10]"
+                          className="h-8 w-8 p-0 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--color-destructive)/10]"
                           aria-label="Supprimer"
                         >
                           <Trash2 size={16} />
@@ -418,8 +418,8 @@ const StudentsPage: React.FC = () => {
 
         {/* Pagination Footer */}
         {meta.last_page > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
-            <p className="text-[hsl(var(--muted-foreground))] text-sm">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+            <p className="text-[var(--muted-foreground)] text-sm">
               {t('students:list.page', { current: meta.current_page, total: meta.last_page })}
             </p>
             <div className="flex items-center gap-1.5">
@@ -438,7 +438,7 @@ const StudentsPage: React.FC = () => {
                   variant={page === p ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => setPage(p)}
-                  className={`w-9 h-9 p-0 font-medium ${page !== p && 'text-[hsl(var(--muted-foreground))]'}`}
+                  className={`w-9 h-9 p-0 font-medium ${page !== p && 'text-[var(--muted-foreground)]'}`}
                 >
                   {p}
                 </Button>
@@ -467,27 +467,27 @@ const StudentsPage: React.FC = () => {
         <form onSubmit={handleSave} className="space-y-6">
           {/* Section: Identité */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+            <h3 className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
               {t('students:form.sections.identity')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.first_name')} *</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.first_name')} *</label>
                 <Input required value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} placeholder="Fatima" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.last_name')} *</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.last_name')} *</label>
                 <Input required value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} placeholder="ALAOUI" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.gender')} *</label>
-                <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50">
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.gender')} *</label>
+                <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50">
                   <option value="male">{t('students:form.gender.male')}</option>
                   <option value="female">{t('students:form.gender.female')}</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.birth_date')}</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.birth_date')}</label>
                 <Input type="date" value={form.birth_date} onChange={e => setForm({ ...form, birth_date: e.target.value })} />
               </div>
             </div>
@@ -495,24 +495,24 @@ const StudentsPage: React.FC = () => {
 
           {/* Section: Administration */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+            <h3 className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
               {t('students:form.sections.administration')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">CNE *</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">CNE *</label>
                 <Input required value={form.cne} onChange={e => setForm({ ...form, cne: e.target.value })} placeholder="R134567890" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">Code Massar</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">Code Massar</label>
                 <Input value={form.massar_code} onChange={e => setForm({ ...form, massar_code: e.target.value })} placeholder="G123456789" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">Email *</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">Email *</label>
                 <Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="f.alaoui@etu.encg-fes.ma" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:form.fields.phone')}</label>
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.phone')}</label>
                 <Input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+212 6xx xxx xxx" />
               </div>
             </div>
@@ -520,13 +520,13 @@ const StudentsPage: React.FC = () => {
 
           {/* Section: Académique */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider border-b border-[hsl(var(--border))] pb-2">
+            <h3 className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
               {t('students:form.sections.academic')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:list.columns.status')}</label>
-                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:list.columns.status')}</label>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
                   <option value="active">{t('students:status.active')}</option>
                   <option value="suspended">{t('students:status.suspended')}</option>
                   <option value="graduated">{t('students:status.graduated')}</option>
@@ -534,8 +534,8 @@ const StudentsPage: React.FC = () => {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('students:list.columns.scholarship')}</label>
-                <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+                <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:list.columns.scholarship')}</label>
+                <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
                   <option value="">{t('students:scholarship.none')}</option>
                   <option value="excellence">{t('students:scholarship.excellence')}</option>
                   <option value="social">{t('students:scholarship.social')}</option>
@@ -545,7 +545,7 @@ const StudentsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-[hsl(var(--border))]">
+          <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-[var(--border)]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
               {t('common:buttons.cancel')}
             </Button>

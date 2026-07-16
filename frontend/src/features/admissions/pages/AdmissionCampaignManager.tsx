@@ -55,7 +55,7 @@ export default function AdmissionCampaignManager() {
       case 'waitlisted':
         return <Badge className="bg-amber-500/10 text-amber-600 border-none hover:bg-amber-500/20"><Clock size={12} className="me-1"/> {t('admissions:campaign.status.waitlisted')}</Badge>
       default:
-        return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none hover:bg-[hsl(var(--muted))/80]">{t('admissions:campaign.status.pending')}</Badge>
+        return <Badge className="bg-[var(--muted)] text-[var(--muted-foreground)] border-none hover:bg-[var(--muted)/80]">{t('admissions:campaign.status.pending')}</Badge>
     }
   }
 
@@ -89,24 +89,24 @@ export default function AdmissionCampaignManager() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         {/* Sidebar Status / Actions */}
         <div className="xl:col-span-1 space-y-6">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 shadow-sm relative overflow-hidden group">
-            <div className="absolute -end-6 -top-6 w-24 h-24 bg-[hsl(var(--color-primary))/5] rounded-full blur-2xl transition-transform group-hover:scale-150"></div>
-            <h2 className="font-black text-lg mb-6 text-[hsl(var(--foreground))] relative z-10">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm relative overflow-hidden group">
+            <div className="absolute -end-6 -top-6 w-24 h-24 bg-[var(--color-primary)/5] rounded-full blur-2xl transition-transform group-hover:scale-150"></div>
+            <h2 className="font-black text-lg mb-6 text-[var(--foreground)] relative z-10">
               {t('admissions:campaign.card.title')}
             </h2>
             
-            <div className="space-y-4 text-sm text-[hsl(var(--muted-foreground))] relative z-10">
-              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+            <div className="space-y-4 text-sm text-[var(--muted-foreground)] relative z-10">
+              <div className="flex justify-between items-center bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-3 rounded-xl border border-[var(--border)]">
                 <span className="font-bold">{t('admissions:campaign.card.formula')}</span>
-                <Badge variant="outline" className="bg-[hsl(var(--background))]">75% Nat + 25% Reg</Badge>
+                <Badge variant="outline" className="bg-[var(--background)]">75% Nat + 25% Reg</Badge>
               </div>
-              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+              <div className="flex justify-between items-center bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-3 rounded-xl border border-[var(--border)]">
                 <span className="font-bold">{t('admissions:campaign.card.capacity')}</span>
-                <span className="font-black text-[hsl(var(--foreground))]">450 {t('admissions:campaign.card.places')}</span>
+                <span className="font-black text-[var(--foreground)]">450 {t('admissions:campaign.card.places')}</span>
               </div>
-              <div className="flex justify-between items-center bg-[hsl(var(--muted)/30)] p-3 rounded-xl border border-[hsl(var(--border))]">
+              <div className="flex justify-between items-center bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-3 rounded-xl border border-[var(--border)]">
                 <span className="font-bold">{t('admissions:campaign.card.enrolled')}</span>
-                <span className="font-black text-[hsl(var(--foreground))]">12,500</span>
+                <span className="font-black text-[var(--foreground)]">12,500</span>
               </div>
             </div>
 
@@ -118,10 +118,10 @@ export default function AdmissionCampaignManager() {
 
         {/* Main Content: Ranking List */}
         <div className="xl:col-span-3">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
-              <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
-                <div className="p-2 bg-[hsl(var(--color-primary))/10] rounded-lg text-[hsl(var(--color-primary))]"><Users size={18} /></div>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col h-full">
+            <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+              <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
+                <div className="p-2 bg-[var(--color-primary)/10] rounded-lg text-[var(--color-primary)]"><Users size={18} /></div>
                 {t('admissions:campaign.list.title')}
               </h2>
               
@@ -134,7 +134,7 @@ export default function AdmissionCampaignManager() {
                     icon={<Search size={16}/>}
                   />
                 </div>
-                <Button variant="outline" icon={<Download size={16}/>} className="bg-[hsl(var(--background))]">
+                <Button variant="outline" icon={<Download size={16}/>} className="bg-[var(--background)]">
                   {t('admissions:campaign.list.export')}
                 </Button>
               </div>
@@ -142,12 +142,12 @@ export default function AdmissionCampaignManager() {
 
             {isLoading ? (
               <div className="flex-1 p-12 flex justify-center items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--color-primary))]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
               </div>
             ) : (
               <div className="flex-1 p-0 overflow-x-auto">
                 <table className="w-full text-sm text-start">
-                  <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+                  <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-[10px] tracking-wider">
                     <tr>
                       <th className="px-6 py-4">{t('admissions:campaign.list.table.rank')}</th>
                       <th className="px-6 py-4">{t('admissions:campaign.list.table.name')}</th>
@@ -156,17 +156,17 @@ export default function AdmissionCampaignManager() {
                       <th className="px-6 py-4 text-end">{t('admissions:campaign.list.table.actions')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[hsl(var(--border))]">
+                  <tbody className="divide-y divide-[var(--border)]">
                     {filteredApps?.length > 0 ? filteredApps.map((app: any, idx: number) => (
-                      <tr key={app.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
-                        <td className="px-6 py-4 font-black text-[hsl(var(--foreground))] opacity-70">
+                      <tr key={app.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
+                        <td className="px-6 py-4 font-black text-[var(--foreground)] opacity-70">
                           #{idx + 1}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-bold text-[hsl(var(--foreground))]">{app.candidate?.last_name || 'Candidat'} {app.candidate?.first_name || 'Anonyme'}</p>
-                          <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">CNE: {app.candidate?.cne || 'N/A'}</p>
+                          <p className="font-bold text-[var(--foreground)]">{app.candidate?.last_name || 'Candidat'} {app.candidate?.first_name || 'Anonyme'}</p>
+                          <p className="text-[11px] text-[var(--muted-foreground)] font-medium">CNE: {app.candidate?.cne || 'N/A'}</p>
                         </td>
-                        <td className="px-6 py-4 text-center font-black text-lg text-[hsl(var(--color-primary))]">
+                        <td className="px-6 py-4 text-center font-black text-lg text-[var(--color-primary)]">
                           {(app.score || 14.5).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -194,7 +194,7 @@ export default function AdmissionCampaignManager() {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                        <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted-foreground)] font-medium">
                           <div className="flex flex-col items-center gap-2">
                             <Target className="w-8 h-8 opacity-20" />
                             {t('admissions:campaign.list.empty')}

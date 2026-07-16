@@ -20,13 +20,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: [
-          'bg-[hsl(var(--color-primary)/0.1)]',
-          'text-[hsl(var(--color-primary))]',
-          'border-[hsl(var(--color-primary)/0.2)]',
+          'bg-[color-mix(in srgb, var(--color-primary) 0.100%, transparent)]',
+          'text-[var(--color-primary)]',
+          'border-[color-mix(in srgb, var(--color-primary) 0.200%, transparent)]',
         ],
         secondary: [
-          'bg-[hsl(var(--muted))]',
-          'text-[hsl(var(--muted-foreground))]',
+          'bg-[var(--muted)]',
+          'text-[var(--muted-foreground)]',
         ],
         success: [
           'bg-[hsl(142_71%_45%/0.12)]',
@@ -39,14 +39,14 @@ const badgeVariants = cva(
           'border-[hsl(38_92%_50%/0.25)]',
         ],
         destructive: [
-          'bg-[hsl(var(--color-destructive)/0.12)]',
-          'text-[hsl(var(--color-destructive))]',
-          'border-[hsl(var(--color-destructive)/0.25)]',
+          'bg-[color-mix(in srgb, var(--color-destructive) 0.1200%, transparent)]',
+          'text-[var(--color-destructive)]',
+          'border-[color-mix(in srgb, var(--color-destructive) 0.2500%, transparent)]',
         ],
         outline: [
           'bg-transparent',
-          'text-[hsl(var(--foreground))]',
-          'border-[hsl(var(--border))]',
+          'text-[var(--foreground)]',
+          'border-[var(--border)]',
         ],
         navy: [
           'bg-[hsl(215_51%_25%/0.12)]',
@@ -87,11 +87,11 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
             className={cn(
               'inline-block h-1.5 w-1.5 rounded-full flex-shrink-0',
               {
-                'bg-[hsl(var(--color-primary))]':   variant === 'default',
+                'bg-[var(--color-primary)]':   variant === 'default',
                 'bg-[hsl(142_71%_45%)]':             variant === 'success',
                 'bg-[hsl(38_92%_50%)]':              variant === 'warning',
-                'bg-[hsl(var(--color-destructive))]':variant === 'destructive',
-                'bg-[hsl(var(--muted-foreground))]': variant === 'secondary',
+                'bg-[var(--color-destructive)]':variant === 'destructive',
+                'bg-[var(--muted-foreground)]': variant === 'secondary',
               }
             )}
             aria-hidden="true"

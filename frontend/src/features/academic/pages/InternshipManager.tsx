@@ -72,10 +72,10 @@ export default function InternshipManager() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
-          <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
-            <div className="p-2 bg-[hsl(var(--color-primary))/10] rounded-lg text-[hsl(var(--color-primary))]"><Briefcase size={18} /></div>
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+          <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
+            <div className="p-2 bg-[var(--color-primary)/10] rounded-lg text-[var(--color-primary)]"><Briefcase size={18} /></div>
             {isRtl ? 'لائحة التدريبات' : 'Conventions de Stage'}
           </h2>
           
@@ -88,10 +88,10 @@ export default function InternshipManager() {
                 icon={<Search size={16}/>}
               />
             </div>
-            <Button variant="outline" icon={<Filter size={16}/>} className="bg-[hsl(var(--background))] hidden sm:flex">
+            <Button variant="outline" icon={<Filter size={16}/>} className="bg-[var(--background)] hidden sm:flex">
               {isRtl ? 'تصفية' : 'Filtres'}
             </Button>
-            <Button variant="outline" icon={<Download size={16}/>} className="bg-[hsl(var(--background))]">
+            <Button variant="outline" icon={<Download size={16}/>} className="bg-[var(--background)]">
               {isRtl ? 'تصدير' : 'Exporter'}
             </Button>
           </div>
@@ -99,12 +99,12 @@ export default function InternshipManager() {
 
         {isLoading && !internships ? (
           <div className="flex-1 p-12 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--color-primary))]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
           </div>
         ) : (
           <div className="flex-1 overflow-x-auto">
             <table className="w-full text-sm text-start">
-              <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+              <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-6 py-4">{isRtl ? 'الطالب' : 'Étudiant'}</th>
                   <th className="px-6 py-4">{isRtl ? 'نوع التدريب' : 'Type'}</th>
@@ -113,25 +113,25 @@ export default function InternshipManager() {
                   <th className="px-6 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {filteredList.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                  <tr key={item.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--muted))] flex items-center justify-center text-[hsl(var(--muted-foreground))]">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--muted)] flex items-center justify-center text-[var(--muted-foreground)]">
                           <UserSquare2 size={20} />
                         </div>
                         <div>
-                          <p className="font-bold text-[hsl(var(--foreground))]">{item.student?.last_name} {item.student?.first_name}</p>
+                          <p className="font-bold text-[var(--foreground)]">{item.student?.last_name} {item.student?.first_name}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-[hsl(var(--foreground))]">
+                    <td className="px-6 py-4 font-medium text-[var(--foreground)]">
                       {item.type}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-[hsl(var(--foreground))]">{item.company?.name || 'N/A'}</p>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1 mt-0.5">
+                      <p className="font-bold text-[var(--foreground)]">{item.company?.name || 'N/A'}</p>
+                      <p className="text-[11px] text-[var(--muted-foreground)] font-medium flex items-center gap-1 mt-0.5">
                         <MapPin size={10} /> {item.city} - {item.duration}
                       </p>
                     </td>
@@ -152,7 +152,7 @@ export default function InternshipManager() {
                             {isRtl ? 'مصادقة' : 'Valider'}
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" className="h-8 text-xs bg-[hsl(var(--background))]" icon={<Download size={14}/>}>
+                          <Button variant="outline" size="sm" className="h-8 text-xs bg-[var(--background)]" icon={<Download size={14}/>}>
                             {isRtl ? 'تحميل' : 'Convention'}
                           </Button>
                         )}
@@ -163,7 +163,7 @@ export default function InternshipManager() {
                 
                 {filteredList.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted-foreground)] font-medium">
                       <div className="flex flex-col items-center gap-2">
                         <Briefcase className="w-8 h-8 opacity-20" />
                         {isRtl ? 'لا توجد تدريبات' : 'Aucun stage trouvé.'}

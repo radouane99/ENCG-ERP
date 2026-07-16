@@ -32,7 +32,7 @@ export default function AppShell() {
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
+    <div className="flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* ── Mobile Sidebar Overlay ── */}
       {sidebarOpen && (
         <div 
@@ -73,7 +73,7 @@ export default function AppShell() {
         richColors
         closeButton
         toastOptions={{
-          className: 'shadow-xl rounded-xl border border-[hsl(var(--border))]',
+          className: 'shadow-xl rounded-xl border border-[var(--border)]',
           style: { fontFamily: 'var(--font-sans)' },
         }}
       />

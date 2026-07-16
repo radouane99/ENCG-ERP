@@ -47,7 +47,7 @@ export default function AdminClubsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active': return <Badge className="bg-emerald-500/10 text-emerald-600 border-none"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'نشط' : 'Actif'}</Badge>
-      case 'inactive': return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none"><Building2 size={12} className="me-1"/> {isRtl ? 'غير نشط' : 'Inactif'}</Badge>
+      case 'inactive': return <Badge className="bg-[var(--muted)] text-[var(--muted-foreground)] border-none"><Building2 size={12} className="me-1"/> {isRtl ? 'غير نشط' : 'Inactif'}</Badge>
       case 'rejected': return <Badge className="bg-red-500/10 text-red-600 border-none"><XCircle size={12} className="me-1"/> {isRtl ? 'مرفوض' : 'Rejeté'}</Badge>
       default: return <Badge className="bg-amber-500/10 text-amber-600 border-none"><Clock size={12} className="me-1"/> {isRtl ? 'قيد الانتظار' : 'En attente'}</Badge>
     }
@@ -76,9 +76,9 @@ export default function AdminClubsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
-          <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+          <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
             <div className="p-2 bg-red-500/10 rounded-lg text-red-500"><Users size={18} /></div>
             {isRtl ? 'لائحة الأندية' : 'Liste des Associations'}
           </h2>
@@ -92,7 +92,7 @@ export default function AdminClubsPage() {
                 icon={<Search size={16}/>}
               />
             </div>
-            <Button variant="outline" icon={<Filter size={16}/>} className="bg-[hsl(var(--background))] hidden sm:flex">
+            <Button variant="outline" icon={<Filter size={16}/>} className="bg-[var(--background)] hidden sm:flex">
               {isRtl ? 'تصفية' : 'Filtres'}
             </Button>
           </div>
@@ -103,9 +103,9 @@ export default function AdminClubsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
           </div>
         ) : (
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 bg-[hsl(var(--muted)/10)]">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 bg-[color-mix(in srgb, var(--muted) 1000%, transparent)]">
             {filteredList.map((club: any) => (
-              <div key={club.id} className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+              <div key={club.id} className="bg-[var(--background)] border border-[var(--border)] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center text-white font-black text-xl shadow-inner">
                     {club.name[0]}
@@ -113,24 +113,24 @@ export default function AdminClubsPage() {
                   {getStatusBadge(club.status)}
                 </div>
                 
-                <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1 line-clamp-1">{club.name}</h3>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] line-clamp-2 mb-4 min-h-[40px]">
+                <h3 className="font-bold text-lg text-[var(--foreground)] mb-1 line-clamp-1">{club.name}</h3>
+                <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-4 min-h-[40px]">
                   {club.description}
                 </p>
 
                 <div className="mt-auto space-y-4">
-                  <div className="flex items-center justify-between text-sm bg-[hsl(var(--muted)/50)] p-2.5 rounded-xl border border-[hsl(var(--border))]">
-                    <span className="text-[hsl(var(--muted-foreground))] flex items-center gap-1"><Users size={14}/> {isRtl ? 'الأعضاء' : 'Membres'}</span>
-                    <span className="font-bold text-[hsl(var(--foreground))]">{club.members_count || 0}</span>
+                  <div className="flex items-center justify-between text-sm bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] p-2.5 rounded-xl border border-[var(--border)]">
+                    <span className="text-[var(--muted-foreground)] flex items-center gap-1"><Users size={14}/> {isRtl ? 'الأعضاء' : 'Membres'}</span>
+                    <span className="font-bold text-[var(--foreground)]">{club.members_count || 0}</span>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-[hsl(var(--muted-foreground))]">{isRtl ? 'الرئيس' : 'Président'}</span>
-                    <span className="font-medium text-[hsl(var(--foreground))]">{club.president?.last_name} {club.president?.first_name}</span>
+                    <span className="text-[var(--muted-foreground)]">{isRtl ? 'الرئيس' : 'Président'}</span>
+                    <span className="font-medium text-[var(--foreground)]">{club.president?.last_name} {club.president?.first_name}</span>
                   </div>
 
                   {club.status === 'pending' && (
-                    <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <div className="pt-4 border-t border-[var(--border)] flex gap-2">
                       <Button 
                         variant="primary" 
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-9" 
@@ -153,7 +153,7 @@ export default function AdminClubsPage() {
             ))}
 
             {filteredList.length === 0 && (
-              <div className="col-span-full py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+              <div className="col-span-full py-12 text-center text-[var(--muted-foreground)] font-medium">
                 <div className="flex flex-col items-center gap-2">
                   <Tent className="w-8 h-8 opacity-20" />
                   {isRtl ? 'لا توجد أندية' : 'Aucun club trouvé.'}

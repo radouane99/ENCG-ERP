@@ -59,7 +59,7 @@ export default function DisciplinePage() {
       if (decision === 'warning') return <Badge className="bg-amber-500/10 text-amber-600 border-none"><AlertTriangle size={12} className="me-1"/> {isRtl ? 'إنذار' : 'Avertissement'}</Badge>
       return <Badge className="bg-emerald-500/10 text-emerald-600 border-none"><CheckCircle2 size={12} className="me-1"/> {isRtl ? 'محسوم' : 'Résolu'}</Badge>
     }
-    return <Badge className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-none"><Clock size={12} className="me-1"/> {isRtl ? 'قيد الانتظار' : 'À traiter'}</Badge>
+    return <Badge className="bg-[var(--muted)] text-[var(--muted-foreground)] border-none"><Clock size={12} className="me-1"/> {isRtl ? 'قيد الانتظار' : 'À traiter'}</Badge>
   }
 
   return (
@@ -84,9 +84,9 @@ export default function DisciplinePage() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-[hsl(var(--border))] flex flex-wrap gap-4 items-center justify-between bg-[hsl(var(--muted)/30)]">
-          <h2 className="font-bold text-lg flex items-center gap-2 text-[hsl(var(--foreground))] px-2">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+          <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
             <div className="p-2 bg-red-500/10 rounded-lg text-red-500"><Gavel size={18} /></div>
             {isRtl ? 'الملفات التأديبية' : 'Dossiers Disciplinaires'}
           </h2>
@@ -110,7 +110,7 @@ export default function DisciplinePage() {
         ) : (
           <div className="flex-1 overflow-x-auto">
             <table className="w-full text-sm text-start">
-              <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-[10px] tracking-wider">
+              <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="px-6 py-4">{isRtl ? 'الطالب' : 'Étudiant'}</th>
                   <th className="px-6 py-4">{isRtl ? 'نوع المخالفة' : 'Type d\'incident'}</th>
@@ -120,17 +120,17 @@ export default function DisciplinePage() {
                   <th className="px-6 py-4 text-end">{isRtl ? 'إجراءات' : 'Actions (Conseil)'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {filteredList.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                  <tr key={item.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-[hsl(var(--foreground))]">{item.student?.last_name} {item.student?.first_name}</p>
-                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">CNE: {item.student?.cne}</p>
+                      <p className="font-bold text-[var(--foreground)]">{item.student?.last_name} {item.student?.first_name}</p>
+                      <p className="text-[11px] text-[var(--muted-foreground)] font-medium">CNE: {item.student?.cne}</p>
                     </td>
-                    <td className="px-6 py-4 font-medium text-[hsl(var(--foreground))]">
+                    <td className="px-6 py-4 font-medium text-[var(--foreground)]">
                       {item.type}
                     </td>
-                    <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] text-xs">
+                    <td className="px-6 py-4 text-[var(--muted-foreground)] text-xs">
                       {item.incident_date}
                     </td>
                     <td className="px-6 py-4">
@@ -166,7 +166,7 @@ export default function DisciplinePage() {
                             </button>
                           </>
                         ) : (
-                          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                          <span className="text-xs text-[var(--muted-foreground)]">
                             {isRtl ? 'مغلق' : 'Clôturé'}
                           </span>
                         )}
@@ -177,7 +177,7 @@ export default function DisciplinePage() {
                 
                 {filteredList.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-[hsl(var(--muted-foreground))] font-medium">
+                    <td colSpan={6} className="px-6 py-12 text-center text-[var(--muted-foreground)] font-medium">
                       <div className="flex flex-col items-center gap-2">
                         <ShieldAlert className="w-8 h-8 opacity-20" />
                         {isRtl ? 'لا توجد ملفات تأديبية' : 'Aucun dossier disciplinaire trouvé.'}

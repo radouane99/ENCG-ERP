@@ -176,8 +176,8 @@ const Modal: React.FC<ModalProps> = ({
           'relative z-10 w-full',
           sizeMap[size],
           // Surface
-          'bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]',
-          'border border-[hsl(var(--border))]',
+          'bg-[var(--card)] text-[var(--card-foreground)]',
+          'border border-[var(--border)]',
           'rounded-2xl shadow-2xl',
           // Entrance animation
           'motion-safe:animate-scale-in',
@@ -188,12 +188,12 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* ── Header ── */}
         {(title || !hideCloseButton) && (
-          <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[hsl(var(--border))] shrink-0">
+          <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[var(--border)] shrink-0">
             <div className="flex-1 min-w-0">
               {title && (
                 <h2
                   id={titleId}
-                  className="text-base font-semibold leading-tight text-[hsl(var(--foreground))] truncate"
+                  className="text-base font-semibold leading-tight text-[var(--foreground)] truncate"
                 >
                   {title}
                 </h2>
@@ -201,7 +201,7 @@ const Modal: React.FC<ModalProps> = ({
               {description && (
                 <p
                   id={descId}
-                  className="mt-1 text-sm text-[hsl(var(--muted-foreground))] leading-relaxed"
+                  className="mt-1 text-sm text-[var(--muted-foreground)] leading-relaxed"
                 >
                   {description}
                 </p>
@@ -215,8 +215,8 @@ const Modal: React.FC<ModalProps> = ({
                 aria-label="Fermer la fenêtre"
                 className={cn(
                   'shrink-0 h-8 w-8 rounded-md flex items-center justify-center',
-                  'text-[hsl(var(--muted-foreground))]',
-                  'hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]',
+                  'text-[var(--muted-foreground)]',
+                  'hover:bg-[var(--muted)] hover:text-[var(--foreground)]',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   'transition-colors duration-150',
                   'ms-auto'
@@ -235,7 +235,7 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* ── Footer ── */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] rounded-b-2xl shrink-0">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 0.400%, transparent)] rounded-b-2xl shrink-0">
             {footer}
           </div>
         )}

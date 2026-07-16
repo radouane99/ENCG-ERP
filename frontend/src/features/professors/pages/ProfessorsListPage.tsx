@@ -129,8 +129,8 @@ export default function ProfessorsListPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--foreground))]">{t('professors:list.title')}</h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 text-sm">{t('professors:list.subtitle')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('professors:list.title')}</h1>
+          <p className="text-[var(--muted-foreground)] mt-1 text-sm">{t('professors:list.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <ExcelActions model="professors" label={t('professors:list.title')} onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ['professors'] })} />
@@ -143,52 +143,52 @@ export default function ProfessorsListPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('common:total')}</p>
-            <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.length}</p>
+            <p className="text-sm font-medium text-[var(--muted-foreground)] mb-1">{t('common:total')}</p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">{professors.length}</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] flex items-center justify-center"><Users className="w-6 h-6" /></div>
+          <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)/10] text-[var(--color-primary)] flex items-center justify-center"><Users className="w-6 h-6" /></div>
         </div>
-        <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:contracts.permanent_pl', { defaultValue: 'Permanents' })}</p>
-            <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.contract_type === 'permanent').length}</p>
+            <p className="text-sm font-medium text-[var(--muted-foreground)] mb-1">{t('professors:contracts.permanent_pl', { defaultValue: 'Permanents' })}</p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">{professors.filter(p => p.contract_type === 'permanent').length}</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] flex items-center justify-center"><Briefcase className="w-6 h-6" /></div>
+          <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)/10] text-[var(--color-primary)] flex items-center justify-center"><Briefcase className="w-6 h-6" /></div>
         </div>
-        <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:contracts.contractual_pl', { defaultValue: 'Contractuels' })}</p>
-            <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.contract_type === 'contractual').length}</p>
+            <p className="text-sm font-medium text-[var(--muted-foreground)] mb-1">{t('professors:contracts.contractual_pl', { defaultValue: 'Contractuels' })}</p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">{professors.filter(p => p.contract_type === 'contractual').length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center"><GraduationCap className="w-6 h-6" /></div>
         </div>
-        <div className="p-5 rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">{t('professors:status.active')}</p>
-            <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{professors.filter(p => p.is_active).length}</p>
+            <p className="text-sm font-medium text-[var(--muted-foreground)] mb-1">{t('professors:status.active')}</p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">{professors.filter(p => p.is_active).length}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center"><CheckCircle className="w-6 h-6" /></div>
         </div>
       </div>
 
       {/* Table & Filters */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-[hsl(var(--border))] flex flex-col sm:flex-row gap-4 items-center bg-[hsl(var(--muted)/20)]">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[var(--border)] flex flex-col sm:flex-row gap-4 items-center bg-[color-mix(in srgb, var(--muted) 2000%, transparent)]">
           <div className="relative w-full flex-1">
             <Input 
               icon={<Search size={16} />}
               placeholder={t('professors:list.search')} 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-[hsl(var(--background))]"
+              className="bg-[var(--background)]"
             />
           </div>
           <select 
             value={contractFilter} 
             onChange={e => setContractFilter(e.target.value)}
-            className="px-4 py-2.5 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] min-w-[180px]"
+            className="px-4 py-2.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--ring)] min-w-[180px]"
           >
             <option value="">{t('professors:contracts.all', { defaultValue: 'Tous les contrats' })}</option>
             <option value="permanent">{t('professors:contracts.permanent', { defaultValue: 'Permanent' })}</option>
@@ -202,7 +202,7 @@ export default function ProfessorsListPage() {
             <div className="flex justify-center items-center p-12"><Spinner size="lg" /></div>
           ) : (
             <table className="w-full text-sm text-start">
-              <thead className="text-xs text-[hsl(var(--muted-foreground))] uppercase bg-[hsl(var(--muted)/50)] border-b border-[hsl(var(--border))]">
+              <thead className="text-xs text-[var(--muted-foreground)] uppercase bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] border-b border-[var(--border)]">
                 <tr>
                   <th className="px-6 py-4 font-semibold">{t('professors:list.columns.professor')}</th>
                   <th className="px-6 py-4 font-semibold">{t('professors:list.columns.specialty')}</th>
@@ -212,38 +212,38 @@ export default function ProfessorsListPage() {
                   <th className="px-6 py-4 font-semibold text-end">{t('professors:list.columns.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-16 text-[hsl(var(--muted-foreground))]">
-                    <div className="w-16 h-16 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <tr><td colSpan={6} className="text-center py-16 text-[var(--muted-foreground)]">
+                    <div className="w-16 h-16 bg-[var(--muted)] rounded-full flex items-center justify-center mx-auto mb-4">
                       <GraduationCap size={32} className="opacity-50" />
                     </div>
-                    <p className="font-medium text-[hsl(var(--foreground))]">{t('professors:list.empty')}</p>
+                    <p className="font-medium text-[var(--foreground)]">{t('professors:list.empty')}</p>
                     <Button variant="link" onClick={openCreate} className="mt-2">{t('professors:list.add_button')}</Button>
                   </td></tr>
                 ) : filtered.map((prof) => (
-                  <tr key={prof.id} className="hover:bg-[hsl(var(--muted)/30)] transition-colors group">
+                  <tr key={prof.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
                           {prof.first_name?.[0] || ''}{prof.last_name?.[0] || ''}
                         </div>
                         <div>
-                          <p className="font-bold text-[hsl(var(--foreground))]">{prof.last_name} {prof.first_name}</p>
-                          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{prof.email}</p>
+                          <p className="font-bold text-[var(--foreground)]">{prof.last_name} {prof.first_name}</p>
+                          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{prof.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-medium text-[hsl(var(--foreground))]">{prof.grade || '—'}</p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{prof.specialty || '—'}</p>
+                      <p className="font-medium text-[var(--foreground)]">{prof.grade || '—'}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{prof.specialty || '—'}</p>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={CONTRACT_VARIANTS[prof.contract_type] || 'default'} size="sm">
                         {CONTRACT_LABELS[prof.contract_type]}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] text-sm">{prof.department}</td>
+                    <td className="px-6 py-4 text-[var(--muted-foreground)] text-sm">{prof.department}</td>
                     <td className="px-6 py-4 text-center">
                       <Badge variant={prof.is_active ? 'success' : 'outline'} size="sm">
                         {prof.is_active ? t('professors:status.active') : t('professors:status.inactive')}
@@ -251,10 +251,10 @@ export default function ProfessorsListPage() {
                     </td>
                     <td className="px-6 py-4 text-end">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(prof)} className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-amber-600 hover:bg-amber-500/10">
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(prof)} className="h-8 w-8 p-0 text-[var(--muted-foreground)] hover:text-amber-600 hover:bg-amber-500/10">
                           <Edit2 size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(prof.id)} className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--color-destructive))] hover:bg-[hsl(var(--color-destructive))/10]">
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(prof.id)} className="h-8 w-8 p-0 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--color-destructive)/10]">
                           <Trash2 size={16} />
                         </Button>
                       </div>
@@ -277,44 +277,44 @@ export default function ProfessorsListPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:name', { defaultValue: 'Prénom' })} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('common:name', { defaultValue: 'Prénom' })} *</label>
               <Input required value={form.first_name} onChange={setF('first_name')} placeholder="Ahmed" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:name', { defaultValue: 'Nom' })} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('common:name', { defaultValue: 'Nom' })} *</label>
               <Input required value={form.last_name} onChange={setF('last_name')} placeholder="BENSOUDA" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:email', { defaultValue: 'Email' })} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('common:email', { defaultValue: 'Email' })} *</label>
               <Input required type="email" value={form.email} onChange={setF('email')} placeholder="prof@encg-fes.ma" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('common:phone', { defaultValue: 'Téléphone' })}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('common:phone', { defaultValue: 'Téléphone' })}</label>
               <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:form.grade', { defaultValue: 'Grade académique' })}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('professors:form.grade', { defaultValue: 'Grade académique' })}</label>
               <Input value={form.grade} onChange={setF('grade')} placeholder="Professeur Habilité, PES..." />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:list.columns.specialty')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('professors:list.columns.specialty')}</label>
               <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance, Management..." />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:contracts.type', { defaultValue: 'Type de contrat' })} *</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('professors:contracts.type', { defaultValue: 'Type de contrat' })} *</label>
               <select 
                 value={form.contract_type} 
                 onChange={setF('contract_type')} 
-                className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+                className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
                 <option value="permanent">{t('professors:contracts.permanent', { defaultValue: 'Permanent' })}</option>
                 <option value="contractual">{t('professors:contracts.contractual', { defaultValue: 'Contractuel' })}</option>
@@ -322,18 +322,18 @@ export default function ProfessorsListPage() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:form.hire_date', { defaultValue: 'Date d\'embauche' })}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('professors:form.hire_date', { defaultValue: 'Date d\'embauche' })}</label>
               <Input type="date" value={form.hire_date} onChange={setF('hire_date')} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('professors:list.columns.department')}</label>
+              <label className="text-sm font-semibold text-[var(--foreground)]">{t('professors:list.columns.department')}</label>
               <select 
                 value={form.department_id} 
                 onChange={setF('department_id')} 
-                className="flex h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+                className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
               >
                 <option value="">{t('professors:form.select_dept', { defaultValue: '-- Choisir un département --' })}</option>
                 {departments.map((dept: Department) => (
@@ -346,13 +346,13 @@ export default function ProfessorsListPage() {
           <div className="flex items-center gap-3 pt-2">
             <input type="checkbox" id="is_active" checked={form.is_active as boolean}
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
-              className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]" />
-            <label htmlFor="is_active" className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              className="w-4 h-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+            <label htmlFor="is_active" className="text-sm font-semibold text-[var(--foreground)]">
               {t('professors:form.is_active', { defaultValue: 'Professeur actif' })}
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[hsl(var(--border))]">
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[var(--border)]">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
               {t('common:buttons.cancel')}
             </Button>

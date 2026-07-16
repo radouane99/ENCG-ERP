@@ -110,15 +110,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               'text-sm font-medium leading-none select-none',
               hasError
-                ? 'text-[hsl(var(--color-destructive))]'
-                : 'text-[hsl(var(--foreground))]',
+                ? 'text-[var(--color-destructive)]'
+                : 'text-[var(--foreground)]',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
             {label}
             {(isRequired ?? props.required) && (
               <span
-                className="text-[hsl(var(--color-destructive))] ms-0.5"
+                className="text-[var(--color-destructive)] ms-0.5"
                 aria-label="requis"
               >
                 *
@@ -133,7 +133,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {resolvedLeadingIcon && (
             <span
               className={cn(
-                'absolute top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]',
+                'absolute top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]',
                 'pointer-events-none',
                 iconPositionMap[inputSize]
               )}
@@ -161,25 +161,25 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             }
             className={cn(
               // Base styles
-              'w-full border bg-[hsl(var(--background))] text-[hsl(var(--foreground))]',
-              'placeholder:text-[hsl(var(--muted-foreground))]',
+              'w-full border bg-[var(--background)] text-[var(--foreground)]',
+              'placeholder:text-[var(--muted-foreground)]',
               'transition-all duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
               // Normal state
               !hasError && [
-                'border-[hsl(var(--border))]',
-                'focus-visible:border-[hsl(var(--ring))]',
-                'focus-visible:ring-[hsl(var(--ring)/0.2)]',
+                'border-[var(--border)]',
+                'focus-visible:border-[var(--ring)]',
+                'focus-visible:ring-[color-mix(in srgb, var(--ring) 0.200%, transparent)]',
               ],
               // Error state
               hasError && [
-                'border-[hsl(var(--color-destructive))]',
-                'focus-visible:border-[hsl(var(--color-destructive))]',
-                'focus-visible:ring-[hsl(var(--color-destructive)/0.2)]',
-                'bg-[hsl(var(--color-destructive)/0.03)]',
+                'border-[var(--color-destructive)]',
+                'focus-visible:border-[var(--color-destructive)]',
+                'focus-visible:ring-[color-mix(in srgb, var(--color-destructive) 0.200%, transparent)]',
+                'bg-[color-mix(in srgb, var(--color-destructive) 0.0300%, transparent)]',
               ],
               // Disabled
-              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[hsl(var(--muted))]',
+              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--muted)]',
               // Size
               sizeMap[inputSize],
               // Leading icon padding — RTL-safe
@@ -197,8 +197,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className={cn(
                 'absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none',
                 hasError
-                  ? 'text-[hsl(var(--color-destructive))]'
-                  : 'text-[hsl(var(--muted-foreground))]'
+                  ? 'text-[var(--color-destructive)]'
+                  : 'text-[var(--muted-foreground)]'
               )}
               aria-hidden="true"
             >
@@ -217,7 +217,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={errorId}
             role="alert"
             aria-live="polite"
-            className="text-xs text-[hsl(var(--color-destructive))] flex items-center gap-1.5 mt-0.5"
+            className="text-xs text-[var(--color-destructive)] flex items-center gap-1.5 mt-0.5"
           >
             {errorMessage}
           </p>
@@ -227,7 +227,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {!hasError && helper && (
           <p
             id={helperId}
-            className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5"
+            className="text-xs text-[var(--muted-foreground)] mt-0.5"
           >
             {helper}
           </p>

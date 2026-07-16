@@ -47,7 +47,7 @@ export default function TimetableAdminView() {
       title: `${schedule.module_name}\n${schedule.room_name}\n${schedule.professor_name}`,
       start: `${dateStr}T${schedule.start_time}`,
       end: `${dateStr}T${schedule.end_time}`,
-      backgroundColor: schedule.type === 'TD' ? '#10b981' : schedule.type === 'TP' ? '#f59e0b' : 'hsl(var(--color-primary))',
+      backgroundColor: schedule.type === 'TD' ? '#10b981' : schedule.type === 'TP' ? '#f59e0b' : 'var(--color-primary)',
       borderColor: 'transparent',
       extendedProps: { roomId: schedule.room_id, profId: schedule.professor_id, groupId: schedule.group_id }
     }
@@ -127,21 +127,21 @@ export default function TimetableAdminView() {
       font-family: inherit;
     }
     .fc-theme-standard .fc-scrollgrid {
-      border-color: hsl(var(--border));
+      border-color: var(--border);
       border-radius: 1rem;
       overflow: hidden;
     }
     .fc-theme-standard th {
-      border-color: hsl(var(--border));
-      background: hsl(var(--muted)/50);
+      border-color: var(--border);
+      background: color-mix(in srgb, var(--muted) 5000%, transparent);
       padding: 0.75rem 0;
       font-weight: 700;
       text-transform: uppercase;
       font-size: 0.75rem;
-      color: hsl(var(--muted-foreground));
+      color: var(--muted-foreground);
     }
     .fc-theme-standard td {
-      border-color: hsl(var(--border));
+      border-color: var(--border);
     }
     .fc-timegrid-slot {
       height: 3rem;
@@ -149,7 +149,7 @@ export default function TimetableAdminView() {
     .fc-timegrid-slot-label {
       font-size: 0.75rem;
       font-weight: 600;
-      color: hsl(var(--muted-foreground));
+      color: var(--muted-foreground);
     }
     .fc-v-event {
       border-radius: 0.75rem;
@@ -166,25 +166,25 @@ export default function TimetableAdminView() {
       line-height: 1.4;
     }
     .fc-button-primary {
-      background-color: hsl(var(--background)) !important;
-      border-color: hsl(var(--border)) !important;
-      color: hsl(var(--foreground)) !important;
+      background-color: var(--background) !important;
+      border-color: var(--border) !important;
+      color: var(--foreground) !important;
       border-radius: 0.5rem !important;
       font-weight: 600 !important;
       text-transform: capitalize !important;
     }
     .fc-button-primary:hover {
-      background-color: hsl(var(--muted)) !important;
+      background-color: var(--muted) !important;
     }
     .fc-button-primary:not(:disabled).fc-button-active, .fc-button-primary:not(:disabled):active {
-      background-color: hsl(var(--color-primary)) !important;
+      background-color: var(--color-primary) !important;
       color: white !important;
-      border-color: hsl(var(--color-primary)) !important;
+      border-color: var(--color-primary) !important;
     }
     .fc-toolbar-title {
       font-size: 1.25rem !important;
       font-weight: 700 !important;
-      color: hsl(var(--foreground)) !important;
+      color: var(--foreground) !important;
     }
   `
 
@@ -193,38 +193,38 @@ export default function TimetableAdminView() {
       <style>{customCalendarStyles}</style>
       
       {/* Header Panel */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-6 rounded-[2rem] shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 end-0 p-8 opacity-5 text-[hsl(var(--color-primary))] pointer-events-none">
+      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-[2rem] shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 end-0 p-8 opacity-5 text-[var(--color-primary)] pointer-events-none">
           <CalendarIcon size={120} />
         </div>
         
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3">
-            <div className="w-10 h-10 bg-[hsl(var(--color-primary))/10] rounded-xl flex items-center justify-center text-[hsl(var(--color-primary))]">
+          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
+            <div className="w-10 h-10 bg-[var(--color-primary)/10] rounded-xl flex items-center justify-center text-[var(--color-primary)]">
               <CalendarIcon className="w-5 h-5" />
             </div>
             {isRtl ? 'إدارة الجداول الذكية' : 'Smart Timetabling'}
           </h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-2 font-medium">
+          <p className="text-[var(--muted-foreground)] mt-2 font-medium">
             {isRtl ? 'توليد تلقائي وإدارة ذكية للجداول الزمنية مع تفادي التعارضات.' : 'Génération algorithmique et gestion intelligente des emplois du temps.'}
           </p>
         </div>
         
         <div className="relative z-10 flex flex-wrap items-center gap-3">
-          <div className="flex bg-[hsl(var(--muted)/30)] p-1 rounded-xl border border-[hsl(var(--border))]">
+          <div className="flex bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-1 rounded-xl border border-[var(--border)]">
             <select 
               value={filiereId}
               onChange={(e) => setFiliereId(Number(e.target.value))}
-              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8"
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8"
             >
               <option value={1}>S6 - Génie Info</option>
               <option value={2}>S4 - Tronc Commun</option>
             </select>
-            <div className="w-px bg-[hsl(var(--border))] mx-2 my-1"></div>
+            <div className="w-px bg-[var(--border)] mx-2 my-1"></div>
             <select 
               value={semesterId}
               onChange={(e) => setSemesterId(Number(e.target.value))}
-              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[hsl(var(--foreground))] pe-8"
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8"
             >
               <option value={1}>Semestre 1</option>
               <option value={2}>Semestre 2</option>
@@ -254,7 +254,7 @@ export default function TimetableAdminView() {
       </div>
 
       {/* Calendar Area */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -290,22 +290,22 @@ export default function TimetableAdminView() {
             <AlertTriangle size={32} />
           </div>
           
-          <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">
+          <h3 className="text-lg font-bold text-[var(--foreground)]">
             {isRtl ? 'تداخل في المواعيد' : 'Collision de créneaux'}
           </h3>
           
-          <p className="text-[hsl(var(--muted-foreground))] max-w-sm">
+          <p className="text-[var(--muted-foreground)] max-w-sm">
             {conflictDetails?.message || (isRtl ? 'هذا الإجراء يسبب تعارضاً مع أستاذ أو قاعة مشغولة.' : 'Cette action cause un conflit (Salle occupée ou Professeur indisponible).')}
           </p>
 
           {conflictDetails?.suggestions?.length > 0 && (
-            <div className="w-full text-start mt-4 bg-[hsl(var(--muted)/30)] rounded-2xl p-4 border border-[hsl(var(--border))]">
-              <p className="font-bold text-sm mb-3 text-[hsl(var(--foreground))]">
+            <div className="w-full text-start mt-4 bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] rounded-2xl p-4 border border-[var(--border)]">
+              <p className="font-bold text-sm mb-3 text-[var(--foreground)]">
                 {isRtl ? 'مقترحات ذكية لتفادي التعارض:' : 'Suggestions intelligentes :'}
               </p>
               <ul className="space-y-2">
                 {conflictDetails.suggestions.map((sug: any, idx: number) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+                  <li key={idx} className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
                     <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                     <span>{sug.day} à {sug.start_time} - {sug.room}</span>
                   </li>

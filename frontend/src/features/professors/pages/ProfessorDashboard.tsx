@@ -11,7 +11,7 @@ export default function ProfessorDashboard() {
   return (
     <div className="space-y-8 p-4 md:p-6 max-w-[1200px] mx-auto animate-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] p-8 text-white rounded-[2rem] shadow-xl shadow-[hsl(var(--color-primary))/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] p-8 text-white rounded-[2rem] shadow-xl shadow-[var(--color-primary)/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl mix-blend-overlay"></div>
         <div className="relative z-10">
           <h1 className="text-3xl font-bold mb-2">
@@ -36,19 +36,19 @@ export default function ProfessorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (Main features) */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-lg font-bold text-[hsl(var(--foreground))]">{isRtl ? 'الوصول السريع' : 'Accès Rapide'}</h2>
+          <h2 className="text-lg font-bold text-[var(--foreground)]">{isRtl ? 'الوصول السريع' : 'Accès Rapide'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* Classroom Card */}
-            <Link to="/professors/classroom" className="group bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 hover:shadow-lg transition-all hover:-translate-y-1 block relative overflow-hidden">
-              <div className="absolute top-0 end-0 p-6 opacity-5 text-[hsl(var(--color-primary))] transform group-hover:scale-110 transition-transform">
+            <Link to="/professors/classroom" className="group bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 hover:shadow-lg transition-all hover:-translate-y-1 block relative overflow-hidden">
+              <div className="absolute top-0 end-0 p-6 opacity-5 text-[var(--color-primary)] transform group-hover:scale-110 transition-transform">
                 <Users size={80} />
               </div>
               <div className="w-12 h-12 bg-blue-500/10 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
                 <Users size={24} />
               </div>
-              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{isRtl ? 'القسم الرقمي (Classroom)' : 'Espace Classroom'}</h3>
-              <p className="text-[hsl(var(--muted-foreground))] text-sm mb-4">
+              <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">{isRtl ? 'القسم الرقمي (Classroom)' : 'Espace Classroom'}</h3>
+              <p className="text-[var(--muted-foreground)] text-sm mb-4">
                 {isRtl ? 'إدارة الغياب بالـ QR، مشاركة الملفات، والتفاعل' : 'Appel par QR Code, partage de documents et interaction.'}
               </p>
               <div className="flex items-center text-blue-600 font-semibold text-sm">
@@ -57,15 +57,15 @@ export default function ProfessorDashboard() {
             </Link>
 
             {/* AI Assistant Card */}
-            <Link to="/professors/ai-assistant" className="group bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 hover:shadow-lg transition-all hover:-translate-y-1 block relative overflow-hidden">
+            <Link to="/professors/ai-assistant" className="group bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 hover:shadow-lg transition-all hover:-translate-y-1 block relative overflow-hidden">
               <div className="absolute top-0 end-0 p-6 opacity-5 text-purple-600 transform group-hover:scale-110 transition-transform">
                 <BrainCircuit size={80} />
               </div>
               <div className="w-12 h-12 bg-purple-500/10 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
                 <BrainCircuit size={24} />
               </div>
-              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{t('modules:prof_dash.ai_title')}</h3>
-              <p className="text-[hsl(var(--muted-foreground))] text-sm mb-4">
+              <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">{t('modules:prof_dash.ai_title')}</h3>
+              <p className="text-[var(--muted-foreground)] text-sm mb-4">
                 {isRtl ? 'توليد أسئلة QCM، تحليل نتائج الطلاب، تلخيص' : 'Générateur de QCM, analyse prédictive des résultats.'}
               </p>
               <div className="flex items-center text-purple-600 font-semibold text-sm">
@@ -75,22 +75,22 @@ export default function ProfessorDashboard() {
 
           </div>
 
-          <h2 className="text-lg font-bold text-[hsl(var(--foreground))] pt-4">{t('modules:prof_dash.today_timetable')}</h2>
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-2 shadow-sm">
-            <div className="flex items-center p-4 hover:bg-[hsl(var(--muted)/50)] rounded-2xl transition-colors">
-              <div className="w-16 text-center font-bold text-[hsl(var(--color-primary))]">08:30</div>
-              <div className="w-1 bg-[hsl(var(--color-primary))] rounded-full h-10 mx-4"></div>
+          <h2 className="text-lg font-bold text-[var(--foreground)] pt-4">{t('modules:prof_dash.today_timetable')}</h2>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-2 shadow-sm">
+            <div className="flex items-center p-4 hover:bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] rounded-2xl transition-colors">
+              <div className="w-16 text-center font-bold text-[var(--color-primary)]">08:30</div>
+              <div className="w-1 bg-[var(--color-primary)] rounded-full h-10 mx-4"></div>
               <div className="flex-1">
-                <h4 className="font-bold text-[hsl(var(--foreground))]">Management Stratégique (M12)</h4>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Amphi 1 • S6 • Gestion</p>
+                <h4 className="font-bold text-[var(--foreground)]">Management Stratégique (M12)</h4>
+                <p className="text-sm text-[var(--muted-foreground)]">Amphi 1 • S6 • Gestion</p>
               </div>
             </div>
-            <div className="flex items-center p-4 hover:bg-[hsl(var(--muted)/50)] rounded-2xl transition-colors">
+            <div className="flex items-center p-4 hover:bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] rounded-2xl transition-colors">
               <div className="w-16 text-center font-bold text-amber-500">10:30</div>
               <div className="w-1 bg-amber-500 rounded-full h-10 mx-4"></div>
               <div className="flex-1">
-                <h4 className="font-bold text-[hsl(var(--foreground))]">Finance d'Entreprise (M04)</h4>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Salle 14 • S4 • ENCG</p>
+                <h4 className="font-bold text-[var(--foreground)]">Finance d'Entreprise (M04)</h4>
+                <p className="text-sm text-[var(--muted-foreground)]">Salle 14 • S4 • ENCG</p>
               </div>
             </div>
           </div>
@@ -98,8 +98,8 @@ export default function ProfessorDashboard() {
 
         {/* Right Column (Widgets) */}
         <div className="space-y-6">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl p-6 shadow-sm">
-            <h3 className="font-bold flex items-center gap-2 mb-4 text-[hsl(var(--foreground))]">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-sm">
+            <h3 className="font-bold flex items-center gap-2 mb-4 text-[var(--foreground)]">
               <MessageSquare className="w-5 h-5 text-pink-500" />
               {t('modules:prof_dash.admin_alerts')}
             </h3>

@@ -36,7 +36,7 @@ export default function ConvocationDashboard() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] p-8 text-white rounded-[2rem] shadow-xl shadow-[hsl(var(--color-primary))/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] p-8 text-white rounded-[2rem] shadow-xl shadow-[var(--color-primary)/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
@@ -57,38 +57,38 @@ export default function ConvocationDashboard() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-4 rounded-3xl shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shadow-sm">
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'دورة الامتحان' : 'Session d\'examens'}</label>
-          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+          <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'دورة الامتحان' : 'Session d\'examens'}</label>
+          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
             <option>Normale Automne — 2025/2026</option>
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'الشعبة' : 'Filière'}</label>
-          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+          <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'الشعبة' : 'Filière'}</label>
+          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
             <option>{isRtl ? 'جميع الشعب' : 'Toutes les filières'}</option>
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase mb-1.5 block">{isRtl ? 'الحالة' : 'Statut'}</label>
-          <select className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none">
+          <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'الحالة' : 'Statut'}</label>
+          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
             <option>{isRtl ? 'جميع الحالات' : 'Tous les statuts'}</option>
           </select>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-[hsl(var(--border))]">
+      <div className="flex gap-2 border-b border-[var(--border)]">
         <button 
           onClick={() => setActiveTab('etudiants')}
-          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'etudiants' ? "border-[hsl(var(--color-primary))] text-[hsl(var(--color-primary))]" : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]")}
+          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'etudiants' ? "border-[var(--color-primary)] text-[var(--color-primary)]" : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
         >
           <GraduationCap className="w-5 h-5" /> {isRtl ? 'الطلاب (750)' : 'Étudiants (750)'}
         </button>
         <button 
           onClick={() => setActiveTab('surveillants')}
-          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'surveillants' ? "border-[#e91e63] text-[#e91e63]" : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]")}
+          className={cn("flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase transition-colors border-b-2", activeTab === 'surveillants' ? "border-[#e91e63] text-[#e91e63]" : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
         >
           <Users className="w-5 h-5" /> {isRtl ? 'المراقبين (28)' : 'Surveillants (28)'}
         </button>
@@ -128,7 +128,7 @@ export default function ConvocationDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[hsl(var(--color-primary))]/10 border border-[hsl(var(--color-primary))]/20 text-[hsl(var(--color-primary))] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary)] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
               <div className="text-4xl font-black mb-1">750</div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الطلاب' : 'Total Étudiants'}</div>
@@ -160,8 +160,8 @@ export default function ConvocationDashboard() {
       )}
 
       {/* Actions */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-6 rounded-3xl shadow-sm">
-        <h3 className="text-[hsl(var(--foreground))] font-bold text-lg mb-4">
+      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-3xl shadow-sm">
+        <h3 className="text-[var(--foreground)] font-bold text-lg mb-4">
           {isRtl ? 'إجراءات جماعية' : 'Actions Groupées'} — {activeTab === 'surveillants' ? (isRtl ? 'المراقبين' : 'Surveillance') : (isRtl ? 'الطلاب' : 'Étudiants')}
         </h3>
         
@@ -193,18 +193,18 @@ export default function ConvocationDashboard() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/30)]">
-          <h3 className="font-bold text-[hsl(var(--foreground))] text-lg px-2">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
+          <h3 className="font-bold text-[var(--foreground)] text-lg px-2">
             {isRtl ? 'قائمة الاستدعاءات' : 'Liste des convocations'}
           </h3>
         </div>
         <div className="p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center mb-4">
-            <ClipboardList className="w-10 h-10 text-[hsl(var(--muted-foreground))]" />
+          <div className="w-20 h-20 bg-[var(--muted)] rounded-full flex items-center justify-center mb-4">
+            <ClipboardList className="w-10 h-10 text-[var(--muted-foreground)]" />
           </div>
-          <p className="font-bold text-[hsl(var(--foreground))] text-lg mb-1">{isRtl ? 'البيانات قيد التحميل...' : 'Chargement des données...'}</p>
-          <p className="text-[hsl(var(--muted-foreground))] text-sm">
+          <p className="font-bold text-[var(--foreground)] text-lg mb-1">{isRtl ? 'البيانات قيد التحميل...' : 'Chargement des données...'}</p>
+          <p className="text-[var(--muted-foreground)] text-sm">
             {isRtl ? 'يرجى الانتظار، سيتم عرض الجدول قريباً.' : 'Veuillez patienter, le tableau sera affiché.'}
           </p>
         </div>

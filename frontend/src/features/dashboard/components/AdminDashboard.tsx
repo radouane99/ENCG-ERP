@@ -190,22 +190,22 @@ export default function AdminDashboard() {
                 <AreaChart data={data?.enrollment_chart ?? []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--color-primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--color-primary))" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                    contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
+                    itemStyle={{ color: 'var(--foreground)' }}
                     formatter={(value: any) => {
                       const numericValue = typeof value === 'number' ? value : Number(value ?? 0)
                       return [`${numericValue} étudiants`, 'Inscriptions'] as [string, string]
                     }}
                   />
-                  <Area type="monotone" dataKey="students" stroke="hsl(var(--color-primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorStudents)" />
+                  <Area type="monotone" dataKey="students" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorStudents)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -224,17 +224,17 @@ export default function AdminDashboard() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data?.filiere_chart ?? []} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} hide />
-                  <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} width={60} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+                  <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} hide />
+                  <YAxis dataKey="name" type="category" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} width={60} />
                   <RechartsTooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                     formatter={(value: any) => {
                       const numericValue = typeof value === 'number' ? value : Number(value ?? 0)
                       return [`${numericValue} étudiants`, 'Effectif'] as [string, string]
                     }}
                   />
-                  <Bar dataKey="count" fill="hsl(var(--color-primary))" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -40,8 +40,8 @@ export default function AdminPilotage() {
   if (loading || !data) {
     return (
       <div className="flex h-[80vh] items-center justify-center flex-col gap-4 animate-in fade-in">
-        <div className="w-12 h-12 border-4 border-[hsl(var(--color-primary))/20] border-t-[hsl(var(--color-primary))] rounded-full animate-spin"></div>
-        <p className="text-[hsl(var(--muted-foreground))] font-bold">{isRtl ? 'جاري تحميل لوحة القيادة...' : 'Chargement du Centre de Commandement...'}</p>
+        <div className="w-12 h-12 border-4 border-[var(--color-primary)/20] border-t-[var(--color-primary)] rounded-full animate-spin"></div>
+        <p className="text-[var(--muted-foreground)] font-bold">{isRtl ? 'جاري تحميل لوحة القيادة...' : 'Chargement du Centre de Commandement...'}</p>
       </div>
     )
   }
@@ -59,18 +59,18 @@ export default function AdminPilotage() {
     <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute -top-10 -end-10 w-40 h-40 bg-[hsl(var(--color-primary))/5] rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute -top-10 -end-10 w-40 h-40 bg-[var(--color-primary)/5] rounded-full blur-3xl pointer-events-none"></div>
         
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-[hsl(var(--color-primary))/10] rounded-2xl flex items-center justify-center border border-[hsl(var(--color-primary))/20]">
-            <Activity className="w-8 h-8 text-[hsl(var(--color-primary))]" />
+          <div className="w-16 h-16 bg-[var(--color-primary)/10] rounded-2xl flex items-center justify-center border border-[var(--color-primary)/20]">
+            <Activity className="w-8 h-8 text-[var(--color-primary)]" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-[hsl(var(--foreground))] mb-1 tracking-tight">
+            <h1 className="text-3xl font-black text-[var(--foreground)] mb-1 tracking-tight">
               {isRtl ? 'لوحة القيادة الإستراتيجية' : 'Centre de Commandement (BI)'}
             </h1>
-            <p className="text-[hsl(var(--muted-foreground))] font-medium text-sm">
+            <p className="text-[var(--muted-foreground)] font-medium text-sm">
               {isRtl ? 'رؤية شاملة للموارد البشرية، الأكاديمية والمالية.' : 'Vue globale stratégique : Ressources Humaines, Académiques et Financières.'}
             </p>
           </div>
@@ -93,10 +93,10 @@ export default function AdminPilotage() {
       {/* Primary KPIs - Glassmorphism Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {KPI_CARDS.map((kpi, i) => (
-          <div key={i} className="p-6 rounded-[2rem] bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm flex items-center justify-between hover:shadow-md hover:border-[hsl(var(--color-primary))/30] transition-all group">
+          <div key={i} className="p-6 rounded-[2rem] bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between hover:shadow-md hover:border-[var(--color-primary)/30] transition-all group">
             <div>
-              <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] mb-2 uppercase tracking-widest">{kpi.title}</p>
-              <p className="text-4xl font-black text-[hsl(var(--foreground))] tracking-tight">{kpi.value}</p>
+              <p className="text-xs font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-widest">{kpi.title}</p>
+              <p className="text-4xl font-black text-[var(--foreground)] tracking-tight">{kpi.value}</p>
             </div>
             <div className={cn("w-14 h-14 rounded-[1.2rem] flex items-center justify-center transition-transform group-hover:scale-110", kpi.bg, kpi.color)}>
               {kpi.icon}
@@ -109,8 +109,8 @@ export default function AdminPilotage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Chart 1: Répartition par Filière */}
-        <div className="p-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm">
-          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[hsl(var(--foreground))]">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
             <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Building size={18} /></div>
             {isRtl ? 'توزيع الطلاب حسب الشعبة' : 'Répartition des étudiants par filière'}
           </h3>
@@ -118,10 +118,10 @@ export default function AdminPilotage() {
             {charts.students_by_filiere?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={charts.students_by_filiere} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted)/20)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                  <Tooltip cursor={{ fill: 'color-mix(in srgb, var(--muted) 2000%, transparent)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   <Bar dataKey="value" fill="#0ea5e9" radius={[8, 8, 0, 0]} barSize={40}>
                     {charts.students_by_filiere.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -130,14 +130,14 @@ export default function AdminPilotage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-               <div className="h-full flex items-center justify-center text-[hsl(var(--muted-foreground))] text-sm font-bold">{isRtl ? 'لا توجد بيانات كافية' : 'Données insuffisantes'}</div>
+               <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm font-bold">{isRtl ? 'لا توجد بيانات كافية' : 'Données insuffisantes'}</div>
             )}
           </div>
         </div>
 
         {/* Chart 2: Admissions & Candidatures */}
-        <div className="p-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm">
-          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[hsl(var(--foreground))]">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
             <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><TrendingUp size={18} /></div>
             {isRtl ? 'حالة القبول والترشيحات' : 'Statuts des Admissions'}
           </h3>
@@ -165,14 +165,14 @@ export default function AdminPilotage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[hsl(var(--muted-foreground))] text-sm font-bold">{isRtl ? 'لا توجد بيانات كافية' : 'Données insuffisantes'}</div>
+              <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm font-bold">{isRtl ? 'لا توجد بيانات كافية' : 'Données insuffisantes'}</div>
             )}
           </div>
         </div>
 
         {/* Chart 3: Ressources Humaines (Dynamic CSS Progress) */}
-        <div className="p-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm">
-          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[hsl(var(--foreground))]">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
             <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg"><BrainCircuit size={18} /></div>
             {isRtl ? 'طاقة التأطير (أساتذة vs زائرون)' : 'Charge d\'Encadrement (Permanents vs Vacataires)'}
           </h3>
@@ -180,20 +180,20 @@ export default function AdminPilotage() {
           <div className="space-y-6 mt-8">
             <div>
               <div className="flex justify-between items-end mb-2">
-                <span className="font-bold text-[hsl(var(--foreground))]">{isRtl ? 'الأساتذة الدائمون' : 'Professeurs Permanents'}</span>
+                <span className="font-bold text-[var(--foreground)]">{isRtl ? 'الأساتذة الدائمون' : 'Professeurs Permanents'}</span>
                 <span className="text-xl font-black text-purple-600">{charts.hr?.permanents || 0}</span>
               </div>
-              <div className="h-4 w-full bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+              <div className="h-4 w-full bg-[var(--muted)] rounded-full overflow-hidden">
                 <div className="h-full bg-purple-500 rounded-full transition-all duration-1000" style={{ width: '60%' }}></div>
               </div>
             </div>
             
             <div>
               <div className="flex justify-between items-end mb-2">
-                <span className="font-bold text-[hsl(var(--foreground))]">{isRtl ? 'الأساتذة الزائرون (نشطون)' : 'Professeurs Vacataires (Actifs)'}</span>
+                <span className="font-bold text-[var(--foreground)]">{isRtl ? 'الأساتذة الزائرون (نشطون)' : 'Professeurs Vacataires (Actifs)'}</span>
                 <span className="text-xl font-black text-blue-600">{charts.hr?.vacataires || 0}</span>
               </div>
-              <div className="h-4 w-full bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+              <div className="h-4 w-full bg-[var(--muted)] rounded-full overflow-hidden">
                 <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: '40%' }}></div>
               </div>
             </div>

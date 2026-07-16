@@ -72,7 +72,7 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 md:p-6 pb-20 animate-in">
       {/* Student Premium Header */}
-      <div className="bg-gradient-to-r from-[hsl(var(--color-primary))] to-[hsl(var(--color-secondary))] rounded-[2rem] p-8 text-white shadow-xl shadow-[hsl(var(--color-primary))/20] relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] rounded-[2rem] p-8 text-white shadow-xl shadow-[var(--color-primary)/20] relative overflow-hidden">
         <div className="absolute top-0 end-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay -mt-10 -me-10 pointer-events-none"></div>
         <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
           <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center border border-white/30 shadow-inner">
@@ -96,9 +96,9 @@ export default function StudentDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] shadow-sm overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden">
         {/* Navigation Tabs */}
-        <div className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/20)] flex overflow-x-auto hide-scrollbar">
+        <div className="border-b border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 2000%, transparent)] flex overflow-x-auto hide-scrollbar">
           {[
             { id: 'overview', label: t('students:dashboard.tabs.overview') },
             { id: 'grades', label: t('students:dashboard.tabs.grades') },
@@ -111,8 +111,8 @@ export default function StudentDashboard() {
               className={cn(
                 "py-4 px-6 text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2",
                 activeTab === tab.id
-                  ? "border-[hsl(var(--color-primary))] text-[hsl(var(--color-primary))] bg-[hsl(var(--background))]"
-                  : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--background))/50]"
+                  ? "border-[var(--color-primary)] text-[var(--color-primary)] bg-[var(--background)]"
+                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--background)/50]"
               )}
             >
               {tab.icon} {tab.label}
@@ -126,28 +126,28 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Timeline (Left/Right depending on RTL) */}
               <div className="lg:col-span-2 space-y-4">
-                <h3 className="font-bold text-lg text-[hsl(var(--foreground))] flex items-center gap-2 mb-4">
-                  <Calendar className="text-[hsl(var(--color-primary))]" />
+                <h3 className="font-bold text-lg text-[var(--foreground)] flex items-center gap-2 mb-4">
+                  <Calendar className="text-[var(--color-primary)]" />
                   {t('students:dashboard.overview.timeline_title')}
                 </h3>
 
-                <div className="space-y-4 relative before:absolute before:inset-0 before:ms-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[hsl(var(--border))] before:to-transparent">
+                <div className="space-y-4 relative before:absolute before:inset-0 before:ms-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[var(--border)] before:to-transparent">
                   {scheduleData?.slice(0, 2).map((cours: any, idx: number) => (
                     <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full border-4 border-[hsl(var(--card))] bg-[hsl(var(--color-primary))] text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full border-4 border-[var(--card)] bg-[var(--color-primary)] text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                         <Clock size={12} />
                       </div>
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2rem)] p-4 rounded-2xl bg-[hsl(var(--background))] border border-[hsl(var(--border))] shadow-sm hover:border-[hsl(var(--color-primary))/50] transition-colors">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2rem)] p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] shadow-sm hover:border-[var(--color-primary)/50] transition-colors">
                         <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline" className="text-xs bg-[hsl(var(--color-primary))/10] text-[hsl(var(--color-primary))] border-none">
+                          <Badge variant="outline" className="text-xs bg-[var(--color-primary)/10] text-[var(--color-primary)] border-none">
                             {cours.time}
                           </Badge>
-                          <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{cours.type}</span>
+                          <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-wider">{cours.type}</span>
                         </div>
-                        <h4 className="font-bold text-[hsl(var(--foreground))] text-sm leading-tight mb-2">
+                        <h4 className="font-bold text-[var(--foreground)] text-sm leading-tight mb-2">
                           {cours.module}
                         </h4>
-                        <div className="flex items-center gap-3 text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                        <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)] font-medium">
                           <span className="flex items-center gap-1"><User size={12} /> {cours.professor}</span>
                           <span className="flex items-center gap-1"><MapPin size={12} /> {cours.room}</span>
                         </div>
@@ -164,7 +164,7 @@ export default function StudentDashboard() {
                     <AlertCircle className="w-5 h-5" />
                     {t('students:dashboard.overview.alerts_title')}
                   </h3>
-                  <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] shadow-sm text-sm font-medium text-[hsl(var(--foreground))]">
+                  <div className="bg-[var(--card)] p-3 rounded-xl border border-[var(--border)] shadow-sm text-sm font-medium text-[var(--foreground)]">
                     {t('students:dashboard.overview.alerts_text')}
                   </div>
                 </div>
@@ -175,10 +175,10 @@ export default function StudentDashboard() {
                     {t('students:dashboard.overview.docs_title')}
                   </h3>
                   <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start text-xs bg-[hsl(var(--background))]">
+                    <Button variant="outline" className="w-full justify-start text-xs bg-[var(--background)]">
                       {t('students:dashboard.overview.doc_1')}
                     </Button>
-                    <Button variant="outline" className="w-full justify-start text-xs bg-[hsl(var(--background))]">
+                    <Button variant="outline" className="w-full justify-start text-xs bg-[var(--background)]">
                       {t('students:dashboard.overview.doc_2')}
                     </Button>
                   </div>
@@ -192,18 +192,18 @@ export default function StudentDashboard() {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{t('students:dashboard.grades.title')}</h2>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('students:dashboard.grades.subtitle')}</p>
+                  <h2 className="text-xl font-bold text-[var(--foreground)]">{t('students:dashboard.grades.title')}</h2>
+                  <p className="text-sm text-[var(--muted-foreground)]">{t('students:dashboard.grades.subtitle')}</p>
                 </div>
                 <Badge className="bg-green-500 text-white border-none">{t('students:dashboard.grades.status_validated')}</Badge>
               </div>
 
               {loadingGrades ? (
-                <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--color-primary))]"></div></div>
+                <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div></div>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)]">
                   <table className="w-full text-sm text-start">
-                    <thead className="bg-[hsl(var(--muted)/50)] text-[hsl(var(--muted-foreground))] font-bold uppercase text-xs">
+                    <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[var(--muted-foreground)] font-bold uppercase text-xs">
                       <tr>
                         <th className="px-6 py-4">{t('students:dashboard.grades.columns.module')}</th>
                         <th className="px-6 py-4">{t('students:dashboard.grades.columns.type')}</th>
@@ -211,12 +211,12 @@ export default function StudentDashboard() {
                         <th className="px-6 py-4 text-center">{t('students:dashboard.grades.columns.result')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[hsl(var(--border))]">
+                    <tbody className="divide-y divide-[var(--border)]">
                       {gradesData?.length > 0 ? gradesData.map((grade: any, i: number) => (
-                        <tr key={i} className="hover:bg-[hsl(var(--muted)/30)] transition-colors">
-                          <td className="px-6 py-4 font-bold text-[hsl(var(--foreground))]">{grade.gradeComponent?.module?.name || 'Comptabilité Générale'}</td>
-                          <td className="px-6 py-4 text-[hsl(var(--muted-foreground))]">{grade.examSession?.type || 'Contrôle Continu'}</td>
-                          <td className="px-6 py-4 text-center font-black text-lg text-[hsl(var(--foreground))]">{grade.value}</td>
+                        <tr key={i} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors">
+                          <td className="px-6 py-4 font-bold text-[var(--foreground)]">{grade.gradeComponent?.module?.name || 'Comptabilité Générale'}</td>
+                          <td className="px-6 py-4 text-[var(--muted-foreground)]">{grade.examSession?.type || 'Contrôle Continu'}</td>
+                          <td className="px-6 py-4 text-center font-black text-lg text-[var(--foreground)]">{grade.value}</td>
                           <td className="px-6 py-4 text-center">
                             {grade.value >= 10 ? (
                               <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">{t('students:dashboard.grades.pass')}</Badge>
@@ -227,7 +227,7 @@ export default function StudentDashboard() {
                         </tr>
                       )) : (
                         <tr>
-                          <td colSpan={4} className="px-6 py-10 text-center text-[hsl(var(--muted-foreground))]">
+                          <td colSpan={4} className="px-6 py-10 text-center text-[var(--muted-foreground)]">
                             {t('students:dashboard.grades.empty')}
                           </td>
                         </tr>
@@ -243,18 +243,18 @@ export default function StudentDashboard() {
           {activeTab === 'absences' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4">
               <div>
-                <h2 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">{t('students:dashboard.absences.title')}</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] mb-6">
+                <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">{t('students:dashboard.absences.title')}</h2>
+                <p className="text-sm text-[var(--muted-foreground)] mb-6">
                   {t('students:dashboard.absences.subtitle')}
                 </p>
 
                 <form onSubmit={(e) => { e.preventDefault(); submitAbsenceMutation.mutate(); }} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.reason')}</label>
+                    <label className="block text-sm font-bold text-[var(--foreground)] mb-1.5">{t('students:dashboard.absences.reason')}</label>
                     <select
                       value={absenceReason}
                       onChange={e => setAbsenceReason(e.target.value)}
-                      className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none"
+                      className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none"
                       required
                     >
                       <option value="">{t('students:dashboard.absences.reason_select')}</option>
@@ -265,22 +265,22 @@ export default function StudentDashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.details')}</label>
+                    <label className="block text-sm font-bold text-[var(--foreground)] mb-1.5">{t('students:dashboard.absences.details')}</label>
                     <textarea
                       value={absenceDesc}
                       onChange={e => setAbsenceDesc(e.target.value)}
-                      className="w-full border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm bg-[hsl(var(--background))] focus:ring-2 focus:ring-[hsl(var(--color-primary))/20] outline-none resize-none h-24"
+                      className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none resize-none h-24"
                       placeholder={t('students:dashboard.absences.details_placeholder')}
                     ></textarea>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-1.5">{t('students:dashboard.absences.document')}</label>
-                    <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-6 text-center hover:bg-[hsl(var(--muted)/20)] transition-colors cursor-pointer">
+                    <label className="block text-sm font-bold text-[var(--foreground)] mb-1.5">{t('students:dashboard.absences.document')}</label>
+                    <div className="border-2 border-dashed border-[var(--border)] rounded-xl p-6 text-center hover:bg-[color-mix(in srgb, var(--muted) 2000%, transparent)] transition-colors cursor-pointer">
                       <input type="file" className="hidden" id="file-upload" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.png" />
                       <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                        <Upload className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
-                        <span className="text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <Upload className="w-8 h-8 text-[var(--muted-foreground)]" />
+                        <span className="text-sm font-medium text-[var(--muted-foreground)]">
                           {absenceFile ? absenceFile.name : (t('students:dashboard.absences.document_placeholder'))}
                         </span>
                       </label>
@@ -298,16 +298,16 @@ export default function StudentDashboard() {
                 </form>
               </div>
 
-              <div className="bg-[hsl(var(--muted)/30)] rounded-3xl p-6 border border-[hsl(var(--border))]">
-                <h3 className="font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[hsl(var(--color-primary))]" />
+              <div className="bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] rounded-3xl p-6 border border-[var(--border)]">
+                <h3 className="font-bold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-[var(--color-primary)]" />
                   {t('students:dashboard.absences.history_title')}
                 </h3>
                 <div className="space-y-3">
-                  <div className="bg-[hsl(var(--background))] p-4 rounded-xl border border-[hsl(var(--border))] flex justify-between items-start shadow-sm">
+                  <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)] flex justify-between items-start shadow-sm">
                     <div>
-                      <p className="font-bold text-sm text-[hsl(var(--foreground))]">{t('students:dashboard.absences.history_item')}</p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{t('students:dashboard.absences.history_date')}</p>
+                      <p className="font-bold text-sm text-[var(--foreground)]">{t('students:dashboard.absences.history_item')}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] mt-1">{t('students:dashboard.absences.history_date')}</p>
                     </div>
                     <Badge variant="outline" className="text-amber-600 bg-amber-500/10 border-amber-200">
                       {t('students:dashboard.absences.history_status')}
@@ -324,8 +324,8 @@ export default function StudentDashboard() {
               <div className="w-20 h-20 bg-purple-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-purple-500/20">
                 <Sparkles className="w-10 h-10 text-purple-600" />
               </div>
-              <h2 className="text-2xl font-black text-[hsl(var(--foreground))]">{t('students:dashboard.revision.title')}</h2>
-              <p className="text-[hsl(var(--muted-foreground))] text-sm">
+              <h2 className="text-2xl font-black text-[var(--foreground)]">{t('students:dashboard.revision.title')}</h2>
+              <p className="text-[var(--muted-foreground)] text-sm">
                 {t('students:dashboard.revision.subtitle')}
               </p>
 
@@ -346,14 +346,14 @@ export default function StudentDashboard() {
               </div>
 
               {generateRevisionMutation.isSuccess && (
-                <div className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl p-6 mt-6 shadow-sm text-start">
+                <div className="bg-[var(--background)] border border-[var(--border)] rounded-2xl p-6 mt-6 shadow-sm text-start">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-lg text-[hsl(var(--foreground))]">
+                    <h3 className="font-bold text-lg text-[var(--foreground)]">
                       {t('students:dashboard.revision.result_title')}
                     </h3>
                     <Badge className="bg-purple-100 text-purple-700 border-none">AI Generated</Badge>
                   </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-[hsl(var(--muted-foreground))]">
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-[var(--muted-foreground)]">
                     <p>{t('students:dashboard.revision.result_text')}</p>
                     <ul className="mt-4 space-y-2">
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Jour 1: Comptabilité (Chapitres 1-3) - 2h</li>
