@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,11 +20,7 @@ class DatabaseSeeder extends Seeder
         DB::transaction(function () {
             $this->call([
                 RbacSeeder::class,           // Roles and Permissions
-                EncgFesSeeder::class,        // Infrastructure, Academic Core
-                UserSeeder::class,           // Admins, Professors, Students
-                EnrollmentSeeder::class,     // Groups, Registrations
-                ScheduleSeeder::class,       // Timetables
-                TransactionalSeeder::class,  // Document requests, Absences, Grades, Projects
+                EncgFesSeeder::class,        // Infrastructure, Academic Core, Users, Grades, Cards
             ]);
         });
 
