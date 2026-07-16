@@ -62,8 +62,9 @@ return new class extends Migration
 
         // 3. Create SQL Views
         // Note: student_full_profile_view unifies users and students
+        DB::statement("DROP VIEW IF EXISTS student_full_profile_view");
         DB::statement("
-            CREATE OR REPLACE VIEW student_full_profile_view AS
+            CREATE VIEW student_full_profile_view AS
             SELECT 
                 s.id as student_id,
                 u.id as user_id,
@@ -83,8 +84,9 @@ return new class extends Migration
         ");
 
         // Note: room_utilization_view tracks schedules per room
+        DB::statement("DROP VIEW IF EXISTS room_utilization_view");
         DB::statement("
-            CREATE OR REPLACE VIEW room_utilization_view AS
+            CREATE VIEW room_utilization_view AS
             SELECT 
                 r.id as room_id,
                 r.name as room_name,

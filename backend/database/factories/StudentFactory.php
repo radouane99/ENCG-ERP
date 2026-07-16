@@ -25,7 +25,6 @@ class StudentFactory extends Factory
             'cne'             => strtoupper(fake()->unique()->bothify('??#####')),
             'massar_code'     => fake()->optional()->bothify('G########'),
             'gender'          => fake()->randomElement(['male', 'female']),
-            'birth_date'      => fake()->dateTimeBetween('-30 years', '-18 years')->format('Y-m-d'),
             'status'          => 'active',
             'scholarship_type'=> null,
             'institution_id'  => 1,

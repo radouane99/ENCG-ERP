@@ -83,10 +83,12 @@ return new class extends Migration
             $table->unique(['module_id', 'professor_id'], 'unique_module_professor');
         });
         
-        // MySQL 8 CHECK constraints
-        DB::statement('ALTER TABLE schedules ADD CONSTRAINT chk_schedule_time CHECK (start_time < end_time)');
-        DB::statement('ALTER TABLE rooms ADD CONSTRAINT chk_room_capacity CHECK (capacity > 0)');
-        DB::statement('ALTER TABLE academic_years ADD CONSTRAINT chk_academic_year_dates CHECK (start_date < end_date)');
+        // MySQL 8 CHECK constraints (skip on sqlite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE schedules ADD CONSTRAINT chk_schedule_time CHECK (start_time < end_time)');
+            DB::statement('ALTER TABLE rooms ADD CONSTRAINT chk_room_capacity CHECK (capacity > 0)');
+            DB::statement('ALTER TABLE academic_years ADD CONSTRAINT chk_academic_year_dates CHECK (start_date < end_date)');
+        }
     }
 
     /**
@@ -95,9 +97,11 @@ return new class extends Migration
     public function down(): void
     {
         // 1. Drop constraints
-        DB::statement('ALTER TABLE schedules DROP CONSTRAINT chk_schedule_time');
-        DB::statement('ALTER TABLE rooms DROP CONSTRAINT chk_room_capacity');
-        DB::statement('ALTER TABLE academic_years DROP CONSTRAINT chk_academic_year_dates');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE schedules DROP CONSTRAINT chk_schedule_time');
+            DB::statement('ALTER TABLE rooms DROP CONSTRAINT chk_room_capacity');
+            DB::statement('ALTER TABLE academic_years DROP CONSTRAINT chk_academic_year_dates');
+        }
 
         Schema::table('module_professor', function (Blueprint $table) {
             $table->dropUnique('unique_module_professor');
