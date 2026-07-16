@@ -29,7 +29,6 @@ class Student extends Model
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
             'has_disability' => 'boolean',
         ];
     }

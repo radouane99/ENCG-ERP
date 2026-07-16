@@ -24,6 +24,12 @@ function makeAdminUser(): User
     // Flush Spatie permission cache to avoid stale data across tests
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
+
+    // Assign a role that passes the route-level role middleware
+    $role = Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
+    $user->assignRole($role);
+
+    // Assign direct permissions for controller-level checks
     $permissions = [
         'students.view', 'students.create', 'students.edit', 'students.delete',
     ];
@@ -38,6 +44,7 @@ function makeAdminUser(): User
 function makeRestrictedUser(): User
 {
     ensureInstitution();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     return User::factory()->create();
 }
 
