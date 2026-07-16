@@ -96,8 +96,8 @@ class EncgFesSeeder extends Seeder
         DB::table('vacation_payments')->delete();
         DB::table('vacation_sessions')->delete();
         DB::table('vacation_contracts')->delete();
-        DB::table('internship_evaluations')->delete();
-        DB::table('internship_reports')->delete();
+        DB::table('soutenances')->delete();
+        DB::table('internship_documents')->delete();
         DB::table('internships')->delete();
         DB::table('deliberation_decisions')->delete();
         DB::table('deliberation_members')->delete();
@@ -1116,55 +1116,62 @@ class EncgFesSeeder extends Seeder
             ['name' => 'Maroc Telecom', 'city' => 'Rabat'],
         ];
 
+        $room = Room::first();
+
         // Seed 3 internships for students
         foreach (array_slice($students, 0, 3) as $sIndex => $studentUser) {
+            // Find Student profile
+            $studentProfile = Student::where('user_id', $studentUser->id)->first();
+            if (! $studentProfile) {
+                continue;
+            }
+
             $company = $companies[$sIndex % count($companies)];
             $prof = $professors[$sIndex % count($professors)];
 
             $internId = DB::table('internships')->insertGetId([
-                'institution_id' => $institution->id,
-                'student_id' => $studentUser->id,
-                'academic_year_id' => $academicYear->id,
+                'student_id' => $studentProfile->id,
                 'type' => 'fin_etudes',
                 'company_name' => $company['name'],
-                'company_address' => 'Avenue des FAR',
-                'company_city' => $company['city'],
-                'supervisor_name' => 'Mr. Bennani Karim',
-                'supervisor_email' => 'k.bennani@company.ma',
-                'supervisor_phone' => '+212 6 61 23 45 67',
-                'position_title' => 'Stagiaire en Audit & Finance',
                 'start_date' => now()->subMonths(3)->format('Y-m-d'),
                 'end_date' => now()->subMonth()->format('Y-m-d'),
                 'status' => 'completed',
-                'professor_supervisor_id' => $prof->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Submission report
-            DB::table('internship_reports')->insert([
-                'internship_id' => $internId,
-                'file_path' => 'internships/reports/report_'.$studentUser->id.'.pdf',
-                'status' => 'approved',
-                'submitted_at' => now()->subMonth()->format('Y-m-d H:i:s'),
-                'reviewed_by' => 2, // scolarite
-                'reviewed_at' => now()->subMonth()->addDays(2)->format('Y-m-d H:i:s'),
-                'feedback' => 'Excellent travail, rapport complet et professionnel.',
-                'created_at' => now(),
-                'updated_at' => now(),
+            // Seed internship documents
+            DB::table('internship_documents')->insert([
+                [
+                    'internship_id' => $internId,
+                    'document_type' => 'convention',
+                    'file_path' => 'internships/conventions/conv_'.$studentUser->id.'.pdf',
+                    'status' => 'approved',
+                    'feedback' => 'Convention signée par toutes les parties.',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'internship_id' => $internId,
+                    'document_type' => 'rapport_final',
+                    'file_path' => 'internships/reports/report_'.$studentUser->id.'.pdf',
+                    'status' => 'approved',
+                    'feedback' => 'Excellent travail, rapport complet et professionnel.',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
             ]);
 
-            // Evaluation
-            DB::table('internship_evaluations')->insert([
+            // Seed soutenance
+            DB::table('soutenances')->insert([
                 'internship_id' => $internId,
-                'evaluator_type' => 'professor',
-                'technical_score' => 15.00,
-                'behavior_score' => 16.00,
-                'initiative_score' => 14.00,
-                'report_score' => 15.50,
-                'final_score' => 15.10,
-                'mention' => 'Bien',
-                'comments' => 'Stage très productif, l\'étudiant a fait preuve d\'un grand sérieux.',
+                'date_time' => now()->subDays(5)->format('Y-m-d H:i:s'),
+                'room_id' => $room->id,
+                'president_id' => $professors[0]->id,
+                'examiner_id' => $prof->id,
+                'grade' => 16.50,
+                'status' => 'completed',
+                'remarks' => 'Soutenance brillante. Très bonne présentation orale.',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
