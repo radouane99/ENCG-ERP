@@ -64,6 +64,7 @@
   {{-- Header --}}
   <div class="header">
     <div class="header-left">
+      <img src="{{ $logoPath }}" alt="ENCG Logo" style="height:48px; margin-bottom:8px;" />
       <div class="institution">ENCG Fès</div>
       <div class="address">École Nationale de Commerce et de Gestion — Route d'Imouzzer, Fès 30000, Maroc</div>
     </div>

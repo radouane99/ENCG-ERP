@@ -8,5 +8,5 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 // Channel for all professors (for grade deadlines, locking notifications)
 Broadcast::channel('professors', function ($user) {
-    return $user->hasRole('professeur');
+    return $user->hasRole('professor');
 });
