@@ -55,12 +55,68 @@ class EncgFesSeeder extends Seeder
             $this->assignProfessorsToModules($academicYear, $filieres, $professors);
 
             // 7. Seed Moroccan Students & Groups & Enrollments & Grades
-            $this->seedMoroccanStudentsAndGrades($institution, $academicYear, $filieres, $sessions, $professors, $rooms);
+            $seededInfo = $this->seedMoroccanStudentsAndGrades($institution, $academicYear, $filieres, $sessions, $professors, $rooms);
+
+            $studentUser = $seededInfo['student_user'];
+            $studentProfile = $seededInfo['student_profile'];
+            $groupList = $seededInfo['group_list'];
+            $studentList = $seededInfo['student_list'];
+
+            // 8. Seed Timetable/Schedules
+            $this->seedSchedules($institution, $academicYear, $semesters, $filieres, $groupList, $professors, $rooms);
+
+            // 9. Seed Library (Books, copies, borrowings)
+            $this->seedLibrary($institution, $studentUser);
+
+            // 10. Seed Clubs, members, and events
+            $this->seedClubs($institution, $studentList);
+
+            // 11. Seed Convocations, seatings, and surveillances
+            $this->seedConvocationsAndSurveillance($institution, $studentList, $professors, $rooms);
+
+            // 12. Seed Deliberations and Jury decisions
+            $this->seedDeliberationsAndJury($institution, $academicYear, $semesters[1], $filieres, $groupList, $studentList, $professors);
+
+            // 13. Seed Internships, projects, reports, and evaluations
+            $this->seedInternshipsAndProjects($institution, $academicYear, $studentList, $professors);
+
+            // 14. Seed HR vacation contracts, hours, and payments
+            $this->seedHRVacations($institution, $academicYear, $filieres, $professors, $groupList);
+
+            // 15. Seed Attendance sessions, records, and justifications
+            $this->seedAttendancesAndJustifications($institution, $academicYear, $groupList, $studentList, $professors);
         });
     }
 
     private function clearDatabase(): void
     {
+        DB::table('absence_justifications')->delete();
+        DB::table('attendances')->delete();
+        DB::table('attendance_sessions')->delete();
+        DB::table('vacation_payments')->delete();
+        DB::table('vacation_sessions')->delete();
+        DB::table('vacation_contracts')->delete();
+        DB::table('internship_evaluations')->delete();
+        DB::table('internship_reports')->delete();
+        DB::table('internships')->delete();
+        DB::table('deliberation_decisions')->delete();
+        DB::table('deliberation_members')->delete();
+        DB::table('deliberations')->delete();
+        DB::table('exam_surveillances')->delete();
+        DB::table('exam_seatings')->delete();
+        DB::table('convocations')->delete();
+        DB::table('club_events')->delete();
+        DB::table('club_members')->delete();
+        DB::table('clubs')->delete();
+        DB::table('borrowings')->delete();
+        DB::table('book_copies')->delete();
+        DB::table('books')->delete();
+        DB::table('schedules')->delete();
+        DB::table('diploma_verifications')->delete();
+        DB::table('diplomas')->delete();
+        DB::table('document_requests')->delete();
+        DB::table('document_types')->delete();
+
         Grade::query()->delete();
         Assessment::query()->delete();
         Exam::query()->delete();
@@ -448,7 +504,7 @@ class EncgFesSeeder extends Seeder
         array $sessions,
         array $professors,
         array $rooms
-    ): void {
+    ): array {
         $password = Hash::make('password');
 
         // Spring Sessions
@@ -489,12 +545,55 @@ class EncgFesSeeder extends Seeder
             'expires_at' => now()->addYears(2),
         ]);
 
+        // Document Types
+        $attScolType = DB::table('document_types')->insertGetId([
+            'name' => 'Attestation de Scolarité',
+            'code' => 'ATT_SCOL',
+            'view_name' => 'documents.attestation_scolarite',
+            'fee_amount' => 0.00,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $relNotesType = DB::table('document_types')->insertGetId([
+            'name' => 'Relevé de Notes',
+            'code' => 'REL_NOTES',
+            'view_name' => 'documents.releve_notes',
+            'fee_amount' => 0.00,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Document Requests for Youssef
+        DB::table('document_requests')->insert([
+            [
+                'student_id' => $studentProfile->id,
+                'document_type_id' => $attScolType,
+                'status' => 'ready',
+                'requested_at' => now()->subDays(5),
+                'processed_at' => now()->subDays(4),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'student_id' => $studentProfile->id,
+                'document_type_id' => $relNotesType,
+                'status' => 'pending',
+                'requested_at' => now()->subDays(1),
+                'processed_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
         // 2. Complete Moroccan names bank
         $names = [
             ['first' => 'Salma', 'last' => 'Bennani', 'gender' => 'female'],
             ['first' => 'Amine', 'last' => 'Benziane', 'gender' => 'male'],
             ['first' => 'Ghita', 'last' => 'Berrada', 'gender' => 'female'],
-            ['first' => 'Othmane', 'last' => 'El Amrani', 'gender' => 'male'],
+            ['first' => 'Othmane', 'last' => 'El Alami', 'gender' => 'male'],
             ['first' => 'Malak', 'last' => 'Guessous', 'gender' => 'female'],
             ['first' => 'Hajar', 'last' => 'El Fassi', 'gender' => 'female'],
             ['first' => 'Anas', 'last' => 'Tazi', 'gender' => 'male'],
@@ -516,12 +615,14 @@ class EncgFesSeeder extends Seeder
             ['first' => 'Nisrine', 'last' => 'Benjelloun', 'gender' => 'female'],
         ];
 
-        // Seed TC (S2) and GFC (S5)
         $studentIndex = 2;
         $filiereSet = [
             ['filiere' => $filieres['TC'], 'sem' => 2, 'code' => 'TC'],
             ['filiere' => $filieres['GFC'], 'sem' => 5, 'code' => 'GFC'],
         ];
+
+        $groupList = [];
+        $studentList = [$studentUser];
 
         foreach ($filiereSet as $set) {
             $filiere = $set['filiere'];
@@ -541,7 +642,7 @@ class EncgFesSeeder extends Seeder
                     'capacity' => 35,
                 ]);
 
-                // Create and enroll students
+                $groupList[] = $group;
                 $groupStudents = [];
 
                 // Enroll our primary student Youssef in GFC-S5-G1
@@ -558,7 +659,6 @@ class EncgFesSeeder extends Seeder
                     ]);
                 }
 
-                // Add 11 other students to make it 12 per group
                 $countToAdd = ($fCode === 'GFC' && $g === 1) ? 11 : 12;
 
                 for ($s = 0; $s < $countToAdd; $s++) {
@@ -621,6 +721,7 @@ class EncgFesSeeder extends Seeder
                     }
 
                     $groupStudents[] = $student;
+                    $studentList[] = $u;
                     $studentIndex++;
                 }
 
@@ -672,20 +773,16 @@ class EncgFesSeeder extends Seeder
                                 'absent' => false,
                             ]);
                         } else {
-                            // Random grade logic
-                            // 70% get passing grades, 20% compensable, 10% rattrapage
                             $roll = rand(1, 100);
-                            if ($roll <= 70) {
-                                // Passing grade
-                                $val = mt_rand(1000, 1800) / 100;
+                            if ($roll <= 75) {
+                                $val = mt_rand(1000, 1750) / 100;
                                 Grade::create([
                                     'assessment_id' => $assessment->id,
                                     'student_id' => $st->id,
                                     'value' => $val,
                                     'absent' => false,
                                 ]);
-                            } elseif ($roll <= 90) {
-                                // Compensable (8-9.99)
+                            } elseif ($roll <= 92) {
                                 $val = mt_rand(800, 999) / 100;
                                 Grade::create([
                                     'assessment_id' => $assessment->id,
@@ -694,8 +791,7 @@ class EncgFesSeeder extends Seeder
                                     'absent' => false,
                                 ]);
                             } else {
-                                // Failing / Rattrapage (< 8)
-                                $val = mt_rand(400, 799) / 100;
+                                $val = mt_rand(300, 790) / 100;
                                 Grade::create([
                                     'assessment_id' => $assessment->id,
                                     'student_id' => $st->id,
@@ -704,7 +800,7 @@ class EncgFesSeeder extends Seeder
                                 ]);
 
                                 // Seed a passing Rattrapage grade
-                                $retakeVal = mt_rand(1000, 1400) / 100;
+                                $retakeVal = mt_rand(1000, 1350) / 100;
                                 Grade::create([
                                     'assessment_id' => $retakeAssessment->id,
                                     'student_id' => $st->id,
@@ -715,6 +811,498 @@ class EncgFesSeeder extends Seeder
                         }
                     }
                 }
+            }
+        }
+
+        return [
+            'student_user' => $studentUser,
+            'student_profile' => $studentProfile,
+            'group_list' => $groupList,
+            'student_list' => $studentList,
+        ];
+    }
+
+    private function seedSchedules(
+        Institution $institution,
+        AcademicYear $academicYear,
+        array $semesters,
+        array $filieres,
+        array $groups,
+        array $professors,
+        array $rooms
+    ): void {
+        $days = [1, 2, 3, 4, 5]; // Mon to Fri
+        $times = [
+            ['start' => '08:30:00', 'end' => '10:30:00'],
+            ['start' => '10:45:00', 'end' => '12:45:00'],
+            ['start' => '14:30:00', 'end' => '16:30:00'],
+            ['start' => '16:45:00', 'end' => '18:45:00'],
+        ];
+
+        foreach ($groups as $group) {
+            $modules = Module::where('filiere_id', $group->filiere_id)->where('semester_number', $group->semester_number)->get();
+
+            $dayIndex = 1;
+            foreach ($modules as $index => $mod) {
+                $timeSlot = $times[$index % count($times)];
+                $room = $rooms[$index % count($rooms)];
+                $prof = $professors[$index % count($professors)];
+
+                DB::table('schedules')->insert([
+                    'institution_id' => $institution->id,
+                    'academic_year_id' => $academicYear->id,
+                    'semester_id' => $semesters[1]->id, // Spring
+                    'group_id' => $group->id,
+                    'module_id' => $mod->id,
+                    'room_id' => $room->id,
+                    'professor_id' => $prof->id,
+                    'professor_type' => 'App\Models\Professor',
+                    'day_of_week' => $dayIndex,
+                    'start_time' => $timeSlot['start'],
+                    'end_time' => $timeSlot['end'],
+                    'session_type' => 'cm',
+                    'recurrence' => 'weekly',
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $dayIndex = ($dayIndex % 5) + 1;
+            }
+        }
+    }
+
+    private function seedLibrary(Institution $institution, User $studentUser): void
+    {
+        $booksData = [
+            ['title' => 'Comptabilité Financière en Pratique', 'author' => 'Jean R. Richard', 'category' => 'Comptabilité', 'isbn' => '9782759032041'],
+            ['title' => 'Marketing Management 16e éd.', 'author' => 'Philip Kotler', 'category' => 'Marketing', 'isbn' => '9782326002868'],
+            ['title' => 'Analyse Financière de l\'Entreprise', 'author' => 'Elie Cohen', 'category' => 'Finance', 'isbn' => '9782717865239'],
+            ['title' => 'Droit Commercial et des Affaires', 'author' => 'Michel de Juglart', 'category' => 'Droit', 'isbn' => '9782275090123'],
+        ];
+
+        foreach ($booksData as $b) {
+            $bookId = DB::table('books')->insertGetId([
+                'institution_id' => $institution->id,
+                'isbn' => $b['isbn'],
+                'title' => $b['title'],
+                'author' => $b['author'],
+                'publisher' => 'Pearson France',
+                'publication_year' => 2022,
+                'edition' => '16ème édition',
+                'language' => 'fr',
+                'category' => $b['category'],
+                'location_code' => 'RAY-'.strtoupper(substr($b['category'], 0, 3)).'-01',
+                'total_copies' => 3,
+                'available_copies' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Add 3 copies
+            for ($c = 1; $c <= 3; $c++) {
+                $barcode = $b['isbn'].str_pad($c, 3, '0', STR_PAD_LEFT);
+                $isAvail = ($c != 3); // Copy 3 is checked out
+
+                $copyId = DB::table('book_copies')->insertGetId([
+                    'book_id' => $bookId,
+                    'barcode' => $barcode,
+                    'condition' => 'good',
+                    'is_available' => $isAvail,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Create borrowing record for copy 3
+                if (! $isAvail) {
+                    DB::table('borrowings')->insert([
+                        'book_copy_id' => $copyId,
+                        'user_id' => $studentUser->id,
+                        'issued_by' => 2, // scolarite agent
+                        'borrow_date' => now()->subDays(5)->format('Y-m-d'),
+                        'due_date' => now()->addDays(10)->format('Y-m-d'),
+                        'status' => 'borrowed',
+                        'penalty_amount' => 0.00,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    private function seedClubs(Institution $institution, array $students): void
+    {
+        $clubs = [
+            ['name' => 'Club d\'Entrepreneuriat ENCG Fès', 'name_ar' => 'نادي المقاولة', 'category' => 'scientific'],
+            ['name' => 'Club Arts et Musique ENCG', 'name_ar' => 'نادي الفنون والموسيقى', 'category' => 'cultural'],
+            ['name' => 'Club Sportif ENCG (CSEC)', 'name_ar' => 'النادي الرياضي', 'category' => 'sports'],
+        ];
+
+        foreach ($clubs as $cIndex => $c) {
+            // Pick a president student
+            $pres = $students[$cIndex % count($students)];
+
+            $clubId = DB::table('clubs')->insertGetId([
+                'institution_id' => $institution->id,
+                'name' => $c['name'],
+                'name_ar' => $c['name_ar'],
+                'category' => $c['category'],
+                'description' => 'Un club académique dynamique favorisant le développement des compétences des étudiants de l\'ENCG.',
+                'president_name' => $pres->name,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Add president as member
+            DB::table('club_members')->insert([
+                'club_id' => $clubId,
+                'user_id' => $pres->id,
+                'role' => 'president',
+                'joined_at' => now()->subMonths(6)->format('Y-m-d'),
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Add 4 other members
+            for ($m = 1; $m <= 4; $m++) {
+                $memberUser = $students[($cIndex + $m + 2) % count($students)];
+                if ($memberUser->id !== $pres->id) {
+                    DB::table('club_members')->insertOrIgnore([
+                        'club_id' => $clubId,
+                        'user_id' => $memberUser->id,
+                        'role' => 'member',
+                        'joined_at' => now()->subMonths(3)->format('Y-m-d'),
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // Create a club event
+            DB::table('club_events')->insert([
+                'club_id' => $clubId,
+                'title' => 'Événement Grand Public '.($cIndex + 1),
+                'description' => 'Conférence et ateliers pratiques organisés par le club.',
+                'start_at' => now()->addDays(7)->format('Y-m-d H:i:s'),
+                'end_at' => now()->addDays(7)->addHours(4)->format('Y-m-d H:i:s'),
+                'location' => 'Amphithéâtre A',
+                'status' => 'planned',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function seedConvocationsAndSurveillance(Institution $institution, array $students, array $professors, array $rooms): void
+    {
+        $exams = Exam::all();
+
+        foreach ($exams as $eIndex => $exam) {
+            // Assign 1 professor as invigilator/surveillant
+            $prof = $professors[$eIndex % count($professors)];
+            DB::table('exam_surveillances')->insertOrIgnore([
+                'exam_id' => $exam->id,
+                'room_id' => $exam->room_id,
+                'professor_id' => $prof->user_id, // invigilators are linked to users
+                'role' => 'surveillant',
+                'has_attended' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Generate convocations/seatings for the first 5 students enrolled in this group
+            $registrations = StudentRegistration::where('group_id', $exam->group_id)->take(5)->get();
+            foreach ($registrations as $sIndex => $reg) {
+                // Find student user profile
+                $studentUser = User::find($reg->student_id);
+                if (! $studentUser) {
+                    continue;
+                }
+
+                $seatNo = $sIndex + 1;
+                $ref = 'CONV-'.strtoupper(Str::random(10));
+
+                DB::table('convocations')->insertOrIgnore([
+                    'exam_id' => $exam->id,
+                    'student_id' => $studentUser->id,
+                    'room_id' => $exam->room_id,
+                    'seat_number' => $seatNo,
+                    'reference' => $ref,
+                    'status' => 'sent',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('exam_seatings')->insertOrIgnore([
+                    'exam_id' => $exam->id,
+                    'student_id' => $studentUser->id,
+                    'room_id' => $exam->room_id,
+                    'seat_number' => $seatNo,
+                    'is_present' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    private function seedDeliberationsAndJury(
+        Institution $institution,
+        AcademicYear $academicYear,
+        Semester $semester,
+        array $filieres,
+        array $groups,
+        array $students,
+        array $professors
+    ): void {
+        foreach ($groups as $gIndex => $group) {
+            $delibId = DB::table('deliberations')->insertGetId([
+                'institution_id' => $institution->id,
+                'academic_year_id' => $academicYear->id,
+                'semester_id' => $semester->id,
+                'filiere_id' => $group->filiere_id,
+                'group_id' => $group->id,
+                'type' => 'semester',
+                'status' => 'completed',
+                'deliberation_date' => now()->subDays(2)->format('Y-m-d'),
+                'pv_content' => "PV de délibération du semestre pour le groupe {$group->name}. Délibération validée à l'unanimité du jury.",
+                'president_id' => 1, // Radouane admin
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Add 2 professors as deliberation jury members
+            foreach (array_slice($professors, 0, 2) as $pIndex => $prof) {
+                DB::table('deliberation_members')->insert([
+                    'deliberation_id' => $delibId,
+                    'user_id' => $prof->user_id,
+                    'role' => $pIndex === 0 ? 'secretary' : 'member',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Enter a sample deliberation decision for students registered in this group
+            $registrations = StudentRegistration::where('group_id', $group->id)->get();
+            foreach ($registrations as $reg) {
+                DB::table('deliberation_decisions')->insertOrIgnore([
+                    'deliberation_id' => $delibId,
+                    'student_id' => $reg->student_id,
+                    'semester_average' => 13.50,
+                    'annual_average' => null,
+                    'compensated_average' => null,
+                    'decision' => 'admitted',
+                    'was_compensated' => false,
+                    'was_rachat' => false,
+                    'mention' => 'Assez Bien',
+                    'next_semester' => $group->semester_number + 1,
+                    'jury_notes' => 'Félicitations du jury.',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    private function seedInternshipsAndProjects(Institution $institution, AcademicYear $academicYear, array $students, array $professors): void
+    {
+        $companies = [
+            ['name' => 'Attijariwafa Bank', 'city' => 'Casablanca'],
+            ['name' => 'OCP Group Fès', 'city' => 'Fès'],
+            ['name' => 'Maroc Telecom', 'city' => 'Rabat'],
+        ];
+
+        // Seed 3 internships for students
+        foreach (array_slice($students, 0, 3) as $sIndex => $studentUser) {
+            $company = $companies[$sIndex % count($companies)];
+            $prof = $professors[$sIndex % count($professors)];
+
+            $internId = DB::table('internships')->insertGetId([
+                'institution_id' => $institution->id,
+                'student_id' => $studentUser->id,
+                'academic_year_id' => $academicYear->id,
+                'type' => 'fin_etudes',
+                'company_name' => $company['name'],
+                'company_address' => 'Avenue des FAR',
+                'company_city' => $company['city'],
+                'supervisor_name' => 'Mr. Bennani Karim',
+                'supervisor_email' => 'k.bennani@company.ma',
+                'supervisor_phone' => '+212 6 61 23 45 67',
+                'position_title' => 'Stagiaire en Audit & Finance',
+                'start_date' => now()->subMonths(3)->format('Y-m-d'),
+                'end_date' => now()->subMonth()->format('Y-m-d'),
+                'status' => 'completed',
+                'professor_supervisor_id' => $prof->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Submission report
+            DB::table('internship_reports')->insert([
+                'internship_id' => $internId,
+                'file_path' => 'internships/reports/report_'.$studentUser->id.'.pdf',
+                'status' => 'approved',
+                'submitted_at' => now()->subMonth()->format('Y-m-d H:i:s'),
+                'reviewed_by' => 2, // scolarite
+                'reviewed_at' => now()->subMonth()->addDays(2)->format('Y-m-d H:i:s'),
+                'feedback' => 'Excellent travail, rapport complet et professionnel.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Evaluation
+            DB::table('internship_evaluations')->insert([
+                'internship_id' => $internId,
+                'evaluator_type' => 'professor',
+                'technical_score' => 15.00,
+                'behavior_score' => 16.00,
+                'initiative_score' => 14.00,
+                'report_score' => 15.50,
+                'final_score' => 15.10,
+                'mention' => 'Bien',
+                'comments' => 'Stage très productif, l\'étudiant a fait preuve d\'un grand sérieux.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function seedHRVacations(
+        Institution $institution,
+        AcademicYear $academicYear,
+        array $filieres,
+        array $professors,
+        array $groups
+    ): void {
+        // Pick one professor as vacataire contract recipient
+        $prof = $professors[2];
+        $module = Module::first();
+        $group = $groups[0];
+
+        $contractId = DB::table('vacation_contracts')->insertGetId([
+            'professor_id' => $prof->id,
+            'institution_id' => $institution->id,
+            'user_id' => $prof->user_id,
+            'cin' => 'CD349012',
+            'first_name' => $prof->first_name ?? 'Tarik',
+            'last_name' => $prof->last_name ?? 'Meziane',
+            'email' => $prof->email ?? 'meziane.tarik@encg-fes.ma',
+            'phone' => '+212 6 54 89 21 00',
+            'rib_number' => '230 450 12000 459012 34',
+            'bank_name' => 'CIH Bank',
+            'external_institution' => 'Faculté des Sciences Fès',
+            'qualification' => 'Doctorat en Droit Privé',
+            'academic_year_id' => $academicYear->id,
+            'module_id' => $module->id,
+            'group_id' => $group->id,
+            'session_type' => 'cm',
+            'agreed_hours' => 36,
+            'hourly_rate' => 250.00, // 250 MAD/hour
+            'status' => 'active',
+            'contract_start' => '2025-02-03',
+            'contract_end' => '2025-06-15',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Seed vacation session
+        DB::table('vacation_sessions')->insert([
+            'vacation_contract_id' => $contractId,
+            'session_date' => '2025-05-12',
+            'start_time' => '08:30:00',
+            'end_time' => '10:30:00',
+            'hours' => 2.00,
+            'status' => 'validated',
+            'validated_by' => 1,
+            'validated_at' => now()->format('Y-m-d H:i:s'),
+            'notes' => 'Séance d\'introduction au droit commercial.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Seed vacation payment
+        DB::table('vacation_payments')->insert([
+            'institution_id' => $institution->id,
+            'vacation_contract_id' => $contractId,
+            'reference_number' => 'PAY-2025-05001',
+            'payment_year' => 2025,
+            'payment_month' => 5,
+            'total_hours' => 16.00,
+            'hourly_rate' => 250.00,
+            'gross_amount' => 4000.00,
+            'tax_deduction' => 680.00, // 17% IR
+            'cnss_deduction' => 0.00,
+            'net_amount' => 3320.00,
+            'status' => 'paid',
+            'payment_date' => '2025-05-28',
+            'notes' => 'Paiement des vacations du mois de Mai 2025.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function seedAttendancesAndJustifications(
+        Institution $institution,
+        AcademicYear $academicYear,
+        array $groups,
+        array $students,
+        array $professors
+    ): void {
+        $group = $groups[0];
+        $modules = Module::where('filiere_id', $group->filiere_id)->get();
+        $module = $modules[0];
+        $prof = $professors[0];
+
+        $sessionId = DB::table('attendance_sessions')->insertGetId([
+            'schedule_id' => null,
+            'module_id' => $module->id,
+            'group_id' => $group->id,
+            'academic_year_id' => $academicYear->id,
+            'professor_id' => $prof->id,
+            'professor_type' => 'App\Models\Professor',
+            'session_date' => now()->subDays(3)->format('Y-m-d'),
+            'start_time' => '10:45:00',
+            'end_time' => '12:45:00',
+            'session_type' => 'cm',
+            'room' => 'Salle 101',
+            'is_locked' => true,
+            'created_by' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Mark student 1 as absent, others present
+        foreach (array_slice($students, 0, 5) as $index => $studentUser) {
+            $status = $index === 0 ? 'absent' : 'present';
+            $isJust = ($index === 0); // we will justify it
+
+            $attId = DB::table('attendances')->insertGetId([
+                'attendance_session_id' => $sessionId,
+                'student_id' => $studentUser->id,
+                'status' => $status,
+                'is_justified' => $isJust,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            if ($index === 0) {
+                // Justify absence
+                DB::table('absence_justifications')->insert([
+                    'attendance_id' => $attId,
+                    'student_id' => $studentUser->id,
+                    'reason' => 'medical',
+                    'description' => 'Certificat médical pour grippe saisonnière.',
+                    'document_path' => 'justifications/certif_'.$studentUser->id.'.pdf',
+                    'status' => 'approved',
+                    'reviewed_by' => 2,
+                    'reviewed_at' => now()->subDays(1)->format('Y-m-d H:i:s'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
     }
