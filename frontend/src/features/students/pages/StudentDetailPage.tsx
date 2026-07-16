@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, User, FileText, Mail, Phone, MapPin, GraduationCap, Calendar, Clock, Edit2 } from 'lucide-react'
+import { ArrowLeft, User, FileText, Mail, Phone, MapPin, GraduationCap, Calendar, Clock, Edit2, IdCard } from 'lucide-react'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
+import StudentCardCreator from '../components/StudentCardCreator'
 
 export default function StudentDetailPage() {
   const { id } = useParams()
@@ -102,6 +103,10 @@ export default function StudentDetailPage() {
              <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-xl">
                 Aucune inscription pédagogique trouvée pour cet étudiant.
              </div>
+          </div>
+
+          <div className="bg-card border rounded-2xl shadow-sm p-6">
+             <StudentCardCreator studentId={student.user_id || student.id} isAdmin={true} />
           </div>
         </div>
       </div>

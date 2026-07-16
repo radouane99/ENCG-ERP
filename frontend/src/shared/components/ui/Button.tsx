@@ -33,43 +33,43 @@ const buttonVariants = cva(
       variant: {
         // Primary — ENCG Red, main CTA
         primary: [
-          'bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))]',
-          'hover:bg-[hsl(var(--color-primary)/0.88)]',
+          'bg-primary text-primary-foreground',
+          'hover:bg-primary/90',
           'shadow-sm',
         ],
         // Secondary — Navy Blue
         secondary: [
-          'bg-[hsl(var(--color-secondary))] text-[hsl(var(--color-secondary-foreground))]',
-          'hover:bg-[hsl(var(--color-secondary)/0.88)]',
+          'bg-secondary text-secondary-foreground',
+          'hover:bg-secondary/90',
           'shadow-sm',
         ],
         // Destructive — Error red
         destructive: [
-          'bg-[hsl(var(--color-destructive))] text-[hsl(var(--color-destructive-foreground))]',
-          'hover:bg-[hsl(var(--color-destructive)/0.88)]',
+          'bg-destructive text-destructive-foreground',
+          'hover:bg-destructive/90',
           'shadow-sm',
         ],
         // Outline — transparent with border
         outline: [
-          'border-[hsl(var(--border))] bg-transparent text-[hsl(var(--foreground))]',
-          'hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--muted-foreground)/0.3)]',
+          'border border-border bg-transparent text-foreground',
+          'hover:bg-muted hover:border-muted-foreground/30',
         ],
         // Ghost — no border, subtle hover
         ghost: [
-          'bg-transparent text-[hsl(var(--foreground))]',
-          'hover:bg-[hsl(var(--muted))]',
+          'bg-transparent text-foreground',
+          'hover:bg-muted',
         ],
         // Link — looks like a link, minimal chrome
         link: [
-          'bg-transparent text-[hsl(var(--color-primary))]',
+          'bg-transparent text-primary',
           'underline underline-offset-4',
-          'hover:text-[hsl(var(--color-primary)/0.8)]',
+          'hover:text-primary/80',
           'hover:no-underline',
         ],
         // Success
         success: [
-          'bg-[hsl(var(--color-success))] text-[hsl(var(--color-success-foreground))]',
-          'hover:bg-[hsl(var(--color-success)/0.88)]',
+          'bg-success text-success-foreground',
+          'hover:bg-success/90',
           'shadow-sm',
         ],
       },

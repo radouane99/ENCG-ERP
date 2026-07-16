@@ -13,6 +13,20 @@
    TAILWIND v4 THEME — Design Tokens
    ──────────────────────────────────────────────────────────────── */
 @theme {
+  /* Brand tokens */
+  --color-primary:                hsl(var(--primary));
+  --color-primary-foreground:     hsl(var(--primary-foreground));
+  --color-secondary:              hsl(var(--secondary));
+  --color-secondary-foreground:   hsl(var(--secondary-foreground));
+  --color-accent:                 hsl(var(--accent));
+  --color-accent-foreground:      hsl(var(--accent-foreground));
+  --color-destructive:            hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success:                hsl(var(--success));
+  --color-success-foreground:     hsl(var(--success-foreground));
+  --color-warning:                hsl(var(--warning));
+  --color-warning-foreground:     hsl(var(--warning-foreground));
+  
   /* Semantic surface tokens */
   --color-background:             hsl(var(--background));
   --color-foreground:             hsl(var(--foreground));
@@ -25,20 +39,6 @@
   --color-border:                 hsl(var(--border));
   --color-input:                  hsl(var(--input));
   --color-ring:                   hsl(var(--ring));
-
-  /* Brand tokens */
-  --color-primary:                hsl(var(--color-primary));
-  --color-primary-foreground:     hsl(var(--color-primary-foreground));
-  --color-secondary:              hsl(var(--color-secondary));
-  --color-secondary-foreground:   hsl(var(--color-secondary-foreground));
-  --color-accent:                 hsl(var(--color-accent));
-  --color-accent-foreground:      hsl(var(--color-accent-foreground));
-  --color-destructive:            hsl(var(--color-destructive));
-  --color-destructive-foreground: hsl(var(--color-destructive-foreground));
-  --color-success:                hsl(var(--color-success));
-  --color-success-foreground:     hsl(var(--color-success-foreground));
-  --color-warning:                hsl(var(--color-warning));
-  --color-warning-foreground:     hsl(var(--color-warning-foreground));
 
   /* Sidebar tokens */
   --color-sidebar-background:             hsl(var(--sidebar-background));
@@ -78,22 +78,22 @@
   :root {
     /* ── Brand (ENCG) ── */
     /* Primary: ENCG Blue #1a3673 */
-    --color-primary:                221 63% 28%;
-    --color-primary-foreground:     0   0%  100%;
+    --primary:                      221 63% 28%;
+    --primary-foreground:           0   0%  100%;
     
     /* Accent/Destructive: ENCG Red #a31f24 */
-    --color-accent:                 358 68% 38%;
-    --color-accent-foreground:      0   0%  100%;
-    --color-destructive:            358 68% 38%;
-    --color-destructive-foreground: 0   0%  100%;
+    --accent:                       358 68% 38%;
+    --accent-foreground:            0   0%  100%;
+    --destructive:                  358 68% 38%;
+    --destructive-foreground:       0   0%  100%;
 
-    --color-secondary:              215 51% 25%;
-    --color-secondary-foreground:   0   0%  100%;
+    --secondary:                    215 51% 25%;
+    --secondary-foreground:         0   0%  100%;
     
-    --color-success:                142 71% 45%;
-    --color-success-foreground:     0   0%  100%;
-    --color-warning:                38  92% 50%;
-    --color-warning-foreground:     0   0%  100%;
+    --success:                      142 71% 45%;
+    --success-foreground:           0   0%  100%;
+    --warning:                      38  92% 50%;
+    --warning-foreground:           0   0%  100%;
 
     /* ── Surfaces ── */
     --background:        210 33% 98%;  /* #f8fafc (surface) */
@@ -129,18 +129,18 @@
      Dark Mode Overrides
      ──────────────────────────────────────────────────────────────── */
   .dark {
-    --color-primary:                221 63% 40%;
-    --color-primary-foreground:     0   0%  100%;
-    --color-secondary:              215 51% 40%;
-    --color-secondary-foreground:   0   0%  100%;
-    --color-accent:                 358 68% 50%;
-    --color-accent-foreground:      0   0%  100%;
-    --color-destructive:            358 68% 50%;
-    --color-destructive-foreground: 0   0%  100%;
-    --color-success:                142 71% 40%;
-    --color-success-foreground:     0   0%  100%;
-    --color-warning:                38  92% 45%;
-    --color-warning-foreground:     0   0%  100%;
+    --primary:                      221 63% 40%;
+    --primary-foreground:           0   0%  100%;
+    --secondary:                    215 51% 40%;
+    --secondary-foreground:         0   0%  100%;
+    --accent:                       358 68% 50%;
+    --accent-foreground:            0   0%  100%;
+    --destructive:                  358 68% 50%;
+    --destructive-foreground:       0   0%  100%;
+    --success:                      142 71% 40%;
+    --success-foreground:           0   0%  100%;
+    --warning:                      38  92% 45%;
+    --warning-foreground:           0   0%  100%;
 
     --background:        222 47% 6%;
     --foreground:        210 40% 96%;

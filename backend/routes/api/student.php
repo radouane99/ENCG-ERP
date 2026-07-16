@@ -1,56 +1,69 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\DeliberationController;
 use App\Http\Controllers\Api\Mobile\MobileStudentController;
+use App\Http\Controllers\Api\Student\StudentConvocationController;
+use App\Http\Controllers\Api\Student\StudentDocumentRequestController;
+use App\Http\Controllers\Api\Student\StudentInternshipController;
+use App\Http\Controllers\Api\Student\StudentMobilityController;
+use App\Http\Controllers\Api\StudentCardController;
+use App\Http\Controllers\Api\StudentPortalController;
+use App\Http\Controllers\Api\StudentTranscriptController;
+use App\Http\Middleware\EnsureInstitutionContext;
+use Illuminate\Support\Facades\Route;
 
 // Mobile App Student Portal API
-Route::middleware(['auth:sanctum', 'role:student', \App\Http\Middleware\EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
+Route::middleware(['auth:sanctum', 'role:student', EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
     Route::get('/profile', [MobileStudentController::class, 'profile']);
     Route::get('/schedule', [MobileStudentController::class, 'schedule']);
     Route::get('/grades', [MobileStudentController::class, 'grades']);
-    Route::get('/card', [\App\Http\Controllers\Api\StudentCardController::class, 'show']);
-    Route::post('/attendance/scan', [\App\Http\Controllers\Api\AttendanceController::class, 'scanQr']);
+    Route::get('/card', [StudentCardController::class, 'show']);
+    Route::post('/card/preview', [StudentCardController::class, 'preview']);
+    Route::post('/card', [StudentCardController::class, 'store']);
+    Route::post('/attendance/scan', [AttendanceController::class, 'scanQr']);
 });
 
 // Web App Student Portal API
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Api\StudentPortalController::class, 'getDashboardStats']);
-    Route::get('/schedule', [\App\Http\Controllers\Api\StudentPortalController::class, 'getSchedule']);
-    Route::get('/grades', [\App\Http\Controllers\Api\StudentPortalController::class, 'getGrades']);
-    Route::post('/absences', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsence']);
-    Route::post('/absences/justify', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsenceJustification']);
-    
+    Route::get('/dashboard', [StudentPortalController::class, 'getDashboardStats']);
+    Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
+    Route::get('/grades', [StudentPortalController::class, 'getGrades']);
+    Route::post('/absences', [StudentPortalController::class, 'submitAbsence']);
+    Route::post('/absences/justify', [StudentPortalController::class, 'submitAbsenceJustification']);
+    Route::get('/card', [StudentCardController::class, 'show']);
+    Route::post('/card/preview', [StudentCardController::class, 'preview']);
+    Route::post('/card', [StudentCardController::class, 'store']);
+
     // Apogée Deliberation Engine - Transcript
-    Route::get('/transcript', [\App\Http\Controllers\Api\DeliberationController::class, 'getStudentTranscript']);
+    Route::get('/transcript', [DeliberationController::class, 'getStudentTranscript']);
 
     // Internships
     Route::prefix('internships')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'store']);
-        Route::post('/{id}/documents', [\App\Http\Controllers\Api\Student\StudentInternshipController::class, 'uploadDocument']);
+        Route::get('/', [StudentInternshipController::class, 'index']);
+        Route::post('/', [StudentInternshipController::class, 'store']);
+        Route::post('/{id}/documents', [StudentInternshipController::class, 'uploadDocument']);
     });
-    
+
     // Convocations (Exams)
     Route::prefix('convocations')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'index']);
-        Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentConvocationController::class, 'download']);
+        Route::get('/', [StudentConvocationController::class, 'index']);
+        Route::get('/{id}/download', [StudentConvocationController::class, 'download']);
     });
-    
+
     // Document Requests (Guichet Électronique)
     Route::prefix('document-requests')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'store']);
-        Route::get('/{id}/download', [\App\Http\Controllers\Api\Student\StudentDocumentRequestController::class, 'download']);
+        Route::get('/', [StudentDocumentRequestController::class, 'index']);
+        Route::post('/', [StudentDocumentRequestController::class, 'store']);
+        Route::get('/{id}/download', [StudentDocumentRequestController::class, 'download']);
     });
-    
+
     // International Mobility
     Route::prefix('mobility')->group(function () {
-        Route::get('/partners', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'getPartners']);
-        Route::post('/voeux', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'saveVoeux']);
+        Route::get('/partners', [StudentMobilityController::class, 'getPartners']);
+        Route::post('/voeux', [StudentMobilityController::class, 'saveVoeux']);
     });
 
     // Official Transcript (Relevé de Notes) PDF
-    Route::get('/transcript/pdf', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForStudent']);
+    Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);
 });
-
-

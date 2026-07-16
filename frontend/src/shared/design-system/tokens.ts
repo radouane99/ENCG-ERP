@@ -146,7 +146,7 @@ export const componentSizes = {
 // BADGE / STATUS VARIANTS — CSS variable references for Tailwind
 // ─────────────────────────────────────────────────────────────────
 export type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'secondary' | 'outline'
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link'
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' | 'success'
 export type ButtonSize    = 'sm' | 'md' | 'lg' | 'xl' | 'icon'
 export type InputSize     = 'sm' | 'md' | 'lg'
 export type AlertVariant  = 'info' | 'success' | 'warning' | 'destructive'

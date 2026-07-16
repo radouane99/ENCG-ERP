@@ -1,15 +1,16 @@
-﻿import React, { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
 import { Download, IdCard, Building2, User, Mail, Hash, BookOpen } from 'lucide-react';
 import api from '@/shared/lib/api';
+import StudentCardCreator from '../components/StudentCardCreator';
 
 export default function DigitalCardPage() {
   const { t } = useTranslation('common');
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const { data: cardData, isLoading } = useQuery({
+  const { data: cardData, isLoading, refetch } = useQuery({
     queryKey: ['student-card'],
     queryFn: () => api.get('/v1/mobile/student/card').then((res) => res.data.data),
   });
@@ -28,7 +29,22 @@ export default function DigitalCardPage() {
     );
   }
 
-  if (!cardData) return null;
+  if (!cardData) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <IdCard className="w-6 h-6 text-primary" />
+            Carte d'Étudiant Digitale
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Générez et activez votre carte d'identité académique officielle.
+          </p>
+        </div>
+        <StudentCardCreator onSuccess={refetch} />
+      </div>
+    );
+  }
 
   // The QR code URL would point to the public verification route
   const verificationUrl = `${window.location.origin}/verify/card/${cardData.qr_token}`;

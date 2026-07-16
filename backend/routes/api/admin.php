@@ -1,369 +1,427 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB;
+use App\Exports\StudentsExport;
+use App\Http\Controllers\Api\AbsenceJustificationController;
+use App\Http\Controllers\Api\AcademicReportController;
+use App\Http\Controllers\Api\AcademicYearController;
+use App\Http\Controllers\Api\Admin\AdminAbsenceController;
+use App\Http\Controllers\Api\Admin\AdminDocumentTypeController;
+use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
+use App\Http\Controllers\Api\AdminAnalyticsController;
+use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\AdminDocumentRequestController;
+use App\Http\Controllers\Api\AdminExamController;
+use App\Http\Controllers\Api\AdminInternshipController;
+use App\Http\Controllers\Api\AdminPredictiveAnalyticsController;
+use App\Http\Controllers\Api\AdminSmartCampusController;
+use App\Http\Controllers\Api\AdmissionCampaignController;
 use App\Http\Controllers\Api\AdmissionController;
-use App\Http\Controllers\Api\HR\VacationController;
-use App\Http\Controllers\Api\Mobile\MobileStudentController;
-use App\Presentation\Api\Controllers\Auth\AuthController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\AiFeatureController;
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\ApogeeEngineController;
+use App\Http\Controllers\Api\AssessmentController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\ClubController;
+use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\ConvocationController;
+use App\Http\Controllers\Api\DeliberationController;
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\DisciplineController;
+use App\Http\Controllers\Api\DocumentCenterController;
+use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\ExamAttendanceController;
+use App\Http\Controllers\Api\ExamLockingController;
+use App\Http\Controllers\Api\ExamPlanningController;
+use App\Http\Controllers\Api\ExamSessionController;
+use App\Http\Controllers\Api\ExcelController;
+use App\Http\Controllers\Api\FiliereController;
+use App\Http\Controllers\Api\FinalProjectController;
+use App\Http\Controllers\Api\GradeController;
+use App\Http\Controllers\Api\GroupController;
+use App\Http\Controllers\Api\HolidayController;
+use App\Http\Controllers\Api\InternalApiController;
+use App\Http\Controllers\Api\InternshipController;
+use App\Http\Controllers\Api\LmsCourseController;
+use App\Http\Controllers\Api\ModuleController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PdfExportController;
+use App\Http\Controllers\Api\ProfessorAssignmentController;
+use App\Http\Controllers\Api\ProfessorAvailabilityController;
+use App\Http\Controllers\Api\ProfessorController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RestApiController;
+use App\Http\Controllers\Api\RetakeController;
+use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\ScheduleChangeRequestController;
+use App\Http\Controllers\Api\SmartSchedulingController;
+use App\Http\Controllers\Api\StudentCardController;
+use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\StudentPortalController;
+use App\Http\Controllers\Api\StudentTranscriptController;
+use App\Http\Controllers\Api\TimetableController;
+use App\Http\Controllers\Api\TimetableExportController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\VacataireController;
+use App\Models\DocumentRequest;
+use App\Models\StudentPathway;
+use App\Services\DocumentRequestService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
-
-
 
 Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    
+
     // Removed db-test route from here
 
-    Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
-    
+    Route::post('/profile', [ProfileController::class, 'update']);
+
     // Dashboard Stats
-    Route::get('/dashboard/stats', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getStats']);
+    Route::get('/dashboard/stats', [AdminDashboardController::class, 'getStats']);
 
     // Admin Custom Routes
-    Route::get('/smart-campus', [\App\Http\Controllers\Api\AdminSmartCampusController::class, 'getCampusData']);
-    Route::get('/exams/analytics', [\App\Http\Controllers\Api\AdminExamController::class, 'analytics']);
-    Route::post('/documents/generate', [\App\Http\Controllers\Api\DocumentCenterController::class, 'generate']);
-    Route::apiResource('holidays', \App\Http\Controllers\Api\HolidayController::class);
+    Route::get('/smart-campus', [AdminSmartCampusController::class, 'getCampusData']);
+    Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
+    Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
+    Route::apiResource('holidays', HolidayController::class);
 
     // AI Predictive Analytics
-    Route::get('/predictive-analytics', [\App\Http\Controllers\Api\AdminPredictiveAnalyticsController::class, 'index']);
-    Route::post('/predictive-analytics/refresh', [\App\Http\Controllers\Api\AdminPredictiveAnalyticsController::class, 'refresh']);
-    
+    Route::get('/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
+    Route::post('/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
 
     Route::prefix('discipline')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\DisciplineController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\DisciplineController::class, 'store']);
-        Route::post('/{id}/decide', [\App\Http\Controllers\Api\DisciplineController::class, 'decide']);
-    });
-    
-    Route::prefix('internships')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\AdminInternshipController::class, 'index']);
-        Route::put('/{id}/status', [\App\Http\Controllers\Api\AdminInternshipController::class, 'updateStatus']);
+        Route::get('/', [DisciplineController::class, 'index']);
+        Route::post('/', [DisciplineController::class, 'store']);
+        Route::post('/{id}/decide', [DisciplineController::class, 'decide']);
     });
 
-Route::get('/check-students', function() {
-    $count = \App\Models\StudentPathway::count();
-    return "Total assigned students: " . $count;
-});
+    Route::prefix('internships')->group(function () {
+        Route::get('/', [AdminInternshipController::class, 'index']);
+        Route::put('/{id}/status', [AdminInternshipController::class, 'updateStatus']);
+    });
+
+    Route::get('/check-students', function () {
+        $count = StudentPathway::count();
+
+        return 'Total assigned students: '.$count;
+    });
     Route::prefix('notifications')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
-        Route::post('/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
-        Route::patch('/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
-        Route::delete('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
     });
 
     // LMS & E-Learning
     Route::prefix('lms')->group(function () {
-        Route::get('/courses', [\App\Http\Controllers\Api\LmsCourseController::class, 'index']);
-        Route::get('/courses/{id}', [\App\Http\Controllers\Api\LmsCourseController::class, 'show']);
-        Route::post('/courses/{id}/materials', [\App\Http\Controllers\Api\LmsCourseController::class, 'storeMaterial']);
+        Route::get('/courses', [LmsCourseController::class, 'index']);
+        Route::get('/courses/{id}', [LmsCourseController::class, 'show']);
+        Route::post('/courses/{id}/materials', [LmsCourseController::class, 'storeMaterial']);
     });
 
     // Academic Structure
-    Route::apiResource('filieres', \App\Http\Controllers\Api\FiliereController::class);
-    Route::apiResource('modules', \App\Http\Controllers\Api\ModuleController::class);
-    Route::apiResource('students', \App\Http\Controllers\Api\StudentController::class);
-    Route::apiResource('groups', \App\Http\Controllers\Api\GroupController::class);
-    Route::apiResource('academic-years', \App\Http\Controllers\Api\AcademicYearController::class);
-    Route::post('academic-years/{id}/rollover', [\App\Http\Controllers\Api\AcademicYearController::class, 'rollover']);
-    Route::apiResource('exam-sessions', \App\Http\Controllers\Api\ExamSessionController::class);
-    Route::apiResource('final-projects', \App\Http\Controllers\Api\FinalProjectController::class);
-    Route::apiResource('attendances', \App\Http\Controllers\Api\AttendanceController::class)->only(['index', 'destroy']);
+    Route::apiResource('filieres', FiliereController::class);
+    Route::apiResource('modules', ModuleController::class);
+    Route::apiResource('students', StudentController::class);
+    Route::post('student-cards/preview', [StudentCardController::class, 'preview']);
+    Route::post('student-cards', [StudentCardController::class, 'store']);
+    Route::apiResource('groups', GroupController::class);
+    Route::apiResource('academic-years', AcademicYearController::class);
+    Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
+    Route::apiResource('exam-sessions', ExamSessionController::class);
+    Route::apiResource('final-projects', FinalProjectController::class);
+    Route::apiResource('attendances', AttendanceController::class)->only(['index', 'destroy']);
 
     // Clubs
-    Route::apiResource('clubs', \App\Http\Controllers\Api\ClubController::class)->except(['destroy']);
+    Route::apiResource('clubs', ClubController::class)->except(['destroy']);
 
     // Internships
-    Route::apiResource('internships', \App\Http\Controllers\Api\InternshipController::class)->except(['destroy']);
+    Route::apiResource('internships', InternshipController::class)->except(['destroy']);
     Route::prefix('admin/internships')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'index']);
-        Route::post('/{id}/validate', [\App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'validateInternship']);
-        Route::post('/soutenances', [\App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'scheduleSoutenance']);
+        Route::get('/', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'index']);
+        Route::post('/{id}/validate', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'validateInternship']);
+        Route::post('/soutenances', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'scheduleSoutenance']);
     });
 
     // Complaints
-    Route::apiResource('complaints', \App\Http\Controllers\Api\ComplaintController::class)->except(['destroy']);
+    Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);
 
     // Discipline
-    Route::apiResource('discipline', \App\Http\Controllers\Api\DisciplineController::class)->except(['destroy']);
-    Route::post('discipline/{id}/decide', [\App\Http\Controllers\Api\DisciplineController::class, 'decide']);
-    
+    Route::apiResource('discipline', DisciplineController::class)->except(['destroy']);
+    Route::post('discipline/{id}/decide', [DisciplineController::class, 'decide']);
+
     // Absences (Admin)
     Route::prefix('admin/absences')->group(function () {
-        Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminAbsenceController::class, 'stats']);
-        Route::post('/justifications/{id}/review', [\App\Http\Controllers\Api\Admin\AdminAbsenceController::class, 'review']);
+        Route::get('/stats', [AdminAbsenceController::class, 'stats']);
+        Route::post('/justifications/{id}/review', [AdminAbsenceController::class, 'review']);
     });
-    
+
     // Grades & Deliberation
     Route::prefix('grades')->group(function () {
-        Route::post('/batch', [\App\Http\Controllers\Api\GradeController::class, 'storeBatch']);
-        Route::post('/validate', [\App\Http\Controllers\Api\GradeController::class, 'validateGrades']);
+        Route::post('/batch', [GradeController::class, 'storeBatch']);
+        Route::post('/validate', [GradeController::class, 'validateGrades']);
     });
-    Route::get('modules/{module}/assessments', [\App\Http\Controllers\Api\AssessmentController::class, 'getForModule']);
-    Route::post('modules/{module}/assessments', [\App\Http\Controllers\Api\AssessmentController::class, 'storeForModule']);
-    Route::get('modules/{module}/pv', [\App\Http\Controllers\Api\GradeController::class, 'getModulePv']);
-    Route::post('modules/{module}/pv/sign', [\App\Http\Controllers\Api\GradeController::class, 'signModulePv']);
-    Route::get('modules/{module}/export-grades', [\App\Http\Controllers\Api\GradeController::class, 'exportGradesTemplate']);
-    Route::post('modules/{module}/import-grades', [\App\Http\Controllers\Api\GradeController::class, 'importGrades']);
-    Route::get('modules/{module}/audit-logs', [\App\Http\Controllers\Api\GradeController::class, 'getModuleAuditLogs']);
-    Route::get('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
-    Route::post('assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
-    Route::get('academic/deliberate', [\App\Http\Controllers\Api\DeliberationController::class, 'run']);
+    Route::get('modules/{module}/assessments', [AssessmentController::class, 'getForModule']);
+    Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
+    Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
+    Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
+    Route::get('modules/{module}/export-grades', [GradeController::class, 'exportGradesTemplate']);
+    Route::post('modules/{module}/import-grades', [GradeController::class, 'importGrades']);
+    Route::get('modules/{module}/audit-logs', [GradeController::class, 'getModuleAuditLogs']);
+    Route::get('assessments/{assessment}/grades', [GradeController::class, 'getForAssessment']);
+    Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
+    Route::get('academic/deliberate', [DeliberationController::class, 'run']);
 
     // Student Transcript PDF
-    Route::get('students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
+    Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {
-        Route::apiResource('professors', \App\Http\Controllers\Api\ProfessorController::class);
-        Route::get('vacataires/{vacataire}/contract-pdf', [\App\Http\Controllers\Api\VacataireController::class, 'downloadContract']);
-        Route::post('vacataires/contracts/{contractId}/payments', [\App\Http\Controllers\Api\VacataireController::class, 'processPayment']);
-        Route::apiResource('vacataires', \App\Http\Controllers\Api\VacataireController::class);
+        Route::apiResource('professors', ProfessorController::class);
+        Route::get('vacataires/{vacataire}/contract-pdf', [VacataireController::class, 'downloadContract']);
+        Route::post('vacataires/contracts/{contractId}/payments', [VacataireController::class, 'processPayment']);
+        Route::apiResource('vacataires', VacataireController::class);
     });
 
-    Route::apiResource('departments', \App\Http\Controllers\Api\DepartmentController::class);
-    Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
-    Route::apiResource('professor-assignments', \App\Http\Controllers\Api\ProfessorAssignmentController::class)->except(['show', 'update']);
+    Route::apiResource('departments', DepartmentController::class);
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('professor-assignments', ProfessorAssignmentController::class)->except(['show', 'update']);
 
     // Exam Locking (Admin)
     Route::prefix('admin/exam-locking')->middleware('require-admin-2fa')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ExamLockingController::class, 'index']);
-        Route::post('/change', [\App\Http\Controllers\Api\ExamLockingController::class, 'updateStatus']);
+        Route::get('/', [ExamLockingController::class, 'index']);
+        Route::post('/change', [ExamLockingController::class, 'updateStatus']);
     });
 
     // Infrastructure
-    Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
+    Route::apiResource('rooms', RoomController::class);
 
     // Excel Import / Export (global — all modules)
-    Route::get('export/{model}', [\App\Http\Controllers\Api\ExcelController::class, 'export']);
-    Route::get('export/{model}/template', [\App\Http\Controllers\Api\ExcelController::class, 'template']);
-    Route::post('import/{model}', [\App\Http\Controllers\Api\ExcelController::class, 'import'])->middleware('throttle:10,1');
+    Route::get('export/{model}', [ExcelController::class, 'export']);
+    Route::get('export/{model}/template', [ExcelController::class, 'template']);
+    Route::post('import/{model}', [ExcelController::class, 'import'])->middleware('throttle:10,1');
 
     // Secure Documents & Anti-Fraud
-    Route::post('documents/generate-attestation', [\App\Http\Controllers\Api\DocumentController::class, 'generateAttestation']);
-    Route::get('documents/verify/{trackingCode}', [\App\Http\Controllers\Api\DocumentController::class, 'verifyDocument']);
+    Route::post('documents/generate-attestation', [DocumentController::class, 'generateAttestation']);
+    Route::get('documents/verify/{trackingCode}', [DocumentController::class, 'verifyDocument']);
 
     // Admissions (TAFEM & Applications)
     Route::prefix('admissions')->group(function () {
-        Route::get('/campaigns/{campaign}/applications', [\App\Http\Controllers\Api\AdmissionController::class, 'index']);
-        Route::patch('/applications/{application}/status', [\App\Http\Controllers\Api\AdmissionController::class, 'updateStatus']);
-        Route::delete('/applications/{application}', [\App\Http\Controllers\Api\AdmissionController::class, 'destroy']);
+        Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
+        Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
+        Route::delete('/applications/{application}', [AdmissionController::class, 'destroy']);
     });
 
     // Exports (admin-only Excel export)
-    Route::get('/export/students', function (\Illuminate\Http\Request $request) {
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\StudentsExport(), 'etudiants.xlsx');
+    Route::get('/export/students', function (Request $request) {
+        return Excel::download(new StudentsExport, 'etudiants.xlsx');
     });
-    
+
     // Timetable & Smart Scheduling
     Route::prefix('timetable')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\TimetableController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\TimetableController::class, 'store']);
-        Route::put('/{id}', [\App\Http\Controllers\Api\TimetableController::class, 'update']);
-        Route::delete('/{id}', [\App\Http\Controllers\Api\TimetableController::class, 'destroy']);
-        Route::get('/export/{type}/{id}', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportForFullCalendar']);
-        Route::get('/export/{type}/{id}/pdf', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportPdf']);
-        Route::get('/export/{type}/{id}/ics', [\App\Http\Controllers\Api\TimetableExportController::class, 'exportIcs']);
-        Route::post('/generate', [\App\Http\Controllers\Api\TimetableController::class, 'generate']);
-        Route::post('/publish', [\App\Http\Controllers\Api\TimetableController::class, 'publish']);
-        Route::post('/check-conflict', [\App\Http\Controllers\Api\TimetableController::class, 'checkConflict']);
+        Route::get('/', [TimetableController::class, 'index']);
+        Route::post('/', [TimetableController::class, 'store']);
+        Route::put('/{id}', [TimetableController::class, 'update']);
+        Route::delete('/{id}', [TimetableController::class, 'destroy']);
+        Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
+        Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
+        Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
+        Route::post('/generate', [TimetableController::class, 'generate']);
+        Route::post('/publish', [TimetableController::class, 'publish']);
+        Route::post('/check-conflict', [TimetableController::class, 'checkConflict']);
     });
 
-
     // Smart Scheduling
-    Route::post('/schedules/auto-generate', [\App\Http\Controllers\Api\SmartSchedulingController::class, 'autoGenerate']);
+    Route::post('/schedules/auto-generate', [SmartSchedulingController::class, 'autoGenerate']);
 
     // Exam Planning & Convocations
     Route::prefix('exam-planning')->group(function () {
-        Route::post('/generate-session', [\App\Http\Controllers\Api\ExamPlanningController::class, 'generateSession']);
-        Route::post('/store', [\App\Http\Controllers\Api\ExamPlanningController::class, 'store']);
-        Route::post('/check-conflict', [\App\Http\Controllers\Api\ExamPlanningController::class, 'checkRoomConflict']);
-        
+        Route::post('/generate-session', [ExamPlanningController::class, 'generateSession']);
+        Route::post('/store', [ExamPlanningController::class, 'store']);
+        Route::post('/check-conflict', [ExamPlanningController::class, 'checkRoomConflict']);
+
         // New Convocations module logic
         Route::prefix('/{exam}/convocations')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'index']);
-            Route::post('/generate', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'generate']);
-            Route::post('/publish', [\App\Http\Controllers\Api\Admin\AdminExamConvocationController::class, 'publish']);
+            Route::get('/', [AdminExamConvocationController::class, 'index']);
+            Route::post('/generate', [AdminExamConvocationController::class, 'generate']);
+            Route::post('/publish', [AdminExamConvocationController::class, 'publish']);
         });
-        
+
         // New Convocations & Live routes
-        Route::post('/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
+        Route::post('/{sessionId}/auto-assign-proctors', [ConvocationController::class, 'autoAssign']);
         // Old endpoints are replaced by the /convocations group below
-        Route::get('/{examId}/live-stats', [\App\Http\Controllers\Api\ExamAttendanceController::class, 'getLiveStats']);
-        Route::get('/{examId}/details', [\App\Http\Controllers\Api\ConvocationController::class, 'getDetails']);
+        Route::get('/{examId}/live-stats', [ExamAttendanceController::class, 'getLiveStats']);
+        Route::get('/{examId}/details', [ConvocationController::class, 'getDetails']);
         // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
-        Route::post('/{examId}/notify-absents', [\App\Http\Controllers\Api\ConvocationController::class, 'notifyAbsents']);
-        
+        Route::post('/{examId}/notify-absents', [ConvocationController::class, 'notifyAbsents']);
+
         // Student endpoints
-        Route::get('/student/{studentId}', [\App\Http\Controllers\Api\ConvocationController::class, 'getStudentConvocations']);
-        Route::get('/student/{id}/download', [\App\Http\Controllers\Api\PdfExportController::class, 'studentConvocationPdf']);
+        Route::get('/student/{studentId}', [ConvocationController::class, 'getStudentConvocations']);
+        Route::get('/student/{id}/download', [PdfExportController::class, 'studentConvocationPdf']);
     });
 
     // Convocations Lifecycle
     Route::prefix('convocations')->group(function () {
-        Route::post('/generate-session', [\App\Http\Controllers\Api\ConvocationController::class, 'generateSession']);
-        Route::post('/send-session', [\App\Http\Controllers\Api\ConvocationController::class, 'sendSession']);
-        Route::get('/{reference}/verify', [\App\Http\Controllers\Api\ConvocationController::class, 'verify']);
-        Route::post('/{reference}/present', [\App\Http\Controllers\Api\ConvocationController::class, 'markPresent']);
+        Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
+        Route::post('/send-session', [ConvocationController::class, 'sendSession']);
+        Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
+        Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);
     });
 
     // Retakes
     Route::prefix('retakes')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\RetakeController::class, 'index']);
-        Route::patch('/{id}/status', [\App\Http\Controllers\Api\RetakeController::class, 'updateStatus']);
+        Route::get('/', [RetakeController::class, 'index']);
+        Route::patch('/{id}/status', [RetakeController::class, 'updateStatus']);
     });
 
     // Professor Availability
     Route::prefix('professor-availability')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);
-        Route::post('/alert', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'alert']);
+        Route::get('/', [ProfessorAvailabilityController::class, 'index']);
+        Route::post('/alert', [ProfessorAvailabilityController::class, 'alert']);
     });
 
     // Schedule Change Requests
     Route::prefix('schedule-change-requests')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'index']);
-        Route::patch('/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);
+        Route::get('/', [ScheduleChangeRequestController::class, 'index']);
+        Route::patch('/{id}/status', [ScheduleChangeRequestController::class, 'updateStatus']);
     });
-
-
 
     // Admin — Absence Justifications Management
     Route::prefix('admin/absences-justifications')->middleware('require-admin-2fa')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
-        Route::patch('/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
-        Route::delete('/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+        Route::get('/', [AbsenceJustificationController::class, 'index']);
+        Route::patch('/{absenceJustification}/status', [AbsenceJustificationController::class, 'updateStatus']);
+        Route::delete('/{absenceJustification}', [AbsenceJustificationController::class, 'destroy']);
     });
 
     // Analytics & AI
     Route::prefix('analytics')->group(function () {
-        Route::get('/at-risk-students', [\App\Http\Controllers\Api\AnalyticsController::class, 'getAtRiskStudents']);
+        Route::get('/at-risk-students', [AnalyticsController::class, 'getAtRiskStudents']);
     });
 
     // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
-        Route::post('/generate', [\App\Http\Controllers\Api\DocumentController::class, 'generate']);
-        Route::get('/verify/{token}', [\App\Http\Controllers\Api\DocumentController::class, 'verify']);
-        
+        Route::post('/generate', [DocumentController::class, 'generate']);
+        Route::get('/verify/{token}', [DocumentController::class, 'verify']);
+
         // PDF Previews
-        Route::get('/preview/ordre-mission', [\App\Http\Controllers\Api\PdfExportController::class, 'previewOrdreMission']);
-        Route::get('/preview/convention-stage', [\App\Http\Controllers\Api\PdfExportController::class, 'previewConventionStage']);
-        Route::get('/preview/attestation-travail', [\App\Http\Controllers\Api\PdfExportController::class, 'previewAttestationTravail']);
-        Route::get('/preview/releve-notes', [\App\Http\Controllers\Api\PdfExportController::class, 'releveNotes']);
+        Route::get('/preview/ordre-mission', [PdfExportController::class, 'previewOrdreMission']);
+        Route::get('/preview/convention-stage', [PdfExportController::class, 'previewConventionStage']);
+        Route::get('/preview/attestation-travail', [PdfExportController::class, 'previewAttestationTravail']);
+        Route::get('/preview/releve-notes', [PdfExportController::class, 'releveNotes']);
     });
 
     // Admin — Document Requests Management
     Route::prefix('admin/document-requests')->middleware('require-admin-2fa')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
-        Route::patch('/{id}/status', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
-        Route::post('/{id}/generate', [\App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
+        Route::get('/', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
+        Route::post('/{id}/generate', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
     });
 
     // Admin — Document Types Management
-    Route::apiResource('admin/document-types', \App\Http\Controllers\Api\Admin\AdminDocumentTypeController::class)->middleware('require-admin-2fa');
+    Route::apiResource('admin/document-types', AdminDocumentTypeController::class)->middleware('require-admin-2fa');
 
     // Admissions / TAFEM
     Route::prefix('admissions')->group(function () {
-        Route::post('/campaigns/{campaignId}/calculate-seuil', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'calculateSeuil']);
+        Route::post('/campaigns/{campaignId}/calculate-seuil', [AdmissionCampaignController::class, 'calculateSeuil']);
     });
 
     // [AUDIT ROUTE-01] Chatbot, alumni, REST, and dashboard routes moved to shared.php
     // [AUDIT ROUTE-02] Dead vacataire-manager group (all-commented) removed
     // Student Portal
     Route::prefix('student-portal')->group(function () {
-        Route::get('/grades', [\App\Http\Controllers\Api\StudentPortalController::class, 'getGrades']);
-        Route::get('/schedule', [\App\Http\Controllers\Api\StudentPortalController::class, 'getSchedule']);
-        Route::post('/absences', [\App\Http\Controllers\Api\StudentPortalController::class, 'submitAbsence']);
+        Route::get('/grades', [StudentPortalController::class, 'getGrades']);
+        Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
+        Route::post('/absences', [StudentPortalController::class, 'submitAbsence']);
     });
 
     // [AUDIT ROUTE-01] Dashboard routes (stats, search, timeline, pilotage) live in shared.php
     // Admin-exclusive APOGEE Academic Engine routes kept here:
     Route::prefix('dashboard')->group(function () {
-        Route::post('/academic/grade-periods', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'openGradePeriod']);
-        Route::post('/academic/deliberation/run', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'runDeliberation']);
-        Route::get('/academic/reports/{type}', [\App\Http\Controllers\Api\AcademicReportController::class, 'generate']);
+        Route::post('/academic/grade-periods', [ApogeeEngineController::class, 'openGradePeriod']);
+        Route::post('/academic/deliberation/run', [ApogeeEngineController::class, 'runDeliberation']);
+        Route::get('/academic/reports/{type}', [AcademicReportController::class, 'generate']);
     });
 
     // [AUDIT ROUTE-01] /timetable/export duplicate removed (already in shared.php)
     // ---------------------------------------------------------
     // GENERATION DE DOCUMENTS PDF (DomPDF)
     // ---------------------------------------------------------
-    Route::get('/admin/convocations/print-session', [\App\Http\Controllers\Api\PdfExportController::class, 'printSession']);
-    Route::get('/admin/convocations/print-professors', [\App\Http\Controllers\Api\PdfExportController::class, 'printProfessors']);
-    Route::get('/professor/exams/{exam}/pv/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
-    Route::get('/admin/pv-globaux/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvGlobal']);
-    Route::get('/admin/students/{id}/releve-notes/{year}', [\App\Http\Controllers\Api\PdfExportController::class, 'releveNotes']);
-    Route::get('/admin/students/{id}/attestation-reussite/{year}', [\App\Http\Controllers\Api\PdfExportController::class, 'attestationReussite']);
-    Route::get('/admin/exams/{exam}/attendance-sheet', [\App\Http\Controllers\Api\PdfExportController::class, 'attendanceSheet']);
-    Route::get('/admin/reports/absences', [\App\Http\Controllers\Api\PdfExportController::class, 'rapportAbsences']);
-    Route::get('/admin/schedules/export/group-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportScheduleGroupPdf']);
-    Route::get('/admin/exams/{exam}/live-attendance/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'liveAttendancePdf']);
-    Route::get('/admin/exams/{exam}/display-list/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'displayList']);
-    
+    Route::get('/admin/convocations/print-session', [PdfExportController::class, 'printSession']);
+    Route::get('/admin/convocations/print-professors', [PdfExportController::class, 'printProfessors']);
+    Route::get('/professor/exams/{exam}/pv/pdf', [PdfExportController::class, 'pvExamen']);
+    Route::get('/admin/pv-globaux/pdf', [PdfExportController::class, 'pvGlobal']);
+    Route::get('/admin/students/{id}/releve-notes/{year}', [PdfExportController::class, 'releveNotes']);
+    Route::get('/admin/students/{id}/attestation-reussite/{year}', [PdfExportController::class, 'attestationReussite']);
+    Route::get('/admin/exams/{exam}/attendance-sheet', [PdfExportController::class, 'attendanceSheet']);
+    Route::get('/admin/reports/absences', [PdfExportController::class, 'rapportAbsences']);
+    Route::get('/admin/schedules/export/group-pdf', [PdfExportController::class, 'exportScheduleGroupPdf']);
+    Route::get('/admin/exams/{exam}/live-attendance/pdf', [PdfExportController::class, 'liveAttendancePdf']);
+    Route::get('/admin/exams/{exam}/display-list/pdf', [PdfExportController::class, 'displayList']);
+
 });
 
 // [AUDIT ROUTE-01] Public verify routes are already in shared.php — removed duplicates here.
-
-
 
 // ---------------------------------------------------------
 // REST API (Protected endpoints for third-party integrations)
 // ---------------------------------------------------------
 
-Route::get('/test-doc', function() {
+Route::get('/test-doc', function () {
     try {
-        $reqs = \App\Models\DocumentRequest::where('status', 'pending')->get();
-        if ($reqs->isEmpty()) return 'No pending requests found';
+        $reqs = DocumentRequest::where('status', 'pending')->get();
+        if ($reqs->isEmpty()) {
+            return 'No pending requests found';
+        }
         $out = [];
         foreach ($reqs as $req) {
             try {
-                app(\App\Services\DocumentRequestService::class)->processRequest($req, 'ready');
+                app(DocumentRequestService::class)->processRequest($req, 'ready');
                 $out[] = "Success for {$req->id} ({$req->documentType->name})";
-            } catch (\Exception $e) {
-                $out[] = "Error for {$req->id}: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine();
+            } catch (Exception $e) {
+                $out[] = "Error for {$req->id}: ".$e->getMessage().' in '.$e->getFile().' on line '.$e->getLine();
             }
         }
+
         return response()->json($out);
-    } catch (\Exception $e) {
-        return 'Global Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+    } catch (Exception $e) {
+        return 'Global Error: '.$e->getMessage().' in '.$e->getFile().' on line '.$e->getLine();
     }
 });
 
-
 Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
-    Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
-    Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);
-    Route::get('/schedule', [\App\Http\Controllers\Api\RestApiController::class, 'schedule']);
-    Route::get('/absences', [\App\Http\Controllers\Api\RestApiController::class, 'absences']);
-    Route::get('/exams', [\App\Http\Controllers\Api\RestApiController::class, 'exams']);
-    Route::get('/appointments', [\App\Http\Controllers\Api\RestApiController::class, 'appointments']);
-    Route::get('/notifications', [\App\Http\Controllers\Api\RestApiController::class, 'notifications']);
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\RestApiController::class, 'readNotification']);
-    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\RestApiController::class, 'readAllNotifications']);
+    Route::get('/modules', [RestApiController::class, 'modules']);
+    Route::get('/grades', [RestApiController::class, 'grades']);
+    Route::get('/schedule', [RestApiController::class, 'schedule']);
+    Route::get('/absences', [RestApiController::class, 'absences']);
+    Route::get('/exams', [RestApiController::class, 'exams']);
+    Route::get('/appointments', [RestApiController::class, 'appointments']);
+    Route::get('/notifications', [RestApiController::class, 'notifications']);
+    Route::post('/notifications/{id}/read', [RestApiController::class, 'readNotification']);
+    Route::post('/notifications/read-all', [RestApiController::class, 'readAllNotifications']);
 });
 
 // ---------------------------------------------------------
 // INTERNAL DYNAMIC ENDPOINTS (Admin Web Auth)
 // ---------------------------------------------------------
 Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head'])->group(function () {
-    Route::get('/admin/api/filieres/{id}/groups', [\App\Http\Controllers\Api\InternalApiController::class, 'filiereGroups']);
-    Route::get('/admin/api/groups/{id}/modules', [\App\Http\Controllers\Api\InternalApiController::class, 'groupModules']);
-    Route::get('/admin/api/rooms/{id}/availability', [\App\Http\Controllers\Api\InternalApiController::class, 'roomAvailability']);
-    Route::get('/admin/exams/api/calendar', [\App\Http\Controllers\Api\InternalApiController::class, 'examCalendar']);
-    Route::get('/admin/timetable/calendar-events', [\App\Http\Controllers\Api\InternalApiController::class, 'timetableEvents']);
-    Route::get('/admin/exams/{exam}/live-attendance/stats', [\App\Http\Controllers\Api\InternalApiController::class, 'liveAttendanceStats']);
-    Route::get('/classroom/chat/{group}/{module}/messages', [\App\Http\Controllers\Api\InternalApiController::class, 'chatMessages']);
-    Route::post('/admin/schedules/makeup/suggest', [\App\Http\Controllers\Api\InternalApiController::class, 'suggestMakeup']);
-    Route::post('/classroom/ai/tutor', [\App\Http\Controllers\Api\AiFeatureController::class, 'tutor']);
-    
+    Route::get('/admin/api/filieres/{id}/groups', [InternalApiController::class, 'filiereGroups']);
+    Route::get('/admin/api/groups/{id}/modules', [InternalApiController::class, 'groupModules']);
+    Route::get('/admin/api/rooms/{id}/availability', [InternalApiController::class, 'roomAvailability']);
+    Route::get('/admin/exams/api/calendar', [InternalApiController::class, 'examCalendar']);
+    Route::get('/admin/timetable/calendar-events', [InternalApiController::class, 'timetableEvents']);
+    Route::get('/admin/exams/{exam}/live-attendance/stats', [InternalApiController::class, 'liveAttendanceStats']);
+    Route::get('/classroom/chat/{group}/{module}/messages', [InternalApiController::class, 'chatMessages']);
+    Route::post('/admin/schedules/makeup/suggest', [InternalApiController::class, 'suggestMakeup']);
+    Route::post('/classroom/ai/tutor', [AiFeatureController::class, 'tutor']);
+
     // Admin Guichet & Analytics
-    Route::get('/admin/analytics', [\App\Http\Controllers\Api\AdminAnalyticsController::class, 'index']);
-    Route::get('/admin/document-requests', [\App\Http\Controllers\Api\AdminDocumentRequestController::class, 'index']);
-    Route::patch('/admin/document-requests/{documentRequest}/status', [\App\Http\Controllers\Api\AdminDocumentRequestController::class, 'updateStatus']);
+    Route::get('/admin/analytics', [AdminAnalyticsController::class, 'index']);
+    Route::get('/admin/document-requests', [AdminDocumentRequestController::class, 'index']);
+    Route::patch('/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
 });
