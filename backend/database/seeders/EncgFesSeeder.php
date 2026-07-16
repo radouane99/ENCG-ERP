@@ -85,6 +85,36 @@ class EncgFesSeeder extends Seeder
 
             // 15. Seed Attendance sessions, records, and justifications
             $this->seedAttendancesAndJustifications($institution, $academicYear, $groupList, $studentList, $professors);
+
+            // 16. Seed Compensation rules per filière
+            $this->seedCompensationRules($institution, $filieres);
+
+            // 17. Seed Conversations & Messages (messagerie interne)
+            $this->seedConversationsAndMessages($institution, $professors, $studentList);
+
+            // 18. Seed Diplomas & Verifications
+            $this->seedDiplomasAndVerifications($institution, $academicYear, $filieres, $studentList);
+
+            // 19. Seed Disciplinary Cases & Decisions
+            $this->seedDisciplinaryCasesAndDecisions($institution, $studentList, $professors);
+
+            // 20. Seed Holidays
+            $this->seedHolidays();
+
+            // 21. Seed Module PV Signatures
+            $this->seedModulePvSignatures($academicYear, $filieres, $groupList, $professors);
+
+            // 22. Seed Teacher Constraints (availabilities)
+            $this->seedTeacherConstraints($professors);
+
+            // 23. Seed Notifications
+            $this->seedNotifications($studentList, $professors);
+
+            // 24. Seed Research Labs & Publications
+            $this->seedResearchLabsAndPublications($institution, $professors);
+
+            // 25. Seed Module Prerequisites
+            $this->seedModulePrerequisites($filieres);
         });
     }
 
@@ -120,6 +150,20 @@ class EncgFesSeeder extends Seeder
         DB::table('diplomas')->delete();
         DB::table('document_requests')->delete();
         DB::table('document_types')->delete();
+        // New tables
+        DB::table('module_prerequisites')->delete();
+        DB::table('publications')->delete();
+        DB::table('research_labs')->delete();
+        DB::table('notifications')->delete();
+        DB::table('teacher_constraints')->delete();
+        DB::table('module_pv_signatures')->delete();
+        DB::table('holidays')->delete();
+        DB::table('disciplinary_decisions')->delete();
+        DB::table('disciplinary_cases')->delete();
+        DB::table('conversation_user')->delete();
+        DB::table('messages')->delete();
+        DB::table('conversations')->delete();
+        DB::table('compensation_rules')->delete();
 
         Grade::query()->delete();
         Assessment::query()->delete();
@@ -1346,6 +1390,537 @@ class EncgFesSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
+        }
+    }
+
+    // =========================================================================
+    // 16. COMPENSATION RULES
+    // =========================================================================
+    private function seedCompensationRules(Institution $institution, array $filieres): void
+    {
+        $rules = [
+            // Tronc Commun — S1
+            [
+                'institution_id'       => $institution->id,
+                'filiere_id'           => $filieres['TC']->id,
+                'semester_number'      => 1,
+                'rule_type'            => 'compensation',
+                'minimum_average'      => 10.00,
+                'minimum_module_grade' => 7.00,
+                'max_deficit_allowed'  => 3.00,
+                'eliminatory_blocks'   => false,
+                'is_active'            => true,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ],
+            // Tronc Commun — S2
+            [
+                'institution_id'       => $institution->id,
+                'filiere_id'           => $filieres['TC']->id,
+                'semester_number'      => 2,
+                'rule_type'            => 'compensation',
+                'minimum_average'      => 10.00,
+                'minimum_module_grade' => 7.00,
+                'max_deficit_allowed'  => 3.00,
+                'eliminatory_blocks'   => false,
+                'is_active'            => true,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ],
+            // GFC — S3
+            [
+                'institution_id'       => $institution->id,
+                'filiere_id'           => $filieres['GFC']->id,
+                'semester_number'      => 3,
+                'rule_type'            => 'compensation',
+                'minimum_average'      => 10.00,
+                'minimum_module_grade' => 7.00,
+                'max_deficit_allowed'  => 3.00,
+                'eliminatory_blocks'   => false,
+                'is_active'            => true,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ],
+            // GFC — rattrapage
+            [
+                'institution_id'       => $institution->id,
+                'filiere_id'           => $filieres['GFC']->id,
+                'semester_number'      => 3,
+                'rule_type'            => 'rattrapage',
+                'minimum_average'      => 10.00,
+                'minimum_module_grade' => 5.00,
+                'max_deficit_allowed'  => 5.00,
+                'eliminatory_blocks'   => false,
+                'is_active'            => true,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ],
+        ];
+        DB::table('compensation_rules')->insert($rules);
+    }
+
+    // =========================================================================
+    // 17. CONVERSATIONS & MESSAGES
+    // =========================================================================
+    private function seedConversationsAndMessages(
+        Institution $institution,
+        array $professors,
+        array $students
+    ): void {
+        $adminUser  = User::where('email', 'admin@encg.ma')->first();
+        $profUser   = $professors[0]; // User object
+        $studentUser = $students[0];
+
+        // Conversation 1 — Admin ↔ Professeur
+        $conv1Id = DB::table('conversations')->insertGetId([
+            'institution_id' => $institution->id,
+            'type'           => 'direct',
+            'name'           => null,
+            'created_at'     => now()->subDays(5),
+            'updated_at'     => now()->subDays(5),
+        ]);
+        DB::table('conversation_user')->insert([
+            ['conversation_id' => $conv1Id, 'user_id' => $adminUser->id,  'is_admin' => true,  'last_read_at' => now()->subDays(1), 'created_at' => now(), 'updated_at' => now()],
+            ['conversation_id' => $conv1Id, 'user_id' => $profUser->id,   'is_admin' => false, 'last_read_at' => now()->subDays(2), 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        DB::table('messages')->insert([
+            ['conversation_id' => $conv1Id, 'sender_id' => $adminUser->id, 'body' => 'Bonjour Professeur, avez-vous saisi les notes du module Comptabilité Approfondie ?', 'is_read' => true, 'read_at' => now()->subDays(4), 'created_at' => now()->subDays(5), 'updated_at' => now()->subDays(5)],
+            ['conversation_id' => $conv1Id, 'sender_id' => $profUser->id,  'body' => 'Bonjour, oui les notes sont saisies et validées. Je vous confirme que tout est en ordre.', 'is_read' => true, 'read_at' => now()->subDays(3), 'created_at' => now()->subDays(4), 'updated_at' => now()->subDays(4)],
+            ['conversation_id' => $conv1Id, 'sender_id' => $adminUser->id, 'body' => 'Parfait, merci beaucoup. La délibération est prévue pour vendredi.', 'is_read' => true, 'read_at' => now()->subDays(2), 'created_at' => now()->subDays(3), 'updated_at' => now()->subDays(3)],
+        ]);
+
+        // Conversation 2 — Étudiant ↔ Professeur
+        $conv2Id = DB::table('conversations')->insertGetId([
+            'institution_id' => $institution->id,
+            'type'           => 'direct',
+            'name'           => null,
+            'created_at'     => now()->subDays(3),
+            'updated_at'     => now()->subDays(1),
+        ]);
+        DB::table('conversation_user')->insert([
+            ['conversation_id' => $conv2Id, 'user_id' => $studentUser->id, 'is_admin' => false, 'last_read_at' => now()->subDays(1), 'created_at' => now(), 'updated_at' => now()],
+            ['conversation_id' => $conv2Id, 'user_id' => $profUser->id,   'is_admin' => false, 'last_read_at' => now()->subHours(2), 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        DB::table('messages')->insert([
+            ['conversation_id' => $conv2Id, 'sender_id' => $studentUser->id, 'body' => 'Bonjour Professeur, j\'ai une question concernant le TD du chapitre 4 sur la consolidation.', 'is_read' => true, 'read_at' => now()->subDays(2), 'created_at' => now()->subDays(3), 'updated_at' => now()->subDays(3)],
+            ['conversation_id' => $conv2Id, 'sender_id' => $profUser->id,   'body' => 'Bonjour Youssef, bien sûr. Quelle est votre question ?', 'is_read' => true, 'read_at' => now()->subDays(1), 'created_at' => now()->subDays(2), 'updated_at' => now()->subDays(2)],
+            ['conversation_id' => $conv2Id, 'sender_id' => $studentUser->id, 'body' => 'Est-ce que les écritures d\'élimination sont obligatoires pour le cas A ?', 'is_read' => false, 'read_at' => null, 'created_at' => now()->subDays(1), 'updated_at' => now()->subDays(1)],
+        ]);
+
+        // Group conversation — Annonce scolarité
+        $scolariteUser = User::where('email', 'scolarite@encg.ma')->first();
+        $conv3Id = DB::table('conversations')->insertGetId([
+            'institution_id' => $institution->id,
+            'type'           => 'group',
+            'name'           => 'Annonces Scolarité — TC S2',
+            'created_at'     => now()->subDays(7),
+            'updated_at'     => now()->subDays(7),
+        ]);
+        $participantsConv3 = [[$scolariteUser->id, true], [$studentUser->id, false], [$students[1]->id, false], [$students[2]->id, false]];
+        $conv3Users = [];
+        foreach ($participantsConv3 as [$uid, $isAdmin]) {
+            $conv3Users[] = ['conversation_id' => $conv3Id, 'user_id' => $uid, 'is_admin' => $isAdmin, 'last_read_at' => now()->subDays(6), 'created_at' => now(), 'updated_at' => now()];
+        }
+        DB::table('conversation_user')->insert($conv3Users);
+        DB::table('messages')->insert([
+            ['conversation_id' => $conv3Id, 'sender_id' => $scolariteUser->id, 'body' => 'Bonjour à tous. Les calendriers d\'examens du semestre 2 sont disponibles sur l\'ENT. Merci de vérifier vos convocations.', 'is_read' => true, 'read_at' => now()->subDays(6), 'created_at' => now()->subDays(7), 'updated_at' => now()->subDays(7)],
+        ]);
+    }
+
+    // =========================================================================
+    // 18. DIPLOMAS & VERIFICATIONS
+    // =========================================================================
+    private function seedDiplomasAndVerifications(
+        Institution $institution,
+        AcademicYear $academicYear,
+        array $filieres,
+        array $students
+    ): void {
+        $adminUser = User::where('email', 'admin@encg.ma')->first();
+
+        // Alumni student from GFC who graduated last year
+        $alumniStudent = Student::where('cne', 'G245678901')->first()
+            ?? Student::inRandomOrder()->first();
+
+        $diplomaId = DB::table('diplomas')->insertGetId([
+            'institution_id'     => $institution->id,
+            'student_id'         => $alumniStudent->id,
+            'filiere_id'         => $filieres['GFC']->id,
+            'academic_year_id'   => $academicYear->id,
+            'diploma_number'     => 'ENCG-FES-DIPL-2024-0042',
+            'diploma_type'       => 'licence',
+            'graduation_date'    => '2024-07-15',
+            'final_average'      => 14.35,
+            'mention'            => 'Bien',
+            'file_path'          => null,
+            'verification_token' => strtoupper(Str::random(32)),
+            'is_issued'          => true,
+            'issued_at'          => '2024-09-01 09:00:00',
+            'issued_by'          => $adminUser->id,
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        // A couple of diploma verification attempts
+        DB::table('diploma_verifications')->insert([
+            [
+                'diploma_id'            => $diplomaId,
+                'verifier_name'         => 'Mariam Cherkaoui',
+                'verifier_organization' => 'Bank Al-Maghrib',
+                'ip_address'            => '196.62.4.12',
+                'created_at'            => now()->subMonths(2),
+                'updated_at'            => now()->subMonths(2),
+            ],
+            [
+                'diploma_id'            => $diplomaId,
+                'verifier_name'         => 'Omar Filali',
+                'verifier_organization' => 'Ministère des Finances',
+                'ip_address'            => '41.248.77.190',
+                'created_at'            => now()->subWeeks(3),
+                'updated_at'            => now()->subWeeks(3),
+            ],
+        ]);
+    }
+
+    // =========================================================================
+    // 19. DISCIPLINARY CASES & DECISIONS
+    // =========================================================================
+    private function seedDisciplinaryCasesAndDecisions(
+        Institution $institution,
+        array $students,
+        array $professors
+    ): void {
+        $adminUser = User::where('email', 'admin@encg.ma')->first();
+        $profUser  = $professors[1]; // second prof as reporter
+
+        // Case 1 — Fraude aux examens, clôturé
+        $case1Id = DB::table('disciplinary_cases')->insertGetId([
+            'institution_id'    => $institution->id,
+            'student_id'        => $students[2]->id,
+            'case_number'       => 'DISC-2025-001',
+            'infraction_type'   => 'fraud',
+            'description'       => 'L\'étudiant a été surpris en possession d\'un aide-mémoire non autorisé lors de l\'examen de Comptabilité Approfondie.',
+            'incident_date'     => '2025-05-20',
+            'reported_by_name'  => $profUser->name,
+            'status'            => 'closed',
+            'student_statement' => 'Je reconnais les faits et je m\'en excuse. C\'était la première fois et je n\'ai pas eu l\'intention de tricher.',
+            'created_at'        => now()->subMonths(1),
+            'updated_at'        => now()->subMonths(1),
+        ]);
+        DB::table('disciplinary_decisions')->insert([
+            'disciplinary_case_id' => $case1Id,
+            'sanction_type'        => 'warning',
+            'suspension_days'      => null,
+            'decision_text'        => 'Après délibération du conseil de discipline, l\'étudiant reçoit un avertissement écrit. La note de l\'épreuve est annulée (0/20).',
+            'decision_date'        => '2025-05-28',
+            'is_appealed'          => false,
+            'appeal_notes'         => null,
+            'decided_by'           => $adminUser->id,
+            'created_at'           => now()->subMonths(1),
+            'updated_at'           => now()->subMonths(1),
+        ]);
+
+        // Case 2 — Comportement irrespectueux, en cours
+        DB::table('disciplinary_cases')->insert([
+            'institution_id'    => $institution->id,
+            'student_id'        => $students[4]->id,
+            'case_number'       => 'DISC-2025-002',
+            'infraction_type'   => 'misconduct',
+            'description'       => 'Comportement irrespectueux envers un enseignant lors d\'un cours magistral de Finance d\'Entreprise.',
+            'incident_date'     => '2025-06-03',
+            'reported_by_name'  => $professors[0]->name,
+            'status'            => 'pending',
+            'student_statement' => null,
+            'created_at'        => now()->subWeeks(3),
+            'updated_at'        => now()->subWeeks(3),
+        ]);
+    }
+
+    // =========================================================================
+    // 20. HOLIDAYS
+    // =========================================================================
+    private function seedHolidays(): void
+    {
+        $holidays = [
+            ['name' => 'Aïd Al-Adha 2025',        'start_date' => '2025-06-06', 'end_date' => '2025-06-09', 'is_recurring' => false],
+            ['name' => 'Fête du Trône',             'start_date' => '2025-07-30', 'end_date' => '2025-07-30', 'is_recurring' => true],
+            ['name' => 'Aïd Al-Mawlid 2025',       'start_date' => '2025-09-04', 'end_date' => '2025-09-05', 'is_recurring' => false],
+            ['name' => 'Marché de la Marche Verte', 'start_date' => '2025-11-06', 'end_date' => '2025-11-06', 'is_recurring' => true],
+            ['name' => 'Fête de l\'Indépendance',  'start_date' => '2025-11-18', 'end_date' => '2025-11-18', 'is_recurring' => true],
+            ['name' => 'Nouvel An 2026',             'start_date' => '2026-01-01', 'end_date' => '2026-01-01', 'is_recurring' => true],
+            ['name' => 'Manifeste de l\'Indépendance', 'start_date' => '2026-01-11', 'end_date' => '2026-01-11', 'is_recurring' => true],
+            ['name' => 'Fête du Travail',           'start_date' => '2026-05-01', 'end_date' => '2026-05-01', 'is_recurring' => true],
+        ];
+        foreach ($holidays as &$h) {
+            $h['created_at'] = now();
+            $h['updated_at'] = now();
+        }
+        DB::table('holidays')->insert($holidays);
+    }
+
+    // =========================================================================
+    // 21. MODULE PV SIGNATURES
+    // =========================================================================
+    private function seedModulePvSignatures(
+        AcademicYear $academicYear,
+        array $filieres,
+        array $groups,
+        array $professors
+    ): void {
+        $filierIds = array_map(fn ($f) => $f->id, $filieres);
+        $modules = Module::whereIn('filiere_id', $filierIds)
+            ->take(4)
+            ->get();
+
+        foreach ($modules as $i => $module) {
+            $prof     = $professors[$i % count($professors)];
+            $group    = $groups[$i % count($groups)];
+            $seal     = hash('sha256', $module->id.$group->id.$prof->id);
+            $sigData  = json_encode([
+                'professor' => $prof->name,
+                'module'    => $module->name,
+                'group'     => $group->name,
+                'signed_at' => now()->subDays(rand(1, 10))->toISOString(),
+            ]);
+
+            DB::table('module_pv_signatures')->insert([
+                'module_id'        => $module->id,
+                'group_id'         => $group->id,
+                'academic_year_id' => $academicYear->id,
+                'signed_by'        => $prof->id,
+                'signature_data'   => $sigData,
+                'digital_seal'     => $seal,
+                'ip_address'       => '192.168.1.'.rand(10, 50),
+                'signed_at'        => now()->subDays(rand(1, 10)),
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+        }
+    }
+
+    // =========================================================================
+    // 22. TEACHER CONSTRAINTS
+    // =========================================================================
+    private function seedTeacherConstraints(array $professors): void
+    {
+        $constraints = [
+            // Prof 0 — indisponible lundi matin
+            ['professor_id' => $professors[0]->id, 'day_of_week' => 'MONDAY',    'start_time' => '08:00:00', 'end_time' => '10:00:00', 'constraint_type' => 'UNAVAILABLE'],
+            // Prof 0 — préfère ne pas faire le vendredi après-midi
+            ['professor_id' => $professors[0]->id, 'day_of_week' => 'FRIDAY',    'start_time' => '14:00:00', 'end_time' => '18:00:00', 'constraint_type' => 'PREFER_NOT'],
+            // Prof 1 — indisponible mercredi
+            ['professor_id' => $professors[1]->id, 'day_of_week' => 'WEDNESDAY', 'start_time' => '08:00:00', 'end_time' => '18:00:00', 'constraint_type' => 'UNAVAILABLE'],
+            // Prof 2 — préfère ne pas samedi
+            ['professor_id' => $professors[2]->id, 'day_of_week' => 'SATURDAY',  'start_time' => '08:00:00', 'end_time' => '13:00:00', 'constraint_type' => 'PREFER_NOT'],
+            // Prof 3 — indisponible jeudi après-midi
+            ['professor_id' => $professors[3]->id, 'day_of_week' => 'THURSDAY',  'start_time' => '14:00:00', 'end_time' => '18:00:00', 'constraint_type' => 'UNAVAILABLE'],
+        ];
+        foreach ($constraints as &$c) {
+            $c['created_at'] = now();
+            $c['updated_at'] = now();
+        }
+        DB::table('teacher_constraints')->insert($constraints);
+    }
+
+    // =========================================================================
+    // 23. NOTIFICATIONS
+    // =========================================================================
+    private function seedNotifications(array $students, array $professors): void
+    {
+        $adminUser = User::where('email', 'admin@encg.ma')->first();
+        $rows = [];
+
+        // Notification pour l'étudiant principal — résultats disponibles
+        $rows[] = [
+            'id'              => (string) Str::uuid(),
+            'type'            => 'App\Notifications\ExamResultsAvailable',
+            'notifiable_type' => 'App\Models\User',
+            'notifiable_id'   => $students[0]->id,
+            'data'            => json_encode(['message' => 'Vos résultats du semestre 2 sont disponibles.', 'url' => '/student/grades']),
+            'read_at'         => now()->subDays(1),
+            'created_at'      => now()->subDays(2),
+            'updated_at'      => now()->subDays(2),
+        ];
+        // Notification non lue — convocation
+        $rows[] = [
+            'id'              => (string) Str::uuid(),
+            'type'            => 'App\Notifications\ConvocationIssued',
+            'notifiable_type' => 'App\Models\User',
+            'notifiable_id'   => $students[0]->id,
+            'data'            => json_encode(['message' => 'Votre convocation pour la session de rattrapage est disponible.', 'url' => '/student/convocations']),
+            'read_at'         => null,
+            'created_at'      => now()->subDays(1),
+            'updated_at'      => now()->subDays(1),
+        ];
+        // Notification admin — nouveau dossier disciplinaire
+        $rows[] = [
+            'id'              => (string) Str::uuid(),
+            'type'            => 'App\Notifications\DisciplinaryCaseOpened',
+            'notifiable_type' => 'App\Models\User',
+            'notifiable_id'   => $adminUser->id,
+            'data'            => json_encode(['message' => 'Un nouveau dossier disciplinaire (DISC-2025-002) a été soumis et nécessite votre attention.', 'url' => '/admin/disciplinary']),
+            'read_at'         => null,
+            'created_at'      => now()->subWeeks(3),
+            'updated_at'      => now()->subWeeks(3),
+        ];
+        // Notification prof — contrat vacation approuvé
+        $rows[] = [
+            'id'              => (string) Str::uuid(),
+            'type'            => 'App\Notifications\VacationContractApproved',
+            'notifiable_type' => 'App\Models\User',
+            'notifiable_id'   => $professors[0]->id,
+            'data'            => json_encode(['message' => 'Votre contrat de vacation pour l\'année 2024-2025 a été approuvé.', 'url' => '/professor/vacation']),
+            'read_at'         => now()->subWeeks(2),
+            'created_at'      => now()->subWeeks(3),
+            'updated_at'      => now()->subWeeks(3),
+        ];
+        // Notifications pour plusieurs étudiants
+        foreach (array_slice($students, 1, 4) as $stuUser) {
+            $rows[] = [
+                'id'              => (string) Str::uuid(),
+                'type'            => 'App\Notifications\ExamResultsAvailable',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $stuUser->id,
+                'data'            => json_encode(['message' => 'Vos résultats du semestre 2 sont disponibles.', 'url' => '/student/grades']),
+                'read_at'         => null,
+                'created_at'      => now()->subDays(2),
+                'updated_at'      => now()->subDays(2),
+            ];
+        }
+        DB::table('notifications')->insert($rows);
+    }
+
+    // =========================================================================
+    // 24. RESEARCH LABS & PUBLICATIONS
+    // =========================================================================
+    private function seedResearchLabsAndPublications(
+        Institution $institution,
+        array $professors
+    ): void {
+        $prof0 = $professors[0];
+        $prof1 = $professors[1];
+
+        // Lab 1 — Finance & Comptabilité
+        $lab1Id = DB::table('research_labs')->insertGetId([
+            'institution_id' => $institution->id,
+            'name'           => 'Laboratoire de Recherche en Finance et Comptabilité (LARFCO)',
+            'acronym'        => 'LARFCO',
+            'director_id'    => $prof0->id,
+            'description'    => 'Recherches en finance d\'entreprise, audit et comptabilité internationale. Partenariats avec Bank Al-Maghrib et CFC.',
+            'created_at'     => now()->subYears(2),
+            'updated_at'     => now(),
+        ]);
+        // Lab 2 — Marketing & Management
+        $lab2Id = DB::table('research_labs')->insertGetId([
+            'institution_id' => $institution->id,
+            'name'           => 'Centre de Recherche en Management et Marketing (CR2M)',
+            'acronym'        => 'CR2M',
+            'director_id'    => $prof1->id,
+            'description'    => 'Recherches sur le comportement du consommateur marocain, e-commerce et digitalisation des entreprises au Maroc.',
+            'created_at'     => now()->subYears(1),
+            'updated_at'     => now(),
+        ]);
+
+        // Publications
+        DB::table('publications')->insert([
+            [
+                'research_lab_id' => $lab1Id,
+                'author_id'       => $prof0->id,
+                'title'           => 'Impact de la Norme IFRS 9 sur les Banques Marocaines : Analyse Empirique',
+                'journal'         => 'Revue Marocaine de Finance et Comptabilité',
+                'publish_date'    => '2024-03-15',
+                'doi'             => '10.1234/rmfc.2024.001',
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ],
+            [
+                'research_lab_id' => $lab1Id,
+                'author_id'       => $prof0->id,
+                'title'           => 'Audit Interne et Gouvernance d\'Entreprise dans les PME du Maroc',
+                'journal'         => 'International Journal of Accounting',
+                'publish_date'    => '2023-11-01',
+                'doi'             => '10.5678/ija.2023.088',
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ],
+            [
+                'research_lab_id' => $lab2Id,
+                'author_id'       => $prof1->id,
+                'title'           => 'Digitalisation du Commerce de Détail au Maroc : Opportunités et Défis',
+                'journal'         => 'Journal of Business Studies — Maghreb',
+                'publish_date'    => '2024-06-20',
+                'doi'             => '10.9012/jbsm.2024.015',
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ],
+            [
+                'research_lab_id' => $lab2Id,
+                'author_id'       => $prof1->id,
+                'title'           => 'L\'Influence des Réseaux Sociaux sur la Décision d\'Achat des Millennials Marocains',
+                'journal'         => 'Revue Africaine de Management',
+                'publish_date'    => '2023-09-10',
+                'doi'             => null,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ],
+        ]);
+    }
+
+    // =========================================================================
+    // 25. MODULE PREREQUISITES
+    // =========================================================================
+    private function seedModulePrerequisites(array $filieres): void
+    {
+        // Get GFC modules ordered by code
+        $gfcModules = Module::where('filiere_id', $filieres['GFC']->id)
+            ->orderBy('code')
+            ->get()
+            ->keyBy('code');
+
+        // Get TC modules
+        $tcModules = Module::where('filiere_id', $filieres['TC']->id)
+            ->orderBy('code')
+            ->get();
+
+        $rows = [];
+        // Rule: each advanced GFC module requires the first TC module as prerequisite
+        if ($tcModules->isNotEmpty() && $gfcModules->isNotEmpty()) {
+            $tcBase = $tcModules->first();
+            foreach ($gfcModules->take(3) as $gfcModule) {
+                if ($gfcModule->id !== $tcBase->id) {
+                    $rows[] = [
+                        'module_id'             => $gfcModule->id,
+                        'prerequisite_module_id' => $tcBase->id,
+                        'created_at'             => now(),
+                        'updated_at'             => now(),
+                    ];
+                }
+            }
+        }
+
+        // Inter-GFC prerequisites: module 2 requires module 1, module 3 requires module 2
+        $gfcList = $gfcModules->values();
+        for ($i = 1; $i < min(3, $gfcList->count()); $i++) {
+            $rows[] = [
+                'module_id'             => $gfcList[$i]->id,
+                'prerequisite_module_id' => $gfcList[$i - 1]->id,
+                'created_at'             => now(),
+                'updated_at'             => now(),
+            ];
+        }
+
+        if (! empty($rows)) {
+            // Deduplicate to avoid unique constraint violation
+            $seen = [];
+            $unique = [];
+            foreach ($rows as $r) {
+                $key = $r['module_id'].'-'.$r['prerequisite_module_id'];
+                if (! isset($seen[$key]) && $r['module_id'] !== $r['prerequisite_module_id']) {
+                    $seen[$key] = true;
+                    $unique[] = $r;
+                }
+            }
+            DB::table('module_prerequisites')->insert($unique);
         }
     }
 }
