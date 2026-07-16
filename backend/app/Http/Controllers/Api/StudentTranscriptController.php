@@ -147,6 +147,7 @@ class StudentTranscriptController extends Controller
             'academic_year' => $academicYear,
             'rows'         => $transcriptRows->values(),
             'gpa'          => $gpa,
+            'logoPath'     => public_path('logo-encg.png'),
             'verify_url'   => config('app.url') . "/verify/transcript/{$verifyToken}",
             'generated_at' => now()->format('d/m/Y à H:i'),
         ];
