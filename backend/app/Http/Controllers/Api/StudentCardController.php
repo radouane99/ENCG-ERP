@@ -15,6 +15,97 @@ use Illuminate\Support\Str;
 class StudentCardController extends Controller
 {
     /**
+     * Display a listing of the student cards with search and filters (admin only).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = User::whereHas('student')->with(['studentCard', 'student.latestPathway.group', 'student.latestPathway.filiere', 'institution']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status === 'not_generated') {
+                $query->whereDoesntHave('studentCard');
+            } else {
+                $query->whereHas('studentCard', function ($q) use ($status) {
+                    $q->where('status', $status);
+                });
+            }
+        }
+
+        // Filter by group_id or filiere_id
+        if ($request->filled('group_id') || $request->filled('filiere_id')) {
+            $query->whereHas('student.latestPathway', function ($q) use ($request) {
+                if ($request->filled('group_id')) {
+                    $q->where('group_id', $request->input('group_id'));
+                }
+                if ($request->filled('filiere_id')) {
+                    $q->where('filiere_id', $request->input('filiere_id'));
+                }
+            });
+        }
+
+        // Search by student name, CNE, card_number
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('cin', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($sq) use ($search) {
+                        $sq->where('cne', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('studentCard', function ($sq) use ($search) {
+                        $sq->where('card_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $users = $query->paginate($request->input('per_page', 15));
+
+        // Format to match show schema
+        $items = collect($users->items())->map(function ($user) {
+            $card = $user->studentCard;
+            $studentProfile = $user->student;
+            $pathway = $studentProfile?->latestPathway;
+
+            return [
+                'id' => $card?->id ?? null,
+                'student_id' => $user->id,
+                'card_number' => $card?->card_number ?? 'Non générée',
+                'qr_token' => $card?->qr_token ?? null,
+                'status' => $card?->status ?? 'not_generated',
+                'expires_at' => $card?->expires_at ?? null,
+                'academic_year' => $card?->academic_year ?? null,
+                'photo_url' => $card?->photo_url ? asset('storage/'.$card->photo_url) : null,
+                'student' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'cne' => $studentProfile?->cne ?? 'N/A',
+                    'cin' => $user->cin ?? 'N/A',
+                    'filiere' => $pathway?->filiere?->name ?? 'Non assignée',
+                    'group' => $pathway?->group?->name ?? 'Non assigné',
+                ],
+                'institution' => [
+                    'name' => $user->institution->name ?? 'ENCG Fès',
+                ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
+        ]);
+    }
+
+    /**
      * Fetch the digital student card for the authenticated student.
      */
     public function show(Request $request): JsonResponse
@@ -261,6 +352,97 @@ class StudentCardController extends Controller
     }
 
     /**
+     * Update the status of a student card (admin only).
+     */
+    public function updateStatus(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|string|in:active,suspended,lost,stolen,revoked,expired',
+        ]);
+
+        $card = StudentCard::findOrFail($id);
+        $card->update([
+            'status' => $request->input('status'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Le statut de la carte d\'étudiant a été mis à jour avec succès.',
+            'data' => $card,
+        ]);
+    }
+
+    /**
+     * Bulk generate student cards (admin only).
+     */
+    public function bulkStore(Request $request): JsonResponse
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:users,id',
+            'expires_at' => 'nullable|date|after:now',
+        ]);
+
+        $studentIds = $request->input('student_ids');
+        $academicYear = AcademicYear::where('is_current', true)->first()?->name ?? date('Y').'-'.(date('Y') + 1);
+        $generatedCount = 0;
+
+        foreach ($studentIds as $studentId) {
+            $existingCard = StudentCard::where('student_id', $studentId)->first();
+            if ($existingCard) {
+                continue;
+            }
+
+            $user = User::with(['student.latestPathway.group', 'student.latestPathway.filiere'])->find($studentId);
+            if (! $user || ! $user->student) {
+                continue;
+            }
+
+            // Sync: extract user's profile picture fallback from user avatar/photo columns if any
+            $photoPath = $user->photo_path ?? $user->avatar_path ?? null;
+
+            if (! $photoPath) {
+                $photoPath = 'student_cards/photos/default_avatar.png';
+                if (! Storage::disk('public')->exists($photoPath)) {
+                    Storage::disk('public')->put($photoPath, '');
+                }
+            }
+
+            // Expiration Date calculation
+            if ($request->filled('expires_at')) {
+                $expiresAt = Carbon::parse($request->input('expires_at'));
+            } else {
+                $semester = $user->student->latestPathway?->current_semester ?? 1;
+                $years = match (true) {
+                    $semester <= 2 => 5,
+                    $semester <= 4 => 3,
+                    $semester <= 6 => 2,
+                    $semester <= 8 => 2,
+                    default => 1,
+                };
+                $expiresAt = now()->addYears($years);
+            }
+
+            StudentCard::create([
+                'student_id' => $studentId,
+                'card_number' => 'ENCG-'.date('Y').'-'.str_pad($studentId, 5, '0', STR_PAD_LEFT),
+                'qr_token' => Str::random(40),
+                'academic_year' => $academicYear,
+                'photo_url' => $photoPath,
+                'status' => 'active',
+                'expires_at' => $expiresAt,
+            ]);
+
+            $generatedCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$generatedCount} cartes d'étudiants ont été générées et activées avec succès.",
+        ]);
+    }
+
+    /**
      * Public API endpoint to verify a student card using its QR token.
      */
     public function verify(Request $request, string $token): JsonResponse
@@ -275,9 +457,21 @@ class StudentCardController extends Controller
         }
 
         if ($card->status !== 'active' || $card->expires_at->isPast()) {
+            $statusText = match ($card->status) {
+                'suspended' => 'suspendue.',
+                'lost' => 'déclarée perdue.',
+                'stolen' => 'déclarée volée.',
+                'revoked' => 'révoquée.',
+                default => 'expirée.',
+            };
+            if ($card->expires_at->isPast()) {
+                $statusText = 'expirée.';
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Cette carte est '.($card->status === 'revoked' ? 'révoquée.' : 'expirée.'),
+                'status' => $card->status,
+                'message' => 'Cette carte est '.$statusText,
             ], 403);
         }
 

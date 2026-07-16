@@ -5,6 +5,7 @@ import QRCode from 'react-qr-code';
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';
 import { toast } from 'sonner';
+import Barcode from './Barcode';
 
 interface StudentCardCreatorProps {
   studentId?: string | number; // Required if Admin is creating for a student
@@ -300,6 +301,7 @@ export default function StudentCardCreator({ studentId, isAdmin = false, onSucce
 
                 {/* QR Section */}
                 <div className="border-t border-dashed border-border pt-3 flex flex-col items-center">
+                  <Barcode value={previewData.card_number} className="mb-2 bg-white/5 p-1 rounded-xl border border-border w-full" />
                   <div className="bg-white p-1 rounded-lg border border-border mb-1">
                     <QRCode value={`${window.location.origin}/verify/card/${previewData.qr_token}`} size={70} level="M" />
                   </div>

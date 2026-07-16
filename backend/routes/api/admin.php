@@ -131,6 +131,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::apiResource('students', StudentController::class);
     Route::post('student-cards/preview', [StudentCardController::class, 'preview']);
     Route::post('student-cards', [StudentCardController::class, 'store']);
+    Route::get('student-cards', [StudentCardController::class, 'index']);
+    Route::patch('student-cards/{id}/status', [StudentCardController::class, 'updateStatus']);
+    Route::post('student-cards/bulk', [StudentCardController::class, 'bulkStore']);
     Route::apiResource('groups', GroupController::class);
     Route::apiResource('academic-years', AcademicYearController::class);
     Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);

@@ -12,7 +12,7 @@ import {
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
   BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles, Mail,
-  X, Layers
+  X, Layers, IdCard
 } from 'lucide-react'
 
 interface NavItem {
@@ -52,6 +52,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { labelKey: 'nav.item_9', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_10', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_11', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
+      { labelKey: 'nav.item_student_cards', href: '/admin/student-cards', icon: IdCard, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_12', href: '/admin/absences', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_13', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { labelKey: 'nav.item_14', href: '/admin/requests', icon: FileText, roles: ['super-admin', 'institution-admin', 'director'] },

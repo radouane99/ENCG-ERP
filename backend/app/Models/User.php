@@ -4,26 +4,24 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use PragmaRX\Google2FA\Google2FA;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, LogsActivity, InteractsWithMedia, HasUuids;
+    use HasApiTokens, HasFactory, HasRoles, HasUuids, InteractsWithMedia, LogsActivity, Notifiable, SoftDeletes;
 
     protected $guard_name = 'sanctum';
 
@@ -65,12 +63,17 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsTo(Institution::class);
     }
 
-    public function student(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function student(): HasOne
     {
         return $this->hasOne(Student::class);
     }
 
-    public function professor(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function studentCard(): HasOne
+    {
+        return $this->hasOne(StudentCard::class, 'student_id');
+    }
+
+    public function professor(): HasOne
     {
         return $this->hasOne(Professor::class);
     }

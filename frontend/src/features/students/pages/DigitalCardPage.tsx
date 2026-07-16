@@ -5,6 +5,24 @@ import QRCode from 'react-qr-code';
 import { Download, IdCard, Building2, User, Mail, Hash, BookOpen } from 'lucide-react';
 import api from '@/shared/lib/api';
 import StudentCardCreator from '../components/StudentCardCreator';
+import Barcode from '../components/Barcode';
+
+const getStatusBadge = (status: string) => {
+  const configs: Record<string, { label: string, classes: string }> = {
+    active: { label: 'Active', classes: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' },
+    suspended: { label: 'Suspendue', classes: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' },
+    lost: { label: 'Perdue', classes: 'bg-rose-500/10 text-rose-500 border border-rose-500/20' },
+    stolen: { label: 'Volée', classes: 'bg-red-500/10 text-red-500 border border-red-500/20' },
+    revoked: { label: 'Révoquée', classes: 'bg-gray-500/10 text-gray-500 border border-gray-500/20' },
+    expired: { label: 'Expirée', classes: 'bg-slate-500/10 text-slate-500 border border-slate-500/20' },
+  };
+  const config = configs[status] || configs.active;
+  return (
+    <span className={`inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${config.classes}`}>
+      {config.label}
+    </span>
+  );
+};
 
 export default function DigitalCardPage() {
   const { t } = useTranslation('common');
@@ -57,7 +75,7 @@ export default function DigitalCardPage() {
             <IdCard className="w-6 h-6 text-primary" />
             Carte d'Étudiant Digitale
           </h1>
-          <p className="text-white/50 mt-1">
+          <p className="text-muted-foreground mt-1">
             Votre carte d'identité académique officielle.
           </p>
         </div>
@@ -97,19 +115,20 @@ export default function DigitalCardPage() {
           {/* Body Area */}
           <div className="p-6 space-y-6 relative">
             {/* Expiration Tag */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 flex flex-col items-end gap-1 z-10">
               <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
                 {cardData.academic_year}
               </span>
+              {getStatusBadge(cardData.status)}
             </div>
 
             <div className="flex gap-4">
               {/* Photo placeholder */}
               <div className="w-20 h-24 bg-white/5 rounded-xl border-2 border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {cardData.student.photo_url ? (
-                  <img src={cardData.student.photo_url} alt="Photo" className="w-full h-full object-cover" />
+                {cardData.photo_url ? (
+                  <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-8 h-8 text-white/50/50" />
+                  <User className="w-8 h-8 text-white/50" />
                 )}
               </div>
               
@@ -145,6 +164,7 @@ export default function DigitalCardPage() {
 
             {/* QR Code */}
             <div className="pt-4 pb-2 flex flex-col items-center border-t border-dashed border-white/10">
+              <Barcode value={cardData.card_number} className="mb-4 bg-white/5 p-2 rounded-xl border border-white/10 w-full" />
               <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 mb-2">
                 <QRCode value={verificationUrl} size={100} level="H" />
               </div>

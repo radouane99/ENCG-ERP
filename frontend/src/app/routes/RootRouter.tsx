@@ -43,6 +43,7 @@ const DashboardRouter = lazy(() => import('@features/dashboard/pages/DashboardRo
 const StudentsListPage = lazy(() => import('@features/students/pages/StudentsPage'))
 const StudentDetailPage = lazy(() => import('@features/students/pages/StudentDetailPage'))
 const DigitalCardPage = lazy(() => import('@features/students/pages/DigitalCardPage'))
+const AdminStudentCardsPage = lazy(() => import('@features/students/pages/AdminStudentCardsPage'))
 const StudentCreatePage = lazy(() => import('@features/students/pages/StudentCreatePage'))
 // Student Portal
 const StudentDashboard = lazy(() => import('@features/dashboard/pages/StudentDashboard'))
@@ -275,6 +276,7 @@ export default function RootRouter() {
           <Route path="/students/new" element={<StudentCreatePage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/profile/card" element={<DigitalCardPage />} />
+          <Route path="/admin/student-cards" element={<AdminStudentCardsPage />} />
 
           {/* HR */}
           <Route path="/hr/professors" element={<ProfessorsListPage />} />
