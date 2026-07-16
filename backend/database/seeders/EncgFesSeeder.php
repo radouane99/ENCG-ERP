@@ -96,8 +96,12 @@ class EncgFesSeeder extends Seeder
         DB::table('vacation_payments')->delete();
         DB::table('vacation_sessions')->delete();
         DB::table('vacation_contracts')->delete();
-        DB::table('soutenances')->delete();
+        DB::table('internship_evaluations')->delete();
+        DB::table('internship_reports')->delete();
         DB::table('internship_documents')->delete();
+        DB::table('defense_juries')->delete();
+        DB::table('project_defenses')->delete();
+        DB::table('final_projects')->delete();
         DB::table('internships')->delete();
         DB::table('deliberation_decisions')->delete();
         DB::table('deliberation_members')->delete();
@@ -1145,7 +1149,6 @@ class EncgFesSeeder extends Seeder
                 [
                     'internship_id' => $internId,
                     'document_type' => 'convention',
-                    'file_path' => 'internships/conventions/conv_'.$studentUser->id.'.pdf',
                     'status' => 'approved',
                     'feedback' => 'Convention signée par toutes les parties.',
                     'created_at' => now(),
@@ -1154,7 +1157,6 @@ class EncgFesSeeder extends Seeder
                 [
                     'internship_id' => $internId,
                     'document_type' => 'rapport_final',
-                    'file_path' => 'internships/reports/report_'.$studentUser->id.'.pdf',
                     'status' => 'approved',
                     'feedback' => 'Excellent travail, rapport complet et professionnel.',
                     'created_at' => now(),
@@ -1162,18 +1164,52 @@ class EncgFesSeeder extends Seeder
                 ],
             ]);
 
-            // Seed soutenance
-            DB::table('soutenances')->insert([
-                'internship_id' => $internId,
-                'date_time' => now()->subDays(5)->format('Y-m-d H:i:s'),
-                'room_id' => $room->id,
-                'president_id' => $professors[0]->id,
-                'examiner_id' => $prof->id,
-                'grade' => 16.50,
+            // Seed final project, project defense and juries
+            $projectId = DB::table('final_projects')->insertGetId([
+                'student_id' => $studentProfile->id,
+                'title' => 'Digitalisation des Processus Académiques de l\'ENCG Fès',
+                'description' => 'Mise en place d\'un ERP complet pour la gestion de l\'établissement scolaire.',
                 'status' => 'completed',
-                'remarks' => 'Soutenance brillante. Très bonne présentation orale.',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]);
+
+            $defenseId = DB::table('project_defenses')->insertGetId([
+                'final_project_id' => $projectId,
+                'room_id' => $room->id,
+                'scheduled_at' => now()->subDays(3)->format('Y-m-d H:i:s'),
+                'duration_minutes' => 45,
+                'status' => 'completed',
+                'presentation_score' => 17.00,
+                'report_score' => 16.00,
+                'final_score' => 16.50,
+                'mention' => 'Très Bien',
+                'jury_remarks' => 'Soutenance de projet de fin d\'études exceptionnelle. Excellente maîtrise technique.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('defense_juries')->insert([
+                [
+                    'project_defense_id' => $defenseId,
+                    'professor_id' => $professors[0]->id,
+                    'professor_type' => 'internal',
+                    'role' => 'president',
+                    'is_external' => false,
+                    'external_name' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'project_defense_id' => $defenseId,
+                    'professor_id' => $prof->id,
+                    'professor_type' => 'internal',
+                    'role' => 'supervisor',
+                    'is_external' => false,
+                    'external_name' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
             ]);
         }
     }
@@ -1245,7 +1281,7 @@ class EncgFesSeeder extends Seeder
             'cnss_deduction' => 0.00,
             'net_amount' => 3320.00,
             'status' => 'paid',
-            'payment_date' => '2025-05-28',
+            'paid_at' => '2025-05-28 10:00:00',
             'notes' => 'Paiement des vacations du mois de Mai 2025.',
             'created_at' => now(),
             'updated_at' => now(),
@@ -1303,7 +1339,6 @@ class EncgFesSeeder extends Seeder
                     'student_id' => $studentUser->id,
                     'reason' => 'medical',
                     'description' => 'Certificat médical pour grippe saisonnière.',
-                    'document_path' => 'justifications/certif_'.$studentUser->id.'.pdf',
                     'status' => 'approved',
                     'reviewed_by' => 2,
                     'reviewed_at' => now()->subDays(1)->format('Y-m-d H:i:s'),
