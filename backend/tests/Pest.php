@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Spatie\Permission\PermissionRegistrar;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,9 @@ use Tests\TestCase;
 */
 uses(TestCase::class, RefreshDatabase::class)
     ->beforeEach(function () {
+        // Reset Spatie permission cache so tests don't leak stale permissions
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         \Illuminate\Support\Facades\DB::table('institutions')->insertOrIgnore([
             'id' => 1,
             'name' => 'ENCG Test',

@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ function ensureInstitution()
 function makeAdminUser(): User
 {
     ensureInstitution();
+    // Flush Spatie permission cache to avoid stale data across tests
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
     $permissions = [
         'students.view', 'students.create', 'students.edit', 'students.delete',
