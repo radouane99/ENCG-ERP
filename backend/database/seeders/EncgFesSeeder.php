@@ -383,9 +383,6 @@ class EncgFesSeeder extends Seeder
                 'user_id' => $user->id,
                 'institution_id' => $institution->id,
                 'department_id' => $departments[$pData['dept']]->id,
-                'first_name' => $pData['first'],
-                'last_name' => $pData['last'],
-                'email' => $pData['email'],
                 'specialty' => $pData['spec'],
                 'grade' => 'PES',
                 'contract_type' => 'permanent',
@@ -570,7 +567,7 @@ class EncgFesSeeder extends Seeder
                     $lastName = $nameData['last'];
                     $gender = $nameData['gender'];
 
-                    $email = strtolower("{$firstName}.{$lastName}@student.encg.ma");
+                    $email = strtolower("{$firstName}.{$lastName}{$studentIndex}@student.encg.ma");
 
                     $u = User::create([
                         'institution_id' => $institution->id,
