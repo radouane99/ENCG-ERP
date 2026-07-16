@@ -9,6 +9,8 @@ export default function AdminExamAnalyticsPage() {
   })
 
   const chartData = analyticsData?.chart || []
+  const stats = analyticsData?.stats || { success_rate: 0, attendance_rate: 0, overall_average: 0, scheduled_exams: 0 }
+  const criticalModules = analyticsData?.critical_modules || []
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -42,11 +44,8 @@ export default function AdminExamAnalyticsPage() {
               <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
                 <Target className="w-6 h-6 text-emerald-600" />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                <ArrowUpRight className="w-3 h-3" /> +5.2%
-              </span>
             </div>
-            <p className="text-3xl font-black text-slate-800 mb-1">78.5%</p>
+            <p className="text-3xl font-black text-slate-800 mb-1">{stats.success_rate}%</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TAUX DE RÉUSSITE GLOBAL</p>
           </div>
         </div>
@@ -58,11 +57,8 @@ export default function AdminExamAnalyticsPage() {
               <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                <ArrowUpRight className="w-3 h-3" /> +1.2%
-              </span>
             </div>
-            <p className="text-3xl font-black text-slate-800 mb-1">94.2%</p>
+            <p className="text-3xl font-black text-slate-800 mb-1">{stats.attendance_rate}%</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TAUX DE PRÉSENCE</p>
           </div>
         </div>
@@ -74,11 +70,8 @@ export default function AdminExamAnalyticsPage() {
               <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
                 <Award className="w-6 h-6 text-purple-600" />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">
-                <ArrowDownRight className="w-3 h-3" /> -0.4
-              </span>
             </div>
-            <p className="text-3xl font-black text-slate-800 mb-1">13.4 <span className="text-lg text-slate-400 font-medium">/ 20</span></p>
+            <p className="text-3xl font-black text-slate-800 mb-1">{stats.overall_average} <span className="text-lg text-slate-400 font-medium">/ 20</span></p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MOYENNE GÉNÉRALE</p>
           </div>
         </div>
@@ -91,7 +84,7 @@ export default function AdminExamAnalyticsPage() {
                 <FileText className="w-6 h-6 text-indigo-600" />
               </div>
             </div>
-            <p className="text-3xl font-black text-slate-800 mb-1">142</p>
+            <p className="text-3xl font-black text-slate-800 mb-1">{stats.scheduled_exams}</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ÉPREUVES PLANIFIÉES</p>
           </div>
         </div>
@@ -135,27 +128,22 @@ export default function AdminExamAnalyticsPage() {
           <p className="text-xs text-slate-500 mb-6">Matières avec un taux d'échec supérieur à 40% nécessitant une attention pédagogique.</p>
           
           <div className="space-y-4 flex-1">
-            <div className="bg-rose-50/50 border border-rose-100 p-4 rounded-2xl">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-rose-900 text-sm">Thermodynamique Avancée</h4>
-                <span className="bg-rose-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">52% Échec</span>
-              </div>
-              <p className="text-xs font-medium text-rose-700 mb-2">Génie Électrique — S7</p>
-              <div className="w-full h-1.5 bg-rose-200 rounded-full overflow-hidden">
-                <div className="h-full bg-rose-500 rounded-full" style={{ width: '52%' }}></div>
-              </div>
-            </div>
-
-            <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-orange-900 text-sm">Programmation Linéaire</h4>
-                <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">45% Échec</span>
-              </div>
-              <p className="text-xs font-medium text-orange-700 mb-2">Génie Informatique — S7</p>
-              <div className="w-full h-1.5 bg-orange-200 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full" style={{ width: '45%' }}></div>
-              </div>
-            </div>
+            {criticalModules.length === 0 ? (
+              <div className="text-center py-6 text-sm text-slate-400 font-medium">Aucun module critique détecté</div>
+            ) : (
+              criticalModules.map((cm: any) => (
+                <div key={cm.id} className="bg-rose-50/50 border border-rose-100 p-4 rounded-2xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-rose-900 text-sm truncate max-w-[200px]" title={cm.name}>{cm.name}</h4>
+                    <span className="bg-rose-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">{cm.failure_rate}% Échec</span>
+                  </div>
+                  <p className="text-xs font-medium text-rose-700 mb-2">{cm.context}</p>
+                  <div className="w-full h-1.5 bg-rose-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-500 rounded-full" style={{ width: `${cm.failure_rate}%` }}></div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <button className="w-full py-3 mt-4 text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors">

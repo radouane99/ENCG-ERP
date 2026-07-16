@@ -103,12 +103,25 @@ class ConvocationController extends Controller
 
     public function getStudentConvocations(int $studentId): JsonResponse
     {
-        // Mock data for student convocations based on the UI
-        $convocations = [
-            [ 'id' => 276, 'module' => 'Introduction - Génie Informatique', 'type' => 'CC1', 'date' => 'JUIL. 01', 'time' => '09:00 - 10:30', 'duration' => '90 min', 'room' => 'Amphi Al Khwarizmi', 'ref' => 'CONV-' . date('Y') . '-000276', 'days' => 6 ],
-            [ 'id' => 277, 'module' => 'Avancé - Génie Informatique', 'type' => 'CC1', 'date' => 'JUIL. 01', 'time' => '11:00 - 12:30', 'duration' => '90 min', 'room' => 'Amphi Ibn Khaldoun', 'ref' => 'CONV-' . date('Y') . '-000277', 'days' => 6 ],
-            [ 'id' => 278, 'module' => 'Développement mobile', 'type' => 'CC1', 'date' => 'JUIL. 02', 'time' => '09:00 - 10:30', 'duration' => '90 min', 'room' => 'Amphi Al Khwarizmi', 'ref' => 'CONV-' . date('Y') . '-000278', 'days' => 7 ],
-        ];
+        $seatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+            ->where('student_id', $studentId)
+            ->whereNotNull('sent_at') // Only show if they have been sent/published
+            ->get();
+
+        $convocations = $seatings->map(function ($seating) {
+            $exam = $seating->exam;
+            return [
+                'id' => $seating->id,
+                'module' => $exam->module->name ?? 'N/A',
+                'type' => $exam->type ?? 'CC1',
+                'date' => $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->isoFormat('MMM DD') : 'N/A',
+                'time' => $exam->start_time . ' - ' . \Carbon\Carbon::parse($exam->start_time)->addMinutes($exam->duration_minutes)->format('H:i'),
+                'duration' => $exam->duration_minutes . ' min',
+                'room' => $seating->room->name ?? 'N/A',
+                'ref' => $seating->qr_token,
+                'days' => $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->diffInDays(now()) : 0,
+            ];
+        });
         
         return response()->json([
             'success' => true,

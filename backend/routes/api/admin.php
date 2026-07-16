@@ -50,7 +50,6 @@ use App\Http\Controllers\Api\ProfessorAssignmentController;
 use App\Http\Controllers\Api\ProfessorAvailabilityController;
 use App\Http\Controllers\Api\ProfessorController;
 use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\RestApiController;
 use App\Http\Controllers\Api\RetakeController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleChangeRequestController;
@@ -397,17 +396,7 @@ Route::get('/test-doc', function () {
     }
 });
 
-Route::prefix('rest')->middleware('auth:sanctum')->group(function () {
-    Route::get('/modules', [RestApiController::class, 'modules']);
-    Route::get('/grades', [RestApiController::class, 'grades']);
-    Route::get('/schedule', [RestApiController::class, 'schedule']);
-    Route::get('/absences', [RestApiController::class, 'absences']);
-    Route::get('/exams', [RestApiController::class, 'exams']);
-    Route::get('/appointments', [RestApiController::class, 'appointments']);
-    Route::get('/notifications', [RestApiController::class, 'notifications']);
-    Route::post('/notifications/{id}/read', [RestApiController::class, 'readNotification']);
-    Route::post('/notifications/read-all', [RestApiController::class, 'readAllNotifications']);
-});
+// Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
 
 // ---------------------------------------------------------
 // INTERNAL DYNAMIC ENDPOINTS (Admin Web Auth)

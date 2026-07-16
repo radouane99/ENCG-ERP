@@ -30,10 +30,23 @@ class VacataireController extends Controller
         abort_unless(request()->user()->can('hr.view'), 403);
 
         $professors = $this->vacataireService->getAllVacataires();
+        // Ensure relations are loaded
+        $professors->load(['vacationContracts.sessions', 'vacationContracts.payments']);
         
         $mapped = $professors->map(function ($p) {
             $contract = $p->vacationContracts->first();
             $moduleName = $contract && $contract->module ? $contract->module->code . ' - ' . $contract->module->name : null;
+            
+            $hoursCompleted = $contract ? $contract->sessions->sum('hours') : 0;
+            $paymentAmount = $contract ? $contract->payments->sum('amount') : 0;
+            $totalExpected = ($contract->agreed_hours ?? 0) * ($contract->hourly_rate ?? 0);
+            
+            $paymentStatus = 'unpaid';
+            if ($paymentAmount > 0 && $paymentAmount >= $totalExpected) {
+                $paymentStatus = 'paid';
+            } elseif ($paymentAmount > 0) {
+                $paymentStatus = 'partial';
+            }
             
             return [
                 'id' => $p->id,
@@ -47,13 +60,13 @@ class VacataireController extends Controller
                 'module' => $moduleName,
                 'module_id' => $contract->module_id ?? null,
                 'agreed_hours' => $contract->agreed_hours ?? 0,
-                'hours_completed' => 0, // Mock for now
+                'hours_completed' => $hoursCompleted,
                 'hourly_rate' => $contract->hourly_rate ?? 0,
                 'status' => $contract->status ?? 'pending',
                 'contract_start' => $contract->contract_start ?? null,
                 'contract_end' => $contract->contract_end ?? null,
-                'payment_status' => 'unpaid', // Mock for now
-                'payment_amount' => 0,
+                'payment_status' => $paymentStatus,
+                'payment_amount' => $paymentAmount,
             ];
         });
         
@@ -61,7 +74,7 @@ class VacataireController extends Controller
            'total' => $professors->count(),
            'pending' => $professors->filter(fn($p) => $p->vacationContracts->first()?->status === 'pending')->count(),
            'total_hours' => collect($mapped)->sum('agreed_hours'),
-           'unpaid_contracts' => collect($mapped)->where('payment_status', 'unpaid')->count()
+           'unpaid_contracts' => collect($mapped)->whereIn('payment_status', ['unpaid', 'partial'])->count()
         ];
 
         return response()->json(['success' => true, 'data' => $mapped, 'stats' => $stats]);

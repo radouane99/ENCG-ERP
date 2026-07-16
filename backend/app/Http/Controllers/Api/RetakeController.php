@@ -11,20 +11,20 @@ class RetakeController extends Controller
 {
     public function index(): JsonResponse
     {
-        // For the mock UI, we return all resit eligibilities with relations
-        $retakes = ResitEligibility::with(['student.studentProfile', 'module'])
+        // Fetch all resit eligibilities with correct real relations
+        $retakes = ResitEligibility::with(['student.user', 'module.filiere'])
             ->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'student_id' => $item->student_id,
-                    'nom' => $item->student->name ?? 'Inconnu',
-                    'email' => $item->student->email ?? '',
-                    'cne' => optional($item->student->studentProfile)->cne ?? 'N/A',
-                    'filiere' => 'Génie Informatique', // Mocked or fetched from relations
+                    'nom' => $item->student->user->name ?? 'Inconnu',
+                    'email' => $item->student->user->email ?? '',
+                    'cne' => $item->student->cne ?? 'N/A',
+                    'filiere' => $item->module->filiere->name ?? 'N/A',
                     'module' => $item->module->name ?? 'N/A',
                     'raison' => $item->reason,
-                    'status' => $item->status ?? ($item->is_eligible ? 'Accordé' : 'En attente'), // Depending on how we manage it
+                    'status' => $item->status ?? ($item->is_eligible ? 'Accordé' : 'En attente'),
                     'date_decision' => $item->updated_at ? $item->updated_at->format('d/m/Y') : null,
                 ];
             });

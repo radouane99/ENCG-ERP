@@ -17,8 +17,11 @@ class ProfessorAvailabilityController extends Controller
             $q->where('name', 'professor');
         })->get();
 
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        $academicYearId = $academicYear ? $academicYear->id : 1;
+
         // Get their availabilities
-        $availabilities = ProfessorAvailability::where('academic_year_id', 1) // Mock current year
+        $availabilities = ProfessorAvailability::where('academic_year_id', $academicYearId)
             ->get()
             ->keyBy('professor_id');
 
@@ -28,7 +31,7 @@ class ProfessorAvailabilityController extends Controller
                 'id' => $prof->id,
                 'nom' => $prof->name,
                 'email' => $prof->email,
-                'dept' => 'Génie Informatique', // Should fetch from department relation
+                'dept' => $prof->department->name ?? 'Génie Informatique', // Uses department relation if available
                 'contrat' => 'Permanent',
                 'statut' => $avail ? $avail->status : 'Non envoyé',
                 'creneaux' => $avail ? $avail->available_slots_count . ' créneaux' : '-',

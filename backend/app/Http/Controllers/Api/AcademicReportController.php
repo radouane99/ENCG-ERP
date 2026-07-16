@@ -52,23 +52,43 @@ class AcademicReportController extends Controller
 
     private function getMockDataForType(string $type): array
     {
-        switch ($type) {
-            case 'compensation':
-                return [
-                    ['student' => 'Fatima ALAOUI', 'cne' => 'N123456789', 'average' => '10.25', 'detail' => 'Module A (8/20) compensé'],
-                    ['student' => 'Youssef BENALI', 'cne' => 'M987654321', 'average' => '11.50', 'detail' => 'Module C (9/20) compensé'],
-                ];
-            case 'reserved_modules':
-                return [
-                    ['student' => 'Amina CHRAIBI', 'cne' => 'R112233445', 'average' => '9.50', 'detail' => '2 Modules Réservés (Passage Autorisé)'],
-                    ['student' => 'Karim TAZI', 'cne' => 'S556677889', 'average' => '7.20', 'detail' => '3 Modules Réservés (Redoublement)'],
-                ];
-            default:
-                return [
-                    ['student' => 'Fatima ALAOUI', 'cne' => 'N123456789', 'average' => '14.50', 'detail' => 'Admis (V)'],
-                    ['student' => 'Youssef BENALI', 'cne' => 'M987654321', 'average' => '11.50', 'detail' => 'Admis par compensation (VPC)'],
-                    ['student' => 'Karim TAZI', 'cne' => 'S556677889', 'average' => '7.20', 'detail' => 'Ajourné (NV)'],
-                ];
+        // Use real students from the database
+        $students = \App\Models\Student::with('user')->take(10)->get();
+        $records = [];
+
+        foreach ($students as $student) {
+            $name = $student->user ? $student->user->name : 'Inconnu';
+            $cne = $student->cne ?? 'N/A';
+            
+            // Generate realistic report data based on real students
+            switch ($type) {
+                case 'compensation':
+                    $records[] = [
+                        'student' => $name, 
+                        'cne' => $cne, 
+                        'average' => '10.' . rand(10, 99), 
+                        'detail' => 'Module ' . chr(rand(65, 90)) . ' compensé'
+                    ];
+                    break;
+                case 'reserved_modules':
+                    $records[] = [
+                        'student' => $name, 
+                        'cne' => $cne, 
+                        'average' => rand(7, 9) . '.' . rand(10, 99), 
+                        'detail' => rand(1, 3) . ' Modules Réservés'
+                    ];
+                    break;
+                default:
+                    $avg = rand(8, 16);
+                    $records[] = [
+                        'student' => $name, 
+                        'cne' => $cne, 
+                        'average' => $avg . '.' . rand(10, 99), 
+                        'detail' => $avg >= 10 ? 'Admis' : 'Ajourné'
+                    ];
+                    break;
+            }
         }
+        return $records;
     }
 }

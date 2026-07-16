@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
+use App\Models\Module;
+use App\Models\Room;
 use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
@@ -40,35 +42,34 @@ class SearchController extends Controller
             ];
         }
 
-        // 2. Mock Modules Search
-        $mockModules = [
-            'Analyse Financière',
-            'Comptabilité Générale',
-            'Mathématiques Financières',
-            'Marketing Digital'
-        ];
+        // 2. Real Modules Search
+        $modules = Module::where('name', 'like', "%{$query}%")
+            ->take(5)
+            ->get();
 
-        foreach ($mockModules as $idx => $mod) {
-            if (stripos($mod, $query) !== false) {
-                $results[] = [
-                    'id' => 'mod_' . $idx,
-                    'title' => $mod,
-                    'subtitle' => 'Module d\'enseignement',
-                    'type' => 'module',
-                    'url' => "/academic/modules",
-                ];
-            }
+        foreach ($modules as $mod) {
+            $results[] = [
+                'id' => 'mod_' . $mod->id,
+                'title' => $mod->name,
+                'subtitle' => 'Module d\'enseignement',
+                'type' => 'module',
+                'url' => "/academic/modules", // Or whatever the actual route is
+            ];
         }
 
-        // 3. Mock Rooms Search
-        if (stripos('Amphi 1', $query) !== false || stripos('Salle 102', $query) !== false) {
-             $results[] = [
-                'id' => 'room_1',
-                'title' => 'Amphi 1',
-                'subtitle' => 'Capacité: 300',
+        // 3. Real Rooms Search
+        $rooms = Room::where('name', 'like', "%{$query}%")
+            ->take(5)
+            ->get();
+
+        foreach ($rooms as $room) {
+            $results[] = [
+                'id' => 'room_' . $room->id,
+                'title' => $room->name,
+                'subtitle' => 'Capacité: ' . $room->capacity,
                 'type' => 'room',
                 'url' => "/timetable",
-             ];
+            ];
         }
 
         return response()->json([

@@ -19,6 +19,11 @@ export default function AdminExamsPage() {
     queryFn: academicApi.getFilieres
   })
 
+  const { data: exams, isLoading: isLoadingExams } = useQuery({
+    queryKey: ['admin-exams'],
+    queryFn: examsApi.getExams
+  })
+
   const handleNotify = (msg: string) => {
     setNotificationMsg(msg)
     setShowNotification(true)
@@ -198,41 +203,42 @@ export default function AdminExamsPage() {
       )}
 
       <div className="space-y-6">
-        <ExamCard t={t} 
-          id={4}
-          title="Avancé - Génie Informatique"
-          group="Génie Informatique - Groupe 2"
-          time="11:00 - 12:30"
-          duration="90 min"
-          room="Amphi Al Khwarizmi"
-          surveillants="Aucun"
-          day="01"
-          month="JUIN"
-          dayName="lun."
-          type="CC1"
-          generated={25}
-          sent={0}
-          pending={25}
-          onNotify={handleNotify}
-        />
-
-        <ExamCard t={t} 
-          id={5}
-          title="Introduction - Génie Informatique"
-          group="Génie Informatique - Groupe 1"
-          time="09:00 - 10:30"
-          duration="90 min"
-          room="Amphi Ibn Khaldoun"
-          surveillants="Aucun"
-          day="01"
-          month="JUIN"
-          dayName="lun."
-          type="CC1"
-          generated={0}
-          sent={0}
-          pending={0}
-          onNotify={handleNotify}
-        />
+        {isLoadingExams ? (
+          <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+        ) : exams?.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 text-slate-500">Aucun examen programmé.</div>
+        ) : (
+          exams?.map((exam: any) => {
+            const dateObj = new Date(exam.exam_date || new Date());
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const monthNames = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUI", "JUL", "AOU", "SEP", "OCT", "NOV", "DÉC"];
+            const dayNames = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+            
+            const timeEndHour = exam.start_time ? parseInt(exam.start_time.split(':')[0]) + Math.floor(exam.duration_minutes / 60) : 0;
+            const timeEndMin = exam.start_time ? parseInt(exam.start_time.split(':')[1]) + (exam.duration_minutes % 60) : 0;
+            const endTimeStr = `${String(timeEndHour).padStart(2, '0')}:${String(timeEndMin).padStart(2, '0')}`;
+            
+            return (
+              <ExamCard key={exam.id} t={t} 
+                id={exam.id}
+                title={exam.module?.name || 'Examen'}
+                group={exam.group?.name || 'Tous Groupes'}
+                time={`${exam.start_time?.substring(0, 5) || '--:--'} - ${endTimeStr}`}
+                duration={`${exam.duration_minutes || 90} min`}
+                room={exam.room?.name || 'Non assignée'}
+                surveillants="Aucun"
+                day={day}
+                month={monthNames[dateObj.getMonth()]}
+                dayName={dayNames[dateObj.getDay()]}
+                type={exam.type || 'EXAMEN'}
+                generated={exam.generated_count || 0}
+                sent={exam.sent_count || 0}
+                pending={exam.pending_count || 0}
+                onNotify={handleNotify}
+              />
+            )
+          })
+        )}
       </div>
     </div>
   )

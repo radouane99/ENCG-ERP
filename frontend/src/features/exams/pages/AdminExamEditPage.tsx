@@ -1,8 +1,23 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { examsApi } from '@shared/api/exams'
 
 export default function AdminExamEditPage() {
   const { id } = useParams()
+
+  const { data: detailsData, isLoading } = useQuery({
+    queryKey: ['exam-details', id],
+    queryFn: () => examsApi.getExamDetails(Number(id)),
+    enabled: !!id
+  })
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-100"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+  }
+
+  const exam = detailsData?.exam
+  const surveillants = detailsData?.surveillances || []
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-5xl mx-auto pb-20">
@@ -18,19 +33,19 @@ export default function AdminExamEditPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Filière</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Génie Informatique</option>
+              <option>{exam?.module?.filiere?.name || 'N/A'}</option>
             </select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Groupe</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Génie Informatique - Groupe 2</option>
+              <option>{exam?.group?.name || 'N/A'}</option>
             </select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Module</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Avancé - Génie Informatique</option>
+              <option>{exam?.module?.name || 'N/A'}</option>
             </select>
           </div>
         </div>
@@ -39,19 +54,19 @@ export default function AdminExamEditPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Session d'examen</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Rattrapage Automne (15/05 - 15/06)</option>
+              <option>Session #{exam?.exam_session_id || 'N/A'}</option>
             </select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Type d'examen</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Contrôle Continu 1</option>
+              <option>{exam?.type || 'EXAMEN'}</option>
             </select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Salle (Optionnelle mais recommandée)</label>
             <select className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500">
-              <option>Amphi Al Khwarizmi (Capacité: 300)</option>
+              <option>{exam?.room?.name || 'N/A'}</option>
             </select>
           </div>
         </div>
@@ -60,46 +75,34 @@ export default function AdminExamEditPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Date</label>
             <div className="relative">
-              <input type="text" defaultValue="01/06/2026" className="w-full h-12 pl-4 pr-10 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
-              <Calendar className="w-5 h-5 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
+              <input type="date" defaultValue={exam?.exam_date?.split('T')[0]} className="w-full h-12 pl-4 pr-10 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Heure de début</label>
             <div className="relative">
-              <input type="text" defaultValue="11:00" className="w-full h-12 pl-4 pr-10 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
-              <Clock className="w-5 h-5 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
+              <input type="time" defaultValue={exam?.start_time} className="w-full h-12 pl-4 pr-10 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">Durée (minutes)</label>
-            <input type="number" defaultValue="90" className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
+            <input type="number" defaultValue={exam?.duration_minutes} className="w-full h-12 px-4 rounded-xl border border-slate-200 text-slate-700 bg-white outline-none focus:border-blue-500" />
           </div>
         </div>
 
         <div className="mb-12">
           <label className="text-sm font-medium text-slate-600 block mb-4">Surveillants assignés</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
-              <span className="text-sm text-slate-700 font-medium">Prof. Fatima Zahra Bennani</span>
-            </label>
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
-              <span className="text-sm text-slate-700 font-medium">Prof. Hicham Alaoui</span>
-            </label>
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
-              <span className="text-sm text-slate-700 font-medium">Prof. Salma Tazi</span>
-            </label>
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
-              <span className="text-sm text-slate-700 font-medium">Prof. Youssef El Mansouri</span>
-            </label>
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
-              <span className="text-sm text-slate-700 font-medium">Radouane el asri</span>
-            </label>
+            {surveillants.length === 0 ? (
+              <div className="text-slate-500 text-sm">Aucun surveillant assigné.</div>
+            ) : (
+              surveillants.map((s: any) => (
+                <label key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer">
+                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
+                  <span className="text-sm text-slate-700 font-medium">{s.name}</span>
+                </label>
+              ))
+            )}
           </div>
         </div>
 

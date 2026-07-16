@@ -11,11 +11,11 @@ class ScheduleChangeRequestController extends Controller
 {
     public function index(): JsonResponse
     {
-        $requests = ScheduleChangeRequest::with(['professor', 'exam.module'])->get()->map(function ($req) {
+        $requests = ScheduleChangeRequest::with(['professor.professor.department', 'exam.module'])->get()->map(function ($req) {
             return [
                 'id' => $req->id,
                 'professor_name' => $req->professor->name ?? 'Inconnu',
-                'department' => 'Génie Informatique', // Mock
+                'department' => $req->professor->professor->department->name ?? 'Génie Informatique', // Use real dept or fallback
                 'module_name' => $req->exam->module->name ?? 'N/A',
                 'old_date' => $req->old_date ? $req->old_date->format('d/m/Y') : 'N/A',
                 'old_start_time' => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',

@@ -114,17 +114,11 @@ class StudentCardController extends Controller
 
         $card = StudentCard::where('student_id', $user->id)->first();
 
-        // Fallback or mock behavior if no card exists yet (ensure backward compatibility/testing)
         if (! $card) {
-            $academicYear = AcademicYear::where('is_current', true)->first()?->name ?? '2023-2024';
-            $card = StudentCard::create([
-                'student_id' => $user->id,
-                'card_number' => 'ENCG-'.date('Y').'-'.str_pad($user->id, 5, '0', STR_PAD_LEFT),
-                'qr_token' => Str::random(40),
-                'academic_year' => $academicYear,
-                'status' => 'active',
-                'expires_at' => now()->addYears(3),
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucune carte étudiant générée pour ce profil.',
+            ], 404);
         }
 
         $studentProfile = $user->student;

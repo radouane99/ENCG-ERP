@@ -1,22 +1,27 @@
 import { Link, useParams } from 'react-router-dom'
-import { ChevronLeft, Download, FileText, ArrowLeft } from 'lucide-react'
+import { ChevronLeft, Download, FileText, ArrowLeft, Loader2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { examsApi } from '@shared/api/exams'
 
 export default function AdminExamDisplayListPage() {
   const { id } = useParams()
 
-  const students = [
-    { place: 1, matricule: 'S20260030', nom: 'Ali El Fassi', statut: 'En attente' },
-    { place: 2, matricule: 'S20260047', nom: 'Amine Tahiri', statut: 'En attente' },
-    { place: 3, matricule: 'S20260037', nom: 'Aya Alaoui', statut: 'En attente' },
-    { place: 4, matricule: 'S20260027', nom: 'Ayoub Boujida', statut: 'En attente' },
-    { place: 5, matricule: 'S20260033', nom: 'Chaimae Benani', statut: 'En attente' },
-    { place: 6, matricule: 'S20260038', nom: 'Fatima Sekkat', statut: 'En attente' },
-    { place: 7, matricule: 'S20260029', nom: 'Khadija Idrissi', statut: 'En attente' },
-    { place: 8, matricule: 'S20260036', nom: 'Mehdi Tazi', statut: 'En attente' },
-    { place: 9, matricule: 'S20260031', nom: 'Mohammed Bennis', statut: 'En attente' },
-    { place: 10, matricule: 'S20260048', nom: 'Mohammed Bennis', statut: 'En attente' },
-  ]
+  const { data: detailsData, isLoading } = useQuery({
+    queryKey: ['exam-details', id],
+    queryFn: () => examsApi.getExamDetails(Number(id)),
+    enabled: !!id
+  })
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-100"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+  }
+
+  const exam = detailsData?.exam
+  const students = detailsData?.seatings || []
+  const surveillants = detailsData?.surveillances || []
+
+  // Removed hardcoded students
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -37,32 +42,34 @@ export default function AdminExamDisplayListPage() {
       <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm mb-8 flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MODULE</p>
-          <p className="font-bold text-slate-800 text-lg">Avancé - Génie Informatique</p>
+          <p className="font-bold text-slate-800 text-lg">{exam?.module?.name}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">DATE & HEURE</p>
-          <p className="font-bold text-blue-700 text-lg">01/06/2026 à 11:00:00</p>
+          <p className="font-bold text-blue-700 text-lg">{new Date(exam?.exam_date).toLocaleDateString('fr-FR')} à {exam?.start_time}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SALLE</p>
-          <p className="font-bold text-blue-700 text-lg">Amphi Al Khwarizmi</p>
+          <p className="font-bold text-blue-700 text-lg">{exam?.room?.name}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">GROUPE / FILIÈRE</p>
-          <p className="font-bold text-slate-800 text-lg">Génie Informatique - Groupe 2<br/><span className="text-sm font-medium text-slate-500">(Génie Informatique)</span></p>
+          <p className="font-bold text-slate-800 text-lg">{exam?.group?.name}<br/><span className="text-sm font-medium text-slate-500">({exam?.module?.filiere?.name})</span></p>
         </div>
         
         <div className="w-full mt-6 pt-6 border-t border-slate-100 flex items-start">
           <div className="space-y-1">
              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SURVEILLANTS ASSIGNÉS</p>
-             <p className="font-bold text-red-500 text-sm">Aucun surveillant</p>
+             <p className={cn("text-sm font-bold", surveillants.length > 0 ? "text-slate-800" : "text-red-500")}>
+               {surveillants.length > 0 ? surveillants.map((s: any) => s.name).join(', ') : "Aucun surveillant"}
+             </p>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-800">Étudiants concernés (25)</h2>
+          <h2 className="text-xl font-bold text-slate-800">Étudiants concernés ({students.length})</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -75,14 +82,16 @@ export default function AdminExamDisplayListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {students.map((student, idx) => (
+              {students.map((student: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-black text-slate-800">{student.place}</td>
-                  <td className="px-6 py-4 text-slate-500">{student.matricule}</td>
-                  <td className="px-6 py-4 font-bold text-slate-700">{student.nom}</td>
+                  <td className="px-6 py-4 font-black text-slate-800">{student.seat_number}</td>
+                  <td className="px-6 py-4 text-slate-500">{student.cne}</td>
+                  <td className="px-6 py-4 font-bold text-slate-700">{student.student_name}</td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                      {student.statut}
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full",
+                      student.sent_at ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    )}>
+                      {student.sent_at ? 'Envoyé' : 'En attente'}
                     </span>
                   </td>
                 </tr>

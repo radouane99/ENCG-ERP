@@ -23,6 +23,12 @@ api.interceptors.request.use(
 );
 
 export const examsApi = {
+  // Exams
+  getExams: async () => {
+    const response = await api.get('/exams');
+    return response.data.data;
+  },
+
   // Retakes
   getRetakes: async () => {
     const response = await api.get('/retakes');

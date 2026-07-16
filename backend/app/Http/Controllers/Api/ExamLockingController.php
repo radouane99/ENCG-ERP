@@ -77,17 +77,9 @@ class ExamLockingController extends Controller
                 try {
                     $emails = $professors->pluck('email')->filter()->toArray();
                     if (!empty($emails)) {
-                        \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($emails, $newPhase) {
-                            $message->to($emails)
-                                ->subject("ENCG ERP - Notification : Changement de phase des notes")
-                                ->html("
-                                    <h3>Bonjour Cher Professeur,</h3>
-                                    <p>Nous vous informons que la phase de saisie des notes a été mise à jour par l'administration vers : <b>{$newPhase}</b>.</p>
-                                    <p>Veuillez vous connecter sur votre portail enseignant pour effectuer ou vérifier vos saisies de notes.</p>
-                                    <br/>
-                                    <p>Cordialement,<br/>L'administration de l'ENCG</p>
-                                ");
-                        });
+                        foreach ($emails as $email) {
+                            \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\GradePhaseUpdatedMail($newPhase));
+                        }
                     }
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error("Failed to send phase update emails: " . $e->getMessage());

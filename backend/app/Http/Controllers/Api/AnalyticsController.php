@@ -21,9 +21,14 @@ class AnalyticsController extends Controller
      */
     public function getAtRiskStudents(Request $request): JsonResponse
     {
-        // Mocking institution_id and academic_year_id for demo
-        $institutionId = $request->input('institution_id', 1);
-        $academicYearId = $request->input('academic_year_id', 1);
+        // Fetch actual academic year dynamically
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        if (!$academicYear) {
+            return response()->json(['success' => false, 'message' => 'Aucune année académique en cours'], 404);
+        }
+
+        $institutionId = $request->user()->institution_id ?? 1; // Assuming multi-tenant, fallback to 1
+        $academicYearId = $academicYear->id;
 
         try {
             $data = $this->analyticsService->getAtRiskStudents($institutionId, $academicYearId);

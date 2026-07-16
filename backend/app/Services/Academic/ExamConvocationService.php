@@ -289,16 +289,32 @@ class ExamConvocationService
      */
     public function getLiveStats(int $examId): array
     {
+        $exam = Exam::with(['module.filiere', 'group'])->find($examId);
         $total = DB::table('exam_seatings')->where('exam_id', $examId)->count();
         $present = DB::table('exam_seatings')->where('exam_id', $examId)->where('is_present', true)->count();
         
+        $latestScans = DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->where('exam_id', $examId)
+            ->where('is_present', true)
+            ->select('users.name as student_name', 'exam_seatings.updated_at as scan_time')
+            ->orderBy('exam_seatings.updated_at', 'desc')
+            ->limit(50)
+            ->get();
+
         return [
             'success' => true,
             'data' => [
+                'exam' => $exam ? [
+                    'module_name' => $exam->module->name ?? 'N/A',
+                    'filiere_name' => $exam->module->filiere->name ?? 'N/A',
+                    'group_name' => $exam->group->name ?? 'N/A',
+                ] : null,
                 'total_students' => $total,
                 'present' => $present,
                 'absent' => $total - $present,
-                'latest_scans' => []
+                'latest_scans' => $latestScans
             ]
         ];
     }
@@ -330,25 +346,28 @@ class ExamConvocationService
      */
     public function getExamDetails(int $examId): array
     {
+        $exam = Exam::with(['module.filiere', 'group', 'room'])->find($examId);
+
         $seatings = DB::table('exam_seatings')
             ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
             ->where('exam_id', $examId)
-            ->select('exam_seatings.*', 'students.first_name', 'students.last_name', 'rooms.name as room_name')
-            ->orderBy('rooms.name')
+            ->select('exam_seatings.*', 'users.name as student_name', 'students.cne', 'rooms.name as room_name')
             ->orderBy('exam_seatings.seat_number')
             ->get();
 
         $surveillances = DB::table('exam_surveillances')
             ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-            ->join('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
+            ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
             ->where('exam_id', $examId)
-            ->select('exam_surveillances.*', 'users.first_name', 'users.last_name', 'rooms.name as room_name')
+            ->select('exam_surveillances.*', 'users.name', 'rooms.name as room_name')
             ->get();
 
         return [
             'success' => true,
             'data' => [
+                'exam' => $exam,
                 'seatings' => $seatings,
                 'surveillances' => $surveillances
             ]

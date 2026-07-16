@@ -89,16 +89,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/dashboard-stats', [\App\Http\Controllers\Api\AlumniController::class, 'getDashboardStats']);
     });
 
-    // REST API (Protected endpoints for third-party integrations)
-    Route::prefix('rest')->group(function () {
-        Route::get('/modules', [\App\Http\Controllers\Api\RestApiController::class, 'modules']);
-        Route::get('/grades', [\App\Http\Controllers\Api\RestApiController::class, 'grades']);
-        Route::get('/schedule', [\App\Http\Controllers\Api\RestApiController::class, 'schedule']);
-        Route::get('/absences', [\App\Http\Controllers\Api\RestApiController::class, 'absences']);
-        Route::get('/exams', [\App\Http\Controllers\Api\RestApiController::class, 'exams']);
-        Route::get('/appointments', [\App\Http\Controllers\Api\RestApiController::class, 'appointments']);
-        Route::get('/notifications', [\App\Http\Controllers\Api\RestApiController::class, 'notifications']);
-        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\RestApiController::class, 'readNotification']);
-        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\RestApiController::class, 'readAllNotifications']);
-    });
+    // Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
 });

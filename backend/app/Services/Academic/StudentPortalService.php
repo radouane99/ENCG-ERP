@@ -110,7 +110,7 @@ class StudentPortalService
             }
             $gpa = round($sum / $gradesCount, 2);
         } else {
-            $gpa = 14.5; // Demo fallback
+            $gpa = 0; // No grades published yet
         }
 
         // Check if there are scheduled classes today
@@ -140,7 +140,7 @@ class StudentPortalService
 
         // Recent approved documents
         $recentDocuments = DB::table('document_requests')
-            ->where('student_id', $student->user_id ?? $student->id)
+            ->where('student_id', $studentId)
             ->where('status', 'approved')
             ->orderByDesc('created_at')
             ->limit(5)

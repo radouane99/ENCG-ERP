@@ -154,10 +154,10 @@ it('shows a single student', function () {
     $student = Student::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')
-        ->getJson("/api/students/{$student->id}");
+        ->getJson("/api/students/{$student->uuid}");
 
     $response->assertStatus(200)
-        ->assertJsonPath('data.id', $student->id);
+        ->assertJsonPath('data.id', $student->uuid);
 });
 
 // ── Update ───────────────────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ it('updates a student with valid data', function () {
     $student = Student::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')
-        ->putJson("/api/students/{$student->id}", [
+        ->putJson("/api/students/{$student->uuid}", [
             'status' => 'graduated',
         ]);
 
@@ -180,7 +180,7 @@ it('returns 422 for invalid status on update', function () {
     $student = Student::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')
-        ->putJson("/api/students/{$student->id}", [
+        ->putJson("/api/students/{$student->uuid}", [
             'status' => 'INVALID_STATUS',
         ]);
 
@@ -195,7 +195,7 @@ it('soft-deletes a student', function () {
     $student = Student::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')
-        ->deleteJson("/api/students/{$student->id}");
+        ->deleteJson("/api/students/{$student->uuid}");
 
     $response->assertStatus(200)
         ->assertJsonPath('message', 'Étudiant supprimé avec succès.');
@@ -208,7 +208,7 @@ it('returns 403 when deleting student without permission', function () {
     $student = Student::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')
-        ->deleteJson("/api/students/{$student->id}");
+        ->deleteJson("/api/students/{$student->uuid}");
 
     $response->assertStatus(403);
 });
