@@ -24,6 +24,29 @@ export default function AdminExamsPage() {
     queryFn: examsApi.getExams
   })
 
+  const { data: modules } = useQuery({
+    queryKey: ['modules'],
+    queryFn: academicApi.getModules
+  })
+
+  const { data: groups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: academicApi.getGroups
+  })
+
+  const { data: rooms } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: academicApi.getRooms
+  })
+
+  const { data: examSessions } = useQuery({
+    queryKey: ['exam-sessions'],
+    queryFn: async () => {
+      const res = await api.get('/exam-sessions')
+      return res.data.data
+    }
+  })
+
   const handleNotify = (msg: string) => {
     setNotificationMsg(msg)
     setShowNotification(true)
@@ -111,9 +134,9 @@ export default function AdminExamsPage() {
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">{t('exams.filters.session')}</label>
               <select className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-32">
                 <option>{t('exams.filters.session_empty')}</option>
-                <option>Normale Automne</option>
-                <option>Rattrapage Automne</option>
-                <option>Rattrapage Printemps</option>
+                {examSessions?.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -154,15 +177,17 @@ export default function AdminExamsPage() {
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">{t('exams.manual_modal.module')}</label>
                   <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.module_id} onChange={(e) => setManualForm({...manualForm, module_id: Number(e.target.value)})}>
-                    <option value={1}>Bases de données</option>
-                    <option value={2}>Algorithmique</option>
+                    {modules?.map((m: any) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">{t('exams.manual_modal.group')}</label>
                   <select className="w-full mt-1 px-3 py-2 border rounded-lg text-sm" value={manualForm.group_id} onChange={(e) => setManualForm({...manualForm, group_id: Number(e.target.value)})}>
-                    <option value={1}>Groupe 1</option>
-                    <option value={2}>Groupe 2</option>
+                    {groups?.map((g: any) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-2">
@@ -171,8 +196,9 @@ export default function AdminExamsPage() {
                     setManualForm({...manualForm, room_id: Number(e.target.value)});
                     setConflictMsg('');
                   }}>
-                    <option value={1}>Amphi Ibn Khaldoun (Cap: 200)</option>
-                    <option value={2}>Salle TD 1 (Cap: 40)</option>
+                    {rooms?.map((r: any) => (
+                      <option key={r.id} value={r.id}>{r.name} (Cap: {r.capacity})</option>
+                    ))}
                   </select>
                 </div>
                 <div>

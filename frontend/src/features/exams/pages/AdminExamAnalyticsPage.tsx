@@ -8,6 +8,11 @@ export default function AdminExamAnalyticsPage() {
     queryFn: () => api.get('/admin/exams/analytics').then(res => res.data.data)
   })
 
+  const { data: academicYears } = useQuery({
+    queryKey: ['academic-years'],
+    queryFn: () => api.get('/academic-years').then(res => res.data.data)
+  })
+
   const chartData = analyticsData?.chart || []
   const stats = analyticsData?.stats || { success_rate: 0, attendance_rate: 0, overall_average: 0, scheduled_exams: 0 }
   const criticalModules = analyticsData?.critical_modules || []
@@ -25,9 +30,9 @@ export default function AdminExamAnalyticsPage() {
         </div>
         <div className="flex items-center gap-3">
           <select className="h-10 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 outline-none hover:bg-slate-50 transition-colors cursor-pointer shadow-sm">
-            <option>Semestre Actuel (S7)</option>
-            <option>Semestre Précédent (S6)</option>
-            <option>Année Académique 2025/2026</option>
+            {academicYears?.map((ay: any) => (
+              <option key={ay.id} value={ay.id}>{ay.name || ay.year}</option>
+            ))}
           </select>
           <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">
             EXPORTER RAPPORT
