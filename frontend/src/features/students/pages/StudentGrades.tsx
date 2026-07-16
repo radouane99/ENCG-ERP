@@ -1,17 +1,33 @@
 import React from 'react';
-import { CheckCircle2, FlaskConical, Beaker, MessageSquare, Download } from 'lucide-react';
+import { CheckCircle2, FlaskConical, Download, AlertCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentGrades() {
-  const grades = [
-    { name: 'Introduction - Génie Informatique', code: 'INF-101', cc1: 19.00, cc2: 18.00, exam: 14.50, total: 16.10, status: 'VALIDÉ' },
-    { name: 'Avancé - Génie Informatique', code: 'INF-201', cc1: 5.50, cc2: 8.50, exam: 7.00, total: 7.00, status: 'RATTRAPAGE' },
-    { name: 'Développement mobile', code: 'DEV-301', cc1: 11.80, cc2: 11.70, exam: 16.60, total: 14.66, status: 'VALIDÉ' },
-    { name: 'Développement mobile LARAVEL', code: 'DEV-302', cc1: 12.90, cc2: 12.20, exam: 6.00, total: 8.62, status: 'RATTRAPAGE' },
-    { name: 'Intelligent Artificiel', code: 'IA-401', cc1: 17.20, cc2: 16.30, exam: 8.40, total: 11.74, status: 'VALIDÉ' },
-    { name: 'SQL SERVER BASE DE DONNEE', code: 'DB-201', cc1: 14.20, cc2: 17.60, exam: 11.30, total: 13.14, status: 'VALIDÉ' },
-    { name: 'GAMING', code: 'GAM-501', cc1: 15.00, cc2: 14.00, exam: 16.00, total: 15.00, status: 'VALIDÉ' },
-  ];
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['student-grades'],
+    queryFn: () => api.get('/student-portal/grades').then(res => res.data)
+  });
+
+  if (isLoading) {
+    return <div className="flex h-[50vh] items-center justify-center"><Spinner size="lg" /></div>;
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto text-center space-y-4">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+        <h3 className="text-lg font-bold">Impossible de charger les notes</h3>
+        <p className="text-sm text-slate-500">Une erreur est survenue lors de la récupération de vos notes.</p>
+      </div>
+    );
+  }
+
+  // Assuming data structure based on the typical response
+  const grades = data.data || data;
+  const overallAvg = data.overall_average || 0; // or calculate if needed
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -59,60 +75,63 @@ export default function StudentGrades() {
         <div className="relative z-10 text-right">
           <div className="text-xs font-bold text-teal-200 uppercase tracking-widest mb-1">MOYENNE ANNUELLE</div>
           <div className="flex items-baseline justify-end gap-1">
-            <span className="text-6xl font-black text-white">11.61</span>
+            <span className="text-6xl font-black text-white">{Number(overallAvg).toFixed(2)}</span>
             <span className="text-2xl font-bold text-teal-200">/ 20</span>
           </div>
-          <div className="mt-3 inline-flex items-center gap-1.5 bg-teal-800/40 border border-teal-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">
-            ANNÉE VALIDÉE <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
+          {overallAvg >= 10 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-teal-800/40 border border-teal-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">
+              ANNÉE VALIDÉE <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* S1 Table */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
-          <h2 className="text-2xl font-black text-[#001A4B]">S1</h2>
-          <div className="text-sm font-bold text-white/50">
-            Moyenne Semestre : <span className="text-[#0f766e]">11.61</span>
-          </div>
+      {/* Table */}
+      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+          <h2 className="text-2xl font-black text-[#001A4B]">Mes Notes</h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-white/5">
+              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-slate-100">
                 <th className="pb-4 pl-4 w-1/3">MODULE</th>
-                <th className="pb-4 text-center">CC1 (40%)</th>
-                <th className="pb-4 text-center">CC2 (40%)</th>
-                <th className="pb-4 text-center">EXAMEN FINAL</th>
-                <th className="pb-4 text-right pr-4">MOYENNE</th>
+                <th className="pb-4 text-center">NOTE FINALE</th>
+                <th className="pb-4 text-right pr-4">STATUT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {grades.map((grade, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02]/50 transition-colors group">
-                  <td className="py-5 pl-4">
-                    <div className="font-bold text-white">{grade.name}</div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">{grade.code}</div>
-                  </td>
-                  <td className="py-5 text-center font-semibold text-white/80">{grade.cc1.toFixed(2)}</td>
-                  <td className="py-5 text-center font-semibold text-white/80">{grade.cc2.toFixed(2)}</td>
-                  <td className="py-5 text-center font-black text-[#001A4B]">{grade.exam.toFixed(2)}</td>
-                  <td className="py-5 text-right pr-4">
-                    <div className={cn("text-lg font-black", grade.status === 'VALIDÉ' ? "text-[#0f766e]" : "text-rose-600")}>
-                      {grade.total.toFixed(2)}
-                    </div>
-                    <div className="flex justify-end mt-1">
-                      <span className={cn(
-                        "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1",
-                        grade.status === 'VALIDÉ' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                      )}>
-                        {grade.status} {grade.status === 'VALIDÉ' && <CheckCircle2 className="w-3 h-3" />}
-                      </span>
-                    </div>
-                  </td>
+              {grades.map((grade: any, idx: number) => {
+                const total = grade.moyenne_finale || grade.moyenne_normale || 0;
+                const decision = grade.decision_finale || grade.decision_normale || 'N/A';
+                const isValidated = decision === 'V' || decision === 'VAR';
+                
+                return (
+                  <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                    <td className="py-5 pl-4">
+                      <div className="font-bold text-[#001A4B]">{grade.module_name || grade.module?.name}</div>
+                      <div className="text-[10px] text-gray-400 uppercase tracking-wider">{grade.module_code || grade.module?.code}</div>
+                    </td>
+                    <td className="py-5 text-center font-black text-[#001A4B] text-lg">{Number(total).toFixed(2)}</td>
+                    <td className="py-5 text-right pr-4">
+                      <div className="flex justify-end mt-1">
+                        <span className={cn(
+                          "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1",
+                          isValidated ? "bg-emerald-50 text-emerald-600" : (decision === 'R' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600")
+                        )}>
+                          {isValidated ? 'VALIDÉ' : (decision === 'R' ? 'RATTRAPAGE' : 'NON VALIDÉ')} {isValidated && <CheckCircle2 className="w-3 h-3" />}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {grades.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="py-8 text-center text-slate-500 font-medium">Aucune note n'est disponible pour le moment.</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -121,3 +140,4 @@ export default function StudentGrades() {
     </div>
   );
 }
+
