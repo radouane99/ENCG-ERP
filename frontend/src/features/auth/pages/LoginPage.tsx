@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@stores/authStore'
 import { Button } from '@shared/components/ui/Button'
@@ -58,18 +58,18 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-black tracking-tight text-foreground">
           {t('login_title')}
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-muted-foreground text-xs mt-1.5 font-medium">
           {t('login_subtitle')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Email */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground" htmlFor="email">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-foreground" htmlFor="email">
             {t('email')}
           </label>
           <Input
@@ -79,22 +79,23 @@ export default function LoginPage() {
             {...register('email')}
             error={!!errors.email}
             placeholder="nom@encg-fes.ma"
+            className="w-full transition-all focus:ring-2 focus:ring-primary/20"
           />
           {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
+            <p className="text-xs text-destructive mt-1 font-semibold">{errors.email.message}</p>
           )}
         </div>
 
         {/* Password */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground" htmlFor="password">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-foreground" htmlFor="password">
               {t('password')}
             </label>
             <button
               type="button"
               onClick={() => navigate('/forgot-password')}
-              className="text-xs text-primary hover:underline"
+              className="text-xs text-primary hover:underline font-semibold"
             >
               {t('forgot_password')}
             </button>
@@ -107,28 +108,29 @@ export default function LoginPage() {
               {...register('password')}
               error={!!errors.password}
               placeholder="••••••••"
+              className="w-full transition-all focus:ring-2 focus:ring-primary/20 pe-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
+            <p className="text-xs text-destructive mt-1 font-semibold">{errors.password.message}</p>
           )}
         </div>
 
         {/* Remember me */}
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
           <input
             type="checkbox"
             {...register('remember')}
-            className="w-4 h-4 rounded border-input accent-primary"
+            className="w-4 h-4 rounded border-border bg-transparent text-primary focus:ring-primary accent-primary"
           />
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             {t('remember_me')}
           </span>
         </label>
@@ -138,18 +140,18 @@ export default function LoginPage() {
           id="login-submit"
           type="submit"
           isLoading={isSubmitting}
-          className="w-full mt-2 font-semibold text-white gradient-primary hover:opacity-90 transition-all duration-200"
+          className="w-full mt-3 font-bold text-white gradient-primary hover:opacity-95 shadow-md shadow-primary/10 hover:shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
         >
           {!isSubmitting && <LogIn className="w-4 h-4" />}
           {isSubmitting ? t('logging_in') : t('login_button')}
         </Button>
 
-        <div className="relative my-4">
+        <div className="relative my-5">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[var(--border)]"></span>
+            <span className="w-full border-t border-border"></span>
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[var(--background)] px-2 text-muted-foreground">
+          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+            <span className="bg-card px-3">
               {isAr ? 'أو' : 'Ou'}
             </span>
           </div>
@@ -158,7 +160,7 @@ export default function LoginPage() {
         <Button
           type="button"
           variant="outline"
-          className="w-full font-semibold border-slate-200 hover:bg-slate-50 transition-all duration-200 flex items-center justify-center gap-2"
+          className="w-full font-bold border-border bg-transparent hover:bg-muted text-foreground transition-all duration-200 flex items-center justify-center gap-2.5 hover:scale-[1.01] active:scale-[0.99]"
           onClick={() => {
             window.location.href = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/redirect`
           }}
@@ -174,7 +176,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
         {isAr ? 'منصة إدارة جامعة ENCG فاس — نظام آمن ومشفر' : 'ENCG ERP — Plateforme sécurisée conforme à la loi 09-08'}
       </p>
     </div>

@@ -1,60 +1,95 @@
 import { Outlet } from 'react-router-dom'
-import { Building2 } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 export default function AuthLayout() {
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative overflow-hidden bg-background">
+      {/* Decorative Floating Blobs for Right/Global Panel */}
+      <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl animate-float pointer-events-none" />
+      <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl animate-float-delayed pointer-events-none" />
+
       {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-primary flex-col justify-between p-12">
-        <div className="flex items-center gap-3">
-          <div className="bg-white p-2 rounded-xl flex items-center justify-center">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden bg-gradient-to-br from-[#0a1226] via-[#101c38] to-[#070b16] border-e border-border">
+        {/* Animated Glow Blobs inside left panel */}
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-primary/15 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: '3s' }} />
+
+        {/* Dotted Grid Pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* Logo and Header */}
+        <div className="flex items-center gap-4 relative z-10 animate-fade-in">
+          <div className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md">
             <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain" />
           </div>
           <div>
-            <p className="text-white font-bold text-lg">ENCG Fès</p>
-            <p className="text-white/70 text-sm">École Nationale de Commerce et de Gestion</p>
+            <p className="text-white font-extrabold text-xl tracking-tight">ENCG Fès</p>
+            <p className="text-white/60 text-xs font-semibold">École Nationale de Commerce et de Gestion</p>
           </div>
         </div>
 
-        <div>
-          <blockquote className="text-white">
-            <p className="text-3xl font-bold leading-snug mb-4">
+        {/* Slogan / Slogans quote */}
+        <div className="relative z-10 max-w-lg space-y-6 animate-slide-up delay-75">
+          <div className="inline-flex items-center gap-2 bg-primary/20 text-white/90 border border-white/10 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-accent" /> Portail Universitaire Intelligent
+          </div>
+          <blockquote className="space-y-4">
+            <h1 className="text-white text-4xl font-black leading-tight tracking-tight">
               Plateforme de gestion universitaire
+            </h1>
+            <p className="text-2xl font-medium text-white/70 italic font-sans" dir="rtl">
+              منصة الإدارة الجامعية المتكاملة
             </p>
-            <p className="text-xl font-light text-white/80 mb-6">
-              منصة الإدارة الجامعية
-            </p>
-            <p className="text-white/70 text-sm leading-relaxed">
-              Un système intégré pour la gestion académique, administrative,
-              pédagogique et financière — conçu pour les universités publiques marocaines.
+            <p className="text-white/60 text-sm leading-relaxed font-medium">
+              Un écosystème connecté simplifiant le parcours académique, administratif et financier pour l'excellence de l'enseignement supérieur au Maroc.
             </p>
           </blockquote>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Stats Blocks */}
+        <div className="grid grid-cols-3 gap-5 relative z-10 animate-slide-up delay-150">
           {[
             { label: 'Étudiants', value: '2,400+' },
             { label: 'Enseignants', value: '180+' },
             { label: 'Modules', value: '320+' },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white/10 rounded-xl p-4 text-center">
-              <p className="text-white font-bold text-xl">{stat.value}</p>
-              <p className="text-white/70 text-xs mt-1">{stat.label}</p>
+            <div 
+              key={stat.label} 
+              className="group backdrop-blur-md bg-white/[0.02] border border-white/5 hover:border-white/15 hover:bg-white/[0.06] rounded-2xl p-4 text-center cursor-default transition-all duration-300 hover:scale-[1.03]"
+            >
+              <p className="text-white font-black text-2xl tracking-tight transition-transform duration-300 group-hover:scale-105">{stat.value}</p>
+              <p className="text-white/50 text-xs font-bold uppercase tracking-wider mt-1.5 transition-colors group-hover:text-white/70">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-md animate-fade-in relative z-20">
+          
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain" />
-            <span className="font-bold text-foreground">ENCG ERP</span>
+          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden animate-slide-up">
+            <div className="bg-white dark:bg-card p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
+              <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain" />
+            </div>
+            <div>
+              <p className="text-foreground font-black text-lg leading-none">ENCG Fès</p>
+              <p className="text-muted-foreground text-xs mt-1">École Nationale de Commerce et de Gestion</p>
+            </div>
           </div>
 
-          <Outlet />
+          {/* Frosted Glass Form Container */}
+          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl shadow-black/[0.02] dark:shadow-black/20">
+            <Outlet />
+          </div>
+
         </div>
       </div>
     </div>
