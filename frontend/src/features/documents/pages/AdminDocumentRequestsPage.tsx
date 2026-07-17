@@ -60,7 +60,7 @@ export default function AdminDocumentRequestsPage() {
                     <DocumentStatusBadge status={r.status} />
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 items-center">
                       {r.status === 'pending' && (
                         <>
                           <Button size="sm" variant="outline" className="text-green-600 border-green-200" onClick={() => handleUpdateStatus(r.id, 'processing')}>Accepter</Button>
@@ -68,9 +68,23 @@ export default function AdminDocumentRequestsPage() {
                         </>
                       )}
                       {r.status === 'processing' && (
-                        <Button size="sm" onClick={() => generatePdf.mutate(r.id)} disabled={generatePdf.isPending}>
-                           <FileOutput className="w-4 h-4 mr-2" /> Générer
-                        </Button>
+                        <>
+                          <select 
+                            className="border rounded-lg p-1 text-xs bg-background mr-2"
+                            id={`signatory-${r.id}`}
+                            defaultValue="LE DIRECTEUR DE L'ENCG FÈS"
+                          >
+                            <option value="LE DIRECTEUR DE L'ENCG FÈS">Directeur</option>
+                            <option value="LE SECRÉTAIRE GÉNÉRAL">Secrétaire Général</option>
+                            <option value="LE RESPONSABLE SCOLARITÉ">Responsable Scolarité</option>
+                          </select>
+                          <Button size="sm" onClick={() => {
+                            const select = document.getElementById(`signatory-${r.id}`) as HTMLSelectElement;
+                            generatePdf.mutate({ id: r.id, signatoryTitle: select.value });
+                          }} disabled={generatePdf.isPending}>
+                             <FileOutput className="w-4 h-4 mr-2" /> Générer
+                          </Button>
+                        </>
                       )}
                     </div>
                   </td>

@@ -47,8 +47,8 @@ export const documentsApi = {
     const response = await api.patch(`/admin/document-requests/${id}/status`, { status, rejection_reason });
     return response.data;
   },
-  generateRequest: async (id: number) => {
-    const response = await api.post(`/admin/document-requests/${id}/generate`);
+  generateRequest: async ({ id, signatoryTitle }: { id: number, signatoryTitle?: string }) => {
+    const response = await api.post(`/admin/document-requests/${id}/generate`, { signatory_title: signatoryTitle });
     return response.data;
   },
   getDocumentTypes: async () => {
