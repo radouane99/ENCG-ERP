@@ -734,6 +734,17 @@ class EncgFesSeeder extends Seeder
                         'status' => 'admin_validated',
                         'registration_type' => 'initial',
                     ]);
+                    // Also create student_pathway for API display
+                    DB::table('student_pathways')->insert([
+                        'student_id' => $studentProfile->id,
+                        'filiere_id' => $filiere->id,
+                        'academic_year_id' => $academicYear->id,
+                        'group_id' => $group->id,
+                        'current_semester' => $semNum,
+                        'is_current' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
 
                 $countToAdd = ($fCode === 'GFC' && $g === 1) ? 11 : 12;
@@ -776,6 +787,17 @@ class EncgFesSeeder extends Seeder
                         'semester_number' => $semNum,
                         'status' => 'admin_validated',
                         'registration_type' => 'initial',
+                    ]);
+                    // Also create student_pathway for API display
+                    DB::table('student_pathways')->insert([
+                        'student_id' => $student->id,
+                        'filiere_id' => $filiere->id,
+                        'academic_year_id' => $academicYear->id,
+                        'group_id' => $group->id,
+                        'current_semester' => $semNum,
+                        'is_current' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
 
                     // Pre-generate a few cards with other states

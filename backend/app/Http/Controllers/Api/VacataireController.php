@@ -27,7 +27,7 @@ class VacataireController extends Controller
     public function index(): JsonResponse
     {
         // [AUDIT SEC-02] Authorization guard
-        abort_unless(request()->user()->can('hr.view'), 403);
+        abort_unless(request()->user()->can('vacataires.view'), 403);
 
         $professors = $this->vacataireService->getAllVacataires();
         // Ensure relations are loaded
@@ -97,7 +97,7 @@ class VacataireController extends Controller
     public function store(Request $request): JsonResponse
     {
         // [AUDIT SEC-02] Authorization guard
-        abort_unless($request->user()->can('hr.manage'), 403);
+        abort_unless($request->user()->can('vacataires.create'), 403);
 
         $validated = $request->validate([
             'first_name'    => 'required|string|max:100',
@@ -147,7 +147,7 @@ class VacataireController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         // [AUDIT SEC-02] Authorization guard
-        abort_unless($request->user()->can('hr.manage'), 403);
+        abort_unless($request->user()->can('vacataires.edit'), 403);
 
         $professor = Professor::findOrFail($id);
 
@@ -206,7 +206,7 @@ class VacataireController extends Controller
     public function destroy($id): JsonResponse
     {
         // [AUDIT SEC-02] Authorization guard
-        abort_unless(request()->user()->can('hr.manage'), 403);
+        abort_unless(request()->user()->can('vacataires.delete'), 403);
 
         $professor = Professor::findOrFail($id);
         
@@ -264,7 +264,7 @@ class VacataireController extends Controller
     public function downloadContract($id)
     {
         // [AUDIT SEC-02] Authorization guard
-        abort_unless(request()->user()->can('hr.manage'), 403);
+        abort_unless(request()->user()->can('vacataires.edit'), 403);
 
         $professor = Professor::with('vacationContracts.module')->findOrFail($id);
         $contract = $professor->vacationContracts()->latest()->first();
