@@ -63,8 +63,29 @@ class ExamLockingController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
+            // ⚖️ JURY DELIBERATION
+            if ($newPhase === 'Verrouillé' || $newPhase === 'Verrouillage Total') {
+                $deliberationService = new \App\Services\Academic\DeliberationService();
+                $modules = \App\Models\Module::all();
+                
+                // Try to find the active exam session
+                $session = \Illuminate\Support\Facades\DB::table('exam_sessions')
+                    ->where('status', 'active')
+                    ->latest('id')
+                    ->first();
+                $sessionId = $session ? $session->id : null;
+
+                foreach ($modules as $module) {
+                    try {
+                        $deliberationService->processModuleDeliberation($module->id, $sessionId);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to deliberate module {$module->id}: " . $e->getMessage());
+                    }
+                }
+            }
+
             // Notify all professors about the phase change
-            $professors = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'professeur'))->get();
+            $professors = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire']))->get();
             if ($professors->isNotEmpty()) {
                 Notification::send($professors, new SystemNotification(
                     "Changement de phase des notes",

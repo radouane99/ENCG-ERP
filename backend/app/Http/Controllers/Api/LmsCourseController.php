@@ -75,7 +75,7 @@ class LmsCourseController extends Controller
      */
     public function storeMaterial(Request $request, string $moduleId): JsonResponse
     {
-        abort_unless($request->user()->hasRole(['admin', 'professeur']), 403);
+        abort_unless($request->user()->hasRole(['super-admin', 'institution-admin', 'professor', 'vacataire']), 403);
 
         $request->validate([
             'title' => 'required|string|max:255',

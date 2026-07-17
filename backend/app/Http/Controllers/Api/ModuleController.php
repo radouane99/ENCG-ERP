@@ -29,6 +29,17 @@ class ModuleController extends Controller
             $query->where('semester_number', $request->semester);
         }
 
+        // 🛡️ ROLE-BASED ACCESS CONTROL (RBAC)
+        if ($request->user() && $request->user()->hasRole(['professor', 'vacataire'])) {
+            $prof = \App\Models\Professor::where('user_id', $request->user()->id)->first();
+            if ($prof) {
+                $moduleIds = \Illuminate\Support\Facades\DB::table('module_professor')
+                    ->where('professor_id', $prof->id)
+                    ->pluck('module_id');
+                $query->whereIn('id', $moduleIds);
+            }
+        }
+
         $modules = $query->get();
 
         return response()->json([

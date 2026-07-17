@@ -243,6 +243,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     // Smart Scheduling
     Route::post('/schedules/auto-generate', [SmartSchedulingController::class, 'autoGenerate']);
+    Route::apiResource('schedules', \App\Http\Controllers\Api\ScheduleController::class)->except(['update', 'show']);
 
     // Exam Planning & Convocations
     Route::prefix('exam-planning')->group(function () {

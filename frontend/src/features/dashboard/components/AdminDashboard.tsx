@@ -23,6 +23,8 @@ interface DashboardData {
   attendance_rate: number;
   enrollment_chart: { name: string; students: number }[];
   filiere_chart: { name: string; count: number }[];
+  gradesCompletionRate: number;
+  pendingComplaintsCount: number;
 }
 
 // Skeleton card for loading state
@@ -101,8 +103,8 @@ export default function AdminDashboard() {
   const statusCards = data ? [
     { label: 'Actifs', value: data.students.active, icon: <CheckCircle className="w-5 h-5" />, color: 'text-green-600 bg-green-500/10 border-green-500/20' },
     { label: 'Diplômés', value: data.students.graduated, icon: <GraduationCap className="w-5 h-5" />, color: 'text-blue-600 bg-blue-500/10 border-blue-500/20' },
-    { label: 'Suspendus', value: data.students.suspended, icon: <AlertCircle className="w-5 h-5" />, color: 'text-amber-600 bg-amber-500/10 border-amber-500/20' },
-    { label: 'Taux Présence', value: `${data.attendance_rate}%`, icon: <Clock className="w-5 h-5" />, color: 'text-purple-600 bg-purple-500/10 border-purple-500/20' },
+    { label: 'Taux Complétion Notes', value: `${data.gradesCompletionRate}%`, icon: <CheckCircle className="w-5 h-5" />, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' },
+    { label: 'Réclamations (Attente)', value: data.pendingComplaintsCount, icon: <AlertCircle className="w-5 h-5" />, color: 'text-red-600 bg-red-500/10 border-red-500/20' },
   ] : []
 
   return (

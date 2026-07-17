@@ -129,6 +129,16 @@ class AdminDashboardController extends Controller
             ];
         }
 
+        // 4. Grade Completion Rate
+        $totalAssessments = DB::table('assessments')->count();
+        $totalStudentsForGrades = DB::table('students')->count();
+        $expectedGrades = $totalAssessments * $totalStudentsForGrades;
+        $enteredGrades = DB::table('grades')->count();
+        $gradesCompletionRate = $expectedGrades > 0 ? min(round(($enteredGrades / $expectedGrades) * 100, 1), 100) : 0;
+
+        // 5. Pending Complaints
+        $pendingComplaintsCount = DB::table('complaints')->where('status', 'pending')->count();
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -141,7 +151,9 @@ class AdminDashboardController extends Controller
                 'filiereDistribution' => $filiereDistribution,
                 'enrollmentData' => $enrollmentData,
                 'attendanceByWeek' => $attendanceByWeek,
-                'recentActivities' => $recentActivities
+                'recentActivities' => $recentActivities,
+                'gradesCompletionRate' => $gradesCompletionRate,
+                'pendingComplaintsCount' => $pendingComplaintsCount
             ]
         ]);
     }
