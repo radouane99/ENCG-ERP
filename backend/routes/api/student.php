@@ -38,6 +38,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     // Apogée Deliberation Engine - Transcript
     Route::get('/transcript', [DeliberationController::class, 'getStudentTranscript']);
 
+    // Digital Library
+    Route::get('/library', [StudentPortalController::class, 'getLibraryMaterials']);
+
     // Internships
     Route::prefix('internships')->group(function () {
         Route::get('/', [StudentInternshipController::class, 'index']);
@@ -63,6 +66,12 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
         Route::get('/partners', [StudentMobilityController::class, 'getPartners']);
         Route::post('/voeux', [StudentMobilityController::class, 'saveVoeux']);
     });
+
+    // Job Offers & Market
+    Route::get('/job-offers', [\App\Http\Controllers\Api\Student\JobOfferController::class, 'index']);
+
+    // Clubs & Vie associative
+    Route::get('/clubs', [\App\Http\Controllers\Api\Student\ClubController::class, 'index']);
 
     // Official Transcript (Relevé de Notes) PDF
     Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);

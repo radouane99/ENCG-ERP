@@ -1,21 +1,39 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Search, Filter, Book, Download, Clock, Star, PlayCircle, Heart } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentDigitalLibrary() {
   const [activeTab, setActiveTab] = useState('RECOMMANDÉ'); // RECOMMANDÉ, EBOOKS, EMPRUNTS
 
-  const recommendedBooks = [
-    { title: 'Marketing Management', author: 'Philip Kotler', rating: 4.8, type: 'E-BOOK', cover: 'bg-indigo-600', recommendedBy: 'Pr. Radouane' },
-    { title: 'Finance d\'Entreprise', author: 'Pierre Vernimmen', rating: 4.9, type: 'LIVRE PHYSIQUE', cover: 'bg-emerald-700', recommendedBy: 'Pr. Tazi' },
-    { title: 'Data Science pour l\'Entreprise', author: 'Foster Provost', rating: 4.7, type: 'E-BOOK', cover: 'bg-purple-600', recommendedBy: 'Pr. Alaoui' },
-    { title: 'Stratégie Océan Bleu', author: 'W. Chan Kim', rating: 4.9, type: 'AUDIOBOOK', cover: 'bg-blue-600', recommendedBy: 'Pr. Idrissi' },
-  ];
+  const { data: libraryData, isLoading } = useQuery({
+    queryKey: ['student-library'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/library');
+      return res.data.data;
+    }
+  });
+
+  const recommendedBooks = libraryData?.map((mat: any) => ({
+    title: mat.title,
+    author: mat.professor?.last_name ? `Pr. ${mat.professor.last_name}` : 'Auteur Inconnu',
+    rating: 4.8,
+    type: mat.type === 'video' ? 'AUDIOBOOK' : 'E-BOOK',
+    cover: 'bg-indigo-600',
+    recommendedBy: mat.professor?.last_name || 'Administration'
+  })) || [];
 
   const borrowings = [
     { title: 'Comptabilité Générale', dueDate: 'Dans 3 jours', status: 'WARNING' },
     { title: 'Droit des Affaires', dueDate: 'Dans 12 jours', status: 'OK' },
   ];
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">

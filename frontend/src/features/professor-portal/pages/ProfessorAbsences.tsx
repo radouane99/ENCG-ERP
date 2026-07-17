@@ -1,46 +1,22 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorAbsences() {
-  const sessions = [
-    {
-      id: 1,
-      title: "INTRODUCTION - GÉNIE INFORMATIQUE",
-      group: "GÉNIE INFORMATIQUE - GROUPE 1",
-      time: "08:30 - 10:30"
-    },
-    {
-      id: 2,
-      title: "AVANCÉ - GÉNIE INFORMATIQUE",
-      group: "GÉNIE INFORMATIQUE - GROUPE 2",
-      time: "10:45 - 12:00"
-    },
-    {
-      id: 3,
-      title: "GAMING",
-      group: "GÉNIE INFORMATIQUE - GROUPE 1",
-      time: "08:30 - 10:15"
-    },
-    {
-      id: 4,
-      title: "DÉVELOPPEMENT MOBILE",
-      group: "GÉNIE INFORMATIQUE - GROUPE 1",
-      time: "10:30 - 12:30"
-    },
-    {
-      id: 5,
-      title: "GAMING",
-      group: "GÉNIE INFORMATIQUE - GROUPE 1",
-      time: "08:00 - 10:00"
-    },
-    {
-      id: 6,
-      title: "SQL SERVER BASE DE DONNEE",
-      group: "GÉNIE INFORMATIQUE - GROUPE 1",
-      time: "09:00 - 11:00"
+  const { data: sessions, isLoading } = useQuery({
+    queryKey: ['professor-schedule'],
+    queryFn: async () => {
+      const res = await api.get('/professor-portal/schedule');
+      return res.data.data;
     }
-  ];
+  });
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">

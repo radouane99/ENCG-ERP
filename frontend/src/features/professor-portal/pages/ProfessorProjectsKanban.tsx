@@ -1,46 +1,62 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Kanban, MoreVertical, Plus, MessageSquare, Paperclip, Calendar as CalendarIcon, Move } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
+
 export default function ProfessorProjectsKanban() {
-  const initialColumns = [
-    {
-      id: 'col-1',
-      title: 'Sujet Validé',
-      color: 'bg-blue-100 text-blue-800',
-      cards: [
-        { id: 'c1', title: 'Application de Gestion RH', team: 'Groupe 4', members: 3, date: '12 Juin' },
-        { id: 'c2', title: 'Système IoT pour Serre', team: 'Groupe 7', members: 4, date: '15 Juin' }
-      ]
-    },
-    {
-      id: 'col-2',
-      title: 'En Développement',
-      color: 'bg-amber-100 text-amber-800',
-      cards: [
-        { id: 'c3', title: 'ERP Universitaire', team: 'Groupe 1', members: 5, date: '20 Juin' }
-      ]
-    },
-    {
-      id: 'col-3',
-      title: 'Rapport Soumis',
-      color: 'bg-purple-100 text-purple-800',
-      cards: [
-        { id: 'c4', title: 'E-commerce React Native', team: 'Groupe 2', members: 2, date: '10 Juin' }
-      ]
-    },
-    {
-      id: 'col-4',
-      title: 'Prêt pour Soutenance',
-      color: 'bg-emerald-100 text-emerald-800',
-      cards: [
-        { id: 'c5', title: 'Dashboard Analytics AI', team: 'Groupe 5', members: 3, date: '05 Juin' }
-      ]
+  const { data: internships, isLoading } = useQuery({
+    queryKey: ['professor-internships'],
+    queryFn: async () => {
+      const res = await api.get('/professor/internships/supervised');
+      return res.data.internships;
     }
-  ];
+  });
+  const initialColumns = React.useMemo(() => {
+    const cols = [
+      { id: 'col-1', title: 'Sujet Validé', color: 'bg-blue-100 text-blue-800', cards: [] as any[] },
+      { id: 'col-2', title: 'En Développement', color: 'bg-amber-100 text-amber-800', cards: [] as any[] },
+      { id: 'col-3', title: 'Rapport Soumis', color: 'bg-purple-100 text-purple-800', cards: [] as any[] },
+      { id: 'col-4', title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-800', cards: [] as any[] }
+    ];
+
+    if (internships) {
+      internships.forEach((internship: any) => {
+        const card = {
+          id: internship.id.toString(),
+          title: internship.company_name ? `Projet chez ${internship.company_name}` : 'Projet',
+          team: internship.student ? `${internship.student.first_name} ${internship.student.last_name}` : 'Étudiant',
+          members: 1,
+          date: internship.updated_at ? new Date(internship.updated_at).toLocaleDateString() : 'Récent'
+        };
+
+        if (internship.status === 'pending' || internship.status === 'approved') {
+          cols[0].cards.push(card);
+        } else if (internship.status === 'active') {
+          cols[1].cards.push(card);
+        } else if (internship.status === 'completed') {
+          cols[3].cards.push(card);
+        } else {
+          cols[2].cards.push(card);
+        }
+      });
+    }
+    return cols;
+  }, [internships]);
 
   const [columns, setColumns] = useState(initialColumns);
+
+  React.useEffect(() => {
+    setColumns(initialColumns);
+  }, [initialColumns]);
+
   const [draggedCard, setDraggedCard] = useState<{colId: string, cardId: string} | null>(null);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
+  }
 
   const handleDragStart = (e: React.DragEvent, colId: string, cardId: string) => {
     setDraggedCard({ colId, cardId });

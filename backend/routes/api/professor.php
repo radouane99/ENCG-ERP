@@ -43,4 +43,9 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function 
         Route::get('/supervised', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'supervised']);
         Route::post('/soutenances/{id}/evaluate', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'evaluate']);
     });
+
+    // Portal
+    Route::get('/professor-portal/schedule', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getSchedule']);
+    Route::get('/professor-portal/reservations', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getReservations']);
+    Route::get('/professor-portal/analytics', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getAnalytics']);
 });

@@ -1,13 +1,32 @@
-﻿import React from 'react';
+import React from 'react';
 import { Calendar as CalendarIcon, Clock, Check, AlertCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentExams() {
-  const exams = [
-    { name: 'GAMING', type: 'CC1', date: '04/07/2026', time: '09:00', duration: '90 min', status: 'Présent', action: 'Rattrapage Refusé' },
-    { name: 'SQL SERVER BASE DE DONNEE', type: 'CC1', date: '03/07/2026', time: '11:00', duration: '90 min', status: 'Non renseigné' },
-    { name: 'Intelligent Artificiel', type: 'CC1', date: '03/07/2026', time: '09:00', duration: '90 min', status: 'Non renseigné' },
-  ];
+  const { data: convData, isLoading } = useQuery({
+    queryKey: ['student-convocations'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/convocations');
+      return res.data.convocations;
+    }
+  });
+
+  const exams = convData?.map((c: any) => ({
+    id: c.id,
+    name: c.exam?.module?.name || 'Examen',
+    type: 'SESSION',
+    date: c.exam?.date || 'N/A',
+    time: c.exam?.start_time || 'N/A',
+    duration: c.exam?.duration ? `${c.exam.duration} min` : '90 min',
+    status: c.status === 'viewed' ? 'Présent' : 'Non renseigné',
+  })) || [];
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#2563eb]" /></div>;
+  }
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">

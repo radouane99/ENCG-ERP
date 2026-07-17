@@ -1,18 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import api from '@shared/lib/api';
+
+interface Student {
+  id: string;
+  first_name: string;
+  last_name: string;
+  cin: string;
+  cne: string;
+  status: string;
+  pathways?: any[];
+}
 
 export default function EnrollmentManager() {
   const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/admin/students', { params: { per_page: 100 } })
+      .then(res => setStudents(res.data.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const pending = students.filter(s => s.status === 'pending').length;
+  const validated = students.filter(s => s.status === 'active').length;
+  const rejected = students.filter(s => s.status === 'suspended' || s.status === 'inactive').length;
 
   const kpis = [
-    { label: 'En Attente', value: '0', color: 'text-amber-400', bg: 'bg-amber-400/10', icon: Clock },
-    { label: 'Inscrits Validés', value: '251', color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle2 },
-    { label: 'Rejetés / Suspendus', value: '0', color: 'text-red-400', bg: 'bg-red-400/10', icon: XCircle },
+    { label: 'En Attente', value: pending.toString(), color: 'text-amber-400', bg: 'bg-amber-400/10', icon: Clock },
+    { label: 'Inscrits Validés', value: validated.toString(), color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle2 },
+    { label: 'Rejetés / Suspendus', value: rejected.toString(), color: 'text-red-400', bg: 'bg-red-400/10', icon: XCircle },
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10 p-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10 p-6 animate-in">
 
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -89,17 +113,10 @@ export default function EnrollmentManager() {
         <div className="flex-1 min-w-[160px]">
           <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Statut</label>
           <select className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <option>Tous</option>
             <option>En Attente</option>
             <option>Validé</option>
             <option>Rejeté</option>
-          </select>
-        </div>
-        <div className="flex-1 min-w-[160px]">
-          <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Type</label>
-          <select className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
-            <option>Tous</option>
-            <option>Nouvelle Inscription</option>
-            <option>Réinscription</option>
           </select>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-primary/90 transition-colors">
@@ -111,31 +128,55 @@ export default function EnrollmentManager() {
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         <div className="p-5 border-b border-border flex justify-between items-center">
           <h2 className="text-lg font-bold text-foreground">Registre des Inscriptions</h2>
-          <span className="text-xs font-medium text-muted-foreground">0 dossier(s)</span>
+          <span className="text-xs font-medium text-muted-foreground">{students.length} dossier(s)</span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground font-bold uppercase bg-muted/50 border-b border-border">
-              <tr>
-                <th className="px-6 py-4">Étudiant / Candidat</th>
-                <th className="px-6 py-4">Filière Demandée</th>
-                <th className="px-6 py-4 text-center">Type / Inscription</th>
-                <th className="px-6 py-4 text-center">Cursus Bac</th>
-                <th className="px-6 py-4">Parents / CIN</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={6} className="px-6 py-20 text-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <AlertTriangle className="w-12 h-12 mb-4 opacity-20" />
-                    <p className="font-medium">Aucune candidature en attente de validation.</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {loading ? (
+            <div className="p-10 text-center text-muted-foreground">Chargement...</div>
+          ) : (
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground font-bold uppercase bg-muted/50 border-b border-border">
+                <tr>
+                  <th className="px-6 py-4">Étudiant / Candidat</th>
+                  <th className="px-6 py-4">Filière Demandée</th>
+                  <th className="px-6 py-4 text-center">Type / Inscription</th>
+                  <th className="px-6 py-4 text-center">Cursus Bac</th>
+                  <th className="px-6 py-4">Parents / CIN</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {students.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <AlertTriangle className="w-12 h-12 mb-4 opacity-20" />
+                        <p className="font-medium">Aucun étudiant trouvé.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : students.map((s) => (
+                  <tr key={s.id} className="hover:bg-muted/50">
+                    <td className="px-6 py-4">
+                      <p className="font-bold">{s.first_name} {s.last_name}</p>
+                      <p className="text-xs text-muted-foreground">{s.cne}</p>
+                    </td>
+                    <td className="px-6 py-4">S1 - Tronc Commun</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={cn('px-2 py-1 rounded text-xs', s.status === 'active' ? 'bg-green-500/10 text-green-600' : 'bg-orange-500/10 text-orange-600')}>
+                        {s.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">-</td>
+                    <td className="px-6 py-4">{s.cin}</td>
+                    <td className="px-6 py-4 text-right">
+                       <button className="text-primary hover:underline text-xs">Voir</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

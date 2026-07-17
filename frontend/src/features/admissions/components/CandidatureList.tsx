@@ -1,20 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Users } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-
-// List Data
-const candidatures = [
-  { id: 'APP-2026-001', name: 'Amina Bennani', cne: 'N120000001', type: 'Passerelle S5', score: 14.5, status: 'approved', date: '2026-06-20', bac: 'Sc. Maths' },
-  { id: 'APP-2026-002', name: 'Youssef Alaoui', cne: 'M130000002', type: 'Passerelle S7', score: 12.8, status: 'pending', date: '2026-06-21', bac: 'Sc. Eco' },
-  { id: 'APP-2026-003', name: 'Sara Idrissi', cne: 'R140000003', type: 'TAFSEM', score: 16.2, status: 'approved', date: '2026-06-22', bac: 'Sc. Physique' },
-  { id: 'APP-2026-004', name: 'Omar Chraibi', cne: 'J150000004', type: 'Passerelle S5', score: 9.5, status: 'rejected', date: '2026-06-23', bac: 'SVT' },
-]
+import api from '@shared/lib/api'
 
 export default function CandidatureList() {
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [searchQuery, setSearchQuery] = useState('')
+  const [candidatures, setCandidatures] = useState<any[]>([])
+  const [stats, setStats] = useState({ total: 0, pending: 0, accepted: 0, rejected: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchCandidatures = async () => {
+      try {
+        setLoading(true)
+        const campRes = await api.get('/admin/admissions/campaigns?status=active');
+        const campaignId = campRes.data.data?.[0]?.id || 1;
+        
+        const res = await api.get(`/admin/admissions/campaigns/${campaignId}/applications`);
+        setCandidatures(res.data.data || []);
+        setStats(res.data.stats || { total: 0, pending: 0, accepted: 0, rejected: 0 })
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCandidatures()
+  }, [])
 
   return (
     <div className="space-y-6 animate-in">
@@ -37,7 +52,7 @@ export default function CandidatureList() {
         <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Total Candidats</p>
-            <p className="text-2xl font-bold text-foreground">1,248</p>
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
             <Users className="w-5 h-5" />
@@ -46,7 +61,7 @@ export default function CandidatureList() {
         <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">En attente</p>
-            <p className="text-2xl font-bold text-foreground">412</p>
+            <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center">
             <Clock className="w-5 h-5" />
@@ -55,7 +70,7 @@ export default function CandidatureList() {
         <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Admis (Pré-sélection)</p>
-            <p className="text-2xl font-bold text-foreground">680</p>
+            <p className="text-2xl font-bold text-foreground">{stats.accepted}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
@@ -64,7 +79,7 @@ export default function CandidatureList() {
         <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Rejetés</p>
-            <p className="text-2xl font-bold text-foreground">156</p>
+            <p className="text-2xl font-bold text-foreground">{stats.rejected}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
             <XCircle className="w-5 h-5" />
@@ -112,36 +127,38 @@ export default function CandidatureList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {candidatures.map((candidat) => (
+              {candidatures.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">Aucune candidature trouvée.</td></tr>
+              ) : candidatures.map((candidat) => (
                 <tr key={candidat.id} className="bg-card hover:bg-muted/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-xs shrink-0">
-                        {candidat.name.charAt(0)}
+                        {candidat.last_name?.charAt(0) || 'U'}
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{candidat.name}</p>
+                        <p className="font-semibold text-foreground">{candidat.last_name} {candidat.first_name}</p>
                         <p className="text-xs text-muted-foreground">{candidat.cne}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-foreground">{candidat.type}</p>
-                    <p className="text-xs text-muted-foreground">{candidat.id}</p>
+                    <p className="font-medium text-foreground">S1</p>
+                    <p className="text-xs text-muted-foreground">{candidat.reference_number}</p>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
-                    {candidat.bac}
+                    {candidat.bac_mention}
                   </td>
                   <td className="px-6 py-4 text-center font-bold text-foreground">
-                    {candidat.score.toFixed(2)}
+                    {candidat.selection_score ? candidat.selection_score : (candidat.bac_average ? candidat.bac_average : '-')}
                   </td>
                   <td className="px-6 py-4">
-                    {candidat.status === 'approved' && (
+                    {candidat.status === 'accepted' && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-500 border border-green-500/20">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Pré-sélectionné
                       </span>
                     )}
-                    {candidat.status === 'pending' && (
+                    {(candidat.status === 'pending' || candidat.status === 'under_review') && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-600 dark:text-orange-500 border border-orange-500/20">
                         <Clock className="w-3.5 h-3.5" /> En cours
                       </span>

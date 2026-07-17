@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// ── Default Data ────────────────────────────────────────────────────────
-const enrollmentData = [
+// ── Default Data Fallbacks ───────────────────────────────────────────────
+const defaultEnrollmentData = [
   { month: 'Sep', students: 420 },
   { month: 'Oct', students: 418 },
   { month: 'Nov', students: 415 },
@@ -21,15 +21,7 @@ const enrollmentData = [
   { month: 'Mar', students: 432 },
 ];
 
-const filiereDistribution = [
-  { name: 'GFC', value: 38, color: '#3b82f6' },
-  { name: 'MCM', value: 28, color: '#6366f1' },
-  { name: 'GRH', value: 18, color: '#8b5cf6' },
-  { name: 'ACG', value: 12, color: '#a78bfa' },
-  { name: 'ESCM', value: 4, color: '#c4b5fd' },
-];
-
-const attendanceByWeek = [
+const defaultAttendanceByWeek = [
   { day: 'Lun', rate: 87 },
   { day: 'Mar', rate: 91 },
   { day: 'Mer', rate: 88 },
@@ -38,12 +30,10 @@ const attendanceByWeek = [
   { day: 'Sam', rate: 72 },
 ];
 
-const recentActivities = [
-  { type: 'student', message: '23 nouveaux étudiants inscrits ce mois', time: 'Il y a 2h', icon: Users },
-  { type: 'grade', message: 'Notes de GFC-S5 saisies par Prof. Benali', time: 'Il y a 3h', icon: BookOpen },
-  { type: 'exam', message: 'Planning examens S2 publié', time: 'Il y a 5h', icon: CalendarCheck },
-  { type: 'alert', message: '28 étudiants détectés à risque (IA)', time: 'Il y a 1j', icon: AlertCircle },
-  { type: 'doc', message: '12 demandes de documents en attente', time: 'Il y a 1j', icon: FileText },
+const defaultRecentActivities = [
+  { type: 'student', message: 'Nouveau dossier étudiant', time: 'Il y a 2h', icon: Users },
+  { type: 'grade', message: 'Nouvelle note saisie', time: 'Il y a 3h', icon: BookOpen },
+  { type: 'doc', message: 'Demande de document', time: 'Il y a 1j', icon: FileText },
 ];
 
 const quickActions = [
@@ -57,17 +47,17 @@ const quickActions = [
 const AreaChartSVG: React.FC<{ data: { month: string; students: number }[] }> = ({ data }) => {
   const width = 100;
   const height = 60;
-  const maxVal = Math.max(...data.map(d => d.students));
-  const minVal = Math.min(...data.map(d => d.students)) - 5;
-  const stepX = width / (data.length - 1);
+  const maxVal = Math.max(...data.map(d => d.students), 1);
+  const minVal = Math.min(...data.map(d => d.students), 0);
+  const stepX = width / Math.max(data.length - 1, 1);
 
   const points = data.map((d, i) => ({
     x: i * stepX,
-    y: height - ((d.students - minVal) / (maxVal - minVal)) * height,
+    y: height - (maxVal === minVal ? 0 : ((d.students - minVal) / (maxVal - minVal)) * height),
   }));
 
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-  const areaPath = `${linePath} L${points[points.length - 1].x},${height} L0,${height} Z`;
+  const areaPath = points.length > 0 ? `${linePath} L${points[points.length - 1].x},${height} L0,${height} Z` : '';
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height: 160 }} preserveAspectRatio="none">
@@ -77,8 +67,8 @@ const AreaChartSVG: React.FC<{ data: { month: string; students: number }[] }> = 
           <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" />
+      {areaPath && <path d={areaPath} fill="url(#areaGrad)" />}
+      {linePath && <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" />}
       {points.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r="1.2" fill="#3b82f6" />
       ))}
@@ -91,7 +81,7 @@ const BarChartSVG: React.FC<{ data: { day: string; rate: number }[] }> = ({ data
   const maxRate = 100;
   const barW = 10;
   const gap = 8;
-  const totalW = data.length * (barW + gap);
+  const totalW = Math.max(data.length * (barW + gap), 100);
 
   return (
     <div className="w-full overflow-hidden">
@@ -115,7 +105,7 @@ const BarChartSVG: React.FC<{ data: { day: string; rate: number }[] }> = ({ data
 
 // ── Donut Chart ──────────────────────────────────────────────────────
 const DonutChart: React.FC<{ data: any[] }> = ({ data }) => {
-  const total = data.reduce((s, d) => s + d.value, 0);
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
   const cx = 50; const cy = 50; const r = 35; const ir = 22;
   const circumference = 2 * Math.PI * r;
   let offset = 0;
@@ -142,7 +132,7 @@ const DonutChart: React.FC<{ data: any[] }> = ({ data }) => {
         offset += d.value;
         return el;
       })}
-      <text x={cx} y={cy - 3} textAnchor="middle" fontSize="11" fontWeight="bold" fill="white">{total}%</text>
+      <text x={cx} y={cy - 3} textAnchor="middle" fontSize="11" fontWeight="bold" fill="white">{total === 1 && data.length === 0 ? 0 : total}%</text>
       <text x={cx} y={cy + 9} textAnchor="middle" fontSize="5" fill="currentColor" className="text-muted-foreground">total</text>
     </svg>
   );
@@ -212,6 +202,10 @@ const AdminDashboard: React.FC = () => {
   const attendanceRate = statsData?.attendanceRate ?? 0;
   const alertsCount = statsData?.alertsCount ?? 0;
   const filiereDist = statsData?.filiereDistribution ?? [];
+  
+  const enrollmentData = statsData?.enrollmentData?.length ? statsData.enrollmentData : defaultEnrollmentData;
+  const attendanceByWeek = statsData?.attendanceByWeek?.length ? statsData.attendanceByWeek : defaultAttendanceByWeek;
+  const recentActivities = statsData?.recentActivities?.length ? statsData.recentActivities : defaultRecentActivities;
 
   if (isLoading) {
     return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003a8c]"></div></div>;

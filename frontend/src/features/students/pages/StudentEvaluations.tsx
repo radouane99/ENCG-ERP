@@ -1,12 +1,34 @@
-﻿import React from 'react';
+import React from 'react';
 import { ClipboardCheck, ShieldCheck, BookOpen } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentEvaluations() {
-  const evaluations = [
-    { name: 'Introduction - Génie Informatique', prof: 'Radouane el asri' },
-    { name: 'Développement mobile', prof: 'Radouane el asri' },
-  ];
+  const { data: schedule, isLoading } = useQuery({
+    queryKey: ['student-schedule-evals'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/schedule');
+      return res.data.data;
+    }
+  });
+
+  // Extract unique modules from schedule
+  const evaluations = React.useMemo(() => {
+    if (!schedule) return [];
+    const unique = new Map();
+    schedule.forEach((s: any) => {
+      if (!unique.has(s.module)) {
+        unique.set(s.module, { name: s.module, prof: s.professor || 'Non assigné' });
+      }
+    });
+    return Array.from(unique.values());
+  }, [schedule]);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
+  }
 
   return (
     <div className="max-w-[1000px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">

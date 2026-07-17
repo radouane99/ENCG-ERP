@@ -22,7 +22,7 @@ export default function AdmissionCampaignManager() {
   // Fetch active campaign ID dynamically
   const { data: activeCampaign } = useQuery({
     queryKey: ['active-admission-campaign'],
-    queryFn: () => api.get('/admissions/campaigns?status=active').then(res => res.data.data?.[0]),
+    queryFn: () => api.get('/admin/admissions/campaigns?status=active').then(res => res.data.data?.[0]),
     staleTime: 1000 * 60 * 5,
   })
   const campaignId = activeCampaign?.id
@@ -30,7 +30,7 @@ export default function AdmissionCampaignManager() {
   // Fetch Applications
   const { data: applications, isLoading } = useQuery({
     queryKey: ['applications', campaignId],
-    queryFn: () => api.get(`/admissions/campaigns/${campaignId}/applications`).then(res => res.data.data),
+    queryFn: () => api.get(`/admin/admissions/campaigns/${campaignId}/applications`).then(res => res.data.data),
     enabled: !!campaignId,
   })
 
@@ -38,7 +38,7 @@ export default function AdmissionCampaignManager() {
   // Mutate Application Status
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number, status: string }) => 
-      api.patch(`/admissions/applications/${id}/status`, { status }),
+      api.patch(`/admin/admissions/applications/${id}/status`, { status }),
     onSuccess: (res) => {
       toast.success(res.data.message || t('admissions:campaign.messages.update_success'))
       queryClient.invalidateQueries({ queryKey: ['applications', campaignId] })

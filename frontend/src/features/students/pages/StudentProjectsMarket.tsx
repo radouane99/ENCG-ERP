@@ -1,58 +1,27 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Briefcase, MapPin, Clock, Building2, Search, Filter, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentProjectsMarket() {
   const [filter, setFilter] = useState('ALL'); // ALL, STAGE, PFE
 
-  const offers = [
-    {
-      id: 1,
-      title: 'Assistant(e) Chef de Produit Marketing',
-      company: 'Procter & Gamble',
-      location: 'Casablanca',
-      type: 'STAGE',
-      duration: '3 mois',
-      logo: 'https://logo.clearbit.com/pg.com',
-      tags: ['Marketing', 'FMCG', 'Analyse'],
-      status: 'NEW',
-    },
-    {
-      id: 2,
-      title: 'PFE : Stratégie Digitale & E-commerce',
-      company: 'Maroc Telecom',
-      location: 'Rabat',
-      type: 'PFE',
-      duration: '6 mois',
-      logo: 'https://logo.clearbit.com/iam.ma',
-      tags: ['Digital', 'Stratégie', 'E-commerce'],
-      status: 'APPLIED',
-    },
-    {
-      id: 3,
-      title: 'Auditeur Junior',
-      company: 'Deloitte',
-      location: 'Casablanca',
-      type: 'PFE',
-      duration: '6 mois',
-      logo: 'https://logo.clearbit.com/deloitte.com',
-      tags: ['Audit', 'Finance', 'Conseil'],
-      status: 'NEW',
-    },
-    {
-      id: 4,
-      title: 'Stage Comptabilité et Finance',
-      company: 'Attijariwafa Bank',
-      location: 'Fès',
-      type: 'STAGE',
-      duration: '2 mois',
-      logo: 'https://logo.clearbit.com/attijariwafabank.com',
-      tags: ['Finance', 'Banque', 'Analyse'],
-      status: 'REJECTED',
-    },
-  ];
+  const { data: offersData, isLoading } = useQuery({
+    queryKey: ['job-offers'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/job-offers');
+      return res.data.data;
+    }
+  });
 
-  const filteredOffers = filter === 'ALL' ? offers : offers.filter(o => o.type === filter);
+  const offers = offersData || [];
+  const filteredOffers = filter === 'ALL' ? offers : offers.filter((o: any) => o.type === filter);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#e6007e]" /></div>;
+  }
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">

@@ -1,34 +1,25 @@
-﻿import React from 'react';
+import React from 'react';
 import { Users, Calendar, Megaphone, Plus, ChevronRight, Heart, MessageCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentClubsHub() {
-  const clubs = [
-    { name: 'Club Marketing ENCG', members: 124, active: true, color: 'bg-rose-500' },
-    { name: 'Enactus ENCG', members: 89, active: true, color: 'bg-yellow-500' },
-    { name: 'Club IT & Innovation', members: 56, active: true, color: 'bg-blue-500' },
-    { name: 'Bureau Des Étudiants', members: 15, active: true, color: 'bg-purple-500' },
-  ];
-
-  const posts = [
-    {
-      author: 'BDE ENCG',
-      avatar: 'bg-purple-500',
-      time: 'Il y a 2 heures',
-      content: 'Le grand Gala annuel de l\'ENCG approche ! ðŸŽ­ Préparez-vous pour une soirée inoubliable le 15 Juillet. Les billets seront disponibles demain Ã  la pause.',
-      likes: 45,
-      comments: 12,
-    },
-    {
-      author: 'Club IT & Innovation',
-      avatar: 'bg-blue-500',
-      time: 'Il y a 5 heures',
-      content: 'Hackathon ENCG Edition 2026 ! ðŸš€ Vous avez une idée de startup ? Montez votre équipe de 3 Ã  5 personnes et rejoignez-nous ce week-end au Lab 4.',
-      likes: 89,
-      comments: 34,
-      image: 'bg-gradient-to-tr from-blue-600 to-indigo-400',
+  const { data: hubData, isLoading } = useQuery({
+    queryKey: ['clubs-hub'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/clubs');
+      return res.data;
     }
-  ];
+  });
+
+  const clubs = hubData?.clubs || [];
+  const posts = hubData?.posts || [];
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#e6007e]" /></div>;
+  }
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -74,7 +65,7 @@ export default function StudentClubsHub() {
                     </div>
                     <div>
                       <h4 className="font-bold text-white text-sm group-hover:text-[#003a8c] transition-colors">{club.name}</h4>
-                      <p className="text-xs text-white/50 font-medium">{club.members} membres</p>
+                      <p className="text-xs text-white/50 font-medium">{club.members_count || 0} membres</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#e6007e] transition-colors" />
@@ -116,18 +107,18 @@ export default function StudentClubsHub() {
               <div key={idx} className="bg-white rounded-[2rem] p-6 shadow-sm border border-white/5 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold", post.avatar)}>
-                      {post.author.charAt(0)}
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-purple-500")}>
+                      {(post.club?.name || post.author || 'C').charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-bold text-white">{post.author}</h4>
-                      <p className="text-xs text-white/50 font-medium">{post.time}</p>
+                      <h4 className="font-bold text-white">{post.club?.name || post.author || 'Club'}</h4>
+                      <p className="text-xs text-white/50 font-medium">{post.start_at ? new Date(post.start_at).toLocaleDateString() : 'Récemment'}</p>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-white/80 leading-relaxed mb-4">
-                  {post.content}
+                  {post.description || post.content}
                 </p>
 
                 {post.image && (
@@ -138,10 +129,10 @@ export default function StudentClubsHub() {
 
                 <div className="flex items-center gap-6 pt-4 border-t border-white/5">
                   <button className="flex items-center gap-2 text-white/50 hover:text-rose-500 transition-colors font-medium text-sm">
-                    <Heart className="w-5 h-5" /> {post.likes}
+                    <Heart className="w-5 h-5" /> {post.likes || 0}
                   </button>
                   <button className="flex items-center gap-2 text-white/50 hover:text-blue-500 transition-colors font-medium text-sm">
-                    <MessageCircle className="w-5 h-5" /> {post.comments} Commentaires
+                    <MessageCircle className="w-5 h-5" /> {post.comments || 0} Commentaires
                   </button>
                 </div>
               </div>

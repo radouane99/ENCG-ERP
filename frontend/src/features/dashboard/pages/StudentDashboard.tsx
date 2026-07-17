@@ -37,8 +37,9 @@ export default function StudentDashboard() {
   const stats = statsData || {
     gpa: 0,
     classes_today: 0,
-    absences: 0,
+    absences: { total: 0, justified: 0, unjustified: 0 },
     upcoming_exams: 0,
+    upcoming_classes: [],
     recent_documents: []
   };
 

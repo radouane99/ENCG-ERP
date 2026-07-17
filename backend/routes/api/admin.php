@@ -215,6 +215,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     // Admissions (TAFEM & Applications)
     Route::prefix('admissions')->group(function () {
+        Route::get('/campaigns', [AdmissionCampaignController::class, 'index']);
         Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
         Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
         Route::delete('/applications/{application}', [AdmissionController::class, 'destroy']);

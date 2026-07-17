@@ -23,9 +23,17 @@ class AdmissionController extends Controller
     {
         $applications = $this->admissionService->getApplicationsForCampaign((int) $campaignId);
         
+        $stats = [
+            'total' => $applications->count(),
+            'pending' => $applications->where('status', 'pending')->count(),
+            'accepted' => $applications->where('status', 'accepted')->count(),
+            'rejected' => $applications->where('status', 'rejected')->count(),
+        ];
+
         return response()->json([
             'success' => true,
-            'data' => $applications
+            'data' => $applications,
+            'stats' => $stats
         ]);
     }
 

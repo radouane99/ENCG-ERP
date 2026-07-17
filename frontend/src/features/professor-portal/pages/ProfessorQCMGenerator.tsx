@@ -1,32 +1,57 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UploadCloud, Zap, FileText, CheckCircle2, ChevronRight, Save, Play } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+
+import { useMutation } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
 
 export default function ProfessorQCMGenerator() {
   const [step, setStep] = useState<'upload' | 'generating' | 'review'>('upload');
   const [progress, setProgress] = useState(0);
+  const [questions, setQuestions] = useState<any[]>([]);
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/professor/ai/generate-qcm', {
+        topic: "Bases de données relationnelles et SQL",
+        difficulty: "intermediate",
+        count: 5
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data.questions) {
+        // Transform backend response to match UI
+        const formatted = data.questions.map((q: any) => ({
+          q: q.question,
+          a: q.options,
+          correct: q.options.indexOf(q.correct_answer)
+        }));
+        setQuestions(formatted);
+      }
+      setStep('review');
+    },
+    onError: () => {
+      setStep('review'); // Fallback or show error
+    }
+  });
 
   useEffect(() => {
     if (step === 'generating') {
       const interval = setInterval(() => {
         setProgress(p => {
-          if (p >= 100) {
+          if (p >= 90) {
             clearInterval(interval);
-            setTimeout(() => setStep('review'), 500);
-            return 100;
+            return 90;
           }
           return p + 5;
         });
-      }, 150);
+      }, 300);
       return () => clearInterval(interval);
     }
   }, [step]);
 
-  const questions = [
-    { q: "Qu'est-ce qu'une base de données relationnelle ?", a: ["Un ensemble de tables liées", "Un fichier texte", "Un langage de programmation", "Un système d'exploitation"], correct: 0 },
-    { q: "Que signifie SQL ?", a: ["Structured Question Language", "Structured Query Language", "Simple Query Language", "System Quality Level"], correct: 1 },
-    { q: "Quelle commande est utilisée pour extraire des données ?", a: ["EXTRACT", "PULL", "SELECT", "GET"], correct: 2 },
-  ];
+
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -47,6 +72,7 @@ export default function ProfessorQCMGenerator() {
              onClick={() => {
                setProgress(0);
                setStep('generating');
+               generateMutation.mutate();
              }}>
           <div className="w-24 h-24 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
             <UploadCloud className="w-10 h-10" />
@@ -91,7 +117,7 @@ export default function ProfessorQCMGenerator() {
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               <div>
                 <h3 className="font-bold">Génération terminée avec succès !</h3>
-                <p className="text-sm">L'IA a extrait 20 questions de votre support "Chapitre_1_SQL.pdf".</p>
+                <p className="text-sm">L'IA a généré {questions.length} questions interactives.</p>
               </div>
             </div>
             <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-sm">
@@ -140,7 +166,7 @@ export default function ProfessorQCMGenerator() {
 
           <div className="flex justify-center pt-4">
             <button className="flex items-center gap-2 text-purple-600 font-bold hover:text-purple-800 transition-colors">
-              Voir les 17 autres questions <ChevronRight className="w-4 h-4" />
+              Générer d'autres questions <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>

@@ -2,12 +2,24 @@ import React from 'react';
 import { BarChart3, AlertTriangle, TrendingDown, BellRing, Users, Activity } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
+
 export default function ProfessorAnalytics() {
-  const atRiskStudents = [
-    { name: 'Ahmed Benani', issue: 'N\'a pas ouvert les 3 derniers cours', risk: 'high', absences: 5 },
-    { name: 'Ilyas Tazi', issue: 'Baisse de 40% aux mini-tests', risk: 'high', absences: 4 },
-    { name: 'Sara Lamrini', issue: 'Aucune interaction sur le forum depuis 2 mois', risk: 'medium', absences: 1 },
-  ];
+  const { data: analytics, isLoading } = useQuery({
+    queryKey: ['professor-analytics'],
+    queryFn: async () => {
+      const res = await api.get('/professor-portal/analytics');
+      return res.data;
+    }
+  });
+
+  const atRiskStudents = analytics?.atRiskStudents || [];
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -73,7 +85,7 @@ export default function ProfessorAnalytics() {
                </div>
                <div>
                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Temps Moyen / Cours</div>
-                 <div className="text-2xl font-black text-white">42 min</div>
+                 <div className="text-2xl font-black text-white">{analytics?.avgTime || 0} min</div>
                </div>
              </div>
              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
@@ -82,7 +94,7 @@ export default function ProfessorAnalytics() {
                </div>
                <div>
                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Taux de Complétion</div>
-                 <div className="text-2xl font-black text-white">78%</div>
+                 <div className="text-2xl font-black text-white">{analytics?.completionRate || 0}%</div>
                </div>
              </div>
           </div>

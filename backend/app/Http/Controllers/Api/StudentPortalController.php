@@ -68,4 +68,19 @@ class StudentPortalController extends Controller
 
         return response()->json(['success' => true, 'data' => $stats]);
     }
+
+    /**
+     * Get learning materials (Digital Library)
+     */
+    public function getLibraryMaterials(Request $request): JsonResponse
+    {
+        // For now, fetch published materials with related module and professor
+        $materials = \App\Models\LearningMaterial::where('is_published', true)
+            ->with(['module', 'professor'])
+            ->latest()
+            ->take(20)
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $materials]);
+    }
 }

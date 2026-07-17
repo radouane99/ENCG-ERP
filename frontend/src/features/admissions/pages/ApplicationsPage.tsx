@@ -65,8 +65,27 @@ export default function ApplicationsPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const res = await api.get('/applications', { params: { search, status: statusFilter } })
-      setApplications(res.data.data || [])
+      const campRes = await api.get('/admin/admissions/campaigns?status=active');
+      const campaignId = campRes.data.data?.[0]?.id || 1;
+      
+      const res = await api.get(`/admin/admissions/campaigns/${campaignId}/applications`);
+      let data = res.data.data || [];
+      
+      if (search) {
+        const s = search.toLowerCase();
+        data = data.filter((app: Application) => 
+          app.first_name?.toLowerCase().includes(s) ||
+          app.last_name?.toLowerCase().includes(s) ||
+          app.cne?.toLowerCase().includes(s) ||
+          app.cin?.toLowerCase().includes(s) ||
+          app.reference_number?.toLowerCase().includes(s)
+        );
+      }
+      if (statusFilter) {
+        data = data.filter((app: Application) => app.status === statusFilter);
+      }
+
+      setApplications(data)
       setStats(res.data.stats || { total: 0, pending: 0, accepted: 0, rejected: 0 })
     } catch (err) {
       console.error(err)
@@ -92,7 +111,7 @@ export default function ApplicationsPage() {
     if (!editingApp) return
 
     try {
-      await api.patch(`/applications/${editingApp.id}/status`, {
+      await api.patch(`/admin/admissions/applications/${editingApp.id}/status`, {
         status: form.status,
         selection_score: form.selection_score ? parseFloat(form.selection_score) : null,
         rejection_reason: form.status === 'rejected' ? form.rejection_reason : null
@@ -108,7 +127,7 @@ export default function ApplicationsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm(t('applications.messages.delete_confirm'))) return
     try {
-      await api.delete(`/applications/${id}`)
+      await api.delete(`/admin/admissions/applications/${id}`)
       toast.success(t('applications.messages.delete_success'))
       fetchData()
     } catch {
