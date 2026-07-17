@@ -22,6 +22,11 @@ class DatabaseSeeder extends Seeder
                 RbacSeeder::class,           // Roles and Permissions
                 EncgFesSeeder::class,        // Infrastructure, Academic Core, Users, Grades, Cards
             ]);
+
+            // Re-run RbacSeeder to recreate default users (admin@encg-fes.ma, etc.) after EncgFesSeeder's cleanup wiped them.
+            // This also ensures they are correctly linked to the newly created Institution.
+            $rbacSeeder = new RbacSeeder();
+            $rbacSeeder->run();
         });
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

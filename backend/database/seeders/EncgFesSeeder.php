@@ -165,25 +165,25 @@ class EncgFesSeeder extends Seeder
         DB::table('conversations')->delete();
         DB::table('compensation_rules')->delete();
 
-        Grade::query()->delete();
-        Assessment::query()->delete();
-        Exam::query()->delete();
-        ExamSession::query()->delete();
-        StudentCard::query()->delete();
-        StudentRegistration::query()->delete();
+        DB::table('grades')->delete();
+        DB::table('assessments')->delete();
+        DB::table('exams')->delete();
+        DB::table('exam_sessions')->delete();
+        DB::table('student_cards')->delete();
+        DB::table('student_registrations')->delete();
         DB::table('module_professor')->delete();
-        Group::query()->delete();
-        Student::query()->delete();
-        Professor::query()->delete();
-        User::query()->delete();
-        Module::query()->delete();
-        Speciality::query()->delete();
-        Filiere::query()->delete();
-        Room::query()->delete();
-        Department::query()->delete();
-        Campus::query()->delete();
-        AcademicYear::query()->delete();
-        Institution::query()->delete();
+        DB::table('groups')->delete();
+        DB::table('students')->delete();
+        DB::table('professors')->delete();
+        DB::table('users')->delete();
+        DB::table('modules')->delete();
+        DB::table('specialities')->delete();
+        DB::table('filieres')->delete();
+        DB::table('rooms')->delete();
+        DB::table('departments')->delete();
+        DB::table('campuses')->delete();
+        DB::table('academic_years')->delete();
+        DB::table('institutions')->delete();
     }
 
     private function seedInstitution(): Institution
