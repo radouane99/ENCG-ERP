@@ -27,23 +27,23 @@ interface QuickAction {
 function getRoleActions(roles: string[]): QuickAction[] {
   if (roles.includes('super-admin') || roles.includes('institution-admin')) {
     return [
-      { label: 'Analyse prédictive', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Quels sont les étudiants les plus à risque de décrochage actuellement ?', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
-      { label: 'Rapport absences', icon: <FileText className="w-3.5 h-3.5" />, message: 'Génère un résumé du taux d\'absence global cette semaine.', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-      { label: 'Planning salles', icon: <Calendar className="w-3.5 h-3.5" />, message: 'Quelles salles sont disponibles cette semaine pour une réservation ?', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+      { label: 'Analyse prÃ©dictive', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Quels sont les Ã©tudiants les plus Ã  risque de dÃ©crochage actuellement ?', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+      { label: 'Rapport absences', icon: <FileText className="w-3.5 h-3.5" />, message: 'GÃ©nÃ¨re un rÃ©sumÃ© du taux d\'absence global cette semaine.', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+      { label: 'Planning salles', icon: <Calendar className="w-3.5 h-3.5" />, message: 'Quelles salles sont disponibles cette semaine pour une rÃ©servation ?', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
     ];
   }
   if (roles.includes('professor')) {
     return [
       { label: 'Mon planning', icon: <Calendar className="w-3.5 h-3.5" />, message: 'Quelles sont mes heures de cours cette semaine ?', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-      { label: 'Générer un QCM', icon: <BookOpen className="w-3.5 h-3.5" />, message: 'Génère un QCM de 5 questions sur la Comptabilité de Gestion.', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
-      { label: 'Statistiques', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Montre-moi le taux de présence de mes cours.', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+      { label: 'GÃ©nÃ©rer un QCM', icon: <BookOpen className="w-3.5 h-3.5" />, message: 'GÃ©nÃ¨re un QCM de 5 questions sur la ComptabilitÃ© de Gestion.', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+      { label: 'Statistiques', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Montre-moi le taux de prÃ©sence de mes cours.', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     ];
   }
   // Student
   return [
     { label: 'Mon emploi du temps', icon: <Calendar className="w-3.5 h-3.5" />, message: 'Quel est mon emploi du temps cette semaine ?', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-    { label: 'Mes notes', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Quelles sont mes dernières notes et ma moyenne générale ?', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-    { label: 'Demande document', icon: <FileText className="w-3.5 h-3.5" />, message: 'Comment faire une demande d\'attestation de scolarité ?', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    { label: 'Mes notes', icon: <BarChart2 className="w-3.5 h-3.5" />, message: 'Quelles sont mes derniÃ¨res notes et ma moyenne gÃ©nÃ©rale ?', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    { label: 'Demande document', icon: <FileText className="w-3.5 h-3.5" />, message: 'Comment faire une demande d\'attestation de scolaritÃ© ?', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
     { label: 'Aide', icon: <HelpCircle className="w-3.5 h-3.5" />, message: 'Qu\'est-ce que tu peux faire pour moi ?', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   ];
 }
@@ -93,7 +93,7 @@ export default function GlobalAIChatbot() {
       setMessages([{
         id: 'welcome',
         role: 'bot',
-        text: `Bonjour ${user?.name?.split(' ')[0] ?? ''} ! ?? Je suis votre assistant IA de l'ENCG Fès, propulsé par **Gemini**.\n\nJe peux vous aider avec vos cours, notes, plannings, documents et bien plus encore. Comment puis-je vous aider ?`,
+        text: `Bonjour ${user?.name?.split(' ')[0] ?? ''} ! ?? Je suis votre assistant IA de l'ENCG FÃ¨s, propulsÃ© par **Gemini**.\n\nJe peux vous aider avec vos cours, notes, plannings, documents et bien plus encore. Comment puis-je vous aider ?`,
         timestamp: new Date(),
       }]);
     }
@@ -121,7 +121,7 @@ export default function GlobalAIChatbot() {
       ? 'Administrateur'
       : userRoles.includes('professor')
       ? 'Professeur'
-      : 'Étudiant';
+      : 'Ã‰tudiant';
 
     try {
       const res = await api.post('/chatbot/message', {
@@ -132,16 +132,16 @@ export default function GlobalAIChatbot() {
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        text: res.data.data?.reply ?? res.data.reply ?? 'Je n\'ai pas pu générer une réponse.',
+        text: res.data.data?.reply ?? res.data.reply ?? 'Je n\'ai pas pu gÃ©nÃ©rer une rÃ©ponse.',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMsg]);
     } catch {
-      toast.error("Erreur de connexion à l'IA.");
+      toast.error("Erreur de connexion Ã  l'IA.");
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        text: "Désolé, je rencontre des difficultés techniques. Veuillez réessayer dans un instant.",
+        text: "DÃ©solÃ©, je rencontre des difficultÃ©s techniques. Veuillez rÃ©essayer dans un instant.",
         timestamp: new Date(),
       }]);
     } finally {
@@ -153,7 +153,7 @@ export default function GlobalAIChatbot() {
     setMessages([{
       id: Date.now().toString(),
       role: 'bot',
-      text: 'Conversation réinitialisée. Comment puis-je vous aider ?',
+      text: 'Conversation rÃ©initialisÃ©e. Comment puis-je vous aider ?',
       timestamp: new Date(),
     }]);
   };
@@ -208,7 +208,7 @@ export default function GlobalAIChatbot() {
                 <h3 className="font-black text-base leading-tight">Assistant ENCG IA</h3>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-200">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  Gemini 1.5 Pro · En ligne
+                  Gemini 1.5 Pro Â· En ligne
                 </div>
               </div>
             </div>
@@ -223,7 +223,7 @@ export default function GlobalAIChatbot() {
               <button
                 onClick={() => setIsExpanded(e => !e)}
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                title={isExpanded ? 'Réduire' : 'Agrandir'}
+                title={isExpanded ? 'RÃ©duire' : 'Agrandir'}
               >
                 {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
@@ -329,7 +329,7 @@ export default function GlobalAIChatbot() {
               </button>
             </form>
             <p className="text-center text-[10px] text-[var(--muted-foreground)] mt-1.5 font-medium">
-              Propulsé par Google Gemini 1.5 Pro · ENCG Fès
+              PropulsÃ© par Google Gemini 1.5 Pro Â· ENCG FÃ¨s
             </p>
           </div>
         </div>
