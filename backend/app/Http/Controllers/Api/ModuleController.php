@@ -17,9 +17,19 @@ class ModuleController extends Controller
         $this->moduleService = $moduleService;
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $modules = $this->moduleService->getAllModules();
+        $query = Module::with(['filiere']);
+
+        if ($request->has('filiere_id') && $request->filiere_id != '') {
+            $query->where('filiere_id', $request->filiere_id);
+        }
+
+        if ($request->has('semester') && $request->semester != '') {
+            $query->where('semester_number', $request->semester);
+        }
+
+        $modules = $query->get();
 
         return response()->json([
             'data' => \App\Http\Resources\ModuleResource::collection($modules)

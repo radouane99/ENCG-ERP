@@ -40,19 +40,21 @@ export default function AdminGradesPage() {
   }, [filiere, semestre])
 
   useEffect(() => {
-    if (groupe) {
+    if (filiere && semestre) {
       setModule('')
       setModules([])
-      api.get('/modules', { params: { group_id: groupe } })
+      api.get('/modules', { params: { filiere_id: filiere, semester: semestre } })
         .then(r => setModules(r.data.data || r.data)).catch(console.error)
+    } else {
+      setModules([])
     }
-  }, [groupe])
+  }, [filiere, semestre])
 
-  const isFormComplete = filiere !== '' && groupe !== '' && module !== ''
+  const isFormComplete = filiere !== '' && semestre !== '' && module !== ''
 
   const handleOpenRegistry = () => {
     if (isFormComplete) {
-      navigate(`/admin/grades/edit?group_id=${groupe}&module_id=${module}`)
+      navigate(`/admin/grades/edit?filiere_id=${filiere}&semester=${semestre}&module_id=${module}${groupe ? `&group_id=${groupe}` : ''}`)
     }
   }
 
@@ -142,7 +144,7 @@ export default function AdminGradesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-[var(--border)] pt-8">
           {/* Step 3 */}
-          <div className={cn("space-y-4 transition-all duration-300", !filiere && "opacity-40 grayscale pointer-events-none")}>
+          <div className={cn("space-y-4 transition-all duration-300", (!filiere || !semestre) && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
               <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", filiere ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>3</div>
               <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", filiere ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>{t('admin:grades.steps.groupe')}</h3>
@@ -152,11 +154,11 @@ export default function AdminGradesPage() {
               <select 
                 value={groupe}
                 onChange={(e) => setGroupe(e.target.value)}
-                disabled={!filiere}
+                disabled={!filiere || !semestre}
                 className={getSelectStyle(groupe !== '')}
                 style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
               >
-                <option value="">{t('admin:grades.steps.groupe_empty')}</option>
+                <option value="">Tous les groupes (Facultatif)</option>
                 {groupes.map((g: any) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
@@ -165,21 +167,21 @@ export default function AdminGradesPage() {
           </div>
 
           {/* Step 4 */}
-          <div className={cn("space-y-4 transition-all duration-300", !groupe && "opacity-40 grayscale pointer-events-none")}>
+          <div className={cn("space-y-4 transition-all duration-300", (!filiere || !semestre) && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
-              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", groupe ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>4</div>
-              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", groupe ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>{t('admin:grades.steps.module')}</h3>
+              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", module ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>4</div>
+              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", module ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>{t('admin:grades.steps.module')}</h3>
             </div>
             <div className="relative ps-11">
               <BookOpen className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", module ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")} />
               <select 
                 value={module}
                 onChange={(e) => setModule(e.target.value)}
-                disabled={!groupe}
+                disabled={!filiere || !semestre}
                 className={getSelectStyle(module !== '')}
                 style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
               >
-                <option value="">{t('admin:grades.steps.groupe_empty')}</option>
+                <option value="">-- Sélectionnez un module --</option>
                 {modules.map((m: any) => (
                   <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
                 ))}
@@ -194,7 +196,7 @@ export default function AdminGradesPage() {
             size="lg"
             variant="outline"
             disabled={!isFormComplete}
-            onClick={() => isFormComplete && navigate(`/admin/grades/pv?group_id=${groupe}&module_id=${module}`)}
+            onClick={() => isFormComplete && navigate(`/admin/grades/pv?filiere_id=${filiere}&semester=${semestre}&module_id=${module}${groupe ? `&group_id=${groupe}` : ''}`)}
             className={cn("px-8 py-6 text-base font-bold shadow-sm transition-all", isFormComplete ? "hover:scale-105" : "")}
           >
             📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV de Module'}
