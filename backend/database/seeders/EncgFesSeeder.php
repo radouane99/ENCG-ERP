@@ -804,7 +804,7 @@ class EncgFesSeeder extends Seeder
 
                 // Create assessments and grades for ordinary session
                 foreach ($modules as $module) {
-                    // Create exam session slot
+                    // Create exam session slot (Ordinary)
                     $exam = Exam::create([
                         'exam_session_id' => $ordinarySession->id,
                         'module_id' => $module->id,
@@ -814,6 +814,18 @@ class EncgFesSeeder extends Seeder
                         'start_time' => '09:00:00',
                         'duration_minutes' => 120,
                         'type' => 'final',
+                    ]);
+
+                    // Create exam session slot (Retake / Rattrapage)
+                    $retakeExam = Exam::create([
+                        'exam_session_id' => $retakeSession->id,
+                        'module_id' => $module->id,
+                        'group_id' => $group->id,
+                        'room_id' => $rooms[array_rand($rooms)]->id,
+                        'exam_date' => '2025-06-19',
+                        'start_time' => '14:00:00',
+                        'duration_minutes' => 120,
+                        'type' => 'rattrapage',
                     ]);
 
                     // Ordinary Session Assessment
@@ -833,8 +845,8 @@ class EncgFesSeeder extends Seeder
                     ]);
 
                     // Assign grades to students in the group
-                    foreach ($groupStudents as $st) {
-                        // Logic: Youssef always passes with mention
+                    foreach ($groupStudents as $stIndex => $st) {
+                        // Logic: Youssef always passes with mention directly
                         if ($st->id === $studentProfile->id) {
                             $gradeVal = match ($module->code) {
                                 'GFC-S5-M01' => 14.50, // Comptabilité Approfondie
@@ -849,45 +861,108 @@ class EncgFesSeeder extends Seeder
                                 'value' => $gradeVal,
                                 'absent' => false,
                             ]);
-                        } else {
-                            $roll = rand(1, 100);
-                            if ($roll <= 75) {
-                                $val = mt_rand(1000, 1750) / 100;
-                                Grade::create([
-                                    'assessment_id' => $assessment->id,
-                                    'student_id' => $st->id,
-                                    'value' => $val,
-                                    'absent' => false,
-                                ]);
-                            } elseif ($roll <= 92) {
-                                $val = mt_rand(800, 999) / 100;
-                                Grade::create([
-                                    'assessment_id' => $assessment->id,
-                                    'student_id' => $st->id,
-                                    'value' => $val,
-                                    'absent' => false,
-                                ]);
-                            } else {
-                                $val = mt_rand(300, 790) / 100;
-                                Grade::create([
-                                    'assessment_id' => $assessment->id,
-                                    'student_id' => $st->id,
-                                    'value' => $val,
-                                    'absent' => false,
-                                ]);
+                            continue;
+                        }
 
-                                // Seed a passing Rattrapage grade
-                                $retakeVal = mt_rand(1000, 1350) / 100;
+                        // Distribute cases based on student index modulo
+                        $case = $stIndex % 7;
+
+                        switch ($case) {
+                            case 0:
+                            case 1:
+                            case 2:
+                                // Case 1: Direct Pass (Ordinary >= 10, no retake)
+                                Grade::create([
+                                    'assessment_id' => $assessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => mt_rand(1000, 1800) / 100,
+                                    'absent' => false,
+                                ]);
+                                break;
+
+                            case 3:
+                                // Case 2: Fail Ordinary -> Pass Retake
+                                Grade::create([
+                                    'assessment_id' => $assessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => mt_rand(500, 950) / 100,
+                                    'absent' => false,
+                                ]);
                                 Grade::create([
                                     'assessment_id' => $retakeAssessment->id,
                                     'student_id' => $st->id,
-                                    'value' => $retakeVal,
+                                    'value' => mt_rand(1000, 1400) / 100,
                                     'absent' => false,
                                 ]);
-                            }
+                                break;
+
+                            case 4:
+                                // Case 3: Fail Ordinary -> Fail Retake
+                                Grade::create([
+                                    'assessment_id' => $assessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => mt_rand(300, 900) / 100,
+                                    'absent' => false,
+                                ]);
+                                Grade::create([
+                                    'assessment_id' => $retakeAssessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => mt_rand(400, 950) / 100,
+                                    'absent' => false,
+                                ]);
+                                break;
+
+                            case 5:
+                                // Case 4: Absent from Ordinary -> Pass Retake
+                                Grade::create([
+                                    'assessment_id' => $assessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => 0.00,
+                                    'absent' => true,
+                                ]);
+                                Grade::create([
+                                    'assessment_id' => $retakeAssessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => mt_rand(1000, 1300) / 100,
+                                    'absent' => false,
+                                ]);
+                                break;
+
+                            case 6:
+                                // Case 5: Absent from Ordinary -> Absent from Retake
+                                Grade::create([
+                                    'assessment_id' => $assessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => 0.00,
+                                    'absent' => true,
+                                ]);
+                                Grade::create([
+                                    'assessment_id' => $retakeAssessment->id,
+                                    'student_id' => $st->id,
+                                    'value' => 0.00,
+                                    'absent' => true,
+                                ]);
+                                break;
                         }
                     }
                 }
+            }
+        }
+
+        // Seed some random document requests for other students
+        $otherStudents = array_slice($studentList, 1, 8); // Skip Youssef
+        foreach ($otherStudents as $idx => $stUser) {
+            $stProfile = Student::where('user_id', $stUser->id)->first();
+            if ($stProfile) {
+                DB::table('document_requests')->insert([
+                    'student_id' => $stProfile->id,
+                    'document_type_id' => $idx % 2 === 0 ? $attScolType : $relNotesType,
+                    'status' => $idx % 3 === 0 ? 'pending' : ($idx % 3 === 1 ? 'ready' : 'rejected'),
+                    'requested_at' => now()->subDays($idx + 1),
+                    'processed_at' => $idx % 3 !== 0 ? now()->subDays($idx) : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
 
