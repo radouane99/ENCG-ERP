@@ -65,7 +65,7 @@ class GradeController extends Controller
         }
 
         // 2. Professor must be assigned to this module
-        if ($user->hasRole('professeur')) {
+        if ($user->hasRole(['professor', 'vacataire'])) {
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);
@@ -526,7 +526,7 @@ class GradeController extends Controller
         }
 
         // 2. Professor must be assigned to this module
-        if ($user->hasRole('professeur')) {
+        if ($user->hasRole(['professor', 'vacataire'])) {
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);
