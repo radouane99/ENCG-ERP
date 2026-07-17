@@ -10,6 +10,7 @@ import { useAuthStore } from '@stores/authStore'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
 import { cn } from '@shared/lib/utils'
+import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal'
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
+  const [showCndpModal, setShowCndpModal] = useState(false)
   const isAr = i18n.language === 'ar'
 
   const {
@@ -176,9 +178,18 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
-        {isAr ? 'منصة إدارة جامعة ENCG فاس — نظام آمن ومشفر' : 'ENCG ERP — Plateforme sécurisée conforme à la loi 09-08'}
+      <p className="text-center text-[10px] font-semibold tracking-wide text-muted-foreground uppercase flex flex-col gap-1 items-center justify-center">
+        <span>{isAr ? 'منصة إدارة جامعة ENCG فاس — نظام آمن ومشفر' : 'ENCG ERP — Plateforme sécurisée conforme à la loi 09-08'}</span>
+        <button
+          type="button"
+          onClick={() => setShowCndpModal(true)}
+          className="text-primary hover:underline font-bold normal-case cursor-pointer"
+        >
+          {isAr ? 'حماية المعطيات الشخصية (CNDP)' : 'Protection des Données Personnelles (CNDP)'}
+        </button>
       </p>
+
+      <CndpPrivacyModal isOpen={showCndpModal} onClose={() => setShowCndpModal(false)} lang={i18n.language} />
     </div>
   )
 }

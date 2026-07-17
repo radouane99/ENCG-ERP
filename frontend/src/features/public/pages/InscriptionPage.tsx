@@ -9,6 +9,7 @@ import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
 import api from '@shared/lib/api';
 import { useAuthStore } from '@stores/authStore';
+import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal';
 
 /* ── Types ── */
 type StepId = 1 | 2 | 3;
@@ -135,6 +136,8 @@ export default function InscriptionPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cndpConsent, setCndpConsent] = useState(false);
+  const [showCndpModal, setShowCndpModal] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: '', email: '', password: '', password_confirmation: '',
@@ -161,6 +164,15 @@ export default function InscriptionPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
+
+    if (step === 1) {
+      if (!cndpConsent) {
+        setErrorMsg(lang === 'ar' ? 'يجب عليك الموافقة على معالجة البيانات الشخصية (القانون 09-08).' : 'Vous devez accepter le traitement de vos données personnelles conformément à la loi 09-08 (CNDP).');
+        return;
+      }
+    }
+
     if (step < 3) { goNext(); return; }
     
     if (formData.password !== formData.password_confirmation) {
@@ -369,11 +381,27 @@ export default function InscriptionPage() {
                       <Field icon={Lock}  label="Confirmer" required type="password" name="password_confirmation" value={formData.password_confirmation} onChange={handleChange} placeholder="Répéter le mot de passe" />
                     </div>
 
-                    <div className="flex items-start gap-3 bg-[#E60028]/5 dark:bg-[#E60028]/8 border border-[#E60028]/10 dark:border-[#E60028]/20 rounded-xl px-4 py-3 mt-2">
-                      <Shield className="w-4 h-4 text-[#E60028] mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        Vos données sont protégées et traitées conformément à la <strong className="text-slate-900 dark:text-white">loi 09-08</strong> marocaine sur la protection des données personnelles.
-                      </p>
+                    <div className="flex items-start gap-3 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 mt-2">
+                      <input
+                        type="checkbox"
+                        id="cndp_consent"
+                        checked={cndpConsent}
+                        onChange={(e) => setCndpConsent(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#E60028] focus:ring-[#E60028] accent-[#E60028] mt-0.5 cursor-pointer flex-shrink-0"
+                      />
+                      <label htmlFor="cndp_consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
+                        {lang === 'ar' ? (
+                          <>
+                            أوافق على معالجة معطياتي الشخصية من طرف المؤسسة لأغراض إدارية وبيداغوجية، وذلك طبقاً لمقتضيات <strong>القانون رقم 09-08</strong>.
+                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#E60028] hover:underline font-bold ms-1">لمعرفة المزيد</button>
+                          </>
+                        ) : (
+                          <>
+                            J'accepte le traitement de mes données personnelles par l'ENCG Fès dans le cadre de la gestion administrative et pédagogique de ma scolarité, conformément à la <strong>loi n° 09-08</strong> de la CNDP.
+                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#E60028] hover:underline font-bold ms-1">En savoir plus</button>
+                          </>
+                        )}
+                      </label>
                     </div>
                   </div>
                 )}
@@ -528,6 +556,8 @@ export default function InscriptionPage() {
           </div>
         </main>
       </div>
+
+      <CndpPrivacyModal isOpen={showCndpModal} onClose={() => setShowCndpModal(false)} lang={lang} />
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
