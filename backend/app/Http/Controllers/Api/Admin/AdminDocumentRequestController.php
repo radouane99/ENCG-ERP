@@ -39,12 +39,17 @@ class AdminDocumentRequestController extends Controller
         return response()->json($updated);
     }
 
-    public function generate($id)
+    public function generate(Request $request, $id)
     {
         $documentRequest = DocumentRequest::findOrFail($id);
         
+        $options = [
+            'admin_notes' => 'Generated via API',
+            'signatory_title' => $request->input('signatory_title')
+        ];
+        
         // processRequest 'ready' will trigger generateDocumentPdf automatically
-        $this->documentRequestService->processRequest($documentRequest, 'ready', ['admin_notes' => 'Generated via API']);
+        $this->documentRequestService->processRequest($documentRequest, 'ready', $options);
         
         return response()->json(['message' => 'PDF generated successfully']);
     }

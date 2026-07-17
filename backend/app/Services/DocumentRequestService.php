@@ -109,6 +109,9 @@ class DocumentRequestService
             $logoBase64 = 'data:image/svg+xml;base64,' . base64_encode($svgLogo);
         }
 
+        // Read signatory title if provided
+        $signatoryTitle = $request->admin_notes['signatory_title'] ?? null;
+
         // The View variables
         $data = [
             'student' => $student,
@@ -117,6 +120,7 @@ class DocumentRequestService
             'year' => $year,
             'qrBase64' => $qrBase64,
             'logoBase64' => $logoBase64,
+            'signatoryTitle' => $signatoryTitle,
         ];
 
         if ($viewName === 'pdf.releve_notes') {
