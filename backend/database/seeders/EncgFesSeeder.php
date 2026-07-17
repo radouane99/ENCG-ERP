@@ -175,6 +175,7 @@ class EncgFesSeeder extends Seeder
         DB::table('exams')->delete();
         DB::table('exam_sessions')->delete();
         DB::table('student_cards')->delete();
+        DB::table('student_pathways')->delete();
         DB::table('student_registrations')->delete();
         DB::table('module_professor')->delete();
         DB::table('groups')->delete();
@@ -535,43 +536,58 @@ class EncgFesSeeder extends Seeder
     {
         $allModules = Module::all();
         $moduleIdx = 0;
+        $inserted = [];
 
-        // Ensure each professor gets assigned to at least 2 unique modules
+        $getGroupsForModule = function (int $moduleId) use ($academicYear) {
+            return DB::table('groups')
+                ->join('modules', 'groups.filiere_id', '=', 'modules.filiere_id')
+                ->where('modules.id', $moduleId)
+                ->where('groups.academic_year_id', $academicYear->id)
+                ->pluck('groups.id')
+                ->toArray();
+        };
+
+        $insertAssignment = function ($mod, $prof, $groupId) use ($academicYear, &$inserted) {
+            $key = "{$mod->id}_{$prof->id}_{$groupId}";
+            if (in_array($key, $inserted)) return;
+            $inserted[] = $key;
+            DB::table('module_professor')->insert([
+                'module_id'        => $mod->id,
+                'academic_year_id' => $academicYear->id,
+                'group_id'         => $groupId,
+                'professor_id'     => $prof->id,
+                'professor_type'   => 'App\Models\Professor',
+                'session_type'     => 'cm',
+                'assigned_hours'   => 36,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+        };
+
         foreach ($professors as $prof) {
-            for ($i = 0; $i < 2; $i++) {
-                if ($moduleIdx < count($allModules)) {
-                    $mod = $allModules[$moduleIdx];
-                    DB::table('module_professor')->insert([
-                        'module_id' => $mod->id,
-                        'academic_year_id' => $academicYear->id,
-                        'professor_id' => $prof->id,
-                        'professor_type' => 'App\Models\Professor',
-                        'session_type' => 'cm',
-                        'assigned_hours' => 36,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $moduleIdx++;
+            $assigned = 0;
+            while ($assigned < 2 && $moduleIdx < count($allModules)) {
+                $mod = $allModules[$moduleIdx];
+                $groupIds = $getGroupsForModule($mod->id);
+                if (empty($groupIds)) { $moduleIdx++; continue; }
+                foreach ($groupIds as $gId) {
+                    $insertAssignment($mod, $prof, $gId);
                 }
+                $moduleIdx++;
+                $assigned++;
             }
         }
 
-        // Assign any remaining modules to random professors
         for ($i = $moduleIdx; $i < count($allModules); $i++) {
             $mod = $allModules[$i];
-            $prof = $professors[array_rand($professors)];
-            DB::table('module_professor')->insert([
-                'module_id' => $mod->id,
-                'academic_year_id' => $academicYear->id,
-                'professor_id' => $prof->id,
-                'professor_type' => 'App\Models\Professor',
-                'session_type' => 'cm',
-                'assigned_hours' => 36,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $prof = $professors[$i % count($professors)];
+            $groupIds = $getGroupsForModule($mod->id);
+            foreach ($groupIds as $gId) {
+                $insertAssignment($mod, $prof, $gId);
+            }
         }
     }
+
 
     private function seedMoroccanStudentsAndGrades(
         Institution $institution,
