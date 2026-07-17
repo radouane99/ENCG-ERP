@@ -38,17 +38,39 @@ class StudentService
         }
 
         if (!empty($filters['filiere_id']) || !empty($filters['semester']) || !empty($filters['group_id'])) {
-            $query->whereHas('latestPathway', function ($q) use ($filters) {
-                if (!empty($filters['filiere_id'])) {
-                    $q->where('filiere_id', $filters['filiere_id']);
-                }
-                if (!empty($filters['semester'])) {
-                    // Extract integer from 'S1', 'S2' strings if necessary, or just match exactly if frontend sends integer
-                    $semesterNum = str_replace('S', '', $filters['semester']);
-                    $q->where('semester_number', $semesterNum);
-                }
-                if (!empty($filters['group_id'])) {
-                    $q->where('group_id', $filters['group_id']);
+            $query->where(function ($q) use ($filters) {
+                // 1. Regular enrolled students
+                $q->whereHas('latestPathway', function ($q2) use ($filters) {
+                    if (!empty($filters['filiere_id'])) {
+                        $q2->where('filiere_id', $filters['filiere_id']);
+                    }
+                    if (!empty($filters['semester'])) {
+                        $semesterNum = str_replace('S', '', $filters['semester']);
+                        $q2->where('semester_number', $semesterNum);
+                    }
+                    if (!empty($filters['group_id'])) {
+                        $q2->where('group_id', $filters['group_id']);
+                    }
+                });
+
+                // 2. "Reservistes" (Students carrying over modules from this semester/filiere)
+                // Only if filtering by semester or filiere. (group_id usually applies to current year, not retakes).
+                if (!empty($filters['semester']) || !empty($filters['filiere_id'])) {
+                    $q->orWhereExists(function ($q2) use ($filters) {
+                        $q2->select(DB::raw(1))
+                           ->from('student_module_retakes')
+                           ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
+                           ->whereColumn('student_module_retakes.student_id', 'students.id')
+                           ->where('student_module_retakes.status', 'pending');
+                           
+                        if (!empty($filters['semester'])) {
+                            $semesterNum = str_replace('S', '', $filters['semester']);
+                            $q2->where('modules.semester_number', $semesterNum);
+                        }
+                        if (!empty($filters['filiere_id'])) {
+                            $q2->where('modules.filiere_id', $filters['filiere_id']);
+                        }
+                    });
                 }
             });
         }
