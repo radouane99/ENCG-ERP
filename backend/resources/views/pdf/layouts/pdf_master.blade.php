@@ -139,13 +139,17 @@
                         </td>
                         <td class="footer-right">
                             Fait à Fès, le {{ $date ?? now()->format('d/m/Y') }}<br><br>
-                            <strong>LE DIRECTEUR DE L'ENCG FÈS</strong><br>
-                            <!-- Signature Numérique SVG générée -->
+                            <strong>{{ $signatoryTitle ?? "LE DIRECTEUR DE L'ENCG FÈS" }}</strong><br>
+                            <!-- Signature Numérique SVG générée ou image -->
                             <div style="margin-top: 5px; margin-right: 15px;">
-                                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M10,25 Q15,10 20,20 T30,15 T40,25 T50,15 T60,25 T70,10 T80,25 T90,15 T100,20 T110,25" stroke="#0f2863" stroke-width="2" fill="none" stroke-linecap="round"/>
-                                    <path d="M15,30 L105,30" stroke="#0f2863" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
-                                </svg>
+                                @if(!empty($signatureBase64))
+                                    <img src="{{ $signatureBase64 }}" alt="Signature" style="max-height: 40px; max-width: 120px;">
+                                @else
+                                    <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10,25 Q15,10 20,20 T30,15 T40,25 T50,15 T60,25 T70,10 T80,25 T90,15 T100,20 T110,25" stroke="#0f2863" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                        <path d="M15,30 L105,30" stroke="#0f2863" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+                                    </svg>
+                                @endif
                             </div>
                         </td>
                     </tr>

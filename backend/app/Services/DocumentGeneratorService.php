@@ -37,8 +37,12 @@ class DocumentGeneratorService
     /**
      * Generate a PDF for an exam convocation.
      */
-    public function generateConvocation(Student $student, ExamSession $session): string
-    {
+    public function generateConvocation(
+        Student $student, 
+        ExamSession $session, 
+        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
+        string $signatureBase64 = null
+    ): string {
         $token = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
         $qrCodeSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
@@ -49,7 +53,9 @@ class DocumentGeneratorService
             'session' => $session,
             'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
             'logoBase64' => $this->getLogoBase64(),
-            'verifyUrl' => $verifyUrl
+            'verifyUrl' => $verifyUrl,
+            'signatoryTitle' => $signatoryTitle,
+            'signatureBase64' => $signatureBase64
         ];
 
         $filename = "student_{$student->id}_" . time() . ".pdf";
@@ -72,8 +78,12 @@ class DocumentGeneratorService
     /**
      * Generate an official grade transcript (Relevé de notes).
      */
-    public function generateTranscript(Student $student, int $academicYearId): string
-    {
+    public function generateTranscript(
+        Student $student, 
+        int $academicYearId,
+        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
+        string $signatureBase64 = null
+    ): string {
         // Fetch all grades for this student.
         // In a real scenario, grades could be filtered by the current academic year if a pivot/relation exists.
         $grades = $student->grades()
@@ -117,7 +127,9 @@ class DocumentGeneratorService
             'date' => now()->format('d/m/Y'),
             'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
             'logoBase64' => $this->getLogoBase64(),
-            'verifyUrl' => $verifyUrl
+            'verifyUrl' => $verifyUrl,
+            'signatoryTitle' => $signatoryTitle,
+            'signatureBase64' => $signatureBase64
         ];
 
         $filename = "student_{$student->id}_" . time() . ".pdf";
