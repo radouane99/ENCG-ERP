@@ -27,5 +27,10 @@ class GeneratedDocument extends Model implements HasMedia
     {
         return $this->belongsTo(DocumentRequest::class, 'document_request_id');
     }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(Student::class);
+    }
 }
 

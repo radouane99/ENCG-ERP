@@ -8,6 +8,10 @@ use App\Models\Student;
 use App\Models\ExamSession;
 use App\Services\Core\PdfEngineService;
 
+use App\Models\GeneratedDocument;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
 class DocumentGeneratorService
 {
     protected PdfEngineService $pdfEngine;
@@ -21,16 +25,33 @@ class DocumentGeneratorService
      */
     public function generateConvocation(Student $student, ExamSession $session): string
     {
+        $token = Str::uuid()->toString();
+        $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
+        $qrCodeSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+        $qrCodeBase64 = base64_encode($qrCodeSvg);
+
         $data = [
             'student' => $student,
             'session' => $session,
-            'qrCodeToken' => base64_encode("convocation_{$student->id}_{$session->id}") // Simple token for QR
+            'qrCodeBase64' => $qrCodeBase64,
+            'verifyUrl' => $verifyUrl
         ];
 
-        $filename = "student_{$student->id}.pdf";
+        $filename = "student_{$student->id}_" . time() . ".pdf";
         $directory = "convocations/session_{$session->id}";
         
-        return $this->pdfEngine->generateFromView('pdf.convocation', $data, $directory, $filename);
+        $path = $this->pdfEngine->generateFromView('pdf.convocation', $data, $directory, $filename);
+
+        GeneratedDocument::create([
+            'student_id' => $student->id,
+            'document_type' => 'convocation',
+            'file_path' => $path,
+            'verification_token' => $token,
+            'verification_url' => $verifyUrl,
+            'expires_at' => null
+        ]);
+
+        return $path;
     }
 
     /**
@@ -41,17 +62,34 @@ class DocumentGeneratorService
         // Fetch all grades for this student and academic year
         $grades = $student->grades()->where('academic_year_id', $academicYearId)->with('module')->get();
         
+        $token = Str::uuid()->toString();
+        $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
+        $qrCodeSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+        $qrCodeBase64 = base64_encode($qrCodeSvg);
+
         $data = [
             'student' => $student,
             'grades' => $grades,
             'year' => '2025/2026', // Ideally fetched from DB
             'date' => now()->format('d/m/Y'),
-            'qrCodeToken' => base64_encode("transcript_{$student->id}_{$academicYearId}")
+            'qrCodeBase64' => $qrCodeBase64,
+            'verifyUrl' => $verifyUrl
         ];
 
-        $filename = "student_{$student->id}.pdf";
+        $filename = "student_{$student->id}_" . time() . ".pdf";
         $directory = "transcripts/year_{$academicYearId}";
         
-        return $this->pdfEngine->generateFromView('pdf.releve_notes', $data, $directory, $filename);
+        $path = $this->pdfEngine->generateFromView('pdf.releve_notes', $data, $directory, $filename);
+
+        GeneratedDocument::create([
+            'student_id' => $student->id,
+            'document_type' => 'releve_notes',
+            'file_path' => $path,
+            'verification_token' => $token,
+            'verification_url' => $verifyUrl,
+            'expires_at' => null
+        ]);
+
+        return $path;
     }
 }
