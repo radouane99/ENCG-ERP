@@ -37,6 +37,22 @@ class StudentService
             $query->where('students.status', $filters['status']);
         }
 
+        if (!empty($filters['filiere_id']) || !empty($filters['semester']) || !empty($filters['group_id'])) {
+            $query->whereHas('latestPathway', function ($q) use ($filters) {
+                if (!empty($filters['filiere_id'])) {
+                    $q->where('filiere_id', $filters['filiere_id']);
+                }
+                if (!empty($filters['semester'])) {
+                    // Extract integer from 'S1', 'S2' strings if necessary, or just match exactly if frontend sends integer
+                    $semesterNum = str_replace('S', '', $filters['semester']);
+                    $q->where('semester_number', $semesterNum);
+                }
+                if (!empty($filters['group_id'])) {
+                    $q->where('group_id', $filters['group_id']);
+                }
+            });
+        }
+
         // Validate sort field to prevent SQL injection
         $allowedSorts = ['last_name', 'first_name', 'student_number', 'created_at', 'status'];
         if (!in_array($sortField, $allowedSorts)) {
