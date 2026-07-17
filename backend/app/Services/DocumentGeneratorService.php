@@ -74,8 +74,14 @@ class DocumentGeneratorService
      */
     public function generateTranscript(Student $student, int $academicYearId): string
     {
-        // Fetch all grades for this student and academic year
-        $grades = $student->grades()->where('academic_year_id', $academicYearId)->with('module')->get();
+        // Fetch all grades for this student. Ideally, we should join with assessments to filter by academic_year_id
+        // but for simplicity we fetch all their grades for now or filter through assessment.
+        $grades = $student->grades()
+            ->whereHas('assessment', function ($query) use ($academicYearId) {
+                $query->where('academic_year_id', $academicYearId);
+            })
+            ->with(['assessment.module'])
+            ->get();
         
         $token = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
