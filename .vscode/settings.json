@@ -6,5 +6,6 @@
             "approve": true,
             "matchCommandLine": true
         }
-    }
+    },
+    "css.lint.unknownAtRules": "ignore"
 }
