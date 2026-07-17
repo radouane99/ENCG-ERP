@@ -35,7 +35,7 @@ class AdminDocumentRequestController extends Controller
     public function updateStatus(UpdateDocumentRequestStatusRequest $request, $id)
     {
         $documentRequest = DocumentRequest::findOrFail($id);
-        $updated = $this->documentRequestService->updateStatus($documentRequest, $request->validated());
+        $updated = $this->documentRequestService->processRequest($documentRequest, $request->validated('status'), ['admin_notes' => 'Updated via Admin UI']);
         return response()->json($updated);
     }
 
@@ -43,9 +43,8 @@ class AdminDocumentRequestController extends Controller
     {
         $documentRequest = DocumentRequest::findOrFail($id);
         
-        $this->pdfGenerationService->generatePdf($documentRequest);
-        
-        $this->documentRequestService->updateStatus($documentRequest, ['status' => 'ready']);
+        // processRequest 'ready' will trigger generateDocumentPdf automatically
+        $this->documentRequestService->processRequest($documentRequest, 'ready', ['admin_notes' => 'Generated via API']);
         
         return response()->json(['message' => 'PDF generated successfully']);
     }

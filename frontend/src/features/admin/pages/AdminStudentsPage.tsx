@@ -88,6 +88,15 @@ export default function AdminStudentsPage() {
           </select>
         </div>
         <div className="flex-1 max-w-sm">
+          <label className="block text-xs font-bold text-slate-500 mb-2">Filtrer par Semestre</label>
+          <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
+            <option value="">Tous les semestres</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
+              <option key={s} value={s}>Semestre {s}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 max-w-sm">
           <label className="block text-xs font-bold text-slate-500 mb-2">Filtrer par Groupe</label>
           <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700">
             <option value="">Tous les groupes</option>
