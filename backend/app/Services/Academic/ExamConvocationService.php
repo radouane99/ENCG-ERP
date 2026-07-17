@@ -372,5 +372,121 @@ class ExamConvocationService
                 'surveillances' => $surveillances
             ]
         ];
+    /**
+     * Get aggregate stats for a session's convocations (Dashboard)
+     */
+    public function getSessionConvocationStats(int $sessionId): array
+    {
+        $session = ExamSession::with('exams')->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+
+        if ($examIds->isEmpty()) {
+            return [
+                'success' => true,
+                'data' => [
+                    'students' => ['total' => 0, 'generated' => 0, 'sent' => 0, 'downloaded' => 0],
+                    'surveillants' => ['total' => 0, 'generated' => 0, 'sent' => 0, 'confirmed' => 0]
+                ]
+            ];
+        }
+
+        // Students metrics
+        $totalSeatings = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->count();
+        $generated = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('qr_token')->count();
+        $sent = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('sent_at')->count();
+        $present = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->count();
+        $totalDistinctStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->distinct('student_id')->count('student_id');
+
+        // Surveillants metrics
+        $totalSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->distinct('professor_id')->count('professor_id');
+        $surveillancesGenerated = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->count();
+        $surveillancesAttended = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->where('has_attended', true)->count();
+
+        return [
+            'success' => true,
+            'data' => [
+                'students' => [
+                    'total' => $totalDistinctStudents, // Unique students
+                    'total_seatings' => $totalSeatings, // Total exams taken
+                    'generated' => $generated,
+                    'sent' => $sent,
+                    'downloaded' => $present, // Using present as proxy for now
+                ],
+                'surveillants' => [
+                    'total' => $totalSurveillants,
+                    'generated' => $surveillancesGenerated,
+                    'sent' => 0, // Not tracked in db schema yet
+                    'confirmed' => $surveillancesAttended // Using attended as confirmed
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get detailed list of convocations for a session
+     */
+    public function getSessionConvocationsList(int $sessionId, array $filters = []): array
+    {
+        $session = ExamSession::with('exams')->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+
+        if ($examIds->isEmpty()) {
+            return ['success' => true, 'data' => ['students' => [], 'surveillants' => []]];
+        }
+
+        $studentQuery = DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->join('filieres', 'modules.filiere_id', '=', 'filieres.id')
+            ->leftJoin('groups', 'exams.group_id', '=', 'groups.id')
+            ->whereIn('exam_seatings.exam_id', $examIds)
+            ->select(
+                'exam_seatings.id',
+                'users.name as student_name',
+                'students.cne',
+                'filieres.code as filiere',
+                'groups.name as group_name',
+                'modules.name as exam_name',
+                'exams.exam_date',
+                'exams.start_time',
+                'exam_seatings.qr_token',
+                'exam_seatings.sent_at',
+                'exam_seatings.is_present'
+            );
+
+        if (!empty($filters['filiere'])) {
+            $studentQuery->where('filieres.code', $filters['filiere']);
+        }
+
+        $studentsList = $studentQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();
+
+        $surveillantQuery = DB::table('exam_surveillances')
+            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
+            ->join('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
+            ->whereIn('exam_surveillances.exam_id', $examIds)
+            ->select(
+                'exam_surveillances.id',
+                'users.name as professor_name',
+                'modules.name as exam_name',
+                'rooms.name as room_name',
+                'exams.exam_date',
+                'exams.start_time',
+                'exam_surveillances.role',
+                'exam_surveillances.has_attended'
+            );
+
+        $surveillantsList = $surveillantQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();
+
+        return [
+            'success' => true,
+            'data' => [
+                'students' => $studentsList,
+                'surveillants' => $surveillantsList
+            ]
+        ];
     }
 }

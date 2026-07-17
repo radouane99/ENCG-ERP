@@ -44,8 +44,22 @@ export const examsApi = {
     const response = await api.get(`/exam-planning/${examId}/live-stats`); // Temp reuse
     return response.data;
   },
-  generateSession: async () => {
-    const response = await api.post('/exam-planning/generate-session');
+  // Convocations Dashboard
+  getConvocationSessionStats: async (sessionId: number) => {
+    const response = await api.get(`/admin/convocations/session/${sessionId}/stats`);
+    return response.data.data;
+  },
+  getConvocationSessionList: async (sessionId: number, filiere?: string) => {
+    const params = filiere && filiere !== 'Toutes les filières' ? { filiere } : {};
+    const response = await api.get(`/admin/convocations/session/${sessionId}/list`, { params });
+    return response.data.data;
+  },
+  generateSession: async (sessionId: number) => {
+    const response = await api.post('/admin/convocations/generate-session', { session_id: sessionId });
+    return response.data;
+  },
+  sendSessionEmails: async (sessionId: number) => {
+    const response = await api.post('/admin/convocations/send-session', { session_id: sessionId });
     return response.data;
   },
   createExam: async (data: ExamPayload) => {

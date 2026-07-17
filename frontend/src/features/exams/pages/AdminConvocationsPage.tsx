@@ -55,6 +55,11 @@ export default function AdminConvocationsPage() {
   const [surveillants, setSurveillants] = useState<any[]>([])
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
 
+  const [stats, setStats] = useState({
+    students: { total: 0, total_seatings: 0, generated: 0, sent: 0, downloaded: 0 },
+    surveillants: { total: 0, generated: 0, sent: 0, confirmed: 0 }
+  })
+
   useEffect(() => {
     if (activeTab === 'disponibilites') {
       fetchProfessors()
@@ -66,15 +71,56 @@ export default function AdminConvocationsPage() {
   const fetchExamDetails = async () => {
     try {
       setIsLoadingDetails(true)
-      const data = await examsApi.getExamDetails(1) // Demo with exam 1
-      setStudents(data.seatings || [])
-      setSurveillants(data.surveillances || [])
+      const statsData = await examsApi.getConvocationSessionStats(1) // Demo with session 1
+      if (statsData) setStats(statsData)
+
+      const listData = await examsApi.getConvocationSessionList(1)
+      if (listData) {
+        setStudents(listData.students || [])
+        setSurveillants(listData.surveillants || [])
+      }
     } catch (error) {
       console.error('Failed to fetch exam details:', error)
     } finally {
       setIsLoadingDetails(false)
     }
   }
+
+  const handleGenerateSession = async () => {
+    try {
+      setIsLoadingDetails(true)
+      const res = await examsApi.generateSession(1);
+      setBannerMessage(res.message || "Convocations générées avec succès.");
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 5000);
+      await fetchExamDetails();
+    } catch (e: any) {
+      console.error(e);
+      setBannerMessage(e.response?.data?.message || "Erreur lors de la génération.");
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 5000);
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  };
+
+  const handleSendEmails = async () => {
+    try {
+      setIsLoadingDetails(true)
+      const res = await examsApi.sendSessionEmails(1);
+      setBannerMessage(res.message || "Emails envoyés avec succès.");
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 5000);
+      await fetchExamDetails();
+    } catch (e: any) {
+      console.error(e);
+      setBannerMessage(e.response?.data?.message || "Erreur lors de l'envoi.");
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 5000);
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -119,22 +165,22 @@ export default function AdminConvocationsPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-[#0f2863] rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <FileText className="absolute top-4 left-4 w-6 h-6 text-white/20" />
-          <p className="text-4xl font-black mb-1 relative z-10">750</p>
+          <p className="text-4xl font-black mb-1 relative z-10">{stats.students.total_seatings}</p>
           <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.students')}</p>
         </div>
         <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <FileText className="absolute top-4 left-4 w-6 h-6 text-white/20" />
-          <p className="text-4xl font-black mb-1 relative z-10">728</p>
+          <p className="text-4xl font-black mb-1 relative z-10">{stats.students.generated}</p>
           <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.generated')}</p>
         </div>
         <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <Mail className="absolute top-4 left-4 w-6 h-6 text-white/20" />
-          <p className="text-4xl font-black mb-1 relative z-10">21</p>
+          <p className="text-4xl font-black mb-1 relative z-10">{stats.students.sent}</p>
           <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.sent')}</p>
         </div>
         <div className="bg-purple-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-32 relative overflow-hidden">
           <CheckCircle2 className="absolute top-4 left-4 w-6 h-6 text-white/20" />
-          <p className="text-4xl font-black mb-1 relative z-10">1</p>
+          <p className="text-4xl font-black mb-1 relative z-10">{stats.students.downloaded}</p>
           <p className="text-[10px] font-bold uppercase tracking-wider relative z-10">{t('exams:convocations.kpi.downloaded')}</p>
         </div>
       </div>
@@ -147,14 +193,14 @@ export default function AdminConvocationsPage() {
             "px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors",
             activeTab === 'students' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
-        >🎓 {t('exams:convocations.tabs.students')} (750)</button>
+        >🎓 {t('exams:convocations.tabs.students')} ({stats.students.total_seatings})</button>
         <button 
           onClick={() => setActiveTab('surveillants')}
           className={cn(
             "px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors",
             activeTab === 'surveillants' ? "bg-white text-[#0f2863] shadow-sm" : "text-slate-500 hover:bg-white/50"
           )}
-        >🧑‍🏫 {t('exams:convocations.tabs.surveillants')} (28)</button>
+        >🧑‍🏫 {t('exams:convocations.tabs.surveillants')} ({stats.surveillants.total})</button>
         <button 
           onClick={() => setActiveTab('disponibilites')}
           className={cn(
@@ -171,9 +217,9 @@ export default function AdminConvocationsPage() {
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-amber-500" /> {t('exams:convocations.students.actions_title')}</h3>
             <div className="flex gap-3 mb-6">
-              <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
+              <button disabled={isLoadingDetails} onClick={handleGenerateSession} className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
                 <FileText className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_generate_all')}</button>
-              <button className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
+              <button disabled={isLoadingDetails} onClick={handleSendEmails} className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors">
                 <Mail className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_send_all')}</button>
               <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-colors ml-2">
                 <Printer className="w-3.5 h-3.5" /> {t('exams:convocations.students.btn_print_all')}</button>
@@ -221,10 +267,10 @@ export default function AdminConvocationsPage() {
                   </tr>
                 ) : students.map((st, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">{st.first_name} {st.last_name}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.room_name} ({t('exams:convocations.students.table.room')}: {st.seat_number})</td>
-                    <td className="px-6 py-4 font-bold text-slate-700">{t('exams:convocations.students.table.exam_details')}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{st.student_name}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500 w-48">{st.filiere} ({st.group_name})</td>
+                    <td className="px-6 py-4 font-bold text-slate-700">{st.exam_name}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600">{st.exam_date} {st.start_time}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn("inline-flex px-3 py-1 rounded-full text-[10px] font-bold", st.qr_token ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600")}>
                         {st.qr_token ? t('exams:convocations.students.table.status_generated') : t('exams:convocations.students.table.status_pending')}
@@ -244,19 +290,19 @@ export default function AdminConvocationsPage() {
           {/* Sub KPIs for Surveillants */}
           <div className="grid grid-cols-4 gap-4">
              <div className="bg-indigo-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">{surveillants.length}</p>
+              <p className="text-3xl font-black mb-1">{stats.surveillants.total}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.profs')}</p>
             </div>
             <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">{surveillants.length}</p>
+              <p className="text-3xl font-black mb-1">{stats.surveillants.generated}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.generated')}</p>
             </div>
             <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">0</p>
+              <p className="text-3xl font-black mb-1">{stats.surveillants.sent}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.sent')}</p>
             </div>
             <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-end h-24">
-              <p className="text-3xl font-black mb-1">0</p>
+              <p className="text-3xl font-black mb-1">{stats.surveillants.confirmed}</p>
               <p className="text-[10px] font-bold uppercase tracking-wider">{t('exams:convocations.kpi.confirmed')}</p>
             </div>
           </div>
@@ -307,18 +353,18 @@ export default function AdminConvocationsPage() {
                   </tr>
                 ) : surveillants.map((sv, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">Prof. {sv.first_name} {sv.last_name}</td>
-                    <td className="px-6 py-4 font-bold text-slate-700 w-48">{t('exams:convocations.students.table.exam_details')}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-600">-</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">Prof. {sv.professor_name}</td>
+                    <td className="px-6 py-4 font-bold text-slate-700 w-48">{sv.exam_name}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600">{sv.exam_date} {sv.start_time}</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{sv.room_name}</td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[9px] font-bold">
-                        Surveillant
+                        {sv.role || 'Surveillant'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex px-3 py-1 rounded-full text-[9px] font-bold bg-blue-50 text-blue-600">
-                        Générée
+                      <span className={cn("inline-flex px-3 py-1 rounded-full text-[9px] font-bold", sv.has_attended ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600")}>
+                        {sv.has_attended ? 'Présent' : 'Générée'}
                       </span>
                     </td>
                   </tr>

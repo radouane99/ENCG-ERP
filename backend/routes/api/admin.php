@@ -274,6 +274,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::prefix('convocations')->group(function () {
         Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
         Route::post('/send-session', [ConvocationController::class, 'sendSession']);
+        Route::get('/session/{sessionId}/stats', [ConvocationController::class, 'sessionStats']);
+        Route::get('/session/{sessionId}/list', [ConvocationController::class, 'sessionList']);
+        
         Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
         Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);
     });

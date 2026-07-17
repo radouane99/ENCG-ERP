@@ -45,6 +45,19 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function sessionStats(int $sessionId): JsonResponse
+    {
+        $result = $this->convocationService->getSessionConvocationStats($sessionId);
+        return response()->json($result);
+    }
+
+    public function sessionList(Request $request, int $sessionId): JsonResponse
+    {
+        $filters = $request->only(['filiere']);
+        $result = $this->convocationService->getSessionConvocationsList($sessionId, $filters);
+        return response()->json($result);
+    }
+
     public function verify(string $reference): JsonResponse
     {
         $result = $this->convocationService->verifyByReference($reference);
