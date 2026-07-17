@@ -51,16 +51,16 @@ class EncgFesSeeder extends Seeder
             // 5. Seed spring exam sessions (Ordinary + Retake)
             $sessions = $this->seedSpringExamSessions($institution, $academicYear, $semesters[1]); // S2 is current/spring
 
-            // 6. Assign Professors to Modules
-            $this->assignProfessorsToModules($academicYear, $filieres, $professors);
-
-            // 7. Seed Moroccan Students & Groups & Enrollments & Grades
+            // 6. Seed Moroccan Students & Groups & Enrollments & Grades (groups are created here)
             $seededInfo = $this->seedMoroccanStudentsAndGrades($institution, $academicYear, $filieres, $sessions, $professors, $rooms);
 
             $studentUser = $seededInfo['student_user'];
             $studentProfile = $seededInfo['student_profile'];
             $groupList = $seededInfo['group_list'];
             $studentList = $seededInfo['student_list'];
+
+            // 7. Assign Professors to Modules (must run AFTER groups are created)
+            $this->assignProfessorsToModules($academicYear, $filieres, $professors);
 
             // 8. Seed Timetable/Schedules
             $this->seedSchedules($institution, $academicYear, $semesters, $filieres, $groupList, $professors, $rooms);
