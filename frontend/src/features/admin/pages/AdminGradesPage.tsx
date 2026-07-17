@@ -13,6 +13,7 @@ export default function AdminGradesPage() {
   const isRtl = i18n.language === 'ar'
   
   const [filiere, setFiliere] = useState('')
+  const [semestre, setSemestre] = useState('')
   const [groupe, setGroupe] = useState('')
   const [module, setModule] = useState('')
   const [filieres, setFilieres] = useState<any[]>([])
@@ -33,10 +34,10 @@ export default function AdminGradesPage() {
       setModule('')
       setGroupes([])
       setModules([])
-      api.get('/groups', { params: { filiere_id: filiere } })
+      api.get('/groups', { params: { filiere_id: filiere, semester: semestre || undefined } })
         .then(r => setGroupes(r.data.data || r.data)).catch(console.error)
     }
-  }, [filiere])
+  }, [filiere, semestre])
 
   useEffect(() => {
     if (groupe) {
@@ -94,33 +95,56 @@ export default function AdminGradesPage() {
       {/* Form Card */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm p-6 md:p-10 space-y-10">
         
-        {/* Step 1 */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">1</div>
-            <h3 className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">{t('admin:grades.steps.filiere')}</h3>
+        {/* Step 1 & Semestre */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">1</div>
+              <h3 className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">{t('admin:grades.steps.filiere')}</h3>
+            </div>
+            <div className="relative ps-11">
+              <Building className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", filiere ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")} />
+              <select 
+                value={filiere}
+                onChange={(e) => setFiliere(e.target.value)}
+                className={getSelectStyle(filiere !== '')}
+                style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
+              >
+                <option value="">{t('admin:grades.steps.filiere_empty')}</option>
+                {filieres.map((f: any) => (
+                  <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="relative ps-11">
-            <Building className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", filiere ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")} />
-            <select 
-              value={filiere}
-              onChange={(e) => setFiliere(e.target.value)}
-              className={getSelectStyle(filiere !== '')}
-              style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
-            >
-              <option value="">{t('admin:grades.steps.filiere_empty')}</option>
-              {filieres.map((f: any) => (
-                <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-[var(--border)]">
-          {/* Step 2 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", semestre ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>2</div>
+              <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", semestre ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>SEMESTRE</h3>
+            </div>
+            <div className="relative ps-11">
+              <Target className={cn("w-5 h-5 absolute start-14 top-1/2 -translate-y-1/2 transition-colors", semestre ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")} />
+              <select 
+                value={semestre}
+                onChange={(e) => setSemestre(e.target.value)}
+                className={getSelectStyle(semestre !== '')}
+                style={{ backgroundImage: bgImageSVG, backgroundSize: '0.65em auto', backgroundPosition: isRtl ? 'left 1.5rem center' : 'right 1.5rem center' }}
+              >
+                  <option value="">-- Tous les semestres --</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
+                    <option key={s} value={s}>Semestre {s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-[var(--border)] pt-8">
+          {/* Step 3 */}
           <div className={cn("space-y-4 transition-all duration-300", !filiere && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
-              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", filiere ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>2</div>
+              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", filiere ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>3</div>
               <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", filiere ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>{t('admin:grades.steps.groupe')}</h3>
             </div>
             <div className="relative ps-11">
@@ -140,10 +164,10 @@ export default function AdminGradesPage() {
             </div>
           </div>
 
-          {/* Step 3 */}
+          {/* Step 4 */}
           <div className={cn("space-y-4 transition-all duration-300", !groupe && "opacity-40 grayscale pointer-events-none")}>
             <div className="flex items-center gap-3">
-              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", groupe ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>3</div>
+              <div className={cn("w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors", groupe ? "bg-[var(--color-primary)]" : "bg-[var(--muted-foreground)]")}>4</div>
               <h3 className={cn("text-xs font-bold uppercase tracking-wider transition-colors", groupe ? "text-[var(--color-primary)]" : "text-[var(--muted-foreground)]")}>{t('admin:grades.steps.module')}</h3>
             </div>
             <div className="relative ps-11">

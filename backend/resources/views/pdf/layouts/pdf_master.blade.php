@@ -57,9 +57,18 @@
             border-top: 1px dashed #e2e8f0;
             padding-top: 15px;
         }
-        .footer-grid td { vertical-align: top; }
+        .footer-grid td { vertical-align: bottom; }
         .footer-left { width: 55%; font-size: 9px; color: #64748b; line-height: 1.4; }
         .footer-right { width: 45%; text-align: right; font-size: 11px; }
+
+        .encg-contact-info {
+            font-size: 8px;
+            color: #1e293b;
+            text-align: center;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 8px;
+            margin-top: 10px;
+        }
         
         .qr-placeholder {
             width: 85px;
@@ -122,21 +131,29 @@
                                 @endif
                             </div>
                             <div style="padding-top: 5px;">
-                                <strong style="color:#002e5b; font-size: 11px;">Document numérique officiel</strong><br>
-                                Généré par le portail universitaire de l'ENCG.<br>
-                                Scannez le code QR ci-dessus pour vérifier l'authenticité de ce<br>
-                                document en ligne.
+                                <strong style="color:#002e5b; font-size: 11px;">Document numérique officiel sécurisé</strong><br>
+                                Généré automatiquement par l'ERP ENCG.<br>
+                                <strong>Anti-Fraude :</strong> Scannez le code QR ci-dessus<br>
+                                pour valider l'authenticité de ce document.
                             </div>
                         </td>
                         <td class="footer-right">
-                            Fait à Fès, le {{ now()->format('d/m/Y') }}<br><br>
-                            <strong>LE DIRECTEUR DE L'ENCG FÈS</strong><br><br>
-                            <div style="font-size:8px; color:#94a3b8; border: 1px dashed #cbd5e1; padding: 5px; display:inline-block; margin-top:15px;">
-                                Signé numériquement<br>par la Direction
+                            Fait à Fès, le {{ $date ?? now()->format('d/m/Y') }}<br><br>
+                            <strong>LE DIRECTEUR DE L'ENCG FÈS</strong><br>
+                            <!-- Signature Numérique SVG générée -->
+                            <div style="margin-top: 5px; margin-right: 15px;">
+                                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10,25 Q15,10 20,20 T30,15 T40,25 T50,15 T60,25 T70,10 T80,25 T90,15 T100,20 T110,25" stroke="#0f2863" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M15,30 L105,30" stroke="#0f2863" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+                                </svg>
                             </div>
                         </td>
                     </tr>
                 </table>
+                <div class="encg-contact-info">
+                    École Nationale de Commerce et de Gestion de Fès - Route d'Imouzzer, B.P. 1255, Fès - Maroc<br>
+                    Tél: +212 5 35 64 49 20 | Email: contact@encg-fes.ac.ma | Web: www.encg-fes.ac.ma
+                </div>
             </td>
         </tr>
     </table>

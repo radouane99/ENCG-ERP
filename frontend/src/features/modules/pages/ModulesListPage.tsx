@@ -32,6 +32,7 @@ export default function ModulesListPage() {
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [semesterFilter, setSemesterFilter] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -201,13 +202,19 @@ export default function ModulesListPage() {
   }
 
   const filteredModules = modules.filter(m => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (m.filiere && m.filiere.toLowerCase() === q) ||
-      m.name.toLowerCase().includes(q) || 
-      m.code.toLowerCase().includes(q)
-    );
+    let match = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      match = match && (
+        (m.filiere && m.filiere.toLowerCase() === q) ||
+        m.name.toLowerCase().includes(q) || 
+        m.code.toLowerCase().includes(q)
+      );
+    }
+    if (semesterFilter) {
+      match = match && m.semester_number === parseInt(semesterFilter);
+    }
+    return match;
   })
 
   if (isImporting) {
@@ -269,18 +276,33 @@ export default function ModulesListPage() {
       </div>
 
       {/* Filter Box */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex items-center gap-4">
-        <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Filtrer par filière :</label>
-        <select 
-          className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 min-w-[250px] outline-none focus:border-blue-500 transition-colors"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        >
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-wrap items-center gap-6">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Filtrer par filière :</label>
+          <select 
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 min-w-[200px] outline-none focus:border-blue-500 transition-colors"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          >
           <option value="">-- Toutes les Filières --</option>
           {filieres.map(f => (
             <option key={f.id} value={f.code}>{f.code} - {f.name}</option>
           ))}
-        </select>
+          </select>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Semestre :</label>
+          <select 
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 min-w-[150px] outline-none focus:border-blue-500 transition-colors"
+            value={semesterFilter}
+            onChange={(e) => setSemesterFilter(e.target.value)}
+          >
+            <option value="">-- Tous --</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
+              <option key={s} value={s}>Semestre {s}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Table Container */}

@@ -100,11 +100,13 @@ class DocumentRequestService
         $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->generate($verifyUrl);
         $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
 
-        // Load Logo
+        // Load Logo or use SVG fallback
         $logoPath = public_path('logo-encg.png');
-        $logoBase64 = '';
         if (file_exists($logoPath)) {
             $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        } else {
+            $svgLogo = '<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="60" rx="8" fill="#002e5b"/><text x="100" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">ENCG FÈS</text></svg>';
+            $logoBase64 = 'data:image/svg+xml;base64,' . base64_encode($svgLogo);
         }
 
         // The View variables

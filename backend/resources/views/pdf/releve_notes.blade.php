@@ -85,7 +85,7 @@
 
 @section('content')
 <div class="doc-title">
-    RELEVÉ DE NOTES - SEMESTRE S1
+    RELEVÉ DE NOTES - {{ $semesterName ?? 'SEMESTRE S1' }}
 </div>
 
 <div class="student-info">

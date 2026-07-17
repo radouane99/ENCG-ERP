@@ -373,14 +373,20 @@ class EncgFesSeeder extends Seeder
     {
         $modules = [
             ['name' => 'Mathématiques pour la Gestion', 'code' => 'TC-S1-M01', 'semester' => 1, 'coeff' => 3],
-            ['name' => 'Comptabilité Générale I', 'code' => 'TC-S1-M03', 'semester' => 1, 'coeff' => 3],
-            ['name' => 'Économie Générale I', 'code' => 'TC-S1-M02', 'semester' => 1, 'coeff' => 2],
-            ['name' => 'Langue Anglaise I', 'code' => 'TC-S1-M06', 'semester' => 1, 'coeff' => 1],
+            ['name' => 'Comptabilité Générale I', 'code' => 'TC-S1-M02', 'semester' => 1, 'coeff' => 3],
+            ['name' => 'Économie Générale I', 'code' => 'TC-S1-M03', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Langue Anglaise I', 'code' => 'TC-S1-M04', 'semester' => 1, 'coeff' => 1],
+            ['name' => 'Management de Base', 'code' => 'TC-S1-M05', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Informatique de Gestion I', 'code' => 'TC-S1-M06', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Soft Skills I', 'code' => 'TC-S1-M07', 'semester' => 1, 'coeff' => 1],
 
             ['name' => 'Statistiques et Probabilités', 'code' => 'TC-S2-M01', 'semester' => 2, 'coeff' => 3],
-            ['name' => 'Comptabilité Générale II', 'code' => 'TC-S2-M03', 'semester' => 2, 'coeff' => 3],
-            ['name' => 'Économie Générale II', 'code' => 'TC-S2-M02', 'semester' => 2, 'coeff' => 2],
-            ['name' => 'Langue Anglaise II', 'code' => 'TC-S2-M07', 'semester' => 2, 'coeff' => 1],
+            ['name' => 'Comptabilité Générale II', 'code' => 'TC-S2-M02', 'semester' => 2, 'coeff' => 3],
+            ['name' => 'Économie Générale II', 'code' => 'TC-S2-M03', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Langue Anglaise II', 'code' => 'TC-S2-M04', 'semester' => 2, 'coeff' => 1],
+            ['name' => 'Marketing de Base', 'code' => 'TC-S2-M05', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Informatique de Gestion II', 'code' => 'TC-S2-M06', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Soft Skills II', 'code' => 'TC-S2-M07', 'semester' => 2, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
@@ -403,6 +409,9 @@ class EncgFesSeeder extends Seeder
             ['name' => 'Analyse Financière', 'code' => 'GFC-S5-M02', 'semester' => 5, 'coeff' => 3],
             ['name' => 'Finance d\'Entreprise', 'code' => 'GFC-S5-M03', 'semester' => 5, 'coeff' => 3],
             ['name' => 'Fiscalité des Entreprises', 'code' => 'GFC-S5-M04', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Droit des Sociétés', 'code' => 'GFC-S5-M05', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Management Stratégique', 'code' => 'GFC-S5-M06', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Anglais des Affaires', 'code' => 'GFC-S5-M07', 'semester' => 5, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
@@ -425,6 +434,9 @@ class EncgFesSeeder extends Seeder
             ['name' => 'Marketing Stratégique', 'code' => 'MCM-S5-M02', 'semester' => 5, 'coeff' => 3],
             ['name' => 'Études de Marché', 'code' => 'MCM-S5-M03', 'semester' => 5, 'coeff' => 3],
             ['name' => 'Communication Commerciale', 'code' => 'MCM-S5-M04', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Management de la Force de Vente', 'code' => 'MCM-S5-M05', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Droit Commercial', 'code' => 'MCM-S5-M06', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Anglais du Marketing', 'code' => 'MCM-S5-M07', 'semester' => 5, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
