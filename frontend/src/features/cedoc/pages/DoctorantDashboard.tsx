@@ -93,7 +93,7 @@ export default function DoctorantDashboard() {
             </div>
 
             <div className="space-y-3">
-              {publications.map((pub, idx) => (
+              {publications.map((pub: any, idx: number) => (
                 <div key={idx} className="p-4 border border-white/5 rounded-xl hover:bg-white/[0.02] transition-colors">
                   <h4 className="font-bold text-white leading-tight mb-1">{pub.title}</h4>
                   <div className="text-xs text-white/50 mb-3">{pub.journal} â€¢ {pub.date}</div>
@@ -137,7 +137,7 @@ export default function DoctorantDashboard() {
             </h3>
             
             <div className="space-y-3">
-              {vacations.map((vac, idx) => (
+              {vacations.map((vac: any, idx: number) => (
                 <div key={idx} className="border border-white/5 rounded-xl p-3 bg-white/[0.02]">
                   <div className="text-sm font-bold text-white mb-1">{vac.module}</div>
                   <div className="flex justify-between items-center mt-2">

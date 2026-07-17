@@ -291,7 +291,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* X-axis labels */}
           <div className="flex justify-between px-1 mb-1 mt-3">
-            {enrollmentData.map(d => (
+            {enrollmentData.map((d: any) => (
               <span key={d.month} className="text-foreground/30 text-[10px]">{d.month}</span>
             ))}
           </div>
@@ -407,7 +407,7 @@ const AdminDashboard: React.FC = () => {
             </button>
           </div>
           <div className="space-y-3 flex-1">
-            {recentActivities.map((a, i) => (
+            {recentActivities.map((a: any, i: number) => (
               <div key={i} className="flex items-start gap-3 group">
                 <div className="relative mt-1">
                   <div className={`w-2 h-2 rounded-full ${activityColors[a.type]} ring-2 ring-offset-1 ring-offset-transparent`} />
@@ -427,7 +427,7 @@ const AdminDashboard: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-foreground/30 text-[10px] uppercase tracking-widest mb-2">Actions rapides</p>
             <div className="grid grid-cols-2 gap-2">
-              {quickActions.map((a) => (
+              {quickActions.map((a: any) => (
                 <Link key={a.label} to={a.link} className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br border text-xs font-medium transition-all hover:scale-105 hover:shadow-lg ${a.color}`}>
                   <a.icon size={12} />
                   {a.label}

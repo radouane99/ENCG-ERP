@@ -115,7 +115,7 @@ export default function ProfessorAnalytics() {
             </p>
 
             <div className="space-y-4 flex-1">
-              {atRiskStudents.map((student, idx) => (
+              {atRiskStudents.map((student: { name: string; risk: string; issue: string }, idx: number) => (
                 <div key={idx} className="bg-white rounded-2xl p-4 shadow-sm border border-rose-100/50">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-white text-sm">{student.name}</h3>

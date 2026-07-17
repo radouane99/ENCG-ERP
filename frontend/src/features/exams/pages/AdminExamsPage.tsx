@@ -6,6 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { academicApi } from '@shared/api/academic'
 import { examsApi } from '@shared/api/exams'
+import api from '@shared/lib/api'
 
 export default function AdminExamsPage() {
   const { t, i18n } = useTranslation('exams')

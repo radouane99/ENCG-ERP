@@ -5,6 +5,18 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
+interface JobOffer {
+  id: string | number;
+  logo: string;
+  company: string;
+  type: string;
+  title: string;
+  location: string;
+  duration: string;
+  tags: string[];
+  status: string;
+}
+
 export default function StudentProjectsMarket() {
   const [filter, setFilter] = useState('ALL'); // ALL, STAGE, PFE
 
@@ -16,8 +28,8 @@ export default function StudentProjectsMarket() {
     }
   });
 
-  const offers = offersData || [];
-  const filteredOffers = filter === 'ALL' ? offers : offers.filter((o: any) => o.type === filter);
+  const offers: JobOffer[] = offersData || [];
+  const filteredOffers = filter === 'ALL' ? offers : offers.filter((o: JobOffer) => o.type === filter);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#e6007e]" /></div>;
