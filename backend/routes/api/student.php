@@ -54,6 +54,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
         Route::get('/{id}/download', [StudentConvocationController::class, 'download']);
     });
 
+    // CEDOC Dashboard
+    Route::get('/cedoc/dashboard', [\App\Http\Controllers\Api\CedocController::class, 'getDashboardStats']);
+
     // Document Requests (Guichet Électronique)
     Route::prefix('document-requests')->group(function () {
         Route::get('/', [StudentDocumentRequestController::class, 'index']);

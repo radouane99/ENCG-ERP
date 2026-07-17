@@ -2,13 +2,19 @@ import { useState } from 'react'
 import { Search, Calculator, CheckCircle2, AlertTriangle, Users } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
+import { Spinner } from '@shared/components/ui/Spinner'
 
 export default function DeliberationPage() {
   const { t } = useTranslation('deliberation')
-  const [sessions] = useState([
-    { id: 1, name: 'Délibération S3 - Automne 2025', date: '2026-02-15', status: 'completed', students: 120, success_rate: 85 },
-    { id: 2, name: 'Délibération S4 - Printemps 2026', date: '2026-06-30', status: 'pending', students: 118, success_rate: null },
-  ])
+  const { data: sessions, isLoading } = useQuery({
+    queryKey: ['deliberations'],
+    queryFn: async () => {
+      const res = await api.get('/admin/academic/deliberations');
+      return res.data.data;
+    }
+  });
 
   return (
     <div className="space-y-6 animate-in p-6">
@@ -32,7 +38,13 @@ export default function DeliberationPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {sessions.map(s => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="flex justify-center"><Spinner className="w-6 h-6 text-primary" /></div>
+                </td>
+              </tr>
+            ) : sessions?.map((s: any) => (
               <tr key={s.id} className="hover:bg-muted/50">
                 <td className="px-6 py-4 font-bold">{s.name}</td>
                 <td className="px-6 py-4 text-muted-foreground">{s.date}</td>
@@ -42,7 +54,7 @@ export default function DeliberationPage() {
                 </td>
                 <td className="px-6 py-4 text-center">
                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border", s.status === 'completed' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
-                      {t(`status.${s.status}`)}
+                      {t(`status.${s.status || 'pending'}`)}
                    </span>
                 </td>
                 <td className="px-6 py-4 text-end">

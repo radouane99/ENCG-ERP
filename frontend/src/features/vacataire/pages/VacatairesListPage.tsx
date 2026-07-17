@@ -49,7 +49,7 @@ export default function VacatairesListPage() {
 
   const { data: vacatairesData, isLoading } = useQuery({
     queryKey: ['hr-vacataires', search],
-    queryFn: () => api.get('/hr/vacataires', { params: { search } }).then(res => res.data.data)
+    queryFn: () => api.get('/admin/hr/vacataires', { params: { search } }).then(res => res.data.data)
   })
 
   const { data: deptsData } = useQuery({

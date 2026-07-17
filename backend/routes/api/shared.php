@@ -75,6 +75,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Global Search
         Route::get('/search', [\App\Http\Controllers\Api\SearchController::class, 'search']);
+
+        // User Profiles & Roles
+        Route::get('/users/{user}/roles', [\App\Http\Controllers\Api\ProfileController::class, 'roles']);
+        Route::get('/users/search', [\App\Http\Controllers\Api\ProfileController::class, 'search']);
+
+        Route::get('/document-types', function() {
+            return response()->json(['data' => \App\Models\DocumentType::all()]);
+        });
     });
 
     // Chatbot / AI Shared

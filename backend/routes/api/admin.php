@@ -178,6 +178,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('modules/{module}/audit-logs', [GradeController::class, 'getModuleAuditLogs']);
     Route::get('assessments/{assessment}/grades', [GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
+    Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
 
     // Student Transcript PDF
