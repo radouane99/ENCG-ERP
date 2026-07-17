@@ -8,15 +8,20 @@ export default function AuthLayout() {
       <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl animate-float pointer-events-none" />
       <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl animate-float-delayed pointer-events-none" />
 
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden bg-gradient-to-br from-[#0a1226] via-[#101c38] to-[#070b16] border-e border-border">
+      {/* Left panel — branding with ENCG Fes image background */}
+      <div 
+        className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden border-e border-border bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(10, 18, 38, 0.82), rgba(7, 11, 22, 0.94)), url('/login-bg.png')`,
+        }}
+      >
         {/* Animated Glow Blobs inside left panel */}
-        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-primary/15 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-primary/20 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent/15 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: '3s' }} />
 
         {/* Dotted Grid Pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay"
           style={{
             backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
             backgroundSize: '24px 24px',
@@ -24,7 +29,7 @@ export default function AuthLayout() {
         />
 
         {/* Logo and Header */}
-        <div className="flex items-center gap-4 relative z-10 animate-fade-in">
+        <div className="flex items-center gap-4 relative z-10 animate-fade-in-premium">
           <div className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md">
             <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain" />
           </div>
@@ -35,9 +40,9 @@ export default function AuthLayout() {
         </div>
 
         {/* Slogan / Slogans quote */}
-        <div className="relative z-10 max-w-lg space-y-6 animate-slide-up delay-75">
+        <div className="relative z-10 max-w-lg space-y-6 animate-slide-up-premium delay-200">
           <div className="inline-flex items-center gap-2 bg-primary/20 text-white/90 border border-white/10 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-accent" /> Portail Universitaire Intelligent
+            <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" /> Portail Universitaire Intelligent
           </div>
           <blockquote className="space-y-4">
             <h1 className="text-white text-4xl font-black leading-tight tracking-tight">
@@ -53,7 +58,7 @@ export default function AuthLayout() {
         </div>
 
         {/* Stats Blocks */}
-        <div className="grid grid-cols-3 gap-5 relative z-10 animate-slide-up delay-150">
+        <div className="grid grid-cols-3 gap-5 relative z-10 animate-slide-up-premium delay-400">
           {[
             { label: 'Étudiants', value: '2,400+' },
             { label: 'Enseignants', value: '180+' },
@@ -72,10 +77,10 @@ export default function AuthLayout() {
 
       {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md animate-fade-in relative z-20">
+        <div className="w-full max-w-md animate-slide-up-premium relative z-20">
           
           {/* Mobile logo */}
-          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden animate-slide-up">
+          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden animate-slide-up-premium delay-100">
             <div className="bg-white dark:bg-card p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
               <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain" />
             </div>

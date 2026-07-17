@@ -351,4 +351,28 @@
     0%, 100% { opacity: 0.15; transform: scale(1); }
     50% { opacity: 0.35; transform: scale(1.08); }
   }
+
+  /* ── Premium animations ── */
+  .animate-fade-in-premium {
+    animation: fadeInPremium 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-slide-up-premium {
+    animation: slideUpPremium 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes fadeInPremium {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUpPremium {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Staggered Delays ── */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 }
