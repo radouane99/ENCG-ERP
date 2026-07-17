@@ -74,14 +74,35 @@ class DocumentGeneratorService
      */
     public function generateTranscript(Student $student, int $academicYearId): string
     {
-        // Fetch all grades for this student. Ideally, we should join with assessments to filter by academic_year_id
-        // but for simplicity we fetch all their grades for now or filter through assessment.
+        // Fetch all grades for this student.
+        // In a real scenario, grades could be filtered by the current academic year if a pivot/relation exists.
         $grades = $student->grades()
-            ->whereHas('assessment', function ($query) use ($academicYearId) {
-                $query->where('academic_year_id', $academicYearId);
-            })
             ->with(['assessment.module'])
             ->get();
+            
+        $formattedModules = [];
+        $totalScore = 0;
+        $totalCoef = 0;
+
+        foreach ($grades as $grade) {
+            if (!$grade->assessment || !$grade->assessment->module) continue;
+            
+            $module = $grade->assessment->module;
+            $score = $grade->value;
+            $coef = $module->coefficient ?? 1;
+            
+            $formattedModules[] = [
+                'code' => $module->code ?? 'N/A',
+                'name' => $module->name,
+                'score' => $score,
+                'is_validated' => $score >= 10
+            ];
+            
+            $totalScore += ($score * $coef);
+            $totalCoef += $coef;
+        }
+        
+        $avgGrade = $totalCoef > 0 ? ($totalScore / $totalCoef) : 0;
         
         $token = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
@@ -90,7 +111,8 @@ class DocumentGeneratorService
 
         $data = [
             'student' => $student,
-            'grades' => $grades,
+            'modules' => $formattedModules,
+            'avgGrade' => $avgGrade,
             'year' => '2025/2026', // Ideally fetched from DB
             'date' => now()->format('d/m/Y'),
             'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
