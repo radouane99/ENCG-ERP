@@ -535,26 +535,44 @@ class EncgFesSeeder extends Seeder
     private function assignProfessorsToModules(AcademicYear $academicYear, array $filieres, array $professors): void
     {
         $allModules = Module::all();
-        $moduleIdx = 0;
-        $inserted = [];
+        $profCount = count($professors);
 
-        $getGroupsForModule = function (int $moduleId) use ($academicYear) {
+        // Helper: get all group IDs for a module (via filiere)
+        $getGroupsForModule = function (int $moduleId, int $filiereId) use ($academicYear) {
             return DB::table('groups')
-                ->join('modules', 'groups.filiere_id', '=', 'modules.filiere_id')
-                ->where('modules.id', $moduleId)
-                ->where('groups.academic_year_id', $academicYear->id)
-                ->pluck('groups.id')
+                ->where('filiere_id', $filiereId)
+                ->where('academic_year_id', $academicYear->id)
+                ->pluck('id')
                 ->toArray();
         };
 
-        $insertAssignment = function ($mod, $prof, $groupId) use ($academicYear, &$inserted) {
-            $key = "{$mod->id}_{$prof->id}_{$groupId}";
-            if (in_array($key, $inserted)) return;
-            $inserted[] = $key;
-            DB::table('module_professor')->insert([
+        // Assign one professor per module (round-robin), one row per (module, professor, group)
+        // The unique constraint is (module_id, professor_id), so each module gets exactly one professor
+        foreach ($allModules as $idx => $mod) {
+            $prof = $professors[$idx % $profCount];
+            $groupIds = $getGroupsForModule($mod->id, $mod->filiere_id);
+
+            if (empty($groupIds)) {
+                // Insert without group_id if no groups found
+                DB::table('module_professor')->insertOrIgnore([
+                    'module_id'        => $mod->id,
+                    'academic_year_id' => $academicYear->id,
+                    'group_id'         => null,
+                    'professor_id'     => $prof->id,
+                    'professor_type'   => 'App\Models\Professor',
+                    'session_type'     => 'cm',
+                    'assigned_hours'   => 36,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+                continue;
+            }
+
+            // Insert one row using the first group (one professor per module per constraint)
+            DB::table('module_professor')->insertOrIgnore([
                 'module_id'        => $mod->id,
                 'academic_year_id' => $academicYear->id,
-                'group_id'         => $groupId,
+                'group_id'         => $groupIds[0],
                 'professor_id'     => $prof->id,
                 'professor_type'   => 'App\Models\Professor',
                 'session_type'     => 'cm',
@@ -562,31 +580,28 @@ class EncgFesSeeder extends Seeder
                 'created_at'       => now(),
                 'updated_at'       => now(),
             ]);
-        };
 
-        foreach ($professors as $prof) {
-            $assigned = 0;
-            while ($assigned < 2 && $moduleIdx < count($allModules)) {
-                $mod = $allModules[$moduleIdx];
-                $groupIds = $getGroupsForModule($mod->id);
-                if (empty($groupIds)) { $moduleIdx++; continue; }
-                foreach ($groupIds as $gId) {
-                    $insertAssignment($mod, $prof, $gId);
+            // For second group (if exists), ensure a different professor is assigned
+            if (isset($groupIds[1])) {
+                $altProf = $professors[($idx + 1) % $profCount];
+                // Only if altProf differs from prof (avoids duplicate module_id+professor_id)
+                if ($altProf->id !== $prof->id) {
+                    DB::table('module_professor')->insertOrIgnore([
+                        'module_id'        => $mod->id,
+                        'academic_year_id' => $academicYear->id,
+                        'group_id'         => $groupIds[1],
+                        'professor_id'     => $altProf->id,
+                        'professor_type'   => 'App\Models\Professor',
+                        'session_type'     => 'td',
+                        'assigned_hours'   => 18,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
                 }
-                $moduleIdx++;
-                $assigned++;
-            }
-        }
-
-        for ($i = $moduleIdx; $i < count($allModules); $i++) {
-            $mod = $allModules[$i];
-            $prof = $professors[$i % count($professors)];
-            $groupIds = $getGroupsForModule($mod->id);
-            foreach ($groupIds as $gId) {
-                $insertAssignment($mod, $prof, $gId);
             }
         }
     }
+
 
 
     private function seedMoroccanStudentsAndGrades(
