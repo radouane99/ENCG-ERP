@@ -115,11 +115,16 @@ class EncgFesSeeder extends Seeder
 
             // 25. Seed Module Prerequisites
             $this->seedModulePrerequisites($filieres);
+
+            // 26. Seed Tickets & Replies (Réclamations)
+            $this->seedTicketsAndReplies($institution, $studentList, $professors);
         });
     }
 
     private function clearDatabase(): void
     {
+        DB::table('ticket_replies')->delete();
+        DB::table('tickets')->delete();
         DB::table('absence_justifications')->delete();
         DB::table('attendances')->delete();
         DB::table('attendance_sessions')->delete();
@@ -529,9 +534,32 @@ class EncgFesSeeder extends Seeder
     private function assignProfessorsToModules(AcademicYear $academicYear, array $filieres, array $professors): void
     {
         $allModules = Module::all();
-        foreach ($allModules as $mod) {
-            $prof = $professors[array_rand($professors)];
+        $moduleIdx = 0;
 
+        // Ensure each professor gets assigned to at least 2 unique modules
+        foreach ($professors as $prof) {
+            for ($i = 0; $i < 2; $i++) {
+                if ($moduleIdx < count($allModules)) {
+                    $mod = $allModules[$moduleIdx];
+                    DB::table('module_professor')->insert([
+                        'module_id' => $mod->id,
+                        'academic_year_id' => $academicYear->id,
+                        'professor_id' => $prof->id,
+                        'professor_type' => 'App\Models\Professor',
+                        'session_type' => 'cm',
+                        'assigned_hours' => 36,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $moduleIdx++;
+                }
+            }
+        }
+
+        // Assign any remaining modules to random professors
+        for ($i = $moduleIdx; $i < count($allModules); $i++) {
+            $mod = $allModules[$i];
+            $prof = $professors[array_rand($professors)];
             DB::table('module_professor')->insert([
                 'module_id' => $mod->id,
                 'academic_year_id' => $academicYear->id,
@@ -667,6 +695,7 @@ class EncgFesSeeder extends Seeder
         $filiereSet = [
             ['filiere' => $filieres['TC'], 'sem' => 2, 'code' => 'TC'],
             ['filiere' => $filieres['GFC'], 'sem' => 5, 'code' => 'GFC'],
+            ['filiere' => $filieres['MCM'], 'sem' => 5, 'code' => 'MCM'],
         ];
 
         $groupList = [];
@@ -1339,56 +1368,82 @@ class EncgFesSeeder extends Seeder
         array $students,
         array $professors
     ): void {
-        $group = $groups[0];
-        $modules = Module::where('filiere_id', $group->filiere_id)->get();
-        $module = $modules[0];
-        $prof = $professors[0];
+        // Iterate through all groups to seed rich attendance data
+        foreach ($groups as $group) {
+            $modules = Module::where('filiere_id', $group->filiere_id)->where('semester_number', $group->semester_number)->get();
+            if ($modules->isEmpty()) {
+                continue;
+            }
 
-        $sessionId = DB::table('attendance_sessions')->insertGetId([
-            'schedule_id' => null,
-            'module_id' => $module->id,
-            'group_id' => $group->id,
-            'academic_year_id' => $academicYear->id,
-            'professor_id' => $prof->id,
-            'professor_type' => 'App\Models\Professor',
-            'session_date' => now()->subDays(3)->format('Y-m-d'),
-            'start_time' => '10:45:00',
-            'end_time' => '12:45:00',
-            'session_type' => 'cm',
-            'room' => 'Salle 101',
-            'is_locked' => true,
-            'created_by' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            // Get students registered in this group
+            $groupStudentRegistrations = StudentRegistration::where('group_id', $group->id)->pluck('student_id')->toArray();
+            if (empty($groupStudentRegistrations)) {
+                continue;
+            }
 
-        // Mark student 1 as absent, others present
-        foreach (array_slice($students, 0, 5) as $index => $studentUser) {
-            $status = $index === 0 ? 'absent' : 'present';
-            $isJust = ($index === 0); // we will justify it
+            // Find matching User IDs for these students
+            $groupStudentUserIds = Student::whereIn('id', $groupStudentRegistrations)->pluck('user_id')->toArray();
 
-            $attId = DB::table('attendances')->insertGetId([
-                'attendance_session_id' => $sessionId,
-                'student_id' => $studentUser->id,
-                'status' => $status,
-                'is_justified' => $isJust,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Seed 3 sessions per group
+            for ($sessIdx = 1; $sessIdx <= 3; $sessIdx++) {
+                $module = $modules[$sessIdx % count($modules)];
+                $prof = $professors[array_rand($professors)];
+                
+                $sessionDate = now()->subDays(10 - $sessIdx * 2)->format('Y-m-d');
 
-            if ($index === 0) {
-                // Justify absence
-                DB::table('absence_justifications')->insert([
-                    'attendance_id' => $attId,
-                    'student_id' => $studentUser->id,
-                    'reason' => 'medical',
-                    'description' => 'Certificat médical pour grippe saisonnière.',
-                    'status' => 'approved',
-                    'reviewed_by' => 2,
-                    'reviewed_at' => now()->subDays(1)->format('Y-m-d H:i:s'),
+                $sessionId = DB::table('attendance_sessions')->insertGetId([
+                    'schedule_id' => null,
+                    'module_id' => $module->id,
+                    'group_id' => $group->id,
+                    'academic_year_id' => $academicYear->id,
+                    'professor_id' => $prof->id,
+                    'professor_type' => 'App\Models\Professor',
+                    'session_date' => $sessionDate,
+                    'start_time' => '10:45:00',
+                    'end_time' => '12:45:00',
+                    'session_type' => 'cm',
+                    'room' => 'Salle 10' . rand(1, 9),
+                    'is_locked' => true,
+                    'created_by' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                // Mark students present/absent
+                foreach ($groupStudentUserIds as $index => $uId) {
+                    // 10% chance of absence
+                    $roll = rand(1, 10);
+                    $status = ($roll === 1) ? 'absent' : 'present';
+                    $isJust = false;
+
+                    // If absent, 50% chance of justification
+                    if ($status === 'absent' && rand(1, 2) === 1) {
+                        $isJust = true;
+                    }
+
+                    $attId = DB::table('attendances')->insertGetId([
+                        'attendance_session_id' => $sessionId,
+                        'student_id' => $uId,
+                        'status' => $status,
+                        'is_justified' => $isJust,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    if ($status === 'absent' && $isJust) {
+                        DB::table('absence_justifications')->insert([
+                            'attendance_id' => $attId,
+                            'student_id' => $uId,
+                            'reason' => rand(1, 2) === 1 ? 'medical' : 'family',
+                            'description' => rand(1, 2) === 1 ? 'Certificat médical pour maladie.' : 'Événement familial justifié.',
+                            'status' => rand(1, 3) === 1 ? 'pending' : 'approved',
+                            'reviewed_by' => rand(1, 3) === 1 ? null : 2,
+                            'reviewed_at' => rand(1, 3) === 1 ? null : now()->subDays(1)->format('Y-m-d H:i:s'),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
             }
         }
     }
@@ -1921,6 +1976,93 @@ class EncgFesSeeder extends Seeder
                 }
             }
             DB::table('module_prerequisites')->insert($unique);
+        }
+    }
+
+    private function seedTicketsAndReplies(
+        Institution $institution,
+        array $students,
+        array $professors
+    ): void {
+        $categories = ['grades', 'schedule', 'technical', 'administrative'];
+        $priorities = ['low', 'medium', 'high'];
+        $statuses = ['open', 'in_progress', 'resolved', 'closed'];
+
+        $subjects = [
+            'grades' => [
+                'Réclamation concernant la note de Fiscalité',
+                'Correction de note examen final Comptabilité Approfondie',
+                'Demande de double correction - Tronc Commun S2'
+            ],
+            'schedule' => [
+                'Conflit d\'emploi du temps pour le groupe TC-S2-G1',
+                'Absence de l\'affichage de la salle d\'examen'
+            ],
+            'technical' => [
+                'Problème d\'accès au portail étudiant',
+                'Erreur lors du téléchargement de l\'attestation de scolarité'
+            ],
+            'administrative' => [
+                'Demande urgente de convention de stage',
+                'Correction du nom sur la carte d\'étudiant'
+            ]
+        ];
+
+        // Seed 10 tickets
+        for ($i = 0; $i < 10; $i++) {
+            $category = $categories[$i % count($categories)];
+            $priority = $priorities[$i % count($priorities)];
+            $status = $statuses[$i % count($statuses)];
+            
+            $studentUser = $students[($i + 1) % count($students)];
+            $prof = $professors[$i % count($professors)];
+
+            $subjectList = $subjects[$category];
+            $subject = $subjectList[rand(0, count($subjectList) - 1)];
+
+            $resolvedAt = ($status === 'resolved' || $status === 'closed') ? now()->subDays(rand(1, 5)) : null;
+
+            $ticketId = DB::table('tickets')->insertGetId([
+                'institution_id' => $institution->id,
+                'user_id' => $studentUser->id,
+                'subject' => $subject,
+                'description' => "Bonjour,\n\nJe me permets de vous contacter car j'ai un problème concernant la catégorie " . $category . ". En effet, " . strtolower($subject) . ".\n\nCordialement,\n" . $studentUser->name,
+                'category' => $category,
+                'priority' => $priority,
+                'status' => $status,
+                'assigned_to' => ($status !== 'open') ? $prof->user_id : null,
+                'resolved_at' => $resolvedAt,
+                'created_at' => now()->subDays(10 - $i),
+                'updated_at' => now()->subDays(rand(0, 2)),
+            ]);
+
+            // Add replies
+            if ($status !== 'open') {
+                $profUser = User::find($prof->user_id);
+                // Reply 1 from Professor/Admin
+                DB::table('ticket_replies')->insert([
+                    'ticket_id' => $ticketId,
+                    'user_id' => $prof->user_id,
+                    'body' => "Bonjour " . $studentUser->name . ",\n\nJ'ai bien pris note de votre demande concernant : " . $subject . ". Nous sommes en train d'examiner le problème.\n\nCordialement,\n" . ($profUser ? $profUser->name : 'Administration'),
+                    'is_internal' => false,
+                    'attachment_path' => null,
+                    'created_at' => now()->subDays(9 - $i),
+                    'updated_at' => now()->subDays(9 - $i),
+                ]);
+
+                if ($status === 'resolved' || $status === 'closed') {
+                    // Reply 2 from Student acknowledging
+                    DB::table('ticket_replies')->insert([
+                        'ticket_id' => $ticketId,
+                        'user_id' => $studentUser->id,
+                        'body' => "Merci beaucoup pour votre retour rapide et pour la résolution !",
+                        'is_internal' => false,
+                        'attachment_path' => null,
+                        'created_at' => now()->subDays(5 - $i),
+                        'updated_at' => now()->subDays(5 - $i),
+                    ]);
+                }
+            }
         }
     }
 }
