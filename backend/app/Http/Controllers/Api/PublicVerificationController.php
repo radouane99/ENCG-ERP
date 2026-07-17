@@ -15,23 +15,24 @@ class PublicVerificationController extends Controller
      */
     public function verifyDocument(Request $request, string $documentId): JsonResponse
     {
-        // Real lookup in the documents table by verification_token or uuid
-        $document = DB::table('document_requests')
-            ->join('users', 'document_requests.student_id', '=', 'users.id')
-            ->where('document_requests.verification_token', $documentId)
-            ->orWhere('document_requests.id', is_numeric($documentId) ? $documentId : 0)
+        // Lookup in the generated_documents table by verification_token
+        $document = DB::table('generated_documents')
+            ->join('students', 'generated_documents.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->where('generated_documents.verification_token', $documentId)
             ->select(
-                'document_requests.type',
-                'document_requests.status',
-                'document_requests.created_at',
-                'users.name as student_name',
+                'generated_documents.document_type',
+                'generated_documents.created_at',
+                'users.first_name',
+                'users.last_name',
+                'students.student_number'
             )
             ->first();
 
-        if (!$document || $document->status !== 'approved') {
+        if (!$document) {
             return response()->json([
                 'success' => false,
-                'message' => 'Document invalide, introuvable ou non encore validé.',
+                'message' => 'Document invalide, introuvable ou falsifié.',
             ], 404);
         }
 
@@ -48,8 +49,9 @@ class PublicVerificationController extends Controller
         return response()->json([
             'success' => true,
             'data'    => [
-                'document_type' => $document->type,
-                'student_name'  => $document->student_name,
+                'document_type' => $document->document_type,
+                'student_name'  => strtoupper($document->last_name) . ' ' . $document->first_name,
+                'student_number'=> $document->student_number,
                 'issued_at'     => $document->created_at,
                 'status'        => 'Authentique',
                 'institution'   => 'ENCG Fès',

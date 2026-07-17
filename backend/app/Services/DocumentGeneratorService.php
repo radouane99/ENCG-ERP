@@ -21,6 +21,20 @@ class DocumentGeneratorService
         $this->pdfEngine = $pdfEngine;
     }
     /**
+     * Helper to load the ENCG logo in Base64 for DomPDF.
+     */
+    private function getLogoBase64(): string
+    {
+        $path = public_path('images/encg_logo.png');
+        if (file_exists($path)) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+        return '';
+    }
+
+    /**
      * Generate a PDF for an exam convocation.
      */
     public function generateConvocation(Student $student, ExamSession $session): string
@@ -33,7 +47,8 @@ class DocumentGeneratorService
         $data = [
             'student' => $student,
             'session' => $session,
-            'qrCodeBase64' => $qrCodeBase64,
+            'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
+            'logoBase64' => $this->getLogoBase64(),
             'verifyUrl' => $verifyUrl
         ];
 
@@ -72,7 +87,8 @@ class DocumentGeneratorService
             'grades' => $grades,
             'year' => '2025/2026', // Ideally fetched from DB
             'date' => now()->format('d/m/Y'),
-            'qrCodeBase64' => $qrCodeBase64,
+            'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
+            'logoBase64' => $this->getLogoBase64(),
             'verifyUrl' => $verifyUrl
         ];
 
