@@ -148,8 +148,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <div
       className={cn(
         'flex flex-col w-[280px] shrink-0 h-full overflow-hidden',
-        'bg-[var(--sidebar-background)]',
-        'border-e border-[var(--sidebar-border)]',
+        'bg-sidebar-background',
+        'border-e border-sidebar-border',
         'shadow-xl lg:shadow-none transition-shadow'
       )}
     >
@@ -165,17 +165,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
       )}
 
       {/* Logo */}
-      <div className="flex items-center justify-center px-6 py-6 border-b border-[var(--sidebar-border)] bg-gradient-to-b from-white/[0.02] to-transparent">
+      <div className="flex items-center justify-center px-6 py-6 border-b border-sidebar-border bg-gradient-to-b from-white/[0.02] to-transparent">
         <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain drop-shadow-sm" />
       </div>
 
       {/* Institution badge */}
       {user && (
-        <div className="mx-4 mt-5 px-4 py-3 rounded-xl bg-gradient-to-br from-[var(--sidebar-accent)] to-[var(--sidebar-background)] border border-[var(--sidebar-border)] shadow-sm">
-          <p className="text-sm font-semibold text-[var(--sidebar-foreground)] truncate">{user.institution_name}</p>
+        <div className="mx-4 mt-5 px-4 py-3 rounded-xl bg-gradient-to-br from-sidebar-accent to-sidebar-background border border-sidebar-border shadow-sm">
+          <p className="text-sm font-semibold text-sidebar-foreground truncate">{user.institution_name}</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--sidebar-primary)] shadow-[0_0_8px_var(--sidebar-primary)] animate-pulse" />
-            <p className="text-xs text-[var(--sidebar-primary)] font-medium uppercase tracking-wider">{user.roles[0]}</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-sidebar-primary shadow-[0_0_8px_var(--sidebar-primary)] animate-pulse" />
+            <p className="text-xs text-sidebar-primary font-medium uppercase tracking-wider">{user.roles[0]}</p>
           </div>
         </div>
       )}
@@ -189,7 +189,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
             return (
               <div key={navItem.groupKey} className="mt-6 first:mt-0">
-                <p className="px-3 text-[11px] font-bold tracking-[0.1em] text-[var(--sidebar-foreground)/60] uppercase mb-2">
+                <p className="px-3 text-[11px] font-bold tracking-[0.1em] text-sidebar-foreground/60 uppercase mb-2">
                   {t(navItem.groupKey)}
                 </p>
                 <div className="space-y-0.5">
@@ -209,15 +209,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
                         <>
                           {/* Active Indicator Line (RTL safe) */}
                           {isActive && (
-                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-[var(--sidebar-primary)] rounded-e-full" />
+                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-sidebar-primary rounded-e-full shadow-[0_0_8px_var(--sidebar-primary)]" />
                           )}
                           <item.icon className={cn(
                             "w-4 h-4 shrink-0 transition-transform duration-200",
-                            isActive ? "text-white" : "text-[var(--sidebar-foreground)/70] group-hover:text-white group-hover:scale-110"
+                            isActive ? "text-white scale-110" : "text-sidebar-foreground/70 group-hover:text-white group-hover:scale-110"
                           )} />
                           <span className={cn(
                             "flex-1 truncate transition-colors duration-200",
-                            isActive ? "font-semibold text-white" : "font-medium"
+                            isActive ? "font-semibold text-white" : "font-medium text-sidebar-foreground/80 group-hover:text-white"
                           )}>
                             {t(item.labelKey)}
                           </span>
@@ -240,8 +240,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     cn('sidebar-item group', isActive && 'active')
                   }
                 >
-                  <navItem.icon className="w-4 h-4 shrink-0 text-[var(--sidebar-foreground)/70] group-hover:text-white" />
-                  <span className="flex-1 truncate font-medium">
+                  <navItem.icon className="w-4 h-4 shrink-0 text-sidebar-foreground/70 group-hover:text-white" />
+                  <span className="flex-1 truncate font-medium text-sidebar-foreground/80 group-hover:text-white">
                     {t(navItem.labelKey)}
                   </span>
                 </NavLink>
@@ -254,20 +254,20 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* User footer */}
       {user && (
         <div
-          className="flex items-center gap-3 px-5 py-5 bg-[var(--sidebar-background)] border-t border-[var(--sidebar-border)] cursor-pointer hover:bg-[var(--sidebar-accent)] transition-colors group"
+          className="flex items-center gap-3 px-5 py-5 bg-sidebar-background border-t border-sidebar-border cursor-pointer hover:bg-sidebar-accent transition-colors group"
           onClick={() => {
             navigate('/profile');
             onClose && onClose();
           }}
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center text-white text-sm font-bold shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold shadow-sm">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-semibold truncate group-hover:text-[var(--color-primary)] transition-colors">{user.name}</p>
-            <p className="text-[var(--sidebar-foreground)/70] text-xs truncate">{user.email}</p>
+            <p className="text-white text-sm font-semibold truncate group-hover:text-white transition-colors">{user.name}</p>
+            <p className="text-sidebar-foreground/70 text-xs truncate">{user.email}</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-[var(--sidebar-foreground)/50] group-hover:text-[var(--sidebar-foreground)] transition-colors transform rtl:rotate-180" />
+          <ChevronRight className="w-4 h-4 text-sidebar-foreground/50 group-hover:text-sidebar-foreground transition-colors transform rtl:rotate-180" />
         </div>
       )}
     </div>

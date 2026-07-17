@@ -96,26 +96,26 @@
     --warning-foreground:           hsl(0 0% 100%);
 
     /* ── Surfaces ── */
-    --background:        hsl(210 33% 98%);  /* #f8fafc */
+    --background:        hsl(210 40% 98%);  /* Clean premium light gray-blue background */
     --foreground:        hsl(222 47% 11%);
     --card:              hsl(0 0% 100%);
     --card-foreground:   hsl(222 47% 11%);
     --popover:           hsl(0 0% 100%);
     --popover-foreground: hsl(222 47% 11%);
-    --muted:             hsl(220 14% 93%);
-    --muted-foreground:  hsl(215 16% 47%);
-    --border:            hsl(220 13% 88%);
-    --input:             hsl(220 13% 91%);
+    --muted:             hsl(210 40% 96%);
+    --muted-foreground:  hsl(215.4 16.3% 46.9%);
+    --border:            hsl(214.3 31.8% 91.4%);
+    --input:             hsl(214.3 31.8% 91.4%);
     --ring:              hsl(221 63% 28%);
     --radius:            0.625rem;
 
     /* ── Sidebar (dark blue) ── */
-    --sidebar-background: hsl(221 63% 28%);
-    --sidebar-foreground: hsl(215 25% 85%);
-    --sidebar-primary:    hsl(358 68% 38%);
+    --sidebar-background: hsl(221 63% 20%); /* Deep premium corporate blue */
+    --sidebar-foreground: hsl(210 40% 90%);
+    --sidebar-primary:    hsl(358 68% 45%); /* ENCG Red active line */
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:     hsl(221 63% 35%);
-    --sidebar-border:     hsl(221 63% 25%);
+    --sidebar-accent:     hsl(221 63% 28%); /* Active item background / Hover state */
+    --sidebar-border:     hsl(221 63% 15%);
 
     /* ── Charts ── */
     --chart-1: hsl(221 63% 28%);
@@ -126,40 +126,40 @@
   }
 
   /* ────────────────────────────────────────────────────────────────
-     Dark Mode Overrides
+     Dark Mode Overrides — SaaS Navy Deep Theme
      ──────────────────────────────────────────────────────────────── */
   .dark {
-    --primary:                      hsl(221 63% 40%);
-    --primary-foreground:           hsl(0 0% 100%);
-    --secondary:                    hsl(215 51% 40%);
-    --secondary-foreground:         hsl(0 0% 100%);
-    --accent:                       hsl(358 68% 50%);
+    --primary:                      hsl(221 83% 58%); /* Vibrant accessible primary blue */
+    --primary-foreground:           hsl(210 40% 98%);
+    --secondary:                    hsl(222 47% 15%); /* Elegant secondary dark buttons */
+    --secondary-foreground:         hsl(210 40% 98%);
+    --accent:                       hsl(358 85% 60%); /* High-contrast ENCG Red */
     --accent-foreground:            hsl(0 0% 100%);
-    --destructive:                  hsl(358 68% 50%);
+    --destructive:                  hsl(358 85% 60%);
     --destructive-foreground:       hsl(0 0% 100%);
-    --success:                      hsl(142 71% 40%);
+    --success:                      hsl(142 80% 45%);
     --success-foreground:           hsl(0 0% 100%);
-    --warning:                      hsl(38 92% 45%);
+    --warning:                      hsl(38 92% 55%);
     --warning-foreground:           hsl(0 0% 100%);
 
-    --background:        hsl(222 47% 6%);
-    --foreground:        hsl(210 40% 96%);
-    --card:              hsl(222 47% 9%);
-    --card-foreground:   hsl(210 40% 96%);
-    --popover:           hsl(222 47% 9%);
-    --popover-foreground: hsl(210 40% 96%);
-    --muted:             hsl(217 33% 15%);
-    --muted-foreground:  hsl(215 20% 55%);
-    --border:            hsl(217 33% 19%);
-    --input:             hsl(217 33% 17%);
-    --ring:              hsl(221 63% 40%);
+    --background:        hsl(222 47% 7%);   /* Beautiful SaaS dark blue-gray */
+    --foreground:        hsl(210 40% 98%);
+    --card:              hsl(222 47% 11%);  /* Clearly distinct elevated cards */
+    --card-foreground:   hsl(210 40% 98%);
+    --popover:           hsl(222 47% 11%);
+    --popover-foreground: hsl(210 40% 98%);
+    --muted:             hsl(222 47% 15%);
+    --muted-foreground:  hsl(215 20% 65%);
+    --border:            hsl(222 47% 18%);
+    --input:             hsl(222 47% 18%);
+    --ring:              hsl(221 83% 58%);
 
-    --sidebar-background: hsl(222 47% 4%);
-    --sidebar-foreground: hsl(215 25% 70%);
-    --sidebar-primary:    hsl(358 68% 50%);
+    --sidebar-background: hsl(222 47% 5%);   /* Darker than page content */
+    --sidebar-foreground: hsl(215 20% 75%);
+    --sidebar-primary:    hsl(221 83% 58%);  /* Active line color */
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:     hsl(217 33% 12%);
-    --sidebar-border:     hsl(217 33% 12%);
+    --sidebar-accent:     hsl(222 47% 12%);  /* Dark active background */
+    --sidebar-border:     hsl(222 47% 10%);
   }
 
   /* ── RTL: switch to Arabic font stack ── */
@@ -300,7 +300,7 @@
     color: white;
   }
   .sidebar-item.active {
-    background-color: var(--sidebar-primary);
+    background-color: var(--sidebar-accent);
     color: white;
     @apply shadow-sm;
   }

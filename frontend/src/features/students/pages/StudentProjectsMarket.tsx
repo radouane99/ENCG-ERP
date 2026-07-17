@@ -75,26 +75,26 @@ export default function StudentProjectsMarket() {
         
         {/* Sidebar Filters */}
         <div className="w-full md:w-64 shrink-0 space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-white/5">
-            <h3 className="text-sm font-black text-[#001A4B] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+            <h3 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
               <Filter className="w-4 h-4" /> Type d'Offre
             </h3>
             <div className="space-y-2">
               <button 
                 onClick={() => setFilter('ALL')}
-                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'ALL' ? "bg-blue-50 text-blue-700" : "text-white/70 hover:bg-white/[0.02]")}
+                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'ALL' ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
               >
                 Toutes les offres
               </button>
               <button 
                 onClick={() => setFilter('STAGE')}
-                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'STAGE' ? "bg-blue-50 text-blue-700" : "text-white/70 hover:bg-white/[0.02]")}
+                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'STAGE' ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
               >
                 Stages (1-3 mois)
               </button>
               <button 
                 onClick={() => setFilter('PFE')}
-                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'PFE' ? "bg-blue-50 text-blue-700" : "text-white/70 hover:bg-white/[0.02]")}
+                className={cn("w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-colors", filter === 'PFE' ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}
               >
                 Projets de Fin d'Études
               </button>
@@ -105,9 +105,9 @@ export default function StudentProjectsMarket() {
         {/* Job Cards */}
         <div className="flex-1 space-y-4">
           {filteredOffers.map((offer) => (
-            <div key={offer.id} className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-white/5 hover:shadow-md hover:border-blue-200 transition-all group flex flex-col md:flex-row gap-6">
+            <div key={offer.id} className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all group flex flex-col md:flex-row gap-6">
               
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center shrink-0 p-2 overflow-hidden">
+              <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center shrink-0 p-2 overflow-hidden">
                 <img src={offer.logo} alt={offer.company} className="max-w-full max-h-full object-contain" />
               </div>
 
@@ -115,45 +115,45 @@ export default function StudentProjectsMarket() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className={cn(
                     "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
-                    offer.type === 'PFE' ? "bg-purple-50 text-purple-600" : "bg-emerald-50 text-emerald-600"
+                    offer.type === 'PFE' ? "bg-purple-500/10 text-purple-500 border border-purple-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                   )}>
                     {offer.type}
                   </span>
-                  <span className="text-gray-400 text-xs font-bold">â€¢ {offer.company}</span>
+                  <span className="text-muted-foreground text-xs font-bold">• {offer.company}</span>
                 </div>
                 
-                <h3 className="text-xl font-black text-white group-hover:text-[#003a8c] transition-colors mb-3">
+                <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors mb-3">
                   {offer.title}
                 </h3>
                 
-                <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-white/50 mb-4">
-                  <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> {offer.location}</div>
-                  <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-gray-400" /> {offer.duration}</div>
-                  <div className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-gray-400" /> ENCG Partner</div>
+                <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-muted-foreground mb-4">
+                  <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-muted-foreground" /> {offer.location}</div>
+                  <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-muted-foreground" /> {offer.duration}</div>
+                  <div className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-muted-foreground" /> ENCG Partner</div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {offer.tags.map((tag, idx) => (
-                    <span key={idx} className="bg-white/[0.05] text-white/70 px-3 py-1 rounded-full text-xs font-bold">
+                    <span key={idx} className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-bold">
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="shrink-0 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 md:pl-6">
+              <div className="shrink-0 flex flex-col items-end justify-center border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
                 {offer.status === 'NEW' && (
-                  <button className="bg-[#001A4B] text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#003a8c] transition-colors shadow-sm w-full md:w-auto justify-center">
+                  <button className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm w-full md:w-auto justify-center">
                     <Send className="w-4 h-4" /> Postuler en 1 clic
                   </button>
                 )}
                 {offer.status === 'APPLIED' && (
-                  <div className="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 border border-emerald-200 w-full md:w-auto justify-center">
+                  <div className="bg-emerald-500/10 text-emerald-500 px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 border border-emerald-500/20 w-full md:w-auto justify-center">
                     <CheckCircle2 className="w-4 h-4" /> Candidature Envoyée
                   </div>
                 )}
                 {offer.status === 'REJECTED' && (
-                  <div className="bg-rose-50 text-rose-700 px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 border border-rose-200 w-full md:w-auto justify-center">
+                  <div className="bg-rose-500/10 text-rose-500 px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 border border-rose-500/20 w-full md:w-auto justify-center">
                     <XCircle className="w-4 h-4" /> Refusée
                   </div>
                 )}
