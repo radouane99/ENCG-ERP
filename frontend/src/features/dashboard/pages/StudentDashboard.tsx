@@ -150,6 +150,9 @@ export default function StudentDashboard() {
                 <h2 className="text-sm font-black text-[#001A4B] flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4" /> Agenda d'Aujourd'hui
                 </h2>
+                <a href="/student/schedule" className="text-xs font-bold text-[#e6007e] hover:underline">
+                  Voir tout l'emploi du temps →
+                </a>
               </div>
               {stats.upcoming_classes.length === 0 ? (
                 <div className="text-sm text-muted-foreground italic">Aucun cours prévu aujourd'hui.</div>
