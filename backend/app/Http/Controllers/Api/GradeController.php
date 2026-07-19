@@ -26,7 +26,7 @@ class GradeController extends Controller
         $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId, $groupId) {
             $q->where('filiere_id', $assessment->module->filiere_id)
               ->where('academic_year_id', $academicYearId);
-            if ($groupId) {
+            if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
                 $q->where('group_id', $groupId);
             }
         });
@@ -210,7 +210,7 @@ class GradeController extends Controller
         
         $query = \App\Models\StudentRegistration::query();
 
-        if ($groupId && $groupId !== 'all') {
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
             $query->where('group_id', $groupId);
         } else {
             $query->where('filiere_id', $module->filiere_id)
@@ -452,7 +452,7 @@ class GradeController extends Controller
         $groupId = $request->query('group_id');
         
         $query = \App\Models\StudentRegistration::query();
-        if ($groupId && $groupId !== 'all') {
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
             $query->where('group_id', $groupId);
         } else {
             $query->where('filiere_id', $module->filiere_id)

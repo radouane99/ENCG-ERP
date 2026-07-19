@@ -21,7 +21,8 @@ export default function AdminGradesEditPage() {
   const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [grades2, setGrades2] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [isDoubleSaisie, setIsDoubleSaisie] = useState(false)
-  const [viewAllGroups, setViewAllGroups] = useState(false)
+  const currentGroupId = searchParams.get('group_id')
+  const [viewAllGroups, setViewAllGroups] = useState(!currentGroupId || currentGroupId === 'null' || currentGroupId === 'all')
   const [showAuditLogsDrawer, setShowAuditLogsDrawer] = useState(false)
 
   const [showModalityModal, setShowModalityModal] = useState(false)
@@ -43,9 +44,9 @@ export default function AdminGradesEditPage() {
 
   // Fetch students & grades for the selected assessment
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ['grades', selectedAssessmentId, searchParams.get('group_id'), viewAllGroups],
+    queryKey: ['grades', selectedAssessmentId, currentGroupId, viewAllGroups],
     queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`, {
-      params: { group_id: viewAllGroups ? 'all' : searchParams.get('group_id') }
+      params: { group_id: viewAllGroups ? 'all' : (currentGroupId && currentGroupId !== 'null' ? currentGroupId : 'all') }
     }).then(res => res.data.data),
     enabled: !!selectedAssessmentId,
   })

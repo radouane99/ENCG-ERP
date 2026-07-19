@@ -111,9 +111,9 @@ export default function AdminGradesPVPage() {
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
     queryKey: ['module-pv', moduleId, groupId, viewAllGroups],
     queryFn: () => api.get(`/modules/${moduleId}/pv`, {
-      params: { group_id: viewAllGroups ? 'all' : groupId }
+      params: { group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all') }
     }).then(res => res.data),
-    enabled: !!moduleId && !!groupId,
+    enabled: !!moduleId,
   })
 
   // Get the Rattrapage assessment ID from pvData
