@@ -295,6 +295,15 @@ class PdfExportController extends Controller
         $logoPath = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
+        // Dynamic verification URL & QR Code
+        $verifyUrl = url("/verify/pv/{$moduleId}/" . ($groupId ?: 'all'));
+        try {
+            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($verifyUrl);
+        }
+
         $pdf = Pdf::setOption([
             'isRemoteEnabled' => true,
             'chroot' => public_path(),
@@ -305,6 +314,8 @@ class PdfExportController extends Controller
             'students' => $data,
             'signature' => $signature,
             'logoBase64' => $logoBase64,
+            'qrBase64' => $qrBase64,
+            'verifyUrl' => $verifyUrl,
             'perimetre' => ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? "Groupe {$groupId}" : "Module Complet",
             'academicYear' => '2026/2027',
             'semester' => 'S5',

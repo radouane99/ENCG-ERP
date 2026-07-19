@@ -164,13 +164,19 @@
                     </tr>
                 </table>
             </td>
-            <td style="width: 20%; text-align: center;">
+            <td style="width: 25%; text-align: center;">
                 <div style="font-size: 8px; font-weight: bold; background: #0f2863; color: #fff; padding: 4px 8px; border-radius: 4px; display: inline-block;">
                     DOCUMENT OFFICIEL
                 </div>
-                <div style="font-size: 8px; color: #475569; margin-top: 4px; font-weight: bold;">
+                <div style="font-size: 8px; color: #475569; margin-top: 3px; font-weight: bold;">
                     Session : {{ $session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage' }}
                 </div>
+                @if(!empty($qrBase64))
+                    <div style="margin-top: 4px;">
+                        <img src="{{ $qrBase64 }}" style="width: 42px; height: 42px; border: 1px solid #cbd5e1; padding: 1px; background: #fff; border-radius: 3px;" alt="QR Code">
+                        <div style="font-size: 6px; font-weight: bold; color: #64748b; text-transform: uppercase;">SCAN TO VERIFY</div>
+                    </div>
+                @endif
             </td>
             <td style="width: 40%; text-align: right; font-size: 9px; color: #334155; font-weight: bold; line-height: 1.4;">
                 Année Universitaire : {{ $academicYear ?? '2026/2027' }}<br>
@@ -311,14 +317,31 @@
         </tr>
     </table>
 
-    @if(!empty($signature['digital_seal']))
-        <div style="margin-top: 10px; font-family: monospace; font-size: 7.5px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 4px;">
-            EMPREINTE CRYPTOGRAPHIQUE DE SÉCURITÉ (SHA-256) : {{ $signature['digital_seal'] }}
-        </div>
-    @endif
+    <!-- Official Document Verification & Anti-Fraud Security Footer -->
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; border-top: 2px solid #0f2863; padding-top: 6px; page-break-inside: avoid;">
+        <tr>
+            <td style="width: 55px; vertical-align: middle;">
+                @if(!empty($qrBase64))
+                    <img src="{{ $qrBase64 }}" style="width: 50px; height: 50px; border: 1px solid #cbd5e1; padding: 2px; background: #ffffff; border-radius: 4px;" alt="QR Code Sécurité">
+                @endif
+            </td>
+            <td style="vertical-align: middle; padding-left: 8px; font-size: 7.5px; color: #334155; line-height: 1.3;">
+                <strong style="color: #0f2863; font-size: 8.5px; text-transform: uppercase;">Document Numérique Officiel Sécurisé — ENCG Fès</strong><br>
+                Généré automatiquement par le système ERP d'Évaluation & Délibération Académique.<br>
+                <span style="color: #059669; font-weight: bold;">✓ Anti-Fraude :</span> Scannez le code QR ci-contre ou visitez <span style="font-family: monospace; font-weight: bold;">{{ $verifyUrl ?? url('/') }}</span> pour vérifier l'authenticité de ce PV.
+                @if(!empty($signature['digital_seal']))
+                    <br><span style="font-family: monospace; font-size: 7px; color: #64748b;">Empreinte Cryptographique (SHA-256) : {{ $signature['digital_seal'] }}</span>
+                @endif
+            </td>
+            <td style="width: 28%; text-align: right; vertical-align: middle; font-size: 7.5px; color: #64748b; font-weight: bold;">
+                CERTIFICATION NUMÉRIQUE<br>
+                <span style="color: #0f2863; font-size: 8.5px; font-family: monospace;">ENCG-PV-{{ $module->code }}-2026</span>
+            </td>
+        </tr>
+    </table>
 
     <!-- Footer Banner -->
-    <div class="footer-banner">
+    <div class="footer-banner" style="margin-top: 8px;">
         <strong>École Nationale de Commerce et de Gestion de Fès (ENCG-Fès)</strong> — Université Sidi Mohamed Ben Abdellah<br>
         B.P. 26A Allal Ben Abdellah, Fès, Maroc | Tél: +212 (0)5 35 60 03 54 | Web: encg.usmba.ac.ma
     </div>
