@@ -858,4 +858,31 @@ class GradesTemplateExport implements \Maatwebsite\Excel\Concerns\FromArray, \Ma
             ],
         ];
     }
+
+    /**
+     * Send official transcript via Resend email to a student.
+     */
+    public function sendTranscriptEmail(Request $request, int $studentId): JsonResponse
+    {
+        $student = \App\Models\Student::with('user')->findOrFail($studentId);
+        $user = $student->user;
+
+        if (!$user || !$user->email) {
+            return response()->json(['success' => false, 'message' => 'L\'étudiant ne dispose pas d\'une adresse email valide.'], 400);
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                new \App\Mail\StudentTranscriptMail($user->name, 'Session Automne 2025/2026')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Le relevé de notes a été envoyé avec succès à {$user->email}."
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Erreur lors de l\'envoi de l\'email: ' . $e->getMessage()], 500);
+        }
+    }
 }
+

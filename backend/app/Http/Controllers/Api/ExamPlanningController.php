@@ -51,58 +51,88 @@ class ExamPlanningController extends Controller
     }
 
     /**
-     * Create a new exam manually
+     * Create a new exam manually with database persistence
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'module_id' => 'required|integer',
-            'group_id' => 'required|integer',
-            'room_id' => 'required|integer',
+            'group_id' => 'nullable|integer',
+            'room_id' => 'nullable|integer',
             'exam_date' => 'required|date',
             'start_time' => 'required|string',
-            'duration_minutes' => 'required|integer'
+            'duration_minutes' => 'required|integer',
+            'session_type' => 'nullable|string'
         ]);
 
-        // Normally we would insert this into the DB here:
-        // $exam = Exam::create($validated);
-        
+        $exam = \App\Models\Exam::create([
+            'module_id' => $validated['module_id'],
+            'group_id' => $validated['group_id'] ?? null,
+            'room_id' => $validated['room_id'] ?? null,
+            'exam_date' => $validated['exam_date'],
+            'start_time' => $validated['start_time'],
+            'duration_minutes' => $validated['duration_minutes'],
+            'session_type' => $validated['session_type'] ?? 'normale',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Examen créé avec succès.',
-            'exam' => [
-                'id' => rand(100, 999),
-                'module_id' => $validated['module_id'],
-                'group_id' => $validated['group_id']
-            ]
+            'exam' => $exam->load(['module', 'group', 'room'])
         ]);
     }
 
     /**
-     * Check if a room is available at a specific date and time
+     * Check room availability and same-day group collision detection
      */
     public function checkRoomConflict(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'room_id' => 'required|integer',
+            'group_id' => 'nullable|integer',
             'exam_date' => 'required|date',
             'start_time' => 'required|string',
             'duration_minutes' => 'required|integer'
         ]);
 
-        // Simulated logic for MVP: if room_id == 1, we pretend there's a conflict
-        if ($validated['room_id'] == 1) {
+        // 1. Check room collision at date and start_time
+        $roomConflict = \App\Models\Exam::where('room_id', $validated['room_id'])
+            ->where('exam_date', $validated['exam_date'])
+            ->where('start_time', $validated['start_time'])
+            ->with(['module', 'room'])
+            ->first();
+
+        if ($roomConflict) {
+            $modName = $roomConflict->module->name ?? 'Autre module';
+            $roomName = $roomConflict->room->name ?? 'La salle';
             return response()->json([
                 'success' => false,
                 'has_conflict' => true,
-                'message' => 'La salle est déjà réservée pour un autre examen (Introduction - Génie Civil).'
+                'message' => "{$roomName} est déjà réservée le {$validated['exam_date']} à {$validated['start_time']} pour l'examen ({$modName})."
             ]);
+        }
+
+        // 2. Check same-day student group collision
+        if (!empty($validated['group_id'])) {
+            $groupConflict = \App\Models\Exam::where('group_id', $validated['group_id'])
+                ->where('exam_date', $validated['exam_date'])
+                ->with(['module'])
+                ->first();
+
+            if ($groupConflict) {
+                $modName = $groupConflict->module->name ?? 'un autre examen';
+                return response()->json([
+                    'success' => true,
+                    'has_conflict' => false,
+                    'warning' => "Attention: Ce groupe a déjà un examen prévu le même jour ({$modName})."
+                ]);
+            }
         }
 
         return response()->json([
             'success' => true,
             'has_conflict' => false,
-            'message' => 'La salle est disponible.'
+            'message' => 'La salle est disponible et aucun chevauchement n\'est détecté.'
         ]);
     }
 }

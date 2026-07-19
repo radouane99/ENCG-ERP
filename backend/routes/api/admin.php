@@ -184,6 +184,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     // Student Transcript PDF
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+    Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {
