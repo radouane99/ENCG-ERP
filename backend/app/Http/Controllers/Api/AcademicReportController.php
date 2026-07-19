@@ -31,8 +31,7 @@ class AcademicReportController extends Controller
             'type' => $this->getReportTitle($type),
         ];
 
-        // Mock data tailored to the report type
-        $data['records'] = $this->getMockDataForType($type);
+        $data['records'] = $this->getRealReportDataForType($type);
 
         $pdf = Pdf::loadView('reports.academic_pdf', $data);
         
@@ -50,40 +49,44 @@ class AcademicReportController extends Controller
         };
     }
 
-    private function getMockDataForType(string $type): array
+    private function getRealReportDataForType(string $type): array
     {
-        // Use real students from the database
-        $students = \App\Models\Student::with('user')->take(10)->get();
+        $students = \App\Models\Student::with(['user', 'grades'])->take(20)->get();
         $records = [];
 
         foreach ($students as $student) {
-            $name = $student->user ? $student->user->name : 'Inconnu';
+            $name = $student->user ? $student->user->name : 'Étudiant ID ' . $student->id;
             $cne = $student->cne ?? 'N/A';
             
-            // Generate realistic report data based on real students
+            $grades = $student->grades->pluck('value')->filter(fn($v) => is_numeric($v))->map(fn($v) => (float)$v);
+            $avg = $grades->count() > 0 ? round($grades->avg(), 2) : 10.00;
+
             switch ($type) {
                 case 'compensation':
                     $records[] = [
                         'student' => $name, 
                         'cne' => $cne, 
-                        'average' => '10.' . rand(10, 99), 
-                        'detail' => 'Module ' . chr(rand(65, 90)) . ' compensé'
+                        'average' => number_format($avg, 2), 
+                        'detail' => $avg >= 10 ? 'Compensation validée' : 'Non compensé'
                     ];
                     break;
                 case 'reserved_modules':
+                    $pendingRetakesCount = \Illuminate\Support\Facades\DB::table('student_module_retakes')
+                        ->where('student_id', $student->id)
+                        ->where('status', 'pending')
+                        ->count();
                     $records[] = [
                         'student' => $name, 
                         'cne' => $cne, 
-                        'average' => rand(7, 9) . '.' . rand(10, 99), 
-                        'detail' => rand(1, 3) . ' Modules Réservés'
+                        'average' => number_format($avg, 2), 
+                        'detail' => $pendingRetakesCount . ' Modules Réservés'
                     ];
                     break;
                 default:
-                    $avg = rand(8, 16);
                     $records[] = [
                         'student' => $name, 
                         'cne' => $cne, 
-                        'average' => $avg . '.' . rand(10, 99), 
+                        'average' => number_format($avg, 2), 
                         'detail' => $avg >= 10 ? 'Admis' : 'Ajourné'
                     ];
                     break;

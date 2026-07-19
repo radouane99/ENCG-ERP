@@ -30,7 +30,7 @@ class ModuleService
                 'coefficient' => $module->coefficient,
                 'filiere' => $module->filiere ? $module->filiere->code : 'TC',
                 'professor' => 'Non assigné', // Placeholder pour la Phase 3
-                'studentsCount' => rand(50, 400),
+                'studentsCount' => DB::table('student_pathways')->where('filiere_id', $module->filiere_id)->where('is_current', true)->count(),
                 'active' => $module->is_active,
                 'filiere_id' => $module->filiere_id,
                 'semester_number' => $module->semester_number,

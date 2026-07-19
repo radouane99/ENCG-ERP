@@ -89,13 +89,15 @@ class AdminDashboardController extends Controller
         }
 
         // 2. Attendance by Week (Avg rate per day of week)
+        $daysMap = [1 => 'Lun', 2 => 'Mar', 3 => 'Mer', 4 => 'Jeu', 5 => 'Ven', 6 => 'Sam'];
         $attendanceByWeek = [];
-        $days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-        foreach ($days as $dayName) {
-            // In a real scenario, group by DAYOFWEEK(). Here we provide a scaled version of the real global rate.
+        foreach ($daysMap as $dayNum => $dayName) {
+            $dayTotal = DB::table('attendance_records')->whereRaw('WEEKDAY(date) = ?', [$dayNum - 1])->count();
+            $dayPresent = DB::table('attendance_records')->whereRaw('WEEKDAY(date) = ?', [$dayNum - 1])->where('status', 'present')->count();
+            $rate = $dayTotal > 0 ? round(($dayPresent / $dayTotal) * 100, 1) : ($attendanceRate > 0 ? $attendanceRate : 0);
             $attendanceByWeek[] = [
                 'day' => $dayName,
-                'rate' => $attendanceRate > 0 ? min($attendanceRate + rand(-5, 5), 100) : 0
+                'rate' => $rate
             ];
         }
 

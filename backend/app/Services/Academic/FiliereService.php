@@ -28,7 +28,7 @@ class FiliereService
                 'name' => $filiere->name,
                 'type' => $filiere->type ?? 'Formation Initiale',
                 'coordinator' => $filiere->department ? $filiere->department->head_name : 'Non assigné',
-                'students' => rand(50, 400), // Placeholder pour la Phase 2
+                'students' => DB::table('student_pathways')->where('filiere_id', $filiere->id)->where('is_current', true)->count(),
                 'active' => $filiere->is_active,
                 'duration_years' => $filiere->duration_years,
                 'department_id' => $filiere->department_id,

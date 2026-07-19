@@ -223,12 +223,18 @@ class DashboardAnalyticsService
             ->join('modules', 'module_professor.module_id', '=', 'modules.id')
             ->select('modules.id', 'modules.name', 'modules.code', 'modules.credit_hours')
             ->get()->map(function($mod) {
+                $totalAssessments = DB::table('assessments')->where('module_id', $mod->id)->count();
+                $enteredGrades = DB::table('grades')->whereIn('assessment_id', function($q) use ($mod) {
+                    $q->select('id')->from('assessments')->where('module_id', $mod->id);
+                })->count();
+                $expected = max(1, $totalAssessments * 30);
+                $progress = (int) round(min(100, ($enteredGrades / $expected) * 100));
                 return [
                     'id' => $mod->id,
                     'name' => $mod->name,
                     'code' => $mod->code,
-                    'progress' => rand(30, 90), // mock progress until real timesheets are tracked
-                    'hours_done' => rand(10, 30),
+                    'progress' => $progress,
+                    'hours_done' => (int) round(($progress / 100) * ($mod->credit_hours ?? 45)),
                     'hours_total' => $mod->credit_hours ?? 45
                 ];
             });

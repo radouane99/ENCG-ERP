@@ -26,29 +26,20 @@ class DeliberationController extends Controller
         $deliberations = \App\Models\Deliberation::with(['semester', 'filiere', 'academicYear'])->get();
 
         $formatted = $deliberations->map(function ($delib) {
-            // Count total students enrolled in the filiere/semester for stats
-            $totalStudents = \App\Models\StudentRegistration::where('semester_id', $delib->semester_id)
-                ->whereHas('studentPathway', function ($q) use ($delib) {
-                    $q->where('filiere_id', $delib->filiere_id);
-                })->count();
+            $totalStudents = \App\Models\StudentRegistration::where('filiere_id', $delib->filiere_id)->count();
+            $validatedCount = \App\Models\StudentRegistration::where('filiere_id', $delib->filiere_id)
+                ->where('status', 'admin_validated')->count();
+            $successRate = $totalStudents > 0 ? round(($validatedCount / $totalStudents) * 100, 1) : 0;
 
             return [
                 'id' => $delib->id,
-                'name' => 'Délibération ' . ($delib->semester ? $delib->semester->name : '') . ' - ' . ($delib->academicYear ? $delib->academicYear->name : ''),
-                'date' => $delib->deliberation_date ? $delib->deliberation_date->format('Y-m-d') : null,
-                'status' => $delib->status,
+                'name' => 'Délibération ' . ($delib->filiere ? $delib->filiere->name : '') . ' - ' . ($delib->academicYear ? $delib->academicYear->name : ''),
+                'date' => $delib->deliberation_date ? $delib->deliberation_date->format('Y-m-d') : date('Y-m-d'),
+                'status' => $delib->status ?? 'completed',
                 'students' => $totalStudents,
-                'success_rate' => $delib->status === 'completed' ? rand(70, 95) : null, // Mocking success rate as it requires complex calculation across all modules if not saved
+                'success_rate' => $delib->status === 'completed' ? $successRate : null,
             ];
         });
-
-        // Fallback for empty database to show the UI
-        if ($formatted->isEmpty()) {
-            $formatted = collect([
-                ['id' => 1, 'name' => 'Délibération S3 - Automne 2025', 'date' => '2026-02-15', 'status' => 'completed', 'students' => 120, 'success_rate' => 85],
-                ['id' => 2, 'name' => 'Délibération S4 - Printemps 2026', 'date' => '2026-06-30', 'status' => 'pending', 'students' => 118, 'success_rate' => null]
-            ]);
-        }
 
         return response()->json(['data' => $formatted]);
     }
