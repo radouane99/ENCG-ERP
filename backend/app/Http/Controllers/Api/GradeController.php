@@ -31,8 +31,8 @@ class GradeController extends Controller
             }
         });
 
-        // Eager load grades for this specific assessment
-        $students = $studentsQuery->with(['grades' => function ($q) use ($assessmentId) {
+        // Eager load user and grades for this specific assessment
+        $students = $studentsQuery->with(['user', 'grades' => function ($q) use ($assessmentId) {
             $q->where('assessment_id', $assessmentId);
         }])->get();
 
@@ -160,7 +160,7 @@ class GradeController extends Controller
             }
 
             if ($changed) {
-                $student = \App\Models\Student::find($gradeData['student_id']);
+                $student = \App\Models\Student::with('user')->find($gradeData['student_id']);
                 $newValDesc = $newAbsent ? 'ABI' : ($newValue !== null ? $newValue . '/20' : 'Néant');
                 $user = $request->user();
                 $userName = $user ? ($user->name ?? $user->email) : 'Système/Enseignant';
@@ -213,7 +213,7 @@ class GradeController extends Controller
                   ->where('academic_year_id', $request->query('academic_year_id', 1));
         }
 
-        $registrations = $query->with('student')->get();
+        $registrations = $query->with('student.user')->get();
 
         $students = $registrations->map(function ($reg) {
             return $reg->student;
@@ -455,7 +455,7 @@ class GradeController extends Controller
                   ->where('academic_year_id', $request->query('academic_year_id', 1));
         }
 
-        $registrations = $query->with('student')->get();
+        $registrations = $query->with('student.user')->get();
         $students = $registrations->map(function ($reg) {
             return $reg->student;
         })->filter();
@@ -605,7 +605,7 @@ class GradeController extends Controller
             if (empty($row[0])) continue; // Skip empty rows
 
             $apogeeCode = trim($row[0]);
-            $student = \App\Models\Student::where('student_number', $apogeeCode)
+            $student = \App\Models\Student::with('user')->where('student_number', $apogeeCode)
                 ->orWhere('id', $apogeeCode)
                 ->first();
 
