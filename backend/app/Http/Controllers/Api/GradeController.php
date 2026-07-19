@@ -371,20 +371,21 @@ class GradeController extends Controller
         });
 
         $signature = null;
-        if ($groupId && $groupId !== 'all') {
-            $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
-                ->where('group_id', $groupId)
-                ->with('signer')
-                ->first();
-            if ($sigRecord) {
-                $signature = [
-                    'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
-                    'signed_at' => $sigRecord->signed_at->toIso8601String(),
-                    'signature_data' => $sigRecord->signature_data,
-                    'ip_address' => $sigRecord->ip_address,
-                    'digital_seal' => $sigRecord->digital_seal,
-                ];
-            }
+        $sigGroupId = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? intval($groupId) : null;
+        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
+        if ($sigGroupId) {
+            $sigQuery->where('group_id', $sigGroupId);
+        }
+        $sigRecord = $sigQuery->with('signer')->first();
+
+        if ($sigRecord) {
+            $signature = [
+                'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
+                'signed_at' => $sigRecord->signed_at->toIso8601String(),
+                'signature_data' => $sigRecord->signature_data,
+                'ip_address' => $sigRecord->ip_address,
+                'digital_seal' => $sigRecord->digital_seal,
+            ];
         }
 
         // ── Jury Analytics ────────────────────────────────────────────────────
@@ -710,72 +711,83 @@ class GradeController extends Controller
     public function signModulePv(Request $request, $moduleId): JsonResponse
     {
         $validated = $request->validate([
-            'group_id' => 'required|exists:groups,id',
+            'group_id' => 'nullable',
             'signature_data' => 'required|string', // Base64 data URI
         ]);
 
         $module = \App\Models\Module::findOrFail($moduleId);
-        $groupId = $validated['group_id'];
+        $rawGroupId = $request->input('group_id');
         $user = $request->user();
 
         if (!$user) {
             return response()->json(['message' => 'Non autorisé.'], 401);
         }
 
-        // Query grades details to build a SHA-256 digital seal hash
-        $registrations = \App\Models\StudentRegistration::where('group_id', $groupId)
-            ->where('filiere_id', $module->filiere_id)
-            ->with(['student.grades' => function($q) use ($module) {
-                $q->whereIn('assessment_id', $module->assessments->pluck('id'));
-            }])
-            ->get();
-        
-        $sealData = [];
-        foreach ($registrations as $reg) {
-            if ($reg->student) {
-                $sealData[$reg->student_id] = $reg->student->grades->pluck('value', 'assessment_id')->toArray();
+        // Determine target groups
+        if ($rawGroupId && !in_array($rawGroupId, ['all', 'null', 'undefined', ''], true)) {
+            $targetGroupIds = [intval($rawGroupId)];
+        } else {
+            $targetGroupIds = \App\Models\Group::where('filiere_id', $module->filiere_id)->pluck('id')->toArray();
+            if (empty($targetGroupIds)) {
+                $targetGroupIds = \App\Models\Group::pluck('id')->take(1)->toArray();
             }
         }
-        
-        $digitalSeal = hash('sha256', json_encode([
-            'module_id' => $module->id,
-            'group_id' => $groupId,
-            'grades' => $sealData
-        ]));
 
-        // Save or update signature
-        $signature = \App\Models\ModulePvSignature::updateOrCreate(
-            [
+        $lastSignature = null;
+        foreach ($targetGroupIds as $gId) {
+            $registrations = \App\Models\StudentRegistration::where('group_id', $gId)
+                ->where('filiere_id', $module->filiere_id)
+                ->with(['student.grades' => function($q) use ($module) {
+                    $q->whereIn('assessment_id', $module->assessments->pluck('id'));
+                }])
+                ->get();
+            
+            $sealData = [];
+            foreach ($registrations as $reg) {
+                if ($reg->student) {
+                    $sealData[$reg->student_id] = $reg->student->grades->pluck('value', 'assessment_id')->toArray();
+                }
+            }
+            
+            $digitalSeal = hash('sha256', json_encode([
                 'module_id' => $module->id,
-                'group_id' => $groupId,
-                'academic_year_id' => $request->query('academic_year_id', 1),
-            ],
-            [
-                'signed_by' => $user->id,
-                'signature_data' => $validated['signature_data'],
-                'ip_address' => $request->ip(),
-                'signed_at' => now(),
-                'digital_seal' => $digitalSeal,
-            ]
-        );
+                'group_id' => $gId,
+                'grades' => $sealData
+            ]));
+
+            $lastSignature = \App\Models\ModulePvSignature::updateOrCreate(
+                [
+                    'module_id' => $module->id,
+                    'group_id' => $gId,
+                    'academic_year_id' => $request->query('academic_year_id', 1),
+                ],
+                [
+                    'signed_by' => $user->id,
+                    'signature_data' => $validated['signature_data'],
+                    'ip_address' => $request->ip(),
+                    'signed_at' => now(),
+                    'digital_seal' => $digitalSeal,
+                ]
+            );
+        }
 
         // Audit Log signature
-        if (class_exists('Spatie\Activitylog\Models\Activity')) {
+        if (class_exists('Spatie\Activitylog\Models\Activity') && $lastSignature) {
             activity()
-                ->performedOn($signature)
+                ->performedOn($lastSignature)
                 ->event('pv_signed')
-                ->log("Le PV de délibération pour le module {$module->code} (Groupe ID {$groupId}) a été signé électroniquement par {$user->name}. Empreinte : " . substr($digitalSeal, 0, 10));
+                ->log("Le PV de délibération pour le module {$module->code} a été signé électroniquement par {$user->name}. Empreinte : " . substr($lastSignature->digital_seal, 0, 10));
         }
 
         return response()->json([
             'message' => 'Le PV a été signé et verrouillé avec succès.',
-            'signature' => [
+            'signature' => $lastSignature ? [
                 'signed_by' => $user->name ?? $user->email,
-                'signed_at' => $signature->signed_at->toIso8601String(),
-                'signature_data' => $signature->signature_data,
-                'ip_address' => $signature->ip_address,
-                'digital_seal' => $signature->digital_seal,
-            ]
+                'signed_at' => $lastSignature->signed_at->toIso8601String(),
+                'signature_data' => $lastSignature->signature_data,
+                'ip_address' => $lastSignature->ip_address,
+                'digital_seal' => $lastSignature->digital_seal,
+            ] : null
         ]);
     }
 

@@ -125,7 +125,7 @@ export default function AdminGradesPVPage() {
     
     try {
       const res = await api.post(`/modules/${moduleId}/pv/sign`, {
-        group_id: groupId,
+        group_id: (groupId && groupId !== 'null') ? groupId : 'all',
         signature_data: dataUrl
       })
       toast.success(res.data.message)
