@@ -57,12 +57,7 @@ class GradeController extends Controller
         $assessment = Assessment::findOrFail($assessmentId);
         $user = $request->user();
 
-        // 1. Admins should not enter grades directly, only professors
-        if ($user->hasRole(['super-admin', 'institution-admin', 'director'])) {
-            return response()->json([
-                'message' => 'Opération refusée : Les administrateurs ne sont pas autorisés à saisir les notes directement. Cela doit être fait par le professeur depuis son portail.'
-            ], 403);
-        }
+
 
         // 2. Professor must be assigned to this module
         if ($user->hasRole(['professor', 'vacataire'])) {
@@ -518,12 +513,7 @@ class GradeController extends Controller
         $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
         $user = $request->user();
 
-        // 1. Admins should not enter grades directly, only professors
-        if ($user->hasRole(['super-admin', 'institution-admin', 'director'])) {
-            return response()->json([
-                'message' => 'Opération refusée : Les administrateurs ne sont pas autorisés à importer les notes directement. Cela doit être fait par le professeur depuis son portail.'
-            ], 403);
-        }
+
 
         // 2. Professor must be assigned to this module
         if ($user->hasRole(['professor', 'vacataire'])) {
