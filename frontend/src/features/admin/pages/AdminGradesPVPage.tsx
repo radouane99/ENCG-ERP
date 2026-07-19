@@ -421,42 +421,112 @@ export default function AdminGradesPVPage() {
         </div>
       </div>
 
+      {/* Print-specific CSS Styles */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 8mm 10mm 10mm 10mm;
+          }
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          header, nav, aside, .print\:hidden, button, input:not([type="hidden"]), select {
+            display: none !important;
+          }
+          .pv-print-card {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 10px !important;
+          }
+          th, td {
+            border: 1px solid #334155 !important;
+            padding: 5px 6px !important;
+          }
+          th {
+            background-color: #f1f5f9 !important;
+            color: #0f2863 !important;
+            font-weight: 700 !important;
+          }
+          tr {
+            page-break-inside: avoid !important;
+          }
+          .official-header {
+            border-bottom: 2.5px solid #0f2863 !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 16px !important;
+          }
+        }
+      `}</style>
+
       {/* PV Printable Document Container */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0 pv-print-card">
         
-        {/* PV Document Header (Always prints nicely) */}
-        <div className="text-center space-y-6 mb-8">
-          <div className="flex justify-between items-start">
-            <div className="text-left space-y-1">
-              <p className="font-bold text-xs uppercase text-slate-800">Université Sidi Mohamed Ben Abdellah de Fès</p>
-              <p className="font-bold text-xs uppercase text-slate-600">Ecole Nationale de Commerce et de Gestion</p>
-              <p className="text-[10px] text-slate-400 font-semibold">ENCG - Fès</p>
+        {/* Official Institution Header (Visible on Web & Print) */}
+        <div className="border-b-2 border-[#0f2863] pb-4 mb-6 official-header">
+          <div className="flex justify-between items-center gap-4">
+            {/* Left: Official Logo + Kingdom Header */}
+            <div className="flex items-center gap-4">
+              <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain shrink-0" />
+              <div className="text-left leading-tight">
+                <p className="font-bold text-[10px] uppercase text-slate-500 tracking-wider">Royaume du Maroc</p>
+                <p className="font-extrabold text-xs uppercase text-[#0f2863]">Université Sidi Mohamed Ben Abdellah de Fès</p>
+                <p className="font-bold text-xs uppercase text-slate-800">École Nationale de Commerce et de Gestion de Fès</p>
+                <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">ENCG-Fès — Portail ERP Académique</p>
+              </div>
             </div>
 
-            {/* Dynamic QR Code for Verification */}
-            {pvData.signature && (
-              <div className="flex flex-col items-center gap-1">
-                <QRCodeSVG 
-                  value={`${window.location.origin}/verify/pv/${moduleId}/${groupId}`} 
-                  size={64} 
-                  level="H" 
-                  className="border border-slate-100 p-1 bg-white rounded-md shadow-sm"
-                />
-                <span className="text-[7px] text-slate-400 font-mono tracking-widest uppercase">SCAN TO VERIFY</span>
-              </div>
-            )}
+            {/* Center: Official Status Badge */}
+            <div className="text-center hidden sm:block">
+              <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-bold rounded-md uppercase tracking-wider print:border print:border-[#0f2863] print:text-[#0f2863] print:bg-transparent">
+                Document Officiel
+              </span>
+              <p className="text-[10px] text-slate-500 font-semibold mt-1">
+                Session : {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
+              </p>
+            </div>
 
-            <div className="text-right space-y-1">
-              <p className="text-xs font-bold text-slate-500">Année Universitaire : 2026/2027</p>
-              <p className="text-xs font-bold text-slate-500">Semestre : S5</p>
+            {/* Right: Academic Info & Security QR */}
+            <div className="flex items-center gap-4 text-right">
+              <div className="text-xs font-semibold text-slate-700 leading-tight">
+                <p><span className="font-bold text-[#0f2863]">Année Univ :</span> 2026/2027</p>
+                <p><span className="font-bold text-[#0f2863]">Semestre :</span> S5</p>
+                <p><span className="font-bold text-[#0f2863]">Périmètre :</span> {viewAllGroups ? 'Module Complet' : (groupId ? `Groupe ${groupId}` : 'Tous les Groupes')}</p>
+                <p className="text-[9px] text-slate-400 font-mono mt-1">
+                  {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </p>
+              </div>
+
+              {/* Dynamic QR Code for Authenticity Verification */}
+              <div className="flex flex-col items-center shrink-0">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/verify/pv/${moduleId}/${groupId || 'all'}`} 
+                  size={58} 
+                  level="H" 
+                  className="border border-slate-200 p-1 bg-white rounded-md shadow-sm"
+                />
+                <span className="text-[7px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">VERIFICATION</span>
+              </div>
             </div>
           </div>
 
-          <div className="border-y-2 border-slate-900 py-4">
-            <h2 className="text-xl font-bold uppercase tracking-wider text-slate-800">
-              PV DE DELIBERATION - SESSION {session === 'normale' ? 'ORDINAIRE' : 'DE RATTRAPAGE'}
+          {/* Banner Title */}
+          <div className="mt-4 pt-3 border-t border-slate-200 text-center">
+            <h2 className="text-xl font-black uppercase tracking-wider text-[#0f2863]">
+              PROCES-VERBAL DE DELIBERATION - SESSION {session === 'normale' ? 'ORDINAIRE' : 'DE RATTRAPAGE'}
             </h2>
-            <p className="text-sm font-semibold text-slate-500 mt-1">
+            <p className="text-xs font-bold text-slate-600 mt-1 uppercase tracking-wide">
               MODULE : {pvData.module.code} - {pvData.module.name}
             </p>
           </div>
@@ -507,7 +577,7 @@ export default function AdminGradesPVPage() {
                       {displayAssessments.map((a: any) => {
                         const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {};
                         return (
-                          <td key={a.id} className="border border-slate-300 p-3">
+                          <td key={a.id} className="border border-slate-300 p-3 font-semibold">
                             {gradeInfo.is_absent ? (
                               <span className="text-red-500 font-bold uppercase">ABI</span>
                             ) : (
@@ -518,7 +588,7 @@ export default function AdminGradesPVPage() {
                       })}
 
                       {/* Moyenne Normale */}
-                      <td className="border border-slate-300 p-3 bg-slate-100/20 font-bold text-sm">
+                      <td className="border border-slate-300 p-3 bg-slate-100/20 font-bold text-sm text-[#0f2863]">
                         {student.moyenne_normale !== null ? parseFloat(student.moyenne_normale).toFixed(2) : '-'}
                       </td>
 
@@ -537,7 +607,7 @@ export default function AdminGradesPVPage() {
                       {/* Rattrapage inputs / display */}
                       {session === 'rattrapage' && (
                         <>
-                          <td className="border border-slate-300 p-3 bg-amber-50/10">
+                          <td className="border border-slate-300 p-3 bg-amber-50/10 font-semibold">
                             {isEligibleForRattrapage ? (
                               <div className="flex items-center gap-2 justify-center print:hidden">
                                 <input
@@ -568,7 +638,7 @@ export default function AdminGradesPVPage() {
                           </td>
 
                           {/* Moyenne Finale after resit */}
-                          <td className="border border-slate-300 p-3 bg-blue-50/10 font-bold text-sm">
+                          <td className="border border-slate-300 p-3 bg-blue-50/10 font-bold text-sm text-[#0f2863]">
                             {student.moyenne_finale !== null ? parseFloat(student.moyenne_finale).toFixed(2) : '-'}
                           </td>
 
@@ -607,42 +677,59 @@ export default function AdminGradesPVPage() {
           )}
         </form>
 
-        {/* PV Signatures section (Visible only on print or bottom of page) */}
-        <div className="mt-16 grid grid-cols-2 text-center text-xs font-bold text-slate-800 gap-8">
-          <div className="flex flex-col items-center justify-center">
-            <p className="mb-2">Signature de l'enseignant</p>
+        {/* Official Signatures section */}
+        <div className="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs font-bold text-slate-800 gap-8">
+          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
+            <p className="uppercase text-[11px] text-[#0f2863]">Signature de l'Enseignant Responsable du Module</p>
             {pvData.signature ? (
-              <div className="flex flex-col items-center">
-                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-slate-100 rounded-lg p-1 bg-slate-50" />
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by}</p>
-                <p className="text-[7px] text-slate-400 font-medium">IP: {pvData.signature.ip_address} | {new Date(pvData.signature.signed_at).toLocaleDateString()}</p>
+              <div className="flex flex-col items-center my-2">
+                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
+                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by}</p>
+                <p className="text-[7px] text-slate-400 font-mono">IP: {pvData.signature.ip_address} | {new Date(pvData.signature.signed_at).toLocaleString('fr-FR')}</p>
               </div>
             ) : (
-              <div className="h-20 w-48 border-b border-dashed border-slate-300"></div>
+              <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-56 py-4">
+                (Signature manuscrite / numérique)
+              </div>
             )}
           </div>
-          <div className="flex flex-col items-center justify-center">
-            <p className="mb-2">Signature du Jury / Directeur</p>
-            <div className="h-20 w-48 border-b border-dashed border-slate-300"></div>
+
+          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
+            <p className="uppercase text-[11px] text-[#0f2863]">Signature du Président du Jury & Cachet de l'Établissement</p>
+            <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-56 py-4">
+              (Cachet Officiel ENCG Fès)
+            </div>
           </div>
         </div>
+
+        {/* Digital Certification SHA-256 Seal Footer */}
         {pvData.signature && pvData.signature.digital_seal && (
-          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between items-end text-[8px] font-mono text-slate-400">
-            <div className="flex items-center gap-4">
+          <div className="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-[8px] font-mono text-slate-500">
+            <div className="flex items-center gap-3">
               <QRCodeSVG 
                 value={`${window.location.origin}/verify-pv?seal=${pvData.signature.digital_seal}`}
-                size={64}
+                size={48}
                 level="M"
-                includeMargin={false}
               />
-              <div className="flex flex-col gap-1">
-                <span className="font-bold text-slate-800 text-[10px]">SCANNABLE QR POUR VÉRIFICATION</span>
-                <span>EMPREINTE DU PV (SHA-256) : {pvData.signature.digital_seal}</span>
+              <div>
+                <p className="font-bold text-slate-800 text-[9px] uppercase">Empreinte Numérique Cryptographique SHA-256</p>
+                <p className="text-slate-500 font-mono text-[8px]">{pvData.signature.digital_seal}</p>
               </div>
             </div>
-            <span>CERTIFICATION NUMÉRIQUE ENCG FÈS</span>
+            <span className="font-bold text-[#0f2863] uppercase">CERTIFICATION NUMÉRIQUE ENCG FÈS</span>
           </div>
         )}
+
+        {/* Official Institutional Footer for Printed Pages */}
+        <div className="mt-8 pt-3 border-t border-slate-300 text-center text-[9px] text-slate-500 space-y-0.5">
+          <p className="font-bold text-slate-700">
+            École Nationale de Commerce et de Gestion de Fès (ENCG-Fès) — Université Sidi Mohamed Ben Abdellah
+          </p>
+          <p className="text-[8px] text-slate-400 font-medium">
+            B.P. 26A Allal Ben Abdellah, Fès, Maroc | Tél : +212 (0)5 35 60 03 54 | Web : encg.usmba.ac.ma
+          </p>
+        </div>
+
       </div>
 
       {/* Signature drawing Canvas Modal */}
