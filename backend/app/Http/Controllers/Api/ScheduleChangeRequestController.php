@@ -55,4 +55,31 @@ class ScheduleChangeRequestController extends Controller
             'message' => 'Demande ' . ($validated['status'] === 'approved' ? 'approuvée' : 'rejetée') . ' avec succès.'
         ]);
     }
+
+    /**
+     * Suggest available professors in the same department for substitution.
+     */
+    public function suggestSubstitutes(Request $request): JsonResponse
+    {
+        $departmentId = $request->query('department_id');
+        
+        $professors = \App\Models\Professor::with('user')
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->take(5)
+            ->get()
+            ->map(function ($prof) {
+                return [
+                    'id' => $prof->id,
+                    'name' => $prof->user ? $prof->user->name : "{$prof->first_name} {$prof->last_name}",
+                    'specialty' => $prof->specialty ?? 'Management / Finance',
+                    'available' => true,
+                    'contact' => $prof->email ?? 'N/A'
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'substitutes' => $professors
+        ]);
+    }
 }

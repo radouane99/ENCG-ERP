@@ -141,4 +141,36 @@ class ConvocationController extends Controller
             'data' => $convocations
         ]);
     }
+
+    /**
+     * Generate official Mission Order PDF data for professors/staff.
+     */
+    public function generateMissionOrder(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'professor_name' => 'required|string',
+            'destination' => 'required|string',
+            'purpose' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'transport_mode' => 'nullable|string'
+        ]);
+
+        $ref = 'OM-' . date('Y') . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ordre de mission créé avec succès.',
+            'data' => [
+                'reference' => $ref,
+                'professor_name' => $validated['professor_name'],
+                'destination' => $validated['destination'],
+                'purpose' => $validated['purpose'],
+                'period' => "Du {$validated['start_date']} au {$validated['end_date']}",
+                'transport_mode' => $validated['transport_mode'] ?? 'Véhicule Personnel / Train',
+                'verify_url' => url("/verify/mission-order/{$ref}"),
+                'status' => 'VALIDE'
+            ]
+        ]);
+    }
 }

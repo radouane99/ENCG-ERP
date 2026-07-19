@@ -81,8 +81,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     Route::post('/profile', [ProfileController::class, 'update']);
 
-    // Dashboard Stats
+    // Dashboard Stats & Ministry Audit Reports
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'getStats']);
+    Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes
     Route::get('/smart-campus', [AdminSmartCampusController::class, 'getCampusData']);
@@ -171,6 +172,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     });
     Route::get('modules/{module}/assessments', [AssessmentController::class, 'getForModule']);
     Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
+    Route::get('modules/export-bulk-pv-zip', [\App\Http\Controllers\Api\PdfExportController::class, 'exportBulkPvZip']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
     Route::get('modules/{module}/pv/export-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportModulePvPdf']);
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
@@ -182,9 +184,10 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
 
-    // Student Transcript PDF
+    // Student Transcript PDF & Mission Orders
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
+    Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {
@@ -243,7 +246,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         Route::post('/check-conflict', [TimetableController::class, 'checkConflict']);
     });
 
-    // Smart Scheduling
+    // Smart Scheduling & Substitutions
+    Route::get('/schedule-change-requests/substitutes', [ScheduleChangeRequestController::class, 'suggestSubstitutes']);
     Route::post('/schedules/auto-generate', [SmartSchedulingController::class, 'autoGenerate']);
     Route::apiResource('schedules', \App\Http\Controllers\Api\ScheduleController::class)->except(['update', 'show']);
 

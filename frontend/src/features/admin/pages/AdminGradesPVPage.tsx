@@ -295,18 +295,28 @@ export default function AdminGradesPVPage() {
           >
             <Printer className="w-4 h-4" /> Aperçu Web
           </Button>
-          {pvData.signature ? (
-            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> PV Signé & Clôturé
-            </span>
-          ) : (
             <Button
-              onClick={() => setShowSignatureModal(true)}
-              className="bg-emerald-600 text-white hover:bg-emerald-750 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+              onClick={() => {
+                window.open(`/api/modules/export-bulk-pv-zip?semester=${selectedSemester}`, '_blank')
+              }}
+              variant="outline"
+              className="border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl flex items-center gap-2 text-xs font-bold"
             >
-              ✍️ Signer le PV
+              📦 Export ZIP (Tous les PVs)
             </Button>
-          )}
+
+            {pvData.signature ? (
+              <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> PV Signé & Clôturé
+              </span>
+            ) : (
+              <Button
+                onClick={() => setShowSignatureModal(true)}
+                className="bg-emerald-600 text-white hover:bg-emerald-750 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+              >
+                ✍️ Signer le PV
+              </Button>
+            )}
         </div>
       </div>
 
