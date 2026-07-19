@@ -260,11 +260,13 @@ class GradeController extends Controller
                 $val = $grade ? $grade->value : null;
                 $isAbsent = $grade ? $grade->absent : false;
                 
-                $gradesDetail[$a->type] = [
+                $gradeData = [
                     'value' => $val,
                     'is_absent' => $isAbsent,
                     'weight' => $a->weight
                 ];
+                $gradesDetail[$a->type] = $gradeData;
+                $gradesDetail[$a->id] = $gradeData;
 
                 // If absent, value is treated as 0 for calculation
                 $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);

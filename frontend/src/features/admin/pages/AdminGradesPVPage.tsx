@@ -505,7 +505,7 @@ export default function AdminGradesPVPage() {
 
                       {/* CC/Exam Grades */}
                       {displayAssessments.map((a: any) => {
-                        const gradeInfo = rowGrades[a.type] || {};
+                        const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {};
                         return (
                           <td key={a.id} className="border border-slate-300 p-3">
                             {gradeInfo.is_absent ? (
