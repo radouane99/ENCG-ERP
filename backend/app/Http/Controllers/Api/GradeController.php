@@ -83,25 +83,34 @@ class GradeController extends Controller
         $settings = $institution->settings ?? [];
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
 
-        if ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé') {
-            return response()->json([
-                'message' => 'Opération refusée : Toutes les saisies de notes sont actuellement verrouillées par l\'administration.'
-            ], 403);
-        }
+        $typeLower = strtolower(trim($assessment->type));
+        $isRattrapageAssessment = str_contains($typeLower, 'rattrapage');
+        $isOrdinaireExamAssessment = (str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen')) && !$isRattrapageAssessment;
+        $isMajorExam = $isOrdinaireExamAssessment || $isRattrapageAssessment;
 
-        $isRattrapageAssessment = strtolower($assessment->type) === 'rattrapage';
-        $isRattrapagePhase = str_contains(strtolower($currentPhase), 'rattrapage');
+        // Continuous assessments (CC, CC1, CC2, TP, Projet) are always editable regardless of exam locking phase
+        if ($isMajorExam) {
+            $currentPhaseLower = strtolower($currentPhase);
+            $isRattrapagePhase = str_contains($currentPhaseLower, 'rattrapage');
+            $isTotalLock = ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé');
 
-        if ($isRattrapageAssessment && !$isRattrapagePhase) {
-            return response()->json([
-                'message' => 'Opération refusée : La session de rattrapage n\'est pas encore ouverte.'
-            ], 403);
-        }
+            if ($isTotalLock) {
+                return response()->json([
+                    'message' => 'Opération refusée : La saisie des examens est actuellement verrouillée par l\'administration. Seuls les contrôles continus (CC) sont autorisés.'
+                ], 403);
+            }
 
-        if (!$isRattrapageAssessment && $isRattrapagePhase) {
-            return response()->json([
-                'message' => 'Opération refusée : La session ordinaire est verrouillée. Seules les notes de rattrapage peuvent être modifiées.'
-            ], 403);
+            if ($isRattrapageAssessment && !$isRattrapagePhase) {
+                return response()->json([
+                    'message' => 'Opération refusée : La session de rattrapage n\'est pas encore ouverte.'
+                ], 403);
+            }
+
+            if ($isOrdinaireExamAssessment && $isRattrapagePhase) {
+                return response()->json([
+                    'message' => 'Opération refusée : La session ordinaire est verrouillée. Seules les notes de rattrapage et contrôles continus peuvent être modifiées.'
+                ], 403);
+            }
         }
 
         $validated = $request->validate([
@@ -539,12 +548,6 @@ class GradeController extends Controller
         $settings = $institution->settings ?? [];
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
 
-        if ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé') {
-            return response()->json([
-                'message' => 'Opération refusée : Toutes les saisies de notes sont actuellement verrouillées par l\'administration.'
-            ], 403);
-        }
-
         $sheets = \Maatwebsite\Excel\Facades\Excel::toArray(new class {}, $request->file('file'));
         if (empty($sheets) || empty($sheets[0])) {
             return response()->json(['message' => 'Le fichier Excel est vide ou invalide.'], 400);
@@ -562,17 +565,28 @@ class GradeController extends Controller
 
             // Find matching assessment for module
             foreach ($module->assessments as $assessment) {
-                $typeLower = strtolower($assessment->type);
+                $typeLower = strtolower(trim($assessment->type));
                 if (str_contains(strtolower($heading), $typeLower)) {
-                    // Check locking rules for this assessment
-                    $isRattrapageAssessment = $typeLower === 'rattrapage';
-                    $isRattrapagePhase = str_contains(strtolower($currentPhase), 'rattrapage');
+                    $isRattrapageAssessment = str_contains($typeLower, 'rattrapage');
+                    $isOrdinaireExamAssessment = (str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen')) && !$isRattrapageAssessment;
+                    $isMajorExam = $isOrdinaireExamAssessment || $isRattrapageAssessment;
 
-                    if ($isRattrapageAssessment && !$isRattrapagePhase) {
-                        $lockedColumns[] = "{$assessment->type} (Session rattrapage non ouverte)";
-                    } elseif (!$isRattrapageAssessment && $isRattrapagePhase) {
-                        $lockedColumns[] = "{$assessment->type} (Session ordinaire verrouillée)";
+                    $currentPhaseLower = strtolower($currentPhase);
+                    $isRattrapagePhase = str_contains($currentPhaseLower, 'rattrapage');
+                    $isTotalLock = ($currentPhase === 'Verrouillage Total' || $currentPhase === 'Verrouillé');
+
+                    if ($isMajorExam) {
+                        if ($isTotalLock) {
+                            $lockedColumns[] = "{$assessment->type} (Examens verrouillés - Seul CC autorisé)";
+                        } elseif ($isRattrapageAssessment && !$isRattrapagePhase) {
+                            $lockedColumns[] = "{$assessment->type} (Session rattrapage non ouverte)";
+                        } elseif ($isOrdinaireExamAssessment && $isRattrapagePhase) {
+                            $lockedColumns[] = "{$assessment->type} (Session ordinaire verrouillée)";
+                        } else {
+                            $colMap[$index] = $assessment;
+                        }
                     } else {
+                        // Continuous assessment (CC1, CC2, TP, etc.) is always allowed
                         $colMap[$index] = $assessment;
                     }
                     break;
