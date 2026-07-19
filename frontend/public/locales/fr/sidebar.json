@@ -65,9 +65,13 @@
     "item_41": "Messagerie",
     "item_42": "Cahiers de Textes Admin",
     "item_43": "FAQ",
-    "item_44": "Documents & Attestations",
     "item_45": "Réseau Alumni",
-    "item_46": "Paramètres"
+    "item_46": "Paramètres",
+    "item_blockchain": "Diplômes Blockchain",
+    "item_smart_campus": "Smart Campus",
+    "item_tafem": "Concours TAFEM",
+    "item_mobility": "Mobilité Internationale",
+    "item_jury_pfe": "Jurys PFE & Soutenances"
   },
   "sections": {
     "academics": "Scolarité",

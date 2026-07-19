@@ -430,6 +430,11 @@ export default function RootRouter() {
           <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
           <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
           <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
+          <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
+          <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
+          <Route path="/admin/tafem" element={<AdminTafem />} />
+          <Route path="/admin/mobility" element={<AdminMobility />} />
+          <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
           <Route path="/admin/alumni" element={<AlumniNetwork />} />
           <Route path="/admin/pilotage" element={<PilotagePage />} />
           <Route path="/admin/exams" element={<AdminExamsPage />} />

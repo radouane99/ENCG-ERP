@@ -53,6 +53,8 @@ const navigation: (NavItem | NavGroup)[] = [
       { labelKey: 'nav.item_10', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_11', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_student_cards', href: '/admin/student-cards', icon: IdCard, roles: ['super-admin', 'institution-admin', 'director'] },
+      { labelKey: 'nav.item_tafem', href: '/admin/tafem', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director'] },
+      { labelKey: 'nav.item_mobility', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_12', href: '/admin/absences', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_13', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { labelKey: 'nav.item_14', href: '/admin/requests', icon: FileText, roles: ['super-admin', 'institution-admin', 'director'] },
@@ -83,6 +85,7 @@ const navigation: (NavItem | NavGroup)[] = [
     items: [
       { labelKey: 'nav.item_25', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_26', href: '/infrastructure/classrooms', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
+      { labelKey: 'nav.item_smart_campus', href: '/admin/smart-campus', icon: Landmark, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_27', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_28', href: '/academic/holidays', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
@@ -91,6 +94,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupKey: 'nav.group_5',
     items: [
       { labelKey: 'nav.item_29', href: '/academic/internships', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { labelKey: 'nav.item_jury_pfe', href: '/admin/jury-pfe', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { labelKey: 'nav.item_30', href: '/admin/clubs', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
       { labelKey: 'nav.item_31', href: '/admin/clubs-room-requests', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
@@ -126,6 +130,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupKey: 'nav.group_9',
     items: [
       { labelKey: 'nav.item_44', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
+      { labelKey: 'nav.item_blockchain', href: '/admin/blockchain-diplomas', icon: ShieldCheck, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_activity_logs', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_45', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_46', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
