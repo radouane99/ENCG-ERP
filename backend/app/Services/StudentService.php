@@ -19,17 +19,17 @@ class StudentService
             ->select('students.*', 'users.first_name', 'users.last_name', 'users.email', 'users.phone', 'students.gender');
 
         if (!empty($filters['search'])) {
-            $search = $filters['search'];
+            $search = trim($filters['search']);
             $query->where(function ($q) use ($search) {
-                if (DB::connection()->getDriverName() === 'sqlite') {
-                    $q->where('users.first_name', 'like', "%{$search}%")
-                      ->orWhere('users.last_name', 'like', "%{$search}%")
-                      ->orWhere('users.email', 'like', "%{$search}%");
-                } else {
-                    $q->whereRaw('MATCH(users.first_name, users.last_name, users.email) AGAINST (? IN BOOLEAN MODE)', [$search . '*']);
-                }
-                $q->orWhere('students.student_number', 'like', "%{$search}%")
-                  ->orWhere('students.cne', 'like', "%{$search}%");
+                $q->where('users.first_name', 'like', "%{$search}%")
+                  ->orWhere('users.last_name', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%")
+                  ->orWhere('users.cin', 'like', "%{$search}%")
+                  ->orWhere('users.phone', 'like', "%{$search}%")
+                  ->orWhere('students.student_number', 'like', "%{$search}%")
+                  ->orWhere('students.cne', 'like', "%{$search}%")
+                  ->orWhere('students.cin', 'like', "%{$search}%")
+                  ->orWhere('students.massar_code', 'like', "%{$search}%");
             });
         }
 
@@ -42,11 +42,17 @@ class StudentService
                 // 1. Regular enrolled students
                 $q->whereHas('latestPathway', function ($q2) use ($filters) {
                     if (!empty($filters['filiere_id'])) {
-                        $q2->where('filiere_id', $filters['filiere_id']);
+                        if (is_numeric($filters['filiere_id'])) {
+                            $q2->where('filiere_id', $filters['filiere_id']);
+                        } else {
+                            $q2->whereHas('filiere', function($q3) use ($filters) {
+                                $q3->where('code', $filters['filiere_id'])->orWhere('id', $filters['filiere_id']);
+                            });
+                        }
                     }
                     if (!empty($filters['semester'])) {
                         $semesterNum = str_replace('S', '', $filters['semester']);
-                        $q2->where('semester_number', $semesterNum);
+                        $q2->where('current_semester', $semesterNum);
                     }
                     if (!empty($filters['group_id'])) {
                         $q2->where('group_id', $filters['group_id']);
@@ -54,7 +60,6 @@ class StudentService
                 });
 
                 // 2. "Reservistes" (Students carrying over modules from this semester/filiere)
-                // Only if filtering by semester or filiere. (group_id usually applies to current year, not retakes).
                 if (!empty($filters['semester']) || !empty($filters['filiere_id'])) {
                     $q->orWhereExists(function ($q2) use ($filters) {
                         $q2->select(DB::raw(1))
@@ -68,7 +73,13 @@ class StudentService
                             $q2->where('modules.semester_number', $semesterNum);
                         }
                         if (!empty($filters['filiere_id'])) {
-                            $q2->where('modules.filiere_id', $filters['filiere_id']);
+                            if (is_numeric($filters['filiere_id'])) {
+                                $q2->where('modules.filiere_id', $filters['filiere_id']);
+                            } else {
+                                $q2->whereHas('filiere', function($q3) use ($filters) {
+                                    $q3->where('code', $filters['filiere_id']);
+                                });
+                            }
                         }
                     });
                 }
@@ -140,16 +151,37 @@ class StudentService
             // Clean up student data
             unset($data['first_name'], $data['last_name'], $data['email'], $data['phone'], $data['cin']);
 
+            $filiereCode = $data['current_filiere'] ?? null;
+            $semester = $data['current_semester'] ?? 1;
+            unset($data['current_filiere'], $data['current_semester']);
+
             // Auto-generate student number
             $year = date('Y');
-            // This count could have race conditions in high-concurrency, but DB locks or redis sequence would be overkill for now
             $count = Student::whereYear('created_at', $year)->count() + 1;
             
-            $data['student_number'] = $year . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $data['student_number'] = $data['student_number'] ?? ($year . str_pad($count, 4, '0', STR_PAD_LEFT));
+            $data['cne'] = $data['cne'] ?? ('CNE' . $data['student_number']);
+            $data['gender'] = $data['gender'] ?? 'male';
+            $data['status'] = $data['status'] ?? 'active';
             $data['institution_id'] = $institutionId;
             $data['user_id'] = $user->id;
 
-            return Student::create($data);
+            $student = Student::create($data);
+
+            if ($filiereCode) {
+                $filiere = \App\Models\Filiere::where('code', $filiereCode)->orWhere('id', $filiereCode)->first();
+                if ($filiere) {
+                    $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+                    $student->pathways()->create([
+                        'filiere_id' => $filiere->id,
+                        'current_semester' => $semester,
+                        'academic_year_id' => $academicYear ? $academicYear->id : 1,
+                        'is_current' => true,
+                    ]);
+                }
+            }
+
+            return $student;
         });
     }
 

@@ -22,17 +22,18 @@ class StoreStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name'      => 'required|string|max:100',
-            'last_name'       => 'required|string|max:100',
-            'email'           => 'required|email|unique:users,email',
-            'phone'           => 'nullable|string|max:20',
-            'cin'             => 'nullable|string|max:20|unique:users,cin',
-            'cne'             => 'required|string|max:20|unique:students,cne',
-            'massar_code'     => 'nullable|string|max:30',
-            'gender'          => 'required|in:male,female',
-            'birth_date'      => 'nullable|date|before:today',
-            'status'          => 'required|in:active,suspended,graduated,withdrawn',
-            'scholarship_type'=> 'nullable|string|max:50',
+            'first_name'       => 'required|string|max:100',
+            'last_name'        => 'required|string|max:100',
+            'email'            => 'required|email|unique:users,email',
+            'phone'            => 'nullable|string|max:20',
+            'cin'              => 'nullable|string|max:20',
+            'cne'              => 'nullable|string|max:20',
+            'massar_code'      => 'nullable|string|max:30',
+            'gender'           => 'nullable|in:male,female',
+            'birth_date'       => 'nullable|date',
+            'status'           => 'nullable|in:active,suspended,graduated,withdrawn',
+            'current_filiere'  => 'nullable|string',
+            'current_semester' => 'nullable',
         ];
     }
 }
