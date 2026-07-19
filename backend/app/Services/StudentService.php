@@ -43,22 +43,51 @@ class StudentService
                 if (is_numeric($filters['filiere_id'])) {
                     $filiereId = (int) $filters['filiere_id'];
                 } else {
-                    $filiereId = \App\Models\Filiere::where('code', $filters['filiere_id'])->value('id') ?? -1;
+                    $filiereId = \App\Models\Filiere::where('code', $filters['filiere_id'])->value('id');
                 }
             }
 
-            $semesterNum = !empty($filters['semester']) ? (int) str_replace('S', '', $filters['semester']) : null;
+            $requestedSem = !empty($filters['semester']) ? (int) str_replace('S', '', $filters['semester']) : null;
             $groupId = !empty($filters['group_id']) ? (int) $filters['group_id'] : null;
 
-            $query->whereHas('pathways', function ($q) use ($filiereId, $semesterNum, $groupId) {
-                if ($filiereId !== null) {
-                    $q->where('filiere_id', $filiereId);
-                }
-                if ($semesterNum !== null) {
-                    $q->where('current_semester', $semesterNum);
-                }
-                if ($groupId !== null) {
-                    $q->where('group_id', $groupId);
+            if ($requestedSem !== null) {
+                // Pair semesters by academic year: S1<->S2 (Year 1), S3<->S4 (Year 2), S5<->S6 (Year 3), S7<->S8 (Year 4), S9<->S10 (Year 5)
+                $pairedSem = ($requestedSem % 2 === 1) ? ($requestedSem + 1) : ($requestedSem - 1);
+                $allowedSemesters = [$requestedSem, $pairedSem];
+            } else {
+                $allowedSemesters = null;
+            }
+
+            $query->where(function ($q) use ($filiereId, $requestedSem, $allowedSemesters, $groupId) {
+                // 1. Regular enrolled students in the corresponding academic year (same semester pair S1/S2, S3/S4, etc.)
+                $q->whereHas('pathways', function ($q2) use ($filiereId, $allowedSemesters, $groupId) {
+                    if ($filiereId !== null) {
+                        $q2->where('filiere_id', $filiereId);
+                    }
+                    if ($allowedSemesters !== null) {
+                        $q2->whereIn('current_semester', $allowedSemesters);
+                    }
+                    if ($groupId !== null) {
+                        $q2->where('group_id', $groupId);
+                    }
+                });
+
+                // 2. "Réservistes": Students carrying over modules from this requested semester
+                if ($requestedSem !== null || $filiereId !== null) {
+                    $q->orWhereExists(function ($q2) use ($requestedSem, $filiereId) {
+                        $q2->select(DB::raw(1))
+                           ->from('student_module_retakes')
+                           ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
+                           ->whereColumn('student_module_retakes.student_id', 'students.id')
+                           ->where('student_module_retakes.status', 'pending');
+                           
+                        if ($requestedSem !== null) {
+                            $q2->where('modules.semester_number', $requestedSem);
+                        }
+                        if ($filiereId !== null) {
+                            $q2->where('modules.filiere_id', $filiereId);
+                        }
+                    });
                 }
             });
         }
