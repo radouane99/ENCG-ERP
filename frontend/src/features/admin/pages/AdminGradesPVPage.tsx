@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock } from 'lucide-react'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
@@ -23,9 +23,38 @@ export default function AdminGradesPVPage() {
   const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [viewAllGroups, setViewAllGroups] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
+
+  const handleDownloadPdf = async () => {
+    setIsExportingPdf(true)
+    const toastId = toast.loading(isRtl ? 'جاري تحضير ملف PDF الرسمي...' : 'Génération du PDF Officiel du PV...')
+    try {
+      const response = await api.get(`/modules/${moduleId}/pv/export-pdf`, {
+        params: {
+          group_id: viewAllGroups ? 'all' : (groupId || 'all'),
+          session: session,
+          academic_year_id: 1
+        },
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `PV_Deliberation_Module_${moduleId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toast.success(isRtl ? 'تم تحميل ملف PDF بنجاح' : 'PV PDF Officiel téléchargé avec succès !', { id: toastId })
+    } catch (err) {
+      console.error(err)
+      toast.error(isRtl ? 'حدث خطأ أثناء تحميل الملف' : 'Erreur lors de la génération du PDF.', { id: toastId })
+    } finally {
+      setIsExportingPdf(false)
+    }
+  }
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -250,10 +279,19 @@ export default function AdminGradesPVPage() {
             <RefreshCw className="w-4 h-4" /> Actualiser
           </Button>
           <Button
-            onClick={handlePrint}
-            className="bg-[#0f2863] text-white rounded-xl flex items-center gap-2 text-xs font-bold hover:bg-[#1a387e]"
+            onClick={handleDownloadPdf}
+            disabled={isExportingPdf}
+            className="bg-[#0f2863] text-white rounded-xl flex items-center gap-2 text-xs font-bold hover:bg-[#1a387e] shadow-md"
           >
-            <Printer className="w-4 h-4" /> Imprimer PV (PDF)
+            {isExportingPdf ? <Spinner className="text-white" /> : <Download className="w-4 h-4" />}
+            Télécharger PDF Officiel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            className="rounded-xl flex items-center gap-2 text-xs font-bold border-slate-300"
+          >
+            <Printer className="w-4 h-4" /> Aperçu Web
           </Button>
           {pvData.signature ? (
             <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">

@@ -164,4 +164,153 @@ class PdfExportController extends Controller
         $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Liste Affichage Examen ' . $examId]);
         return $pdf->download("affichage_examen_{$examId}.pdf");
     }
+
+    public function exportModulePvPdf(Request $request, $moduleId)
+    {
+        $groupId = $request->query('group_id');
+        $sessionType = $request->query('session', 'normale');
+        $academicYearId = $request->query('academic_year_id', 1);
+
+        $module = \App\Models\Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
+        
+        $query = \App\Models\StudentRegistration::query();
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
+            $query->where('group_id', $groupId);
+        } else {
+            $query->where('filiere_id', $module->filiere_id)
+                  ->where('academic_year_id', $academicYearId);
+        }
+
+        $registrations = $query->with('student.user')->get();
+        $students = $registrations->map(fn($reg) => $reg->student)->filter();
+
+        // Get assessments
+        $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
+        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
+
+        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment) {
+            $studentGrades = \App\Models\Grade::where('student_id', $student->id)
+                ->whereIn('assessment_id', $module->assessments->pluck('id'))
+                ->get();
+
+            $gradesDetail = [];
+            $totalWeight = 0;
+            $weightedSum = 0;
+
+            foreach ($normaleAssessments as $a) {
+                $grade = $studentGrades->firstWhere('assessment_id', $a->id);
+                $val = $grade ? $grade->value : null;
+                $isAbsent = $grade ? $grade->absent : false;
+                
+                $gradesDetail[$a->id] = ['value' => $val, 'is_absent' => $isAbsent, 'weight' => $a->weight, 'type' => $a->type];
+                $gradesDetail[$a->type] = $gradesDetail[$a->id];
+
+                $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
+                if ($calcVal !== null) {
+                    $weightedSum += $calcVal * ($a->weight / 100);
+                    $totalWeight += $a->weight;
+                }
+            }
+
+            $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
+            $decisionNormale = '';
+            if ($moyenneNormale !== null) {
+                if ($moyenneNormale >= 10) $decisionNormale = 'V';
+                elseif ($moyenneNormale < 6) $decisionNormale = 'NV';
+                else $decisionNormale = 'R';
+            }
+
+            $rattrapageGradeVal = null;
+            $rattrapageIsAbsent = false;
+            if ($rattrapageAssessment) {
+                $rGrade = $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id);
+                if ($rGrade) {
+                    $rattrapageGradeVal = $rGrade->value;
+                    $rattrapageIsAbsent = $rGrade->absent;
+                }
+            }
+
+            $moyenneFinale = $moyenneNormale;
+            $decisionFinale = $decisionNormale;
+
+            if (($decisionNormale === 'R' || $decisionNormale === 'NV') && ($rattrapageGradeVal !== null || $rattrapageIsAbsent)) {
+                $examAssessment = $normaleAssessments->first(fn($a) => str_contains(strtolower($a->type), 'exam'));
+                $rCalcVal = $rattrapageIsAbsent ? 0 : floatval($rattrapageGradeVal);
+                if ($examAssessment) {
+                    $newWeightedSum = 0;
+                    $newTotalWeight = 0;
+                    foreach ($normaleAssessments as $a) {
+                        $grade = $studentGrades->firstWhere('assessment_id', $a->id);
+                        $val = $grade ? $grade->value : null;
+                        $isAbsent = $grade ? $grade->absent : false;
+                        $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
+                        if ($a->id === $examAssessment->id) $calcVal = $rCalcVal;
+                        if ($calcVal !== null) {
+                            $newWeightedSum += $calcVal * ($a->weight / 100);
+                            $newTotalWeight += $a->weight;
+                        }
+                    }
+                    $moyenneRattrapage = $newTotalWeight > 0 ? ($newWeightedSum * (100 / $newTotalWeight)) : 0;
+                    $moyenneFinale = max($moyenneNormale ?? 0, round($moyenneRattrapage, 2));
+                } else {
+                    $moyenneFinale = max($moyenneNormale ?? 0, $rCalcVal);
+                }
+                $decisionFinale = $moyenneFinale >= 10 ? 'VAR' : 'NV';
+            }
+
+            return [
+                'student_id' => $student->id,
+                'apogee' => $student->student_number ?? $student->id,
+                'last_name' => $student->last_name,
+                'first_name' => $student->first_name,
+                'grades_detail' => $gradesDetail,
+                'moyenne_normale' => $moyenneNormale,
+                'decision_normale' => $decisionNormale,
+                'rattrapage_note' => $rattrapageGradeVal,
+                'rattrapage_absent' => $rattrapageIsAbsent,
+                'moyenne_finale' => $moyenneFinale,
+                'decision_finale' => $decisionFinale
+            ];
+        });
+
+        // Signature record
+        $signature = null;
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
+            $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+                ->where('group_id', $groupId)
+                ->with('signer')
+                ->first();
+            if ($sigRecord) {
+                $signature = [
+                    'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
+                    'signed_at' => $sigRecord->signed_at->format('d/m/Y H:i'),
+                    'signature_data' => $sigRecord->signature_data,
+                    'ip_address' => $sigRecord->ip_address,
+                    'digital_seal' => $sigRecord->digital_seal,
+                ];
+            }
+        }
+
+        // Base64 Logo
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $pdf = Pdf::setOption([
+            'isRemoteEnabled' => true,
+            'chroot' => public_path(),
+        ])->loadView('pdf.module_pv', [
+            'module' => $module,
+            'session' => $sessionType,
+            'normaleAssessments' => $normaleAssessments,
+            'students' => $data,
+            'signature' => $signature,
+            'logoBase64' => $logoBase64,
+            'perimetre' => ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? "Groupe {$groupId}" : "Module Complet",
+            'academicYear' => '2026/2027',
+            'semester' => 'S5',
+            'date' => date('d/m/Y H:i')
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download("PV_Deliberation_{$module->code}.pdf");
+    }
 }

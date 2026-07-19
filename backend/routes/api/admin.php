@@ -172,6 +172,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('modules/{module}/assessments', [AssessmentController::class, 'getForModule']);
     Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
+    Route::get('modules/{module}/pv/export-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportModulePvPdf']);
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
     Route::get('modules/{module}/export-grades', [GradeController::class, 'exportGradesTemplate']);
     Route::post('modules/{module}/import-grades', [GradeController::class, 'importGrades']);
