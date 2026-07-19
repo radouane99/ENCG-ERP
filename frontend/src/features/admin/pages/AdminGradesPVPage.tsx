@@ -31,11 +31,12 @@ export default function AdminGradesPVPage() {
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true)
     const toastId = toast.loading(isRtl ? 'جاري تحضير ملف PDF الرسمي...' : 'Génération du PDF Officiel du PV...')
-    try {
+      const semesterVal = searchParams.get('semester') || pvData?.module?.semester_number || 1
       const response = await api.get(`/modules/${moduleId}/pv/export-pdf`, {
         params: {
           group_id: viewAllGroups ? 'all' : (groupId || 'all'),
           session: session,
+          semester: semesterVal,
           academic_year_id: 1
         },
         responseType: 'blob'
@@ -539,7 +540,7 @@ export default function AdminGradesPVPage() {
             <div className="flex items-center gap-4 text-right">
               <div className="text-xs font-semibold text-slate-700 leading-tight">
                 <p><span className="font-bold text-[#0f2863]">Année Univ :</span> 2026/2027</p>
-                <p><span className="font-bold text-[#0f2863]">Semestre :</span> S5</p>
+                <p><span className="font-bold text-[#0f2863]">Semestre :</span> S{searchParams.get('semester') || pvData?.module?.semester_number || 1}</p>
                 <p><span className="font-bold text-[#0f2863]">Périmètre :</span> {viewAllGroups ? 'Module Complet' : (groupId ? `Groupe ${groupId}` : 'Tous les Groupes')}</p>
                 <p className="text-[9px] text-slate-400 font-mono mt-1">
                   {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}

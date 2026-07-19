@@ -273,22 +273,23 @@ class PdfExportController extends Controller
             ];
         });
 
-        // Signature record
+        // Signature record query
         $signature = null;
-        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
-            $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
-                ->where('group_id', $groupId)
-                ->with('signer')
-                ->first();
-            if ($sigRecord) {
-                $signature = [
-                    'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
-                    'signed_at' => $sigRecord->signed_at->format('d/m/Y H:i'),
-                    'signature_data' => $sigRecord->signature_data,
-                    'ip_address' => $sigRecord->ip_address,
-                    'digital_seal' => $sigRecord->digital_seal,
-                ];
-            }
+        $sigGroupId = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? intval($groupId) : null;
+        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
+        if ($sigGroupId) {
+            $sigQuery->where('group_id', $sigGroupId);
+        }
+        $sigRecord = $sigQuery->with('signer')->latest()->first();
+
+        if ($sigRecord) {
+            $signature = [
+                'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
+                'signed_at' => $sigRecord->signed_at ? $sigRecord->signed_at->format('d/m/Y H:i') : date('d/m/Y H:i'),
+                'signature_data' => $sigRecord->signature_data,
+                'ip_address' => $sigRecord->ip_address,
+                'digital_seal' => $sigRecord->digital_seal,
+            ];
         }
 
         // Base64 Logo
@@ -304,6 +305,8 @@ class PdfExportController extends Controller
             $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($verifyUrl);
         }
 
+        $semesterNum = $request->query('semester', $module->semester_number ?? 1);
+
         $pdf = Pdf::setOption([
             'isRemoteEnabled' => true,
             'chroot' => public_path(),
@@ -318,7 +321,7 @@ class PdfExportController extends Controller
             'verifyUrl' => $verifyUrl,
             'perimetre' => ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? "Groupe {$groupId}" : "Module Complet",
             'academicYear' => '2026/2027',
-            'semester' => 'S5',
+            'semester' => 'S' . $semesterNum,
             'date' => date('d/m/Y H:i')
         ])->setPaper('a4', 'landscape');
 
