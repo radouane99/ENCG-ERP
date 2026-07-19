@@ -28,9 +28,19 @@ export default function AdminGradesPVPage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
 
+  // Fetch consolidated PV data
+  const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
+    queryKey: ['module-pv', moduleId, groupId, viewAllGroups],
+    queryFn: () => api.get(`/modules/${moduleId}/pv`, {
+      params: { group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all') }
+    }).then(res => res.data),
+    enabled: !!moduleId,
+  })
+
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true)
     const toastId = toast.loading(isRtl ? 'جاري تحضير ملف PDF الرسمي...' : 'Génération du PDF Officiel du PV...')
+    try {
       const semesterVal = searchParams.get('semester') || pvData?.module?.semester_number || 1
       const response = await api.get(`/modules/${moduleId}/pv/export-pdf`, {
         params: {
@@ -136,15 +146,6 @@ export default function AdminGradesPVPage() {
       toast.error(err.response?.data?.message || "Erreur lors de la signature.")
     }
   }
-
-  // Fetch consolidated PV data
-  const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
-    queryKey: ['module-pv', moduleId, groupId, viewAllGroups],
-    queryFn: () => api.get(`/modules/${moduleId}/pv`, {
-      params: { group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all') }
-    }).then(res => res.data),
-    enabled: !!moduleId,
-  })
 
   // Get the Rattrapage assessment ID from pvData
   const rattrapageAssessment = pvData?.assessments?.find((a: any) => a.type.toLowerCase() === 'rattrapage')

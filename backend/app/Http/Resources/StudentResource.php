@@ -27,6 +27,7 @@ class StudentResource extends JsonResource
             'last_name' => $this->last_name ?? ($this->relationLoaded('user') ? $this->user?->last_name : null),
             'email' => $this->email ?? ($this->relationLoaded('user') ? $this->user?->email : null),
             'phone' => $this->phone ?? ($this->relationLoaded('user') ? $this->user?->phone : null),
+            'cin' => $this->cin ?? ($this->relationLoaded('user') ? $this->user?->cin : null),
             'current_filiere' => $this->current_filiere ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->filiere?->code : null),
             'current_group' => $this->current_group ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->group?->name : null),
             // Wrap the related user model in UserResource if it's loaded

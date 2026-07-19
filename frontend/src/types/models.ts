@@ -64,6 +64,7 @@ export interface Student {
   last_name?: string;
   email?: string;
   phone?: string | null;
+  cin?: string | null;
   current_filiere?: string;
   current_semester?: number;
   current_group?: string;

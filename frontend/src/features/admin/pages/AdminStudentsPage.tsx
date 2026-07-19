@@ -237,7 +237,7 @@ export default function AdminStudentsPage() {
                   </td>
                   <td className="px-8 py-5">
                     <div className="text-xs font-bold text-slate-700">
-                      CIN: {s.cin || (s.user as any)?.cin || '—'}
+                      CIN: {s.cin || s.user?.cin || '—'}
                     </div>
                     <div className="text-[11px] font-medium text-slate-400 mt-0.5">
                       CNE/Massar: {s.cne || s.massar_code || '—'}

@@ -38,50 +38,27 @@ class StudentService
         }
 
         if (!empty($filters['filiere_id']) || !empty($filters['semester']) || !empty($filters['group_id'])) {
-            $query->where(function ($q) use ($filters) {
-                // 1. Regular enrolled students
-                $q->whereHas('latestPathway', function ($q2) use ($filters) {
-                    if (!empty($filters['filiere_id'])) {
-                        if (is_numeric($filters['filiere_id'])) {
-                            $q2->where('filiere_id', $filters['filiere_id']);
-                        } else {
-                            $q2->whereHas('filiere', function($q3) use ($filters) {
-                                $q3->where('code', $filters['filiere_id'])->orWhere('id', $filters['filiere_id']);
-                            });
-                        }
-                    }
-                    if (!empty($filters['semester'])) {
-                        $semesterNum = str_replace('S', '', $filters['semester']);
-                        $q2->where('current_semester', $semesterNum);
-                    }
-                    if (!empty($filters['group_id'])) {
-                        $q2->where('group_id', $filters['group_id']);
-                    }
-                });
+            $filiereId = null;
+            if (!empty($filters['filiere_id'])) {
+                if (is_numeric($filters['filiere_id'])) {
+                    $filiereId = (int) $filters['filiere_id'];
+                } else {
+                    $filiereId = \App\Models\Filiere::where('code', $filters['filiere_id'])->value('id') ?? -1;
+                }
+            }
 
-                // 2. "Reservistes" (Students carrying over modules from this semester/filiere)
-                if (!empty($filters['semester']) || !empty($filters['filiere_id'])) {
-                    $q->orWhereExists(function ($q2) use ($filters) {
-                        $q2->select(DB::raw(1))
-                           ->from('student_module_retakes')
-                           ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
-                           ->whereColumn('student_module_retakes.student_id', 'students.id')
-                           ->where('student_module_retakes.status', 'pending');
-                           
-                        if (!empty($filters['semester'])) {
-                            $semesterNum = str_replace('S', '', $filters['semester']);
-                            $q2->where('modules.semester_number', $semesterNum);
-                        }
-                        if (!empty($filters['filiere_id'])) {
-                            if (is_numeric($filters['filiere_id'])) {
-                                $q2->where('modules.filiere_id', $filters['filiere_id']);
-                            } else {
-                                $q2->whereHas('filiere', function($q3) use ($filters) {
-                                    $q3->where('code', $filters['filiere_id']);
-                                });
-                            }
-                        }
-                    });
+            $semesterNum = !empty($filters['semester']) ? (int) str_replace('S', '', $filters['semester']) : null;
+            $groupId = !empty($filters['group_id']) ? (int) $filters['group_id'] : null;
+
+            $query->whereHas('pathways', function ($q) use ($filiereId, $semesterNum, $groupId) {
+                if ($filiereId !== null) {
+                    $q->where('filiere_id', $filiereId);
+                }
+                if ($semesterNum !== null) {
+                    $q->where('current_semester', $semesterNum);
+                }
+                if ($groupId !== null) {
+                    $q->where('group_id', $groupId);
                 }
             });
         }
