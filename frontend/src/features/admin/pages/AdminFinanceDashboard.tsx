@@ -5,6 +5,14 @@ import api from '@shared/lib/api';
 import { Landmark, TrendingUp, TrendingDown, DollarSign, Send, FileText, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
+interface PaymentItem {
+  name: string;
+  type: string;
+  amount: string;
+  date: string;
+  status: string;
+}
+
 export default function AdminFinanceDashboard() {
   const { t, i18n } = useTranslation(['admin', 'common']);
   const isRtl = i18n.language === 'ar';
@@ -17,7 +25,7 @@ export default function AdminFinanceDashboard() {
     }
   });
 
-  const payments = financeData?.payments || [];
+  const payments: PaymentItem[] = financeData?.payments || [];
   const revenueMonth = financeData?.revenue_month || '0 MAD';
   const unpaidAmount = financeData?.unpaid_amount || '0 MAD';
   const unpaidCount = financeData?.unpaid_count || 0;

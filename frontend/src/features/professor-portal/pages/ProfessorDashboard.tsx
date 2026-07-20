@@ -16,14 +16,17 @@ import {
   Zap,
   FileSignature
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 
 export default function ProfessorDashboard() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { user } = useAuthStore();
-  const currentDate = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+  const currentDate = new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['professor-stats'],
