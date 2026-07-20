@@ -89,6 +89,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     // Admin Custom Routes
     Route::get('/smart-campus', [AdminSmartCampusController::class, 'getCampusData']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
+    Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
     Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
     Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
     Route::apiResource('holidays', HolidayController::class);
