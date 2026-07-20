@@ -65,6 +65,59 @@ class DocumentCenterController extends Controller
             return $pdf->download("Attestation_Scolarite_{$student->id}.pdf");
         }
 
+        if (in_array($type, ['attestation_reussite', 'reussite'])) {
+            $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($id);
+            $pdf = Pdf::loadView('pdf.attestation_reussite', [
+                'student' => $student->user ? (object)[
+                    'first_name' => $student->user->first_name,
+                    'last_name' => $student->user->last_name,
+                    'cne' => $student->cne_cme ?? $student->student_number,
+                    'cin' => $student->user->cin ?? 'N/A',
+                    'student_number' => $student->student_number,
+                    'latestPathway' => $student->latestPathway
+                ] : $student,
+                'year' => $year,
+                'date' => $date,
+                'qrBase64' => $qrBase64,
+                'logoBase64' => $logoBase64
+            ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
+
+            return $pdf->download("Attestation_Reussite_{$student->id}.pdf");
+        }
+
+        if (in_array($type, ['attestation_decharge', 'decharge'])) {
+            $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($id);
+            $pdf = Pdf::loadView('pdf.attestation_decharge', [
+                'student' => $student->user ? (object)[
+                    'first_name' => $student->user->first_name,
+                    'last_name' => $student->user->last_name,
+                    'cne' => $student->cne_cme ?? $student->student_number,
+                    'student_number' => $student->student_number
+                ] : $student,
+                'year' => $year,
+                'date' => $date,
+                'qrBase64' => $qrBase64,
+                'logoBase64' => $logoBase64
+            ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
+
+            return $pdf->download("Attestation_Decharge_{$student->id}.pdf");
+        }
+
+        if (in_array($type, ['attestation_vacations', 'vacations'])) {
+            $professor = Professor::with('user')->find($id) ?? (object)[
+                'first_name' => 'Enseignant', 'last_name' => 'ENCG', 'cin' => 'F123456', 'specialty' => 'Management & Finance'
+            ];
+            $pdf = Pdf::loadView('pdf.attestation_vacations', [
+                'professor' => $professor->user ?? $professor,
+                'year' => $year,
+                'date' => $date,
+                'qrBase64' => $qrBase64,
+                'logoBase64' => $logoBase64
+            ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
+
+            return $pdf->download("Attestation_Vacations_{$id}.pdf");
+        }
+
         if (in_array($type, ['attestation_travail', 'travail'])) {
             $professor = Professor::with('user')->find($id) ?? (object)[
                 'first_name' => 'Enseignant', 'last_name' => 'ENCG', 'cin' => 'F123456', 'specialty' => 'Management'
