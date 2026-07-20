@@ -12,7 +12,7 @@ import {
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
   BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles, Mail,
-  X, Layers, IdCard
+  X, Layers, IdCard, Eye
 } from 'lucide-react'
 
 interface NavItem {
@@ -115,6 +115,10 @@ const navigation: (NavItem | NavGroup)[] = [
       { labelKey: 'nav.item_37', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
       { labelKey: 'nav.item_38', href: '/professor/absences', icon: Users2, roles: ['professor', 'vacataire'] },
       { labelKey: 'nav.item_39', href: '/professor/qcm-generator', icon: Zap, roles: ['professor'] },
+      { labelKey: 'nav.item_prof_analytics', href: '/professor/analytics', icon: BarChart3, roles: ['professor'] },
+      { labelKey: 'nav.item_prof_proctoring', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },
+      { labelKey: 'nav.item_prof_grading', href: '/professor/smart-grading', icon: FileSignature, roles: ['professor'] },
+      { labelKey: 'nav.item_prof_scanner', href: '/professor/scanner', icon: Scan, roles: ['professor', 'vacataire'] },
     ]
   },
   {
