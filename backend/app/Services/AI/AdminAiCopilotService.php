@@ -7,12 +7,13 @@ use App\Models\Professor;
 use App\Models\Grade;
 use App\Models\Schedule;
 use App\Models\DisciplineCase;
+use App\Models\VacationContract;
 use Illuminate\Support\Facades\DB;
 
 class AdminAiCopilotService
 {
     /**
-     * Process natural language query from Admin Copilot.
+     * Process natural language query from Admin Copilot using real MySQL Database queries.
      */
     public function processQuery(string $query): array
     {
@@ -21,16 +22,21 @@ class AdminAiCopilotService
         // 1. Success Rate & Academic Performance
         if (str_contains($queryLower, 'reussite') || str_contains($queryLower, 'moyenne') || str_contains($queryLower, 'taux') || str_contains($queryLower, 'نجاح')) {
             $totalStudents = Student::count();
-            $admittedStudents = Student::where('status', 'active')->count();
-            $rate = $totalStudents > 0 ? round(($admittedStudents / $totalStudents) * 100, 1) : 92.4;
+            $admittedCount = Student::where('status', 'active')->count();
+            $rate = $totalStudents > 0 ? round(($admittedCount / $totalStudents) * 100, 1) : 0;
+
+            $rattrapageCount = Grade::where('value', '<', 10.0)
+                ->where('value', '>=', 6.0)
+                ->distinct('student_id')
+                ->count('student_id');
 
             return [
                 'type' => 'academic_performance',
-                'answer' => "D'après l'analyse en temps réel des délibérations, le taux global de réussite estimé pour l'ENCG Fès est de **{$rate}%** pour la session en cours. 152 étudiants ont déjà validé l'ensemble de leurs modules.",
+                'answer' => "D'après l'analyse en temps réel de la base de données MySQL, le taux global de réussite calculé pour l'ENCG Fès est de **{$rate}%** ({$admittedCount} étudiants actifs sur {$totalStudents}).",
                 'kpis' => [
-                    ['label' => 'Taux de Réussite Estime', 'value' => "{$rate}%", 'trend' => '+3.2%'],
-                    ['label' => 'Étudiants Admis S1-S6', 'value' => '1,420', 'trend' => '+45'],
-                    ['label' => 'Rattrapages Prévisibles', 'value' => '118', 'trend' => '-12']
+                    ['label' => 'Taux de Réussite Réel', 'value' => "{$rate}%", 'trend' => 'MySQL Live'],
+                    ['label' => 'Total Étudiants Inscrits', 'value' => number_format($totalStudents), 'trend' => 'Base Officielle'],
+                    ['label' => 'Étudiants en Rattrapage', 'value' => number_format($rattrapageCount), 'trend' => 'Base de Notes']
                 ],
                 'action_suggestion' => 'Lancer la simulation de délibération Apogée pour les PVs officiels.'
             ];
@@ -38,16 +44,16 @@ class AdminAiCopilotService
 
         // 2. Attendance & Dropout Risk Query
         if (str_contains($queryLower, 'absence') || str_contains($queryLower, 'decrochage') || str_contains($queryLower, 'risque') || str_contains($queryLower, 'غياب')) {
-            $atRiskCount = Student::where('status', 'at_risk')->count();
-            $count = $atRiskCount > 0 ? $atRiskCount : 14;
+            $atRiskCount = Student::whereIn('status', ['at_risk', 'excluded'])->count();
+            $totalAbsences = \App\Models\AttendanceRecord::where('status', 'absent')->count();
 
             return [
                 'type' => 'dropout_risk',
-                'answer' => "L'IA a identifié **{$count} étudiants à risque élevé de décrochage** en raison d'un taux d'absence > 20% aux cours magistraux ou de notes insuffisantes aux épreuves CC1.",
+                'answer' => "L'analyse réelle des registres d'assiduité révèle **{$atRiskCount} étudiants enregistrés en risque académique ou d'exclusion**, avec un total cumulé de **{$totalAbsences} absences** aux séances de cours.",
                 'kpis' => [
-                    ['label' => 'Étudiants à Risque Élevé', 'value' => (string)$count, 'color' => 'red'],
-                    ['label' => 'Taux Moyen Absences', 'value' => '18.4%', 'color' => 'amber'],
-                    ['label' => 'Modules Impactes', 'value' => 'Comptabilité, Finance', 'color' => 'blue']
+                    ['label' => 'Étudiants à Risque Réels', 'value' => (string)$atRiskCount, 'color' => 'red'],
+                    ['label' => 'Absences Enregistrées', 'value' => number_format($totalAbsences), 'color' => 'amber'],
+                    ['label' => 'Base d\'Assiduité', 'value' => 'Direct MySQL', 'color' => 'blue']
                 ],
                 'action_suggestion' => 'Envoyer une convocation d\'avertissement pour absence au Service de la Scolarité.'
             ];
@@ -55,13 +61,24 @@ class AdminAiCopilotService
 
         // 3. Vacataires & Financial Payout Query
         if (str_contains($queryLower, 'budget') || str_contains($queryLower, 'vacation') || str_contains($queryLower, 'paie') || str_contains($queryLower, 'daf') || str_contains($queryLower, 'مالية')) {
+            $contracts = VacationContract::with(['sessions', 'payments'])->get();
+            $totalBudget = 0;
+            $totalHours = 0;
+
+            foreach ($contracts as $contract) {
+                $hours = $contract->sessions ? $contract->sessions->sum('hours') : ($contract->agreed_hours ?? 0);
+                $rate = $contract->hourly_rate ?? 350;
+                $totalBudget += ($hours * $rate);
+                $totalHours += $hours;
+            }
+
             return [
                 'type' => 'financial_forecast',
-                'answer' => "La prévision budgétaire IA pour la paie des vacataires ce mois-ci s'élève à **142,500.00 MAD** pour un total de 407 heures d'enseignement émargées et validées.",
+                'answer' => "Le calcul budgétaire réel des vacations enregistrées dans la base de données donne un total de **" . number_format($totalBudget, 2) . " MAD** pour **{$totalHours} heures** d'enseignement émargées.",
                 'kpis' => [
-                    ['label' => 'Masse Salariale Vacations', 'value' => '142,500 MAD', 'trend' => 'Dans le budget'],
-                    ['label' => 'Heures Réalisées', 'value' => '407h / 450h', 'trend' => '90.4%'],
-                    ['label' => 'Enseignants Concernés', 'value' => '18 Vacataires', 'trend' => '100% à jour']
+                    ['label' => 'Total Budgété Réel', 'value' => number_format($totalBudget, 2) . ' MAD', 'trend' => 'MySQL Live'],
+                    ['label' => 'Heures Émargées', 'value' => "{$totalHours}h", 'trend' => 'Sessions DB'],
+                    ['label' => 'Contrats Vacataires', 'value' => (string)$contracts->count(), 'trend' => 'Contrats Actifs']
                 ],
                 'action_suggestion' => 'Télécharger le bordereau de virement global pour la DAF.'
             ];
@@ -70,28 +87,34 @@ class AdminAiCopilotService
         // 4. Discipline & Fraud Query
         if (str_contains($queryLower, 'discipline') || str_contains($queryLower, 'fraude') || str_contains($queryLower, 'conseil') || str_contains($queryLower, 'غش')) {
             $casesCount = DisciplineCase::count();
+            $resolvedCount = DisciplineCase::where('status', 'resolved')->count();
+
             return [
                 'type' => 'discipline_cases',
-                'answer' => "Il y a actuellement **" . ($casesCount > 0 ? $casesCount : 3) . " dossiers disciplinaires** enregistrés au Conseil de Discipline, dont 1 cas d'annulation de semestre pour fraude à l'examen.",
+                'answer' => "La base disciplinaire contient actuellement **{$casesCount} dossiers enregistrés**, dont **{$resolvedCount} décisions résolues** par le Conseil de Discipline.",
                 'kpis' => [
-                    ['label' => 'Dossiers Ouverts', 'value' => (string)($casesCount > 0 ? $casesCount : 3), 'color' => 'amber'],
-                    ['label' => 'Annulation de Semestre', 'value' => '1', 'color' => 'red'],
-                    ['label' => 'Avertissements Validés', 'value' => '2', 'color' => 'blue']
+                    ['label' => 'Total Dossiers Réels', 'value' => (string)$casesCount, 'color' => 'amber'],
+                    ['label' => 'Décisions Résolues', 'value' => (string)$resolvedCount, 'color' => 'blue'],
+                    ['label' => 'Source de Données', 'value' => 'Table discipline_cases', 'color' => 'emerald']
                 ],
                 'action_suggestion' => 'Consulter les PVs des décisions du Conseil de Discipline.'
             ];
         }
 
-        // Default Intelligent Fallback
+        // Default Real DB Response
+        $totalStudents = Student::count();
+        $totalProfs = Professor::count();
+        $totalSchedules = Schedule::count();
+
         return [
             'type' => 'general_assistant',
-            'answer' => "J'ai analysé votre demande. L'ERP ENCG Fès fonctionne à 100% de ses capacités : tous les emplois du temps sont verrouillés sans collision, les 8 documents PDF sécurisés sont prêts, et le moteur de délibération Apogée est synchronisé.",
+            'answer' => "Connexion directe à la base MySQL ENCG Fès établie avec succès. Le système gère actuellement **{$totalStudents} étudiants**, **{$totalProfs} professeurs** et **{$totalSchedules} séances de cours** au planning.",
             'kpis' => [
-                ['label' => 'Étudiants Inscrits', 'value' => '1,850', 'trend' => 'Actifs'],
-                ['label' => 'Moteur IA Emploi du Temps', 'value' => 'Verrouillé', 'trend' => '0 Collision'],
-                ['label' => 'Documents Sécurisés', 'value' => '100% QR Code', 'trend' => 'Vérifiables']
+                ['label' => 'Étudiants en Base', 'value' => number_format($totalStudents), 'trend' => 'Table students'],
+                ['label' => 'Corps Enseignant', 'value' => number_format($totalProfs), 'trend' => 'Table professors'],
+                ['label' => 'Séances Planifiées', 'value' => number_format($totalSchedules), 'trend' => 'Table schedules']
             ],
-            'action_suggestion' => 'Tapez "rattrapage", "budget", "absences" ou "résultats" pour obtenir une analyse ciblée.'
+            'action_suggestion' => 'Posez une question spécifique sur les réquisitions, délibérations, absences ou le budget.'
         ];
     }
 }
