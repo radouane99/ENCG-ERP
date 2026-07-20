@@ -15,8 +15,18 @@ class AdminExamController extends Controller
     public function index()
     {
         $exams = Exam::with(['module', 'group', 'room'])->latest()->get()->map(function ($exam) {
+            $generatedCount = \DB::table('exam_seatings')
+                ->where('exam_id', $exam->id)
+                ->whereNotNull('qr_token')
+                ->count();
+            $sentCount = \DB::table('exam_seatings')
+                ->where('exam_id', $exam->id)
+                ->whereNotNull('sent_at')
+                ->count();
+
             return [
                 'id' => $exam->id,
+                'session_id' => $exam->session_id,
                 'module' => $exam->module,
                 'group' => $exam->group,
                 'room' => $exam->room,
@@ -24,9 +34,9 @@ class AdminExamController extends Controller
                 'start_time' => $exam->start_time,
                 'duration_minutes' => $exam->duration_minutes,
                 'type' => $exam->session_type ?? 'EXAMEN',
-                'generated_count' => 0, // Mocked for now, can be computed if ExamConvocation model is used
-                'sent_count' => 0,
-                'pending_count' => 0,
+                'generated_count' => $generatedCount,
+                'sent_count' => $sentCount,
+                'pending_count' => max(0, $generatedCount - $sentCount),
             ];
         });
 

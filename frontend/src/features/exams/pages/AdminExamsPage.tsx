@@ -300,6 +300,26 @@ function ExamCard({ id, title, group, time, duration, room, surveillants, day, m
     }
   })
 
+  const sendMutation = useMutation({
+    mutationFn: (examId: number) => examsApi.sendConvocations(examId),
+    onSuccess: (data) => {
+      onNotify(data.message || `Emails envoyés avec succès pour l'examen ${id}.`)
+    },
+    onError: (error: any) => {
+      onNotify(error.response?.data?.message || `Erreur lors de l'envoi pour l'examen ${id}.`, 'error')
+    }
+  })
+
+  const notifyAbsentsMutation = useMutation({
+    mutationFn: (examId: number) => examsApi.notifyAbsents(examId),
+    onSuccess: (data) => {
+      onNotify(data.message || `Absents notifiés avec succès.`)
+    },
+    onError: (error: any) => {
+      onNotify(error.response?.data?.message || `Erreur lors de la notification.`, 'error')
+    }
+  })
+
   const handleGenerateClick = () => {
     setIsGenerating(true)
     generateMutation.mutate(id)
@@ -358,10 +378,20 @@ function ExamCard({ id, title, group, time, duration, room, surveillants, day, m
           {isGenerating ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-amber-500" />} 
           Générer
         </button>
-        <button onClick={() => onNotify(t('exams.messages.mail_success'))} className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors" title="Envoyer emails + PDF">
-          <Mail className="w-3.5 h-3.5" /> {t('exams.card.btn_mail')}</button>
-        <button onClick={() => onNotify(t('exams.messages.notify_success'))} className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
-          <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> {t('exams.card.btn_notify')}</button>
+        <button 
+          onClick={() => sendMutation.mutate(id)}
+          disabled={sendMutation.isPending}
+          className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-70" title="Envoyer emails + PDF">
+          {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} 
+          {t('exams.card.btn_mail')}
+        </button>
+        <button 
+          onClick={() => notifyAbsentsMutation.mutate(id)}
+          disabled={notifyAbsentsMutation.isPending}
+          className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-70">
+          {notifyAbsentsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" /> : <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />} 
+          {t('exams.card.btn_notify')}
+        </button>
         <Link to={`/admin/exams/${id}/attendance-sheet`} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
           <Printer className="w-3.5 h-3.5 text-slate-400" /> {t('exams.card.btn_pdf')}</Link>
         <Link to={`/admin/exams/${id}/display-list`} className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">

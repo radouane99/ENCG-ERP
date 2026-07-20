@@ -294,6 +294,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
         Route::post('/{examId}/notify-absents', [ConvocationController::class, 'notifyAbsents']);
         Route::post('/{examId}/generate-convocations', [ConvocationController::class, 'generate']);
+        Route::post('/{examId}/send-emails', [ConvocationController::class, 'sendEmails']);
 
         // Student endpoints
         Route::get('/student/{studentId}', [ConvocationController::class, 'getStudentConvocations']);

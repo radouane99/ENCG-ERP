@@ -84,6 +84,14 @@ export const examsApi = {
     const response = await api.post(`/exam-planning/${examId}/generate-convocations`);
     return response.data;
   },
+  sendConvocations: async (examId: number) => {
+    const response = await api.post(`/exam-planning/${examId}/send-emails`);
+    return response.data;
+  },
+  notifyAbsents: async (examId: number) => {
+    const response = await api.post(`/exam-planning/${examId}/notify-absents`);
+    return response.data;
+  },
   getExamDetails: async (examId: number) => {
     const response = await api.get(`/exam-planning/${examId}/details`);
     return response.data.data;
