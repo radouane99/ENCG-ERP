@@ -62,5 +62,15 @@ export const academicApi = {
   getRooms: async () => {
     const response = await api.get('/rooms');
     return response.data.data;
+  },
+
+  // Exam Sessions
+  getExamSessions: async () => {
+    const response = await api.get('/exam-sessions');
+    return response.data.data;
+  },
+  updateExamSession: async (id: number, data: any) => {
+    const response = await api.put(`/exam-sessions/${id}`, data);
+    return response.data;
   }
 };

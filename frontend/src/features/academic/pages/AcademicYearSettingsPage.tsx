@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, CheckCircle2, X } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { academicApi } from '@shared/api/academic'
 import { toast } from 'sonner'
 export default function AcademicYearSettingsPage() {
   const queryClient = useQueryClient()
@@ -16,6 +17,7 @@ export default function AcademicYearSettingsPage() {
 
   const [newYearLabel, setNewYearLabel] = useState('')
   const [newYearIsCurrent, setNewYearIsCurrent] = useState(false)
+  const [sessionDates, setSessionDates] = useState<Record<number, {start_date: string, end_date: string}>>({})
 
   // Queries
   const { data: departmentsData } = useQuery({
@@ -43,6 +45,11 @@ export default function AcademicYearSettingsPage() {
     queryFn: () => api.get('/professor-assignments').then(r => r.data)
   })
 
+  const { data: examSessionsData } = useQuery({
+    queryKey: ['exam-sessions'],
+    queryFn: () => academicApi.getExamSessions()
+  })
+
   const departments = departmentsData?.data || []
   const allProfessors = professorsData?.data || []
   const professors = assignmentForm.department_id 
@@ -51,6 +58,20 @@ export default function AcademicYearSettingsPage() {
   const modules = modulesData?.data || []
   const groups = groupsData?.data || []
   const assignments = assignmentsData?.data || []
+  const examSessions = examSessionsData || []
+
+  useEffect(() => {
+    if (examSessions.length > 0) {
+      const dates: any = {}
+      examSessions.forEach((s: any) => {
+        dates[s.id] = {
+          start_date: s.start_date || '',
+          end_date: s.end_date || ''
+        }
+      })
+      setSessionDates(dates)
+    }
+  }, [examSessionsData]) // Run when data arrives
 
   // Mutations
   const createAssignmentMutation = useMutation({
@@ -86,6 +107,26 @@ export default function AcademicYearSettingsPage() {
     },
     onError: () => toast.error('Erreur lors de la suppression')
   })
+
+  const updateSessionMutation = useMutation({
+    mutationFn: (data: {id: number, start_date: string, end_date: string}) => 
+      academicApi.updateExamSession(data.id, { start_date: data.start_date, end_date: data.end_date }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] })
+    }
+  })
+
+  const handleSaveSessions = async () => {
+    try {
+      const promises = Object.entries(sessionDates).map(([id, dates]) => 
+        updateSessionMutation.mutateAsync({ id: Number(id), ...dates })
+      )
+      await Promise.all(promises)
+      toast.success('Périodes d\'examens enregistrées avec succès')
+    } catch (e) {
+      toast.error('Erreur lors de l\'enregistrement des périodes')
+    }
+  }
 
   const handleCreateAssignment = () => {
     if (!assignmentForm.professor_id || !assignmentForm.module_id || !assignmentForm.group_id) {
@@ -218,73 +259,34 @@ export default function AcademicYearSettingsPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
           
-          {/* Normale Automne */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-800">Normale Automne</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-07-01" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
+          {examSessions.map((session: any) => (
+            <div key={session.id} className="space-y-4">
+              <h3 className="font-bold text-slate-800">{session.name}</h3>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
+                <div className="relative">
+                  <input 
+                    type="date" 
+                    value={sessionDates[session.id]?.start_date || ''} 
+                    onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], start_date: e.target.value}})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
+                <div className="relative">
+                  <input 
+                    type="date" 
+                    value={sessionDates[session.id]?.end_date || ''} 
+                    onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], end_date: e.target.value}})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-07-08" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-          </div>
+          ))}
 
-          {/* Normale Printemps */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-800">Normale Printemps</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
-              <div className="relative">
-                <input type="date" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
-              <div className="relative">
-                <input type="date" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-          </div>
-
-          {/* Rattrapage Automne */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-800">Rattrapage Automne</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-07-15" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-07-20" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-          </div>
-
-          {/* Rattrapage Printemps */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-800">Rattrapage Printemps</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-06-22" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
-              <div className="relative">
-                <input type="date" defaultValue="2026-07-03" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-              </div>
-            </div>
-          </div>
         </div>
         
         <div className="mt-8 flex items-center justify-between">
@@ -292,10 +294,11 @@ export default function AcademicYearSettingsPage() {
             Les examens ne pourront être planifiés que dans les périodes définies pour chaque session.
           </p>
           <button 
-            onClick={() => toast.success('Périodes d\'examens enregistrées avec succès')}
-            className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm"
+            onClick={handleSaveSessions}
+            disabled={updateSessionMutation.isPending}
+            className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm disabled:opacity-50"
           >
-            Enregistrer les périodes
+            {updateSessionMutation.isPending ? 'Enregistrement...' : 'Enregistrer les périodes'}
           </button>
         </div>
       </div>
