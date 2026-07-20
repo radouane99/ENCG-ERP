@@ -6,33 +6,33 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; color: #1e293b; background: #fff; }
 
-    /* Header */
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 3px solid #0f2863; margin-bottom: 16px; }
-    .header-left .institution { font-size: 18px; font-weight: 900; color: #0f2863; letter-spacing: -0.5px; }
-    .header-left .address { font-size: 8px; color: #64748b; margin-top: 2px; }
-    .header-right { text-align: right; }
-    .header-right .doc-label { font-size: 13px; font-weight: 900; color: #0f2863; text-transform: uppercase; letter-spacing: 1px; }
-    .header-right .doc-sub { font-size: 8px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Header — table-based for DomPDF compatibility */
+    .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #0f2863; padding-bottom: 14px; margin-bottom: 16px; }
+    .header-table td { vertical-align: middle; }
+    .institution { font-size: 16px; font-weight: 900; color: #0f2863; letter-spacing: -0.5px; }
+    .address { font-size: 8px; color: #64748b; margin-top: 2px; }
+    .doc-label { font-size: 13px; font-weight: 900; color: #0f2863; text-transform: uppercase; letter-spacing: 1px; }
+    .doc-sub { font-size: 8px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Student info card */
-    .student-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; }
-    .student-info-block { flex: 1; }
-    .student-info-block .label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 2px; }
-    .student-info-block .value { font-size: 11px; font-weight: 700; color: #0f172a; }
-    .student-info-block .filiere { font-size: 9px; color: #475569; margin-top: 2px; }
+    /* Student info card — table-based */
+    .student-card-table { width: 100%; border-collapse: collapse; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 16px; }
+    .student-card-table td { padding: 10px 14px; vertical-align: middle; }
+    .info-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 2px; }
+    .info-value { font-size: 11px; font-weight: 700; color: #0f172a; }
+    .info-filiere { font-size: 9px; color: #475569; margin-top: 2px; }
 
     /* Academic year badge */
-    .year-badge { background: #0f2863; color: white; border-radius: 6px; padding: 6px 12px; text-align: center; align-self: center; }
+    .year-badge { background: #0f2863; color: white; border-radius: 6px; padding: 6px 12px; text-align: center; }
     .year-badge .year { font-size: 13px; font-weight: 900; }
-    .year-badge .year-label { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+    .year-badge .year-label { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Table */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9px; }
-    th { background: #0f2863; color: white; padding: 8px 6px; text-align: center; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    th.left { text-align: left; }
-    td { padding: 7px 6px; border-bottom: 1px solid #f1f5f9; text-align: center; }
-    td.left { text-align: left; }
-    tr:nth-child(even) td { background: #f8fafc; }
+    /* Grades Table */
+    .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9px; }
+    .grades-table th { background: #0f2863; color: white; padding: 8px 6px; text-align: center; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .grades-table th.left { text-align: left; }
+    .grades-table td { padding: 7px 6px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+    .grades-table td.left { text-align: left; }
+    .grades-table tr:nth-child(even) td { background: #f8fafc; }
 
     /* Decision badges */
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 8px; font-weight: 900; }
@@ -41,62 +41,79 @@
     .badge-nv { background: #fee2e2; color: #991b1b; }
     .badge-dash { color: #94a3b8; }
 
-    /* GPA section */
-    .gpa-row { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+    /* GPA section — table-based */
+    .gpa-outer { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .gpa-card { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 20px; text-align: center; }
-    .gpa-card .gpa-label { font-size: 7.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
-    .gpa-card .gpa-value { font-size: 22px; font-weight: 900; color: #0f2863; }
-    .gpa-card .gpa-sub { font-size: 8px; color: #64748b; }
+    .gpa-label { font-size: 7.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
+    .gpa-value { font-size: 22px; font-weight: 900; color: #0f2863; }
+    .gpa-sub { font-size: 8px; color: #64748b; }
 
-    /* Signature area */
-    .sig-area { display: flex; justify-content: space-between; margin-top: 24px; }
-    .sig-box { text-align: center; width: 45%; }
-    .sig-box .sig-title { font-size: 9px; font-weight: 700; color: #334155; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 40px; }
+    /* Signature area — table-based */
+    .sig-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .sig-table td { text-align: center; vertical-align: bottom; padding: 0 10px; }
+    .sig-title { font-size: 9px; font-weight: 700; color: #334155; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 40px; }
 
-    /* Footer */
-    .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .footer-seal { font-size: 7.5px; font-family: monospace; color: #94a3b8; max-width: 55%; word-break: break-all; }
+    /* Footer — table-based */
+    .footer-table { width: 100%; border-collapse: collapse; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .footer-table td { vertical-align: middle; padding-top: 8px; }
+    .footer-seal { font-size: 7.5px; font-family: monospace; color: #94a3b8; word-break: break-all; }
     .footer-right { font-size: 7.5px; color: #94a3b8; text-align: right; }
   </style>
 </head>
 <body>
 
-  {{-- Header --}}
-  <div class="header">
-    <div class="header-left">
-      <img src="{{ $logoPath }}" alt="ENCG Logo" style="height:48px; margin-bottom:8px;" />
-      <div class="institution">ENCG Fès</div>
-      <div class="address">École Nationale de Commerce et de Gestion — Route d'Imouzzer, Fès 30000, Maroc</div>
-    </div>
-    <div class="header-right">
-      <div class="doc-label">Relevé de Notes Officiel</div>
-      <div class="doc-sub">Document officiel — ENCG Fès ERP</div>
-    </div>
-  </div>
+  {{-- Header — Royaume du Maroc official header --}}
+  <table class="header-table">
+    <tr>
+      <td style="width:35%; text-align:left;">
+        <span style="font-size:8.5px; font-weight:bold; color:#1e293b; line-height:1.4;">
+          ROYAUME DU MAROC<br>
+          Ministère de l'Enseignement Supérieur,<br>
+          de la Recherche Scientifique et de l'Innovation
+        </span>
+      </td>
+      <td style="width:30%; text-align:center;">
+        @if(!empty($logoBase64))
+          <img src="{{ $logoBase64 }}" alt="ENCG Logo" style="height:44px; margin-bottom:4px;" />
+        @endif
+        <div class="institution">ENCG Fès</div>
+        <div class="address">Route d'Imouzzer, Fès 30000, Maroc</div>
+      </td>
+      <td style="width:35%; text-align:right;">
+        <div class="doc-label">Relevé de Notes Officiel</div>
+        <div class="doc-sub" style="margin-top:4px;">Document officiel — ENCG Fès ERP</div>
+        <div class="doc-sub">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
+      </td>
+    </tr>
+  </table>
 
-  {{-- Student Info --}}
-  <div class="student-card">
-    <div class="student-info-block" style="flex:2">
-      <div class="label">Étudiant(e)</div>
-      <div class="value">{{ strtoupper($student->user->last_name ?? '') }} {{ ucfirst($student->user->first_name ?? '') }}</div>
-      <div class="filiere">{{ $filiere?->name ?? 'Filière non définie' }} — CNE : {{ $student->cne_cme ?? $student->student_number ?? '—' }}</div>
-    </div>
-    <div class="student-info-block">
-      <div class="label">N° Apogée</div>
-      <div class="value">{{ $student->student_number ?? '—' }}</div>
-    </div>
-    <div class="student-info-block">
-      <div class="label">CIN</div>
-      <div class="value">{{ $student->user->cin ?? '—' }}</div>
-    </div>
-    <div class="year-badge">
-      <div class="year">{{ $academic_year?->name ?? date('Y') }}</div>
-      <div class="year-label">Année académique</div>
-    </div>
-  </div>
+  {{-- Student Info — table-based for DomPDF --}}
+  <table class="student-card-table">
+    <tr>
+      <td style="width:45%;">
+        <div class="info-label">Étudiant(e)</div>
+        <div class="info-value">{{ strtoupper($student->user->last_name ?? '') }} {{ ucfirst($student->user->first_name ?? '') }}</div>
+        <div class="info-filiere">{{ $filiere?->name ?? 'Filière non définie' }} — CNE : {{ $student->cne_cme ?? $student->student_number ?? '—' }}</div>
+      </td>
+      <td style="width:20%;">
+        <div class="info-label">N° Apogée</div>
+        <div class="info-value">{{ $student->student_number ?? '—' }}</div>
+      </td>
+      <td style="width:15%;">
+        <div class="info-label">CIN</div>
+        <div class="info-value">{{ $student->user->cin ?? '—' }}</div>
+      </td>
+      <td style="width:20%; text-align:center;">
+        <div class="year-badge">
+          <div class="year">{{ $academic_year?->name ?? date('Y') }}</div>
+          <div class="year-label">Année académique</div>
+        </div>
+      </td>
+    </tr>
+  </table>
 
   {{-- Grades Table --}}
-  <table>
+  <table class="grades-table">
     <thead>
       <tr>
         <th class="left" style="width:30%">Module</th>
@@ -154,34 +171,44 @@
     </tbody>
   </table>
 
-  {{-- GPA --}}
-  <div class="gpa-row">
-    <div class="gpa-card">
-      <div class="gpa-label">Moyenne Générale (GPA)</div>
-      <div class="gpa-value">{{ $gpa !== null ? number_format($gpa, 2) : '—' }}</div>
-      <div class="gpa-sub">sur 20 points</div>
-    </div>
-  </div>
+  {{-- GPA — table-based for DomPDF --}}
+  <table class="gpa-outer">
+    <tr>
+      <td style="width:60%;"></td>
+      <td style="width:40%;">
+        <div class="gpa-card">
+          <div class="gpa-label">Moyenne Générale (GPA)</div>
+          <div class="gpa-value">{{ $gpa !== null ? number_format($gpa, 2) : '—' }}</div>
+          <div class="gpa-sub">sur 20 points</div>
+        </div>
+      </td>
+    </tr>
+  </table>
 
-  {{-- Signature area --}}
-  <div class="sig-area">
-    <div class="sig-box">
-      <div class="sig-title">Signature de l'Étudiant(e)</div>
-    </div>
-    <div class="sig-box">
-      <div class="sig-title">Le Chef de la Scolarité — ENCG Fès</div>
-    </div>
-  </div>
+  {{-- Signature area — table-based for DomPDF --}}
+  <table class="sig-table">
+    <tr>
+      <td style="width:45%;">
+        <div class="sig-title">Signature de l'Étudiant(e)</div>
+      </td>
+      <td style="width:10%;"></td>
+      <td style="width:45%;">
+        <div class="sig-title">Le Chef de la Scolarité — ENCG Fès</div>
+      </td>
+    </tr>
+  </table>
 
-  {{-- Footer --}}
-  <div class="footer">
-    <div class="footer-seal">
-      Document généré le {{ $generated_at }} · Vérification : {{ $verify_url }}
-    </div>
-    <div class="footer-right">
-      © {{ date('Y') }} ENCG Fès ERP<br>Document officiel — Ne pas modifier
-    </div>
-  </div>
+  {{-- Footer — table-based for DomPDF --}}
+  <table class="footer-table">
+    <tr>
+      <td class="footer-seal" style="width:65%;">
+        Document généré le {{ $generated_at }} · Vérification : {{ $verify_url }}
+      </td>
+      <td class="footer-right" style="width:35%;">
+        © {{ date('Y') }} ENCG Fès ERP<br>Document officiel — Ne pas modifier
+      </td>
+    </tr>
+  </table>
 
 </body>
 </html>

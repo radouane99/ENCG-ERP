@@ -25,7 +25,11 @@
         {{ $student->latestPathway ? $student->latestPathway->filiere->name : 'Management & Commerce International' }}
     </div>
     
-    au titre de l'année universitaire <strong>{{ $year }}</strong> avec la mention <strong>Très Bien (Major de Promotion)</strong>.<br><br>
+    au titre de l'année universitaire <strong>{{ $year }}</strong>
+    @if(!empty($mention))
+    avec la mention <strong>{{ $mention }}</strong>
+    @endif
+    .<br><br>
     
     La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit en attendant l'établissement du diplôme définitif.
 </div>

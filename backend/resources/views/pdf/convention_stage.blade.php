@@ -2,7 +2,7 @@
 
 @section('title', 'Convention de Stage')
 
-@section('meta_info', 'N° : 2026/CONV/0005 &nbsp;&nbsp;&nbsp; Date : ' . date('d/m/Y'))
+@section('meta_info', 'N° : ' . date('Y') . '/CONV/' . str_pad($student->id ?? '0001', 4, '0', STR_PAD_LEFT) . ' &nbsp;&nbsp;&nbsp; Date : ' . date('d/m/Y'))
 
 @section('document_title', 'CONVENTION DE STAGE')
 @section('title_color', 'blue')
@@ -21,16 +21,26 @@
 @endsection
 
 @section('content')
+<div style="text-align: center; font-size: 22px; font-weight: bold; color: #002e5b; letter-spacing: 2px; margin: 20px 0 30px 0; text-transform: uppercase; border-bottom: 2px solid #002e5b; padding-bottom: 12px;">
+    CONVENTION DE STAGE
+</div>
+
 <div class="parties">
     <strong>Entre les soussignés :</strong>
     <ol>
-        <li><span class="red">1.</span> <strong>L'École Nationale de Commerce et de Gestion de Fès (ENCG)</strong>, représentée par son administration.</li>
-        <li><span class="red">2.</span> <strong>L'Entreprise d'Accueil</strong> (à compléter par l'organisme d'accueil).</li>
-        <li><span class="red">3.</span> <strong>L'Étudiant(e) :</strong> Nom et Prénom : <strong>Aniss el alaoui</strong><br>
-            N° d'immatriculation : <strong>STU-7207</strong> | Inscrit(e) au titre de l'année universitaire <strong>2025-2026</strong>.
+        <li><span class="red">1.</span> <strong>L'École Nationale de Commerce et de Gestion de Fès (ENCG)</strong>, représentée par son Directeur.</li>
+        <li><span class="red">2.</span> <strong>L'Entreprise d'Accueil :</strong> {{ $company ?? 'Entreprise Partenaire ENCG' }} (à compléter par l'organisme d'accueil).</li>
+        <li><span class="red">3.</span> <strong>L'Étudiant(e) :</strong> Nom et Prénom : <strong>{{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</strong><br>
+            N° d'immatriculation : <strong>{{ $student->student_number ?? 'N/A' }}</strong> | CNE/Massar : <strong>{{ $student->cne ?? 'N/A' }}</strong> | Inscrit(e) au titre de l'année universitaire <strong>{{ $year }}</strong>.
         </li>
     </ol>
 </div>
+
+@if($student->latestPathway ?? null)
+<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 15px; margin-bottom: 15px; font-size: 10px;">
+    <strong style="color: #002e5b;">Filière :</strong> {{ $student->latestPathway->filiere->name ?? 'N/A' }}
+</div>
+@endif
 
 <div style="border-top: 1px dashed #cbd5e1; margin: 15px 0;"></div>
 
@@ -60,18 +70,16 @@
 @endsection
 
 @section('signature_right')
-    <div style="display:flex; justify-content: space-between;">
-        <div style="text-align:center; width: 45%; float:left;">
+    <div style="width: 100%;">
+        <div style="float:left; width: 45%; text-align:center;">
             POUR L'ENTREPRISE
-            <div style="font-size: 8px; font-weight: normal; margin-top: 40px; color:#cbd5e1;">Sceau & Signature<br>(à compléter)</div>
+            <div style="font-size: 8px; font-weight: normal; margin-top: 40px; color:#cbd5e1;">Sceau &amp; Signature<br>(à compléter)</div>
         </div>
-        <div style="text-align:center; width: 45%; float:right;">
+        <div style="float:right; width: 45%; text-align:center;">
             L'ÉTUDIANT(E)
-            <div style="font-size: 8px; font-weight: normal; margin-top: 40px; color:#cbd5e1;">Signature précédée de la mention<br>"Lu et approuvé"</div>
+            <div style="font-size: 9px; margin-top: 5px; color: #002e5b; font-weight: bold;">{{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</div>
+            <div style="font-size: 8px; font-weight: normal; margin-top: 30px; color:#cbd5e1;">Signature précédée de la mention<br>"Lu et approuvé"</div>
         </div>
         <div style="clear:both;"></div>
-    </div>
-    <div style="display:none;">
-        <div class="stamp"></div>
     </div>
 @endsection

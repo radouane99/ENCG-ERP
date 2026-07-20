@@ -13,7 +13,7 @@
     <div style="text-align: center; margin: 20px 0; background-color: #f8fafc; padding: 18px; border-radius: 8px; border: 1.5px solid #002e5b;">
         <strong style="font-size: 20px; color: #002e5b;">{{ strtoupper($professor->last_name ?? '') }} {{ ucfirst($professor->first_name ?? '') }}</strong><br>
         <span style="font-size: 13px; color: #475569; display: inline-block; margin-top: 6px;">
-            <strong>Spécialité / Département :</strong> {{ $professor->specialty ?? 'Management & Finance' }} &nbsp;&nbsp;|&nbsp;&nbsp; 
+            <strong>Spécialité / Département :</strong> {{ $professor->specialty ?? ($professor->department->name ?? 'N/A') }} &nbsp;&nbsp;|&nbsp;&nbsp; 
             <strong>CIN :</strong> {{ $professor->cin ?? 'N/A' }}
         </span>
     </div>
@@ -24,25 +24,45 @@
         <thead>
             <tr style="background-color: #002e5b; color: white;">
                 <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">MODULE / COURS</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">GROUPE</th>
                 <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">VOLUME HORAIRE EFFECTUÉ</th>
                 <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">STATUT VALIDATION</th>
             </tr>
         </thead>
         <tbody>
+            @forelse($contracts ?? [] as $c)
             <tr>
-                <td style="padding: 8px; border: 1px solid #cbd5e1;">Finance d'Entreprise & Audit (Master)</td>
-                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">32 Heures</td>
-                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; color: #059669; font-weight: bold;">Validé DAF</td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1;">
+                    {{ $c->module ? ($c->module->code . ' – ' . $c->module->name) : 'Module non spécifié' }}
+                </td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1; color: #475569;">
+                    {{ $c->group->name ?? '—' }}
+                </td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">
+                    {{ $c->agreed_hours ?? 0 }} Heures
+                </td>
+                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;
+                    color: {{ ($c->status ?? '') === 'validated' ? '#059669' : '#d97706' }};">
+                    {{ ($c->status ?? '') === 'validated' ? 'Validé DAF' : ucfirst($c->status ?? 'En cours') }}
+                </td>
             </tr>
+            @empty
             <tr>
-                <td style="padding: 8px; border: 1px solid #cbd5e1;">Comptabilité Analytique & Contrôle de Gestion</td>
-                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">24 Heures</td>
-                <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; color: #059669; font-weight: bold;">Validé DAF</td>
+                <td colspan="4" style="padding: 12px; text-align: center; color: #64748b; font-style: italic;">
+                    Aucun contrat de vacation enregistré pour cet enseignant.
+                </td>
             </tr>
+            @endforelse
         </tbody>
     </table>
     
-    <strong>Total des Heures Effectuées :</strong> <span style="font-size: 16px; color: #002e5b; font-weight: bold;">56 Heures Cours & TD</span>.<br>
+    @php
+        $totalHours = collect($contracts ?? [])->sum('agreed_hours');
+    @endphp
+
+    @if($totalHours > 0)
+    <strong>Total des Heures Effectuées :</strong> <span style="font-size: 16px; color: #002e5b; font-weight: bold;">{{ $totalHours }} Heures Cours &amp; TD</span>.<br>
+    @endif
     La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
 </div>
 @endsection

@@ -104,33 +104,32 @@ class DocumentCenterController extends Controller
         }
 
         if (in_array($type, ['attestation_vacations', 'vacations'])) {
-            $professor = Professor::with('user')->find($id) ?? (object)[
-                'first_name' => 'Enseignant', 'last_name' => 'ENCG', 'cin' => 'F123456', 'specialty' => 'Management & Finance'
-            ];
+            $professor = Professor::with(['user', 'department', 'vacationContracts.module', 'vacationContracts.group'])
+                ->findOrFail($id);
+            $contracts = $professor->vacationContracts;
             $pdf = Pdf::loadView('pdf.attestation_vacations', [
-                'professor' => $professor->user ?? $professor,
+                'professor' => $professor,
+                'contracts' => $contracts,
                 'year' => $year,
                 'date' => $date,
                 'qrBase64' => $qrBase64,
                 'logoBase64' => $logoBase64
             ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
 
-            return $pdf->download("Attestation_Vacations_{$id}.pdf");
+            return $pdf->download("Attestation_Vacations_{$professor->last_name}_{$professor->first_name}.pdf");
         }
 
         if (in_array($type, ['attestation_travail', 'travail'])) {
-            $professor = Professor::with('user')->find($id) ?? (object)[
-                'first_name' => 'Enseignant', 'last_name' => 'ENCG', 'cin' => 'F123456', 'specialty' => 'Management'
-            ];
+            $professor = Professor::with(['user', 'department'])->findOrFail($id);
             $pdf = Pdf::loadView('pdf.attestation_travail', [
-                'professor' => $professor->user ?? $professor,
+                'professor' => $professor,
                 'year' => $year,
                 'date' => $date,
                 'qrBase64' => $qrBase64,
                 'logoBase64' => $logoBase64
             ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
 
-            return $pdf->download("Attestation_Travail_{$id}.pdf");
+            return $pdf->download("Attestation_Travail_{$professor->last_name}_{$professor->first_name}.pdf");
         }
 
         if (in_array($type, ['convention_stage', 'stage', 'convention'])) {
