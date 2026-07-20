@@ -52,8 +52,28 @@ class ProfessorAvailabilityController extends Controller
             'professor_ids.*' => 'integer|exists:users,id'
         ]);
 
-        // Logic to send email/notification to selected professors
-        // ...
+        $professors = User::whereIn('id', $validated['professor_ids'])->get();
+        
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        $academicYearName = $academicYear ? $academicYear->label : '2026/2027';
+
+        foreach ($professors as $prof) {
+            $surveyData = [
+                'name' => $prof->name,
+                'session' => 'Session d\'Examens ' . $academicYearName,
+                'link' => config('app.frontend_url', 'http://localhost:5173') . '/professor/availability-survey',
+                'deadline' => now()->addDays(7)->format('d/m/Y')
+            ];
+
+            \Illuminate\Support\Facades\Mail::to($prof->email)
+                ->send(new \App\Mail\ProfessorAvailabilitySurveyMail($surveyData));
+                
+            // Update status in ProfessorAvailability table
+            \App\Models\ProfessorAvailability::updateOrCreate(
+                ['professor_id' => $prof->id, 'academic_year_id' => $academicYear->id ?? 1],
+                ['status' => 'En attente', 'available_slots_count' => 0]
+            );
+        }
 
         return response()->json([
             'success' => true,
