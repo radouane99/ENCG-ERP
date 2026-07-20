@@ -8,9 +8,33 @@ use App\Models\Grade;
 use App\Models\Assessment;
 use App\Models\Module;
 use App\Models\Department;
+use App\Models\Exam;
 
 class AdminExamController extends Controller
 {
+    public function index()
+    {
+        $exams = Exam::with(['module', 'group', 'room'])->latest()->get()->map(function ($exam) {
+            return [
+                'id' => $exam->id,
+                'module' => $exam->module,
+                'group' => $exam->group,
+                'room' => $exam->room,
+                'exam_date' => $exam->exam_date,
+                'start_time' => $exam->start_time,
+                'duration_minutes' => $exam->duration_minutes,
+                'type' => $exam->session_type ?? 'EXAMEN',
+                'generated_count' => 0, // Mocked for now, can be computed if ExamConvocation model is used
+                'sent_count' => 0,
+                'pending_count' => 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $exams
+        ]);
+    }
     public function analytics()
     {
         // KPIs

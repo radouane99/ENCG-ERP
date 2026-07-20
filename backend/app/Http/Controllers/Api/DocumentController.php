@@ -45,9 +45,10 @@ class DocumentController extends Controller
         
         // Return same structure as before so frontend toast works
         $media = $docReq->getFirstMedia('generated_documents');
+        $pdfUrl = $media ? parse_url($media->getUrl(), PHP_URL_PATH) : null;
         return response()->json([
             'success' => true,
-            'url' => $media ? $media->getUrl() : null,
+            'url' => $pdfUrl,
             'message' => 'Document PDF sécurisé généré avec succès.'
         ]);
     }

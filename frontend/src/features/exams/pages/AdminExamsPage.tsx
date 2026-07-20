@@ -14,6 +14,7 @@ export default function AdminExamsPage() {
 
   const [showNotification, setShowNotification] = useState(false)
   const [notificationMsg, setNotificationMsg] = useState('')
+  const [notificationType, setNotificationType] = useState<'success'|'error'>('success')
 
   const { data: filieres, isLoading: isLoadingFilieres } = useQuery({
     queryKey: ['filieres'],
@@ -48,13 +49,15 @@ export default function AdminExamsPage() {
     }
   })
 
-  const handleNotify = (msg: string) => {
+  const handleNotify = (msg: string, type: 'success'|'error' = 'success') => {
     setNotificationMsg(msg)
+    setNotificationType(type)
     setShowNotification(true)
     setTimeout(() => setShowNotification(false), 3000)
   }
 
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
   const [showManualModal, setShowManualModal] = useState(false)
   const [manualForm, setManualForm] = useState({
     module_id: 1,
@@ -68,12 +71,16 @@ export default function AdminExamsPage() {
   const [isCheckingConflict, setIsCheckingConflict] = useState(false)
 
   const handleAutoGenerate = async () => {
+    if (!selectedSessionId) {
+      handleNotify("Veuillez sélectionner une session d'abord.", 'error');
+      return;
+    }
     setIsAutoGenerating(true)
     try {
-      const res = await examsApi.generateSession()
-      handleNotify(res.message || t('exams.messages.auto_success'))
+      const res = await examsApi.generateSession(Number(selectedSessionId))
+      handleNotify(res.message || t('exams.messages.auto_success'), 'success')
     } catch (error: any) {
-      handleNotify(error.response?.data?.message || t('exams.messages.auto_error'))
+      handleNotify(error.response?.data?.message || t('exams.messages.auto_error'), 'error')
     } finally {
       setIsAutoGenerating(false)
     }
@@ -101,9 +108,9 @@ export default function AdminExamsPage() {
     try {
       await examsApi.createExam({ ...manualForm, date: manualForm.exam_date })
       setShowManualModal(false)
-      handleNotify(t('exams.messages.manual_success'))
+      handleNotify(t('exams.messages.manual_success'), 'success')
     } catch (error) {
-      handleNotify(t('exams.messages.manual_error'))
+      handleNotify(t('exams.messages.manual_error'), 'error')
     }
   }
 
@@ -133,8 +140,12 @@ export default function AdminExamsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">{t('exams.filters.session')}</label>
-              <select className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-32">
-                <option>{t('exams.filters.session_empty')}</option>
+              <select 
+                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-32"
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value ? Number(e.target.value) : '')}
+              >
+                <option value="">{t('exams.filters.session_empty')}</option>
                 {examSessions?.map((s: any) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
@@ -160,8 +171,11 @@ export default function AdminExamsPage() {
       </div>
 
       {showNotification && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 mb-6">
-          <CheckSquare className="w-5 h-5" />
+        <div className={cn(
+          "px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 mb-6 border",
+          notificationType === 'success' ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"
+        )}>
+          {notificationType === 'success' ? <CheckSquare className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           <span className="text-sm font-medium">{notificationMsg}</span>
         </div>
       )}

@@ -113,19 +113,27 @@ class ScheduleService
 
         $modules = $modulesQuery->get();
         if ($modules->isEmpty()) {
-            $modules = collect([
-                (object)['id' => 1, 'name' => 'Management Stratégique & Gouvernance', 'code' => 'MGT-501', 'credit_hours' => 32],
-                (object)['id' => 2, 'name' => 'Audit Financier & Contrôle Interne', 'code' => 'AUD-502', 'credit_hours' => 32],
-                (object)['id' => 3, 'name' => 'Marketing Digital & E-Business', 'code' => 'MKT-503', 'credit_hours' => 24],
-                (object)['id' => 4, 'name' => 'Comptabilité Analytique Avancée', 'code' => 'CPT-504', 'credit_hours' => 24],
-                (object)['id' => 5, 'name' => 'Droit des Affaires & Fiscalité Marocaine', 'code' => 'DRT-505', 'credit_hours' => 24],
-                (object)['id' => 6, 'name' => 'Finance de Marché & Instruments Financiers', 'code' => 'FIN-506', 'credit_hours' => 32],
-                (object)['id' => 7, 'name' => 'Systèmes d\'Information ERP & Big Data', 'code' => 'INF-507', 'credit_hours' => 24]
-            ]);
+            return [
+                'success' => false,
+                'message' => 'Erreur : Aucun module trouvé pour cette filière et ce semestre. Veuillez ajouter des modules dans la base de données.'
+            ];
         }
 
         $professors = \App\Models\Professor::with('user')->get();
+        if ($professors->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Erreur : Aucun professeur n\'a été trouvé dans la base de données.'
+            ];
+        }
+
         $rooms = \App\Models\Room::all();
+        if ($rooms->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Erreur : Aucune salle n\'a été trouvée dans la base de données.'
+            ];
+        }
 
         $days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
         $timeSlots = [
@@ -146,11 +154,11 @@ class ScheduleService
             foreach ($timeSlots as $slotIndex => $slot) {
                 // Group 1 Session
                 $mod1 = $modulesList[$modIndex % $totalModules];
-                $prof1 = $professors->isNotEmpty() ? $professors[$modIndex % count($professors)] : null;
-                $prof1Name = $prof1 ? (($prof1->user?->first_name ?? $prof1->first_name ?? 'Prof') . ' ' . ($prof1->user?->last_name ?? $prof1->last_name ?? '')) : 'Dr. BENADADA';
+                $prof1 = $professors[$modIndex % count($professors)];
+                $prof1Name = ($prof1->user?->first_name ?? $prof1->first_name ?? 'Professeur') . ' ' . ($prof1->user?->last_name ?? $prof1->last_name ?? 'Inconnu');
 
-                $room1 = $rooms->isNotEmpty() ? $rooms[$slotIndex % count($rooms)] : null;
-                $room1Name = $room1?->name ?? ($slotIndex % 2 === 0 ? 'Amphi Ibn Khaldoun (Cap. 150)' : 'Salle B12 (Cap. 45)');
+                $room1 = $rooms[$slotIndex % count($rooms)];
+                $room1Name = $room1->name ?? 'Salle Inconnue';
 
                 $group1Schedule[] = [
                     'day' => $day,
@@ -167,10 +175,12 @@ class ScheduleService
                 // Group 2 Session (Shifted to eliminate collisions)
                 $mod2Index = ($modIndex + 2) % $totalModules;
                 $mod2 = $modulesList[$mod2Index];
-                $prof2 = $professors->isNotEmpty() ? $professors[($modIndex + 1) % count($professors)] : null;
-                $prof2Name = $prof2 ? (($prof2->user?->first_name ?? $prof2->first_name ?? 'Prof') . ' ' . ($prof2->user?->last_name ?? $prof2->last_name ?? '')) : 'Dr. CHRAIBI';
+                $prof2 = $professors[($modIndex + 1) % count($professors)];
+                $prof2Name = ($prof2->user?->first_name ?? $prof2->first_name ?? 'Professeur') . ' ' . ($prof2->user?->last_name ?? $prof2->last_name ?? 'Inconnu');
 
-                $room2Name = ($slotIndex % 2 === 0 ? 'Salle B05 (Cap. 45)' : 'Amphi A (Cap. 120)');
+                // Shift room index by 1 for group 2 to avoid room collision
+                $room2 = $rooms[($slotIndex + 1) % count($rooms)];
+                $room2Name = $room2->name ?? 'Salle Inconnue';
 
                 $group2Schedule[] = [
                     'day' => $day,

@@ -31,10 +31,10 @@ class AdminDocumentRequestController extends Controller
                 
                 $pdfUrl = null;
                 if ($media) {
-                    // IMPORTANT: Use the full absolute URL so the browser iframe can load
-                    // the PDF from the correct backend origin (e.g. http://localhost:8000/storage/...)
-                    // instead of a broken relative path served by the frontend dev server.
-                    $pdfUrl = $media->getUrl();
+                    // Use a relative path so the frontend (Vite) can correctly proxy
+                    // the request to the backend via its /storage proxy rule.
+                    $fullUrl = $media->getUrl();
+                    $pdfUrl = parse_url($fullUrl, PHP_URL_PATH);
                 }
 
                 return [
