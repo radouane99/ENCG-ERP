@@ -372,6 +372,8 @@ class ExamConvocationService
                 'surveillances' => $surveillances
             ]
         ];
+    }
+
     /**
      * Get aggregate stats for a session's convocations (Dashboard)
      */

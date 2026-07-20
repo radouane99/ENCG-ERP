@@ -41,7 +41,7 @@ class DocumentGeneratorService
         Student $student, 
         ExamSession $session, 
         string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
-        string $signatureBase64 = null
+        ?string $signatureBase64 = null
     ): string {
         $token = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
@@ -82,7 +82,7 @@ class DocumentGeneratorService
         Student $student, 
         int $academicYearId,
         string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
-        string $signatureBase64 = null
+        ?string $signatureBase64 = null
     ): string {
         // Fetch all grades for this student.
         // In a real scenario, grades could be filtered by the current academic year if a pivot/relation exists.
