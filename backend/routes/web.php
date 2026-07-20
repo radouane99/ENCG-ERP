@@ -5,6 +5,4 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/api/test-doc-types', function() {
-    return \App\Models\DocumentType::all();
-});
+// Removed public test route for production. Test routes moved to routes/testing.php

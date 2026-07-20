@@ -19,65 +19,72 @@ class DashboardAnalyticsService
      */
     public function getGlobalMetrics(): array
     {
-        // 1. Démographie Étudiante (Répartition par genre)
-        $studentsGender = Student::select('gender', DB::raw('count(*) as total'))
-            ->groupBy('gender')
-            ->get();
-            
-        // 2. Répartition par Filière
-        $studentsByFiliere = DB::table('students')
-            ->join('filieres', 'students.filiere_id', '=', 'filieres.id')
-            ->select('filieres.code as name', DB::raw('count(students.id) as value'))
-            ->whereNull('students.deleted_at')
-            ->groupBy('filieres.id', 'filieres.code')
-            ->get();
+        try {
+            // 1. Démographie Étudiante (Répartition par genre)
+            $studentsGender = Student::select('gender', DB::raw('count(*) as total'))
+                ->groupBy('gender')
+                ->get();
 
-        // 3. Admissions (Taux d'acceptation et statuts)
-        $admissionStats = Application::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get();
+            // 2. Répartition par Filière
+            $studentsByFiliere = DB::table('students')
+                ->join('filieres', 'students.filiere_id', '=', 'filieres.id')
+                ->select('filieres.code as name', DB::raw('count(students.id) as value'))
+                ->whereNull('students.deleted_at')
+                ->groupBy('filieres.id', 'filieres.code')
+                ->get();
 
-        // 4. Projets PFE/PFA
-        $projectsStats = FinalProject::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get();
+            // 3. Admissions (Taux d'acceptation et statuts)
+            $admissionStats = Application::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get();
 
-        // 5. Ressources Humaines (Permanent vs Vacataire)
-        $hrStats = [
-            'permanents' => Professor::where('contract_type', 'permanent')->count(),
-            'vacataires' => VacationContract::where('status', 'active')->count()
-        ];
+            // 4. Projets PFE/PFA
+            $projectsStats = FinalProject::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get();
 
-        // 6. Finances (Budget Vacataires estimé vs payé)
-        $finances = [
-            'budget_alloue' => 500000,
-            'budget_consomme' => DB::table('vacation_payments')->where('status', 'paid')->sum('total_amount') ?? 125000,
-            'en_attente' => DB::table('vacation_payments')->where('status', 'pending')->sum('total_amount') ?? 45000,
-        ];
+            // 5. Ressources Humaines (Permanent vs Vacataire)
+            $hrStats = [
+                'permanents' => Professor::where('contract_type', 'permanent')->count(),
+                'vacataires' => VacationContract::where('status', 'active')->count()
+            ];
 
-        // Global KPIs
-        $kpis = [
-            'total_students' => Student::count(),
-            'total_professors' => Professor::count(),
-            'success_rate' => 85.4, // Real implementation would compute this from grades
-            'dropout_rate' => 2.1,
-            'budget_used_percent' => ($finances['budget_consomme'] / max($finances['budget_alloue'], 1)) * 100
-        ];
+            // 6. Finances (computed when available)
+            $finances = [
+                'budget_alloue' => DB::table('budgets')->value('allocated') ?? null,
+                'budget_consomme' => DB::table('vacation_payments')->where('status', 'paid')->sum('total_amount') ?? 0,
+                'en_attente' => DB::table('vacation_payments')->where('status', 'pending')->sum('total_amount') ?? 0,
+            ];
 
-        return [
-            'success' => true,
-            'data' => [
-                'kpis' => $kpis,
-                'charts' => [
-                    'students_by_filiere' => $studentsByFiliere,
-                    'students_gender' => $studentsGender,
-                    'admissions' => $admissionStats,
-                    'projects' => $projectsStats,
-                    'hr' => $hrStats,
-                    'finances' => $finances
+            // Global KPIs
+            $kpis = [
+                'total_students' => Student::count(),
+                'total_professors' => Professor::count(),
+                'success_rate' => null,
+                'dropout_rate' => null,
+                'budget_used_percent' => ($finances['budget_alloue'] && $finances['budget_alloue'] > 0)
+                    ? ($finances['budget_consomme'] / $finances['budget_alloue']) * 100
+                    : null,
+            ];
+
+            return [
+                'success' => true,
+                'data' => [
+                    'kpis' => $kpis,
+                    'charts' => [
+                        'students_by_filiere' => $studentsByFiliere,
+                        'students_gender' => $studentsGender,
+                        'admissions' => $admissionStats,
+                        'projects' => $projectsStats,
+                        'hr' => $hrStats,
+                        'finances' => $finances
+                    ]
                 ]
-            ]
-        ];
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Analytics getGlobalMetrics failed: ' . $e->getMessage());
+            throw new \Exception('Analytics data unavailable');
+        }
     }
 
     /**
@@ -147,49 +154,34 @@ class DashboardAnalyticsService
         }
 
         // Attendance calculation
-        $totalRecords = AttendanceRecord::where('student_id', $student->id)->count();
-        $presentRecords = AttendanceRecord::where('student_id', $student->id)->where('status', 'present')->count();
-        $absentRecords = $totalRecords - $presentRecords;
-        $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : 100.0;
+        try {
+            $totalRecords = AttendanceRecord::where('student_id', $student->id)->count();
+            $presentRecords = AttendanceRecord::where('student_id', $student->id)->where('status', 'present')->count();
+            $absentRecords = $totalRecords - $presentRecords;
+            $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : null;
 
-        $grades = DB::table('grades')->where('student_id', $student->id)->avg('value');
-        
-        // Mock upcoming classes for demo until timetable is fully deployed
-        $upcoming_classes = [
-            [
-                'title' => 'Algèbre Linéaire',
-                'time' => '08:30 - 10:15',
-                'location' => 'Amphi A',
-            ],
-            [
-                'title' => 'Programmation C++',
-                'time' => '10:30 - 12:15',
-                'location' => 'Salle TP 4',
-            ]
-        ];
+            $grades = DB::table('grades')->where('student_id', $student->id)->avg('value');
 
-        // Mock recent documents
-        $recent_documents = [
-            [ 'title' => 'Relevé de Notes S1', 'date' => now()->subDays(2)->format('d/m/Y') ],
-            [ 'title' => 'Attestation de Scolarité', 'date' => now()->subDays(10)->format('d/m/Y') ]
-        ];
-
-        return [
-            'success' => true,
-            'data' => [
-                'gpa'                 => $grades ? round($grades, 2) : 14.5,
-                'attendance'          => $attendanceRate,
-                'absences'            => [
-                    'total' => $absentRecords,
-                    'justified' => 0,
-                    'unjustified' => $absentRecords
-                ],
-                'upcoming_exams'      => DB::table('exams')->where('date', '>=', now())->count(),
-                'pending_assignments' => 2,
-                'upcoming_classes'    => $upcoming_classes,
-                'recent_documents'    => $recent_documents
-            ]
-        ];
+            return [
+                'success' => true,
+                'data' => [
+                    'gpa'                 => $grades !== null ? round($grades, 2) : null,
+                    'attendance'          => $attendanceRate,
+                    'absences'            => [
+                        'total' => $absentRecords,
+                        'justified' => 0,
+                        'unjustified' => $absentRecords
+                    ],
+                    'upcoming_exams'      => DB::table('exams')->where('date', '>=', now())->count(),
+                    'pending_assignments' => null,
+                    'upcoming_classes'    => [],
+                    'recent_documents'    => []
+                ]
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Analytics getStudentStats failed for user ' . $userId . ': ' . $e->getMessage());
+            throw new \Exception('Analytics data unavailable for student');
+        }
     }
 
     /**
@@ -245,26 +237,24 @@ class DashboardAnalyticsService
                 ];
             });
 
-        $next_classes = [
-            [
-                'title' => 'Analyse Financière',
-                'group' => 'S5 - F1',
-                'time' => '14:30 - 16:15',
-                'location' => 'Salle 12',
-            ]
-        ];
+        try {
+            $next_classes = [];
 
-        return [
-            'success' => true,
-            'data' => [
-                'total_students' => $studentCount > 0 ? $studentCount : 120, // Mock if 0
-                'total_modules'  => $modulesCount > 0 ? $modulesCount : 3, // Mock if 0
-                'pending_grades' => 1, 
-                'next_classes'   => $next_classes,
-                'modules_list'   => $modules,
-                'has_contract'   => $professor->contract_type === 'visiting',
-                'professor_id'   => $professor->id
-            ]
-        ];
+            return [
+                'success' => true,
+                'data' => [
+                    'total_students' => $studentCount,
+                    'total_modules'  => $modulesCount,
+                    'pending_grades' => DB::table('grades')->where('professor_id', $professor->id)->whereNull('approved_at')->count(),
+                    'next_classes'   => $next_classes,
+                    'modules_list'   => $modules,
+                    'has_contract'   => $professor->contract_type === 'visiting',
+                    'professor_id'   => $professor->id
+                ]
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Analytics getProfessorStats failed for user ' . $userId . ': ' . $e->getMessage());
+            throw new \Exception('Analytics data unavailable for professor');
+        }
     }
 }

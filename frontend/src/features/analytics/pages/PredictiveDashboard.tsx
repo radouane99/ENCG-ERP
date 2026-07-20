@@ -5,24 +5,22 @@ import api from '@/shared/lib/api';
 export default function PredictiveDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fake the API call for demo if the backend is not fully seeded
-    // In a real scenario, this would call /api/analytics/at-risk-students
-    setTimeout(() => {
-      setData({
-        total_analyzed: 850,
-        total_at_risk: 42,
-        critical_count: 15,
-        students: [
-          { student_id: 1, first_name: 'Ahmed', last_name: 'Bennani', student_number: '2023001', risk_score: 95, absences: 6, cc_average: 7.5, risk_factors: ['Absentéisme élevé (6 absences non justifiées)', 'Lacunes critiques en CC (Moyenne: 7.5/20)'], category: 'CRITICAL' },
-          { student_id: 2, first_name: 'Sara', last_name: 'El Fassi', student_number: '2023045', risk_score: 82, absences: 4, cc_average: 8.2, risk_factors: ['Absentéisme élevé (4 absences non justifiées)', 'Lacunes critiques en CC (Moyenne: 8.2/20)'], category: 'CRITICAL' },
-          { student_id: 3, first_name: 'Youssef', last_name: 'Amrani', student_number: '2023112', risk_score: 65, absences: 1, cc_average: 6.5, risk_factors: ['Lacunes critiques en CC (Moyenne: 6.5/20)'], category: 'WARNING' },
-          { student_id: 4, first_name: 'Fatima', last_name: 'Zahra', student_number: '2023220', risk_score: 60, absences: 6, cc_average: 11.0, risk_factors: ['Absentéisme élevé (6 absences non justifiées)'], category: 'WARNING' },
-        ]
-      });
-      setLoading(false);
-    }, 1500);
+    const fetch = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/analytics/at-risk-students');
+        setData(res.data.data ?? res.data);
+      } catch (err: any) {
+        setError(err?.response?.data?.message ?? err?.message ?? 'Erreur lors de la récupération des données prédictives');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetch();
   }, []);
 
   if (loading) {
@@ -36,6 +34,11 @@ export default function PredictiveDashboard() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700">
+          <strong>Erreur:</strong> {error}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <BrainCircuit className="w-6 h-6 text-primary" />

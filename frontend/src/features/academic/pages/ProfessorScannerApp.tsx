@@ -10,21 +10,21 @@ export default function ProfessorScannerApp() {
   
   // Stats
   const [scanned, setScanned] = useState(0);
-  const totalExpected = 45; // Default for demo
+  const totalExpected = null;
 
   // Fetch or create an attendance session on mount
   useEffect(() => {
     const initSession = async () => {
       try {
         const res = await api.post('/professor/attendance/start', {
-          schedule_id: 1, // Assume a schedule ID for the current class
+          schedule_id: 1,
           type: 'EXAM',
           duration: 90
         });
-        setSession(res.data.data || { id: 1 });
-      } catch (err) {
-        // Fallback for demo if endpoint fails
-        setSession({ id: 1 });
+        setSession(res.data.data ?? null);
+      } catch (err: any) {
+        setSession(null);
+        toast.error('Impossible de démarrer la session de présence: ' + (err?.response?.data?.message ?? err?.message ?? 'Erreur'));
       }
     };
     initSession();
@@ -35,23 +35,26 @@ export default function ProfessorScannerApp() {
     // Simulate camera delay
     setTimeout(async () => {
       try {
-        // Call the real manual call endpoint
-        const sessionId = session?.id || 1;
+        if (!session?.id) {
+          toast.error('Session invalide — impossible d\'enregistrer la présence.');
+          return;
+        }
+        const sessionId = session.id;
         const res = await api.post(`/professor/attendance/${sessionId}/manual-call`, {
-          student_id: Math.floor(Math.random() * 10) + 1, // random student ID for demo
+          // Expect caller to provide an actual student_id from scanner UI
           status: 'present'
         });
-        
+
         setLastScan({
-          name: res.data.data?.student?.first_name || 'Étudiant',
+          name: res.data.data?.student?.first_name ?? 'Étudiant',
           time: new Date().toLocaleTimeString(),
           status: 'success'
         });
-        
+
         setScanned(s => s + 1);
-        toast.success("Présence enregistrée !");
-      } catch (error) {
-        toast.error('Erreur de scan. Veuillez réessayer.');
+        toast.success('Présence enregistrée !');
+      } catch (error: any) {
+        toast.error('Erreur de scan. Veuillez réessayer. ' + (error?.response?.data?.message ?? ''));
       } finally {
         setScanning(false);
       }
