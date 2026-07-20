@@ -198,6 +198,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::post('exam-sessions/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
+    Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {

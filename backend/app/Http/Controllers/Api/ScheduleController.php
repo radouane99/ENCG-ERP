@@ -68,4 +68,19 @@ class ScheduleController extends Controller
         $schedule->delete();
         return response()->json(['message' => 'Séance annulée avec succès.']);
     }
+
+    public function generateAiSimulation(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'required|integer',
+            'semester_number' => 'nullable|integer'
+        ]);
+
+        $result = $this->scheduleService->generateAiCourseTimetable(
+            $validated['filiere_id'],
+            $validated['semester_number'] ?? null
+        );
+
+        return response()->json($result);
+    }
 }
