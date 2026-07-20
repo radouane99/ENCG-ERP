@@ -5,19 +5,47 @@ namespace App\Services\Academic;
 use App\Models\Student;
 use App\Models\Module;
 use App\Models\Grade;
+use App\Models\DisciplineCase;
 
 class DeliberationEngine
 {
     /**
-     * Calculate the module result for a specific student with official ENCG Apogée rules.
+     * Calculate the module result for a specific student with official ENCG Apogée & Discipline rules.
      * 
      * Rules:
+     * - Fraud / Conseil de Discipline sanction (annulation_module) -> Grade = 0.00/20, Status = 'FRAUDE'
      * - Module average >= 10/20 -> Validé (V)
      * - Any exam grade < 6.0/20 -> Note Éliminatoire (NV)
      * - Semester Average >= 10/20 & no eliminatory grade -> Validé par Compensation (VC)
      */
     public function calculateModuleResult(Student $student, Module $module): array
     {
+        // 1. Check for Conseil de Discipline Sanction (Annulation Module or Semestre)
+        $disciplinarySanction = DisciplineCase::where('student_id', $student->id)
+            ->whereIn('decision', ['annulation_module', 'annulation_semestre', 'exclusion'])
+            ->where('status', 'resolved')
+            ->first();
+
+        if ($disciplinarySanction) {
+            if ($disciplinarySanction->decision === 'annulation_module') {
+                return [
+                    'average' => 0.0,
+                    'status' => 'FRAUDE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
+                    'disciplinary_mention' => 'Annulation de Note (Conseil de Discipline — Fraude)'
+                ];
+            } elseif (in_array($disciplinarySanction->decision, ['annulation_semestre', 'exclusion'])) {
+                return [
+                    'average' => 0.0,
+                    'status' => 'DISCIPLINE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
+                    'disciplinary_mention' => 'Annulation du Semestre (Conseil de Discipline)'
+                ];
+            }
+        }
+
         $assessments = $module->assessments;
         
         $totalWeight = 0;
@@ -64,16 +92,43 @@ class DeliberationEngine
             'status' => $status,
             'has_eliminatory' => $hasEliminatory,
             'missing_grades' => $missingGrades,
+            'disciplinary_mention' => null
         ];
     }
 
     /**
-     * Calculate Semester Deliberation with Compensation Rules.
-     * If Semester Average >= 10.0 and no module has eliminatory mark (<6.0),
-     * modules with grade between 7.0 and 9.99 are Validated by Compensation (VC).
+     * Calculate Semester Deliberation with Compensation & Conseil de Discipline Sanctions.
      */
     public function calculateSemesterDeliberation(Student $student, $modules): array
     {
+        // Check if student has a global semester cancellation sanction from Conseil de Discipline
+        $disciplinarySanction = DisciplineCase::where('student_id', $student->id)
+            ->whereIn('decision', ['annulation_semestre', 'exclusion'])
+            ->where('status', 'resolved')
+            ->first();
+
+        if ($disciplinarySanction) {
+            $moduleResults = [];
+            foreach ($modules as $module) {
+                $moduleResults[$module->id] = [
+                    'average' => 0.0,
+                    'status' => 'DISCIPLINE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
+                    'disciplinary_mention' => 'Annulé par Conseil de Discipline'
+                ];
+            }
+
+            return [
+                'semester_average' => 0.0,
+                'is_admitted' => false,
+                'has_eliminatory' => true,
+                'is_disciplinary' => true,
+                'decision' => 'ANNULATION DU SEMESTRE (CONSEIL DE DISCIPLINE — FRAUDE)',
+                'module_results' => $moduleResults
+            ];
+        }
+
         $moduleResults = [];
         $totalWeights = 0;
         $totalWeightedScore = 0;
@@ -109,6 +164,7 @@ class DeliberationEngine
             'semester_average' => $semesterAverage,
             'is_admitted' => $isAdmitted,
             'has_eliminatory' => $hasEliminatoryGrade,
+            'is_disciplinary' => false,
             'decision' => $isAdmitted ? 'ADMIS (SEMESTRE VALIDÉ)' : 'RATTRAPAGE / NON ADMIS',
             'module_results' => $moduleResults
         ];

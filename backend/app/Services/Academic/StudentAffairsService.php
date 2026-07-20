@@ -41,10 +41,10 @@ class StudentAffairsService
      */
     public function makeDecision(int $caseId, string $decision, ?string $notes = null): DisciplineCase
     {
-        $validDecisions = ['warning', 'blame', 'exclusion', 'dismissed'];
+        $validDecisions = ['warning', 'blame', 'annulation_module', 'annulation_semestre', 'exclusion', 'dismissed'];
 
         if (!in_array($decision, $validDecisions)) {
-            throw new \InvalidArgumentException("Invalid decision type.");
+            throw new \InvalidArgumentException("Invalid decision type. Valid decisions: warning, blame, annulation_module, annulation_semestre, exclusion, dismissed.");
         }
 
         return DB::transaction(function () use ($caseId, $decision, $notes) {
@@ -56,8 +56,8 @@ class StudentAffairsService
             }
             $case->save();
 
-            // Additional logic: If exclusion, update student status
-            if ($decision === 'exclusion') {
+            // Additional logic: If exclusion or full semester cancellation, update student status
+            if (in_array($decision, ['exclusion', 'annulation_semestre'])) {
                 $case->student->update(['status' => 'excluded']);
             }
 

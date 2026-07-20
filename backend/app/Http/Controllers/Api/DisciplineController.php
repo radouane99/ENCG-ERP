@@ -59,7 +59,7 @@ class DisciplineController extends Controller
     public function decide(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
-            'decision' => 'required|string|in:warning,blame,exclusion,dismissed',
+            'decision' => 'required|string|in:warning,blame,annulation_module,annulation_semestre,exclusion,dismissed',
             'notes'    => 'nullable|string'
         ]);
 
