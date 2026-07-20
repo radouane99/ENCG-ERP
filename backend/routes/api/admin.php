@@ -190,6 +190,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
     Route::get('professors/{professor}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadProfessorConvocationPdf']);
+    Route::post('convocations/send-students', [\App\Http\Controllers\Api\ConvocationController::class, 'sendStudentConvocationsIntelligent']);
+    Route::post('convocations/send-professors', [\App\Http\Controllers\Api\ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
+    Route::get('convocations/export-zip', [\App\Http\Controllers\Api\ConvocationController::class, 'exportConvocationsZip']);
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
 
