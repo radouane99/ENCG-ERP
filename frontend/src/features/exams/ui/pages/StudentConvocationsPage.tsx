@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Download, QrCode, MapPin, Clock, FileText, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, Download, QrCode, MapPin, Clock, FileText, CheckCircle2, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import api from '@shared/lib/api';
@@ -14,33 +15,16 @@ export default function StudentConvocationsPage() {
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [selectedExam, setSelectedExam] = useState<any | null>(null);
 
-  // Real mock/fetched exam schedules for student
-  const examSchedule = [
-    {
-      id: 101,
-      module: 'Management Stratégique & Gouvernance',
-      code: 'MGT-501',
-      date: '25 Juin 2026',
-      time: '09:00 - 11:00',
-      duration: '2 heures',
-      room: 'Amphi Ibn Khaldoun',
-      seat: 'Table N° 14',
-      status: 'Publiée',
-      qrToken: 'CONV-2026-ENCG-98412'
-    },
-    {
-      id: 102,
-      module: 'Finance d\'Entreprise & Evaluation',
-      code: 'FIN-502',
-      date: '27 Juin 2026',
-      time: '14:00 - 16:00',
-      duration: '2 heures',
-      room: 'Salle B12',
-      seat: 'Table N° 08',
-      status: 'Publiée',
-      qrToken: 'CONV-2026-ENCG-98413'
+  // Query real student exam seatings & convocations from MySQL database
+  const { data: convData, isLoading } = useQuery({
+    queryKey: ['studentConvocations', activeSession],
+    queryFn: async () => {
+      const res = await api.get(`/v1/student-portal/convocations?session_type=${activeSession}`);
+      return res.data;
     }
-  ];
+  });
+
+  const convocations = convData?.convocations || [];
 
   const handleDownloadPdf = () => {
     const studentId = user?.id || 1;
@@ -108,61 +92,77 @@ export default function StudentConvocationsPage() {
       </div>
 
       {/* Exam Schedule Cards List */}
-      <div className="space-y-4">
-        {examSchedule.map((exam) => (
-          <div 
-            key={exam.id}
-            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
-          >
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-blue-50 text-[#002e5b] font-bold text-xs rounded-lg border border-blue-100">
-                  {exam.code}
-                </span>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {exam.status}
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">{exam.module}</h3>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#002e5b]" />
+        </div>
+      ) : convocations.length === 0 ? (
+        <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 shadow-sm space-y-3">
+          <Calendar className="w-12 h-12 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-700">
+            {isRtl ? 'لا توجد امتحانات مبرمجة في هذه الدورة' : 'Aucune convocation disponible pour cette session.'}
+          </h3>
+          <p className="text-xs text-slate-400">
+            {isRtl ? 'سيتم نشر جدول الامتحانات فور اعتماده من قبل الإدارة.' : 'Le planning d\'examen sera affiché dès publication officielle par la scolarité.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {convocations.map((exam: any) => (
+            <div 
+              key={exam.id}
+              className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-blue-50 text-[#002e5b] font-bold text-xs rounded-lg border border-blue-100">
+                    {exam.code}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {exam.status}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">{exam.module}</h3>
 
-              <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 pt-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  <span className="font-semibold text-slate-800">{exam.date}</span>
+                <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span className="font-semibold text-slate-800">{exam.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <span className="font-semibold text-slate-800">{exam.time} ({exam.duration})</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-slate-400" />
+                    <span className="font-bold text-[#002e5b]">{exam.room}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-400" />
-                  <span className="font-semibold text-slate-800">{exam.time} ({exam.duration})</span>
+              </div>
+
+              {/* Seat & Digital QR Ticket Actions */}
+              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 md:self-center">
+                <div className="text-center px-3 border-r border-slate-200">
+                  <div className="text-xs font-bold text-slate-400 uppercase">{isRtl ? 'المقعد' : 'Place'}</div>
+                  <div className="text-xl font-extrabold text-[#002e5b]">{exam.seat}</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-slate-400" />
-                  <span className="font-bold text-[#002e5b]">{exam.room}</span>
-                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedExam(exam);
+                    setShowQrModal(true);
+                  }}
+                  className="flex items-center gap-2 bg-[#002e5b] hover:bg-[#0f2863] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>{isRtl ? 'عرض Pass QR' : 'Pass QR Entrée'}</span>
+                </button>
               </div>
             </div>
-
-            {/* Seat & Digital QR Ticket Actions */}
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 md:self-center">
-              <div className="text-center px-3 border-r border-slate-200">
-                <div className="text-xs font-bold text-slate-400 uppercase">{isRtl ? 'المقعد' : 'Place'}</div>
-                <div className="text-xl font-extrabold text-[#002e5b]">{exam.seat}</div>
-              </div>
-
-              <button
-                onClick={() => {
-                  setSelectedExam(exam);
-                  setShowQrModal(true);
-                }}
-                className="flex items-center gap-2 bg-[#002e5b] hover:bg-[#0f2863] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all"
-              >
-                <QrCode className="w-4 h-4" />
-                <span>{isRtl ? 'عرض Pass QR' : 'Pass QR Entrée'}</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Rules Banner */}
       <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex items-start gap-4 text-amber-900">
@@ -172,7 +172,7 @@ export default function StudentConvocationsPage() {
           <ul className="list-disc list-inside space-y-0.5 text-amber-800">
             <li>{isRtl ? 'حضور الطالب 15 دقيقة قبل بداية الامتحان إجباري.' : 'Présence obligatoire 15 minutes avant l\'épreuve.'}</li>
             <li>{isRtl ? 'إظهار بطاقة الطالب أو الاستدعاء عند باب القاعة.' : 'Présentation impérative de la carte d\'étudiant ou de l\'attestation.'}</li>
-            <li>{isRtl ? 'يمنع منعا كليا إدخال الهواتف والساعات الذكية.' : 'Téléphones et montres connectées strictement interdits sous peine de Conseil de Discipline.'}</li>
+            <li>{isRtl ? 'يمنع منعا كليا إدخال الهواتف والساعات الذكية.' : 'Téléphones et montres connectées strictly interdits sous peine de Conseil de Discipline.'}</li>
           </ul>
         </div>
       </div>

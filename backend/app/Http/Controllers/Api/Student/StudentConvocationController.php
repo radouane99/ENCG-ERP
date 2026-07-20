@@ -11,14 +11,37 @@ class StudentConvocationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        // Only return non-draft convocations to students
-        $convocations = Convocation::where('student_id', $request->user()->id)
-            ->whereIn('status', ['sent', 'viewed', 'printed'])
-            ->with(['exam.module', 'room'])
-            ->orderBy('created_at', 'desc')
+        $user = $request->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        $studentId = $student ? $student->id : 0;
+        $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
+
+        // Query real exam seatings from database
+        $seatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+            ->where('student_id', $studentId)
             ->get();
 
-        return response()->json(['convocations' => $convocations]);
+        $convocations = $seatings->map(function ($s) {
+            $exam = $s->exam;
+            return [
+                'id' => $s->id,
+                'module' => $exam->module->name ?? 'Module d\'Examen',
+                'code' => $exam->module->code ?? 'MOD-' . $exam->id,
+                'date' => $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d/m/Y') : 'À déterminer',
+                'time' => $exam->start_time ? substr($exam->start_time, 0, 5) : '09:00',
+                'duration' => ($exam->duration_minutes ?? 120) . ' min',
+                'room' => $s->room->name ?? 'Salle 12',
+                'seat' => 'Table N° ' . ($s->seat_number ?? 1),
+                'status' => 'Publiée',
+                'qrToken' => $s->qr_token ?? ('CONV-' . $s->id)
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'convocations' => $convocations,
+            'session_type' => $sessionType
+        ]);
     }
 
     public function download(int $id, Request $request): JsonResponse
