@@ -83,6 +83,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     // Dashboard Stats & Ministry Audit Reports
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'getStats']);
+    Route::get('/finance/stats', [AdminDashboardController::class, 'getFinanceStats']);
     Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes

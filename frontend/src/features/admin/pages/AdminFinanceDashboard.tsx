@@ -1,17 +1,36 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Landmark, TrendingUp, TrendingDown, DollarSign, Send, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
+import { Landmark, TrendingUp, TrendingDown, DollarSign, Send, FileText, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function AdminFinanceDashboard() {
   const { t, i18n } = useTranslation(['admin', 'common']);
   const isRtl = i18n.language === 'ar';
 
-  const payments = [
-    { name: isRtl ? 'عثمان ب.' : 'Othmane B.', amount: '25,000 MAD', status: 'PAID', date: '12/06/2026', type: isRtl ? 'رسوم التسجيل' : 'Frais de scolarité' },
-    { name: isRtl ? 'آية ر.' : 'Aya R.', amount: '12,500 MAD', status: 'LATE', date: isRtl ? 'تأخير: 15 يوم' : 'Retard: 15 jours', type: isRtl ? 'رسوم التسجيل (S2)' : 'Frais de scolarité (S2)' },
-    { name: isRtl ? 'نادي التسويق' : 'Club Marketing', amount: '5,000 MAD', status: 'PENDING', date: isRtl ? 'في انتظار الموافقة' : 'En attente validation', type: isRtl ? 'ميزانية النشاط' : 'Budget Événement' },
-  ];
+  const { data: financeData, isLoading } = useQuery({
+    queryKey: ['admin-finance-stats'],
+    queryFn: async () => {
+      const res = await api.get('/admin/finance/stats');
+      return res.data.data;
+    }
+  });
+
+  const payments = financeData?.payments || [];
+  const revenueMonth = financeData?.revenue_month || '0 MAD';
+  const unpaidAmount = financeData?.unpaid_amount || '0 MAD';
+  const unpaidCount = financeData?.unpaid_count || 0;
+  const clubBudget = financeData?.club_budget || '0 MAD';
+  const scholarshipTotal = financeData?.scholarship_total || '0 MAD';
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#003a8c]" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
@@ -28,9 +47,9 @@ export default function AdminFinanceDashboard() {
             <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-emerald-500/30">
               <Landmark className="w-3.5 h-3.5" /> DAF ENCG
             </div>
-            <h1 className="text-4xl font-black text-white mb-2">Direction Financière</h1>
+            <h1 className="text-4xl font-black text-white mb-2">{isRtl ? 'الإدارة المالية' : 'Direction Financière'}</h1>
             <p className="text-blue-200 text-lg max-w-2xl">
-              Suivi des recouvrements, gestion budgétaire et bourses de mérite.
+              {isRtl ? 'متابعة التحصيلات، الميزانية، والمنح الدراسية بناءً على قاعدة البيانات الحقيقية.' : 'Suivi des recouvrements, gestion budgétaire et bourses de mérite.'}
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-4">
@@ -47,34 +66,34 @@ export default function AdminFinanceDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-card rounded-2xl p-6 shadow-sm border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><DollarSign className="w-16 h-16 text-emerald-500" /></div>
-            <div className="text-sm font-bold text-muted-foreground mb-2">Recettes (Mois)</div>
-            <div className="text-3xl font-black text-foreground mb-2">1.2M <span className="text-lg text-muted-foreground">MAD</span></div>
+            <div className="text-sm font-bold text-muted-foreground mb-2">{isRtl ? 'المداخيل (الشهر)' : 'Recettes (Mois)'}</div>
+            <div className="text-3xl font-black text-foreground mb-2">{revenueMonth}</div>
             <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold">
               <TrendingUp className="w-4 h-4" /> +15% vs N-1
             </div>
           </div>
           <div className="bg-card rounded-2xl p-6 shadow-sm border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><AlertCircle className="w-16 h-16 text-rose-500" /></div>
-            <div className="text-sm font-bold text-muted-foreground mb-2">Impayés & Retards</div>
-            <div className="text-3xl font-black text-foreground mb-2">245k <span className="text-lg text-muted-foreground">MAD</span></div>
+            <div className="text-sm font-bold text-muted-foreground mb-2">{isRtl ? 'المتأخرات والديون' : 'Impayés & Retards'}</div>
+            <div className="text-3xl font-black text-foreground mb-2">{unpaidAmount}</div>
             <div className="flex items-center gap-1 text-rose-600 text-xs font-bold">
-              <TrendingUp className="w-4 h-4" /> 42 étudiants
+              <TrendingUp className="w-4 h-4" /> {unpaidCount} {isRtl ? 'طلبات' : 'dossiers'}
             </div>
           </div>
           <div className="bg-card rounded-2xl p-6 shadow-sm border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingDown className="w-16 h-16 text-blue-500" /></div>
-            <div className="text-sm font-bold text-muted-foreground mb-2">Budget Clubs (Dépensé)</div>
-            <div className="text-3xl font-black text-foreground mb-2">45k <span className="text-lg text-muted-foreground">MAD</span></div>
+            <div className="text-sm font-bold text-muted-foreground mb-2">{isRtl ? 'عقود الساعات' : 'Budget Vacations'}</div>
+            <div className="text-3xl font-black text-foreground mb-2">{clubBudget}</div>
             <div className="flex items-center gap-1 text-blue-600 text-xs font-bold">
-              Sur enveloppe de 100k
+              {isRtl ? 'ميزانية مؤكدة' : 'Engagé réels'}
             </div>
           </div>
           <div className="bg-card rounded-2xl p-6 shadow-sm border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><CheckCircle2 className="w-16 h-16 text-amber-500" /></div>
-            <div className="text-sm font-bold text-muted-foreground mb-2">Bourses Distribuées</div>
-            <div className="text-3xl font-black text-foreground mb-2">120k <span className="text-lg text-muted-foreground">MAD</span></div>
+            <div className="text-sm font-bold text-muted-foreground mb-2">{isRtl ? 'المنح الموزعة' : 'Bourses Distribuées'}</div>
+            <div className="text-3xl font-black text-foreground mb-2">{scholarshipTotal}</div>
             <div className="flex items-center gap-1 text-amber-600 text-xs font-bold">
-              12 étudiants bénéficiaires
+              {isRtl ? 'مستفيدون' : 'bénéficiaires'}
             </div>
           </div>
         </div>

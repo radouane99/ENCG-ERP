@@ -117,7 +117,11 @@ export const useAuthStore = create<AuthState>()(
 
       hasAnyRole: (roles) => {
         const userRoles = get().user?.roles ?? []
-        return roles.some(r => userRoles.includes(r))
+        if (userRoles.some(r => ['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director'].includes(r))) {
+          const isAdminRoleRequested = roles.some(r => ['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director'].includes(r));
+          if (isAdminRoleRequested) return true;
+        }
+        return roles.some(r => userRoles.includes(r) || userRoles.includes(r.replace('-', '_')) || userRoles.includes(r.replace('_', '-')))
       },
     }),
     {
