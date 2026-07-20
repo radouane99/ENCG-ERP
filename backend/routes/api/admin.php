@@ -198,7 +198,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::post('convocations/send-professors', [\App\Http\Controllers\Api\ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
     Route::get('convocations/export-zip', [\App\Http\Controllers\Api\ConvocationController::class, 'exportConvocationsZip']);
     Route::post('exam-sessions/{sessionId}/send-availability-survey', [\App\Http\Controllers\Api\ConvocationController::class, 'sendAvailabilitySurvey']);
-    Route::post('exam-sessions/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
+    // [AUDIT ROUTE-02] Removed duplicate auto-assign-proctors route: already handled under /exam-planning/{sessionId}/auto-assign-proctors
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
@@ -370,12 +370,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 
     // [AUDIT ROUTE-01] Chatbot, alumni, REST, and dashboard routes moved to shared.php
     // [AUDIT ROUTE-02] Dead vacataire-manager group (all-commented) removed
-    // Student Portal
-    Route::prefix('student-portal')->group(function () {
-        Route::get('/grades', [StudentPortalController::class, 'getGrades']);
-        Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
-        Route::post('/absences', [StudentPortalController::class, 'submitAbsence']);
-    });
+    // [AUDIT ROUTE-03] Removed duplicate student-portal routes: grades/schedule/absences already handled under v1/student-portal in student.php
 
     // [AUDIT ROUTE-01] Dashboard routes (stats, search, timeline, pilotage) live in shared.php
     // Admin-exclusive APOGEE Academic Engine routes kept here:
