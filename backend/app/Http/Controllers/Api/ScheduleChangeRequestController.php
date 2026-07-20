@@ -42,17 +42,38 @@ class ScheduleChangeRequestController extends Controller
         $changeRequest->status = $validated['status'];
         $changeRequest->save();
 
-        if ($validated['status'] === 'approved' && $changeRequest->exam_id) {
-            // Update the actual exam date
-            $exam = $changeRequest->exam;
-            $exam->exam_date = $changeRequest->proposed_date;
-            $exam->start_time = $changeRequest->proposed_start_time;
-            $exam->save();
+        if ($validated['status'] === 'approved') {
+            if ($changeRequest->exam_id) {
+                $exam = $changeRequest->exam;
+                $exam->exam_date = $changeRequest->proposed_date;
+                $exam->start_time = $changeRequest->proposed_start_time;
+                $exam->save();
+            }
+
+            // Send notification via Resend
+            $email = $changeRequest->professor?->user?->email ?? $changeRequest->professor?->email;
+            if ($email) {
+                $changeData = [
+                    'moduleName' => $changeRequest->exam?->module?->name ?? 'Module d\'Enseignement',
+                    'professorName' => $changeRequest->professor?->name ?? 'Enseignant ENCG',
+                    'newDate' => $changeRequest->proposed_date ? $changeRequest->proposed_date->format('d/m/Y') : 'À déterminer',
+                    'newStartTime' => substr($changeRequest->proposed_start_time, 0, 5),
+                    'newEndTime' => '10:30',
+                    'roomName' => 'Salle d\'Examen / Amphi',
+                    'reason' => $changeRequest->reason
+                ];
+
+                try {
+                    \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\ScheduleChangeNotificationMail($changeData));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send schedule change mail to {$email}: " . $e->getMessage());
+                }
+            }
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Demande ' . ($validated['status'] === 'approved' ? 'approuvée' : 'rejetée') . ' avec succès.'
+            'message' => 'Demande ' . ($validated['status'] === 'approved' ? 'approuvée (notifiée par e-mail)' : 'rejetée') . ' avec succès.'
         ]);
     }
 
