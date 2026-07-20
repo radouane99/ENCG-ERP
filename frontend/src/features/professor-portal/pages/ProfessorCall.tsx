@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Check, X, Calendar as CalendarIcon, MessageSquare } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
@@ -12,6 +13,8 @@ interface Student {
 }
 
 export default function ProfessorCall() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { sessionId } = useParams();
 
   const [date, setDate] = useState('24/06/2026');

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Building2, Plus } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorReservations() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { data: reservations, isLoading } = useQuery({
     queryKey: ['professor-reservations'],
     queryFn: async () => {

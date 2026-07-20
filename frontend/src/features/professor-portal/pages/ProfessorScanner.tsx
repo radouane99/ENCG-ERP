@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Camera, QrCode, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 
 export default function ProfessorScanner() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [exam, setExam] = useState('');
   const [room, setRoom] = useState('');
   const [camera, setCamera] = useState('');

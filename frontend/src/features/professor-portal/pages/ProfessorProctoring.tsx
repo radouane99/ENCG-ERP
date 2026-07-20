@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Eye, 
   FileText, 
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 
 export default function ProfessorProctoring() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
       

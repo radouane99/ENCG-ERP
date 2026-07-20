@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Clock, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorAbsences() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['professor-schedule'],
     queryFn: async () => {

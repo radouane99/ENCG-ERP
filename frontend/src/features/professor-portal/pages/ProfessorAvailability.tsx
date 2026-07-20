@@ -1,8 +1,11 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function ProfessorAvailability() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [availability, setAvailability] = useState<Record<string, { matin: boolean, apresMidi: boolean }>>({
     Lundi: { matin: false, apresMidi: true },
     Mardi: { matin: false, apresMidi: false },

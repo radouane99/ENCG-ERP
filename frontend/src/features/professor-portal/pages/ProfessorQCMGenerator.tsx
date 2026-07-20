@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UploadCloud, Zap, FileText, CheckCircle2, ChevronRight, Save, Play } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -6,6 +7,8 @@ import { useMutation } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 
 export default function ProfessorQCMGenerator() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [step, setStep] = useState<'upload' | 'generating' | 'review'>('upload');
   const [progress, setProgress] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);

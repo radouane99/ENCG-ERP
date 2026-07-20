@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Kanban, MoreVertical, Plus, MessageSquare, Paperclip, Calendar as CalendarIcon, Move } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -7,6 +8,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorProjectsKanban() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { data: internships, isLoading } = useQuery({
     queryKey: ['professor-internships'],
     queryFn: async () => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileSignature, PenTool, MessageSquare, Check, ChevronRight, Zap, Download, UploadCloud } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
@@ -6,6 +7,8 @@ import { toast } from 'sonner';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorSmartGrading() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);

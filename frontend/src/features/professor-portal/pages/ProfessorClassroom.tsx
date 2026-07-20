@@ -16,6 +16,8 @@ import {
 import { cn } from '@shared/lib/utils';
 
 export default function ProfessorClassroom() {
+  const { t, i18n } = useTranslation(['professors', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { moduleId } = useParams();
   const [activeTab, setActiveTab] = useState<'annonces' | 'devoirs' | 'discussion' | 'ia'>('annonces');
   const [annonceType, setAnnonceType] = useState<'annonce' | 'support'>('annonce');
