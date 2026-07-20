@@ -290,16 +290,13 @@ function ExamCard({ id, title, group, time, duration, room, surveillants, day, m
 
   const generateMutation = useMutation({
     mutationFn: (examId: number) => examsApi.generateConvocations(examId),
-    onSuccess: () => {
-      onNotify(`Convocations générées avec succès pour l'examen ${id}.`)
+    onSuccess: (data) => {
+      onNotify(data.message || `Convocations générées avec succès pour l'examen ${id}.`)
       setIsGenerating(false)
     },
-    onError: () => {
-      // For demo purposes, we will still show success if the API fails
-      setTimeout(() => {
-        onNotify(`Convocations générées pour l'examen ${id} (Mode démo).`)
-        setIsGenerating(false)
-      }, 1000)
+    onError: (error: any) => {
+      onNotify(error.response?.data?.message || `Erreur lors de la génération pour l'examen ${id}.`, 'error')
+      setIsGenerating(false)
     }
   })
 

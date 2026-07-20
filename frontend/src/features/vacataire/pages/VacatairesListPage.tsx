@@ -49,7 +49,7 @@ export default function VacatairesListPage() {
 
   const { data: vacatairesData, isLoading } = useQuery({
     queryKey: ['hr-vacataires', search],
-    queryFn: () => api.get('/admin/hr/vacataires', { params: { search } }).then(res => res.data.data)
+    queryFn: () => api.get('/hr/vacataires', { params: { search } }).then(res => res.data.data)
   })
 
   const { data: deptsData } = useQuery({
@@ -59,7 +59,7 @@ export default function VacatairesListPage() {
   const departments: Department[] = deptsData?.data || []
 
   const saveMutation = useMutation({
-    mutationFn: (payload: Partial<Vacataire>) => editingId ? api.put(`/hr/professors/${editingId}`, payload) : api.post('/hr/professors', payload),
+    mutationFn: (payload: Partial<Vacataire>) => editingId ? api.put(`/hr/vacataires/${editingId}`, payload) : api.post('/hr/vacataires', payload),
     onSuccess: () => {
       toast.success(t('modules:vacataires_list.messages.save_success'))
       queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })
@@ -72,7 +72,7 @@ export default function VacatairesListPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/hr/professors/${id}`),
+    mutationFn: (id: number) => api.delete(`/hr/vacataires/${id}`),
     onSuccess: () => {
       toast.success(t('modules:vacataires_list.messages.delete_success'))
       queryClient.invalidateQueries({ queryKey: ['hr-vacataires'] })

@@ -2,11 +2,18 @@ import { useState, useEffect } from 'react'
 import { Bell, Users, MailQuestion, Hourglass, CheckSquare, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
+import { academicApi } from '@shared/api/academic'
+import { useQuery } from '@tanstack/react-query'
 
 export default function AdminProfessorAvailabilityPage() {
   const [selectedProfs, setSelectedProfs] = useState<number[]>([])
   const [professeurs, setProfesseurs] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const { data: academicYears } = useQuery({
+    queryKey: ['academic-years'],
+    queryFn: academicApi.getAcademicYears
+  })
 
   const fetchProfessors = async () => {
     try {
@@ -136,10 +143,12 @@ export default function AdminProfessorAvailabilityPage() {
 
       {/* Filters & Actions */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-6 flex items-center justify-between">
-        <div className="w-48">
-          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">SEMESTRE</label>
+        <div className="w-64">
+          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">ANNÉE UNIVERSITAIRE</label>
           <select className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 font-bold outline-none">
-            <option>S7</option>
+            {academicYears?.map((year: any) => (
+              <option key={year.id} value={year.id}>{year.label}</option>
+            )) || <option>2026/2027</option>}
           </select>
         </div>
       </div>

@@ -209,13 +209,19 @@ class DashboardAnalyticsService
         $modulesCount = DB::table('module_professor')
             ->where('professor_id', $professor->id)
             ->count();
+            
+        $academicYearId = \App\Models\AcademicYear::where('is_current', true)->value('id') ?? 1;
 
-        $studentCount = DB::table('module_professor')
+        $filiereIds = DB::table('module_professor')
             ->where('professor_id', $professor->id)
-            ->join('module_group', 'module_professor.module_id', '=', 'module_group.module_id')
-            ->join('student_registrations', 'module_group.group_id', '=', 'student_registrations.group_id')
-            ->distinct('student_registrations.student_id')
-            ->count();
+            ->join('modules', 'module_professor.module_id', '=', 'modules.id')
+            ->pluck('modules.filiere_id');
+
+        $studentCount = DB::table('student_registrations')
+            ->where('academic_year_id', $academicYearId)
+            ->whereIn('filiere_id', $filiereIds)
+            ->distinct('student_id')
+            ->count('student_id');
             
         // Get actual modules with their names
         $modules = DB::table('module_professor')
