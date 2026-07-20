@@ -25,6 +25,12 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function sendAvailabilitySurvey(int $sessionId): JsonResponse
+    {
+        $result = $this->proctorService->sendAvailabilitySurvey($sessionId);
+        return response()->json($result);
+    }
+
     public function generateSession(Request $request): JsonResponse
     {
         $validated = $request->validate([

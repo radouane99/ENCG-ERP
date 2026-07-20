@@ -194,6 +194,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::post('convocations/send-students', [\App\Http\Controllers\Api\ConvocationController::class, 'sendStudentConvocationsIntelligent']);
     Route::post('convocations/send-professors', [\App\Http\Controllers\Api\ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
     Route::get('convocations/export-zip', [\App\Http\Controllers\Api\ConvocationController::class, 'exportConvocationsZip']);
+    Route::post('exam-sessions/{sessionId}/send-availability-survey', [\App\Http\Controllers\Api\ConvocationController::class, 'sendAvailabilitySurvey']);
+    Route::post('exam-sessions/{sessionId}/auto-assign-proctors', [\App\Http\Controllers\Api\ConvocationController::class, 'autoAssign']);
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
 
