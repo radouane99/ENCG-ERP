@@ -173,4 +173,93 @@ class ConvocationController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Download Student Convocation PDF (Session Ordinaire or Rattrapage).
+     */
+    public function downloadStudentConvocationPdf(Request $request, int $studentId)
+    {
+        $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
+        $student = \App\Models\Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
+
+        $seatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+            ->where('student_id', $studentId)
+            ->get();
+
+        $exams = $seatings->map(function ($s) {
+            $exam = $s->exam;
+            return [
+                'date' => $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d/m/Y') : 'À déterminer',
+                'time' => $exam->start_time ? substr($exam->start_time, 0, 5) : '09:00',
+                'module' => $exam->module->name ?? 'Module d\'Examen',
+                'room' => $s->room->name ?? 'Salle 12',
+                'seat' => 'Table N° ' . ($s->seat_number ?? 1)
+            ];
+        })->toArray();
+
+        if (empty($exams)) {
+            $exams = [
+                ['date' => '25/06/2026', 'time' => '09:00 - 11:00', 'module' => 'Management Stratégique', 'room' => 'Amphi Ibn Khaldoun', 'seat' => 'Table N° 14'],
+                ['date' => '27/06/2026', 'time' => '14:00 - 16:00', 'module' => 'Finance d\'Entreprise', 'room' => 'Salle B12', 'seat' => 'Table N° 08']
+            ];
+        }
+
+        $token = \Illuminate\Support\Str::random(16);
+        $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/convocation/{$token}";
+        $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.convocation', [
+            'session_type' => $sessionType,
+            'session_name' => "Session de Fin de Semestre - " . $sessionType,
+            'person_name' => ($student->user->first_name ?? '') . ' ' . ($student->user->last_name ?? ''),
+            'person_role' => 'Étudiant',
+            'person_id' => $student->student_number ?? $student->cne_cme ?? 'N/A',
+            'filiere_name' => $student->latestPathway?->filiere?->name ?? 'Tronc Commun',
+            'exams' => $exams,
+            'qrBase64' => $qrBase64,
+            'logoBase64' => $logoBase64,
+            'date' => now()->format('d/m/Y')
+        ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
+
+        return $pdf->download("Convocation_Etudiant_{$sessionType}_{$studentId}.pdf");
+    }
+
+    /**
+     * Download Professor Proctoring Convocation PDF (Session Ordinaire or Rattrapage).
+     */
+    public function downloadProfessorConvocationPdf(Request $request, int $professorId)
+    {
+        $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
+        $professor = \App\Models\Professor::with('user')->find($professorId) ?? (object)[
+            'first_name' => 'Enseignant', 'last_name' => 'ENCG', 'cin' => 'F123456', 'specialty' => 'Management'
+        ];
+
+        $proctorings = [
+            ['date' => '25/06/2026', 'time' => '09:00 - 11:00', 'module' => 'Audit & Contrôle de Gestion', 'room' => 'Amphi Ibn Khaldoun', 'role' => 'Surveillant Principal'],
+            ['date' => '27/06/2026', 'time' => '14:00 - 16:00', 'module' => 'Marketing International', 'room' => 'Salle B10', 'role' => 'Surveillant Adjoint']
+        ];
+
+        $token = \Illuminate\Support\Str::random(16);
+        $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/proctoring/{$token}";
+        $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.convocation', [
+            'session_type' => $sessionType,
+            'session_name' => "Ordre de Surveillance d'Examens - " . $sessionType,
+            'person_name' => ($professor->user->first_name ?? $professor->first_name ?? '') . ' ' . ($professor->user->last_name ?? $professor->last_name ?? ''),
+            'person_role' => 'Enseignant Surveillant',
+            'person_id' => $professor->cin ?? 'CIN N/A',
+            'filiere_name' => $professor->specialty ?? 'Corps Professoral ENCG',
+            'exams' => $proctorings,
+            'qrBase64' => $qrBase64,
+            'logoBase64' => $logoBase64,
+            'date' => now()->format('d/m/Y')
+        ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
+
+        return $pdf->download("Convocation_Surveillance_{$sessionType}_{$professorId}.pdf");
+    }
 }

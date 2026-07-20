@@ -186,8 +186,10 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
 
-    // Student Transcript PDF & Mission Orders
+    // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+    Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
+    Route::get('professors/{professor}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadProfessorConvocationPdf']);
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
 
