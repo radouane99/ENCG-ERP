@@ -104,9 +104,13 @@ const navigation: (NavItem | NavGroup)[] = [
     items: [
       { labelKey: 'nav.item_32', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
       { labelKey: 'nav.item_33', href: '/student/grades', icon: BarChart3, roles: ['student'] },
+      { labelKey: 'nav.item_student_card', href: '/student/card', icon: IdCard, roles: ['student'] },
+      { labelKey: 'nav.item_student_convocations', href: '/student/convocations', icon: Mail, roles: ['student'] },
       { labelKey: 'nav.item_34', href: '/student/requests', icon: MessageSquare, roles: ['student'] },
       { labelKey: 'nav.item_35', href: '/student/portfolio', icon: Crown, roles: ['student'] },
       { labelKey: 'nav.item_36', href: '/student/clubs', icon: Users, roles: ['student'] },
+      { labelKey: 'nav.item_student_mobility', href: '/student/mobility', icon: PlaneTakeoff, roles: ['student'] },
+      { labelKey: 'nav.item_student_library', href: '/student/library', icon: BookOpen, roles: ['student'] },
     ]
   },
   {

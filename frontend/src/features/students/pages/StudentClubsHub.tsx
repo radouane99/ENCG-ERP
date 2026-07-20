@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, Calendar, Megaphone, Plus, ChevronRight, Heart, MessageCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentClubsHub() {
+  const { t, i18n } = useTranslation(['common']);
+  const isRtl = i18n.language === 'ar';
   const { data: hubData, isLoading } = useQuery({
     queryKey: ['clubs-hub'],
     queryFn: async () => {

@@ -1,9 +1,12 @@
-﻿import React from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Award, Share2, Briefcase, GraduationCap, Star, Zap, CheckCircle2, TrendingUp, Cpu, Users, Download } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function StudentPortfolio() {
+  const { t, i18n } = useTranslation(['students', 'common']);
+  const isRtl = i18n.language === 'ar';
   const { user } = useAuthStore();
 
   const skills = [

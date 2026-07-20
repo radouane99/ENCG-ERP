@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar as CalendarIcon, Clock, MapPin, FileText, Download, CheckCircle2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
@@ -6,6 +7,8 @@ import { examsApi } from '@shared/api/exams';
 import { useAuthStore } from '@stores/authStore';
 
 export default function StudentConvocations() {
+  const { t, i18n } = useTranslation(['exams', 'common']);
+  const isRtl = i18n.language === 'ar';
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [convocations, setConvocations] = useState<any[]>([]);

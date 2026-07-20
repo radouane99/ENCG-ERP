@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BookOpen, Search, Filter, Book, Download, Clock, Star, PlayCircle, Heart } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -7,6 +8,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentDigitalLibrary() {
+  const { t, i18n } = useTranslation(['library', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [activeTab, setActiveTab] = useState('RECOMMANDÉ'); // RECOMMANDÉ, EBOOKS, EMPRUNTS
 
   const { data: libraryData, isLoading } = useQuery({

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlaneTakeoff, Globe2, MapPin, Star, Clock, CheckCircle2, AlertCircle, Send, FileText } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
@@ -7,6 +8,8 @@ import { toast } from 'sonner';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentMobility() {
+  const { t, i18n } = useTranslation(['students', 'common']);
+  const isRtl = i18n.language === 'ar';
   const queryClient = useQueryClient();
   const [localVoeux, setLocalVoeux] = useState<number[]>([]);
 

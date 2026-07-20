@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar as CalendarIcon, Download, Link as LinkIcon, FileText, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,8 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentSchedule() {
+  const { t, i18n } = useTranslation(['timetable', 'common']);
+  const isRtl = i18n.language === 'ar';
   const [view, setView] = useState<'MOIS' | 'SEMAINE' | 'JOUR' | 'LISTE'>('SEMAINE');
 
   const { data: scheduleData, isLoading } = useQuery({
