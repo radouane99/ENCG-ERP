@@ -201,6 +201,13 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
     Route::get('mobility/ranking', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'calculateMeritRanking']);
 
+    // Admin AI Suite
+    Route::prefix('ai')->group(function () {
+        Route::post('copilot/query', [AdminAiController::class, 'copilotQuery']);
+        Route::get('predictive-analytics', [AdminAiController::class, 'getPredictiveAnalytics']);
+        Route::get('financial-forecast', [AdminAiController::class, 'getFinancialForecast']);
+    });
+
     // HR & Personnel
     Route::prefix('hr')->group(function () {
         Route::apiResource('professors', ProfessorController::class);
