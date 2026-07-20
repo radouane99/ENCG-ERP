@@ -5,18 +5,25 @@ namespace App\Services\AI;
 use App\Models\Student;
 use App\Models\Grade;
 use App\Models\AttendanceRecord;
-use Illuminate\Support\Collection;
+use App\Services\AI\GeminiApiService;
 
 class AiPredictiveAnalyticsService
 {
+    protected GeminiApiService $geminiApi;
+
+    public function __construct(GeminiApiService $geminiApi)
+    {
+        $this->geminiApi = $geminiApi;
+    }
+
     /**
-     * Calculate Predictive Student Dropout & Academic Failure Risk using real MySQL database records.
+     * Calculate Predictive Student Dropout Risk with Google Gemini AI Narrative Analysis.
      */
     public function getPredictiveDropoutRisk(): array
     {
-        $students = Student::with(['user', 'registrations.filiere', 'attendanceRecords', 'grades.assessment'])
+        $students = Student::with(['user', 'registrations.filiere', 'attendanceRecords', 'grades'])
             ->has('user')
-            ->take(20)
+            ->take(15)
             ->get();
 
         $atRiskList = $students->map(function ($student) {
@@ -49,15 +56,21 @@ class AiPredictiveAnalyticsService
 
         $totalAnalyzed = Student::count();
         $critiqueCount = $atRiskList->where('risk_level', 'CRITIQUE')->count();
-        $eleveCount = $atRiskList->where('risk_level', 'ÉLEVÉ')->count();
+
+        // Query Gemini API for Executive Narrative Report
+        $prompt = "Analyse les données réelles suivantes et rédige une synthèse de 3 phrases pour la Direction Académique de l'ENCG Fès : {$totalAnalyzed} étudiants analysés, {$critiqueCount} cas en risque critique de décrochage.";
+        $system = ["Tu es l'expert en analytique pédagogique de l'ENCG Fès."];
+        
+        $narrativeReport = $this->geminiApi->generateContent($prompt, $system) 
+            ?? "L'analyse prédictive sur les données réelles de la base de données indique {$critiqueCount} étudiants nécessitant un suivi pédagogique immédiat.";
 
         return [
             'success' => true,
             'summary' => [
                 'total_students_analyzed' => $totalAnalyzed,
                 'high_risk_count' => $critiqueCount,
-                'moderate_risk_count' => $eleveCount,
-                'data_source' => 'Direct MySQL Queries (students, attendance_records, grades)',
+                'gemini_narrative' => $narrativeReport,
+                'data_source' => 'Direct MySQL + Google Gemini 1.5 Flash AI',
                 'model' => 'ENCG Predictive Academic Dropout AI Engine'
             ],
             'at_risk_students' => $atRiskList

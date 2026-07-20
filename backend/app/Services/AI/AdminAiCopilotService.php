@@ -8,113 +8,75 @@ use App\Models\Grade;
 use App\Models\Schedule;
 use App\Models\DisciplineCase;
 use App\Models\VacationContract;
-use Illuminate\Support\Facades\DB;
+use App\Services\AI\GeminiApiService;
 
 class AdminAiCopilotService
 {
+    protected GeminiApiService $geminiApi;
+
+    public function __construct(GeminiApiService $geminiApi)
+    {
+        $this->geminiApi = $geminiApi;
+    }
+
     /**
-     * Process natural language query from Admin Copilot using real MySQL Database queries.
+     * Process natural language query from Admin Copilot using REAL Google Gemini AI + live MySQL DB metrics.
      */
     public function processQuery(string $query): array
     {
         $queryLower = mb_strtolower($query);
 
-        // 1. Success Rate & Academic Performance
-        if (str_contains($queryLower, 'reussite') || str_contains($queryLower, 'moyenne') || str_contains($queryLower, 'taux') || str_contains($queryLower, 'نجاح')) {
-            $totalStudents = Student::count();
-            $admittedCount = Student::where('status', 'active')->count();
-            $rate = $totalStudents > 0 ? round(($admittedCount / $totalStudents) * 100, 1) : 0;
-
-            $rattrapageCount = Grade::where('value', '<', 10.0)
-                ->where('value', '>=', 6.0)
-                ->distinct('student_id')
-                ->count('student_id');
-
-            return [
-                'type' => 'academic_performance',
-                'answer' => "D'après l'analyse en temps réel de la base de données MySQL, le taux global de réussite calculé pour l'ENCG Fès est de **{$rate}%** ({$admittedCount} étudiants actifs sur {$totalStudents}).",
-                'kpis' => [
-                    ['label' => 'Taux de Réussite Réel', 'value' => "{$rate}%", 'trend' => 'MySQL Live'],
-                    ['label' => 'Total Étudiants Inscrits', 'value' => number_format($totalStudents), 'trend' => 'Base Officielle'],
-                    ['label' => 'Étudiants en Rattrapage', 'value' => number_format($rattrapageCount), 'trend' => 'Base de Notes']
-                ],
-                'action_suggestion' => 'Lancer la simulation de délibération Apogée pour les PVs officiels.'
-            ];
-        }
-
-        // 2. Attendance & Dropout Risk Query
-        if (str_contains($queryLower, 'absence') || str_contains($queryLower, 'decrochage') || str_contains($queryLower, 'risque') || str_contains($queryLower, 'غياب')) {
-            $atRiskCount = Student::whereIn('status', ['at_risk', 'excluded'])->count();
-            $totalAbsences = \App\Models\AttendanceRecord::where('status', 'absent')->count();
-
-            return [
-                'type' => 'dropout_risk',
-                'answer' => "L'analyse réelle des registres d'assiduité révèle **{$atRiskCount} étudiants enregistrés en risque académique ou d'exclusion**, avec un total cumulé de **{$totalAbsences} absences** aux séances de cours.",
-                'kpis' => [
-                    ['label' => 'Étudiants à Risque Réels', 'value' => (string)$atRiskCount, 'color' => 'red'],
-                    ['label' => 'Absences Enregistrées', 'value' => number_format($totalAbsences), 'color' => 'amber'],
-                    ['label' => 'Base d\'Assiduité', 'value' => 'Direct MySQL', 'color' => 'blue']
-                ],
-                'action_suggestion' => 'Envoyer une convocation d\'avertissement pour absence au Service de la Scolarité.'
-            ];
-        }
-
-        // 3. Vacataires & Financial Payout Query
-        if (str_contains($queryLower, 'budget') || str_contains($queryLower, 'vacation') || str_contains($queryLower, 'paie') || str_contains($queryLower, 'daf') || str_contains($queryLower, 'مالية')) {
-            $contracts = VacationContract::with(['sessions', 'payments'])->get();
-            $totalBudget = 0;
-            $totalHours = 0;
-
-            foreach ($contracts as $contract) {
-                $hours = $contract->sessions ? $contract->sessions->sum('hours') : ($contract->agreed_hours ?? 0);
-                $rate = $contract->hourly_rate ?? 350;
-                $totalBudget += ($hours * $rate);
-                $totalHours += $hours;
-            }
-
-            return [
-                'type' => 'financial_forecast',
-                'answer' => "Le calcul budgétaire réel des vacations enregistrées dans la base de données donne un total de **" . number_format($totalBudget, 2) . " MAD** pour **{$totalHours} heures** d'enseignement émargées.",
-                'kpis' => [
-                    ['label' => 'Total Budgété Réel', 'value' => number_format($totalBudget, 2) . ' MAD', 'trend' => 'MySQL Live'],
-                    ['label' => 'Heures Émargées', 'value' => "{$totalHours}h", 'trend' => 'Sessions DB'],
-                    ['label' => 'Contrats Vacataires', 'value' => (string)$contracts->count(), 'trend' => 'Contrats Actifs']
-                ],
-                'action_suggestion' => 'Télécharger le bordereau de virement global pour la DAF.'
-            ];
-        }
-
-        // 4. Discipline & Fraud Query
-        if (str_contains($queryLower, 'discipline') || str_contains($queryLower, 'fraude') || str_contains($queryLower, 'conseil') || str_contains($queryLower, 'غش')) {
-            $casesCount = DisciplineCase::count();
-            $resolvedCount = DisciplineCase::where('status', 'resolved')->count();
-
-            return [
-                'type' => 'discipline_cases',
-                'answer' => "La base disciplinaire contient actuellement **{$casesCount} dossiers enregistrés**, dont **{$resolvedCount} décisions résolues** par le Conseil de Discipline.",
-                'kpis' => [
-                    ['label' => 'Total Dossiers Réels', 'value' => (string)$casesCount, 'color' => 'amber'],
-                    ['label' => 'Décisions Résolues', 'value' => (string)$resolvedCount, 'color' => 'blue'],
-                    ['label' => 'Source de Données', 'value' => 'Table discipline_cases', 'color' => 'emerald']
-                ],
-                'action_suggestion' => 'Consulter les PVs des décisions du Conseil de Discipline.'
-            ];
-        }
-
-        // Default Real DB Response
+        // Fetch real aggregated database statistics
         $totalStudents = Student::count();
+        $admittedCount = Student::where('status', 'active')->count();
         $totalProfs = Professor::count();
         $totalSchedules = Schedule::count();
+        $casesCount = DisciplineCase::count();
+        $totalAbsences = \App\Models\AttendanceRecord::where('status', 'absent')->count();
+
+        $contracts = VacationContract::with('sessions')->get();
+        $totalBudget = 0;
+        $totalHours = 0;
+        foreach ($contracts as $contract) {
+            $h = $contract->sessions ? $contract->sessions->sum('hours') : ($contract->agreed_hours ?? 0);
+            $r = $contract->hourly_rate ?? 350;
+            $totalBudget += ($h * $r);
+            $totalHours += $h;
+        }
+
+        // Build rich database context for Gemini 1.5 Flash
+        $dbContext = "DONNÉES EN TEMPS RÉEL MYSQL DE L'ENCG FÈS :\n" .
+            "- Total Étudiants Inscrits: {$totalStudents}\n" .
+            "- Étudiants Actifs / Admis: {$admittedCount}\n" .
+            "- Corps Enseignant: {$totalProfs}\n" .
+            "- Séances de Cours au Planning: {$totalSchedules}\n" .
+            "- Absences Enregistrées au Scanner: {$totalAbsences}\n" .
+            "- Dossiers Disciplinaires: {$casesCount}\n" .
+            "- Masse Salariale Vacations: " . number_format($totalBudget, 2) . " MAD ({$totalHours}h émargées).\n";
+
+        $systemPrompt = [
+            "Tu es le Copilote IA Administratif officiel de l'École Nationale de Commerce et de Gestion (ENCG) de Fès.",
+            "Réponds avec une haute précision professionnelle en te basant sur les données MySQL fournies ci-dessous.",
+            "Sois concis, clair, élégant et structuré en Markdown.",
+            $dbContext
+        ];
+
+        // Call Real Google Gemini 1.5 Flash API
+        $aiResponseText = $this->geminiApi->generateContent($query, $systemPrompt);
+
+        if (!$aiResponseText) {
+            $aiResponseText = "D'après les données MySQL réelles de l'ENCG Fès : {$totalStudents} étudiants sont enregistrés, avec un budget de vacations de " . number_format($totalBudget, 2) . " MAD pour {$totalHours}h d'enseignement.";
+        }
 
         return [
-            'type' => 'general_assistant',
-            'answer' => "Connexion directe à la base MySQL ENCG Fès établie avec succès. Le système gère actuellement **{$totalStudents} étudiants**, **{$totalProfs} professeurs** et **{$totalSchedules} séances de cours** au planning.",
+            'type' => 'gemini_ai_response',
+            'answer' => $aiResponseText,
             'kpis' => [
-                ['label' => 'Étudiants en Base', 'value' => number_format($totalStudents), 'trend' => 'Table students'],
-                ['label' => 'Corps Enseignant', 'value' => number_format($totalProfs), 'trend' => 'Table professors'],
-                ['label' => 'Séances Planifiées', 'value' => number_format($totalSchedules), 'trend' => 'Table schedules']
+                ['label' => 'Étudiants Inscrits (DB)', 'value' => number_format($totalStudents), 'trend' => 'MySQL Live'],
+                ['label' => 'Total Vacations (DB)', 'value' => number_format($totalBudget, 2) . ' MAD', 'trend' => 'Contrats DB'],
+                ['label' => 'Moteur IA Active', 'value' => 'Google Gemini 1.5 Flash', 'trend' => 'Gemini API']
             ],
-            'action_suggestion' => 'Posez une question spécifique sur les réquisitions, délibérations, absences ou le budget.'
+            'action_suggestion' => 'Consulter le rapport officiel ou exécuter la simulation de délibération.'
         ];
     }
 }

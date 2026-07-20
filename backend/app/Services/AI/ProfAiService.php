@@ -5,18 +5,33 @@ namespace App\Services\AI;
 use App\Models\Module;
 use App\Models\Grade;
 use App\Models\AttendanceRecord;
-use App\Models\Professor;
+use App\Services\AI\GeminiApiService;
 
 class ProfAiService
 {
+    protected GeminiApiService $geminiApi;
+
+    public function __construct(GeminiApiService $geminiApi)
+    {
+        $this->geminiApi = $geminiApi;
+    }
+
     /**
-     * AI Exam Subject & Marking Rubric Generator based on Module.
+     * AI Exam Subject & Marking Rubric Generator powered by Google Gemini 1.5 Flash.
      */
     public function generateExamSubject(int $moduleId, string $type = 'EXAMEN_FINAL'): array
     {
         $module = Module::find($moduleId);
         $moduleName = $module ? $module->name : 'Management Stratégique & Gouvernance';
         $moduleCode = $module ? ($module->code ?? 'MOD-501') : 'MGT-501';
+
+        $prompt = "Génère un sujet d'examen universitaire complet et sa grille de correction pour le module '{$moduleName}' (Code {$moduleCode}) de niveau ENCG Fès.";
+        $system = [
+            "Tu es un professeur titulaire de l'ENCG Fès expert en élaboration d'épreuves d'examen.",
+            "Formate l'épreuve avec une Partie Théorique (5 pts), une Étude de Cas Pratique d'Entreprise (10 pts) et une Question de Réflexion (5 pts)."
+        ];
+
+        $aiExamContent = $this->geminiApi->generateContent($prompt, $system);
 
         return [
             'success' => true,
@@ -25,27 +40,7 @@ class ProfAiService
             'type' => $type,
             'duration' => '2 Heures',
             'total_points' => '20/20',
-            'sections' => [
-                [
-                    'part' => 'Partie I — Contrôle des Connaissances & Définitions (5 Points)',
-                    'questions' => [
-                        'Définir brièvement la gouvernance d\'entreprise et le rôle du Conseil d\'Administration (2.5 pts).',
-                        'Expliquer la différence entre le contrôle interne et l\'audit externe selon les normes IFACI (2.5 pts).'
-                    ]
-                ],
-                [
-                    'part' => 'Partie II — Étude de Cas Pratique d\'Entreprise (10 Points)',
-                    'scenario' => 'Considérant la société ENCG-Logistic Maroc confrontée à une expansion sur le marché africain...',
-                    'questions' => [
-                        'Établir la matrice SWOT et proposer 2 choix stratégiques majeurs (4 pts).',
-                        'Évaluer les risques financiers et préconiser un plan de couverture adapté (6 pts).'
-                    ]
-                ],
-                [
-                    'part' => 'Partie III — Question de Réflexion / Dissertation (5 Points)',
-                    'topic' => 'En quoi l\'intégration de la RSE et de la digitalisation transforme-t-elle le management classique ?'
-                ]
-            ],
+            'ai_generated_content' => $aiExamContent ?? "Partie I : Théorie & Concepts (5 pts)\nPartie II : Cas Pratique d'Entreprise (10 pts)\nPartie III : Réflexion Stratégique (5 pts)",
             'marking_rubric' => [
                 'Rigueur conceptuelle et terminologie : 30%',
                 'Qualité de la démonstration et structuration : 40%',
@@ -85,32 +80,20 @@ class ProfAiService
     }
 
     /**
-     * Process Natural Language Query for Professor AI Copilot.
+     * Process Natural Language Query for Professor AI Copilot using Gemini.
      */
     public function processProfQuery(string $query, int $professorId): array
     {
-        $queryLower = mb_strtolower($query);
+        $system = [
+            "Tu es le Copilote Enseignant IA de l'ENCG Fès.",
+            "Aide le professeur sur ses sujets d'examen, le suivi des notes de sa classe et l'assiduité."
+        ];
 
-        if (str_contains($queryLower, 'absence') || str_contains($queryLower, 'غياب')) {
-            $absencesCount = AttendanceRecord::where('status', 'absent')->count();
-            return [
-                'answer' => "D'après les données d'émargement réel, **{$absencesCount} absences** ont été enregistrées dans vos modules ce semestre.",
-                'action' => 'Télécharger la liste d\'émargement officielle.'
-            ];
-        }
-
-        if (str_contains($queryLower, 'moyenne') || str_contains($queryLower, 'note') || str_contains($queryLower, 'نقاط')) {
-            $avg = Grade::avg('value');
-            $formattedAvg = $avg ? round($avg, 2) : 12.5;
-            return [
-                'answer' => "La moyenne générale calculée sur la base de données pour l'ensemble de vos étudiants est de **{$formattedAvg} / 20**.",
-                'action' => 'Consulter le PV de saisie des notes.'
-            ];
-        }
+        $aiResponse = $this->geminiApi->generateContent($query, $system);
 
         return [
-            'answer' => "Je suis votre Copilote Enseignant IA. Vous pouvez me demander de générer un sujet d'examen, d'analyser les résultats de votre classe ou de vérifier l'assiduité.",
-            'action' => 'Sélectionner une action rapide.'
+            'answer' => $aiResponse ?? "Je suis votre Copilote Enseignant IA (Gemini 1.5 Flash). Vous pouvez me demander de générer un sujet d'examen ou d'analyser vos résultats.",
+            'action' => 'Consulter le rapport de la classe.'
         ];
     }
 }
