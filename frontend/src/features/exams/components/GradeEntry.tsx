@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
 import { gradesApi } from '@shared/api/grades';
 import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
@@ -25,9 +26,10 @@ export default function GradeEntry() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  // Hardcode module and group for demo purposes
-  const moduleId = 1;
-  const groupId = 1;
+  // Read module and group from route parameters; do NOT hardcode values
+  const params = useParams();
+  const moduleId = params.moduleId ? Number(params.moduleId) : null;
+  const groupId = params.groupId ? Number(params.groupId) : null;
 
   useEffect(() => {
     fetchGrid();
@@ -36,6 +38,12 @@ export default function GradeEntry() {
   const fetchGrid = async () => {
     try {
       setIsLoading(true);
+      if (!moduleId || !groupId) {
+        console.error('ModuleId and groupId are required for GradeEntry');
+        setStudents([]);
+        setMeta(null);
+        return;
+      }
       const res = await gradesApi.getGradeGrid(moduleId, groupId);
       setStudents(res.data);
       setMeta(res.meta);

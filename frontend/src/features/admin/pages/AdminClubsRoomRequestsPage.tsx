@@ -20,8 +20,6 @@ export default function AdminClubsRoomRequestsPage() {
     try {
       setLoading(true)
       const res = await api.get('/room-bookings')
-      // For demo, assuming clubs are those where purpose contains 'club' or just showing all
-      // You can filter specifically if backend provides a flag
       setRequests(res.data.data || res.data)
     } catch (error) {
       toast.error('Erreur lors du chargement des demandes')

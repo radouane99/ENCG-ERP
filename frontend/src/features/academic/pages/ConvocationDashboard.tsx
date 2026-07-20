@@ -52,7 +52,7 @@ export default function ConvocationDashboard() {
           </div>
         </div>
         <div className="relative z-10 text-sm font-bold bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/20">
-          24/06/2026
+          {new Date().toLocaleDateString()}
         </div>
       </div>
 
@@ -99,28 +99,28 @@ export default function ConvocationDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#e91e63]/10 border border-[#e91e63]/20 text-[#e91e63] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">28</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الأساتذة' : 'Total Profs'}</div>
             </div>
             <Users className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">23</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
             </div>
             <FileText className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">0</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
             </div>
             <Send className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">5</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُؤكدة' : 'Confirmées'}</div>
             </div>
             <CheckCircle2 className="w-10 h-10 opacity-30" />
@@ -130,28 +130,28 @@ export default function ConvocationDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary)] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">750</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الطلاب' : 'Total Étudiants'}</div>
             </div>
             <GraduationCap className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">728</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
             </div>
             <FileText className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">21</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
             </div>
             <Send className="w-10 h-10 opacity-30" />
           </div>
           <div className="bg-[#8e24aa]/10 border border-[#8e24aa]/20 text-[#8e24aa] p-6 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">1</div>
+              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'تنزيلات' : 'Téléchargées'}</div>
             </div>
             <CheckCircle2 className="w-10 h-10 opacity-30" />
@@ -186,7 +186,7 @@ export default function ConvocationDashboard() {
               {isRtl ? 'إرسال بريد الطلاب' : 'Envoyer Emails Étudiants'}
             </Button>
             <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50" icon={<Printer size={16} />}>
-              {isRtl ? 'معاينة PDF' : 'Aperçu PDF (Demo)'}
+              {isRtl ? 'معاينة PDF' : 'Aperçu PDF'}
             </Button>
           </div>
         )}

@@ -22,8 +22,12 @@ export default function StudentConvocations() {
   const fetchConvocations = async () => {
     try {
       setIsLoading(true);
-      // Hardcode studentId 1 for demo purposes if user is not a student
-      const studentId = user?.id || 1;
+      if (!user?.id) {
+        console.error('Aucun utilisateur étudiant connecté — impossible de récupérer les convocations.');
+        setConvocations([]);
+        return;
+      }
+      const studentId = user.id;
       const res = await examsApi.getStudentConvocations(studentId);
       if (res.success) {
         setConvocations(res.data);
