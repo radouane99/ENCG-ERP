@@ -6,12 +6,18 @@ import { cn } from '@shared/lib/utils';
 import { useMutation } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 
+interface QCMQuestion {
+  q: string;
+  a: string[];
+  correct: number;
+}
+
 export default function ProfessorQCMGenerator() {
   const { t, i18n } = useTranslation(['professors', 'common']);
   const isRtl = i18n.language === 'ar';
   const [step, setStep] = useState<'upload' | 'generating' | 'review'>('upload');
   const [progress, setProgress] = useState(0);
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<QCMQuestion[]>([]);
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -25,7 +31,7 @@ export default function ProfessorQCMGenerator() {
     onSuccess: (data) => {
       if (data.questions) {
         // Transform backend response to match UI
-        const formatted = data.questions.map((q: any) => ({
+        const formatted: QCMQuestion[] = data.questions.map((q: any) => ({
           q: q.question,
           a: q.options,
           correct: q.options.indexOf(q.correct_answer)
@@ -142,7 +148,7 @@ export default function ProfessorQCMGenerator() {
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3 pl-12">
-                  {item.a.map((ans, aIdx) => (
+                  {item.a.map((ans: string, aIdx: number) => (
                     <div key={aIdx} className={cn(
                       "flex items-center gap-3 p-3 rounded-xl border text-sm transition-colors cursor-pointer",
                       aIdx === item.correct 
