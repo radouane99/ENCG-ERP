@@ -14,11 +14,11 @@
 <table class="info-table">
     <tr>
         <th>NOM COMPLET</th>
-        <td>Prof. Radouane el asri</td>
+        <td>{{ isset($professor) ? strtoupper(($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : 'Non spécifié' }}</td>
     </tr>
     <tr>
         <th>DÉPARTEMENT</th>
-        <td>Génie Informatique</td>
+        <td>{{ (isset($professor) && isset($professor->department)) ? $professor->department->name : 'Non spécifié' }}</td>
     </tr>
     <tr>
         <th>ÉTABLISSEMENT</th>
@@ -26,15 +26,15 @@
     </tr>
     <tr>
         <th>DESTINATION</th>
-        <td style="color: #0f2863;">Rabat</td>
+        <td style="color: #0f2863;">{{ $mission['destination'] ?? 'Non spécifiée' }}</td>
     </tr>
     <tr>
         <th>PÉRIODE DE MISSION</th>
-        <td>Du <strong>01/06/2026</strong> au <strong>06/06/2026</strong></td>
+        <td>Du <strong>{{ $mission['start_date'] ?? '--/--/----' }}</strong> au <strong>{{ $mission['end_date'] ?? '--/--/----' }}</strong></td>
     </tr>
     <tr>
         <th>OBJET / MOTIF</th>
-        <td>Participation évènement</td>
+        <td>{{ $mission['motif'] ?? 'Non spécifié' }}</td>
     </tr>
 </table>
 
@@ -45,7 +45,7 @@
 
 @section('signature_left')
     SIGNATURE DE L'INTÉRESSÉ(E)
-    <div class="signature-name">Prof. Radouane el asri</div>
+    <div class="signature-name">{{ isset($professor) ? strtoupper(($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : '' }}</div>
 @endsection
 
 @section('signature_right')

@@ -124,13 +124,19 @@ class DocumentRequestService
         ];
 
         if ($viewName === 'pdf.releve_notes') {
-            $data['avgGrade'] = 14.5;
-            $data['modules'] = [
-                ['code' => 'M101', 'name' => 'Management Général', 'score' => 15.5, 'is_validated' => true],
-                ['code' => 'M102', 'name' => 'Comptabilité Générale', 'score' => 13.0, 'is_validated' => true],
-                ['code' => 'M103', 'name' => 'Microéconomie', 'score' => 16.0, 'is_validated' => true],
-                ['code' => 'M104', 'name' => 'Statistiques', 'score' => 13.5, 'is_validated' => true],
-            ];
+            $grades = \App\Models\Grade::with('gradeComponent.module')->where('student_id', $student->id)->get();
+            $modules = $grades->map(function ($grade) {
+                return [
+                    'code' => $grade->gradeComponent->module->code ?? 'N/A',
+                    'name' => $grade->gradeComponent->module->name ?? 'Module Inconnu',
+                    'score' => $grade->value,
+                    'is_validated' => $grade->value >= 10,
+                ];
+            });
+            $avgGrade = $grades->count() > 0 ? $grades->avg('value') : 0;
+            
+            $data['avgGrade'] = $avgGrade;
+            $data['modules'] = $modules;
         }
 
         // Unique filename for storage

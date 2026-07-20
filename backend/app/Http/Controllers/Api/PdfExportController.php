@@ -48,10 +48,28 @@ class PdfExportController extends Controller
 
     public function studentConvocationPdf($convocationId)
     {
-        $pdf = $this->getPdfInstance('pdf.generic_report', [
-            'title' => 'Convocation d\'Examen',
-            'description' => 'Ceci est votre convocation officielle pour l\'examen. Veuillez vous munir de votre carte d\'étudiant.',
-            'ref' => 'CONV-' . date('Y') . '-' . str_pad($convocationId, 6, '0', STR_PAD_LEFT)
+        $convocation = \App\Models\Convocation::with(['student.user', 'exam.module', 'room', 'exam.session'])->findOrFail($convocationId);
+        $student = $convocation->student;
+        
+        $exams = [];
+        if ($convocation->exam) {
+            $exams[] = [
+                'date' => $convocation->exam->exam_date ? $convocation->exam->exam_date->format('d/m/Y') : 'N/A',
+                'time' => $convocation->exam->start_time . ' - ' . $convocation->exam->end_time,
+                'module' => $convocation->exam->module->name ?? 'Module N/A',
+                'room' => $convocation->room->name ?? 'Salle N/A',
+                'seat' => $convocation->seat_number ?? 'N/A'
+            ];
+        }
+
+        $pdf = $this->getPdfInstance('pdf.convocation', [
+            'person_name' => $student->user->last_name . ' ' . $student->user->first_name,
+            'person_role' => 'Étudiant',
+            'person_id' => $student->user->cin ?? 'N/A',
+            'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
+            'session_type' => $convocation->exam->session->type ?? 'ORDINAIRE',
+            'session_name' => $convocation->exam->session->name ?? 'Session Principale',
+            'exams' => $exams
         ]);
         return $pdf->download("convocation_etudiant_{$convocationId}.pdf");
     }
@@ -64,7 +82,14 @@ class PdfExportController extends Controller
 
     public function pvExamen($examId)
     {
-        $pdf = $this->getPdfInstance('pdf.pv_examen', ['exam_id' => $examId]);
+        $exam = \App\Models\Exam::with('module')->findOrFail($examId);
+        $seatings = \App\Models\ExamSeating::with('student.user')->where('exam_id', $examId)->get();
+        
+        $pdf = $this->getPdfInstance('pdf.pv_examen', [
+            'exam_id' => $examId,
+            'exam' => $exam,
+            'seatings' => $seatings
+        ]);
         return $pdf->download("pv_examen_{$examId}.pdf");
     }
 
@@ -105,7 +130,17 @@ class PdfExportController extends Controller
 
     public function previewOrdreMission()
     {
-        $pdf = $this->getPdfInstance('pdf.ordre_mission');
+        $professor = \App\Models\Professor::with(['user', 'department'])->first();
+        $mission = [
+            'destination' => 'Rabat, Maroc',
+            'start_date' => date('d/m/Y', strtotime('+2 days')),
+            'end_date' => date('d/m/Y', strtotime('+5 days')),
+            'motif' => 'Participation à une conférence académique'
+        ];
+        $pdf = $this->getPdfInstance('pdf.ordre_mission', [
+            'professor' => $professor,
+            'mission' => $mission
+        ]);
         return $pdf->stream("ordre_mission.pdf");
     }
 
