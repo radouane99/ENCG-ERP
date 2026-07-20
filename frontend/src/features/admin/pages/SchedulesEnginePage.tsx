@@ -77,11 +77,16 @@ export default function SchedulesEnginePage() {
         semester_number: parseInt(selectedSemester) || 5
       })
 
+      if (res.data.success === false) {
+        toast.error(res.data.message || 'Erreur lors de la génération de la simulation IA')
+        return
+      }
+
       setAiSimulation(res.data)
-      toast.success('Simulation d\'emploi du temps optimisée par IA générée avec succès !')
-    } catch (error) {
+      toast.success(res.data.message || 'Simulation d\'emploi du temps optimisée par IA générée avec succès !')
+    } catch (error: any) {
       console.error('AI Timetable generation error:', error)
-      toast.error('Erreur lors de la génération de la simulation IA')
+      toast.error(error.response?.data?.message || 'Erreur lors de la génération de la simulation IA')
     } finally {
       setAiLoading(false)
     }
