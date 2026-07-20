@@ -35,19 +35,23 @@ class DocumentRequestController extends Controller
         }
 
         $all = $query->latest()->get()->map(function ($dr) {
+            $typeSlug = strtolower(str_replace(' ', '_', $dr->template?->name ?? 'attestation_scolarite'));
+            $userId = $dr->user_id;
+
+            $previewUrl = url("/api/documents/download/{$typeSlug}/{$userId}");
+
             return [
                 'id'               => $dr->id,
                 'reference_number' => $dr->reference_number,
-                'type'             => $dr->template?->name ?? 'Document',
+                'type'             => $dr->template?->name ?? 'Attestation de Scolarité',
                 'status'           => $dr->status ?? 'pending',
                 'rejection_reason' => $dr->rejection_reason,
                 'created_at'       => $dr->created_at?->diffForHumans(),
                 'person'           => $dr->user?->name,
                 'role'             => $dr->user?->roles->first()?->name ?? 'UTILISATEUR',
-                'motif'            => $dr->additional_data['motif'] ?? 'Aucun motif fourni',
-                'preview_url'      => $dr->template?->preview_route
-                    ? '/api' . $dr->template->preview_route
-                    : null,
+                'motif'            => $dr->additional_data['motif'] ?? 'Demande Guichet Numérique',
+                'preview_url'      => $previewUrl,
+                'url'              => $previewUrl,
             ];
         });
 
