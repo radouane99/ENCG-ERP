@@ -147,10 +147,10 @@ class ScheduleService
                 // Group 1 Session
                 $mod1 = $modulesList[$modIndex % $totalModules];
                 $prof1 = $professors->isNotEmpty() ? $professors[$modIndex % count($professors)] : null;
-                $prof1Name = $prof1 ? (($prof1->user->first_name ?? $prof1->first_name) . ' ' . ($prof1->user->last_name ?? $prof1->last_name)) : 'Dr. BENADADA';
+                $prof1Name = $prof1 ? (($prof1->user?->first_name ?? $prof1->first_name ?? 'Prof') . ' ' . ($prof1->user?->last_name ?? $prof1->last_name ?? '')) : 'Dr. BENADADA';
 
                 $room1 = $rooms->isNotEmpty() ? $rooms[$slotIndex % count($rooms)] : null;
-                $room1Name = $room1->name ?? ($slotIndex % 2 === 0 ? 'Amphi Ibn Khaldoun (Cap. 150)' : 'Salle B12 (Cap. 45)');
+                $room1Name = $room1?->name ?? ($slotIndex % 2 === 0 ? 'Amphi Ibn Khaldoun (Cap. 150)' : 'Salle B12 (Cap. 45)');
 
                 $group1Schedule[] = [
                     'day' => $day,
@@ -168,7 +168,7 @@ class ScheduleService
                 $mod2Index = ($modIndex + 2) % $totalModules;
                 $mod2 = $modulesList[$mod2Index];
                 $prof2 = $professors->isNotEmpty() ? $professors[($modIndex + 1) % count($professors)] : null;
-                $prof2Name = $prof2 ? (($prof2->user->first_name ?? $prof2->first_name) . ' ' . ($prof2->user->last_name ?? $prof2->last_name)) : 'Dr. CHRAIBI';
+                $prof2Name = $prof2 ? (($prof2->user?->first_name ?? $prof2->first_name ?? 'Prof') . ' ' . ($prof2->user?->last_name ?? $prof2->last_name ?? '')) : 'Dr. CHRAIBI';
 
                 $room2Name = ($slotIndex % 2 === 0 ? 'Salle B05 (Cap. 45)' : 'Amphi A (Cap. 120)');
 
