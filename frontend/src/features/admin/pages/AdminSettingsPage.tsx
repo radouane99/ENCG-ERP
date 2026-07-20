@@ -1,11 +1,15 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Settings, Database, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
 
 export default function AdminSettingsPage() {
-  const [name, setName] = useState(() => localStorage.getItem('inst_name') || 'École Nationale de Commerce et de Gestion de Fès')
+  const { t, i18n } = useTranslation(['admin', 'common'])
+  const isRtl = i18n.language === 'ar'
+
+  const [name, setName] = useState(() => localStorage.getItem('inst_name') || (isRtl ? 'المدرسة الوطنية للتجارة والتسيير بفاس' : 'École Nationale de Commerce et de Gestion de Fès'))
   const [academicYear, setAcademicYear] = useState(() => localStorage.getItem('inst_year') || '2025-2026')
   const [email, setEmail] = useState(() => localStorage.getItem('inst_email') || 'contact@encg-fes.ma')
   const [phone, setPhone] = useState(() => localStorage.getItem('inst_phone') || '+212 5 35 64 49 20')

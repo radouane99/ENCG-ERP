@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Lock, Leaf, Flower2, RefreshCw, Loader2, Unlock, CheckCircle2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 
 export default function ExamLockingPage() {
+  const { t, i18n } = useTranslation(['exams', 'common'])
+  const isRtl = i18n.language === 'ar'
+
   const [currentPhase, setCurrentPhase] = useState('Verrouillé')
   const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Map, Cpu, Zap, Thermometer, Wifi, Users, AlertCircle, Video, Maximize } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -6,6 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 
 export default function AdminSmartCampus() {
+  const { t, i18n } = useTranslation(['admin', 'common']);
+  const isRtl = i18n.language === 'ar';
+
   const { data: campusData } = useQuery({
     queryKey: ['admin-smart-campus'],
     queryFn: () => api.get('/admin/smart-campus').then(res => res.data.data)

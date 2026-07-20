@@ -1,12 +1,16 @@
-﻿import React from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Link as LinkIcon, Award, FileText, CheckCircle2, Copy, Search, Key } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function AdminBlockchainDiplomas() {
+  const { t, i18n } = useTranslation(['admin', 'common']);
+  const isRtl = i18n.language === 'ar';
+
   const generatedDiplomas = [
-    { name: 'Othmane B.', degree: 'Master Management Financier', date: '25/06/2026', hash: '0x8f2a...4b9e', status: 'VERIFIED' },
-    { name: 'Aya R.', degree: 'Master Marketing Digital', date: '25/06/2026', hash: '0x3c1d...9a2f', status: 'VERIFIED' },
-    { name: 'Karim L.', degree: 'Licence en Gestion', date: '24/06/2026', hash: '0x7e5b...1d8c', status: 'VERIFIED' },
+    { name: isRtl ? 'عثمان ب.' : 'Othmane B.', degree: isRtl ? 'ماستر الإدارة المالية' : 'Master Management Financier', date: '25/06/2026', hash: '0x8f2a...4b9e', status: 'VERIFIED' },
+    { name: isRtl ? 'آية ر.' : 'Aya R.', degree: isRtl ? 'ماستر التسويق الرقمي' : 'Master Marketing Digital', date: '25/06/2026', hash: '0x3c1d...9a2f', status: 'VERIFIED' },
+    { name: isRtl ? 'كريم ل.' : 'Karim L.', degree: isRtl ? 'الإجازة في التسيير' : 'Licence en Gestion', date: '24/06/2026', hash: '0x7e5b...1d8c', status: 'VERIFIED' },
   ];
 
   return (

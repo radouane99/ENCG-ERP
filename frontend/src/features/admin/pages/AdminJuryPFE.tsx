@@ -1,12 +1,16 @@
-﻿import React from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { GraduationCap, CalendarDays, Users, CheckCircle2, Clock, MapPin, Search, Calendar, FileText } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function AdminJuryPFE() {
+  const { t, i18n } = useTranslation(['admin', 'common']);
+  const isRtl = i18n.language === 'ar';
+
   const soutenances = [
-    { student: 'Aya R.', topic: 'Stratégie Digitale dans le secteur bancaire', date: '28 Juin 2026', time: '09:00 - 10:30', room: 'Salle B12', president: 'Dr. El Fassi', encadrant: 'Dr. Benali', rapporteur: 'Dr. Tazi', status: 'SCHEDULED' },
-    { student: 'Othmane B.', topic: 'Optimisation de la Supply Chain via Blockchain', date: '28 Juin 2026', time: '11:00 - 12:30', room: 'Amphi Ibn Sina', president: 'Dr. Idrissi', encadrant: 'Dr. El Fassi', rapporteur: 'Dr. Mansour', status: 'SCHEDULED' },
-    { student: 'Karim L.', topic: 'Audit financier des PME', date: '29 Juin 2026', time: '14:00 - 15:30', room: 'Salle B10', president: 'Dr. Benali', encadrant: 'Dr. Tazi', rapporteur: 'Dr. Idrissi', status: 'CONFLICT' },
+    { student: isRtl ? 'آية ر.' : 'Aya R.', topic: isRtl ? 'الإستراتيجية الرقمية في القطاع البنكي' : 'Stratégie Digitale dans le secteur bancaire', date: '28 Juin 2026', time: '09:00 - 10:30', room: 'Salle B12', president: 'Dr. El Fassi', encadrant: 'Dr. Benali', rapporteur: 'Dr. Tazi', status: 'SCHEDULED' },
+    { student: isRtl ? 'عثمان ب.' : 'Othmane B.', topic: isRtl ? 'تحسين سلسلة التوريد عبر البلوكشين' : 'Optimisation de la Supply Chain via Blockchain', date: '28 Juin 2026', time: '11:00 - 12:30', room: 'Amphi Ibn Sina', president: 'Dr. Idrissi', encadrant: 'Dr. El Fassi', rapporteur: 'Dr. Mansour', status: 'SCHEDULED' },
+    { student: isRtl ? 'كريم ل.' : 'Karim L.', topic: isRtl ? 'التدقيق المالي للمقاولات الصغرى والمتوسطة' : 'Audit financier des PME', date: '29 Juin 2026', time: '14:00 - 15:30', room: 'Salle B10', president: 'Dr. Benali', encadrant: 'Dr. Tazi', rapporteur: 'Dr. Idrissi', status: 'CONFLICT' },
   ];
 
   return (

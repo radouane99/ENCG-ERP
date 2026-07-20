@@ -6,9 +6,13 @@ import { academicApi } from '@shared/api/academic'
 import EditStudentModal from '../components/EditStudentModal'
 import AddStudentModal from '../components/AddStudentModal'
 
+import { useTranslation } from 'react-i18next'
 import { Student } from '@/types/models'
 
 export default function AdminStudentsPage() {
+  const { t, i18n } = useTranslation(['students', 'common'])
+  const isRtl = i18n.language === 'ar'
+
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)

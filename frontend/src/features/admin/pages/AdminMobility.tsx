@@ -1,14 +1,18 @@
-﻿import React from 'react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PlaneTakeoff, Settings2, Users, Download, Medal, CheckCircle2, FileText, ChevronRight } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function AdminMobility() {
+  const { t, i18n } = useTranslation(['admin', 'common']);
+  const isRtl = i18n.language === 'ar';
+
   const ranking = [
-    { rank: 1, name: 'Aya R.', gpa: '16.42', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'KEDGE Business School', status: 'VALIDATED' },
-    { rank: 2, name: 'Othmane B.', gpa: '15.80', voeux: ['Université Laval', 'KEDGE Business School'], assigned: 'Université Laval', status: 'VALIDATED' },
-    { rank: 3, name: 'Sofia M.', gpa: '14.95', voeux: ['KEDGE Business School', 'Kyung Hee University'], assigned: 'Kyung Hee University', status: 'VALIDATED' },
-    { rank: 4, name: 'Karim L.', gpa: '14.10', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'NEOMA Business School', status: 'PENDING_VISA' },
-    { rank: 5, name: 'Youssef B.', gpa: '13.50', voeux: ['Université Laval', 'Kyung Hee University'], assigned: null, status: 'WAITLIST' },
+    { rank: 1, name: isRtl ? 'آية ر.' : 'Aya R.', gpa: '16.42', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'KEDGE Business School', status: 'VALIDATED' },
+    { rank: 2, name: isRtl ? 'عثمان ب.' : 'Othmane B.', gpa: '15.80', voeux: ['Université Laval', 'KEDGE Business School'], assigned: 'Université Laval', status: 'VALIDATED' },
+    { rank: 3, name: isRtl ? 'صوفيا م.' : 'Sofia M.', gpa: '14.95', voeux: ['KEDGE Business School', 'Kyung Hee University'], assigned: 'Kyung Hee University', status: 'VALIDATED' },
+    { rank: 4, name: isRtl ? 'كريم ل.' : 'Karim L.', gpa: '14.10', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'NEOMA Business School', status: 'PENDING_VISA' },
+    { rank: 5, name: isRtl ? 'يوسف ب.' : 'Youssef B.', gpa: '13.50', voeux: ['Université Laval', 'Kyung Hee University'], assigned: null, status: 'WAITLIST' },
   ];
 
   return (

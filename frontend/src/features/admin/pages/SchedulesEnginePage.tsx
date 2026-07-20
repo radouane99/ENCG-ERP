@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Search, CheckCircle2, Lock, ArrowLeftRight, Edit2, Trash2, Check, User, MapPin, Loader2, Calendar, X } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -6,6 +7,9 @@ import { toast } from 'sonner'
 import { Modal } from '@shared/components/ui/Modal'
 
 export default function SchedulesEnginePage() {
+  const { t, i18n } = useTranslation(['timetable', 'common'])
+  const isRtl = i18n.language === 'ar'
+
   const [isGenerated, setIsGenerated] = useState(false)
   const [loading, setLoading] = useState(false)
   

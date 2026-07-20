@@ -1,12 +1,16 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Landmark, TrendingUp, TrendingDown, DollarSign, Send, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function AdminFinanceDashboard() {
+  const { t, i18n } = useTranslation(['admin', 'common']);
+  const isRtl = i18n.language === 'ar';
+
   const payments = [
-    { name: 'Othmane B.', amount: '25,000 MAD', status: 'PAID', date: '12/06/2026', type: 'Frais de scolarité' },
-    { name: 'Aya R.', amount: '12,500 MAD', status: 'LATE', date: 'Retard: 15 jours', type: 'Frais de scolarité (S2)' },
-    { name: 'Club Marketing', amount: '5,000 MAD', status: 'PENDING', date: 'En attente validation', type: 'Budget Événement' },
+    { name: isRtl ? 'عثمان ب.' : 'Othmane B.', amount: '25,000 MAD', status: 'PAID', date: '12/06/2026', type: isRtl ? 'رسوم التسجيل' : 'Frais de scolarité' },
+    { name: isRtl ? 'آية ر.' : 'Aya R.', amount: '12,500 MAD', status: 'LATE', date: isRtl ? 'تأخير: 15 يوم' : 'Retard: 15 jours', type: isRtl ? 'رسوم التسجيل (S2)' : 'Frais de scolarité (S2)' },
+    { name: isRtl ? 'نادي التسويق' : 'Club Marketing', amount: '5,000 MAD', status: 'PENDING', date: isRtl ? 'في انتظار الموافقة' : 'En attente validation', type: isRtl ? 'ميزانية النشاط' : 'Budget Événement' },
   ];
 
   return (

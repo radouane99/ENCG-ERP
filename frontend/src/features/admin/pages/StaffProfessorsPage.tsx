@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, Plus, Eye, Edit, Trash2, Users2, Loader2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { Link } from 'react-router-dom'
@@ -6,6 +7,9 @@ import api from '@shared/lib/api'
 import { toast } from 'sonner'
 
 export default function StaffProfessorsPage() {
+  const { t, i18n } = useTranslation(['professors', 'common'])
+  const isRtl = i18n.language === 'ar'
+
   const [activeTab, setActiveTab] = useState('TOUS')
   const [professors, setProfessors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
