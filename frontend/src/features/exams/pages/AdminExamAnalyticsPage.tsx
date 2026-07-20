@@ -13,8 +13,8 @@ export default function AdminExamAnalyticsPage() {
     queryFn: () => api.get('/academic-years').then(res => res.data.data)
   })
 
-  const chartData = analyticsData?.chart || []
-  const stats = analyticsData?.stats || { success_rate: 0, attendance_rate: 0, overall_average: 0, scheduled_exams: 0 }
+  const chartData = analyticsData?.chart ?? []
+  const stats = analyticsData?.stats ?? null
   const criticalModules = analyticsData?.critical_modules || []
 
   return (
@@ -97,7 +97,7 @@ export default function AdminExamAnalyticsPage() {
 
       <div className="grid grid-cols-3 gap-6">
         
-        {/* Mock Chart Area */}
+        {/* Chart Area */}
         <div className="col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">

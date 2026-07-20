@@ -44,8 +44,7 @@
       "manual_success": "Examen créé manuellement avec succès.",
       "manual_error": "Erreur lors de la création de l'examen.",
       "mail_success": "Emails envoyés avec succès",
-      "notify_success": "Notification envoyée aux absents",
-      "demo_success": "Convocations générées pour l'examen {{id}} (Mode démo)."
+      "notify_success": "Notification envoyée aux absents"
     }
   },
   "convocations": {

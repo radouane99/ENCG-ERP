@@ -10,7 +10,6 @@ export default function QRScannerPage() {
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [message, setMessage] = useState('');
   
-  // For demonstration without an actual camera dependency
   const [manualToken, setManualToken] = useState('');
 
   const submitScan = async (token: string) => {
