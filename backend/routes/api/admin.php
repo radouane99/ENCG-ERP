@@ -199,6 +199,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
     Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
+    Route::get('mobility/ranking', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'calculateMeritRanking']);
 
     // HR & Personnel
     Route::prefix('hr')->group(function () {
