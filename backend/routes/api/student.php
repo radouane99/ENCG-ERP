@@ -38,6 +38,13 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     // Apogée Deliberation Engine - Transcript
     Route::get('/transcript', [DeliberationController::class, 'getStudentTranscript']);
 
+    // Student AI Suite
+    Route::prefix('ai')->group(function () {
+        Route::post('tutor', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'tutorQuery']);
+        Route::get('simulate-grade', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'simulateGrade']);
+        Route::get('career-recommendations', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'getCareerRecommendations']);
+    });
+
     // Digital Library
     Route::get('/library', [StudentPortalController::class, 'getLibraryMaterials']);
 

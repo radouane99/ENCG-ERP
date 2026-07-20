@@ -13,7 +13,12 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/prof
 
     // Apogée Deliberation Engine - Grade Entry
     Route::post('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
-    Route::get('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'getForAssessment']);
+    // Professor AI Suite
+    Route::prefix('ai')->group(function () {
+        Route::post('generate-exam', [\App\Http\Controllers\Api\ProfessorAiController::class, 'generateExam']);
+        Route::get('class-analytics/{moduleId}', [\App\Http\Controllers\Api\ProfessorAiController::class, 'getClassAnalytics']);
+        Route::post('copilot', [\App\Http\Controllers\Api\ProfessorAiController::class, 'copilotQuery']);
+    });
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function () {
