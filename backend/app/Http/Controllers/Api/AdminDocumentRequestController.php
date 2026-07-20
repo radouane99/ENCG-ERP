@@ -31,7 +31,10 @@ class AdminDocumentRequestController extends Controller
                 
                 $pdfUrl = null;
                 if ($media) {
-                    $pdfUrl = str_replace(config('app.url'), '', $media->getUrl());
+                    // IMPORTANT: Use the full absolute URL so the browser iframe can load
+                    // the PDF from the correct backend origin (e.g. http://localhost:8000/storage/...)
+                    // instead of a broken relative path served by the frontend dev server.
+                    $pdfUrl = $media->getUrl();
                 }
 
                 return [
