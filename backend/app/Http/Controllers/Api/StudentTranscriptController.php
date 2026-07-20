@@ -20,9 +20,12 @@ class StudentTranscriptController extends Controller
         $student = Student::with(['user', 'registrations.filiere', 'registrations.academicYear'])
             ->findOrFail($studentId);
 
-        $pdfContent = $this->buildPdf($student, $request->query('academic_year_id'));
+        $semester = $request->query('semester', 'all');
+        $academicYearId = $request->query('academic_year_id');
 
-        $filename = 'Releve_Notes_' . strtoupper($student->user->last_name ?? 'Etudiant') . '.pdf';
+        $pdfContent = $this->buildPdf($student, $academicYearId, $semester);
+
+        $filename = 'Releve_Notes_' . strtoupper($student->user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
         return $pdfContent->download($filename);
     }
 
@@ -36,16 +39,19 @@ class StudentTranscriptController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $pdfContent = $this->buildPdf($student, $request->query('academic_year_id'));
+        $semester = $request->query('semester', 'all');
+        $academicYearId = $request->query('academic_year_id');
 
-        $filename = 'Releve_Notes_' . strtoupper($user->last_name ?? 'Etudiant') . '.pdf';
+        $pdfContent = $this->buildPdf($student, $academicYearId, $semester);
+
+        $filename = 'Releve_Notes_' . strtoupper($user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
         return $pdfContent->download($filename);
     }
 
     /**
      * Build the PDF using dompdf.
      */
-    private function buildPdf(Student $student, ?string $academicYearId = null)
+    private function buildPdf(Student $student, ?string $academicYearId = null, string $semester = 'all')
     {
         // Find the relevant registration (latest or by academic year)
         $registration = $academicYearId
@@ -56,11 +62,18 @@ class StudentTranscriptController extends Controller
         $academicYear = $registration?->academicYear;
 
         // Load all modules from this filiere
-        $modules = $filiere
-            ? \App\Models\Module::where('filiere_id', $filiere->id)
-                ->with(['assessments'])
-                ->get()
+        $modulesQuery = $filiere
+            ? \App\Models\Module::where('filiere_id', $filiere->id)->with(['assessments'])
             : collect();
+
+        if ($filiere && $semester !== 'all') {
+            $modulesQuery->where(function($q) use ($semester) {
+                $q->where('code', 'LIKE', "%{$semester}%")
+                  ->orWhere('name', 'LIKE', "%{$semester}%");
+            });
+        }
+
+        $modules = $filiere ? $modulesQuery->get() : collect();
 
         // Build module-level transcript data
         $transcriptRows = $modules->map(function ($module) use ($student) {
@@ -138,17 +151,25 @@ class StudentTranscriptController extends Controller
         $moyennesFinales = $transcriptRows->pluck('moyenne_finale')->filter();
         $gpa = $moyennesFinales->isNotEmpty() ? round($moyennesFinales->avg(), 2) : null;
 
-        // Generate verification token (simple hash for QR Code)
-        $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y'));
+        // Generate verification token & QR Code URL
+        $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y-m-d'));
+        $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/transcript/{$verifyToken}";
+        $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
         $data = [
             'student'      => $student,
             'filiere'      => $filiere,
             'academic_year' => $academicYear,
+            'semester'     => strtoupper($semester),
             'rows'         => $transcriptRows->values(),
             'gpa'          => $gpa,
-            'logoPath'     => public_path('logo-encg.png'),
-            'verify_url'   => config('app.url') . "/verify/transcript/{$verifyToken}",
+            'logoPath'     => $logoPath,
+            'logoBase64'   => $logoBase64,
+            'qrBase64'     => $qrBase64,
+            'verify_url'   => $verifyUrl,
             'generated_at' => now()->format('d/m/Y à H:i'),
         ];
 
@@ -158,7 +179,7 @@ class StudentTranscriptController extends Controller
                 'dpi'                  => 150,
                 'defaultFont'          => 'DejaVu Sans',
                 'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled'      => false,
+                'isRemoteEnabled'      => true,
             ]);
     }
 }
