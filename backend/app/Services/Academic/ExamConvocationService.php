@@ -18,13 +18,24 @@ class ExamConvocationService
      */
     public function generateSessionConvocations(int $sessionId): array
     {
-        $session = ExamSession::with('exams.group.students')->findOrFail($sessionId);
+        $session = ExamSession::with(['exams.group.students', 'exams.module'])->findOrFail($sessionId);
         
         $totalGenerated = 0;
         
         foreach ($session->exams as $exam) {
             $generatedCount = 0;
-            foreach ($exam->group->students as $student) {
+            
+            $students = collect();
+            if ($exam->group_id && $exam->group) {
+                $students = $exam->group->students;
+            } elseif ($exam->module && $exam->module->filiere_id) {
+                $students = \App\Models\Student::whereHas('pathways', function ($q) use ($exam) {
+                    $q->where('filiere_id', $exam->module->filiere_id)
+                      ->where('is_current', true);
+                })->get();
+            }
+
+            foreach ($students as $student) {
                 $seating = DB::table('exam_seatings')
                     ->where('exam_id', $exam->id)
                     ->where('student_id', $student->id)
@@ -179,10 +190,20 @@ class ExamConvocationService
      */
     public function generateConvocations(int $examId): array
     {
-        $exam = Exam::with(['group.students', 'room'])->findOrFail($examId);
+        $exam = Exam::with(['group.students', 'module', 'room'])->findOrFail($examId);
         
+        $students = collect();
+        if ($exam->group_id && $exam->group) {
+            $students = $exam->group->students;
+        } elseif ($exam->module && $exam->module->filiere_id) {
+            $students = \App\Models\Student::whereHas('pathways', function ($q) use ($exam) {
+                $q->where('filiere_id', $exam->module->filiere_id)
+                  ->where('is_current', true);
+            })->get();
+        }
+
         $generatedCount = 0;
-        foreach ($exam->group->students as $student) {
+        foreach ($students as $student) {
             $seating = DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
                 ->where('student_id', $student->id)
@@ -221,8 +242,18 @@ class ExamConvocationService
         $exam = Exam::with(['group.students.user', 'module', 'room'])->findOrFail($examId);
         $seatings = DB::table('exam_seatings')->where('exam_id', $examId)->get()->keyBy('student_id');
 
+        $students = collect();
+        if ($exam->group_id && $exam->group) {
+            $students = $exam->group->students;
+        } elseif ($exam->module && $exam->module->filiere_id) {
+            $students = \App\Models\Student::with('user')->whereHas('pathways', function ($q) use ($exam) {
+                $q->where('filiere_id', $exam->module->filiere_id)
+                  ->where('is_current', true);
+            })->get();
+        }
+
         $sentCount = 0;
-        foreach ($exam->group->students as $student) {
+        foreach ($students as $student) {
             if (!$student->user || !$student->user->email) continue;
 
             $seating = $seatings->get($student->id);

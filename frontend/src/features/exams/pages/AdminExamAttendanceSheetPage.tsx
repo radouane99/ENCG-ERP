@@ -41,8 +41,8 @@ export default function AdminExamAttendanceSheetPage() {
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-[#0f2863] pb-6 mb-8">
           <div>
-            <h1 className="text-lg font-black text-[#0f2863] uppercase tracking-wider">UNIVERSITÉ PRIVÉE DE FÈS</h1>
-            <p className="text-[10px] text-slate-500">Direction des Affaires Académiques</p>
+            <h1 className="text-lg font-black text-[#0f2863] uppercase tracking-wider">ECOLE NATIONALE DE COMMERCE ET DE GESTION</h1>
+            <p className="text-[10px] text-slate-500">Direction des Affaires Académiques - ENCG Fès</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] text-slate-500 mb-1">
@@ -64,7 +64,9 @@ export default function AdminExamAttendanceSheetPage() {
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Filière & Groupe:</span>
-            <span className="text-slate-700">{exam?.group?.name}</span>
+            <span className="text-slate-700">
+              {exam?.module?.filiere?.name || 'N/A'} {exam?.group ? ` - ${exam.group.name}` : ''}
+            </span>
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Salle:</span>
