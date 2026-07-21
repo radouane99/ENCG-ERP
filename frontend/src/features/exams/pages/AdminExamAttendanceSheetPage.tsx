@@ -40,15 +40,18 @@ export default function AdminExamAttendanceSheetPage() {
         
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-[#0f2863] pb-6 mb-8">
-          <div>
-            <h1 className="text-lg font-black text-[#0f2863] uppercase tracking-wider">ECOLE NATIONALE DE COMMERCE ET DE GESTION</h1>
-            <p className="text-[10px] text-slate-500">Direction des Affaires Académiques - ENCG Fès</p>
+          <div className="flex items-center gap-6">
+            <img src="/logo-encg.png" alt="Logo ENCG" className="h-16 object-contain" />
+            <div>
+              <h1 className="text-lg font-black text-[#0f2863] uppercase tracking-wider">ECOLE NATIONALE DE COMMERCE ET DE GESTION</h1>
+              <p className="text-[10px] text-slate-500">Direction des Affaires Académiques - ENCG Fès</p>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-[10px] text-slate-500 mb-1">
               Fiche d'émargement - {exam?.module?.name || 'N/A'} - {exam?.module?.filiere?.name || 'N/A'}
             </p>
-            <h2 className="text-xl font-bold text-[#0f2863] uppercase tracking-widest">FICHE D'ÉMARGEMENT DES EXAMENS</h2>
+            <h2 className="text-xl font-bold text-[#0f2863] uppercase tracking-widest">FICHE D'ÉMARGEMENT</h2>
           </div>
         </div>
 
@@ -60,7 +63,7 @@ export default function AdminExamAttendanceSheetPage() {
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Heure:</span>
-            <span className="text-slate-700">{exam?.start_time} ({exam?.duration_minutes} min)</span>
+            <span className="text-slate-700">{exam?.start_time?.substring(0,5)} ({exam?.duration_minutes} min)</span>
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Filière & Groupe:</span>
@@ -74,7 +77,7 @@ export default function AdminExamAttendanceSheetPage() {
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Date:</span>
-            <span className="text-slate-700">{new Date(exam?.exam_date).toLocaleDateString('fr-FR')}</span>
+            <span className="text-slate-700">{exam?.exam_date ? new Date(exam.exam_date).toLocaleDateString('fr-FR') : 'N/A'}</span>
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Effectif Attendu:</span>
@@ -97,10 +100,10 @@ export default function AdminExamAttendanceSheetPage() {
             <tbody>
               {students.map((student: any, idx: number) => (
                 <tr key={idx}>
-                  <td className="py-2 px-3 border border-slate-300 font-bold text-center">{student.seat_number}</td>
+                  <td className="py-2 px-3 border border-slate-300 font-bold text-center">{idx + 1}</td>
                   <td className="py-2 px-3 border border-slate-300 font-medium text-slate-700">{student.cne}</td>
                   <td className="py-2 px-3 border border-slate-300 font-bold text-slate-800 uppercase">{student.student_name}</td>
-                  <td className="py-2 px-3 border border-slate-300 text-center text-slate-400">—</td>
+                  <td className="py-2 px-3 border border-slate-300 font-bold text-center text-slate-800">{student.seat_number}</td>
                   <td className="py-2 px-3 border border-slate-300"></td>
                 </tr>
               ))}
