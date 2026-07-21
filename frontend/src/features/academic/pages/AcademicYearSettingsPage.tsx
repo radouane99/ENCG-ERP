@@ -145,6 +145,32 @@ export default function AcademicYearSettingsPage() {
     onError: () => toast.error('Erreur lors de la suppression')
   })
 
+  const handleDeleteSession = (id: number) => {
+    if (confirm('Voulez-vous vraiment supprimer cette session ?')) {
+      deleteSessionMutation.mutate(id)
+    }
+  }
+
+  const handleCreateSession = () => {
+    if (!newSessionForm.name || !newSessionForm.type || !newSessionForm.academic_year_id || !newSessionForm.semester_id) {
+      toast.error('Veuillez remplir les champs obligatoires (Nom, Type, Année, Semestre)')
+      return
+    }
+    createSessionMutation.mutate(newSessionForm, {
+      onSuccess: () => {
+        setShowNewSessionForm(false)
+        setNewSessionForm({
+          name: '',
+          type: '',
+          start_date: '',
+          end_date: '',
+          academic_year_id: '',
+          semester_id: ''
+        })
+      }
+    })
+  }
+
   const handleSaveSessions = async () => {
     try {
       const promises = Object.entries(sessionDates).map(([id, dates]) => 
@@ -208,7 +234,13 @@ export default function AcademicYearSettingsPage() {
     queryFn: () => api.get('/academic-years').then(r => r.data)
   });
 
+  const { data: semestersData } = useQuery({
+    queryKey: ['semesters'],
+    queryFn: () => api.get('/semesters').then(r => r.data)
+  });
+
   const years = yearsData?.data || [];
+  const semesters = semestersData?.data || [];
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">
