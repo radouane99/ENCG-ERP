@@ -21,13 +21,23 @@ export default function AdminExamAttendanceSheetPage() {
   const surveillants = detailsData?.surveillances || []
   // The previous students mock array is removed
 
+  const formatTimeRange = (startTimeStr: string, durationMinutes: number) => {
+    if (!startTimeStr) return 'N/A'
+    const [hours, minutes] = startTimeStr.split(':').map(Number)
+    const start = new Date()
+    start.setHours(hours, minutes, 0, 0)
+    const end = new Date(start.getTime() + (durationMinutes || 120) * 60000)
+    const formatTime = (d: Date) => d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0')
+    return `${formatTime(start)} - ${formatTime(end)}`
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 p-8 pb-20 flex flex-col items-center font-sans">
       <div className="w-full max-w-[210mm] mb-6 flex justify-between items-center print:hidden">
         <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm">
           <ArrowLeft className="w-4 h-4" /> Retour
         </Link>
-        <button 
+        <button
           onClick={() => window.print()}
           className="h-10 px-6 rounded-xl bg-[#0f2863] hover:bg-[#1a387e] text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
@@ -37,7 +47,7 @@ export default function AdminExamAttendanceSheetPage() {
 
       {/* A4 Paper Container */}
       <div className="bg-white w-[210mm] min-h-[297mm] shadow-lg p-12 print:shadow-none print:w-auto print:h-auto print:p-0 flex flex-col relative">
-        
+
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-[#0f2863] pb-6 mb-8">
           <div className="flex items-center gap-6">
@@ -63,7 +73,7 @@ export default function AdminExamAttendanceSheetPage() {
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Heure:</span>
-            <span className="text-slate-700">{exam?.start_time?.substring(0,5)} ({exam?.duration_minutes} min)</span>
+            <span className="text-slate-700">{formatTimeRange(exam?.start_time, exam?.duration_minutes)}</span>
           </div>
           <div className="flex items-center">
             <span className="font-bold text-[#0f2863] w-28">Filière & Groupe:</span>
@@ -84,7 +94,6 @@ export default function AdminExamAttendanceSheetPage() {
             <span className="text-slate-700">{students.length} étudiants</span>
           </div>
         </div>
-
         {/* Table */}
         <div className="flex-1">
           <table className="w-full text-[10px] border-collapse border border-slate-300">
@@ -128,7 +137,7 @@ export default function AdminExamAttendanceSheetPage() {
               <span className="text-slate-400">Signatures :</span>
             </div>
           </div>
-          
+
           <div className="border border-[#0f2863]/20 rounded-xl p-4 text-[10px]">
             <p className="font-bold text-[#0f2863] mb-1">Observation du déroulement :</p>
             <p className="text-slate-400 mb-8 italic">(Absences massives, incidents, retards, etc.)</p>
