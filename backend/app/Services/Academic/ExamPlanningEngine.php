@@ -213,12 +213,13 @@ class ExamPlanningEngine
                     // Création de l'examen
                     $exam = Exam::create([
                         'module_id' => $module->id,
+                        'group_id' => $group->id,
                         'exam_session_id' => $sessionId,
                         'room_id' => $assignedRoom->id,
-                        'date' => $dateStr,
+                        'exam_date' => $dateStr,
                         'start_time' => $startTime,
                         'duration_minutes' => 120, // 2 heures par défaut
-                        'status' => 'scheduled'
+                        'type' => 'final'
                     ]);
                     $examsCreated++;
 
