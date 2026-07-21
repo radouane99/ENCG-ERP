@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('room_id')->constrained('rooms');
             $table->integer('seat_number')->nullable();
             $table->string('reference')->unique(); // UUID or unique code
-            $table->enum('status', ['draft', 'sent', 'viewed', 'printed'])->default('draft');
+            $table->string('status')->default('draft'); // draft, sent, viewed, printed
             $table->timestamps();
 
             // Prevent a student from having multiple convocations for the same exam

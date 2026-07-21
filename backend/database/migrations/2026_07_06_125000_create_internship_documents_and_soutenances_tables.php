@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('internship_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('internship_id')->constrained('internships')->cascadeOnDelete();
-            $table->enum('document_type', ['convention', 'rapport_etape', 'rapport_final', 'attestation', 'fiche_evaluation']);
+            $table->string('document_type'); // convention, rapport_etape, rapport_final, attestation, fiche_evaluation
             $table->string('file_path');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->string('status')->default('pending'); // pending, approved, rejected
             $table->text('feedback')->nullable();
             $table->timestamps();
         });
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->foreignId('president_id')->constrained('professors');
             $table->foreignId('examiner_id')->constrained('professors');
             $table->decimal('grade', 5, 2)->nullable();
-            $table->enum('status', ['scheduled', 'completed', 'cancelled'])->default('scheduled');
+            $table->string('status')->default('scheduled'); // scheduled, completed, cancelled
             $table->text('remarks')->nullable();
             $table->timestamps();
         });

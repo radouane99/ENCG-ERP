@@ -32,7 +32,7 @@ return new class extends Migration
             $table->string('purpose');
             $table->timestamp('start_time')->useCurrent();
             $table->timestamp('end_time')->useCurrent();
-            $table->enum('status', ['pending', 'approved', 'rejected', 'cancelled'])->default('pending');
+            $table->string('status')->default('pending'); // pending, approved, rejected, cancelled
             $table->timestamps();
         });
 
@@ -43,7 +43,7 @@ return new class extends Migration
             $table->foreignId('exam_id')->nullable()->constrained('exams')->nullOnDelete();
             $table->foreignId('grade_id')->nullable()->constrained('grades')->nullOnDelete();
             $table->text('reason');
-            $table->enum('status', ['submitted', 'under_review', 'accepted', 'rejected'])->default('submitted');
+            $table->string('status')->default('submitted'); // submitted, under_review, accepted, rejected
             $table->text('professor_comment')->nullable();
             $table->text('jury_decision')->nullable();
             $table->foreignId('resolved_by')->nullable()->constrained('users');

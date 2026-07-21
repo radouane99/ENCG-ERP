@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('card_number')->unique();
             $table->string('qr_token')->unique();
             $table->string('academic_year'); // e.g. "2024-2025"
-            $table->enum('status', ['active', 'revoked', 'expired'])->default('active');
+            $table->string('status')->default('active'); // active, revoked, expired, suspended, lost, stolen
             $table->timestamp('expires_at');
             $table->timestamps();
         });

@@ -15,7 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // PostgreSQL compatible: use session_replication_role instead of MySQL's FOREIGN_KEY_CHECKS
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = replica;');
+        }
 
         DB::transaction(function () {
             $this->call([
@@ -28,6 +35,10 @@ class DatabaseSeeder extends Seeder
             $rbacSeeder->run();
         });
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = DEFAULT;');
+        }
     }
 }

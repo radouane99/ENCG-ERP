@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('attendance_records', function (Blueprint $table) {
             if (!Schema::hasColumn('attendance_records', 'status')) {
-                $table->enum('status', ['present', 'absent', 'late', 'excused'])->default('present')->after('scanned_at');
+                $table->string('status')->default('present')->after('scanned_at'); // present, absent, late, excused
             }
             if (!Schema::hasColumn('attendance_records', 'is_justified')) {
                 $table->boolean('is_justified')->default(false)->after('status');

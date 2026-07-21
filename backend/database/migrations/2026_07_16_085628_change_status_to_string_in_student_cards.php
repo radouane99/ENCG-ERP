@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('student_cards', function (Blueprint $table) {
-            $table->enum('status', ['active', 'revoked', 'expired'])->default('active')->change();
+            $table->string('status')->default('active')->change();
         });
     }
 };
