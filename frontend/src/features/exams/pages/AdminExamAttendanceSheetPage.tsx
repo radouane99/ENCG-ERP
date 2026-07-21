@@ -50,7 +50,7 @@ export default function AdminExamAttendanceSheetPage() {
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
       script.onload = () => {
         (window as any).html2pdf().set(opt).from(element).save().then(() => {
-            toast.success("PDF téléchargé avec succès !", { id: toastId });
+          toast.success("PDF téléchargé avec succès !", { id: toastId });
         });
       };
       script.onerror = () => {
@@ -60,7 +60,7 @@ export default function AdminExamAttendanceSheetPage() {
       document.body.appendChild(script);
     } else {
       (window as any).html2pdf().set(opt).from(element).save().then(() => {
-          toast.success("PDF téléchargé avec succès !", { id: toastId });
+        toast.success("PDF téléchargé avec succès !", { id: toastId });
       });
     }
   }
@@ -176,11 +176,6 @@ export default function AdminExamAttendanceSheetPage() {
             <p className="font-bold text-[#0f2863] mb-1">Observation du déroulement :</p>
             <p className="text-slate-400 mb-8 italic">(Absences massives, incidents, retards, etc.)</p>
           </div>
-        </div>
-
-        <div className="mt-8 text-center text-[8px] text-slate-400 flex justify-between items-center">
-          <span>https://plateforme-encg.com/admin/exams/{id}/attendance-sheet</span>
-          <span>1/1</span>
         </div>
       </div>
     </div>
