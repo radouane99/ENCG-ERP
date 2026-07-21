@@ -163,8 +163,13 @@ class ExamPlanningEngine
             Exam::whereIn('id', $existingExamIds)->delete();
 
             // Fetch available personnel
-            $professors = \App\Models\User::role(['professor', 'department-head'])->get();
-            $vacataires = \App\Models\User::role(['vacataire', 'doctorant'])->get();
+            $professors = \App\Models\User::whereHas('roles', function($q) {
+                $q->whereIn('name', ['professor', 'department-head']);
+            })->get();
+            
+            $vacataires = \App\Models\User::whereHas('roles', function($q) {
+                $q->whereIn('name', ['vacataire', 'doctorant']);
+            })->get();
             
             // Fallback if no specific roles
             if ($professors->isEmpty()) $professors = \App\Models\User::limit(5)->get();
