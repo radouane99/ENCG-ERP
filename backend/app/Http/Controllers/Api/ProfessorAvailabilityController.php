@@ -12,9 +12,9 @@ class ProfessorAvailabilityController extends Controller
 {
     public function index(): JsonResponse
     {
-        // Get all professors
+        // Get all teaching staff
         $professors = User::whereHas('roles', function($q) {
-            $q->where('name', 'professor');
+            $q->whereIn('name', ['professor', 'department-head', 'vacataire', 'doctorant']);
         })->get();
 
         $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
@@ -40,12 +40,19 @@ class ProfessorAvailabilityController extends Controller
                 $creneauxText = implode(', ', $days) . ' (' . $creneauxText . ')';
             }
 
+            $roleName = $prof->roles->first()->name ?? 'professor';
+            $contrat = match($roleName) {
+                'vacataire' => 'Vacataire',
+                'doctorant' => 'Doctorant',
+                default => 'Permanent'
+            };
+
             return [
                 'id' => $prof->id,
                 'nom' => $prof->name,
                 'email' => $prof->email,
                 'dept' => $departmentName,
-                'contrat' => 'Permanent',
+                'contrat' => $contrat,
                 'statut' => $avail ? $avail->status : 'Non envoyé',
                 'creneaux' => $creneauxText,
                 'date' => $avail ? $avail->updated_at->format('d/m/Y H:i') : '-',
