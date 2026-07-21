@@ -40,7 +40,7 @@ export default function AdminConvocationsPage() {
   // Fetch exams for selected session
   const { data: exams, isLoading: isLoadingExams } = useQuery({
     queryKey: ['session-exams', selectedSessionId],
-    queryFn: () => api.get('/exams').then(r => (r.data.data || []).filter((e: any) => e.session_id === selectedSessionId)),
+    queryFn: () => api.get('/exams').then(r => (r.data.data || []).filter((e: any) => e.exam_session_id === selectedSessionId)),
     enabled: !!selectedSessionId
   })
 
