@@ -174,8 +174,8 @@ class ExamPlanningEngine
             // Fallback if no specific roles
             if ($professors->isEmpty()) $professors = \App\Models\User::limit(5)->get();
             if ($vacataires->isEmpty()) $vacataires = \App\Models\User::limit(5)->get();
-            
-            $examsCreated = 0;
+             $examsCreated = 0;
+            $busyProfessors = []; // Track busy professors by date and slot: 'YYYY-MM-DD_matin' => [id1, id2]
 
             foreach ($modules as $module) {
                 // Règle 1: Semestres impairs le matin, pairs l'après-midi
@@ -184,6 +184,14 @@ class ExamPlanningEngine
                 $startTime = $isOddSemester ? '09:00:00' : '14:00:00';
                 
                 foreach ($groups as $group) {
+                    $dateStr = $currentDate->format('Y-m-d');
+                    $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';
+                    $slotKey = $dateStr . '_' . $timeSlot;
+
+                    if (!isset($busyProfessors[$slotKey])) {
+                        $busyProfessors[$slotKey] = [];
+                    }
+
                     // Règle 2: Capacité de la salle basée sur le nombre exact d'étudiants
                     $studentCount = DB::table('student_registrations')
                         ->where('group_id', $group->id)
@@ -204,18 +212,17 @@ class ExamPlanningEngine
 
                     // Création de l'examen
                     $exam = Exam::create([
-                        'exam_session_id' => $session->id,
                         'module_id' => $module->id,
-                        'group_id' => $group->id,
+                        'exam_session_id' => $sessionId,
                         'room_id' => $assignedRoom->id,
-                        'exam_date' => $currentDate->format('Y-m-d'),
+                        'date' => $dateStr,
                         'start_time' => $startTime,
-                        'duration_minutes' => 120,
-                        'type' => 'final',
+                        'duration_minutes' => 120, // 2 heures par défaut
+                        'status' => 'scheduled'
                     ]);
                     $examsCreated++;
 
-                    // Génération des Convocations Réelles (Seatings)
+                    // Affectation des étudiants de ce groupe à cette salle
                     $students = DB::table('student_registrations')
                         ->join('students', 'student_registrations.student_id', '=', 'students.id')
                         ->where('student_registrations.group_id', $group->id)
@@ -239,12 +246,17 @@ class ExamPlanningEngine
                         DB::table('exam_seatings')->insert($seatings);
                     }
 
-                    // Règle 3 & 4: Affectation intelligente de la surveillance
-                    $dateStr = $currentDate->format('Y-m-d');
-                    $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';
-
+                    // Règle 3 & 4: Affectation intelligente de la surveillance (Disponibilité)
                     // 1 Professeur responsable (Président)
-                    $president = $professors->random();
+                    $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
+                    if ($availablePresidents->isEmpty()) {
+                        // Si tous sont occupés, on fait un fallback sur la liste complète (cas de manque d'effectif)
+                        $availablePresidents = $professors;
+                    }
+                    
+                    $president = $availablePresidents->random();
+                    $busyProfessors[$slotKey][] = $president->id; // Mark as busy
+
                     DB::table('exam_surveillances')->insert([
                         'exam_id' => $exam->id,
                         'room_id' => $assignedRoom->id,
@@ -258,16 +270,24 @@ class ExamPlanningEngine
                     $examCapacity = floor($assignedRoom->capacity / 2);
                     $numVacataires = $examCapacity >= 40 ? 2 : 1; 
 
-                    for ($i = 0; $i < $numVacataires; $i++) {
-                        if ($vacataires->isNotEmpty()) {
-                            DB::table('exam_surveillances')->insert([
-                                'exam_id' => $exam->id,
-                                'room_id' => $assignedRoom->id,
-                                'professor_id' => $vacataires->random()->id,
-                                'role' => 'surveillant',
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
+                    if ($vacataires->isNotEmpty()) {
+                        $availableVacataires = $vacataires->whereNotIn('id', $busyProfessors[$slotKey]);
+                        $actualNumToAssign = min($numVacataires, $availableVacataires->count());
+
+                        if ($actualNumToAssign > 0) {
+                            $selectedVacataires = $availableVacataires->shuffle()->take($actualNumToAssign);
+
+                            foreach ($selectedVacataires as $vacataire) {
+                                DB::table('exam_surveillances')->insert([
+                                    'exam_id' => $exam->id,
+                                    'room_id' => $assignedRoom->id,
+                                    'professor_id' => $vacataire->id,
+                                    'role' => 'surveillant',
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]);
+                                $busyProfessors[$slotKey][] = $vacataire->id; // Mark as busy
+                            }
                         }
                     }
                 }
