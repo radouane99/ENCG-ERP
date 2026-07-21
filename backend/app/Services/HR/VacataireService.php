@@ -2,10 +2,11 @@
 
 namespace App\Services\HR;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\AcademicYear;
 use App\Models\Professor;
 use App\Models\VacationContract;
 use App\Models\VacationPayment;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 
 class VacataireService
@@ -52,7 +53,7 @@ class VacataireService
                 'email'         => $professor->email,
                 'phone'         => $professor->phone,
                 'institution_id' => $professor->institution_id,
-                'academic_year_id' => 1, // Fallback default
+                'academic_year_id' => AcademicYear::where('is_current', true)->value('id') ?? throw new \InvalidArgumentException('No current academic year is configured.'),
                 'module_id'     => $data['module_id'] ?? null,
                 'agreed_hours'  => $data['agreed_hours'],
                 'hourly_rate'   => $data['hourly_rate'] ?? 400.00, // Standard rate MAD

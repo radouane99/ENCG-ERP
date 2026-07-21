@@ -11,6 +11,8 @@ This document outlines the required steps, checks, and configurations before goi
 - [ ] Redis credentials (`REDIS_HOST`, `REDIS_PASSWORD`) are configured.
 - [ ] `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis` are set.
 - [ ] Mail server settings (SMTP, Mailgun, etc.) are valid.
+- [ ] `AI_DRIVER` is explicitly configured and does not point to a local `stub` driver.
+  - Production must set `AI_DRIVER` to a supported provider (e.g., `gemini`) and ensure API keys are present.
 
 ## 2. Infrastructure (Redis & Horizon)
 - [ ] Redis server is installed, running, and accessible by the application.

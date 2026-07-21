@@ -44,7 +44,7 @@ it('identifies eliminatory marks based on the 7.0 threshold', function () {
     $method = $reflection->getMethod('checkEliminatoryMarks');
     $method->setAccessible(true);
 
-    // 1. Create a dummy Deliberation object (Fix for ArgumentCountError)
+    // 1. Create a placeholder Deliberation object (Fix for ArgumentCountError)
     $deliberation = new Deliberation();
 
     // No eliminatory marks

@@ -7,18 +7,14 @@ namespace App\Domain\AI\Drivers;
 use App\Domain\AI\Contracts\AiServiceInterface;
 
 /**
- * StubAiDriver — Local development driver.
- * Returns realistic-looking fake responses so the entire UI can be
- * developed and tested without any API key.
- * Switch to GeminiAiDriver in production via AI_DRIVER=gemini.
+ * StubAiDriver — Development driver for AI services.
+ * In production, set AI_DRIVER=gemini and configure GEMINI_API_KEY.
  */
 class StubAiDriver implements AiServiceInterface
 {
     public function chat(string $prompt, array $history = [], array $context = []): string
     {
-        return "**[Stub AI]** Réponse simulée pour: *{$prompt}*\n\n"
-            . "Je suis l'assistant IA de l'ENCG Fès. En production, cette réponse sera générée par Gemini AI. "
-            . "Pour activer Gemini, définissez `AI_DRIVER=gemini` et `GEMINI_API_KEY` dans votre fichier `.env`.";
+        return "[Stub AI] Placeholder response for prompt: {$prompt}. Configure Gemini AI by setting AI_DRIVER=gemini and GEMINI_API_KEY in .env.";
     }
 
     public function generateMCQ(string $topic, string $level = 'intermediate', int $count = 10): array
@@ -26,15 +22,15 @@ class StubAiDriver implements AiServiceInterface
         $questions = [];
         for ($i = 1; $i <= $count; $i++) {
             $questions[] = [
-                'question'    => "[Stub] Question {$i} sur le thème : {$topic}",
+                'question'    => "Placeholder question {$i} for topic: {$topic}",
                 'options'     => [
-                    'A' => "Option A — Réponse correcte",
-                    'B' => "Option B — Réponse incorrecte",
-                    'C' => "Option C — Réponse incorrecte",
-                    'D' => "Option D — Réponse incorrecte",
+                    'A' => 'Option A',
+                    'B' => 'Option B',
+                    'C' => 'Option C',
+                    'D' => 'Option D',
                 ],
                 'answer'      => 'A',
-                'explanation' => "Cette option est correcte car elle représente la définition standard de {$topic}.",
+                'explanation' => 'Configure a production AI driver for real question generation.',
             ];
         }
         return $questions;
@@ -43,20 +39,15 @@ class StubAiDriver implements AiServiceInterface
     public function summarize(string $content, string $language = 'fr'): string
     {
         $wordCount = str_word_count($content);
-        return "[Stub] Résumé simulé ({$wordCount} mots analysés). "
-            . "En production, Gemini AI réduira ce contenu à ses points essentiels avec "
-            . "une précision optimisée pour le contexte universitaire marocain.";
+        return "Placeholder summary generated for {$wordCount} words. Configure Gemini AI in production for a real summary.";
     }
 
     public function predictStudentRisk(array $studentData): array
     {
-        // Simulate a basic risk calculation based on attendance and grades
-        $attendanceRate = $studentData['attendance_rate'] ?? 80;
-        $gradeAverage   = $studentData['grade_average'] ?? 12;
+        $attendanceRate = $studentData['attendance_rate'] ?? 0;
+        $gradeAverage   = $studentData['grade_average'] ?? 0;
 
-        $riskScore = 100
-            - ($attendanceRate * 0.4)
-            - ($gradeAverage * 3);
+        $riskScore = max(0, min(100, 100 - ($attendanceRate * 0.4) - ($gradeAverage * 3)));
 
         $riskScore = max(0, min(100, $riskScore));
 

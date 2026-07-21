@@ -73,6 +73,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Graceful fallback to avoid data loss
+        // No destructive rollback implemented to prevent accidental data loss.
     }
 };

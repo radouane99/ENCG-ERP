@@ -2,8 +2,8 @@
 
 namespace App\Services\Academic;
 
+use App\Models\AcademicProject;
 use Illuminate\Support\Facades\DB;
-use App\Models\Alumni; // Assuming this model exists or links to Student
 use Illuminate\Database\Eloquent\Collection;
 
 class AlumniService
@@ -13,49 +13,56 @@ class AlumniService
      */
     public function getDashboardStats(): array
     {
-        $totalAlumni = \App\Models\Student::where('status', 'graduated')->count();
-        if ($totalAlumni === 0) {
-            // Fallback for empty DBs so graphs don't divide by zero
-            $totalAlumni = \App\Models\Student::count() ?: 1;
-        }
+        $totalResponses = AcademicProject::where('type', 'alumni_survey')->count();
 
-        $employmentProjects = DB::table('academic_projects')
-            ->where('type', 'alumni_survey')
+        $employmentProjects = AcademicProject::where('type', 'alumni_survey')
             ->whereNotNull('company_name')
             ->get();
 
         $employedCount = $employmentProjects->count();
-        $employmentRate = (int) round(($employedCount / $totalAlumni) * 100);
+        $employmentRate = $totalResponses > 0 ? (int) round(($employedCount / $totalResponses) * 100) : 0;
 
-        // Calculate distribution
-        $statusDistribution = [
-            ['name' => 'En poste', 'value' => $employedCount > 0 ? $employedCount : 75],
-            ['name' => 'En recherche', 'value' => $totalAlumni - $employedCount > 0 ? $totalAlumni - $employedCount : 15],
-            ['name' => 'Poursuite d\'études', 'value' => 8],
-            ['name' => 'Entrepreneuriat', 'value' => 2],
-        ];
+        $avgStartingSalary = (float) AcademicProject::where('type', 'alumni_survey')
+            ->whereNotNull('starting_salary')
+            ->avg('starting_salary');
+
+        $avgMonthsToHire = (float) AcademicProject::where('type', 'alumni_survey')
+            ->whereNotNull('months_to_hire')
+            ->avg('months_to_hire');
+
+        $statusDistribution = AcademicProject::where('type', 'alumni_survey')
+            ->select('employment_status as name', DB::raw('count(*) as value'))
+            ->groupBy('employment_status')
+            ->get()
+            ->map(fn ($row) => ['name' => $row->name ?? 'N/A', 'value' => (int) $row->value])
+            ->toArray();
+
+        $sectorDistribution = AcademicProject::where('type', 'alumni_survey')
+            ->select('sector as name', DB::raw('count(*) as value'))
+            ->whereNotNull('sector')
+            ->groupBy('sector')
+            ->orderByDesc('value')
+            ->get()
+            ->map(fn ($row) => ['name' => $row->name, 'value' => (int) $row->value])
+            ->toArray();
+
+        $topCompanies = AcademicProject::where('type', 'alumni_survey')
+            ->select('company_name as name', DB::raw('count(*) as count'))
+            ->whereNotNull('company_name')
+            ->groupBy('company_name')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get()
+            ->toArray();
 
         return [
-            'employment_rate' => $employmentRate > 0 ? $employmentRate : 85,
-            'avg_starting_salary' => 8500, // Hard to calculate without salary column
-            'avg_months_to_hire' => 2.5,
-            'total_responses' => $totalAlumni,
+            'employment_rate' => $employmentRate,
+            'avg_starting_salary' => $avgStartingSalary,
+            'avg_months_to_hire' => $avgMonthsToHire,
+            'total_responses' => $totalResponses,
             'status_distribution' => $statusDistribution,
-            'sector_distribution' => [
-                ['name' => 'Audit & Conseil', 'value' => 35],
-                ['name' => 'Banque & Assurance', 'value' => 25],
-                ['name' => 'Industrie', 'value' => 15],
-                ['name' => 'Tech & IT', 'value' => 10],
-                ['name' => 'FMCG', 'value' => 10],
-                ['name' => 'Autres', 'value' => 5],
-            ],
-            'top_companies' => [
-                ['name' => 'PwC', 'count' => 45],
-                ['name' => 'Deloitte', 'count' => 38],
-                ['name' => 'Attijariwafa Bank', 'count' => 32],
-                ['name' => 'KPMG', 'count' => 28],
-                ['name' => 'L\'Oréal', 'count' => 15],
-            ]
+            'sector_distribution' => $sectorDistribution,
+            'top_companies' => $topCompanies,
         ];
     }
 
@@ -64,12 +71,23 @@ class AlumniService
      */
     public function getAlumniDirectory(array $filters = []): Collection
     {
-        // In a real scenario:
-        // $query = Alumni::with('student', 'currentCompany');
-        // if (isset($filters['promotion'])) $query->where('promotion_year', $filters['promotion']);
-        // return $query->get();
+        $query = AcademicProject::with(['student.user', 'academicYear'])
+            ->where('type', 'alumni_survey');
 
-        // Returning an empty collection since we'll mock the data in frontend for demo
-        return collect([]);
+        if (!empty($filters['promotion'])) {
+            $query->where('graduation_year', $filters['promotion']);
+        }
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('company_name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhereHas('student.user', function ($userQuery) use ($filters) {
+                        $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('last_name', 'like', '%' . $filters['search'] . '%');
+                    });
+            });
+        }
+
+        return $query->orderByDesc('created_at')->limit(100)->get();
     }
 }

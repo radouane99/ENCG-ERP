@@ -81,8 +81,13 @@ class DocumentRequestService
             'documents.ordre_mission' => 'pdf.ordre_mission',
         ];
 
-        // Fallback to str_replace if not in map
-        $viewName = $viewMap[$type->view_name] ?? str_replace('documents.', 'pdf.', $type->view_name);
+        if (array_key_exists($type->view_name, $viewMap)) {
+            $viewName = $viewMap[$type->view_name];
+        } elseif (str_starts_with($type->view_name, 'documents.')) {
+            $viewName = str_replace('documents.', 'pdf.', $type->view_name);
+        } else {
+            throw new \InvalidArgumentException("Unsupported document view name [{$type->view_name}].");
+        }
 
         // Ensure the Blade view exists
         if (!View::exists($viewName)) {
@@ -100,7 +105,6 @@ class DocumentRequestService
         $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->generate($verifyUrl);
         $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
 
-        // Load Logo or use SVG fallback
         $logoPath = public_path('logo-encg.png');
         if (file_exists($logoPath)) {
             $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));

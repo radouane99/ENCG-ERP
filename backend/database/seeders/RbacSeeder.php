@@ -270,18 +270,7 @@ class RbacSeeder extends Seeder
                 'role'  => 'director',
                 'institution_id' => $institution?->id,
             ],
-            [
-                'name'  => 'Prof. Ahmed BENCHEKROUN',
-                'email' => 'prof.demo@encg-fes.ma',
-                'role'  => 'professor',
-                'institution_id' => $institution?->id,
-            ],
-            [
-                'name'  => 'Fatima ALAOUI',
-                'email' => 'student.demo@encg-fes.ma',
-                'role'  => 'student',
-                'institution_id' => $institution?->id,
-            ],
+            // Demo accounts removed for production safety. Add real seeded accounts via environment-driven seeders if needed.
             [
                 'name'  => 'RH — Khalid BENJELLOUN',
                 'email' => 'rh@encg-fes.ma',

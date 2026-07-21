@@ -2,6 +2,7 @@
 
 namespace App\Services\Academic;
 
+use App\Models\ExamSession;
 use App\Models\Module;
 use Illuminate\Support\Facades\DB;
 
@@ -47,8 +48,15 @@ class DeliberationService
         $rattrapage = 0;
         $failed = 0;
 
-        // Fallback pour exam_session_id si non fourni (utiliser la dernière session ouverte ou 1 par défaut)
-        $sessionId = $examSessionId ?? DB::table('exam_sessions')->latest('id')->value('id') ?? 1;
+        if ($examSessionId) {
+            $sessionId = $examSessionId;
+        } else {
+            $sessionId = ExamSession::where('is_active', true)->value('id');
+        }
+
+        if (!$sessionId) {
+            throw new \InvalidArgumentException('A valid active exam session ID must be provided.');
+        }
 
         foreach ($studentGrades as $studentId => $studentGradeRecords) {
             $finalScore = 0;

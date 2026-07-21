@@ -22,7 +22,6 @@ class StudentResource extends JsonResource
             'status' => $this->status,
             'filiere_id' => $this->filiere_id,
             'current_semester' => $this->current_semester ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->current_semester : null),
-            // Fallback for flat structure expected by some frontend pages
             'first_name' => $this->first_name ?? ($this->relationLoaded('user') ? $this->user?->first_name : null),
             'last_name' => $this->last_name ?? ($this->relationLoaded('user') ? $this->user?->last_name : null),
             'email' => $this->email ?? ($this->relationLoaded('user') ? $this->user?->email : null),

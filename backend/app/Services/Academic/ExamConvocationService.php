@@ -41,11 +41,16 @@ class ExamConvocationService
                     ->where('student_id', $student->id)
                     ->first();
 
+                $roomId = $exam->room_id ?? $exam->room?->id;
+                if (!$roomId) {
+                    throw new \InvalidArgumentException("Cannot generate convocation: exam {$exam->id} has no assigned room.");
+                }
+
                 if (!$seating) {
                     DB::table('exam_seatings')->insert([
                         'exam_id' => $exam->id,
                         'student_id' => $student->id,
-                        'room_id' => $exam->room_id ?? 1, // fallback
+                        'room_id' => $roomId,
                         'seat_number' => $generatedCount + 1,
                         'qr_token' => Str::uuid()->toString(),
                         'created_at' => now(),
@@ -209,11 +214,16 @@ class ExamConvocationService
                 ->where('student_id', $student->id)
                 ->first();
 
+            $roomId = $exam->room_id ?? $exam->room?->id;
+            if (!$roomId) {
+                throw new \InvalidArgumentException("Cannot generate convocation: exam {$exam->id} has no assigned room.");
+            }
+
             if (!$seating) {
                 DB::table('exam_seatings')->insert([
                     'exam_id' => $exam->id,
                     'student_id' => $student->id,
-                    'room_id' => $exam->room_id ?? 1, // fallback
+                    'room_id' => $roomId,
                     'seat_number' => $generatedCount + 1,
                     'qr_token' => Str::uuid()->toString(),
                     'created_at' => now(),
