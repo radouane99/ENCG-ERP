@@ -163,3 +163,34 @@ Un étudiant pose une question sur un module et obtient une réponse fondée sur
 
 ### UC-05 — Affectation automatique des surveillants
 L’administration attribue automatiquement les surveillants en fonction des disponibilités et de l’équilibrage de charge.
+
+## 8. Recommandations et Évolutions Futures
+
+### 8.1 Workflow officiel de validation
+Mise en place d'un module de validation pour les documents, notes, absences, mobilité et stages.
+- **Pourquoi :** Éviter les actions directes sans supervision. Chaque demande passe par un cycle : `pending` -> `reviewed` -> `approved` / `rejected` -> `archived` avec un audit log.
+
+### 8.2 Dossier étudiant unifié
+Création d'une vue centralisée 360° de l'étudiant incluant profil, filière/groupe, notes, absences, justificatifs, documents demandés, convocations, carte étudiant, stages et mobilité.
+- **Pourquoi :** Offrir une version adaptée du même dossier selon le rôle (admin, prof, étudiant).
+
+### 8.3 Calendrier académique officiel
+Intégration d'un "Calendrier institutionnel" gérant les dates clés (inscriptions, examens, rattrapages, dépôt de justificatifs, soutenances, etc.).
+- **Pourquoi :** Lier l'interface utilisateur, les validations, la disponibilité des actions et les alertes automatiques aux dates officielles.
+
+### 8.4 Module de publication officielle des résultats
+Création d'un workflow strict pour les notes : saisie (prof) -> vérification (admin/chef) -> verrouillage (exam locking) -> publication.
+- **Pourquoi :** Empêcher les étudiants de voir leurs notes avant la validation et publication officielle.
+
+### 8.5 Centre de notifications intelligent
+Système de notifications ciblées par rôle (ex: notes publiées pour l'étudiant, copies à corriger pour le prof, demandes en attente pour l'admin).
+- **Bonus :** Support multicanal (Email, In-App, Websocket/Reverb) et rappels automatiques.
+
+### 8.6 Module anti-fraude
+Renforcement de la gestion des absences et documents via des mécanismes avancés : tolérance de géolocalisation, prévention du double scan de QR code, expiration stricte des QR codes, compteur de téléchargements et logs de vérification publique.
+
+### 8.7 Moteur de campagnes
+Transformation des modules clés (mobilité, admission, réinscription, stage/PFE) en processus gérés par des campagnes configurables (campaign-driven) plutôt que hardcodés.
+
+### 8.8 Dashboard santé de l’établissement (Admin)
+Supervision en temps réel pour la production : statistiques journalières (absences, documents en attente, notes non publiées), état des files d'attente (queues, Reverb, mail backlog) et de l'infrastructure (MySQL/Redis).
