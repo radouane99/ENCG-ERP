@@ -15,13 +15,8 @@ class ExportService
             return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ModulesExport(false), 'modules_export_' . date('Ymd_His') . '.xlsx');
         }
 
-        // Mock fallback for others
-        $filename = strtolower($modelName) . '_export_' . date('Ymd_His') . '.xlsx';
-        return [
-            'success' => true,
-            'filename' => $filename,
-            'url' => '/downloads/mock_export.xlsx'
-        ];
+        // No generic mock fallbacks allowed in production.
+        throw new \InvalidArgumentException("Export for model '{$modelName}' is not supported. Implement a specific export handler.");
     }
     
     public function templateToExcel(string $modelName)
@@ -30,11 +25,8 @@ class ExportService
             return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ModulesExport(true), 'modules_template.xlsx');
         }
 
-        // Mock fallback
-        return [
-            'success' => true,
-            'url' => "/downloads/templates/{$modelName}_template.xlsx"
-        ];
+        // No generic mock templates allowed in production.
+        throw new \InvalidArgumentException("Template export for model '{$modelName}' is not supported. Implement a specific template generator.");
     }
 
     /**
@@ -52,11 +44,7 @@ class ExportService
             ];
         }
 
-        // Mock fallback
-        return [
-            'success' => true,
-            'imported' => 0,
-            'message' => "Importation mockée pour le modèle {$modelName}."
-        ];
+        // No generic mock imports allowed in production.
+        throw new \InvalidArgumentException("Import processing for model '{$modelName}' is not supported. Implement a specific import handler.");
     }
 }
