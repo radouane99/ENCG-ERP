@@ -59,7 +59,7 @@ class RbacSeeder extends Seeder
         'attendance.justify-absence', 'attendance.review-justification',
 
         // ── Grades & Exams ─────────────────────────────────────
-        'grades.view', 'grades.enter', 'grades.edit', 'grades.validate', 'grades.publish',
+        'grades.view', 'grades.enter', 'grades.edit', 'grades.delete', 'grades.validate', 'grades.publish',
         'exams.view', 'exams.create', 'exams.edit', 'exams.delete',
 
         // ── Deliberation ───────────────────────────────────────

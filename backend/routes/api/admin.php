@@ -64,9 +64,7 @@ use App\Http\Controllers\Api\TimetableController;
 use App\Http\Controllers\Api\TimetableExportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VacataireController;
-use App\Models\DocumentRequest;
 use App\Models\StudentPathway;
-use App\Services\DocumentRequestService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -357,8 +355,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     // Admin — Document Requests Management
     Route::prefix('admin/document-requests')->middleware('require-admin-2fa')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
-        Route::patch('/{id}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
-        Route::post('/{id}/generate', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
+        Route::patch('/{documentRequest}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
+        Route::post('/{documentRequest}/generate', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
+        Route::get('/{documentRequest}/download', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'download']);
     });
 
     // Admin — Document Types Management
@@ -405,28 +404,6 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
 // REST API (Protected endpoints for third-party integrations)
 // ---------------------------------------------------------
 
-Route::get('/test-doc', function () {
-    try {
-        $reqs = DocumentRequest::where('status', 'pending')->get();
-        if ($reqs->isEmpty()) {
-            return 'No pending requests found';
-        }
-        $out = [];
-        foreach ($reqs as $req) {
-            try {
-                app(DocumentRequestService::class)->processRequest($req, 'ready');
-                $out[] = "Success for {$req->id} ({$req->documentType->name})";
-            } catch (Exception $e) {
-                $out[] = "Error for {$req->id}: ".$e->getMessage().' in '.$e->getFile().' on line '.$e->getLine();
-            }
-        }
-
-        return response()->json($out);
-    } catch (Exception $e) {
-        return 'Global Error: '.$e->getMessage().' in '.$e->getFile().' on line '.$e->getLine();
-    }
-});
-
 // Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
 
 // ---------------------------------------------------------
@@ -447,4 +424,6 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/admin/analytics', [AdminAnalyticsController::class, 'index']);
     Route::get('/admin/document-requests', [AdminDocumentRequestController::class, 'index']);
     Route::patch('/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
+    Route::post('/admin/document-requests/{documentRequest}/generate', [AdminDocumentRequestController::class, 'generate']);
+    Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
 });

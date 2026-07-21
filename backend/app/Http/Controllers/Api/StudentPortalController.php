@@ -3,78 +3,62 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Http\Requests\Academic\SubmitAbsenceRequest;
 use App\Services\Academic\StudentPortalService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class StudentPortalController extends Controller
 {
-    protected StudentPortalService $portalService;
-
-    public function __construct(StudentPortalService $portalService)
+    public function __construct(protected StudentPortalService $portalService)
     {
-        $this->portalService = $portalService;
     }
 
-    /**
-     * Get validated and published grades for the student
-     */
     public function getGrades(Request $request): JsonResponse
     {
-        // In a real app: $studentId = $request->user()->student->id;
-        $studentId = $request->input('student_id', 1);
-
+        $studentId = $this->resolveAuthenticatedStudentId($request);
         $grades = $this->portalService->getGrades($studentId);
 
         return response()->json(['success' => true, 'data' => $grades]);
     }
 
-    /**
-     * Submit a medical certificate for an absence
-     */
-    public function submitAbsence(\App\Http\Requests\Academic\SubmitAbsenceRequest $request): JsonResponse
+    public function submitAbsence(SubmitAbsenceRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-
+        $studentId = $this->resolveAuthenticatedStudentId($request);
         $result = $this->portalService->submitAbsenceJustification(
-            $validated, 
-            $request->file('document')
+            $request->validated(),
+            $request->file('document'),
+            $studentId
         );
 
-        return response()->json($result);
+        return response()->json($result, 201);
     }
 
-    /**
-     * Get student schedule
-     */
+    public function submitAbsenceJustification(SubmitAbsenceRequest $request): JsonResponse
+    {
+        return $this->submitAbsence($request);
+    }
+
     public function getSchedule(Request $request): JsonResponse
     {
-        $studentId = $request->input('student_id', 1);
-
+        $studentId = $this->resolveAuthenticatedStudentId($request);
         $schedule = $this->portalService->getSchedule($studentId);
 
         return response()->json(['success' => true, 'data' => $schedule]);
     }
 
-    /**
-     * Get dashboard stats for the student
-     */
     public function getDashboardStats(Request $request): JsonResponse
     {
-        // In a real app: $studentId = $request->user()->student->id;
-        $studentId = $request->input('student_id', 1);
-
+        $studentId = $this->resolveAuthenticatedStudentId($request);
         $stats = $this->portalService->getDashboardStats($studentId);
 
         return response()->json(['success' => true, 'data' => $stats]);
     }
 
-    /**
-     * Get learning materials (Digital Library)
-     */
     public function getLibraryMaterials(Request $request): JsonResponse
     {
-        // For now, fetch published materials with related module and professor
+        $this->resolveAuthenticatedStudentId($request);
+
         $materials = \App\Models\LearningMaterial::where('is_published', true)
             ->with(['module', 'professor'])
             ->latest()
@@ -82,5 +66,14 @@ class StudentPortalController extends Controller
             ->get();
 
         return response()->json(['success' => true, 'data' => $materials]);
+    }
+
+    private function resolveAuthenticatedStudentId(Request $request): int
+    {
+        $student = $request->user()?->student;
+
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        return $student->id;
     }
 }

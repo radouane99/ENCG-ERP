@@ -114,6 +114,11 @@ class Student extends Model
         return $this->hasMany(StudentRegistration::class);
     }
 
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
     public function resitEligibilities(): HasMany
     {
         return $this->hasMany(ResitEligibility::class, 'student_id');

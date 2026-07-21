@@ -1,57 +1,127 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { Settings, Database, AlertTriangle, Loader2 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { Settings, Database, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import api from '@shared/lib/api'
+import { useAuthStore } from '@stores/authStore'
+
+type AcademicYear = {
+  id: number
+  label: string
+  start_date?: string | null
+  end_date?: string | null
+  is_current: boolean
+  is_locked?: boolean
+}
+
+type ExamLockingStatus = {
+  current_phase?: string
+  audits?: Array<unknown>
+}
+
+const readOnlyInputClass = 'w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-500 outline-none'
+const readOnlyTextAreaClass = 'w-full h-24 p-4 rounded-xl border border-slate-200 bg-slate-50 text-sm resize-none font-medium text-slate-500 outline-none'
 
 export default function AdminSettingsPage() {
-  const { t, i18n } = useTranslation(['admin', 'common'])
+  const { i18n } = useTranslation(['admin', 'common'])
+  const { user } = useAuthStore()
   const isRtl = i18n.language === 'ar'
 
-  const [name, setName] = useState(() => localStorage.getItem('inst_name') || (isRtl ? 'المدرسة الوطنية للتجارة والتسيير بفاس' : 'École Nationale de Commerce et de Gestion de Fès'))
-  const [academicYear, setAcademicYear] = useState(() => localStorage.getItem('inst_year') || '2025-2026')
-  const [email, setEmail] = useState(() => localStorage.getItem('inst_email') || 'contact@encg-fes.ma')
-  const [phone, setPhone] = useState(() => localStorage.getItem('inst_phone') || '+212 5 35 64 49 20')
-  const [address, setAddress] = useState(() => localStorage.getItem('inst_address') || "Route d'Imouzzer, B.P. 1255, Fès")
-  
-  const [startDateInscription, setStartDateInscription] = useState(() => localStorage.getItem('inst_start_insc') || '01/06/2026 20:53')
-  const [endDateInscription, setEndDateInscription] = useState(() => localStorage.getItem('inst_end_insc') || '09/07/2026 20:53')
-  const [startDateReinscription, setStartDateReinscription] = useState(() => localStorage.getItem('inst_start_reinsc') || '01/06/2026 20:53')
-  const [endDateReinscription, setEndDateReinscription] = useState(() => localStorage.getItem('inst_end_reinsc') || '05/07/2026 20:53')
-  
-  const [examRegulation, setExamRegulation] = useState(() => localStorage.getItem('inst_regulation') || "Tout retard supérieur à 15 minutes interdit l'accès à la salle. L'usage des téléphones et de tout objet connecté est strictement interdit et passible d'exclusion immédiate.")
+  const unsupportedValue = isRtl ? 'غير متاح عبر الواجهة الخلفية الحالية' : "Non exposé par l'API backend actuelle"
 
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | null>(null)
+  const [persistedAcademicYearId, setPersistedAcademicYearId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUpdatingDb, setIsUpdatingDb] = useState(false)
+  const [isRefreshingSystem, setIsRefreshingSystem] = useState(false)
+  const [systemState, setSystemState] = useState<ExamLockingStatus>({})
 
-  const handleSave = () => {
+  const currentAcademicYear = useMemo(
+    () => academicYears.find((year: AcademicYear) => year.id === selectedAcademicYearId) ?? null,
+    [academicYears, selectedAcademicYearId]
+  )
+
+  useEffect(() => {
+    let active = true
+
+    const loadSettings = async () => {
+      setLoading(true)
+
+      try {
+        const [yearsResponse, systemResponse] = await Promise.all([
+          api.get('/academic-years'),
+          api.get('/admin/exam-locking'),
+        ])
+
+        if (!active) return
+
+        const years: AcademicYear[] = yearsResponse.data?.data ?? []
+        const currentYear = years.find((year) => year.is_current) ?? null
+
+        setAcademicYears(years)
+        setSelectedAcademicYearId(currentYear?.id ?? years[0]?.id ?? null)
+        setPersistedAcademicYearId(currentYear?.id ?? years[0]?.id ?? null)
+        setSystemState(systemResponse.data ?? {})
+      } catch (error: any) {
+        if (!active) return
+        toast.error(error?.response?.data?.message || 'Impossible de charger les paramètres administratifs.')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadSettings()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleSave = async () => {
+    if (!selectedAcademicYearId) {
+      toast.error("Aucune année académique n'est sélectionnée.")
+      return
+    }
+
+    if (selectedAcademicYearId === persistedAcademicYearId) {
+      toast.info('Aucun changement persistant détecté. Seule l’année académique active est modifiable via API pour le moment.')
+      return
+    }
+
     setIsSaving(true)
-    setTimeout(() => {
-      localStorage.setItem('inst_name', name)
-      localStorage.setItem('inst_year', academicYear)
-      localStorage.setItem('inst_email', email)
-      localStorage.setItem('inst_phone', phone)
-      localStorage.setItem('inst_address', address)
-      localStorage.setItem('inst_start_insc', startDateInscription)
-      localStorage.setItem('inst_end_insc', endDateInscription)
-      localStorage.setItem('inst_start_reinsc', startDateReinscription)
-      localStorage.setItem('inst_end_reinsc', endDateReinscription)
-      localStorage.setItem('inst_regulation', examRegulation)
-      
+
+    try {
+      await api.patch(`/academic-years/${selectedAcademicYearId}`, { is_current: true })
+
+      setAcademicYears((previousYears: AcademicYear[]) => previousYears.map((year: AcademicYear) => ({
+        ...year,
+        is_current: year.id === selectedAcademicYearId,
+      })))
+      setPersistedAcademicYearId(selectedAcademicYearId)
+
+      toast.success('Année académique active enregistrée avec succès.')
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Impossible d'enregistrer l'année académique active.")
+    } finally {
       setIsSaving(false)
-      toast.success('Paramètres de l\'institution enregistrés avec succès !')
-    }, 800)
+    }
   }
 
-  const handleUpdateDb = () => {
-    setIsUpdatingDb(true)
-    const toastId = toast.loading('Vérification de la structure de la base de données...')
-    setTimeout(() => {
-      setIsUpdatingDb(false)
-      toast.dismiss(toastId)
-      toast.success('Base de données à jour ! Toutes les migrations sont appliquées.')
-    }, 1500)
+  const handleRefreshSystem = async () => {
+    setIsRefreshingSystem(true)
+
+    try {
+      const response = await api.get('/admin/exam-locking')
+      setSystemState(response.data ?? {})
+      toast.success('État du système rechargé depuis le backend.')
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Impossible de rafraîchir l'état du système.")
+    } finally {
+      setIsRefreshingSystem(false)
+    }
   }
 
   return (
@@ -61,119 +131,110 @@ export default function AdminSettingsPage() {
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] italic">Paramètres de l'Institution</h1>
+          <h1 className="text-2xl font-bold text-[#0f2863] italic">Paramètres de l&apos;Institution</h1>
           <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Administration Générale</p>
         </div>
       </div>
 
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm text-blue-900">
+        <p className="font-semibold mb-2">Cette page est maintenant branchée sur le backend existant.</p>
+        <ul className="list-disc pl-5 space-y-1 text-blue-800">
+          <li>L&apos;année académique active est chargée et persistée via <code>/api/academic-years</code>.</li>
+          <li>Le bloc système lit l&apos;état courant via <code>/api/admin/exam-locking</code>.</li>
+          <li>Les autres champs institutionnels restent en lecture seule tant qu&apos;aucun endpoint dédié de configuration institutionnelle n&apos;est exposé par le backend.</li>
+        </ul>
+      </div>
+
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          
           <div className="space-y-6">
             <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider mb-6">INFORMATIONS GÉNÉRALES</h2>
-            
+
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Nom de l'Institution</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm font-medium text-slate-800" 
+              <label className="text-xs font-bold text-slate-700">Nom de l&apos;Institution</label>
+              <input
+                type="text"
+                readOnly
+                value={user?.institution_name || unsupportedValue}
+                className={readOnlyInputClass}
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700">Année Académique Active</label>
-              <input 
-                type="text" 
-                value={academicYear} 
-                onChange={(e) => setAcademicYear(e.target.value)} 
-                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm font-medium text-slate-800" 
-              />
+              <select
+                value={selectedAcademicYearId ?? ''}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedAcademicYearId(e.target.value ? Number(e.target.value) : null)}
+                disabled={loading || academicYears.length === 0}
+                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-400"
+              >
+                {academicYears.length === 0 ? (
+                  <option value="">{loading ? 'Chargement...' : 'Aucune année disponible'}</option>
+                ) : (
+                  academicYears.map((year: AcademicYear) => (
+                    <option key={year.id} value={year.id}>
+                      {year.label}{year.is_locked ? ' • verrouillée' : ''}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700">Email Officiel</label>
-              <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm font-medium text-slate-800" 
-              />
+              <input type="email" readOnly value={unsupportedValue} className={readOnlyInputClass} />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700">Téléphone</label>
-              <input 
-                type="tel" 
-                value={phone} 
-                onChange={(e) => setPhone(e.target.value)} 
-                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm font-medium text-slate-800" 
-              />
+              <input type="tel" readOnly value={unsupportedValue} className={readOnlyInputClass} />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700">Adresse complète</label>
-              <textarea 
-                value={address} 
-                onChange={(e) => setAddress(e.target.value)} 
-                className="w-full h-24 p-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm resize-none font-medium text-slate-800"
-              ></textarea>
+              <textarea readOnly value={unsupportedValue} className={readOnlyTextAreaClass}></textarea>
             </div>
           </div>
 
           <div className="space-y-6">
             <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider mb-6">IDENTITÉ VISUELLE</h2>
-            
+
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Logo de l'Institution</label>
-              <div className="flex items-center gap-4">
-                <button className="bg-slate-100 hover:bg-slate-200 text-[#c01844] font-bold text-xs px-4 py-2 rounded-lg transition-colors">Choisir un fichier</button>
-                <span className="text-xs text-slate-500">Aucun fichier n'a été sélectionné</span>
+              <label className="text-xs font-bold text-slate-700">Logo de l&apos;Institution</label>
+              <div className="flex items-center gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                Endpoint backend non disponible pour la gestion des médias institutionnels dans ce scope frontend.
               </div>
-              <p className="text-[10px] text-slate-400">JPEG, PNG, SVG (Max 2MB)</p>
             </div>
 
             <div className="space-y-2 mt-8">
               <label className="text-xs font-bold text-slate-700">Cachet et Signature (pour les PDFs)</label>
-              <div className="flex items-center gap-4">
-                <button className="bg-slate-100 hover:bg-slate-200 text-[#0f2863] font-bold text-xs px-4 py-2 rounded-lg transition-colors">Choisir un fichier</button>
-                <span className="text-xs text-slate-500">Aucun fichier n'a été sélectionné</span>
+              <div className="flex items-center gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                Endpoint backend non disponible pour la gestion du cachet/signature institutionnels.
               </div>
-              <p className="text-[10px] text-slate-400">JPEG, PNG (Max 2MB). Fond transparent recommandé.</p>
             </div>
           </div>
-
         </div>
 
         <div className="mt-12 pt-8 border-t border-slate-100">
           <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider mb-2">DATES DES CAMPAGNES ACADÉMIQUES</h2>
-          <p className="text-xs text-slate-500 mb-6">Définissez les périodes d'ouverture et de fermeture des campagnes d'inscription (nouveaux étudiants) et de réinscription (étudiants actuels).</p>
-          
+          <p className="text-xs text-slate-500 mb-6">
+            Les dates métier d&apos;inscription/réinscription ne sont pas exposées par un endpoint dédié. Les seules dates backend disponibles ici sont celles de l&apos;année académique active.
+          </p>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
               <h3 className="text-[10px] font-bold text-[#c01844] uppercase tracking-wider mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#c01844]"></span>
-                CAMPAGNE D'INSCRIPTION (NOUVEAUX CANDIDATS)
+                CAMPAGNE D&apos;INSCRIPTION (APERÇU)
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600">Date de Début</label>
-                  <input 
-                    type="text" 
-                    value={startDateInscription} 
-                    onChange={(e) => setStartDateInscription(e.target.value)} 
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700" 
-                  />
+                  <label className="text-xs font-bold text-slate-600">Début</label>
+                  <input type="text" readOnly value={currentAcademicYear?.start_date || unsupportedValue} className={readOnlyInputClass} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600">Date de Fin</label>
-                  <input 
-                    type="text" 
-                    value={endDateInscription} 
-                    onChange={(e) => setEndDateInscription(e.target.value)} 
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700" 
-                  />
+                  <label className="text-xs font-bold text-slate-600">Fin</label>
+                  <input type="text" readOnly value={currentAcademicYear?.end_date || unsupportedValue} className={readOnlyInputClass} />
                 </div>
               </div>
             </div>
@@ -181,26 +242,16 @@ export default function AdminSettingsPage() {
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
               <h3 className="text-[10px] font-bold text-[#0f2863] uppercase tracking-wider mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0f2863]"></span>
-                CAMPAGNE DE RÉINSCRIPTION (ÉTUDIANTS ACTUELS)
+                CAMPAGNE DE RÉINSCRIPTION (APERÇU)
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600">Date de Début</label>
-                  <input 
-                    type="text" 
-                    value={startDateReinscription} 
-                    onChange={(e) => setStartDateReinscription(e.target.value)} 
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700" 
-                  />
+                  <label className="text-xs font-bold text-slate-600">Début</label>
+                  <input type="text" readOnly value={currentAcademicYear?.start_date || unsupportedValue} className={readOnlyInputClass} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600">Date de Fin</label>
-                  <input 
-                    type="text" 
-                    value={endDateReinscription} 
-                    onChange={(e) => setEndDateReinscription(e.target.value)} 
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700" 
-                  />
+                  <label className="text-xs font-bold text-slate-600">Fin</label>
+                  <input type="text" readOnly value={currentAcademicYear?.end_date || unsupportedValue} className={readOnlyInputClass} />
                 </div>
               </div>
             </div>
@@ -209,22 +260,18 @@ export default function AdminSettingsPage() {
 
         <div className="mt-12 pt-8 border-t border-slate-100">
           <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider mb-2">RÈGLEMENT DES EXAMENS</h2>
-          <p className="text-xs text-slate-500 mb-6">Ce texte sera affiché au bas des convocations d'examens imprimées.</p>
-          <textarea 
-            value={examRegulation} 
-            onChange={(e) => setExamRegulation(e.target.value)} 
-            className="w-full h-32 p-4 rounded-xl border border-slate-200 focus:border-[#0f2863] focus:ring-1 focus:ring-[#0f2863] outline-none transition-all text-sm resize-none font-medium text-slate-800"
-          ></textarea>
+          <p className="text-xs text-slate-500 mb-6">Le texte de règlement institutionnel n&apos;est pas encore servi par une API dédiée dans le backend actuel.</p>
+          <textarea readOnly value={unsupportedValue} className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-slate-50 outline-none transition-all text-sm resize-none font-medium text-slate-500"></textarea>
         </div>
 
         <div className="mt-8 flex justify-end">
-          <button 
-            onClick={handleSave} 
-            disabled={isSaving}
+          <button
+            onClick={handleSave}
+            disabled={isSaving || loading || !selectedAcademicYearId}
             className="bg-[#0f2863] hover:bg-[#1a387e] active:scale-[0.98] text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-75 disabled:pointer-events-none"
           >
             {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isSaving ? 'Enregistrement...' : 'ENREGISTRER LES PARAMÈTRES'}
+            {isSaving ? 'Enregistrement...' : 'ENREGISTRER L’ANNÉE ACTIVE'}
           </button>
         </div>
       </div>
@@ -232,27 +279,29 @@ export default function AdminSettingsPage() {
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="text-slate-400"><Database className="w-5 h-5" /></div>
-          <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">MAINTENANCE DU SYSTÈME & BASE DE DONNÉES</h2>
+          <h2 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">ÉTAT DU SYSTÈME</h2>
         </div>
-        <p className="text-xs text-slate-500 mb-6">Exécutez les dernières mises à jour de structure de la base de données (migrations) en ligne pour activer et synchroniser toutes les nouvelles fonctionnalités de la plateforme (Prise de RDV, Messagerie, Devoirs, etc.).</p>
-        
+        <p className="text-xs text-slate-500 mb-6">
+          Ce bloc ne lance pas de migration frontend-only. Il relit l&apos;état administrateur déjà exposé par le backend, notamment la phase de verrouillage des examens.
+        </p>
+
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-4 mb-6">
           <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-700 leading-relaxed">
-            <strong>Note de sécurité :</strong> Cette action applique les changements de table en toute sécurité. Les données existantes (étudiants, professeurs, notes, etc.) ne seront pas altérées ni modifiées.
-          </p>
+          <div className="text-xs text-amber-700 leading-relaxed space-y-1">
+            <p><strong>Phase actuelle :</strong> {systemState.current_phase || 'Indisponible'}</p>
+            <p><strong>Historique d&apos;audit chargé :</strong> {systemState.audits?.length ?? 0} entrées</p>
+          </div>
         </div>
 
-        <button 
-          onClick={handleUpdateDb}
-          disabled={isUpdatingDb}
+        <button
+          onClick={handleRefreshSystem}
+          disabled={isRefreshingSystem}
           className="bg-[#0f2863] hover:bg-[#1a387e] active:scale-[0.98] text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-75 disabled:pointer-events-none"
         >
-          {isUpdatingDb ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-          {isUpdatingDb ? 'Mise à jour...' : 'METTRE À JOUR LA BASE DE DONNÉES'}
+          {isRefreshingSystem ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {isRefreshingSystem ? 'Rafraîchissement...' : 'RAFRAÎCHIR L’ÉTAT DU SYSTÈME'}
         </button>
       </div>
-
     </div>
   )
 }

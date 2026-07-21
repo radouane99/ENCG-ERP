@@ -4,7 +4,6 @@ namespace App\Services\Academic;
 
 use App\Models\Internship;
 use App\Models\InternshipDocument;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 
 class InternshipService
@@ -14,10 +13,9 @@ class InternshipService
      */
     public function submitApplication(array $data, int $studentId): Internship
     {
-        // Enforce basic student ID internally
         $data['student_id'] = $studentId;
         $data['status'] = 'pending';
-        
+
         return Internship::create($data);
     }
 
@@ -26,13 +24,13 @@ class InternshipService
      */
     public function uploadDocument(int $internshipId, string $documentType, UploadedFile $file): InternshipDocument
     {
-        $path = $file->store("internships/{$internshipId}/{$documentType}", 'public');
+        $path = $file->store("internships/{$internshipId}/{$documentType}", 'private');
 
         return InternshipDocument::create([
             'internship_id' => $internshipId,
             'document_type' => $documentType,
             'file_path' => $path,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
     }
 
@@ -42,13 +40,14 @@ class InternshipService
     public function validateInternship(int $internshipId, string $status, ?int $professorSupervisorId = null): Internship
     {
         $internship = Internship::findOrFail($internshipId);
-        
+
         $internship->status = $status;
         if ($professorSupervisorId) {
             $internship->professor_supervisor_id = $professorSupervisorId;
         }
-        
+
         $internship->save();
+
         return $internship;
     }
 }

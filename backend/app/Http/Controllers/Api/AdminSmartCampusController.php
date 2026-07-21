@@ -3,25 +3,64 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Room;
+use App\Models\RoomBooking;
+use App\Models\Schedule;
+use Illuminate\Http\JsonResponse;
 
 class AdminSmartCampusController extends Controller
 {
-    public function getCampusData()
+    public function getCampusData(): JsonResponse
     {
+        $now = now();
+        $currentDay = $now->dayOfWeekIso;
+        $currentTime = $now->format('H:i:s');
+
+        $rooms = Room::query()
+            ->orderBy('name')
+            ->get()
+            ->map(function (Room $room) use ($currentDay, $currentTime, $now) {
+                $activeSchedule = Schedule::with(['module', 'group'])
+                    ->where('room_id', $room->id)
+                    ->where('day_of_week', $currentDay)
+                    ->where('start_time', '<=', $currentTime)
+                    ->where('end_time', '>=', $currentTime)
+                    ->where('is_active', true)
+                    ->first();
+
+                $activeBooking = RoomBooking::where('room_id', $room->id)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('start_time', '<=', $now)
+                    ->where('end_time', '>=', $now)
+                    ->first();
+
+                $occupied = $activeSchedule || $activeBooking;
+                $capacity = (int) ($room->capacity ?? 0);
+                $estimatedOccupancy = $occupied ? min(100, max(10, (int) round(($capacity > 0 ? min($capacity, max(1, (int) floor($capacity * 0.7))) : 1) / max($capacity, 1)) * 100))) : 0;
+
+                return [
+                    'id' => $room->id,
+                    'name' => $room->name,
+                    'type' => $room->type ?? 'Salle',
+                    'occupancy' => $estimatedOccupancy . '%',
+                    'status' => $occupied ? 'occupied' : 'empty',
+                    'temp' => 'N/A',
+                    'energy' => $occupied ? 'Medium' : 'Low',
+                    'alert' => null,
+                ];
+            });
+
+        $occupants = $rooms->reduce(function (int $carry, array $room) {
+            return $carry + ($room['status'] === 'occupied' ? max(1, (int) rtrim($room['occupancy'], '%')) : 0);
+        }, 0);
+
         return response()->json([
             'success' => true,
             'data' => [
-                'energy' => '450 kWh',
-                'occupants' => 1240,
-                'rooms' => [
-                    ['id' => 1, 'name' => 'Amphi Al Khwarizmi', 'type' => 'Amphi', 'occupancy' => '85%', 'status' => 'occupy', 'temp' => '22°C', 'energy' => 'High'],
-                    ['id' => 2, 'name' => 'Amphi Ibn Sina', 'type' => 'Amphi', 'occupancy' => '0%', 'status' => 'empty', 'temp' => '19°C', 'energy' => 'Low'],
-                    ['id' => 3, 'name' => 'Labo Informatique 3', 'type' => 'Lab', 'occupancy' => '100%', 'status' => 'occupy', 'temp' => '24°C', 'energy' => 'High', 'alert' => 'Projecteur défectueux'],
-                    ['id' => 4, 'name' => 'Salle B12', 'type' => 'TD', 'occupancy' => '40%', 'status' => 'occupy', 'temp' => '21°C', 'energy' => 'Medium'],
-                    ['id' => 5, 'name' => 'Bibliothèque Centrale', 'type' => 'Commun', 'occupancy' => '60%', 'status' => 'occupy', 'temp' => '20°C', 'energy' => 'Medium'],
-                ]
-            ]
+                'energy' => $rooms->where('status', 'occupied')->count() . ' salles actives',
+                'occupants' => $occupants,
+                'rooms' => $rooms->values(),
+            ],
         ]);
     }
 }

@@ -12,7 +12,7 @@ class StudentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_students');
+        return $user->hasPermissionTo('students.view');
     }
 
     /**
@@ -30,7 +30,7 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('view_students');
+        return $user->hasPermissionTo('students.view');
     }
 
     /**
@@ -38,7 +38,7 @@ class StudentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('manage_students');
+        return $user->hasPermissionTo('students.create');
     }
 
     /**
@@ -50,7 +50,7 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('manage_students');
+        return $user->hasPermissionTo('students.edit');
     }
 
     /**
@@ -62,6 +62,6 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('manage_students');
+        return $user->hasPermissionTo('students.delete');
     }
 }

@@ -473,15 +473,10 @@ class StudentCardController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'card_number' => $card->card_number,
-                'academic_year' => $card->academic_year,
+                'valid' => true,
                 'student_name' => $card->student->name,
-                'photo_url' => $card->photo_url ? asset('storage/'.$card->photo_url) : null,
-                'cne' => $studentProfile?->cne ?? 'N/A',
-                'cin' => $card->student->cin ?? 'N/A',
                 'institution' => $card->student->institution->name ?? 'ENCG Fès',
                 'status' => 'Valide',
-                'verified_at' => now()->toIso8601String(),
             ],
         ]);
     }

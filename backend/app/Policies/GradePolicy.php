@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Grade;
-use Illuminate\Auth\Access\Response;
 
 class GradePolicy
 {
@@ -13,7 +12,7 @@ class GradePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_grades');
+        return $user->hasPermissionTo('grades.view');
     }
 
     /**
@@ -25,7 +24,7 @@ class GradePolicy
             return $user->student->id === $grade->student_id;
         }
 
-        return $user->hasPermissionTo('view_grades');
+        return $user->hasPermissionTo('grades.view');
     }
 
     /**
@@ -33,7 +32,7 @@ class GradePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('enter_grades');
+        return $user->hasPermissionTo('grades.enter');
     }
 
     /**
@@ -47,7 +46,7 @@ class GradePolicy
         }
 
         // Only authorized personnel can enter/edit grades
-        return $user->hasPermissionTo('enter_grades');
+        return $user->hasPermissionTo('grades.edit');
     }
 
     /**
@@ -55,6 +54,6 @@ class GradePolicy
      */
     public function delete(User $user, Grade $grade): bool
     {
-        return $user->hasPermissionTo('manage_grades');
+        return $user->hasPermissionTo('grades.delete');
     }
 }

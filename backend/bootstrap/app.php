@@ -21,8 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     require base_path('routes/api/professor.php');
                     require base_path('routes/api/shared.php');
                     require base_path('routes/api/admin.php');
-                    // Load testing-only routes when running tests
-                    if (env('APP_ENV') === 'testing') {
+                    // Load testing-only routes only in the testing environment
+                    if (app()->environment('testing')) {
                         require base_path('routes/testing.php');
                     }
                 });

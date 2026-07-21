@@ -3,24 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
+use App\Models\Grade;
 use App\Models\Module;
+use App\Models\Student;
 use App\Services\Academic\DeliberationEngine;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DeliberationController extends Controller
 {
-    protected DeliberationEngine $engine;
-
-    public function __construct(DeliberationEngine $engine)
+    public function __construct(protected DeliberationEngine $engine)
     {
-        $this->engine = $engine;
     }
 
-    /**
-     * Liste toutes les sessions de délibération.
-     */
     public function index(): JsonResponse
     {
         $deliberations = \App\Models\Deliberation::with(['semester', 'filiere', 'academicYear'])->get();
@@ -44,16 +39,12 @@ class DeliberationController extends Controller
         return response()->json(['data' => $formatted]);
     }
 
-    /**
-     * Exécute le calcul de la moyenne pour un semestre et une session donnés.
-     */
     public function run(Request $request): JsonResponse
     {
         $semesterId = $request->query('semester', 1);
         $sessionType = $request->query('session', 'normale');
-
         $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
-        
+
         $results = [
             'total_students' => 0,
             'admitted' => 0,
@@ -61,7 +52,6 @@ class DeliberationController extends Controller
             'ajourne' => 0,
         ];
 
-        // Fetch students enrolled in this semester
         $students = Student::has('registrations')->get();
 
         foreach ($students as $student) {
@@ -73,7 +63,7 @@ class DeliberationController extends Controller
 
             foreach ($modules as $module) {
                 $moduleResult = $this->engine->calculateModuleResult($student, $module);
-                
+
                 if ($moduleResult['status'] === 'NV') {
                     $isAjourne = true;
                 } elseif ($moduleResult['status'] === 'RAT') {
@@ -88,7 +78,6 @@ class DeliberationController extends Controller
             $semesterAverage = $totalWeights > 0 ? ($totalWeightedScore / $totalWeights) : 0;
 
             if ($isAjourne) {
-                // Eliminatory mark -> ajourne or rattrapage
                 if ($sessionType === 'normale') {
                     $results['rattrapage']++;
                 } else {
@@ -110,8 +99,45 @@ class DeliberationController extends Controller
             'data' => [
                 'stats' => $results,
                 'semester_id' => $semesterId,
-                'session' => $sessionType
-            ]
+                'session' => $sessionType,
+            ],
+        ]);
+    }
+
+    public function getStudentTranscript(Request $request): JsonResponse
+    {
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        $grades = Grade::with(['assessment.module'])
+            ->where('student_id', $student->id)
+            ->get();
+
+        $rows = $grades
+            ->groupBy(fn (Grade $grade) => $grade->assessment?->module?->id ?? 'unknown')
+            ->map(function ($moduleGrades, $moduleId) {
+                $module = $moduleGrades->first()?->assessment?->module;
+                $average = round((float) $moduleGrades->avg('value'), 2);
+
+                return [
+                    'module_id' => is_numeric($moduleId) ? (int) $moduleId : null,
+                    'module_name' => $module?->name ?? 'Module',
+                    'coefficient' => (float) ($module?->coefficient ?? 1),
+                    'result' => [
+                        'average' => $average,
+                        'status' => $average >= 10 ? 'V' : 'RAT',
+                        'missing_grades' => false,
+                    ],
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'rows' => $rows,
+                'subtitle' => 'Résultats délibérés publiés',
+            ],
         ]);
     }
 }

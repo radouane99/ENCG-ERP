@@ -2,47 +2,42 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Grade;
 use App\Models\AbsenceJustification;
+use App\Models\Attendance;
+use App\Models\Grade;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentPortalService
 {
     /**
-     * Get validated and published grades for the student.
-     * APOGEE Rule: Students only see grades when explicitly published/unlocked by admin/jury.
+     * Get published grades for the student.
      */
     public function getGrades(int $studentId): Collection
     {
-        return Grade::with(['gradeComponent.module', 'examSession'])
+        return Grade::with(['assessment.module'])
             ->where('student_id', $studentId)
-            ->whereHas('examSession', function ($q) {
-                // Assuming 'is_locked' = true means the grades are locked and published.
-                // In some systems, another field like 'is_published' might be used.
-                $q->where('is_locked', true);
-            })
             ->get();
     }
 
     /**
-     * Get student schedule. 
+     * Get student schedule.
      */
     public function getSchedule(int $studentId): Collection
     {
-        // Find current active pathway group
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
             ->where('is_current', true)
             ->first();
 
-        if (!$pathway || !$pathway->group_id) {
+        if (! $pathway || ! $pathway->group_id) {
             return collect([]);
         }
 
         return DB::table('schedules')
             ->join('modules', 'schedules.module_id', '=', 'modules.id')
-            ->join('rooms', 'schedules.room_id', '=', 'rooms.id')
+            ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
             ->leftJoin('users', 'schedules.professor_id', '=', 'users.id')
             ->where('schedules.group_id', $pathway->group_id)
             ->where('schedules.is_active', true)
@@ -53,7 +48,7 @@ class StudentPortalService
                 'modules.name as module',
                 'rooms.name as room',
                 'schedules.session_type as type',
-                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as professor")
+                DB::raw("CONCAT(COALESCE(users.first_name, ''), ' ', COALESCE(users.last_name, '')) as professor")
             )
             ->orderBy('schedules.day_of_week')
             ->orderBy('schedules.start_time')
@@ -63,99 +58,85 @@ class StudentPortalService
     /**
      * Submit a medical certificate or other justification for an absence.
      */
-    public function submitAbsenceJustification(array $data, $file): array
+    public function submitAbsenceJustification(array $data, ?UploadedFile $file, int $studentId): array
     {
-        $path = null;
-        if ($file) {
-            // Save file in public storage 'justifications' folder
-            $path = $file->store('justifications', 'public');
-        }
+        $attendance = Attendance::where('student_id', $studentId)
+            ->whereKey($data['attendance_id'])
+            ->firstOrFail();
 
-        // Create the justification record.
+        $path = $file ? $file->store('justifications', 'private') : null;
+
         $justification = AbsenceJustification::create([
-            'student_id' => $data['student_id'],
-            'attendance_id' => $data['attendance_id'],
+            'student_id' => $studentId,
+            'attendance_id' => $attendance->id,
             'reason' => $data['reason'],
             'description' => $data['description'] ?? null,
             'document_path' => $path,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         return [
             'success' => true,
             'message' => 'Justificatif soumis avec succès. En attente de validation.',
-            'data' => $justification
+            'data' => $justification,
         ];
     }
 
     /**
-     * Dashboard specific stats
+     * Dashboard specific stats.
      */
     public function getDashboardStats(int $studentId): array
     {
-        // Get un-justified absences
-        $absences = DB::table('attendance_records')
+        $absences = DB::table('attendances')
             ->where('student_id', $studentId)
             ->where('status', 'absent')
             ->count();
 
-        // Fetch grades to calculate GPA
         $grades = $this->getGrades($studentId);
         $gradesCount = $grades->count();
-        $gpa = 0;
-        if ($gradesCount > 0) {
-            $sum = 0;
-            foreach ($grades as $grade) {
-                $sum += $grade->value;
-            }
-            $gpa = round($sum / $gradesCount, 2);
-        } else {
-            $gpa = 0; // No grades published yet
-        }
+        $gpa = $gradesCount > 0 ? round((float) $grades->avg('value'), 2) : 0;
 
-        // Check if there are scheduled classes today
-        $dayOfWeek = now()->dayOfWeekIso; // 1 = Monday, 7 = Sunday
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
             ->where('is_current', true)
             ->first();
 
         $classesToday = 0;
+        $upcomingExams = 0;
+
         if ($pathway && $pathway->group_id) {
             $classesToday = DB::table('schedules')
                 ->where('group_id', $pathway->group_id)
-                ->where('day_of_week', $dayOfWeek)
+                ->where('day_of_week', now()->dayOfWeekIso)
                 ->where('is_active', true)
                 ->count();
-        }
 
-        // Real upcoming exams count
-        $upcomingExams = 0;
-        if ($pathway) {
-            $upcomingExams = DB::table('exam_sessions')
+            $upcomingExams = DB::table('exams')
                 ->where('group_id', $pathway->group_id)
-                ->where('date', '>=', now()->toDateString())
+                ->whereDate('exam_date', '>=', now()->toDateString())
                 ->count();
         }
 
-        // Recent approved documents
         $recentDocuments = DB::table('document_requests')
-            ->where('student_id', $studentId)
-            ->where('status', 'approved')
-            ->orderByDesc('created_at')
+            ->join('document_types', 'document_requests.document_type_id', '=', 'document_types.id')
+            ->where('document_requests.student_id', $studentId)
+            ->where('document_requests.status', 'ready')
+            ->orderByDesc('document_requests.created_at')
             ->limit(5)
-            ->get(['type as title', 'created_at as date'])
-            ->map(fn ($d) => ['title' => $d->title, 'date' => substr($d->date, 0, 10)])
+            ->get(['document_types.name as title', 'document_requests.created_at as date'])
+            ->map(fn ($document) => [
+                'title' => $document->title,
+                'date' => substr((string) $document->date, 0, 10),
+            ])
             ->toArray();
 
         return [
-            'absences'         => $absences,
+            'absences' => $absences,
             'published_grades' => $gradesCount,
-            'classes_today'    => $classesToday,
-            'gpa'              => $gpa,
-            'upcoming_exams'   => $upcomingExams,
+            'classes_today' => $classesToday,
+            'gpa' => $gpa,
+            'upcoming_exams' => $upcomingExams,
             'recent_documents' => $recentDocuments,
         ];
     }
 }
-

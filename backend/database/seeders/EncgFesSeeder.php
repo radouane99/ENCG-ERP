@@ -30,7 +30,9 @@ class EncgFesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::transaction(function () {
+        $initialPassword = Hash::make(env('INITIAL_USER_PASSWORD', Str::random(16)));
+
+        DB::transaction(function () use ($initialPassword) {
             // 1. Clear existing transactional and core data
             $this->clearDatabase();
 
@@ -454,7 +456,7 @@ class EncgFesSeeder extends Seeder
 
     private function seedProfessorsAndAdmins(Institution $institution, array $departments): array
     {
-        $password = Hash::make('password');
+        $password = Hash::make(env('INITIAL_USER_PASSWORD', Str::random(16)));
 
         // Admins
         $admin = User::create([
@@ -624,7 +626,7 @@ class EncgFesSeeder extends Seeder
         array $professors,
         array $rooms
     ): array {
-        $password = Hash::make('password');
+        $password = Hash::make(env('INITIAL_USER_PASSWORD', Str::random(16)));
 
         // Spring Sessions
         $ordinarySession = $sessions[0];

@@ -3,88 +3,122 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\Grade;
+use App\Models\MobilityPartner;
 use App\Models\Student;
+use App\Models\StudentMobilityChoice;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StudentMobilityController extends Controller
 {
-    /**
-     * Get the list of international partners available for mobility.
-     */
-    public function getPartners(): JsonResponse
+    public function getPartners(Request $request): JsonResponse
     {
-        $partners = [
-            ['id' => 1, 'name' => 'KEDGE Business School', 'country' => 'France', 'city' => 'Bordeaux', 'type' => 'Double Diplôme', 'slots' => 5, 'gpaRequired' => '14.00'],
-            ['id' => 2, 'name' => 'NEOMA Business School', 'country' => 'France', 'city' => 'Rouen', 'type' => 'Semestre d\'Échange', 'slots' => 8, 'gpaRequired' => '13.50'],
-            ['id' => 3, 'name' => 'Université Laval', 'country' => 'Canada', 'city' => 'Québec', 'type' => 'Semestre d\'Échange', 'slots' => 3, 'gpaRequired' => '14.50'],
-            ['id' => 4, 'name' => 'Kyung Hee University', 'country' => 'Corée du Sud', 'city' => 'Séoul', 'type' => 'Semestre d\'Échange', 'slots' => 2, 'gpaRequired' => '13.00'],
-        ];
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
 
-        $voeux = session('mobility_voeux', []);
+        $partners = MobilityPartner::where('is_active', true)
+            ->orderBy('country')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (MobilityPartner $partner) => [
+                'id' => $partner->id,
+                'name' => $partner->name,
+                'country' => $partner->country,
+                'city' => $partner->city,
+                'type' => $partner->program_type,
+                'slots' => $partner->slots,
+                'gpaRequired' => number_format((float) $partner->gpa_required, 2, '.', ''),
+            ]);
+
+        $voeux = StudentMobilityChoice::where('student_id', $student->id)
+            ->orderBy('choice_rank')
+            ->pluck('mobility_partner_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'partners' => $partners,
-                'voeux' => $voeux
-            ]
+                'voeux' => $voeux,
+            ],
         ]);
     }
 
-    /**
-     * Save the student's choices (voeux) for mobility.
-     */
     public function saveVoeux(Request $request): JsonResponse
     {
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
         $validated = $request->validate([
             'voeux' => 'required|array|max:3',
-            'voeux.*' => 'integer'
+            'voeux.*' => 'integer|distinct|exists:mobility_partners,id',
         ]);
 
-        session(['mobility_voeux' => $validated['voeux']]);
+        DB::transaction(function () use ($student, $validated) {
+            StudentMobilityChoice::where('student_id', $student->id)->delete();
+
+            foreach (array_values($validated['voeux']) as $index => $partnerId) {
+                StudentMobilityChoice::create([
+                    'student_id' => $student->id,
+                    'mobility_partner_id' => $partnerId,
+                    'choice_rank' => $index + 1,
+                ]);
+            }
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Vœux de mobilité enregistrés avec succès.',
-            'data' => $validated['voeux']
+            'data' => $validated['voeux'],
         ]);
     }
 
-    /**
-     * Meritocratic Ranking Algorithm for International Mobility.
-     * Score = (0.6 * GPA_S1_S6) + (0.2 * Language_Grade) + (0.2 * Interview_Grade)
-     */
     public function calculateMeritRanking(Request $request): JsonResponse
     {
-        $students = Student::with('user')->take(20)->get();
+        $students = Student::with('user')->take(50)->get();
 
-        $rankedStudents = $students->map(function ($s) {
-            $gpaS1S6 = rand(1200, 1750) / 100.0;
-            $languageScore = rand(1300, 1900) / 100.0;
-            $interviewScore = rand(1400, 1850) / 100.0;
+        $rankedStudents = $students->map(function (Student $student) {
+            $allGrades = Grade::where('student_id', $student->id)->get();
+            $languageGrades = Grade::where('student_id', $student->id)
+                ->whereHas('assessment.module', function ($query) {
+                    $query->where('name', 'like', '%anglais%')
+                        ->orWhere('name', 'like', '%français%')
+                        ->orWhere('name', 'like', '%communication%')
+                        ->orWhere('code', 'like', '%LANG%');
+                })
+                ->get();
 
-            // Official Formula: 60% Academic GPA + 20% Language/TOEIC + 20% Interview
+            $gpaS1S6 = round((float) ($allGrades->avg('value') ?? 0), 2);
+            $languageScore = round((float) ($languageGrades->avg('value') ?? 0), 2);
+            $interviewScore = 0.0;
             $meritScore = round((0.6 * $gpaS1S6) + (0.2 * $languageScore) + (0.2 * $interviewScore), 2);
 
+            $assignedPartner = MobilityPartner::where('is_active', true)
+                ->where('gpa_required', '<=', $gpaS1S6)
+                ->orderByDesc('gpa_required')
+                ->value('name');
+
             return [
-                'student_id' => $s->id,
-                'name' => ($s->user->first_name ?? 'Étudiant') . ' ' . ($s->user->last_name ?? ''),
-                'student_number' => $s->student_number ?? 'N/A',
+                'student_id' => $student->id,
+                'name' => trim(($student->user->first_name ?? '') . ' ' . ($student->user->last_name ?? '')),
+                'student_number' => $student->student_number ?? 'N/A',
                 'gpa_s1_s6' => $gpaS1S6,
                 'language_score' => $languageScore,
                 'interview_score' => $interviewScore,
                 'merit_score' => $meritScore,
-                'assigned_partner' => $meritScore >= 15.0 ? 'KEDGE Business School (France)' : ($meritScore >= 13.5 ? 'NEOMA Business School (France)' : 'Université Laval (Canada)'),
-                'status' => 'ADMISSIBLE'
+                'assigned_partner' => $assignedPartner,
+                'status' => $meritScore > 0 ? 'ADMISSIBLE' : 'EN_ATTENTE_DONNÉES',
             ];
         })->sortByDesc('merit_score')->values();
 
         return response()->json([
             'success' => true,
-            'message' => 'Classement méritocratique de mobilité internationale calculé par algorithme.',
+            'message' => 'Classement de mobilité calculé à partir des données disponibles en base.',
             'formula' => 'Score = (0.6 * GPA S1-S6) + (0.2 * Language/TOEIC) + (0.2 * Entretien)',
-            'data' => $rankedStudents
+            'data' => $rankedStudents,
         ]);
     }
 }

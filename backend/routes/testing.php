@@ -2,17 +2,21 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Testing-only routes. These are included only when APP_ENV=testing.
+if (! app()->environment('testing')) {
+    return;
+}
 
-Route::get('/test-doc', function() {
+Route::get('/test-doc', function () {
     $reqs = \App\Models\DocumentRequest::where('status', 'pending')->get();
+
     return response()->json($reqs);
 });
 
-Route::get('/seed-students', function() {
-    // Moved here to be executed only in testing environment via artisan or test runner.
+Route::get('/seed-students', function () {
     $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
-    if (!$academicYear) return response()->json(['error' => 'No current academic year.'], 400);
+    if (! $academicYear) {
+        return response()->json(['error' => 'No current academic year.'], 400);
+    }
 
     $filieres = \App\Models\Filiere::all();
     $students = \App\Models\Student::all();
@@ -33,7 +37,10 @@ Route::get('/seed-students', function() {
                 ]
             );
             for ($j = 0; $j < 10; $j++) {
-                if (!isset($students[$studentIndex])) break 3;
+                if (! isset($students[$studentIndex])) {
+                    break 3;
+                }
+
                 $student = $students[$studentIndex++];
                 \App\Models\StudentPathway::updateOrCreate(
                     ['student_id' => $student->id, 'academic_year_id' => $academicYear->id],
@@ -44,5 +51,6 @@ Route::get('/seed-students', function() {
         }
         $log[] = "Assigned {$assignedCount} students to {$filiere->name}.";
     }
+
     return response()->json(['log' => $log, 'total_assigned' => $studentIndex]);
 });

@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect, type ReactNode } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import AppShell from '@shared/components/layout/AppShell'
 import AuthLayout from '@shared/components/layout/AuthLayout'
@@ -203,7 +203,7 @@ const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminA
 const AdminGuichetDashboard = lazy(() => import('@features/guichet/ui/admin-dashboard/AdminGuichetDashboard'))
 
 // ── Route Guard ────────────────────────────────────────────────
-function RequireAuth({ children }: { children: React.ReactNode }) {
+function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore()
 
   if (isLoading) return <LoadingScreen />
@@ -211,22 +211,36 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function RequireGuest({ children }: { children: React.ReactNode }) {
+function RequireGuest({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
-function ProtectedRoute({ roles }: { roles: string[] }) {
+const ADMIN_ROLES = ['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director']
+
+function ProtectedRoute({ roles, children }: { roles: string[]; children?: ReactNode }) {
   const { isAuthenticated, user, isLoading } = useAuthStore()
 
   if (isLoading) return <LoadingScreen />
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  
-  const hasRole = roles.some(role => user?.roles?.includes(role))
+
+  const normalizeRole = (role: string) => role.toLowerCase().replace(/_/g, '-').trim()
+  const requestedRoles = roles.map(normalizeRole)
+  const userRoles = (user?.roles ?? []).map(normalizeRole)
+  const adminAliases = new Set(ADMIN_ROLES.map(normalizeRole))
+
+  const hasRole = requestedRoles.some((role) => {
+    if (userRoles.includes(role)) return true
+    if (adminAliases.has(role)) {
+      return userRoles.some((userRole: string) => adminAliases.has(userRole))
+    }
+    return false
+  })
+
   if (!hasRole) return <Navigate to="/dashboard" replace />
-  
-  return <Outlet />
+
+  return children ? <>{children}</> : <Outlet />
 }
 
 // ── App Component ──────────────────────────────────────────────
@@ -261,7 +275,7 @@ export default function RootRouter() {
         <Route path="/verify/pv/:moduleId/:groupId" element={<VerifyPv />} />
 
         {/* Printable Document Preview (No Sidebar) */}
-        <Route path="/admin/documents/preview/:type?" element={<RequireAuth><DocumentPreviewPage /></RequireAuth>} />
+        <Route path="/admin/documents/preview/:type?" element={<ProtectedRoute roles={ADMIN_ROLES}><DocumentPreviewPage /></ProtectedRoute>} />
 
         {/* ── Authenticated App Shell ───────────────────────── */}
         <Route element={<RequireAuth><AppShell /></RequireAuth>}>
@@ -283,14 +297,22 @@ export default function RootRouter() {
           <Route path="/hr/vacataires" element={<VacatairesManager />} />
 
           {/* Student Portal */}
-          <Route path="student/*" element={<StudentRouter />} />
+          <Route element={<ProtectedRoute roles={['student']} />}>
+            <Route path="student/*" element={<StudentRouter />} />
+          </Route>
 
           {/* Professor Portal */}
-          <Route path="professor/*" element={<ProfessorRouter />} />
+          <Route element={<ProtectedRoute roles={['professor']} />}>
+            <Route path="professor/*" element={<ProfessorRouter />} />
+          </Route>
 
           {/* Attendance */}
-          <Route path="/attendance/manage" element={<ProfessorAttendanceView />} />
-          <Route path="/attendance/scan" element={<QRScannerPage />} />
+          <Route element={<ProtectedRoute roles={['professor']} />}>
+            <Route path="/attendance/manage" element={<ProfessorAttendanceView />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={['student']} />}>
+            <Route path="/attendance/scan" element={<QRScannerPage />} />
+          </Route>
 
           {/* Vacataires */}
           <Route path="/vacataires" element={<VacatairesListPage />} />
@@ -387,70 +409,72 @@ export default function RootRouter() {
           <Route path="/faq" element={<FAQPage />} />
 
           {/* Administration */}
-          <Route path="/admin/activity-logs" element={<ActivityLogsPage />} />
-          <Route path="/admin/textbooks" element={<TextbooksPage />} />
-          <Route path="/admin/evaluations" element={<EvaluationsPage />} />
-          <Route path="/admin/clubs" element={<AdminClubsPage />} />
-          <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
-          <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
-          <Route path="/admin/club-finance" element={<AdminClubFinancePage />} />
-          <Route path="/admin/tafem" element={<AdminTafem />} />
-          <Route path="/admin/mobility" element={<AdminMobility />} />
-          <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
-          <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
-          <Route path="/admin/workflow-builder" element={<AdminWorkflowBuilder />} />
-          <Route path="/admin/exam-locking" element={<ExamLockingPage />} />
-          <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
-          <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
-          <Route path="/admin/users" element={<StaffProfessorsPage />} />
-          <Route path="/admin/users/create" element={<AddUserPage />} />
-          <Route path="/admin/users/:id/edit" element={<EditUserPage />} />
-          <Route path="/admin/users/:id" element={<ViewUserPage />} />
-          <Route path="/admin/students" element={<AdminStudentsPage />} />
-          <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
-          <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
-          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
-          <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
-          <Route path="/admin/reservations" element={<ReservationsPage />} />
-          <Route path="/admin/reservations/create" element={<ReservationCreatePage />} />
-          <Route path="/admin/reservations/:id/edit" element={<ReservationEditPage />} />
-          <Route path="/admin/students-credits" element={<StudentsCreditsPage />} />
-          <Route path="/admin/students-credits/:id/manage" element={<ManageStudentCreditPage />} />
-          <Route path="/admin/grades" element={<AdminGradesPage />} />
-          <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
-          <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
-          <Route path="/admin/absences" element={<AdminAbsencesPage />} />
-          <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
-          <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
-          <Route path="/admin/requests" element={<AdminRequestsPage />} />
-          <Route path="/admin/messages" element={<AdminMessagesPage />} />
-          <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
-          <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
-          <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
-          <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
-          <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
-          <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
-          <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
-          <Route path="/admin/tafem" element={<AdminTafem />} />
-          <Route path="/admin/mobility" element={<AdminMobility />} />
-          <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
-          <Route path="/admin/alumni" element={<AlumniNetwork />} />
-          <Route path="/admin/pilotage" element={<PilotagePage />} />
-          <Route path="/admin/exams" element={<AdminExamsPage />} />
-          <Route path="/admin/exams/:id/edit" element={<AdminExamEditPage />} />
-          <Route path="/admin/exams/:id/display-list" element={<AdminExamDisplayListPage />} />
-          <Route path="/admin/exams/:id/attendance-sheet" element={<AdminExamAttendanceSheetPage />} />
-          <Route path="/admin/exams/:id/live-attendance" element={<AdminExamLiveAttendancePage />} />
-          <Route path="/admin/exams/:id/live-attendance/report" element={<AdminExamLiveAttendanceReportPage />} />
-          <Route path="/admin/retake" element={<AdminRetakePage />} />
-          <Route path="/admin/convocations" element={<AdminConvocationsPage />} />
-          <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
-          <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
-          <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />
-          <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
-          <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
-          <Route path="/admin/guichet" element={<AdminGuichetDashboard />} />
+          <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
+            <Route path="/admin/activity-logs" element={<ActivityLogsPage />} />
+            <Route path="/admin/textbooks" element={<TextbooksPage />} />
+            <Route path="/admin/evaluations" element={<EvaluationsPage />} />
+            <Route path="/admin/clubs" element={<AdminClubsPage />} />
+            <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
+            <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
+            <Route path="/admin/club-finance" element={<AdminClubFinancePage />} />
+            <Route path="/admin/tafem" element={<AdminTafem />} />
+            <Route path="/admin/mobility" element={<AdminMobility />} />
+            <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
+            <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
+            <Route path="/admin/workflow-builder" element={<AdminWorkflowBuilder />} />
+            <Route path="/admin/exam-locking" element={<ExamLockingPage />} />
+            <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
+            <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
+            <Route path="/admin/users" element={<StaffProfessorsPage />} />
+            <Route path="/admin/users/create" element={<AddUserPage />} />
+            <Route path="/admin/users/:id/edit" element={<EditUserPage />} />
+            <Route path="/admin/users/:id" element={<ViewUserPage />} />
+            <Route path="/admin/students" element={<AdminStudentsPage />} />
+            <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
+            <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
+            <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
+            <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
+            <Route path="/admin/reservations" element={<ReservationsPage />} />
+            <Route path="/admin/reservations/create" element={<ReservationCreatePage />} />
+            <Route path="/admin/reservations/:id/edit" element={<ReservationEditPage />} />
+            <Route path="/admin/students-credits" element={<StudentsCreditsPage />} />
+            <Route path="/admin/students-credits/:id/manage" element={<ManageStudentCreditPage />} />
+            <Route path="/admin/grades" element={<AdminGradesPage />} />
+            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
+            <Route path="/admin/absences" element={<AdminAbsencesPage />} />
+            <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
+            <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
+            <Route path="/admin/requests" element={<AdminRequestsPage />} />
+            <Route path="/admin/messages" element={<AdminMessagesPage />} />
+            <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+            <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
+            <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
+            <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
+            <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
+            <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
+            <Route path="/admin/tafem" element={<AdminTafem />} />
+            <Route path="/admin/mobility" element={<AdminMobility />} />
+            <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
+            <Route path="/admin/alumni" element={<AlumniNetwork />} />
+            <Route path="/admin/pilotage" element={<PilotagePage />} />
+            <Route path="/admin/exams" element={<AdminExamsPage />} />
+            <Route path="/admin/exams/:id/edit" element={<AdminExamEditPage />} />
+            <Route path="/admin/exams/:id/display-list" element={<AdminExamDisplayListPage />} />
+            <Route path="/admin/exams/:id/attendance-sheet" element={<AdminExamAttendanceSheetPage />} />
+            <Route path="/admin/exams/:id/live-attendance" element={<AdminExamLiveAttendancePage />} />
+            <Route path="/admin/exams/:id/live-attendance/report" element={<AdminExamLiveAttendanceReportPage />} />
+            <Route path="/admin/retake" element={<AdminRetakePage />} />
+            <Route path="/admin/convocations" element={<AdminConvocationsPage />} />
+            <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
+            <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
+            <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />
+            <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
+            <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
+            <Route path="/admin/guichet" element={<AdminGuichetDashboard />} />
+          </Route>
           <Route path="/classroom" element={<ClassroomPage />} />
           <Route path="/classroom/show/:classId/:groupId" element={<ClassroomShowPage />} />
         </Route>

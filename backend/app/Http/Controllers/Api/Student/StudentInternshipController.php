@@ -18,7 +18,10 @@ class StudentInternshipController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $internships = Internship::where('student_id', $request->user()->id)
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        $internships = Internship::where('student_id', $student->id)
             ->with(['internshipDocuments'])
             ->get();
 
@@ -27,9 +30,12 @@ class StudentInternshipController extends Controller
 
     public function store(ApplyInternshipRequest $request): JsonResponse
     {
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
         $internship = $this->internshipService->submitApplication(
             $request->validated(),
-            $request->user()->id
+            $student->id
         );
 
         return response()->json([

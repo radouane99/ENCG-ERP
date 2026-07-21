@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Public Documents & Cards Verification
-Route::get('/documents/verify/{documentId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyDocument']);
+Route::get('/documents/verify/{documentId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyDocument'])->name('document.verify');
 Route::get('/verify/pv/{moduleId}/{groupId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [\App\Http\Controllers\Api\StudentCardController::class, 'verify']);
 

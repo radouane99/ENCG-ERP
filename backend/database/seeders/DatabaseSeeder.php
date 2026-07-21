@@ -19,12 +19,11 @@ class DatabaseSeeder extends Seeder
 
         DB::transaction(function () {
             $this->call([
-                RbacSeeder::class,           // Roles and Permissions
-                EncgFesSeeder::class,        // Infrastructure, Academic Core, Users, Grades, Cards
+                RbacSeeder::class,
+                EncgFesSeeder::class,
+                MobilityPartnerSeeder::class,
             ]);
 
-            // Re-run RbacSeeder to recreate default users (admin@encg-fes.ma, etc.) after EncgFesSeeder's cleanup wiped them.
-            // This also ensures they are correctly linked to the newly created Institution.
             $rbacSeeder = new RbacSeeder();
             $rbacSeeder->run();
         });

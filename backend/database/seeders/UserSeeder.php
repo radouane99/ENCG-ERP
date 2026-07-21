@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Institution;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
@@ -16,7 +17,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create('fr_FR');
-        $password = Hash::make('password');
+        $password = Hash::make(env('INITIAL_USER_PASSWORD', Str::random(16)));
 
         // 1. ADMINS
         $adminUsers = [

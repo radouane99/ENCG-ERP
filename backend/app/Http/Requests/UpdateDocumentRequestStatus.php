@@ -16,7 +16,8 @@ class UpdateDocumentRequestStatus extends FormRequest
         return [
             'status' => ['required', 'string', 'in:processing,ready,rejected'],
             'admin_notes' => ['nullable', 'array'],
-            'admin_notes.reason' => ['required_if:status,rejected', 'string'],
+            'admin_notes.reason' => ['nullable', 'string'],
+            'admin_notes.rejection_reason' => ['nullable', 'string'],
         ];
     }
 }

@@ -16,7 +16,7 @@ export default function StudentMobility() {
   const { data, isLoading } = useQuery({
     queryKey: ['mobility-data'],
     queryFn: async () => {
-      const res = await api.get('/student-portal/mobility/partners');
+      const res = await api.get('/v1/student-portal/mobility/partners');
       const apiData = res.data.data;
       setLocalVoeux(apiData.voeux || []);
       return apiData;
@@ -25,7 +25,7 @@ export default function StudentMobility() {
 
   const saveVoeuxMutation = useMutation({
     mutationFn: async (voeuxToSave: number[]) => {
-      return api.post('/student-portal/mobility/voeux', { voeux: voeuxToSave });
+      return api.post('/v1/student-portal/mobility/voeux', { voeux: voeuxToSave });
     },
     onSuccess: () => {
       toast.success("Vos vœux ont été enregistrés avec succès.");
@@ -157,7 +157,7 @@ export default function StudentMobility() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {localVoeux.map((id, idx) => {
+                  {localVoeux.map((id: number, idx: number) => {
                     const p = partners.find((x: any) => x.id === id);
                     if (!p) return null;
                     return (

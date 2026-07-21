@@ -3,47 +3,79 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\DocumentRequest;
 use App\Http\Requests\StoreDocumentRequest;
+use App\Models\DocumentRequest;
 use App\Services\DocumentRequestService;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 class StudentDocumentRequestController extends Controller
 {
-    protected $documentRequestService;
-
-    public function __construct(DocumentRequestService $documentRequestService)
+    public function __construct(private DocumentRequestService $documentRequestService)
     {
-        $this->documentRequestService = $documentRequestService;
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
-        $requests = DocumentRequest::with('template')
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        return response()->json($requests);
+        $student = request()->user()?->student;
+
+        if (! $student) {
+            return response()->json(['message' => 'Profil étudiant introuvable.'], 403);
+        }
+
+        $requests = DocumentRequest::with(['student.user', 'documentType'])
+            ->where('student_id', $student->id)
+            ->latest()
+            ->get()
+            ->map(function (DocumentRequest $request) {
+                $generatedDocument = $this->documentRequestService->getGeneratedDocument($request);
+
+                return [
+                    'id' => $request->id,
+                    'status' => $request->status,
+                    'requested_at' => $request->requested_at,
+                    'processed_at' => $request->processed_at,
+                    'document_type' => $request->documentType?->name,
+                    'document_type_id' => $request->document_type_id,
+                    'download_url' => $generatedDocument ? url("/api/v1/student-portal/document-requests/{$request->id}/download") : null,
+                    'admin_notes' => $request->admin_notes,
+                ];
+            });
+
+        return response()->json(['data' => $requests]);
     }
 
-    public function store(StoreDocumentRequest $request)
+    public function store(StoreDocumentRequest $request): JsonResponse
     {
-        $documentRequest = $this->documentRequestService->createRequest($request->validated());
-        return response()->json($documentRequest, 201);
+        $student = $request->user()?->student;
+
+        if (! $student) {
+            return response()->json(['message' => 'Profil étudiant introuvable.'], 403);
+        }
+
+        $documentRequest = $this->documentRequestService->createRequest($student, $request->validated());
+
+        return response()->json(['data' => $documentRequest], 201);
     }
 
-    public function download($id)
+    public function download(int $id)
     {
-        $documentRequest = DocumentRequest::where('user_id', Auth::id())->findOrFail($id);
-        
-        $file = $documentRequest->additional_data['generated_file'] ?? null;
-        
-        if (!$file || !Storage::disk('public')->exists($file)) {
+        $student = request()->user()?->student;
+
+        if (! $student) {
+            return response()->json(['message' => 'Profil étudiant introuvable.'], 403);
+        }
+
+        $documentRequest = DocumentRequest::where('student_id', $student->id)->findOrFail($id);
+        $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+
+        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
             return response()->json(['message' => 'Document not ready or not found'], 404);
         }
-        
-        return Storage::disk('public')->download($file);
+
+        return Storage::disk('private')->download(
+            $generatedDocument->file_path,
+            basename($generatedDocument->file_path)
+        );
     }
 }
