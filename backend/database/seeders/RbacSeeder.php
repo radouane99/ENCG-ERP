@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\Institution;
@@ -308,7 +309,7 @@ class RbacSeeder extends Seeder
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 array_merge($userData, [
-                    'password'          => Hash::make('Password@123'),
+                    'password'          => env('DEFAULT_SEEDED_USER_PASSWORD') ? Hash::make(env('DEFAULT_SEEDED_USER_PASSWORD')) : Hash::make(Str::random(24)),
                     'email_verified_at' => now(),
                     'is_active'         => true,
                 ])

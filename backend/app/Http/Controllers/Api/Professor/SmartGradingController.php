@@ -17,46 +17,18 @@ class SmartGradingController extends Controller
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // max 10MB
         ]);
 
-        // SIMULATION: In a real environment, we would send the file to an AI service (e.g. Gemini/OpenAI Vision)
-        // Here we simulate a processing delay of 2 seconds
-        sleep(2);
-
-        // Generate some simulated grading data
-        $simulatedData = [
-            'total_score' => 14.5,
-            'max_score' => 20,
-            'confidence' => 0.94,
-            'student_id' => '2023001',
-            'annotations' => [
-                [
-                    'box' => ['x' => 120, 'y' => 300, 'w' => 500, 'h' => 150],
-                    'score' => 3.5,
-                    'max_score' => 4,
-                    'feedback' => 'Good explanation, but missed one detail.',
-                    'type' => 'text_answer'
-                ],
-                [
-                    'box' => ['x' => 120, 'y' => 500, 'w' => 500, 'h' => 100],
-                    'score' => 5.0,
-                    'max_score' => 5,
-                    'feedback' => 'Perfect calculation.',
-                    'type' => 'math_equation'
-                ],
-                [
-                    'box' => ['x' => 120, 'y' => 650, 'w' => 500, 'h' => 80],
-                    'score' => 6.0,
-                    'max_score' => 11,
-                    'feedback' => 'Partial answer.',
-                    'type' => 'text_answer'
-                ]
-            ]
-        ];
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Analyse terminée',
-            'data' => $simulatedData
-        ]);
+        // In production, processing must be performed by a dedicated grading service.
+        // This endpoint only accepts the file and enqueues a job to process it.
+        try {
+            $job = \App\Jobs\ProcessExamScan::dispatch($request->file('file'), $request->user()?->id ?? null);
+            return response()->json([
+                'success' => true,
+                'message' => 'Fichier reçu; traitement en file d\'attente',
+                'job_id' => $job->getJobId() ?? null
+            ], 202);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Erreur lors de l\'enregistrement du job'], 500);
+        }
     }
 
     /**
@@ -70,12 +42,20 @@ class SmartGradingController extends Controller
             'assessment_id' => 'nullable|integer'
         ]);
 
-        // Here we would normally save to the `grades` table
-        // For the sake of the demo, we just return success
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Note synchronisée avec succès vers Apogée'
+        // Validate student exists and permission
+        $student = \App\Models\Student::where('student_number', $validated['student_id'])->first();
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => 'Étudiant introuvable'], 404);
+        }
+
+        // Persist grade record
+        $grade = \App\Models\Grade::create([
+            'student_id' => $student->id,
+            'score' => $validated['score'],
+            'assessment_id' => $validated['assessment_id'] ?? null,
+            'entered_by' => $request->user()?->id,
         ]);
+
+        return response()->json(['success' => true, 'message' => 'Note enregistrée', 'grade_id' => $grade->id]);
     }
 }
