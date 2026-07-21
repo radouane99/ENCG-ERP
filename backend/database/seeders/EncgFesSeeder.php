@@ -543,7 +543,18 @@ class EncgFesSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        return [$ordinary, $retake];
+        $autonome = ExamSession::create([
+            'institution_id' => $institution->id,
+            'academic_year_id' => $academicYear->id,
+            'semester_id' => $semester->id,
+            'name' => 'Session Autonome Printemps',
+            'type' => 'autonome',
+            'start_date' => '2025-07-01',
+            'end_date' => '2025-07-15',
+            'is_active' => true,
+        ]);
+
+        return [$ordinary, $retake, $autonome];
     }
 
     private function assignProfessorsToModules(AcademicYear $academicYear, array $filieres, array $professors): void
