@@ -17,7 +17,16 @@ export default function AcademicYearSettingsPage() {
 
   const [newYearLabel, setNewYearLabel] = useState('')
   const [newYearIsCurrent, setNewYearIsCurrent] = useState(false)
-  const [sessionDates, setSessionDates] = useState<Record<number, {start_date: string, end_date: string}>>({})
+  const [sessionDates, setSessionDates] = useState<Record<number, {name: string, type: string, start_date: string, end_date: string}>>({})
+  const [showNewSessionForm, setShowNewSessionForm] = useState(false)
+  const [newSessionForm, setNewSessionForm] = useState({
+    name: '',
+    type: '',
+    start_date: '',
+    end_date: '',
+    academic_year_id: '',
+    semester_id: ''
+  })
 
   // Queries
   const { data: departmentsData } = useQuery({
@@ -65,6 +74,8 @@ export default function AcademicYearSettingsPage() {
       const dates: any = {}
       examSessions.forEach((s: any) => {
         dates[s.id] = {
+          name: s.name || '',
+          type: s.type || '',
           start_date: s.start_date || '',
           end_date: s.end_date || ''
         }
@@ -109,11 +120,29 @@ export default function AcademicYearSettingsPage() {
   })
 
   const updateSessionMutation = useMutation({
-    mutationFn: (data: {id: number, start_date: string, end_date: string}) => 
-      academicApi.updateExamSession(data.id, { start_date: data.start_date, end_date: data.end_date }),
+    mutationFn: (data: {id: number, name: string, type: string, start_date: string, end_date: string}) => 
+      academicApi.updateExamSession(data.id, { name: data.name, type: data.type, start_date: data.start_date, end_date: data.end_date }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exam-sessions'] })
     }
+  })
+
+  const createSessionMutation = useMutation({
+    mutationFn: (data: any) => academicApi.createExamSession(data),
+    onSuccess: () => {
+      toast.success('Session ajoutée avec succès')
+      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] })
+    },
+    onError: () => toast.error('Erreur lors de l\'ajout')
+  })
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: (id: number) => academicApi.deleteExamSession(id),
+    onSuccess: () => {
+      toast.success('Session supprimée')
+      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] })
+    },
+    onError: () => toast.error('Erreur lors de la suppression')
   })
 
   const handleSaveSessions = async () => {

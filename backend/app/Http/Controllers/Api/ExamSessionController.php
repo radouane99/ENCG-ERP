@@ -49,7 +49,7 @@ class ExamSessionController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:normal,rattrapage,derogation',
+            'type' => 'required|string|max:50',
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'semester_id' => 'nullable|exists:semesters,id',
             'start_date' => 'nullable|date',
@@ -75,7 +75,7 @@ class ExamSessionController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|required|in:normal,rattrapage,derogation',
+            'type' => 'sometimes|required|string|max:50',
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'semester_id' => 'nullable|exists:semesters,id',
             'start_date' => 'nullable|date',

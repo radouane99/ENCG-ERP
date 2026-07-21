@@ -69,8 +69,16 @@ export const academicApi = {
     const response = await api.get('/exam-sessions');
     return response.data.data;
   },
+  createExamSession: async (data: any) => {
+    const response = await api.post('/exam-sessions', data);
+    return response.data;
+  },
   updateExamSession: async (id: number, data: any) => {
     const response = await api.put(`/exam-sessions/${id}`, data);
+    return response.data;
+  },
+  deleteExamSession: async (id: number) => {
+    const response = await api.delete(`/exam-sessions/${id}`);
     return response.data;
   }
 };
