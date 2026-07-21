@@ -110,7 +110,6 @@ const ClubsPage = lazy(() => import('@features/clubs/pages/ClubsPage'))
 
 const ClassroomsPage = lazy(() => import('@features/infrastructure/pages/ClassroomsPage'))
 const TimetableAdminView = lazy(() => import('@features/academic/pages/TimetableAdminView'))
-const ExamPlanningManager = lazy(() => import('@features/academic/pages/ExamPlanningManager'))
 const ExamLivePresence = lazy(() => import('@features/academic/pages/ExamLivePresence'))
 const ExamDisplayList = lazy(() => import('@features/academic/pages/ExamDisplayList'))
 const ExamAttendanceSheet = lazy(() => import('@features/academic/pages/ExamAttendanceSheet'))
@@ -334,7 +333,6 @@ export default function RootRouter() {
           {/* Timetable & Exams */}
           <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/academic/timetable" element={<TimetableAdminView />} />
-          <Route path="/academic/exam-planning" element={<ExamPlanningManager />} />
           <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
           <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
