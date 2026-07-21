@@ -45,12 +45,18 @@ class StudentDocumentRequestController extends Controller
         return response()->json(['data' => $requests]);
     }
 
-    public function store(StoreDocumentRequest $request): JsonResponse
+    public function store(StoreDocumentRequest $request, \App\Services\AcademicCalendarService $calendarService): JsonResponse
     {
         $student = $request->user()?->student;
 
         if (! $student) {
             return response()->json(['message' => 'Profil étudiant introuvable.'], 403);
+        }
+
+        if (! $calendarService->isDocumentSubmissionOpen()) {
+            return response()->json([
+                'message' => 'La période de dépôt des justificatifs et documents est actuellement fermée selon le calendrier académique.'
+            ], 403);
         }
 
         $documentRequest = $this->documentRequestService->createRequest($student, $request->validated());

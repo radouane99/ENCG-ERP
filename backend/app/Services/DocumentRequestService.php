@@ -105,6 +105,8 @@ class DocumentRequestService
 
         $signatoryTitle = $request->admin_notes['signatory_title'] ?? null;
 
+        $watermarkText = sprintf("Généré le %s par le système centralisé ENCG ERP - Document Sécurisé", now()->format('d/m/Y H:i:s'));
+
         $data = [
             'student' => $student,
             'documentRequest' => $request,
@@ -113,6 +115,7 @@ class DocumentRequestService
             'qrBase64' => $qrBase64,
             'logoBase64' => $logoBase64,
             'signatoryTitle' => $signatoryTitle,
+            'watermark' => $watermarkText,
         ];
 
         if ($viewName === 'pdf.releve_notes') {

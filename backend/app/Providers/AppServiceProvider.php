@@ -32,5 +32,14 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $request) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Register Observers for Anti-Fraud Module
+        \App\Models\Grade::observe(\App\Observers\GradeObserver::class);
+        
+        // Register Listeners for Anti-Fraud Module
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \App\Listeners\LogSuccessfulLogin::class
+        );
     }
 }

@@ -12,6 +12,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::get('/students/{student}/dossier', [\App\Http\Controllers\Api\UnifiedStudentRecordController::class, 'show']);
+
+    Route::prefix('calendar')->group(function () {
+        Route::get('/events', [\App\Http\Controllers\Api\AcademicCalendarController::class, 'events']);
+        Route::get('/status', [\App\Http\Controllers\Api\AcademicCalendarController::class, 'status']);
+    });
+
     Route::get('/server-time', function () {
         return response()->json([
             'server_time_utc' => now()->timezone('UTC')->toDateTimeString(),
