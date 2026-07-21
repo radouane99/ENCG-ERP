@@ -50,7 +50,7 @@ return new class extends Migration
         // 2. FINAL PURGE
 
         // A. ai_chat_messages
-        DB::statement('DROP TABLE IF EXISTS "ai_chat_messages" CASCADE');
+        // DB::statement('DROP TABLE IF EXISTS "ai_chat_messages" CASCADE');
 
         // B. alumni_surveys — migrate to academic_projects then drop
         if (Schema::hasTable('alumni_surveys') && Schema::hasTable('academic_projects')) {
