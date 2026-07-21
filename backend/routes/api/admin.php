@@ -72,7 +72,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->prefix('admin')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
