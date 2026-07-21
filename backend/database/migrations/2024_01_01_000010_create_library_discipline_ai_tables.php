@@ -138,7 +138,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title')->nullable();
             $table->string('type');                         // tutor, admin_assistant, qcm_generator
-            $table->string('driver')->default('stub');     // stub, gemini
+            $table->string('driver')->default('gemini');     // stub, gemini
             $table->json('messages');                       // [{role, content, timestamp}]
             $table->integer('token_count')->default(0);
             $table->timestamps();
@@ -154,7 +154,7 @@ return new class extends Migration
             $table->foreignId('module_id')->nullable()->constrained()->nullOnDelete();
             $table->string('prompt')->nullable();
             $table->longText('content');
-            $table->string('driver')->default('stub');
+            $table->string('driver')->default('gemini');
             $table->boolean('is_saved')->default(false);
             $table->timestamps();
         });

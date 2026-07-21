@@ -14,6 +14,10 @@ class GeminiAiDriver implements AiDriverInterface
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY', ''));
+
+        if (empty(trim($this->apiKey))) {
+            throw new \InvalidArgumentException('GEMINI_API_KEY is not configured. Set GEMINI_API_KEY in your .env file.');
+        }
     }
 
     public function generate(string $prompt, array $context = []): string

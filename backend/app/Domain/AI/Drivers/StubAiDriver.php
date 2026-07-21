@@ -14,7 +14,7 @@ class StubAiDriver implements AiServiceInterface
 {
     public function chat(string $prompt, array $history = [], array $context = []): string
     {
-        return "[Stub AI] Placeholder response for prompt: {$prompt}. Configure Gemini AI by setting AI_DRIVER=gemini and GEMINI_API_KEY in .env.";
+        return "[Stub AI] Local stub response for prompt: {$prompt}. Configure Gemini AI by setting AI_DRIVER=gemini and GEMINI_API_KEY in .env.";
     }
 
     public function generateMCQ(string $topic, string $level = 'intermediate', int $count = 10): array
@@ -22,7 +22,7 @@ class StubAiDriver implements AiServiceInterface
         $questions = [];
         for ($i = 1; $i <= $count; $i++) {
             $questions[] = [
-                'question'    => "Placeholder question {$i} for topic: {$topic}",
+                'question'    => "Stub question {$i} for topic: {$topic}",
                 'options'     => [
                     'A' => 'Option A',
                     'B' => 'Option B',
@@ -39,7 +39,7 @@ class StubAiDriver implements AiServiceInterface
     public function summarize(string $content, string $language = 'fr'): string
     {
         $wordCount = str_word_count($content);
-        return "Placeholder summary generated for {$wordCount} words. Configure Gemini AI in production for a real summary.";
+        return "Local stub summary generated for {$wordCount} words. Configure Gemini AI in production for a real summary.";
     }
 
     public function predictStudentRisk(array $studentData): array

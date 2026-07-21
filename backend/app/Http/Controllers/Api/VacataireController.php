@@ -276,8 +276,7 @@ class VacataireController extends Controller
         $verificationUrl = url("/verify-contract/{$contract->id}");
         $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verificationUrl));
 
-        // Use base64 for the logo if we have one, otherwise ignore or use placeholder
-        // Normally, we'd use public_path('images/logo.png') but base64 is safer for DOMPDF
+        // Use base64 for the logo if available; this avoids file path issues with DOMPDF.
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.vacation_contract', [
             'professor' => $professor,

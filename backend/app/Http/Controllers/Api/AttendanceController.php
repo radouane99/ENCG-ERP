@@ -18,7 +18,6 @@ class AttendanceController extends Controller
 
     public function store(\App\Http\Requests\StartAttendanceSessionRequest $request): JsonResponse
     {
-        // This is a placeholder since the plan says store method is added and StartAttendanceSessionRequest already exists
         return response()->json(['message' => 'Not implemented yet'], 501);
     }
 

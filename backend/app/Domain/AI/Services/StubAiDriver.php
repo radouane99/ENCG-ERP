@@ -8,12 +8,12 @@ class StubAiDriver implements AiDriverInterface
 {
     public function generate(string $prompt, array $context = []): string
     {
-        return "Placeholder AI response for prompt: '{$prompt}'. Configure a production AI driver by setting AI_DRIVER=gemini in .env.";
+        return "Local stub AI response for prompt: '{$prompt}'. Configure a production AI driver by setting AI_DRIVER=gemini in .env.";
     }
 
     public function chat(string $conversationId, string $message): string
     {
-        return "Placeholder chat response for message: '{$message}' in conversation: '{$conversationId}'.";
+        return "Local stub chat response for message: '{$message}' in conversation: '{$conversationId}'.";
     }
 
     public function predictRisk(array $data): array

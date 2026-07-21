@@ -29,7 +29,13 @@ class ModuleService
                 'semester' => 'S' . $module->semester_number,
                 'coefficient' => $module->coefficient,
                 'filiere' => $module->filiere ? $module->filiere->code : 'TC',
-                'professor' => 'Non assigné', // Placeholder pour la Phase 3
+                'professor' => DB::table('module_professor')
+                    ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                    ->join('users', 'professors.user_id', '=', 'users.id')
+                    ->where('module_professor.module_id', $module->id)
+                    ->orderByDesc('module_professor.id')
+                    ->value(DB::raw("CONCAT(users.first_name, ' ', users.last_name)"))
+                    ?? 'Non assigné',
                 'studentsCount' => DB::table('student_pathways')->where('filiere_id', $module->filiere_id)->where('is_current', true)->count(),
                 'active' => $module->is_active,
                 'filiere_id' => $module->filiere_id,

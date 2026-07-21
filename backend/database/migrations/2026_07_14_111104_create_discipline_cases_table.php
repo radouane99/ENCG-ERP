@@ -19,7 +19,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Re-create minimal stub for rollback safety
+        // Re-create minimal legacy schema for rollback safety
         Schema::create('discipline_cases', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained()->onDelete('cascade');
