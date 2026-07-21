@@ -27,7 +27,12 @@ class AnalyticsController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucune année académique en cours'], 404);
         }
 
-        $institutionId = $request->user()->institution_id ?? 1; // Assuming multi-tenant, fallback to 1
+        $user = $request->user();
+        if (!$user || !$user->institution_id) {
+            return response()->json(['success' => false, 'message' => 'Institution non définie pour l’utilisateur connecté.'], 400);
+        }
+
+        $institutionId = $user->institution_id;
         $academicYearId = $academicYear->id;
 
         try {

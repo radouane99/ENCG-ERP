@@ -52,9 +52,16 @@ class ExamAttendanceController extends Controller
              })->where('absent', false)->count();
         }
 
+        if ($totalStudents === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucun étudiant inscrit trouvé pour cet examen.'
+            ], 404);
+        }
+
         return response()->json([
             'data' => [
-                'total_students' => $totalStudents > 0 ? $totalStudents : 100, // fallback
+                'total_students' => $totalStudents,
                 'present' => $present,
             ]
         ]);

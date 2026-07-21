@@ -42,7 +42,10 @@ class DisciplineController extends Controller
             'severity'      => 'nullable|string|in:low,medium,high'
         ]);
 
-        $reporterId = auth()->id() ?? 1; // Fallback to 1 for demo purposes
+        $reporterId = auth()->id();
+        if (!$reporterId) {
+            return response()->json(['success' => false, 'message' => 'Utilisateur non authentifié.'], 403);
+        }
 
         $case = $this->affairsService->reportIncident($validated, $reporterId);
 

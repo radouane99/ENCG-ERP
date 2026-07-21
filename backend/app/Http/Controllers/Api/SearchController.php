@@ -14,7 +14,6 @@ class SearchController extends Controller
 {
     /**
      * Universal Search Endpoint.
-     * Currently mocked to search Users (Students/Professors).
      */
     public function search(Request $request): JsonResponse
     {

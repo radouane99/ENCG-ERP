@@ -27,7 +27,6 @@ class DashboardController extends Controller
 
     public function getExecutiveStats(Request $request): JsonResponse
     {
-        // For demonstration, returning the global metrics since it has similar KPIs
         $result = $this->analyticsService->getGlobalMetrics();
         return response()->json($result);
     }
