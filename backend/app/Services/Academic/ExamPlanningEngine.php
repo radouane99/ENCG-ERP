@@ -183,80 +183,98 @@ class ExamPlanningEngine
                 $isOddSemester = ($semesterNumber % 2 !== 0);
                 $startTime = $isOddSemester ? '09:00:00' : '14:00:00';
                 
-                foreach ($groups as $group) {
-                    $dateStr = $currentDate->format('Y-m-d');
-                    $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';
-                    $slotKey = $dateStr . '_' . $timeSlot;
+                $dateStr = $currentDate->format('Y-m-d');
+                $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';
+                $slotKey = $dateStr . '_' . $timeSlot;
 
-                    if (!isset($busyProfessors[$slotKey])) {
-                        $busyProfessors[$slotKey] = [];
-                    }
+                if (!isset($busyProfessors[$slotKey])) {
+                    $busyProfessors[$slotKey] = [];
+                }
 
-                    // Règle 2: Capacité de la salle basée sur le nombre exact d'étudiants
-                    $studentCount = DB::table('student_registrations')
-                        ->where('group_id', $group->id)
-                        ->where('academic_year_id', $session->academic_year_id)
-                        ->count();
-                        
-                    if ($studentCount == 0) $studentCount = 20; // Fallback pour les tests
+                // Traiter toute la filière comme un seul bloc (pas par groupe)
+                $students = DB::table('student_registrations')
+                    ->join('groups', 'student_registrations.group_id', '=', 'groups.id')
+                    ->where('groups.filiere_id', $filiereId)
+                    ->where('student_registrations.academic_year_id', $session->academic_year_id)
+                    ->select('student_registrations.student_id')
+                    ->get();
+                    
+                $studentCount = $students->count();
+                if ($studentCount == 0) $studentCount = 20; // Fallback
 
+                $unassignedCount = $studentCount;
+                $studentsList = $students->pluck('student_id')->toArray();
+                
+                // Si on utilise le fallback, on génère un tableau de fausses IDs pour boucler
+                if (empty($studentsList) && $studentCount > 0) {
+                    $studentsList = array_fill(0, $studentCount, null);
+                }
+
+                $availableRooms = clone $rooms;
+                $defaultGroupId = $groups->first()->id; // Requis par la DB
+
+                // Répartir les étudiants de la filière sur une ou plusieurs salles
+                while ($unassignedCount > 0 && $availableRooms->count() > 0) {
                     $assignedRoom = null;
-                    foreach ($rooms as $room) {
+                    foreach ($availableRooms as $key => $room) {
                         $examCapacity = floor($room->capacity / 2);
-                        if ($examCapacity >= $studentCount) {
+                        if ($examCapacity >= $unassignedCount) {
                             $assignedRoom = $room;
+                            $availableRooms->forget($key);
                             break;
                         }
                     }
-                    if (!$assignedRoom) $assignedRoom = $rooms->last(); // Plus grande salle dispo
 
-                    // Création de l'examen
+                    if (!$assignedRoom) {
+                        // Prendre la plus grande salle dispo si aucune n'est assez grande seule
+                        $assignedRoom = $availableRooms->last(); 
+                        $availableRooms->pop();
+                    }
+
+                    $examCapacity = floor($assignedRoom->capacity / 2);
+                    $studentsForThisRoom = array_splice($studentsList, 0, $examCapacity);
+                    $unassignedCount -= count($studentsForThisRoom);
+
+                    // Création de l'examen pour cette salle
                     $exam = Exam::create([
                         'module_id' => $module->id,
-                        'group_id' => $group->id,
+                        'group_id' => $defaultGroupId,
                         'exam_session_id' => $sessionId,
                         'room_id' => $assignedRoom->id,
                         'exam_date' => $dateStr,
                         'start_time' => $startTime,
-                        'duration_minutes' => 120, // 2 heures par défaut
+                        'duration_minutes' => 120,
                         'type' => 'final'
                     ]);
                     $examsCreated++;
 
-                    // Affectation des étudiants de ce groupe à cette salle
-                    $students = DB::table('student_registrations')
-                        ->join('students', 'student_registrations.student_id', '=', 'students.id')
-                        ->where('student_registrations.group_id', $group->id)
-                        ->where('student_registrations.academic_year_id', $session->academic_year_id)
-                        ->select('students.id')
-                        ->get();
-
+                    // Affectation des étudiants à cette salle
                     $seatings = [];
                     $seat = 1;
-                    foreach ($students as $student) {
-                        $seatings[] = [
-                            'exam_id' => $exam->id,
-                            'student_id' => $student->id,
-                            'room_id' => $assignedRoom->id,
-                            'seat_number' => $seat++,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ];
+                    foreach ($studentsForThisRoom as $studentId) {
+                        if ($studentId !== null) {
+                            $seatings[] = [
+                                'exam_id' => $exam->id,
+                                'student_id' => $studentId,
+                                'room_id' => $assignedRoom->id,
+                                'seat_number' => $seat++,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ];
+                        }
                     }
                     if (!empty($seatings)) {
                         DB::table('exam_seatings')->insert($seatings);
                     }
 
-                    // Règle 3 & 4: Affectation intelligente de la surveillance (Disponibilité)
-                    // 1 Professeur responsable (Président)
+                    // Affectation intelligente de la surveillance
                     $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
                     if ($availablePresidents->isEmpty()) {
-                        // Si tous sont occupés, on fait un fallback sur la liste complète (cas de manque d'effectif)
                         $availablePresidents = $professors;
                     }
                     
                     $president = $availablePresidents->random();
-                    $busyProfessors[$slotKey][] = $president->id; // Mark as busy
+                    $busyProfessors[$slotKey][] = $president->id;
 
                     DB::table('exam_surveillances')->insert([
                         'exam_id' => $exam->id,
@@ -267,8 +285,6 @@ class ExamPlanningEngine
                         'updated_at' => now()
                     ]);
 
-                    // Nombre de vacataires selon la taille de la salle (> 40 capacité examen = grande)
-                    $examCapacity = floor($assignedRoom->capacity / 2);
                     $numVacataires = $examCapacity >= 40 ? 2 : 1; 
 
                     if ($vacataires->isNotEmpty()) {
@@ -287,7 +303,7 @@ class ExamPlanningEngine
                                     'created_at' => now(),
                                     'updated_at' => now()
                                 ]);
-                                $busyProfessors[$slotKey][] = $vacataire->id; // Mark as busy
+                                $busyProfessors[$slotKey][] = $vacataire->id;
                             }
                         }
                     }
