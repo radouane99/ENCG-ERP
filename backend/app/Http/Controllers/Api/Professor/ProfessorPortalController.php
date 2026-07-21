@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Professor;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProfessorPortalController extends Controller
 {
@@ -56,23 +57,37 @@ class ProfessorPortalController extends Controller
             ->limit(5)
             ->get();
 
-        $formattedAtRisk = $atRisk->map(function($student) {
+        $formattedAtRisk = $atRisk->map(function ($student) {
             return [
                 'name' => $student->first_name . ' ' . $student->last_name,
                 'issue' => "Absent {$student->absences} fois",
                 'risk' => $student->absences > 3 ? 'high' : 'medium',
-                'absences' => $student->absences
+                'absences' => $student->absences,
             ];
         });
 
-        // Mock overall completion rate for demo since we don't track course completion
-        $completionRate = 78;
-        $avgTime = 42;
+        $attendanceSummary = DB::table('attendance_records')
+            ->join('attendance_sessions', 'attendance_records.attendance_session_id', '=', 'attendance_sessions.id')
+            ->where('attendance_sessions.professor_id', $professorId)
+            ->selectRaw('count(*) as total, sum(case when attendance_records.status = ? then 1 else 0 end) as present', ['present'])
+            ->first();
+
+        $completionRate = null;
+        if ($attendanceSummary?->total > 0) {
+            $completionRate = (int) round(($attendanceSummary->present / $attendanceSummary->total) * 100);
+        }
+
+        $avgTime = DB::table('schedules')
+            ->where('professor_id', $professorId)
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avg_minutes')
+            ->value('avg_minutes');
 
         return response()->json([
             'atRiskStudents' => $formattedAtRisk,
             'completionRate' => $completionRate,
-            'avgTime' => $avgTime
+            'avgTime' => $avgTime !== null ? (int) round($avgTime) : null,
         ]);
     }
 }

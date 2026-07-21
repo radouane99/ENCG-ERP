@@ -36,7 +36,11 @@ class DocumentCenterController extends Controller
 
     public function downloadDocument(Request $request, string $type, int $id)
     {
-        $token = $request->query('token', Str::random(16));
+        $token = $request->query('token');
+        if (!$token) {
+            abort(400, 'Token de téléchargement manquant.');
+        }
+
         $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/doc/{$token}";
         $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
 
@@ -140,27 +144,18 @@ class DocumentCenterController extends Controller
                     'last_name' => $student->user->last_name,
                     'cne' => $student->cne_cme ?? $student->student_number,
                     'student_number' => $student->student_number,
-                    'latestPathway' => $student->latestPathway
+                    'latestPathway' => $student->latestPathway,
                 ] : $student,
                 'year' => $year,
                 'date' => $date,
                 'company' => 'Entreprise Partenaire ENCG',
                 'qrBase64' => $qrBase64,
-                'logoBase64' => $logoBase64
+                'logoBase64' => $logoBase64,
             ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
 
             return $pdf->download("Convention_Stage_{$student->id}.pdf");
         }
 
-        // Fallback generic report
-        $pdf = Pdf::loadView('pdf.generic_report', [
-            'title' => strtoupper(str_replace('_', ' ', $type)),
-            'content' => "Document officiel type {$type} délivré par l'ENCG Fès.",
-            'date' => $date,
-            'qrBase64' => $qrBase64,
-            'logoBase64' => $logoBase64
-        ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
-
-        return $pdf->download("Document_{$type}_{$id}.pdf");
+        abort(404, 'Type de document non pris en charge.');
     }
 }

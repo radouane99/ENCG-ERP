@@ -13,8 +13,6 @@ class AdmissionService
      */
     public function getApplicationsForCampaign(int $campaignId): Collection
     {
-        // Mock implementation assuming Application model exists and relates to campaign.
-        // Eager load related user or candidate details to avoid N+1
         return Application::where('campaign_id', $campaignId)
             // ->with('candidate') // Assuming candidate relationship exists
             ->latest()

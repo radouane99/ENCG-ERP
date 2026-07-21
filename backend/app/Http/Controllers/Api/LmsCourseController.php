@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Module;
+use App\Models\AcademicYear;
 use App\Models\LearningMaterial;
+use App\Models\Module;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -16,11 +18,26 @@ class LmsCourseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        // For demonstration/demo purposes, we'll fetch some modules.
-        // In a real app, this would be filtered by $user->student->filiere_id or $user->professor->module_ids
-        
-        $modules = Module::with(['filiere'])->take(10)->get();
+
+        $modules = Module::with(['filiere'])
+            ->when($user && $user->student, function ($query) use ($user) {
+                $filiereIds = $user->student->registrations()->pluck('filiere_id')->unique()->filter();
+                if ($filiereIds->isNotEmpty()) {
+                    $query->whereIn('filiere_id', $filiereIds);
+                }
+            })
+            ->when($user && $user->professor, function ($query) use ($user) {
+                $moduleIds = DB::table('module_professor')
+                    ->where('professor_id', $user->professor->id)
+                    ->pluck('module_id')
+                    ->toArray();
+
+                if (!empty($moduleIds)) {
+                    $query->whereIn('id', $moduleIds);
+                }
+            })
+            ->take(10)
+            ->get();
 
         $classes = $modules->map(function ($module) use ($user) {
             // Count pubs and supports
@@ -90,14 +107,16 @@ class LmsCourseController extends Controller
             $filePath = $request->file('file')->store('lms/materials', 'public');
         }
 
-        // We assume an active academic year exists. For demo, we just get the first one.
-        $academicYearId = \App\Models\AcademicYear::where('is_active', true)->first()->id ?? 1;
+        $academicYear = AcademicYear::where('is_active', true)->first();
+        if (!$academicYear) {
+            return response()->json(['success' => false, 'message' => 'Année académique active introuvable.'], 404);
+        }
 
         $material = LearningMaterial::create([
             'module_id' => $moduleId,
-            'academic_year_id' => $academicYearId,
+            'academic_year_id' => $academicYear->id,
             'professor_id' => $request->user()->id,
-            'professor_type' => \App\Models\User::class, // Poly relation
+            'professor_type' => \App\Models\User::class,
             'title' => $request->title,
             'description' => $request->description,
             'type' => $request->type,
