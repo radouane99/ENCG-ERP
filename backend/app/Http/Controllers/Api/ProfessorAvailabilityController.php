@@ -27,7 +27,7 @@ class ProfessorAvailabilityController extends Controller
 
         $data = $professors->map(function ($prof) use ($availabilities) {
             $avail = $availabilities->get($prof->id);
-            $departmentName = $prof->professor->department->name ?? 'Inconnu';
+            $departmentName = optional(optional($prof->professor)->department)->name ?? 'Inconnu';
             
             $days = [];
             if ($avail && $avail->availability_data) {
