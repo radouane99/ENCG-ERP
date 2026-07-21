@@ -123,46 +123,9 @@ class ExamPlanningController extends Controller
             'session_id' => 'required|integer',
         ]);
 
-        $session = \App\Models\ExamSession::findOrFail($validated['session_id']);
-        $modules = \App\Models\Module::where('filiere_id', $validated['filiere_id'])->get();
-        $rooms = \App\Models\Room::all();
+        $result = $this->engine->autoGenerateIntelligentBatch($validated['filiere_id'], $validated['session_id']);
 
-        if ($modules->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucun module trouvé pour cette filière.'], 400);
-        }
-        if ($rooms->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucune salle disponible.'], 400);
-        }
-
-        $startDate = \Carbon\Carbon::parse($session->start_date);
-        $endDate = \Carbon\Carbon::parse($session->end_date);
-        $totalDays = $startDate->diffInDays($endDate) + 1;
-
-        $currentDate = $startDate->copy();
-
-        foreach ($modules as $module) {
-            $groups = \App\Models\Group::where('filiere_id', $validated['filiere_id'])->get();
-
-            foreach ($groups as $group) {
-                \App\Models\Exam::create([
-                    'exam_session_id' => $session->id,
-                    'module_id' => $module->id,
-                    'group_id' => $group->id,
-                    'room_id' => $rooms->random()->id,
-                    'exam_date' => $currentDate->format('Y-m-d'),
-                    'start_time' => '09:00:00',
-                    'duration_minutes' => 120,
-                    'type' => 'final',
-                ]);
-            }
-
-            $currentDate->addDay();
-            if ($currentDate->gt($endDate)) {
-                $currentDate = $startDate->copy();
-            }
-        }
-
-        return response()->json(['success' => true, 'message' => 'Les examens ont été générés avec succès.']);
+        return response()->json($result, $result['success'] ? 200 : 400);
     }
 
     /**
