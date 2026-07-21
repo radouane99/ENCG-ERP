@@ -31,6 +31,28 @@ export default function AdminExamAttendanceSheetPage() {
     return `${formatTime(start)} - ${formatTime(end)}`
   }
 
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('fiche-emargement');
+    const opt = {
+      margin:       10,
+      filename:     `fiche_emargement_${exam?.module?.name?.replace(/\s+/g, '_') || 'exam'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    if (!(window as any).html2pdf) {
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+      script.onload = () => {
+        (window as any).html2pdf().set(opt).from(element).save();
+      };
+      document.body.appendChild(script);
+    } else {
+      (window as any).html2pdf().set(opt).from(element).save();
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 p-8 pb-20 flex flex-col items-center font-sans">
       <div className="w-full max-w-[210mm] mb-6 flex justify-between items-center print:hidden">
@@ -38,15 +60,15 @@ export default function AdminExamAttendanceSheetPage() {
           <ArrowLeft className="w-4 h-4" /> Retour
         </Link>
         <button
-          onClick={() => window.print()}
+          onClick={handleDownloadPDF}
           className="h-10 px-6 rounded-xl bg-[#0f2863] hover:bg-[#1a387e] text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
-          <Printer className="w-4 h-4" /> Imprimer la Fiche
+          <Printer className="w-4 h-4" /> Télécharger en PDF
         </button>
       </div>
 
       {/* A4 Paper Container */}
-      <div className="bg-white w-[210mm] min-h-[297mm] shadow-lg p-12 print:shadow-none print:w-auto print:h-auto print:p-0 flex flex-col relative">
+      <div id="fiche-emargement" className="bg-white w-[210mm] min-h-[297mm] shadow-lg p-12 print:shadow-none print:w-auto print:h-auto print:p-0 flex flex-col relative">
 
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-[#0f2863] pb-6 mb-8">
