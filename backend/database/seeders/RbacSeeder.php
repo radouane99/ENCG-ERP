@@ -295,10 +295,12 @@ class RbacSeeder extends Seeder
             $role = $userData['role'];
             unset($userData['role']);
 
+            $seededPassword = env('INITIAL_USER_PASSWORD', env('DEFAULT_SEEDED_USER_PASSWORD'));
+
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 array_merge($userData, [
-                    'password'          => env('DEFAULT_SEEDED_USER_PASSWORD') ? Hash::make(env('DEFAULT_SEEDED_USER_PASSWORD')) : Hash::make(Str::random(24)),
+                    'password'          => $seededPassword ? Hash::make($seededPassword) : Hash::make(Str::random(24)),
                     'email_verified_at' => now(),
                     'is_active'         => true,
                 ])

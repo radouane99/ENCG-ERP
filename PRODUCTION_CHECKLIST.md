@@ -19,15 +19,16 @@ This document outlines the required steps, checks, and configurations before goi
 - [ ] Laravel Horizon is installed. `config/horizon.php` has appropriate worker counts (e.g., supervisor-1 configuration matches server capacity).
 - [ ] Horizon Daemon is managed by a process monitor (e.g., Supervisor) to keep `php artisan horizon` running continuously in the background.
 
-## 3. Deployment Script
-- [ ] `deploy.sh` is present in the repository root.
-- [ ] Execute `chmod +x deploy.sh` to make the deployment script executable.
-- [ ] Ensure the script runs:
+## 3. Deployment / Container Execution
+- [ ] `deploy.sh` is present in the repository root if you use the shell-based deployment path.
+- [ ] If you deploy with Docker Compose, confirm `docker-compose.prod.yml` is the source of truth and the production `.env` file is mounted correctly.
+- [ ] Ensure the deployment process runs:
   - `composer install --no-dev --optimize-autoloader`
   - `php artisan migrate --force`
   - `php artisan optimize`
-  - `php artisan horizon:terminate`
-  - Frontend asset compilation (`npm run build`)
+  - `php artisan horizon:terminate` or restarts the worker container cleanly
+  - Frontend asset compilation (`npm run build`) when frontend assets are built outside the runtime image
+- [ ] Verify the final production services are the expected ones: app, nginx, db, redis, worker.
 
 ## 4. File Permissions & Storage
 - [ ] Ensure the `storage` and `bootstrap/cache` directories are writable by the web server user (e.g., `www-data` or `nginx`).
@@ -45,10 +46,14 @@ This document outlines the required steps, checks, and configurations before goi
 
 ## 6. Critical Routes Audit (Manual Verification)
 Before announcing Go-Live, perform manual testing on the following critical paths:
-- [ ] **Authentication Flow:** Login, Logout, Social Auth (Google), Token refresh/expiration handling.
+- [ ] **Infrastructure Reachability:** `/api` responds through Nginx, `/up` returns healthy status, and static/storage links resolve correctly.
+- [ ] **Authentication Flow:** Login, logout, token/session expiry handling, and any enabled social auth flow.
 - [ ] **Role Management:** Admin can assign roles; restricted users cannot access admin routes (assert 403 Forbidden).
-- [ ] **File Uploads:** Test profile picture or document uploads to verify Spatie MediaLibrary paths and storage permissions.
-- [ ] **Queues:** Trigger an asynchronous job (like sending an email or generating a report) and verify it completes successfully in the Horizon Dashboard (`/horizon`).
+- [ ] **Administration Flow:** Dashboard stats, document generation, validation/review actions, and one export path.
+- [ ] **Professor Flow:** Timetable access, attendance session creation, attendance marking, and grade entry.
+- [ ] **Student Flow:** Dashboard access, transcript/notes access, document request, and absence justification submission.
+- [ ] **File Uploads:** Test profile picture or document uploads to verify media/storage permissions and private/public disk separation.
+- [ ] **Queues:** Trigger an asynchronous job (email, notification, report generation) and verify it completes successfully in Horizon or worker logs.
 
 ## 7. Stateless Architecture Check
 - [ ] Ensure no local session files or local cache files are being relied upon across scaled instances.
