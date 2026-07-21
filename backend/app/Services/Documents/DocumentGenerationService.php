@@ -23,15 +23,24 @@ class DocumentGenerationService
         // In a real app, this would point to the frontend verification route
         $verificationUrl = config('app.url') . "/verify-document/" . $verificationToken;
 
-        // Mock saving the document record (Assuming we don't have document_requests setup perfectly in mock, we insert directly)
+        // Ensure a corresponding document request exists
+        $docRequest = DB::table('document_requests')
+            ->where('student_id', $studentId)
+            ->where('document_type', $documentType)
+            ->first();
+
+        if (! $docRequest) {
+            throw new \Exception('Document request not found for this student and document type');
+        }
+
         $docId = DB::table('generated_documents')->insertGetId([
-            'document_request_id' => 1, // Mock request id
+            'document_request_id' => $docRequest->id,
             'file_path' => '/storage/documents/' . $verificationToken . '.pdf',
             'verification_token' => $verificationToken,
             'verification_url' => $verificationUrl,
             'expires_at' => now()->addYears(5),
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return [
@@ -66,13 +75,19 @@ class DocumentGenerationService
             ];
         }
 
-        // We would join with students to get real details, mocking for now
+        $docRequest = DB::table('document_requests')->where('id', $document->document_request_id)->first();
+
+        $studentInfo = null;
+        if ($docRequest) {
+            $studentInfo = DB::table('students')->where('id', $docRequest->student_id)->first();
+        }
+
         return [
             'is_valid' => true,
-            'document_type' => 'Certificat de Scolarité', // Mock
+            'document_type' => $docRequest->document_type ?? null,
             'issued_at' => $document->created_at,
-            'student_name' => 'John Doe', // Mock
-            'student_number' => '2023001' // Mock
+            'student_name' => $studentInfo ? ($studentInfo->first_name . ' ' . $studentInfo->last_name) : null,
+            'student_number' => $studentInfo->student_number ?? null,
         ];
     }
 }

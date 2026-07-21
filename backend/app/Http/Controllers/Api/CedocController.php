@@ -11,26 +11,41 @@ class CedocController extends Controller
 {
     public function getDashboardStats(Request $request): JsonResponse
     {
-        // Try to get student ID from auth, fallback to first student for demo purposes if not found
-        $studentId = $request->user()?->student?->id ?? \App\Models\Student::first()?->id ?? 1;
+        // Require an authenticated student
+        $student = $request->user()?->student;
+        if (! $student) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authenticated student required'
+            ], 401);
+        }
+        $studentId = $student->id;
 
         $publications = DB::table('research_publications')
             ->where('student_id', $studentId)
             ->get();
 
-        $vacations = DB::table('vacation_contracts')
-            ->where('professor_id', $studentId) // some vacations might be linked to student acting as prof
-            ->orWhere('id', '>', 0) // fallback to show something
-            ->limit(2)
-            ->get()->map(function($vac) {
-                return [
-                    'id' => $vac->id,
-                    'module' => 'Vacation Module ' . $vac->id,
-                    'hours' => $vac->total_hours ?? '20h',
-                    'date' => 'S1',
-                    'status' => $vac->status ?? 'COMPLETED'
-                ];
-            });
+        // If the authenticated user is a professor, fetch their vacation contracts; otherwise do not expose vacataire data
+        $authUser = $request->user();
+        $vacations = collect();
+
+        if ($authUser && method_exists($authUser, 'professor') && $authUser->professor) {
+            $professorId = $authUser->professor->id;
+            $vacations = DB::table('vacation_contracts')
+                ->where('professor_id', $professorId)
+                ->limit(2)
+                ->get()->map(function($vac) {
+                    return [
+                        'id' => $vac->id,
+                        'module' => $vac->module_name ?? null,
+                        'hours' => $vac->agreed_hours ?? null,
+                        'date' => $vac->contract_start ?? null,
+                        'status' => $vac->status ?? null
+                    ];
+                });
+        } else {
+            $vacations = collect();
+        }
 
         $thesis = DB::table('academic_projects')
             ->where('student_id', $studentId)
@@ -42,16 +57,16 @@ class CedocController extends Controller
             'data' => [
                 'publications' => $publications,
                 'vacations' => $vacations,
-                'thesis' => [
-                    'title' => $thesis->title ?? 'Thèse non assignée',
-                    'director' => $thesis->supervisor_name ?? 'Non assigné',
-                    'year' => 2,
-                    'progress' => $thesis->status === 'completed' ? 100 : 45,
-                    'next_deadline' => '15 Juin',
-                ],
+                'thesis' => $thesis ? [
+                    'title' => $thesis->title,
+                    'director' => $thesis->supervisor_name,
+                    'year' => $thesis->year ?? null,
+                    'progress' => $thesis->status === 'completed' ? 100 : null,
+                    'next_deadline' => $thesis->next_deadline ?? null,
+                ] : null,
                 'training' => [
-                    'completed_hours' => 120,
-                    'required_hours' => 200
+                    'completed_hours' => null,
+                    'required_hours' => null
                 ]
             ]
         ]);

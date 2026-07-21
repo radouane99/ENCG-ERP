@@ -61,7 +61,19 @@ class SmartSchedulingEngine
             // 2. Schedule generation (Heuristic Backtracking-lite)
             foreach ($groups as $group) {
                 foreach ($modules as $module) {
-                    $blocksNeeded = 2; // Fixed requirement for demo: 4 hours (2 blocks) per module per group
+                    // Determine blocks needed from assignment or module metadata (2-hour block unit)
+                    if (!empty($assignment->assigned_hours) && $assignment->assigned_hours > 0) {
+                        $totalHours = (int) $assignment->assigned_hours;
+                    } else {
+                        $totalHours = (($module->hours_cm ?? 0) + ($module->hours_td ?? 0) + ($module->hours_tp ?? 0));
+                    }
+
+                    if ($totalHours <= 0) {
+                        throw new \Exception("Module duration not configured for module id {$module->id}");
+                    }
+
+                    // Each TIME_BLOCKS entry is ~2 hours; compute blocks needed
+                    $blocksNeeded = (int) ceil($totalHours / 2);
 
                     $assignment = DB::table('module_professor')
                         ->where('module_id', $module->id)
