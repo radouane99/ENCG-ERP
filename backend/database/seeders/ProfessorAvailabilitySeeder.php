@@ -22,13 +22,19 @@ class ProfessorAvailabilitySeeder extends Seeder
             $q->whereIn('name', ['professor', 'department-head', 'vacataire', 'doctorant']);
         })->get();
 
+        $weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
         foreach ($professors as $prof) {
+            // Pick 2-4 random days for this professor
+            $numDays = rand(2, 4);
+            $selectedDays = (array) array_rand(array_flip($weekDays), $numDays);
+
             $status = ProfessorAvailability::updateOrCreate(
                 ['professor_id' => $prof->id, 'academic_year_id' => $academicYearId],
                 [
                     'status' => 'Soumise', 
                     'available_slots_count' => rand(5, 12),
-                    'availability_data' => json_encode(['mock' => true]),
+                    'availability_data' => json_encode($selectedDays),
                     'created_at' => now(),
                     'updated_at' => now()
                 ]

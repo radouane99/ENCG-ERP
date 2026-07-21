@@ -27,14 +27,27 @@ class ProfessorAvailabilityController extends Controller
 
         $data = $professors->map(function ($prof) use ($availabilities) {
             $avail = $availabilities->get($prof->id);
+            $departmentName = $prof->professor->department->name ?? 'Inconnu';
+            
+            $days = [];
+            if ($avail && $avail->availability_data) {
+                $days = json_decode($avail->availability_data, true) ?? [];
+                if (isset($days['mock'])) $days = ['Lundi', 'Mardi', 'Jeudi']; // Fallback for old seeder
+            }
+            
+            $creneauxText = $avail ? $avail->available_slots_count . ' créneaux' : '-';
+            if (!empty($days)) {
+                $creneauxText = implode(', ', $days) . ' (' . $creneauxText . ')';
+            }
+
             return [
                 'id' => $prof->id,
                 'nom' => $prof->name,
                 'email' => $prof->email,
-                'dept' => $prof->department->name ?? 'Inconnu',
+                'dept' => $departmentName,
                 'contrat' => 'Permanent',
                 'statut' => $avail ? $avail->status : 'Non envoyé',
-                'creneaux' => $avail ? $avail->available_slots_count . ' créneaux' : '-',
+                'creneaux' => $creneauxText,
                 'date' => $avail ? $avail->updated_at->format('d/m/Y H:i') : '-',
             ];
         });

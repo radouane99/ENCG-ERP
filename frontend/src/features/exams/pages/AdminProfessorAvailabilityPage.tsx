@@ -62,6 +62,7 @@ export default function AdminProfessorAvailabilityPage() {
       setSelectedProfs([...selectedProfs, id])
     }
   }
+  const [selectedProfDetails, setSelectedProfDetails] = useState<any>(null)
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-[1400px] mx-auto pb-20">
@@ -89,13 +90,13 @@ export default function AdminProfessorAvailabilityPage() {
             <Bell className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold">Disponibilités en attente</h3>
-            <p className="text-sm text-orange-100">{professeurs.filter(p => p.statut === 'Non envoyé').length} professeur(s) non notifié(s) et {professeurs.filter(p => p.statut === 'En attente').length} en attente de réponse.</p>
+            <h3 className="font-bold text-sm">Campagne de disponibilité en cours</h3>
+            <p className="text-xs text-orange-100 mt-0.5">La date limite de soumission est fixée au 15 Février 2026. 4 professeurs n'ont pas encore répondu.</p>
           </div>
         </div>
         <button 
           onClick={() => handleAlert(professeurs.filter(p => p.statut !== 'Soumise').map(p => p.id))}
-          className="bg-white text-orange-500 hover:bg-orange-50 px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-2"
+          className="bg-white text-orange-600 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-orange-50 transition-colors flex items-center gap-2"
         >
           <Bell className="w-3.5 h-3.5" /> Alerter tous les non-soumis
         </button>
@@ -159,7 +160,7 @@ export default function AdminProfessorAvailabilityPage() {
           <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-600">
             <input 
               type="checkbox" 
-              checked={selectedProfs.length === professeurs.length}
+              checked={selectedProfs.length > 0 && selectedProfs.length === professeurs.length}
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" 
             />
@@ -188,12 +189,13 @@ export default function AdminProfessorAvailabilityPage() {
               <th className="px-6 py-4 font-bold text-center">STATUT DISPONIBILITÉ</th>
               <th className="px-6 py-4 font-bold text-center">CRÉNEAUX DÉCLARÉS</th>
               <th className="px-6 py-4 font-bold">SOUMIS LE</th>
+              <th className="px-6 py-4 font-bold text-right">ACTIONS</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
+                <td colSpan={8} className="px-6 py-12 text-center">
                   <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
                 </td>
               </tr>
@@ -233,11 +235,86 @@ export default function AdminProfessorAvailabilityPage() {
                 </td>
                 <td className="px-6 py-4 text-center text-slate-800 font-bold">{prof.creneaux}</td>
                 <td className="px-6 py-4 text-xs text-slate-400">{prof.date}</td>
+                <td className="px-6 py-4 text-right">
+                  <button 
+                    onClick={() => setSelectedProfDetails(prof)}
+                    className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Détails
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Details Modal */}
+      {selectedProfDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Détails de Disponibilité</h2>
+                <p className="text-sm text-slate-500 mt-1">{selectedProfDetails.nom}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedProfDetails(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-sm text-slate-500 font-medium">Statut</span>
+                  {selectedProfDetails.statut === 'Soumise' ? (
+                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
+                      <CheckSquare className="w-3.5 h-3.5" /> Soumise
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold">
+                      <MailQuestion className="w-3.5 h-3.5" /> Non envoyé
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-sm text-slate-500 font-medium">Département</span>
+                  <span className="font-bold text-slate-800">{selectedProfDetails.dept}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-sm text-slate-500 font-medium">Dernière mise à jour</span>
+                  <span className="font-bold text-slate-800">{selectedProfDetails.date}</span>
+                </div>
+                
+                <div className="pt-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Créneaux sélectionnés</h3>
+                  {selectedProfDetails.statut === 'Soumise' ? (
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <p className="font-medium text-slate-700 leading-relaxed">
+                        {selectedProfDetails.creneaux}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 text-amber-700 text-sm">
+                      Aucune disponibilité soumise pour le moment.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+              <button 
+                onClick={() => setSelectedProfDetails(null)}
+                className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl text-sm hover:bg-slate-900 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )
