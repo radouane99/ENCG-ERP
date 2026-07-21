@@ -58,8 +58,10 @@ export const examsApi = {
     const response = await api.post('/exam-planning/auto-generate-batch', { session_id: sessionId, filiere_id: filiereId });
     return response.data;
   },
-  resetSession: async (sessionId: number, filiereId: number) => {
-    const response = await api.delete('/exam-planning/reset', { data: { session_id: sessionId, filiere_id: filiereId } });
+  resetSession: async (sessionId: number, filiereId?: number) => {
+    const data: any = { session_id: sessionId };
+    if (filiereId) data.filiere_id = filiereId;
+    const response = await api.delete('/exam-planning/reset', { data });
     return response.data;
   },
   sendSessionEmails: async (sessionId: number) => {

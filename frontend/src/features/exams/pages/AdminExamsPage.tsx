@@ -91,14 +91,18 @@ export default function AdminExamsPage() {
   }
 
   const handleReset = async () => {
-    if (!selectedSessionId || !selectedFiliereId) {
-      handleNotify("Veuillez sélectionner une filière et une session d'abord.", 'error');
+    if (!selectedSessionId) {
+      handleNotify("Veuillez sélectionner une session d'abord pour la remise à zéro.", 'error');
       return;
     }
-    if (!confirm("Voulez-vous vraiment effacer tous les examens et convocations pour cette filière et session ?")) return;
+    const message = selectedFiliereId 
+      ? "Voulez-vous vraiment effacer tous les examens et convocations pour CETTE filière et session ?"
+      : "ATTENTION : Voulez-vous vraiment effacer TOUS les examens et convocations pour TOUTES les filières de cette session ?";
+      
+    if (!confirm(message)) return;
     
     try {
-      const res = await examsApi.resetSession(Number(selectedSessionId), Number(selectedFiliereId));
+      const res = await examsApi.resetSession(Number(selectedSessionId), selectedFiliereId ? Number(selectedFiliereId) : undefined);
       handleNotify(res.message || 'Remise à zéro réussie', 'success');
       window.location.reload();
     } catch (error: any) {

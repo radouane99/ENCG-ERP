@@ -97,25 +97,32 @@ class ExamPlanningController extends Controller
     }
 
     /**
-     * Reset/Delete exams for a given filiere and session
+     * Reset/Delete exams for a given session (and optionally a filiere)
      */
     public function resetExams(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id' => 'required|integer',
+            'filiere_id' => 'nullable|integer',
             'session_id' => 'required|integer',
         ]);
 
-        $exams = \App\Models\Exam::where('exam_session_id', $validated['session_id'])
-            ->whereHas('module', function($q) use ($validated) {
+        $query = \App\Models\Exam::where('exam_session_id', $validated['session_id']);
+        
+        if (!empty($validated['filiere_id'])) {
+            $query->whereHas('module', function($q) use ($validated) {
                 $q->where('filiere_id', $validated['filiere_id']);
-            })->get();
-
-        foreach ($exams as $exam) {
-            $exam->delete(); // Cascades to convocations based on DB schema
+            });
         }
 
-        return response()->json(['success' => true, 'message' => 'Toutes les convocations et examens ont été supprimés avec succès.']);
+        $exams = $query->get();
+
+        foreach ($exams as $exam) {
+            \Illuminate\Support\Facades\DB::table('exam_seatings')->where('exam_id', $exam->id)->delete();
+            \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('exam_id', $exam->id)->delete();
+            $exam->delete();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Toutes les convocations et examens ciblés ont été supprimés avec succès.']);
     }
 
     /**

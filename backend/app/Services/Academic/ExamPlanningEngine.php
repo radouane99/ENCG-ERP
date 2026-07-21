@@ -254,14 +254,16 @@ class ExamPlanningEngine
                     $numVacataires = $examCapacity >= 40 ? 2 : 1; 
 
                     for ($i = 0; $i < $numVacataires; $i++) {
-                        DB::table('exam_surveillances')->insert([
-                            'exam_id' => $exam->id,
-                            'room_id' => $assignedRoom->id,
-                            'professor_id' => $vacataires->random()->id,
-                            'role' => 'surveillant',
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
+                        if ($vacataires->isNotEmpty()) {
+                            DB::table('exam_surveillances')->insert([
+                                'exam_id' => $exam->id,
+                                'room_id' => $assignedRoom->id,
+                                'professor_id' => $vacataires->random()->id,
+                                'role' => 'surveillant',
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
                     }
                 }
 
