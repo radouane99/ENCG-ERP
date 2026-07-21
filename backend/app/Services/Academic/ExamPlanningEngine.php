@@ -210,6 +210,30 @@ class ExamPlanningEngine
                     ]);
                     $examsCreated++;
 
+                    // Génération des Convocations Réelles (Seatings)
+                    $students = DB::table('student_registrations')
+                        ->join('students', 'student_registrations.student_id', '=', 'students.id')
+                        ->where('student_registrations.group_id', $group->id)
+                        ->where('student_registrations.academic_year_id', $session->academic_year_id)
+                        ->select('students.id')
+                        ->get();
+
+                    $seatings = [];
+                    $seat = 1;
+                    foreach ($students as $student) {
+                        $seatings[] = [
+                            'exam_id' => $exam->id,
+                            'student_id' => $student->id,
+                            'room_id' => $assignedRoom->id,
+                            'seat_number' => $seat++,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+                    }
+                    if (!empty($seatings)) {
+                        DB::table('exam_seatings')->insert($seatings);
+                    }
+
                     // Règle 3 & 4: Affectation intelligente de la surveillance
                     $dateStr = $currentDate->format('Y-m-d');
                     $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';

@@ -58,7 +58,8 @@ class ExamPlanningController extends Controller
         $filiereId = $request->query('filiere_id');
         $sessionId = $request->query('session_id');
 
-        $query = \App\Models\Exam::with(['module.filiere', 'group', 'room', 'examSession']);
+        $query = \App\Models\Exam::with(['module.filiere', 'group', 'room', 'examSession', 'surveillances.professor'])
+            ->withCount('seatings');
 
         if ($sessionId) {
             $query->where('exam_session_id', $sessionId);
@@ -71,6 +72,10 @@ class ExamPlanningController extends Controller
         }
 
         $exams = $query->orderBy('exam_date')->get()->map(function($e) {
+            $proctors = $e->surveillances->map(function($s) {
+                return $s->professor->last_name . ' ' . $s->professor->first_name;
+            })->toArray();
+
             return [
                 'id' => $e->id,
                 'module' => $e->module->name ?? 'N/A',
@@ -79,12 +84,12 @@ class ExamPlanningController extends Controller
                 'dayLabel' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->format('d') : '--',
                 'monthLabel' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->translatedFormat('M') : '---',
                 'dayName' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->translatedFormat('D') : '--',
-                'sessionLabel' => $e->examSession->type ?? 'Session',
+                'sessionLabel' => $e->examSession->name ?? 'Session',
                 'time' => $e->start_time ? substr($e->start_time, 0, 5) : null,
                 'duration' => $e->duration_minutes . ' min',
                 'room' => $e->room->name ?? 'À affecter',
-                'convocations_generated' => 0, // Mock for now or count from relationship
-                'proctors' => [] // Mock for now
+                'convocations_generated' => $e->seatings_count ?? 0,
+                'proctors' => $proctors
             ];
         });
 
