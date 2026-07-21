@@ -34,11 +34,11 @@ export default function AdminExamAttendanceSheetPage() {
   const handleDownloadPDF = () => {
     const element = document.getElementById('fiche-emargement');
     const opt = {
-      margin:       10,
-      filename:     `fiche_emargement_${exam?.module?.name?.replace(/\s+/g, '_') || 'exam'}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: 10,
+      filename: `fiche_emargement_${exam?.module?.name?.replace(/\s+/g, '_') || 'exam'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     if (!(window as any).html2pdf) {
@@ -75,15 +75,15 @@ export default function AdminExamAttendanceSheetPage() {
           <div className="flex items-center gap-6">
             <img src="/logo-encg.png" alt="Logo ENCG" className="h-16 object-contain" />
             <div>
-              <h1 className="text-lg font-black text-[#0f2863] uppercase tracking-wider">ECOLE NATIONALE DE COMMERCE ET DE GESTION</h1>
-              <p className="text-[10px] text-slate-500">Direction des Affaires Académiques - ENCG Fès</p>
+              <h2 className="text-xl font-bold text-[#0f2863] uppercase tracking-widest">FICHE D'ÉMARGEMENT</h2>
+              <p className="text-[10px] text-slate-500 mb-1">
+                Fiche d'émargement - {exam?.module?.name || 'N/A'} - {exam?.module?.filiere?.name || 'N/A'}
+              </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-slate-500 mb-1">
-              Fiche d'émargement - {exam?.module?.name || 'N/A'} - {exam?.module?.filiere?.name || 'N/A'}
-            </p>
-            <h2 className="text-xl font-bold text-[#0f2863] uppercase tracking-widest">FICHE D'ÉMARGEMENT</h2>
+            <img src="/logo-encg.png" alt="Logo ENCG" className="h-16 object-contain" />
+
           </div>
         </div>
 
