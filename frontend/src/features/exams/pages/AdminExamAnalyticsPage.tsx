@@ -5,7 +5,7 @@ import api from '@shared/lib/api'
 export default function AdminExamAnalyticsPage() {
   const { data: analyticsData } = useQuery({
     queryKey: ['admin-exam-analytics'],
-    queryFn: () => api.get('/admin/exams/analytics').then(res => res.data.data)
+    queryFn: () => api.get('/exams/analytics').then(res => res.data.data)
   })
 
   const { data: academicYears } = useQuery({

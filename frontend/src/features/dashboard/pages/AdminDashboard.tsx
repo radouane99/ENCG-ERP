@@ -190,7 +190,7 @@ const AdminDashboard: React.FC = () => {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['admin-dashboard-stats'],
     queryFn: async () => {
-      const res = await api.get('/admin/dashboard/stats');
+      const res = await api.get('/dashboard/stats');
       return res.data.data;
     }
   });

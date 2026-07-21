@@ -20,7 +20,7 @@ export default function AdminFinanceDashboard() {
   const { data: financeData, isLoading } = useQuery({
     queryKey: ['admin-finance-stats'],
     queryFn: async () => {
-      const res = await api.get('/admin/finance/stats');
+      const res = await api.get('/finance/stats');
       return res.data.data;
     }
   });
