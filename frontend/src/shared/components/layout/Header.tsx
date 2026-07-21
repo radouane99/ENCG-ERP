@@ -75,7 +75,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
           >
             <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center text-white text-xs font-bold shadow-inner">
             {user?.avatar_path ? (
-              <img src={`${import.meta.env.VITE_API_URL}/storage/${user.avatar_path}`} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={`${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${user.avatar_path}`} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               user?.name?.charAt(0).toUpperCase()
             )}

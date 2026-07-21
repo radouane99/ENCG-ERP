@@ -294,7 +294,7 @@ export default function ProfessorClassroom() {
                         <p className="text-sm text-gray-600 mb-3">{mat.description}</p>
                         {mat.file_path && (
                           <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${mat.file_path}`} 
+                            href={`${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${mat.file_path}`} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-[#0f2863] text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"

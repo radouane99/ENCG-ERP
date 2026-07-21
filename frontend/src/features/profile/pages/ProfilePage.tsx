@@ -22,7 +22,7 @@ export default function ProfilePage() {
   })
   
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    user?.avatar_path ? `${import.meta.env.VITE_API_URL}/storage/${user.avatar_path}` : null
+    user?.avatar_path ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${user.avatar_path}` : null
   )
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
 

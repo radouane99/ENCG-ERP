@@ -214,7 +214,7 @@ export default function ProfessorDashboard() {
                   </Link>
 
                   {stats.has_contract && stats.professor_id && (
-                    <a href={`http://localhost:8000/api/vacataires/${stats.professor_id}/pdf`} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 group hover:bg-amber-50 transition-colors cursor-pointer">
+                    <a href={`${(import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')}/vacataires/${stats.professor_id}/pdf`} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 group hover:bg-amber-50 transition-colors cursor-pointer">
                       <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <FileSignature className="w-5 h-5" />
                       </div>

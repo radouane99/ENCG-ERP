@@ -18,7 +18,7 @@ export interface CalendarEvent {
   };
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const fetchCalendarEvents = async (start: string, end: string): Promise<CalendarEvent[]> => {
   const token = localStorage.getItem('token');
