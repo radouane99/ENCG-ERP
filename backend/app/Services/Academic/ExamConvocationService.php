@@ -195,41 +195,15 @@ class ExamConvocationService
      */
     public function generateConvocations(int $examId): array
     {
-        $exam = Exam::with(['group.students', 'module', 'room'])->findOrFail($examId);
+        $exam = Exam::findOrFail($examId);
         
-        $students = collect();
-        if ($exam->group_id && $exam->group) {
-            $students = $exam->group->students;
-        } elseif ($exam->module && $exam->module->filiere_id) {
-            $students = \App\Models\Student::whereHas('pathways', function ($q) use ($exam) {
-                $q->where('filiere_id', $exam->module->filiere_id)
-                  ->where('is_current', true);
-            })->get();
-        }
+        $seatings = DB::table('exam_seatings')
+            ->where('exam_id', $exam->id)
+            ->get();
 
         $generatedCount = 0;
-        foreach ($students as $student) {
-            $seating = DB::table('exam_seatings')
-                ->where('exam_id', $exam->id)
-                ->where('student_id', $student->id)
-                ->first();
-
-            $roomId = $exam->room_id ?? $exam->room?->id;
-            if (!$roomId) {
-                throw new \InvalidArgumentException("Cannot generate convocation: exam {$exam->id} has no assigned room.");
-            }
-
-            if (!$seating) {
-                DB::table('exam_seatings')->insert([
-                    'exam_id' => $exam->id,
-                    'student_id' => $student->id,
-                    'room_id' => $roomId,
-                    'seat_number' => $generatedCount + 1,
-                    'qr_token' => Str::uuid()->toString(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } elseif (empty($seating->qr_token)) {
+        foreach ($seatings as $seating) {
+            if (empty($seating->qr_token)) {
                 DB::table('exam_seatings')
                     ->where('id', $seating->id)
                     ->update(['qr_token' => Str::uuid()->toString()]);
@@ -244,23 +218,14 @@ class ExamConvocationService
         ];
     }
 
-    /**
-     * Send emails to students
-     */
     public function sendEmails(int $examId): array
     {
-        $exam = Exam::with(['group.students.user', 'module', 'room'])->findOrFail($examId);
+        $exam = Exam::with(['module', 'room'])->findOrFail($examId);
         $seatings = DB::table('exam_seatings')->where('exam_id', $examId)->get()->keyBy('student_id');
 
-        $students = collect();
-        if ($exam->group_id && $exam->group) {
-            $students = $exam->group->students;
-        } elseif ($exam->module && $exam->module->filiere_id) {
-            $students = \App\Models\Student::with('user')->whereHas('pathways', function ($q) use ($exam) {
-                $q->where('filiere_id', $exam->module->filiere_id)
-                  ->where('is_current', true);
-            })->get();
-        }
+        $students = \App\Models\Student::with('user')
+            ->whereIn('id', $seatings->keys())
+            ->get();
 
         $sentCount = 0;
         foreach ($students as $student) {
