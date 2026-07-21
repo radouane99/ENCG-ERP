@@ -9,7 +9,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        // PostgreSQL requires CASCADE to drop tables with dependent foreign keys
+        // Schema::disableForeignKeyConstraints() doesn't work reliably with pgsql
 
         Schema::create('academic_projects', function (Blueprint $table) {
             $table->id();
@@ -82,10 +83,9 @@ return new class extends Migration
             }
         }
 
-        Schema::dropIfExists('internships');
-        Schema::dropIfExists('final_projects');
-
-        Schema::enableForeignKeyConstraints();
+        // Drop old tables with CASCADE to handle PostgreSQL foreign key dependencies
+        DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
     }
 
     public function down(): void

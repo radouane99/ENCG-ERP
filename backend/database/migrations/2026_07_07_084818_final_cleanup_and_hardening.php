@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,18 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
+        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
         // 1. REMOVE LEGACY TABLES
-        Schema::dropIfExists('project_supervisors');
-        Schema::dropIfExists('soutenances');
-        Schema::dropIfExists('final_projects');
-        Schema::dropIfExists('internships');
+        DB::statement('DROP TABLE IF EXISTS "project_supervisors" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "soutenances" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
 
         // 2. DATA CONSISTENCY CHECK
         // 'document_requests' uses 'student_id' as a foreign key pointing to 'students.id'.
         // It is already correctly configured as we checked the schema. We'll ensure it explicitly if not exists.
-        
+
         // 3. PERFORMANCE OPTIMIZATION
         // Add a composite index on 'attendance_records' for columns ('student_id', 'attendance_session_id', 'status')
         Schema::table('attendance_records', function (Blueprint $table) {
@@ -38,8 +38,6 @@ return new class extends Migration
                 $table->index(['student_id', 'attendance_session_id', 'status'], 'att_rec_stu_sess_stat_idx');
             }
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     /**

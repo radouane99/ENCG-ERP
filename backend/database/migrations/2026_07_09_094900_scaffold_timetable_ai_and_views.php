@@ -25,12 +25,12 @@ return new class extends Migration
         Schema::create('teacher_constraints', function (Blueprint $table) {
             $table->id();
             $table->foreignId('professor_id')->constrained()->cascadeOnDelete();
-            $table->enum('day_of_week', ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']);
+            $table->string('day_of_week'); // MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
             $table->time('start_time');
             $table->time('end_time');
-            $table->enum('constraint_type', ['PREFER_NOT', 'UNAVAILABLE'])->default('UNAVAILABLE');
+            $table->string('constraint_type')->default('UNAVAILABLE'); // PREFER_NOT, UNAVAILABLE
             $table->timestamps();
-            
+
             // A teacher can't have duplicate constraints for the exact same time
             $table->unique(['professor_id', 'day_of_week', 'start_time', 'end_time'], 'unique_teacher_constraint');
         });
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->string('equipment_type'); // e.g., 'PROJECTOR', 'COMPUTERS', 'SMARTBOARD'
             $table->integer('quantity')->default(1);
             $table->timestamps();
-            
+
             $table->unique(['room_id', 'equipment_type']);
         });
 
@@ -50,7 +50,7 @@ return new class extends Migration
             $table->foreignId('academic_year_id')->constrained()->cascadeOnDelete();
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
             $table->string('version_name'); // e.g., 'Draft v1', 'Published 2026'
-            $table->enum('status', ['DRAFT', 'PUBLISHED', 'ARCHIVED'])->default('DRAFT');
+            $table->string('status')->default('DRAFT'); // DRAFT, PUBLISHED, ARCHIVED
             $table->json('ai_metadata')->nullable(); // Store generation stats, fitness score, etc.
             $table->timestamps();
         });
@@ -60,14 +60,13 @@ return new class extends Migration
             $table->foreignId('schedule_version_id')->nullable()->constrained('schedule_versions')->nullOnDelete();
         });
 
-        // 3. Create SQL Views
-        // Note: student_full_profile_view unifies users and students
-        DB::statement("DROP VIEW IF EXISTS student_full_profile_view");
-        DB::statement("
+        // 3. Create SQL Views — PostgreSQL compatible syntax
+        DB::statement('DROP VIEW IF EXISTS student_full_profile_view');
+        DB::statement('
             CREATE VIEW student_full_profile_view AS
-            SELECT 
-                s.id as student_id,
-                u.id as user_id,
+            SELECT
+                s.id   AS student_id,
+                u.id   AS user_id,
                 u.first_name,
                 u.last_name,
                 u.email,
@@ -81,23 +80,26 @@ return new class extends Migration
                 u.updated_at
             FROM students s
             JOIN users u ON s.user_id = u.id
-        ");
+        ');
 
-        // Note: room_utilization_view tracks schedules per room
-        DB::statement("DROP VIEW IF EXISTS room_utilization_view");
-        DB::statement("
+        // PostgreSQL compatible: use EXTRACT(EPOCH) instead of TIME_TO_SEC/TIMEDIFF,
+        // and boolean literal (true) instead of integer (1).
+        DB::statement('DROP VIEW IF EXISTS room_utilization_view');
+        DB::statement('
             CREATE VIEW room_utilization_view AS
-            SELECT 
-                r.id as room_id,
-                r.name as room_name,
+            SELECT
+                r.id           AS room_id,
+                r.name         AS room_name,
                 r.capacity,
-                r.type as room_type,
-                COUNT(s.id) as scheduled_sessions,
-                SUM(TIME_TO_SEC(TIMEDIFF(s.end_time, s.start_time))/3600) as total_hours_booked
+                r.type         AS room_type,
+                COUNT(s.id)    AS scheduled_sessions,
+                COALESCE(SUM(
+                    EXTRACT(EPOCH FROM (s.end_time::time - s.start_time::time)) / 3600
+                ), 0)          AS total_hours_booked
             FROM rooms r
-            LEFT JOIN schedules s ON r.id = s.room_id AND s.is_active = 1
+            LEFT JOIN schedules s ON r.id = s.room_id AND s.is_active = true
             GROUP BY r.id, r.name, r.capacity, r.type
-        ");
+        ');
     }
 
     /**
@@ -105,17 +107,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP VIEW IF EXISTS student_full_profile_view");
-        DB::statement("DROP VIEW IF EXISTS room_utilization_view");
+        DB::statement('DROP VIEW IF EXISTS student_full_profile_view');
+        DB::statement('DROP VIEW IF EXISTS room_utilization_view');
 
         Schema::table('schedules', function (Blueprint $table) {
             $table->dropForeign(['schedule_version_id']);
             $table->dropColumn('schedule_version_id');
         });
 
-        Schema::dropIfExists('schedule_versions');
-        Schema::dropIfExists('room_equipments');
-        Schema::dropIfExists('teacher_constraints');
-        Schema::dropIfExists('holidays');
+        DB::statement('DROP TABLE IF EXISTS "schedule_versions" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "room_equipments" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "teacher_constraints" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "holidays" CASCADE');
     }
 };

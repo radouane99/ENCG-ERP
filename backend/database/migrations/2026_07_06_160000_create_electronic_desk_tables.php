@@ -2,17 +2,17 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('generated_documents');
-        Schema::dropIfExists('document_requests');
-        Schema::dropIfExists('document_templates');
-        Schema::enableForeignKeyConstraints();
+        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
+        DB::statement('DROP TABLE IF EXISTS "generated_documents" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "document_templates" CASCADE');
 
         Schema::create('document_types', function (Blueprint $table) {
             $table->id();
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('document_type_id')->constrained()->cascadeOnDelete();
-            $table->enum('status', ['pending', 'processing', 'ready', 'rejected'])->default('pending');
+            $table->string('status')->default('pending'); // pending, processing, ready, rejected
             $table->timestamp('requested_at')->useCurrent();
             $table->timestamp('processed_at')->nullable();
             $table->json('admin_notes')->nullable();
@@ -38,7 +38,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('document_requests');
-        Schema::dropIfExists('document_types');
+        DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "document_types" CASCADE');
     }
 };

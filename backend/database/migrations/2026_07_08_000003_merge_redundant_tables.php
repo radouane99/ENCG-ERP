@@ -56,7 +56,8 @@ return new class extends Migration
                 }
             }
             // Drop old table
-            Schema::dropIfExists('attendance_records');
+            // Drop old table (CASCADE required for PostgreSQL foreign key dependencies)
+            DB::statement('DROP TABLE IF EXISTS "attendance_records" CASCADE');
         }
 
         // 2. Professor Availabilities
@@ -99,7 +100,7 @@ return new class extends Migration
                     ]);
                 }
             }
-            Schema::dropIfExists('professor_availability');
+            DB::statement('DROP TABLE IF EXISTS "professor_availability" CASCADE');
         }
     }
 

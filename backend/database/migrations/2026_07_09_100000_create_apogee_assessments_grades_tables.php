@@ -2,17 +2,17 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('grade_appeals');
-        Schema::dropIfExists('grades');
-        Schema::dropIfExists('grade_components');
-        Schema::enableForeignKeyConstraints();
+        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
+        DB::statement('DROP TABLE IF EXISTS "grade_appeals" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "grades" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "grade_components" CASCADE');
 
         Schema::create('assessments', function (Blueprint $table) {
             $table->id();
@@ -21,8 +21,6 @@ return new class extends Migration
             $table->decimal('weight', 5, 2); // percentage 0-100
             $table->date('date')->nullable();
             $table->timestamps();
-            
-            // Cannot have two exams for the same module normally, but let's keep it simple.
         });
 
         Schema::create('grades', function (Blueprint $table) {
@@ -40,9 +38,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('grades');
-        Schema::dropIfExists('assessments');
-        Schema::enableForeignKeyConstraints();
+        DB::statement('DROP TABLE IF EXISTS "grades" CASCADE');
+        DB::statement('DROP TABLE IF EXISTS "assessments" CASCADE');
     }
 };

@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('last_login_ip', 45)->nullable()->after('remember_token');
-        });
+        if (!Schema::hasColumn('users', 'last_login_ip')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('last_login_ip', 45)->nullable()->after('remember_token');
+            });
+        }
     }
 
     public function down(): void
