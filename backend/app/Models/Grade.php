@@ -9,7 +9,7 @@ use App\Traits\OptimisticLocking;
 
 class Grade extends Model
 {
-    use HasFactory, OptimisticLocking;
+    use HasFactory, OptimisticLocking, \App\Traits\HasValidationWorkflow;
 
     protected $guarded = ['id'];
 

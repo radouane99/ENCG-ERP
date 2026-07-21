@@ -10,7 +10,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class DocumentRequest extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, \App\Traits\HasValidationWorkflow;
 
     protected $guarded = ['id'];
 

@@ -12,6 +12,7 @@ class AbsenceJustification extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use HasFactory;
+    use \App\Traits\HasValidationWorkflow;
 
     protected $guarded = ['id'];
 

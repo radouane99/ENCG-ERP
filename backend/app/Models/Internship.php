@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Internship extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasValidationWorkflow;
 
     protected $guarded = ['id'];
 
