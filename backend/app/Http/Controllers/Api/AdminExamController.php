@@ -14,7 +14,7 @@ class AdminExamController extends Controller
 {
     public function index()
     {
-        $exams = Exam::with(['module', 'group', 'room'])->latest()->get()->map(function ($exam) {
+        $exams = Exam::with(['module', 'group', 'room', 'surveillances.professor'])->latest()->get()->map(function ($exam) {
             $generatedCount = \DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
                 ->whereNotNull('qr_token')
@@ -23,6 +23,12 @@ class AdminExamController extends Controller
                 ->where('exam_id', $exam->id)
                 ->whereNotNull('sent_at')
                 ->count();
+
+            $surveillantsText = $exam->surveillances->map(function($s) {
+                return $s->professor ? ($s->professor->name ?? ($s->professor->first_name . ' ' . $s->professor->last_name)) : 'Inconnu';
+            })->join(', ');
+            
+            if (empty($surveillantsText)) $surveillantsText = 'Aucun';
 
             return [
                 'id' => $exam->id,
@@ -34,6 +40,7 @@ class AdminExamController extends Controller
                 'start_time' => $exam->start_time,
                 'duration_minutes' => $exam->duration_minutes,
                 'type' => $exam->session_type ?? 'EXAMEN',
+                'surveillants' => $surveillantsText,
                 'generated_count' => $generatedCount,
                 'sent_count' => $sentCount,
                 'pending_count' => max(0, $generatedCount - $sentCount),

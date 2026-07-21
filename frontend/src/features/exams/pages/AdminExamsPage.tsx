@@ -300,7 +300,7 @@ export default function AdminExamsPage() {
                 time={`${exam.start_time?.substring(0, 5) || '--:--'} - ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 90} min`}
                 room={exam.room?.name || 'Non assignée'}
-                surveillants="Aucun"
+                surveillants={exam.surveillants || 'Aucun'}
                 day={day}
                 month={monthNames[dateObj.getMonth()]}
                 dayName={dayNames[dateObj.getDay()]}
