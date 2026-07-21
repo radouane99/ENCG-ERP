@@ -3,6 +3,8 @@ import { Printer, ArrowLeft, Loader2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 
+import { toast } from 'react-hot-toast'
+
 export default function AdminExamAttendanceSheetPage() {
   const { id } = useParams()
 
@@ -41,15 +43,25 @@ export default function AdminExamAttendanceSheetPage() {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    const toastId = toast.loading("Génération du PDF en cours... Veuillez patienter.");
+
     if (!(window as any).html2pdf) {
       const script = document.createElement('script');
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
       script.onload = () => {
-        (window as any).html2pdf().set(opt).from(element).save();
+        (window as any).html2pdf().set(opt).from(element).save().then(() => {
+            toast.success("PDF téléchargé avec succès !", { id: toastId });
+        });
+      };
+      script.onerror = () => {
+        toast.error("Librairie introuvable. Impression classique...", { id: toastId });
+        window.print();
       };
       document.body.appendChild(script);
     } else {
-      (window as any).html2pdf().set(opt).from(element).save();
+      (window as any).html2pdf().set(opt).from(element).save().then(() => {
+          toast.success("PDF téléchargé avec succès !", { id: toastId });
+      });
     }
   }
 
