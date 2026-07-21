@@ -51,6 +51,121 @@ class ExamPlanningController extends Controller
     }
 
     /**
+     * Get exams filtered by filiere and session
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $filiereId = $request->query('filiere_id');
+        $sessionId = $request->query('session_id');
+
+        $query = \App\Models\Exam::with(['module.filiere', 'group', 'room', 'examSession']);
+
+        if ($sessionId) {
+            $query->where('exam_session_id', $sessionId);
+        }
+
+        if ($filiereId) {
+            $query->whereHas('module', function($q) use ($filiereId) {
+                $q->where('filiere_id', $filiereId);
+            });
+        }
+
+        $exams = $query->orderBy('exam_date')->get()->map(function($e) {
+            return [
+                'id' => $e->id,
+                'module' => $e->module->name ?? 'N/A',
+                'group' => $e->group->name ?? 'N/A',
+                'date' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->format('d/m/Y') : null,
+                'dayLabel' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->format('d') : '--',
+                'monthLabel' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->translatedFormat('M') : '---',
+                'dayName' => $e->exam_date ? \Carbon\Carbon::parse($e->exam_date)->translatedFormat('D') : '--',
+                'sessionLabel' => $e->examSession->type ?? 'Session',
+                'time' => $e->start_time ? substr($e->start_time, 0, 5) : null,
+                'duration' => $e->duration_minutes . ' min',
+                'room' => $e->room->name ?? 'À affecter',
+                'convocations_generated' => 0, // Mock for now or count from relationship
+                'proctors' => [] // Mock for now
+            ];
+        });
+
+        return response()->json(['data' => $exams]);
+    }
+
+    /**
+     * Reset/Delete exams for a given filiere and session
+     */
+    public function resetExams(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'required|integer',
+            'session_id' => 'required|integer',
+        ]);
+
+        $exams = \App\Models\Exam::where('exam_session_id', $validated['session_id'])
+            ->whereHas('module', function($q) use ($validated) {
+                $q->where('filiere_id', $validated['filiere_id']);
+            })->get();
+
+        foreach ($exams as $exam) {
+            $exam->delete(); // Cascades to convocations based on DB schema
+        }
+
+        return response()->json(['success' => true, 'message' => 'Toutes les convocations et examens ont été supprimés avec succès.']);
+    }
+
+    /**
+     * Auto-generate exams for a given filiere and session
+     */
+    public function autoGenerateBatch(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'required|integer',
+            'session_id' => 'required|integer',
+        ]);
+
+        $session = \App\Models\ExamSession::findOrFail($validated['session_id']);
+        $modules = \App\Models\Module::where('filiere_id', $validated['filiere_id'])->get();
+        $rooms = \App\Models\Room::all();
+
+        if ($modules->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Aucun module trouvé pour cette filière.'], 400);
+        }
+        if ($rooms->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Aucune salle disponible.'], 400);
+        }
+
+        $startDate = \Carbon\Carbon::parse($session->start_date);
+        $endDate = \Carbon\Carbon::parse($session->end_date);
+        $totalDays = $startDate->diffInDays($endDate) + 1;
+
+        $currentDate = $startDate->copy();
+
+        foreach ($modules as $module) {
+            $groups = \App\Models\Group::where('filiere_id', $validated['filiere_id'])->get();
+
+            foreach ($groups as $group) {
+                \App\Models\Exam::create([
+                    'exam_session_id' => $session->id,
+                    'module_id' => $module->id,
+                    'group_id' => $group->id,
+                    'room_id' => $rooms->random()->id,
+                    'exam_date' => $currentDate->format('Y-m-d'),
+                    'start_time' => '09:00:00',
+                    'duration_minutes' => 120,
+                    'type' => 'final',
+                ]);
+            }
+
+            $currentDate->addDay();
+            if ($currentDate->gt($endDate)) {
+                $currentDate = $startDate->copy();
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Les examens ont été générés avec succès.']);
+    }
+
+    /**
      * Create a new exam manually with database persistence
      */
     public function store(Request $request): JsonResponse

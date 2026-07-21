@@ -1,52 +1,75 @@
 import React, { useState } from 'react';
 import {
   Calendar, MapPin, Users, Clock, Mail, Printer, LayoutList,
-  ClipboardCheck, Activity, FileText, ChevronRight, Zap, AlertCircle, CheckCircle2,
+  ClipboardCheck, Activity, FileText, ChevronRight, Zap, AlertCircle, CheckCircle2, Trash2
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function ExamPlanningManager() {
-  const [exams, setExams] = useState([
-    {
-      id: 1,
-      module: 'Avancé – Génie Informatique',
-      group: 'Génie Informatique – Groupe 2',
-      date: '01/06/2026',
-      dayLabel: '01',
-      monthLabel: 'Juin',
-      dayName: 'Lun.',
-      sessionLabel: 'CC1',
-      time: '11:00 – 12:30',
-      duration: '90 min',
-      room: 'Amphi Al Khwarizmi',
-      convocations_generated: 0,
-      proctors: [] as string[],
+  const queryClient = useQueryClient();
+  const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [selectedSession, setSelectedSession] = useState('');
+
+  const { data: filieresData } = useQuery({
+    queryKey: ['filieres'],
+    queryFn: () => api.get('/filieres').then(r => r.data)
+  });
+
+  const { data: sessionsData } = useQuery({
+    queryKey: ['exam-sessions'],
+    queryFn: () => api.get('/exam-sessions').then(r => r.data)
+  });
+
+  const filieres = filieresData?.data || [];
+  const sessions = sessionsData?.data || [];
+
+  const { data: examsData, isLoading: examsLoading } = useQuery({
+    queryKey: ['exams', selectedFiliere, selectedSession],
+    queryFn: () => api.get('/exam-planning', {
+      params: { filiere_id: selectedFiliere, session_id: selectedSession }
+    }).then(r => r.data),
+    enabled: !!selectedFiliere && !!selectedSession
+  });
+
+  const exams = examsData?.data || [];
+
+  const autoGenerateMutation = useMutation({
+    mutationFn: () => api.post('/exam-planning/auto-generate-batch', {
+      filiere_id: selectedFiliere,
+      session_id: selectedSession
+    }),
+    onSuccess: (res) => {
+      toast.success(res.data.message || 'Génération réussie');
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
     },
-    {
-      id: 2,
-      module: 'Introduction – Génie Informatique',
-      group: 'Génie Informatique – Groupe 1',
-      date: '01/06/2026',
-      dayLabel: '01',
-      monthLabel: 'Juin',
-      dayName: 'Lun.',
-      sessionLabel: 'CC1',
-      time: '09:00 – 10:30',
-      duration: '90 min',
-      room: 'Amphi Ibn Khaldoun',
-      convocations_generated: 45,
-      proctors: ['Dr. El Idrissi'] as string[],
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de la génération');
+    }
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: () => api.delete('/exam-planning/reset', {
+      data: { filiere_id: selectedFiliere, session_id: selectedSession }
+    }),
+    onSuccess: (res) => {
+      toast.success(res.data.message || 'Remise à zéro réussie');
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
     },
-  ]);
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de la remise à zéro');
+    }
+  });
 
   const handleAutoAssign = async () => {
     try {
-      const res = await api.post('/exam-planning/1/auto-assign-proctors');
+      if (exams.length === 0) return toast.error("Aucun examen à affecter.");
+      const res = await api.post(`/exam-planning/${exams[0].id}/auto-assign-proctors`);
       toast.success(res.data.message);
-      setExams(exams.map(e => e.id === 1 ? { ...e, proctors: ['Dr. Alaoui', 'Dr. Tazi'] } : e));
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
     } catch {
       toast.error("Erreur lors de l'affectation.");
     }
@@ -56,7 +79,7 @@ export default function ExamPlanningManager() {
     try {
       const res = await api.post(`/exam-planning/${examId}/generate-convocations`);
       toast.success(res.data.message);
-      setExams(exams.map(e => e.id === examId ? { ...e, convocations_generated: res.data.generated_count } : e));
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
     } catch {
       toast.error('Erreur de génération.');
     }
@@ -86,16 +109,41 @@ export default function ExamPlanningManager() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <select className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
-            <option>Toutes les filières</option>
-            <option>Génie Informatique</option>
+          <select 
+            value={selectedFiliere}
+            onChange={(e) => setSelectedFiliere(e.target.value)}
+            className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">-- Sélectionnez une filière --</option>
+            {filieres.map((f: any) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
-          <select className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
-            <option>-- Session --</option>
-            <option>Automne 2026</option>
+          <select 
+            value={selectedSession}
+            onChange={(e) => setSelectedSession(e.target.value)}
+            className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">-- Session --</option>
+            {sessions.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors">
-            <Zap className="w-4 h-4" /> Auto-Générer
+          
+          <button 
+            onClick={() => autoGenerateMutation.mutate()}
+            disabled={!selectedFiliere || !selectedSession || autoGenerateMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            <Zap className="w-4 h-4" /> {autoGenerateMutation.isPending ? 'Génération...' : 'Auto-Générer'}
+          </button>
+          
+          <button 
+            onClick={() => {
+              if (confirm('Voulez-vous vraiment effacer tous les examens et convocations pour cette filière et session ?')) {
+                resetMutation.mutate();
+              }
+            }}
+            disabled={!selectedFiliere || !selectedSession || resetMutation.isPending || exams.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold text-sm hover:bg-red-100 transition-colors disabled:opacity-50 border border-red-200"
+          >
+            <Trash2 className="w-4 h-4" /> Remise à zéro
           </button>
         </div>
       </div>
