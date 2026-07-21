@@ -58,6 +58,7 @@ export default function AdminExamsPage() {
 
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
+  const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
   const [showManualModal, setShowManualModal] = useState(false)
   const [manualForm, setManualForm] = useState({
     module_id: 1,
@@ -71,18 +72,37 @@ export default function AdminExamsPage() {
   const [isCheckingConflict, setIsCheckingConflict] = useState(false)
 
   const handleAutoGenerate = async () => {
-    if (!selectedSessionId) {
-      handleNotify("Veuillez sélectionner une session d'abord.", 'error');
+    if (!selectedSessionId || !selectedFiliereId) {
+      handleNotify("Veuillez sélectionner une filière et une session d'abord.", 'error');
       return;
     }
     setIsAutoGenerating(true)
     try {
-      const res = await examsApi.generateSession(Number(selectedSessionId))
+      const res = await examsApi.generateSession(Number(selectedSessionId), Number(selectedFiliereId))
       handleNotify(res.message || t('exams.messages.auto_success'), 'success')
+      // Need to invalidate queries here if queryClient is available, but the component uses useQuery
+      // Let's force a reload for simplicity if needed, or rely on window.location
+      window.location.reload();
     } catch (error: any) {
       handleNotify(error.response?.data?.message || t('exams.messages.auto_error'), 'error')
     } finally {
       setIsAutoGenerating(false)
+    }
+  }
+
+  const handleReset = async () => {
+    if (!selectedSessionId || !selectedFiliereId) {
+      handleNotify("Veuillez sélectionner une filière et une session d'abord.", 'error');
+      return;
+    }
+    if (!confirm("Voulez-vous vraiment effacer tous les examens et convocations pour cette filière et session ?")) return;
+    
+    try {
+      const res = await examsApi.resetSession(Number(selectedSessionId), Number(selectedFiliereId));
+      handleNotify(res.message || 'Remise à zéro réussie', 'success');
+      window.location.reload();
+    } catch (error: any) {
+      handleNotify(error.response?.data?.message || 'Erreur lors de la remise à zéro', 'error');
     }
   }
 
@@ -131,7 +151,11 @@ export default function AdminExamsPage() {
           <div className="flex items-center gap-2">
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">{t('exams.filters.filiere')}</label>
-              <select className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-48">
+              <select 
+                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-48"
+                value={selectedFiliereId}
+                onChange={(e) => setSelectedFiliereId(e.target.value ? Number(e.target.value) : '')}
+              >
                 <option value="">{t('exams.filters.filiere_empty')}</option>
                 {!isLoadingFilieres && filieres?.map((f: any) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
@@ -154,6 +178,11 @@ export default function AdminExamsPage() {
           </div>
           
           <div className="flex items-center gap-2 mt-4">
+            <button 
+              onClick={handleReset}
+              className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2 border border-red-200">
+              <Trash2 className="w-4 h-4" /> REMISE À ZÉRO
+            </button>
             <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-blue-600">
               <input type="checkbox" className="rounded border-slate-300 text-blue-600" /> {t('exams.actions.overwrite')}</label>
             <button 

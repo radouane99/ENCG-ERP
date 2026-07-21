@@ -54,8 +54,12 @@ export const examsApi = {
     const response = await api.get(`/convocations/session/${sessionId}/list`, { params });
     return response.data.data;
   },
-  generateSession: async (sessionId: number) => {
-    const response = await api.post('/convocations/generate-session', { session_id: sessionId });
+  generateSession: async (sessionId: number, filiereId: number) => {
+    const response = await api.post('/exam-planning/auto-generate-batch', { session_id: sessionId, filiere_id: filiereId });
+    return response.data;
+  },
+  resetSession: async (sessionId: number, filiereId: number) => {
+    const response = await api.delete('/exam-planning/reset', { data: { session_id: sessionId, filiere_id: filiereId } });
     return response.data;
   },
   sendSessionEmails: async (sessionId: number) => {
