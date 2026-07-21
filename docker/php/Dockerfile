@@ -2,7 +2,7 @@ FROM php:8.4-fpm-alpine
 
 ARG PHP_VERSION=8.4
 
-# Install system dependencies
+# ── System dependencies ──────────────────────────────────────
 RUN apk add --no-cache \
     bash \
     curl \
@@ -20,7 +20,7 @@ RUN apk add --no-cache \
     linux-headers \
     $PHPIZE_DEPS
 
-# Install PHP extensions
+# ── PHP extensions ────────────────────────────────────────────
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo \
@@ -37,20 +37,32 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         opcache \
         sockets
 
-# Install Redis extension via PECL
+# ── PECL extensions ───────────────────────────────────────────
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
-# Install Xdebug (disabled by default)
+# ── Xdebug (dev only — disabled by default) ───────────────────
 RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+    && docker-php-ext-enable xdebug \
+    && echo "xdebug.mode=off" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-# Install Composer
+# ── Composer 2 ───────────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Create non-root user
+# ── Non-root user ────────────────────────────────────────────
 RUN addgroup -g 1000 -S www \
     && adduser -u 1000 -S www -G www
+
+# ── Working directory ─────────────────────────────────────────
+WORKDIR /var/www/html
+
+# Fix permissions so www can write to storage & cache
+RUN mkdir -p /var/www/html/storage/logs \
+             /var/www/html/storage/framework/cache \
+             /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/framework/views \
+             /var/www/html/bootstrap/cache \
+    && chown -R www:www /var/www/html
 
 USER www
 

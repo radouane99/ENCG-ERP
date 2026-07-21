@@ -1,275 +1,237 @@
-# ENCG ERP — University Management Platform
+# ENCG ERP — Plateforme de Gestion Universitaire
 
-<div align="center">
-  <h3>🎓 ENCG Fès ERP</h3>
-  <p><strong>ERP universitaire multi-rôles pour administration, professeurs et étudiants</strong></p>
-  <p>Laravel 12 · React 19 · MySQL 8 · Redis · Docker</p>
-</div>
+> Système ERP complet pour les Écoles Nationales de Commerce et de Gestion (ENCG) du Maroc.
 
 ---
 
-## Overview
+## 🏗️ Stack Technique
 
-ENCG ERP is a university management platform tailored to the Moroccan academic context, starting with **ENCG Fès**.
-
-The current product revolves around three main sides:
-
-- **Administration**
-- **Professeur**
-- **Étudiant**
-
-Core workflows already present in the codebase include:
-
-- academic structure and user management
-- attendance and absence justification
-- grades, deliberation, and transcript flows
-- document generation with verification
-- internships and mobility
-- messaging, notifications, and dashboarding
-
-A detailed functional reference is available in [`docs/functional-spec.md`](docs/functional-spec.md).
-
----
-
-## Actual local tech stack
-
-| Layer | Technology |
+| Couche | Technologie |
 |---|---|
-| Backend | Laravel 12, PHP 8.4 |
-| Frontend | React 19, TypeScript, Vite |
-| Database | MySQL 8 |
-| Cache / Queue | Redis |
-| Realtime | Laravel Reverb |
-| Queue worker | Laravel Horizon |
-| Reverse proxy | Nginx |
-| Mail (local) | Mailpit |
-| DB admin (local) | phpMyAdmin |
-| Storage (local) | Laravel filesystem disks (`public` + `private`) |
-
-> Local development uses **MySQL** and **does not include MinIO** in the current `docker-compose.yml`.
+| **Backend** | Laravel 12 · PHP 8.4-FPM-Alpine |
+| **Frontend** | React 19 · Vite 8 · TypeScript · TailwindCSS v4 |
+| **Base de données** | PostgreSQL 16 |
+| **Cache / Queue** | Redis 7 |
+| **WebSocket** | Laravel Reverb |
+| **Queue Worker** | Laravel Horizon |
+| **File Storage** | MinIO (S3-compatible) |
+| **Mail (dev)** | Mailpit |
+| **Proxy** | Nginx Alpine |
 
 ---
 
-## Prerequisites
+## 🖥️ Services & Ports
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Git](https://git-scm.com/)
-- Optional only for non-Docker workflows:
-  - Node.js 20+
-  - PHP 8.4+
-  - Composer
-
-If you work with Docker, you can run the project without local PHP or local Node installed on the host machine.
-
----
-
-## Quick start with Docker
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-org/encg-erp.git
-cd encg-erp
-```
-
-### 2. Copy the backend environment file
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-### 3. Set a known local seeded password
-
-Before running `db:seed`, set this in `backend/.env` if you want predictable credentials locally:
-
-```env
-INITIAL_USER_PASSWORD=Password@123
-```
-
-### 4. Start the stack
-
-```bash
-docker compose up -d --build
-```
-
-### 5. Install backend dependencies
-
-```bash
-docker compose exec backend composer install
-```
-
-### 6. Initialize Laravel
-
-```bash
-docker compose exec backend php artisan key:generate
-docker compose exec backend php artisan migrate --seed
-docker compose exec backend php artisan storage:link
-docker compose exec backend php artisan optimize:clear
-```
-
-### 7. Generate API docs and validate the frontend build
-
-```bash
-docker compose exec backend php artisan scribe:generate
-docker compose exec frontend sh -c "npm run build"
-```
-
-### 8. Access the platform
-
-| Service | URL | Notes |
-|---|---|---|
-| Main app | http://localhost | Recommended daily entry point |
-| Frontend direct | http://localhost:5173 | Direct Vite access |
-| API base | http://localhost/api | Proxied to Laravel |
-| Backend health | http://localhost/up | Laravel health endpoint |
-| Horizon | http://localhost/horizon | Requires authenticated/authorized backend user |
-| API docs | http://localhost/docs | Run `scribe:generate` first |
-| Mailpit | http://localhost:8025 | Local email inbox |
-| phpMyAdmin | http://localhost:8081 | MySQL inspection |
-| Reverb | ws://localhost:8080 | WebSocket endpoint |
-| MySQL from host | 127.0.0.1:3307 | Container port 3306 |
+| Service | Conteneur | Port exposé | Description |
+|---|---|---|---|
+| Nginx | `encg_nginx` | `:80` | Reverse proxy (API + Frontend) |
+| Backend API | `encg_backend` | `:9000` (interne) | Laravel PHP-FPM |
+| Frontend | `encg_frontend` | `:5173` | Vite dev server (React) |
+| Reverb | `encg_reverb` | `:8080` | WebSocket server |
+| PostgreSQL | `encg_postgres` | `:5432` | Base de données principale |
+| Redis | `encg_redis` | `:6379` | Cache, sessions, queues |
+| MinIO API | `encg_minio` | `:9000` | S3-compatible object storage |
+| MinIO Console | `encg_minio` | `:9001` | Interface web MinIO |
+| Mailpit SMTP | `encg_mailpit` | `:1025` | Serveur mail de développement |
+| Mailpit UI | `encg_mailpit` | `:8025` | Interface web des emails |
+| pgAdmin | `encg_pgadmin` | `:5050` | Interface web PostgreSQL |
 
 ---
 
-## Seeded local accounts
+## 🚀 Installation & Démarrage (Première fois)
 
-If `INITIAL_USER_PASSWORD` is set before seeding, these local accounts use that same password:
+### Prérequis
 
-| Role | Email |
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé et en cours d'exécution
+- Git
+
+### 1. Cloner le projet
+
+```bash
+git clone <repo-url> ENCG-ERP-V1
+cd ENCG-ERP-V1
+```
+
+### 2. Vérifier la configuration
+
+Le fichier `backend/.env` est déjà présent avec les valeurs de développement.  
+Si tu as besoin de le recréer :
+
+```bash
+cp .env.example backend/.env
+```
+
+### 3. Construire et démarrer les conteneurs
+
+```bash
+docker compose up --build -d
+```
+
+> La première fois, le build peut prendre 5-10 minutes (téléchargement des images + compilation PHP).
+
+### 4. Générer la clé Laravel
+
+```bash
+docker exec encg_backend php artisan key:generate
+```
+
+### 5. Exécuter les migrations
+
+```bash
+docker exec encg_backend php artisan migrate --seed
+```
+
+### 6. Créer le lien de stockage
+
+```bash
+docker exec encg_backend php artisan storage:link
+```
+
+### 7. Vérifier que tout fonctionne
+
+| URL | Description |
 |---|---|
-| Super Admin | `superadmin@encg-fes.ma` |
-| Institution Admin | `admin@encg-fes.ma` |
-| Director | `directeur@encg-fes.ma` |
-| Demo Admin | `admin@encg.ma` |
-| Demo Scolarité | `scolarite@encg.ma` |
-| Demo Professor | `prof@encg.ma` |
-| Demo Student | `student@encg.ma` |
-
-Additional professor and student users are also seeded from ENCG Fès demo data.
+| http://localhost | Application principale (React + API) |
+| http://localhost:5173 | Vite dev server direct |
+| http://localhost:8025 | Mailpit — Boîte de réception dev |
+| http://localhost:9001 | MinIO Console (user: `minioadmin` / pass: `minioadmin123`) |
+| http://localhost:5050 | pgAdmin (email: `admin@encg.ma` / pass: `admin`) |
+| http://localhost/horizon | Laravel Horizon dashboard |
 
 ---
 
-## Day-to-day Docker commands
+## 📋 Commandes Docker Utiles
 
-### Start
+### Gestion des conteneurs
 
 ```bash
+# Démarrer tous les services
 docker compose up -d
-```
 
-### Stop
-
-```bash
+# Arrêter tous les services
 docker compose down
-```
 
-### Rebuild
+# Voir les logs en temps réel
+docker compose logs -f
 
-```bash
-docker compose down
-docker compose up -d --build
-```
-
-### Reset local database completely
-
-```bash
-docker compose down -v
-docker compose up -d --build
-docker compose exec backend composer install
-docker compose exec backend php artisan key:generate
-docker compose exec backend php artisan migrate:fresh --seed
-docker compose exec backend php artisan storage:link
-docker compose exec backend php artisan optimize:clear
-```
-
-### Logs
-
-```bash
+# Voir les logs d'un service spécifique
 docker compose logs -f backend
-docker compose logs -f nginx
 docker compose logs -f frontend
 docker compose logs -f queue-worker
-docker compose logs -f reverb
 ```
 
----
-
-## Role-based smoke test
-
-### Administration
-
-- log in via `http://localhost`
-- open dashboard and confirm stats load
-- generate a document
-- review a document request or absence justification
-
-### Professeur
-
-- log in with `prof@encg.ma`
-- open timetable or teaching dashboard
-- create an attendance session
-- mark attendance
-- open grade entry for one module
-
-### Étudiant
-
-- log in with `student@encg.ma`
-- open the student dashboard
-- submit an absence justification
-- request or download a document
-- open transcript / notes view
-
----
-
-## Useful validation commands
+### Laravel (via Docker)
 
 ```bash
-docker compose ps
-docker compose exec backend php artisan migrate --force
-docker compose exec backend php artisan optimize:clear
-docker compose exec backend php artisan storage:link
-docker compose exec frontend sh -c "npm run build"
-curl http://localhost/up
-curl http://localhost/api
+# Artisan
+docker exec encg_backend php artisan <command>
+
+# Migrations
+docker exec encg_backend php artisan migrate
+docker exec encg_backend php artisan migrate:fresh --seed
+
+# Cache
+docker exec encg_backend php artisan config:clear
+docker exec encg_backend php artisan cache:clear
+docker exec encg_backend php artisan route:clear
+
+# Tinker (REPL)
+docker exec -it encg_backend php artisan tinker
+
+# Vérifier la syntaxe d'un fichier PHP
+docker exec encg_backend php -l app/Http/Controllers/ExampleController.php
 ```
 
-If `curl http://localhost/api` returns a 404 or an auth-style JSON response, the backend proxy is still reachable.
+### Rebuild après modifications
 
----
+```bash
+# Rebuild un seul service
+docker compose up -d --build backend
 
-## Project structure
-
-```text
-encg-erp/
-├── backend/                  # Laravel application
-├── frontend/                 # React + Vite SPA
-├── docker/                   # Nginx and Docker support files
-├── docs/                     # Functional and operational documentation
-├── docker-compose.yml        # Local development stack
-├── docker-compose.prod.yml   # Production-oriented compose file
-├── PRODUCTION_CHECKLIST.md
-└── README.md
+# Rebuild tout
+docker compose up --build -d
 ```
 
 ---
 
-## Documentation
+## 🛠️ Développement
 
-- Functional scope: [`docs/functional-spec.md`](docs/functional-spec.md)
-- Local Docker operations: [`docs/local-docker-runbook.md`](docs/local-docker-runbook.md)
-- Production go-live checks: [`PRODUCTION_CHECKLIST.md`](PRODUCTION_CHECKLIST.md)
+### Structure du projet
+
+```
+ENCG-ERP-V1/
+├── backend/          # Laravel 12 API
+│   ├── app/
+│   ├── database/
+│   ├── routes/
+│   └── .env          # Environnement Docker local
+├── frontend/         # React 19 + Vite
+│   └── src/
+├── docker/           # Configurations Docker
+│   ├── nginx/        # Config Nginx
+│   ├── php/          # Dockerfile PHP + php.ini
+│   └── postgres/     # Script d'initialisation PostgreSQL
+├── docker-compose.yml
+└── .env.example      # Référence des variables d'environnement
+```
+
+### Hot Reload
+
+- **Frontend** : Hot Module Replacement (HMR) activé par défaut via Vite. Les changements dans `frontend/src/` se reflètent instantanément.
+- **Backend** : Les fichiers sont montés en volume. Les changements PHP sont immédiatement disponibles (pas besoin de rebuild).
+
+### Accès à la base de données
+
+**Via pgAdmin** (recommandé) :
+1. Ouvre http://localhost:5050
+2. Ajoute un nouveau serveur :
+   - Host: `postgres`
+   - Port: `5432`
+   - Database: `encg_erp`
+   - Username: `encg`
+   - Password: `secret`
+
+**Via CLI** :
+```bash
+docker exec -it encg_postgres psql -U encg -d encg_erp
+```
 
 ---
 
-## Important local notes
+## 🔧 Variables d'Environnement Clés
 
-- Use `docker compose exec backend ...`, not `docker compose exec php ...`.
-- `http://localhost` is the best local entry point because Nginx proxies both the SPA and `/api`.
-- Sensitive generated files should stay on private storage and be served through controlled backend endpoints.
-- The current local compose file is based on **MySQL**, not PostgreSQL.
+| Variable | Valeur par défaut (dev) | Description |
+|---|---|---|
+| `DB_HOST` | `postgres` | Nom du conteneur PostgreSQL |
+| `REDIS_HOST` | `redis` | Nom du conteneur Redis |
+| `REDIS_PASSWORD` | `secret` | Mot de passe Redis |
+| `AWS_ENDPOINT` | `http://minio:9000` | Endpoint MinIO interne |
+| `MAIL_HOST` | `mailpit` | Serveur SMTP local |
+| `REVERB_HOST` | `0.0.0.0` | Écoute sur toutes les interfaces |
+
+> **Important** : Les hostnames correspondent aux noms des services dans `docker-compose.yml`, pas à `localhost`.
 
 ---
 
-## License
+## 📦 GitHub — Initialisation du dépôt
 
-Proprietary — ENCG Fès. All rights reserved.
+```bash
+# Initialiser git (si pas encore fait)
+git init
+
+# Ajouter l'origine
+git remote add origin https://github.com/<ton-username>/ENCG-ERP-V1.git
+
+# Premier commit
+git add .
+git commit -m "chore: initial setup with Docker (PostgreSQL + MinIO + Redis)"
+git push -u origin main
+```
+
+> **Note** : Le fichier `backend/.env` est ignoré par `.gitignore`. Ne jamais commit les credentials réels.
+
+---
+
+## 📄 Licence
+
+Propriétaire — ENCG Fès. Tous droits réservés.
