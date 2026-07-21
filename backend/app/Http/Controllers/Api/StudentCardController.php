@@ -392,7 +392,6 @@ class StudentCardController extends Controller
                 continue;
             }
 
-            // Sync: extract user's profile picture fallback from user avatar/photo columns if any
             $photoPath = $user->photo_path ?? $user->avatar_path ?? null;
 
             if (! $photoPath) {

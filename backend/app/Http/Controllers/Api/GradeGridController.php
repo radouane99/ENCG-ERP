@@ -13,12 +13,26 @@ class GradeGridController extends Controller
      */
     public function getGrid(Request $request): JsonResponse
     {
-        $moduleId = $request->query('module_id', 1);
-        $groupId = $request->query('group_id', 1);
+        $moduleId = $request->query('module_id');
+        $groupId = $request->query('group_id');
 
-        // Simulated dynamic data for the MVP grid
-        $students = [
-            ['id' => 1, 'first_name' => 'Omar', 'last_name' => 'Tahiri', 'cc' => 14.5, 'exam' => null, 'average' => null, 'status' => 'Saisie en cours'],
+        if (!$moduleId || !$groupId) {
+            return response()->json(['success' => false, 'message' => 'module_id et group_id sont requis.'], 400);
+        }
+
+        $students = \App\Models\Student::whereHas('registrations', function ($query) use ($groupId) {
+            $query->where('group_id', $groupId);
+        })->with(['user'])->get();
+
+        $students = $students->map(fn($student) => [
+            'id' => $student->id,
+            'first_name' => $student->first_name,
+            'last_name' => $student->last_name,
+            'cc' => null,
+            'exam' => null,
+            'average' => null,
+            'status' => 'Non saisie',
+        ]);
             ['id' => 2, 'first_name' => 'Salma', 'last_name' => 'El Fassi', 'cc' => 16.0, 'exam' => 15.0, 'average' => 15.5, 'status' => 'Validée'],
             ['id' => 3, 'first_name' => 'Othmane', 'last_name' => 'Sekkat', 'cc' => 12.0, 'exam' => 10.0, 'average' => 11.0, 'status' => 'Validée'],
             ['id' => 4, 'first_name' => 'Zineb', 'last_name' => 'Alaoui', 'cc' => null, 'exam' => null, 'average' => null, 'status' => 'Non saisie'],
@@ -29,9 +43,9 @@ class GradeGridController extends Controller
             'success' => true,
             'data' => $students,
             'meta' => [
-                'module_name' => 'Bases de Données Avancées',
-                'group_name' => 'Génie Informatique - Groupe 1',
-                'weights' => ['cc' => 0.5, 'exam' => 0.5] // 50% CC, 50% Exam
+                'module_name' => \App\Models\Module::find($moduleId)?->name ?? 'Module inconnu',
+                'group_name' => \App\Models\Group::find($groupId)?->name ?? 'Groupe inconnu',
+                'weights' => ['cc' => 0.5, 'exam' => 0.5]
             ]
         ]);
     }

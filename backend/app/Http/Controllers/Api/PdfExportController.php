@@ -29,7 +29,6 @@ class PdfExportController extends Controller
             $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->margin(0)->generate($data['verifyUrl']);
             $data['qrBase64'] = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
         } catch (\Exception $e) {
-            // Fallback to external API
             $data['qrBase64'] = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($data['verifyUrl']);
         }
 

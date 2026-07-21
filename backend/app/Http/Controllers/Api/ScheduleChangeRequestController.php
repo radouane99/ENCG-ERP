@@ -15,7 +15,7 @@ class ScheduleChangeRequestController extends Controller
             return [
                 'id' => $req->id,
                 'professor_name' => $req->professor->name ?? 'Inconnu',
-                'department' => $req->professor->professor->department->name ?? 'Génie Informatique', // Use real dept or fallback
+                'department' => $req->professor->professor->department->name ?? 'Inconnu',
                 'module_name' => $req->exam->module->name ?? 'N/A',
                 'old_date' => $req->old_date ? $req->old_date->format('d/m/Y') : 'N/A',
                 'old_start_time' => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',
@@ -58,8 +58,8 @@ class ScheduleChangeRequestController extends Controller
                     'professorName' => $changeRequest->professor?->name ?? 'Enseignant ENCG',
                     'newDate' => $changeRequest->proposed_date ? $changeRequest->proposed_date->format('d/m/Y') : 'À déterminer',
                     'newStartTime' => substr($changeRequest->proposed_start_time, 0, 5),
-                    'newEndTime' => '10:30',
-                    'roomName' => 'Salle d\'Examen / Amphi',
+                    'newEndTime' => $changeRequest->exam?->end_time ? substr($changeRequest->exam->end_time, 0, 5) : null,
+                    'roomName' => $changeRequest->room?->name ?? 'Salle d\'Examen / Amphi',
                     'reason' => $changeRequest->reason
                 ];
 
@@ -92,7 +92,7 @@ class ScheduleChangeRequestController extends Controller
                 return [
                     'id' => $prof->id,
                     'name' => $prof->user ? $prof->user->name : "{$prof->first_name} {$prof->last_name}",
-                    'specialty' => $prof->specialty ?? 'Management / Finance',
+                    'specialty' => $prof->specialty ?? 'Non défini',
                     'available' => true,
                     'contact' => $prof->email ?? 'N/A'
                 ];

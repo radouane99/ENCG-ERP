@@ -18,9 +18,14 @@ class GradeController extends Controller
     {
         $assessment = Assessment::with('module')->findOrFail($assessmentId);
         
-        // We find all students registered to the module's filiere for the current active academic year
-        // We'll assume academic_year_id = 1 for this implementation, or extract from request if provided
-        $academicYearId = $request->query('academic_year_id', 1);
+        $academicYearId = $request->query('academic_year_id');
+        if (!$academicYearId) {
+            $academicYear = \App\Models\AcademicYear::where('is_current', true)->orWhere('is_active', true)->first();
+            if (!$academicYear) {
+                return response()->json(['success' => false, 'message' => 'Année académique active introuvable.'], 404);
+            }
+            $academicYearId = $academicYear->id;
+        }
 
         $groupId = $request->query('group_id');
         $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId, $groupId) {
@@ -43,7 +48,7 @@ class GradeController extends Controller
                 'first_name' => $student->first_name,
                 'last_name' => $student->last_name,
                 'student_number' => $student->student_number,
-                'apogee' => $student->cne_cme ?? $student->student_number, // Fallback
+                'apogee' => $student->cne_cme ?? $student->student_number,
                 'value' => $grade ? (float) $grade->value : null,
                 'is_absent' => $grade ? (bool) $grade->absent : false,
             ];

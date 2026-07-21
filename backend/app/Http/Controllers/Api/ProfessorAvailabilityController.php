@@ -31,7 +31,7 @@ class ProfessorAvailabilityController extends Controller
                 'id' => $prof->id,
                 'nom' => $prof->name,
                 'email' => $prof->email,
-                'dept' => $prof->department->name ?? 'Génie Informatique', // Uses department relation if available
+                'dept' => $prof->department->name ?? 'Inconnu',
                 'contrat' => 'Permanent',
                 'statut' => $avail ? $avail->status : 'Non envoyé',
                 'creneaux' => $avail ? $avail->available_slots_count . ' créneaux' : '-',
