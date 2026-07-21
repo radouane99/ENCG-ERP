@@ -171,8 +171,18 @@ class PdfExportController extends Controller
 
     public function attendanceSheet($examId)
     {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Feuille de Présence - Examen ' . $examId]);
-        return $pdf->download("attendance_sheet_{$examId}.pdf");
+        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        $students = \App\Models\ExamSeating::with('student.user')
+                    ->where('exam_id', $examId)
+                    ->orderBy('seat_number', 'asc')
+                    ->get();
+                    
+        $pdf = $this->getPdfInstance('pdf.attendance_sheet', [
+            'exam' => $exam,
+            'students' => $students,
+            'title' => 'Feuille de Présence - Examen ' . $examId
+        ]);
+        return $pdf->download("fiche_emargement_{$examId}.pdf");
     }
 
     public function rapportAbsences()

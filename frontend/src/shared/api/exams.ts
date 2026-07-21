@@ -86,6 +86,12 @@ export const examsApi = {
     });
     return response.data;
   },
+  downloadAttendanceSheetPdf: async (examId: number) => {
+    const response = await api.get(`/admin/exams/${examId}/attendance-sheet`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
   generateConvocations: async (examId: number) => {
     const response = await api.post(`/exam-planning/${examId}/generate-convocations`);
     return response.data;

@@ -33,35 +33,21 @@ export default function AdminExamAttendanceSheetPage() {
     return `${formatTime(start)} - ${formatTime(end)}`
   }
 
-  const handleDownloadPDF = () => {
-    const element = document.getElementById('fiche-emargement');
-    const opt = {
-      margin: 10,
-      filename: `fiche_emargement_${exam?.module?.name?.replace(/\s+/g, '_') || 'exam'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    const toastId = toast.loading("Génération du PDF en cours... Veuillez patienter.");
-
-    if (!(window as any).html2pdf) {
-      const script = document.createElement('script');
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => {
-        (window as any).html2pdf().set(opt).from(element).save().then(() => {
-          toast.success("PDF téléchargé avec succès !", { id: toastId });
-        });
-      };
-      script.onerror = () => {
-        toast.error("Librairie introuvable. Impression classique...", { id: toastId });
-        window.print();
-      };
-      document.body.appendChild(script);
-    } else {
-      (window as any).html2pdf().set(opt).from(element).save().then(() => {
-        toast.success("PDF téléchargé avec succès !", { id: toastId });
-      });
+  const handleDownloadPDF = async () => {
+    const toastId = toast.loading("Génération du PDF officiel en cours...");
+    try {
+      const blob = await examsApi.downloadAttendanceSheetPdf(Number(id));
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('link');
+      link.href = url;
+      link.setAttribute('download', `fiche_emargement_${exam?.module?.name?.replace(/\s+/g, '_') || 'exam'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success("PDF téléchargé avec succès !", { id: toastId });
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la génération du PDF côté serveur.", { id: toastId });
     }
   }
 
