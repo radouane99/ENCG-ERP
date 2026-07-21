@@ -32,7 +32,8 @@ class AdminExamController extends Controller
 
             return [
                 'id' => $exam->id,
-                'session_id' => $exam->session_id,
+                'session_id' => $exam->exam_session_id,
+                'exam_session_id' => $exam->exam_session_id,
                 'module' => $exam->module,
                 'group' => $exam->group,
                 'room' => $exam->room,
