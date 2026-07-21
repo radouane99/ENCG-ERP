@@ -100,6 +100,16 @@ export const examsApi = {
     const response = await api.post(`/exam-planning/${examId}/send-emails`);
     return response.data;
   },
+  batchDownloadPdf: async (sessionId: number, seatingIds: number[]) => {
+    const response = await api.post(`/exam-planning/session/${sessionId}/batch-pdf`, { seating_ids: seatingIds }, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  sendBatchEmails: async (sessionId: number, seatingIds: number[]) => {
+    const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-emails`, { seating_ids: seatingIds });
+    return response.data;
+  },
   notifyAbsents: async (examId: number) => {
     const response = await api.post(`/exam-planning/${examId}/notify-absents`);
     return response.data;

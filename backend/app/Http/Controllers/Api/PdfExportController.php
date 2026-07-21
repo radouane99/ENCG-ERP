@@ -45,32 +45,128 @@ class PdfExportController extends Controller
         return $pdf->download('convocations_session.pdf');
     }
 
-    public function studentConvocationPdf($convocationId)
+    public function studentConvocationPdf($seatingId)
     {
-        $convocation = \App\Models\Convocation::with(['student.user', 'exam.module', 'room', 'exam.session'])->findOrFail($convocationId);
-        $student = $convocation->student;
+        $seating = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])->findOrFail($seatingId);
         
-        $exams = [];
-        if ($convocation->exam) {
-            $exams[] = [
-                'date' => $convocation->exam->exam_date ? $convocation->exam->exam_date->format('d/m/Y') : 'N/A',
-                'time' => $convocation->exam->start_time . ' - ' . $convocation->exam->end_time,
-                'module' => $convocation->exam->module->name ?? 'Module N/A',
-                'room' => $convocation->room->name ?? 'Salle N/A',
-                'seat' => $convocation->seat_number ?? 'N/A'
+        $pdf = $this->generateSingleConvocationPdf($seating);
+        return $pdf->download("convocation_etudiant_{$seatingId}.pdf");
+    }
+
+    public function studentConvocationPreview($seatingId)
+    {
+        $seating = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])->findOrFail($seatingId);
+        
+        $pdf = $this->generateSingleConvocationPdf($seating);
+        return $pdf->stream("convocation_preview.pdf", ["Attachment" => false]);
+    }
+
+    public function batchPdf(Request $request)
+    {
+        $seatingIds = $request->input('seating_ids', []);
+        if (empty($seatingIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucune convocation sélectionnée.'], 400);
+        }
+
+        $seatings = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])
+            ->whereIn('id', $seatingIds)
+            ->get();
+
+        $studentsData = [];
+        foreach ($seatings->groupBy('student_id') as $studentId => $studentSeatings) {
+            $student = $studentSeatings->first()->student;
+            $sessionId = $studentSeatings->first()->exam->exam_session_id;
+            
+            $allStudentSeatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+                ->where('student_id', $student->id)
+                ->whereHas('exam', function($query) use ($sessionId) {
+                    $query->where('exam_session_id', $sessionId);
+                })
+                ->get();
+            
+            $exams = [];
+            foreach ($allStudentSeatings as $s) {
+                if ($s->exam) {
+                    $exams[] = [
+                        'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
+                        'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
+                        'module' => $s->exam->module->name ?? 'Module N/A',
+                        'room' => $s->room->name ?? 'Salle N/A',
+                        'seat' => $s->seat_number ?? 'N/A',
+                        'qr_token' => $s->qr_token
+                    ];
+                }
+            }
+            
+            usort($exams, function($a, $b) {
+                $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
+                $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
+                return strcmp($dateA, $dateB);
+            });
+            
+            $studentsData[] = [
+                'person_name' => $student->user->last_name . ' ' . $student->user->first_name,
+                'person_id' => $student->user->cin ?? 'N/A',
+                'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
+                'session_type' => $studentSeatings->first()->exam->session->type ?? 'ORDINAIRE',
+                'session_name' => $studentSeatings->first()->exam->session->name ?? 'Session Principale',
+                'exams' => $exams,
+                'qr_token' => $allStudentSeatings->first()->qr_token ?? null,
+                'id' => $studentSeatings->first()->id,
+                'created_at' => clone $studentSeatings->first()->created_at
             ];
         }
 
-        $pdf = $this->getPdfInstance('pdf.convocation', [
+        $pdf = $this->getPdfInstance('pdf.convocations_batch', [
+            'studentsData' => $studentsData
+        ]);
+        
+        return $pdf->download('convocations_lot.pdf');
+    }
+
+    private function generateSingleConvocationPdf($seating)
+    {
+        $student = $seating->student;
+        $sessionId = $seating->exam->exam_session_id;
+        
+        // Fetch ALL seatings for this student in the same session
+        $allSeatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+            ->where('student_id', $student->id)
+            ->whereHas('exam', function($query) use ($sessionId) {
+                $query->where('exam_session_id', $sessionId);
+            })
+            ->get();
+
+        $exams = [];
+        foreach ($allSeatings as $s) {
+            if ($s->exam) {
+                $exams[] = [
+                    'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
+                    'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
+                    'module' => $s->exam->module->name ?? 'Module N/A',
+                    'room' => $s->room->name ?? 'Salle N/A',
+                    'seat' => $s->seat_number ?? 'N/A',
+                    'qr_token' => $s->qr_token
+                ];
+            }
+        }
+
+        // Sort exams by date and time
+        usort($exams, function($a, $b) {
+            $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
+            $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
+            return strcmp($dateA, $dateB);
+        });
+
+        return $this->getPdfInstance('pdf.convocation', [
             'person_name' => $student->user->last_name . ' ' . $student->user->first_name,
             'person_role' => 'Étudiant',
             'person_id' => $student->user->cin ?? 'N/A',
             'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
-            'session_type' => $convocation->exam->session->type ?? 'ORDINAIRE',
-            'session_name' => $convocation->exam->session->name ?? 'Session Principale',
+            'session_type' => $seating->exam->session->type ?? 'ORDINAIRE',
+            'session_name' => $seating->exam->session->name ?? 'Session Principale',
             'exams' => $exams
         ]);
-        return $pdf->download("convocation_etudiant_{$convocationId}.pdf");
     }
 
     public function printProfessors(Request $request)

@@ -88,6 +88,17 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function sendBatchEmails(Request $request, int $sessionId): JsonResponse
+    {
+        $seatingIds = $request->input('seating_ids', []);
+        if (empty($seatingIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucune convocation sélectionnée.'], 400);
+        }
+
+        $result = $this->convocationService->sendBatchEmails($sessionId, $seatingIds);
+        return response()->json($result);
+    }
+
     public function scanQr(Request $request): JsonResponse
     {
         $validated = $request->validate([

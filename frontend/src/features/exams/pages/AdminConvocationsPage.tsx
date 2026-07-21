@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3 } from 'lucide-react'
+import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -11,6 +11,8 @@ export default function AdminConvocationsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'surveillants'>('overview')
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [selectedFiliere, setSelectedFiliere] = useState('')
+  const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set())
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     setNotification({ msg, type })
@@ -75,12 +77,58 @@ export default function AdminConvocationsPage() {
     onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de l\'affectation.', 'error')
   })
 
+  // Batch actions
+  const batchDownloadMutation = useMutation({
+    mutationFn: (seatingIds: number[]) => examsApi.batchDownloadPdf(selectedSessionId!, seatingIds),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `convocations_lot_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      notify('PDF téléchargé avec succès !');
+    },
+    onError: () => notify('Erreur lors du téléchargement.', 'error')
+  })
+
+  const batchEmailMutation = useMutation({
+    mutationFn: (seatingIds: number[]) => examsApi.sendBatchEmails(selectedSessionId!, seatingIds),
+    onSuccess: () => {
+      notify('Emails envoyés avec succès !');
+      setSelectedSeatings(new Set());
+      refetchList();
+      refetchStats();
+    },
+    onError: () => notify('Erreur lors de l\'envoi des emails.', 'error')
+  })
+
   const stats = sessionStats
 
   const students: any[] = convocationList?.students || []
   const surveillants: any[] = convocationList?.surveillants || []
 
   const filieres = [...new Set(students.map((s: any) => s.filiere))].filter(Boolean)
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedSeatings(new Set(students.map((s: any) => s.id)))
+    } else {
+      setSelectedSeatings(new Set())
+    }
+  }
+
+  const handleSelectOne = (id: number) => {
+    const newSet = new Set(selectedSeatings)
+    if (newSet.has(id)) newSet.delete(id)
+    else newSet.add(id)
+    setSelectedSeatings(newSet)
+  }
+
+  const handlePreview = (id: number) => {
+    setPreviewUrl(`http://localhost:8000/api/admin/exam-planning/student/${id}/preview`)
+  }
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -360,22 +408,65 @@ export default function AdminConvocationsPage() {
                     Aucune convocation générée. Cliquez sur "Générer les Convocations" d'abord.
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
-                      <tr>
-                        <th className="px-5 py-3 text-left font-bold">Étudiant</th>
-                        <th className="px-5 py-3 text-left font-bold">CNE</th>
-                        <th className="px-5 py-3 text-left font-bold">Filière / Groupe</th>
-                        <th className="px-5 py-3 text-left font-bold">Examen</th>
-                        <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
-                        <th className="px-5 py-3 text-center font-bold">QR</th>
-                        <th className="px-5 py-3 text-center font-bold">Statut</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {students.map((s: any) => (
-                        <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="px-5 py-3">
+                  <>
+                    {selectedSeatings.size > 0 && (
+                      <div className="bg-blue-50 border-b border-blue-100 p-3 px-5 flex items-center justify-between sticky top-0 z-10">
+                        <span className="text-blue-800 font-bold text-sm">
+                          {selectedSeatings.size} étudiant(s) sélectionné(s)
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => batchDownloadMutation.mutate(Array.from(selectedSeatings))}
+                            disabled={batchDownloadMutation.isPending}
+                            className="bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                          >
+                            {batchDownloadMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                            Télécharger PDFs
+                          </button>
+                          <button
+                            onClick={() => batchEmailMutation.mutate(Array.from(selectedSeatings))}
+                            disabled={batchEmailMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                          >
+                            {batchEmailMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                            Envoyer Emails
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <table className="w-full text-sm">
+                      <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
+                        <tr>
+                          <th className="px-5 py-3 text-left w-10">
+                            <input
+                              type="checkbox"
+                              checked={students.length > 0 && selectedSeatings.size === students.length}
+                              onChange={handleSelectAll}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </th>
+                          <th className="px-5 py-3 text-left font-bold">Étudiant</th>
+                          <th className="px-5 py-3 text-left font-bold">CNE</th>
+                          <th className="px-5 py-3 text-left font-bold">Filière / Groupe</th>
+                          <th className="px-5 py-3 text-left font-bold">Examen</th>
+                          <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
+                          <th className="px-5 py-3 text-center font-bold">QR</th>
+                          <th className="px-5 py-3 text-center font-bold">Statut</th>
+                          <th className="px-5 py-3 text-right font-bold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {students.map((s: any) => (
+                          <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSeatings.has(s.id) ? "bg-blue-50/30" : "")}>
+                            <td className="px-5 py-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedSeatings.has(s.id)}
+                                onChange={() => handleSelectOne(s.id)}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </td>
+                            <td className="px-5 py-3">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
                                 {(s.student_name || 'E').charAt(0).toUpperCase()}
@@ -407,6 +498,7 @@ export default function AdminConvocationsPage() {
                       ))}
                     </tbody>
                   </table>
+                  </>
                 )}
               </div>
             )}

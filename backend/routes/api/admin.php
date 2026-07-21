@@ -303,6 +303,11 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         // Student endpoints
         Route::get('/student/{studentId}', [ConvocationController::class, 'getStudentConvocations']);
         Route::get('/student/{id}/download', [PdfExportController::class, 'studentConvocationPdf']);
+        Route::get('/student/{id}/preview', [PdfExportController::class, 'studentConvocationPreview']);
+        
+        // Batch actions
+        Route::post('/session/{sessionId}/batch-pdf', [PdfExportController::class, 'batchPdf']);
+        Route::post('/session/{sessionId}/send-batch-emails', [ConvocationController::class, 'sendBatchEmails']);
     });
 
     // Convocations Lifecycle
