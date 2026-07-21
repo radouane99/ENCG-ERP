@@ -316,16 +316,127 @@ export default function AcademicYearSettingsPage() {
 
       {/* Périodes des Sessions d'Examens */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-8">
-        <h2 className="text-xl font-bold text-[#0f2863] mb-8">Périodes des Sessions d'Examens (Année Courante)</h2>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-bold text-[#0f2863]">Périodes des Sessions d'Examens</h2>
+          <button 
+            onClick={() => setShowNewSessionForm(!showNewSessionForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0f2863]/10 text-[#0f2863] font-bold rounded-xl hover:bg-[#0f2863]/20 transition-colors text-sm"
+          >
+            {showNewSessionForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            Ajouter une Session
+          </button>
+        </div>
+
+        {showNewSessionForm && (
+          <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-2xl">
+            <h3 className="font-bold text-slate-800 mb-4">Nouvelle Session</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Nom de la session</label>
+                <input 
+                  type="text" 
+                  value={newSessionForm.name}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, name: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  placeholder="ex: Session Ordinaire"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Type</label>
+                <input 
+                  type="text" 
+                  value={newSessionForm.type}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, type: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  placeholder="ex: normale, rattrapage, autonome..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Année Universitaire</label>
+                <select 
+                  value={newSessionForm.academic_year_id}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, academic_year_id: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+                >
+                  <option value="">Sélectionner</option>
+                  {years.map((y: any) => <option key={y.id} value={y.id}>{y.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Semestre</label>
+                <select 
+                  value={newSessionForm.semester_id}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, semester_id: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
+                >
+                  <option value="">Sélectionner</option>
+                  {semesters.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
+                <input 
+                  type="date" 
+                  value={newSessionForm.start_date}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, start_date: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
+                <input 
+                  type="date" 
+                  value={newSessionForm.end_date}
+                  onChange={(e) => setNewSessionForm({...newSessionForm, end_date: e.target.value})}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button 
+                onClick={handleCreateSession}
+                disabled={createSessionMutation.isPending}
+                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm"
+              >
+                {createSessionMutation.isPending ? 'Création...' : 'Créer la session'}
+              </button>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
           
           {examSessions.map((session: any) => (
-            <div key={session.id} className="space-y-4">
-              <h3 className="font-bold text-slate-800">{session.name}</h3>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
-                <div className="relative">
+            <div key={session.id} className="space-y-4 p-4 border border-slate-100 rounded-xl bg-slate-50 relative group">
+              <button 
+                onClick={() => handleDeleteSession(session.id)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                title="Supprimer la session"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Nom de la session</label>
+                  <input 
+                    type="text" 
+                    value={sessionDates[session.id]?.name ?? session.name} 
+                    onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], name: e.target.value}})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Type</label>
+                  <input 
+                    type="text" 
+                    value={sessionDates[session.id]?.type ?? session.type} 
+                    onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], type: e.target.value}})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Début</label>
                   <input 
                     type="date" 
                     value={sessionDates[session.id]?.start_date || ''} 
@@ -333,10 +444,8 @@ export default function AcademicYearSettingsPage() {
                     className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" 
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
-                <div className="relative">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Fin</label>
                   <input 
                     type="date" 
                     value={sessionDates[session.id]?.end_date || ''} 
@@ -352,14 +461,14 @@ export default function AcademicYearSettingsPage() {
         
         <div className="mt-8 flex items-center justify-between">
           <p className="text-xs text-slate-400 italic">
-            Les examens ne pourront être planifiés que dans les périodes définies pour chaque session.
+            N'oubliez pas d'enregistrer vos modifications après avoir modifié les noms ou les dates.
           </p>
           <button 
             onClick={handleSaveSessions}
             disabled={updateSessionMutation.isPending}
             className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm shadow-sm disabled:opacity-50"
           >
-            {updateSessionMutation.isPending ? 'Enregistrement...' : 'Enregistrer les périodes'}
+            {updateSessionMutation.isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
       </div>
