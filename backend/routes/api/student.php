@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', 'role:student', EnsureInstitutionContext::cla
 
 // Web App Student Portal API
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group(function () {
+    Route::get('/my-dossier', [\App\Http\Controllers\Api\UnifiedStudentRecordController::class, 'myDossier']);
     Route::get('/dashboard', [StudentPortalController::class, 'getDashboardStats']);
     Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
     Route::get('/grades', [StudentPortalController::class, 'getGrades']);
