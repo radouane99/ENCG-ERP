@@ -116,61 +116,30 @@ class ExamConvocationService
      */
     public function sendSessionEmails(int $sessionId): array
     {
-        $session = ExamSession::with(['exams.group.students.user', 'exams.module', 'exams.room'])->findOrFail($sessionId);
-        $examIds = $session->exams->pluck('id');
+        $session = ExamSession::findOrFail($sessionId);
+        $examIds = DB::table('exams')->where('exam_session_id', $sessionId)->pluck('id');
         
-        // Only select seatings that haven't been sent yet
-        $seatings = DB::table('exam_seatings')
+        $seatingIds = DB::table('exam_seatings')
             ->whereIn('exam_id', $examIds)
             ->whereNull('sent_at')
-            ->get()
-            ->groupBy('exam_id');
+            ->pluck('id')
+            ->toArray();
 
-        $sentCount = 0;
-        
-        foreach ($session->exams as $exam) {
-            if (!$seatings->has($exam->id)) continue;
-            
-            $examSeatings = $seatings->get($exam->id)->keyBy('student_id');
-            
-            foreach ($exam->group->students as $student) {
-                if (!$student->user || !$student->user->email) continue;
-
-                $seating = $examSeatings->get($student->id);
-                if (!$seating || !$seating->qr_token) continue;
-
-                $examData = [
-                    'studentName' => $student->user->name,
-                    'moduleName' => $exam->module->name ?? 'N/A',
-                    'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
-                    'examTime' => $exam->start_time ?? 'N/A',
-                    'roomName' => $exam->room->name ?? 'N/A',
-                    'qrToken' => $seating->qr_token,
-                ];
-
-                if (class_exists(Pdf::class) && class_exists(ConvocationEmail::class)) {
-                    try {
-                        $pdf = Pdf::loadView('emails.convocation', $examData);
-                        Mail::to($student->user->email)->send(
-                            new ConvocationEmail($examData, $pdf->output())
-                        );
-                        
-                        DB::table('exam_seatings')
-                            ->where('id', $seating->id)
-                            ->update(['sent_at' => now()]);
-                            
-                        $sentCount++;
-                    } catch (\Exception $e) {
-                        // Log email error but continue
-                    }
-                }
-            }
+        if (empty($seatingIds)) {
+            $seatingIds = DB::table('exam_seatings')
+                ->whereIn('exam_id', $examIds)
+                ->pluck('id')
+                ->toArray();
         }
 
-        return [
-            'success' => true,
-            'message' => "{$sentCount} convocations envoyées avec succès."
-        ];
+        if (empty($seatingIds)) {
+            return [
+                'success' => false,
+                'message' => 'Aucune convocation à envoyer pour cette session. Veuillez d\'abord générer les convocations.'
+            ];
+        }
+
+        return $this->sendBatchEmails($sessionId, $seatingIds);
     }
 
     /**
