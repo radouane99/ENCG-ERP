@@ -96,8 +96,7 @@ const DocumentsAttestationsPage = lazy(() => import('@features/documents/pages/D
 const CoursesPage = lazy(() => import('@features/lms/pages/CoursesPage'))
 const CourseDetailPage = lazy(() => import('@features/lms/pages/CourseDetailPage'))
 const AssignmentsPage = lazy(() => import('@features/lms/pages/AssignmentsPage'))
-const GradeGridsPage = lazy(() => import('@features/exams/pages/GradeGridsPage'))
-const GradeInputPage = lazy(() => import('@features/exams/pages/GradeInputPage'))
+
 
 const DeliberationJuryPage = lazy(() => import('@features/deliberation/pages/DeliberationJuryPage'))
 
@@ -366,8 +365,7 @@ export default function RootRouter() {
 
           {/* Exams & Grades */}
           <Route path="/exams" element={<ExamSessionsPage />} />
-          <Route path="/exams/grades" element={<GradeGridsPage />} />
-          <Route path="/exams/grades/:filiereId/:moduleId" element={<GradeInputPage />} />
+
           <Route path="/exams/deliberations" element={<DeliberationPage />} />
           <Route path="/exams/deliberations/:id/jury" element={<DeliberationJuryPage />} />
 
