@@ -113,55 +113,8 @@ class ConvocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
         }
 
-        // DEBUG: find what we got
-        $session = \App\Models\ExamSession::with(['exams'])->findOrFail($sessionId);
-        $examIds = $session->exams->pluck('id');
-        
-        $found = \Illuminate\Support\Facades\DB::table('exam_surveillances')
-            ->whereIn('exam_id', $examIds)
-            ->whereIn('id', $surveillanceIds)
-            ->select('id', 'professor_id', 'exam_id', 'qr_token')
-            ->get();
-
-        if ($found->isEmpty()) {
-            return response()->json([
-                'debug' => true,
-                'success' => false,
-                'message' => 'Aucune surveillance trouvée en base pour ces IDs',
-                'received_ids' => $surveillanceIds,
-                'session_exam_ids' => $examIds,
-            ]);
-        }
-
-        $professorId = $found->first()->professor_id;
-        $professor = \App\Models\User::find($professorId);
-
-        // Try sending a simple raw test email directly via Resend to see if it works
-        $testResult = 'not_attempted';
-        $errorMsg = null;
-        try {
-            \Illuminate\Support\Facades\Mail::raw(
-                'Test de convocation ENCG - si vous recevez ceci, Resend fonctionne.',
-                function ($message) use ($professor) {
-                    $message->to($professor->email)->subject('TEST Convocation ENCG');
-                }
-            );
-            $testResult = 'raw_sent_ok';
-        } catch (\Exception $e) {
-            $testResult = 'raw_failed';
-            $errorMsg = $e->getMessage();
-        }
-
-        return response()->json([
-            'debug' => true,
-            'received_ids' => $surveillanceIds,
-            'found_surveillance_count' => $found->count(),
-            'professor_id' => $professorId,
-            'professor_name' => $professor?->name,
-            'professor_email_in_db' => $professor?->email,
-            'raw_mail_test' => $testResult,
-            'raw_mail_error' => $errorMsg,
-        ]);
+        $result = $this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds);
+        return response()->json($result);
     }
 
     public function sendBatchSurveillantsWhatsApp(Request $request, int $sessionId, \App\Services\WhatsAppService $whatsappService): JsonResponse

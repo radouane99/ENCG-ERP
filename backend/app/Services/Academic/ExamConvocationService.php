@@ -261,10 +261,10 @@ class ExamConvocationService
                 if (!$exam) continue;
 
                 $profExamsData[] = [
-                    'moduleName' => $exam->module->name ?? 'N/A',
+                    'moduleName' => $exam->module?->name ?? 'N/A',
                     'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
                     'examTime' => $exam->start_time ?? 'N/A',
-                    'roomName' => $exam->room->name ?? 'N/A',
+                    'roomName' => $exam->room?->name ?? 'N/A',
                     'role' => $surv->role ?? 'Surveillant',
                     'qrToken' => $surv->qr_token,
                 ];
