@@ -154,11 +154,11 @@ export const examsApi = {
     return response.data;
   },
   sendBatchSurveillantsEmails: async (sessionId: number, surveillanceIds: number[]) => {
-    const response = await api.post(`/convocations/session/${sessionId}/send-batch-surveillants-emails`, { surveillance_ids: surveillanceIds });
+    const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-surveillants-emails`, { surveillance_ids: surveillanceIds });
     return response.data;
   },
   sendBatchSurveillantsWhatsApp: async (sessionId: number, surveillanceIds: number[]) => {
-    const response = await api.post(`/convocations/session/${sessionId}/send-batch-surveillants-whatsapp`, { surveillance_ids: surveillanceIds });
+    const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-surveillants-whatsapp`, { surveillance_ids: surveillanceIds });
     return response.data;
   },
 
