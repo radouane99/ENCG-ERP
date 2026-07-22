@@ -98,6 +98,7 @@ C'est le module le plus critique et complexe du système, basé sur le modèle `
   - **Validé (V)** : Moyenne Module >= 10/20.
   - **Validé par Compensation (VC)** : Moyenne Semestre >= 10 ET aucune note éliminatoire (< 6). Le module < 10 est compensé.
   - **Non Validé (NV) / Rattrapage (RAT)** : Note éliminatoire ou échec global.
+- **Espace Étudiant (Suspense UI & Certification)** : L'étudiant découvre ses notes via une interface gamifiée avec effet "Blur" (Suspense UI). En un clic, il génère son Relevé de Notes PDF officiel. Ce relevé intègre un QR Code cryptographique unique scannable (Anti-fraude), renvoyant vers une page publique de l'ERP certifiant son authenticité pour les futurs employeurs.
   - **Discipline** : En cas de fraude (décision du Conseil de Discipline), la note du module ou du semestre est automatiquement annulée (0/20) de façon irréversible.
 
 #### Scénario Métier Complet : De la Saisie au PV Officiel

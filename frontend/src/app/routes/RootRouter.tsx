@@ -98,7 +98,7 @@ const CourseDetailPage = lazy(() => import('@features/lms/pages/CourseDetailPage
 const AssignmentsPage = lazy(() => import('@features/lms/pages/AssignmentsPage'))
 const GradeGridsPage = lazy(() => import('@features/exams/pages/GradeGridsPage'))
 const GradeInputPage = lazy(() => import('@features/exams/pages/GradeInputPage'))
-const DeliberationPage = lazy(() => import('@features/deliberation/pages/DeliberationPage'))
+
 const DeliberationJuryPage = lazy(() => import('@features/deliberation/pages/DeliberationJuryPage'))
 
 const InternshipsPage = lazy(() => import('@features/internships/pages/InternshipsPage'))
