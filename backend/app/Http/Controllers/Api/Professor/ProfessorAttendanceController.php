@@ -52,5 +52,46 @@ class ProfessorAttendanceController extends Controller
             'message' => 'Attendance session closed',
             'session' => $closedSession
         ]);
+    public function scanQrCode(AttendanceSession $session, \Illuminate\Http\Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        // In a real scenario, the token would be decrypted/verified.
+        // For ENCG ERP V1, the token contains the student_id prefixed with "STU-"
+        $tokenParts = explode('-', $validated['token']);
+        $studentId = count($tokenParts) > 1 ? (int)$tokenParts[1] : (int)$validated['token'];
+
+        // Check if student exists
+        $student = \App\Models\Student::with('user')->find($studentId);
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
+        }
+
+        // Mark presence
+        $record = $this->attendanceService->markPresence(
+            $session->id,
+            $studentId,
+            'present'
+        );
+
+        // Check total absences for ENCG limits
+        $totalAbsences = \App\Models\AttendanceRecord::where('student_id', $studentId)
+            ->where('status', 'absent')
+            ->count();
+
+        $warning = null;
+        if ($totalAbsences >= 3) {
+            $warning = "Attention: L'étudiant a atteint $totalAbsences absences.";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Présence validée.',
+            'student_name' => $student->user->name ?? 'Étudiant',
+            'warning' => $warning,
+            'record' => $record
+        ]);
     }
 }

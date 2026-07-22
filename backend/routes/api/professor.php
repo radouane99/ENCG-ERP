@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function 
     Route::prefix('professor/attendance')->group(function () {
         Route::post('/start', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'startSession']);
         Route::post('/{session}/manual-call', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'manualCall']);
+        Route::post('/{session}/scan', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'scanQrCode']);
         Route::post('/{session}/close', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'closeSession']);
     });
 

@@ -21,12 +21,17 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { ProfAiCopilotModal } from '../components/ProfAiCopilotModal';
+import { QRScannerModal } from '../components/QRScannerModal';
 
 export default function ProfessorDashboard() {
   const { t, i18n } = useTranslation(['professors', 'common']);
   const isRtl = i18n.language === 'ar';
   const { user } = useAuthStore();
   const currentDate = new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+
+  const [activeAiModule, setActiveAiModule] = React.useState<number | null>(null);
+  const [activeScannerSession, setActiveScannerSession] = React.useState<number | null>(null);
 
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['professor-stats'],
@@ -145,9 +150,9 @@ export default function ProfessorDashboard() {
                             <span className="flex items-center gap-1"><Building2 className="w-3 h-3" /> {cls.location}</span>
                           </div>
                         </div>
-                        <Link to="/professor/check-in/scanner" className="hidden md:flex items-center gap-2 bg-[#001A4B] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#000d26] transition-colors">
+                        <button onClick={() => setActiveScannerSession(cls.session_id || 1)} className="hidden md:flex items-center gap-2 bg-[#001A4B] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#000d26] transition-colors">
                           <QrCode className="w-4 h-4" /> FAIRE L'APPEL
-                        </Link>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -166,7 +171,12 @@ export default function ProfessorDashboard() {
                       <div className="flex justify-between items-end mb-2">
                         <div>
                           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{mod.code}</div>
-                          <h3 className="font-bold text-foreground text-sm">{mod.name}</h3>
+                          <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+                            {mod.name}
+                            <button onClick={() => setActiveAiModule(mod.id)} className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 transition-colors">
+                              <Zap className="w-3 h-3" /> IA
+                            </button>
+                          </h3>
                         </div>
                         <div className="text-right">
                           <div className="text-xs font-bold text-[#003a8c]">{mod.progress}%</div>
@@ -193,7 +203,7 @@ export default function ProfessorDashboard() {
                 <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Actions Rapides</h2>
                 
                 <div className="grid grid-cols-1 gap-3">
-                  <Link to="/professor/check-in/scanner" className="flex items-center gap-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 group hover:bg-indigo-50 transition-colors">
+                  <button onClick={() => setActiveScannerSession(stats.next_classes[0]?.session_id || 1)} className="w-full text-left flex items-center gap-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 group hover:bg-indigo-50 transition-colors">
                     <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                       <QrCode className="w-5 h-5" />
                     </div>
@@ -201,7 +211,7 @@ export default function ProfessorDashboard() {
                       <div className="font-bold text-[#001A4B] text-sm">Scanner QR Présence</div>
                       <div className="text-[10px] font-medium text-muted-foreground mt-0.5">Application mobile de scan</div>
                     </div>
-                  </Link>
+                  </button>
 
                   <Link to="/admin/grades" className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 group hover:bg-emerald-50 transition-colors">
                     <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -244,6 +254,18 @@ export default function ProfessorDashboard() {
           </div>
         </>
       )}
+
+      {/* Modals */}
+      <ProfAiCopilotModal 
+        isOpen={!!activeAiModule} 
+        onClose={() => setActiveAiModule(null)} 
+        moduleId={activeAiModule!} 
+      />
+      <QRScannerModal 
+        isOpen={!!activeScannerSession} 
+        onClose={() => setActiveScannerSession(null)} 
+        sessionId={activeScannerSession!} 
+      />
     </div>
   );
 }

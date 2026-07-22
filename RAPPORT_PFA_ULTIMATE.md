@@ -117,12 +117,12 @@ C'est le module le plus critique et complexe du système, basé sur le modèle `
 
 ### 3.7. Gestion des Ressources Humaines & Vacataires (`hr`, `vacataire`)
 - **Contrats** : Gestion des professeurs externes (`VacationContract`).
-- **Suivi des Paiements** : Comptabilisation des heures enseignées via le pointage (`AttendanceSession`) pour générer les bons de paiement (`VacationPayment`).
+- **Pointage Intelligent** : L'enseignant utilise son smartphone (via l'ERP) pour scanner le QR Code de l'étudiant à l'entrée. Le système vérifie en temps réel le quota d'absences (limite de 3) et alerte le professeur. Cela permet de générer automatiquement les états de présence et de calculer la rémunération des vacataires via les sessions validées.
 
 ### 3.8. La Suite Intelligence Artificielle (`ai`)
 - **Tuteur IA** : Le modèle `AiConversation` garde le contexte pour expliquer des cours complexes aux étudiants.
-- **Smart Grading** : L'IA aide les professeurs à noter les QCM (`Quiz`) et générer des évaluations.
 - **Assistant d'Examen** : Chatbot contextuel répondant aux questions des étudiants sur le règlement de leur examen.
+- **Copilote Professeur (Smart Grading)** : Une fois la délibération terminée, l'IA (propulsée par Google Gemini) génère un rapport analytique de la classe, identifie les "Concepts Mal Compris" avec précision et propose des recommandations pédagogiques personnalisées pour le professeur.
 
 ---
 
