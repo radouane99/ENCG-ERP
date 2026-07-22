@@ -176,6 +176,7 @@ class ExamConvocationService
             ->join('users', 'students.user_id', '=', 'users.id')
             ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
             ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
             ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
             ->whereIn('exam_seatings.exam_id', $examIds)
             ->whereIn('exam_seatings.id', $seatingIds)
@@ -183,9 +184,11 @@ class ExamConvocationService
                 'exam_seatings.id as seating_id',
                 'exam_seatings.student_id',
                 'exam_seatings.qr_token',
+                'students.cne',
                 'users.name as student_name',
                 'users.email as student_email',
                 'modules.name as module_name',
+                'filieres.name as filiere_name',
                 'exams.exam_date',
                 'exams.start_time',
                 'rooms.name as room_name'
@@ -218,7 +221,30 @@ class ExamConvocationService
             ];
 
             try {
-                $pdf = Pdf::loadView('emails.convocation', ['emailData' => $emailData]);
+                // Build PDF data in the format of the official pdf/convocation template
+                $pdfExamsData = $studentSeatings->map(function ($s) {
+                    return [
+                        'date'       => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
+                        'time'       => ($s->start_time ? substr($s->start_time, 0, 5) : '--:--'),
+                        'module'     => $s->module_name ?? 'N/A',
+                        'enseignant' => '-',
+                        'room'       => $s->room_name ?? 'N/A',
+                        'seat'       => '-',
+                    ];
+                })->values()->toArray();
+
+                $pdfData = [
+                    'session_name' => $session->name,
+                    'session_type' => '',
+                    'person_id'    => $first->cne ?? 'N/A',
+                    'person_name'  => strtoupper($first->student_name),
+                    'filiere_name' => $first->filiere_name ?? 'N/A',
+                    'niveau_name'  => $first->niveau_name ?? 'N/A',
+                    'exams'        => $pdfExamsData,
+                    'qr_token'     => $studentSeatings->first()->qr_token ?? null,
+                ];
+
+                $pdf = Pdf::loadView('pdf.convocation', $pdfData);
                 Mail::to($first->student_email)->send(
                     new ConvocationEmail($emailData, $pdf->output())
                 );
@@ -291,7 +317,32 @@ class ExamConvocationService
             ];
 
             try {
-                $pdf = Pdf::loadView('emails.convocation_prof', ['emailData' => $emailData]);
+                // Build PDF data in the format of the official pdf/convocations_profs_batch template
+                $profPdfExams = array_map(function ($exam) {
+                    return [
+                        'date'   => $exam['examDate'],
+                        'time'   => substr($exam['examTime'], 0, 5),
+                        'module' => $exam['moduleName'],
+                        'room'   => $exam['roomName'],
+                        'role'   => $exam['role'],
+                    ];
+                }, $profExamsData);
+
+                $professorData = [[
+                    'id'           => $professor->id,
+                    'created_at'   => now()->toDateTimeString(),
+                    'person_id'    => $professor->professor_id ?? $professor->id,
+                    'person_name'  => strtoupper($professor->name),
+                    'filiere_name' => 'Département Enseignant',
+                    'person_role'  => $profExamsData[0]['role'] ?? 'Surveillant',
+                    'session_name' => $session->name,
+                    'session_type' => '',
+                    'exams'        => $profPdfExams,
+                    'qr_token'     => $profExamsData[0]['qrToken'] ?? null,
+                    'qrCodeBase64' => null,
+                ]];
+
+                $pdf = Pdf::loadView('pdf.convocations_profs_batch', ['professorsData' => $professorData]);
                 Mail::to($professor->email)->send(
                     new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
                 );
