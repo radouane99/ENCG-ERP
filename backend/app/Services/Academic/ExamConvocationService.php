@@ -279,24 +279,24 @@ class ExamConvocationService
                 'confirmUrl' => url('/api/verify/surveillance/' . $profExamsData[0]['qrToken'] . '/confirm')
             ];
 
-            if (class_exists(Pdf::class) && class_exists(\App\Mail\ProfessorConvocationEmail::class)) {
-                try {
-                    $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
-                    Mail::to($professor->email)->send(
-                        new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
-                    );
+            try {
+                $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
+                Mail::to($professor->email)->send(
+                    new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
+                );
+                
+                DB::table('exam_surveillances')
+                    ->whereIn('id', $profSurveillances->pluck('id'))
+                    ->update(['sent_at' => now()]);
                     
-                    DB::table('exam_surveillances')
-                        ->whereIn('id', $profSurveillances->pluck('id'))
-                        ->update(['sent_at' => now()]);
-                        
-                    $sentCount++;
-                } catch (\Exception $e) {
-                    // Log the error for debugging and continue with other professors
-                    \Illuminate\Support\Facades\Log::error('Error sending convocation email to professor ID ' . $professor->id . ': ' . $e->getMessage(), ['exception' => $e]);
-                    // Optionally collect error info to include in final response
-                    // Continue to next professor without aborting the whole process
-                }
+                $sentCount++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Convocation email error for professor ' . $professor->id . ': ' . $e->getMessage());
+                return [
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'envoi à ' . $professor->name . ' (' . $professor->email . '): ' . $e->getMessage(),
+                    'sent_count' => $sentCount,
+                ];
             }
         }
 
