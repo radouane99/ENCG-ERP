@@ -188,27 +188,40 @@ class ExamConvocationService
             ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
             ->join('modules', 'exams.module_id', '=', 'modules.id')
             ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
-            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
+            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
+            ->leftJoin('exam_surveillances', function($join) {
+                $join->on('exam_surveillances.exam_id', '=', 'exams.id')
+                     ->where('exam_surveillances.role', '=', 'president_salle');
+            })
+            ->leftJoin('users as prof_users', 'exam_surveillances.professor_id', '=', 'prof_users.id')
             ->whereIn('exam_seatings.exam_id', $examIds)
             ->whereIn('exam_seatings.id', $seatingIds)
             ->select(
                 'exam_seatings.id as seating_id',
                 'exam_seatings.student_id',
                 'exam_seatings.qr_token',
+                'exam_seatings.seat_number',
                 'students.cne',
                 'users.name as student_name',
                 'users.email as student_email',
                 'modules.name as module_name',
+                'modules.semester_number',
                 'filieres.name as filiere_name',
                 'exams.exam_date',
                 'exams.start_time',
-                'rooms.name as room_name'
+                DB::raw('COALESCE(seating_rooms.name, exam_rooms.name, "Salle non assignée") as room_name'),
+                DB::raw('COALESCE(prof_users.name, "Prof. Responsable") as professor_name')
             )
             ->orderBy('exams.exam_date')
+            ->orderBy('exams.start_time')
             ->get()
             ->groupBy('student_id');
 
         $sentCount = 0;
+
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
         foreach ($seatings as $studentId => $studentSeatings) {
             $first = $studentSeatings->first();
@@ -217,42 +230,58 @@ class ExamConvocationService
             // Build list of all exams for this student
             $examsData = $studentSeatings->map(function ($s) {
                 return [
-                    'moduleName' => $s->module_name ?? 'N/A',
-                    'examDate'   => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
-                    'examTime'   => $s->start_time ? substr($s->start_time, 0, 5) : 'N/A',
-                    'roomName'   => $s->room_name ?? 'N/A',
-                    'qrToken'    => $s->qr_token,
+                    'moduleName'    => $s->module_name ?? 'N/A',
+                    'examDate'      => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
+                    'examTime'      => $s->start_time ? substr($s->start_time, 0, 5) : 'N/A',
+                    'roomName'      => $s->room_name ?? 'Salle non assignée',
+                    'seatNumber'    => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
+                    'professorName' => $s->professor_name ?? 'Prof. ENCG',
+                    'qrToken'       => $s->qr_token,
                 ];
             })->values()->toArray();
 
             $emailData = [
                 'studentName' => $first->student_name,
                 'sessionName' => $session->name,
+                'logoBase64'  => $logoBase64,
                 'exams'       => $examsData,
             ];
 
             try {
+                $qrToken = $first->qr_token ?? ('ENCG-' . ($first->cne ?? 'STUDENT') . '-' . $studentId);
+                $qrCodeBase64 = '';
+                try {
+                    $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(140)->margin(1)->generate($qrToken);
+                    $qrCodeBase64 = base64_encode($qrPng);
+                } catch (\Throwable $e) {
+                    try {
+                        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->margin(1)->generate($qrToken);
+                        $qrCodeBase64 = base64_encode($qrSvg);
+                    } catch (\Throwable $e2) {}
+                }
+
                 // Build PDF data in the format of the official pdf/convocation template
                 $pdfExamsData = $studentSeatings->map(function ($s) {
                     return [
                         'date'       => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
                         'time'       => ($s->start_time ? substr($s->start_time, 0, 5) : '--:--'),
                         'module'     => $s->module_name ?? 'N/A',
-                        'enseignant' => '-',
-                        'room'       => $s->room_name ?? 'N/A',
-                        'seat'       => '-',
+                        'enseignant' => $s->professor_name ?? 'Prof. ENCG',
+                        'room'       => $s->room_name ?? 'Salle non assignée',
+                        'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
                     ];
                 })->values()->toArray();
 
                 $pdfData = [
                     'session_name' => $session->name,
-                    'session_type' => '',
+                    'session_type' => 'ORDINAIRE',
                     'person_id'    => $first->cne ?? 'N/A',
                     'person_name'  => strtoupper($first->student_name),
                     'filiere_name' => $first->filiere_name ?? 'N/A',
-                    'niveau_name'  => $first->niveau_name ?? 'N/A',
+                    'niveau_name'  => 'S' . ($first->semester_number ?? 1),
                     'exams'        => $pdfExamsData,
-                    'qr_token'     => $studentSeatings->first()->qr_token ?? null,
+                    'qr_token'     => $qrToken,
+                    'qrCodeBase64' => $qrCodeBase64,
                 ];
 
                 $pdf = Pdf::loadView('pdf.convocation', $pdfData);

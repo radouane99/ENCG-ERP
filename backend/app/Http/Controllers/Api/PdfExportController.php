@@ -249,7 +249,7 @@ class PdfExportController extends Controller
         $exams = [];
         foreach ($allSeatings as $s) {
             if ($s->exam) {
-                $profName = '-';
+                $profName = '';
                 if ($s->exam->module_id) {
                     $profData = \Illuminate\Support\Facades\DB::table('module_professor')
                         ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
@@ -261,15 +261,28 @@ class PdfExportController extends Controller
                         $profName = mb_strtoupper($profData->last_name) . ' ' . $profData->first_name;
                     }
                 }
+                if (!$profName) {
+                    $survProf = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+                        ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
+                        ->where('exam_surveillances.exam_id', $s->exam->id)
+                        ->select('users.name')
+                        ->first();
+                    if ($survProf) {
+                        $profName = $survProf->name;
+                    }
+                }
+                if (!$profName) {
+                    $profName = 'Prof. ENCG';
+                }
 
                 $exams[] = [
-                    'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
-                    'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
-                    'module' => $s->exam->module->name ?? 'Module N/A',
+                    'date'       => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
+                    'time'       => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
+                    'module'     => $s->exam->module->name ?? 'Module N/A',
                     'enseignant' => $profName,
-                    'room' => $s->room->name ?? 'Salle N/A',
-                    'seat' => $s->seat_number ?? 'N/A',
-                    'qr_token' => $s->qr_token
+                    'room'       => $s->room->name ?? $s->exam->room->name ?? 'Salle non assignée',
+                    'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
+                    'qr_token'   => $s->qr_token
                 ];
             }
         }
@@ -281,14 +294,31 @@ class PdfExportController extends Controller
             return strcmp($dateA, $dateB);
         });
 
+        $qrToken = $allSeatings->first()->qr_token ?? ('ENCG-' . ($student->cne ?? $student->id));
+        $qrCodeBase64 = '';
+        try {
+            $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(140)->margin(1)->generate($qrToken);
+            $qrCodeBase64 = base64_encode($qrPng);
+        } catch (\Throwable $e) {
+            try {
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->margin(1)->generate($qrToken);
+                $qrCodeBase64 = base64_encode($qrSvg);
+            } catch (\Throwable $e2) {}
+        }
+
+        $firstModuleSem = $allSeatings->first()->exam->module->semester_number ?? 1;
+
         return $this->getPdfInstance('pdf.convocation', [
-            'person_name' => $student->user->last_name . ' ' . $student->user->first_name,
-            'person_role' => 'Étudiant',
-            'person_id' => $student->user->cin ?? 'N/A',
-            'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
+            'person_name'  => strtoupper(($student->user->last_name ?? '') . ' ' . ($student->user->first_name ?? $student->user->name ?? '')),
+            'person_role'  => 'Étudiant',
+            'person_id'    => $student->cne ?? $student->user->cin ?? 'N/A',
+            'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun ENCG',
+            'niveau_name'  => 'Semestre S' . $firstModuleSem,
             'session_type' => $seating->exam->session->type ?? 'ORDINAIRE',
             'session_name' => $seating->exam->session->name ?? 'Session Principale',
-            'exams' => $exams
+            'exams'        => $exams,
+            'qr_token'     => $qrToken,
+            'qrCodeBase64' => $qrCodeBase64,
         ]);
     }
 

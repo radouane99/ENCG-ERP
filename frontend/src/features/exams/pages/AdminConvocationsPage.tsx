@@ -611,15 +611,15 @@ export default function AdminConvocationsPage() {
                       </div>
                     </div>
                     {selectedSeatings.size > 0 && (
-                      <div className="bg-blue-50 border-b border-blue-100 p-3 px-5 flex items-center justify-between sticky top-0 z-10">
-                        <span className="text-blue-800 font-bold text-sm">
+                      <div className="bg-blue-50 border-b border-blue-100 p-3 px-4 sm:px-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sticky top-0 z-10">
+                        <span className="text-blue-800 font-bold text-xs sm:text-sm">
                           {groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} étudiant(s) sélectionné(s) ({selectedSeatings.size} convocation(s) au total)
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => batchDownloadMutation.mutate(Array.from(selectedSeatings))}
                             disabled={batchDownloadMutation.isPending}
-                            className="bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                            className="flex-1 sm:flex-none justify-center bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
                           >
                             {batchDownloadMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                             Télécharger PDFs
@@ -627,15 +627,16 @@ export default function AdminConvocationsPage() {
                           <button
                             onClick={() => batchEmailMutation.mutate(Array.from(selectedSeatings))}
                             disabled={batchEmailMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                            className="flex-1 sm:flex-none justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
                           >
                             {batchEmailMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                            Envoyer Emails ({groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} notification(s))
+                            Envoyer Emails
                           </button>
                         </div>
                       </div>
                     )}
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
                       <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
                         <tr>
                           <th className="px-5 py-3 text-left w-10">
@@ -737,6 +738,7 @@ export default function AdminConvocationsPage() {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </>
                 )}
               </div>
@@ -792,77 +794,79 @@ export default function AdminConvocationsPage() {
                         </div>
                       </div>
                     )}
-                  <table className="w-full text-sm">
-                    <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
-                      <tr>
-                        <th className="px-5 py-3 text-left w-10">
-                          <input
-                            type="checkbox"
-                            checked={groupedSurveillants.length > 0 && selectedSurveillants.size === groupedSurveillants.length}
-                            onChange={handleSelectAllSurveillants}
-                            className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                          />
-                        </th>
-                        <th className="px-5 py-3 text-left font-bold">Professeur</th>
-                        <th className="px-5 py-3 text-center font-bold">Nombre de séances</th>
-                        <th className="px-5 py-3 text-center font-bold">Statut Envoi</th>
-                        <th className="px-5 py-3 text-right font-bold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {groupedSurveillants.map((s: any) => (
-                        <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSurveillants.has(s.id) ? "bg-amber-50/30" : "")}>
-                          <td className="px-5 py-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedSurveillants.has(s.id)}
-                              onChange={() => handleSelectOneSurveillant(s.id)}
-                              className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                            />
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold shrink-0">
-                                {(s.professor_name || 'P').charAt(0).toUpperCase()}
-                              </div>
-                              <span className="font-medium text-slate-700">{s.professor_name}</span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-3 text-center">
-                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">
-                              {s.seances_count} {s.seances_count > 1 ? 'séances' : 'séance'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-center flex flex-col gap-1 items-center justify-center">
-                            {s.sent_at
-                              ? <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-bold">Envoyée</span>
-                              : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
-                            {s.confirmed_at && (
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Confirmé</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handlePreviewSurveillantPdf(s.id); }}
-                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                                title="Voir la convocation"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDownloadSurveillantPdf(s.id); }}
-                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                                title="Télécharger"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
+                          <tr>
+                            <th className="px-5 py-3 text-left w-10">
+                              <input
+                                type="checkbox"
+                                checked={groupedSurveillants.length > 0 && selectedSurveillants.size === groupedSurveillants.length}
+                                onChange={handleSelectAllSurveillants}
+                                className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                              />
+                            </th>
+                            <th className="px-5 py-3 text-left font-bold">Professeur</th>
+                            <th className="px-5 py-3 text-center font-bold">Nombre de séances</th>
+                            <th className="px-5 py-3 text-center font-bold">Statut Envoi</th>
+                            <th className="px-5 py-3 text-right font-bold">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {groupedSurveillants.map((s: any) => (
+                            <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSurveillants.has(s.id) ? "bg-amber-50/30" : "")}>
+                              <td className="px-5 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSurveillants.has(s.id)}
+                                  onChange={() => handleSelectOneSurveillant(s.id)}
+                                  className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                                />
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold shrink-0">
+                                    {(s.professor_name || 'P').charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="font-medium text-slate-700">{s.professor_name}</span>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 text-center">
+                                <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">
+                                  {s.seances_count} {s.seances_count > 1 ? 'séances' : 'séance'}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-center flex flex-col gap-1 items-center justify-center">
+                                {s.sent_at
+                                  ? <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-bold">Envoyée</span>
+                                  : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
+                                {s.confirmed_at && (
+                                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Confirmé</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handlePreviewSurveillantPdf(s.id); }}
+                                    className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                    title="Voir la convocation"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDownloadSurveillantPdf(s.id); }}
+                                    className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                    title="Télécharger"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </>
                 )}
               </div>

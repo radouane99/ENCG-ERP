@@ -10,6 +10,8 @@ import GlobalAIChatbot from '../ai/GlobalAIChatbot'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
 import InstallPrompt from '../pwa/InstallPrompt'
 
+import MobileBottomNav from './MobileBottomNav'
+
 export default function AppShell() {
   const fetchUser = useAuthStore((s) => s.fetchUser)
   const [isCommandOpen, setIsCommandOpen] = useState(false)
@@ -56,13 +58,16 @@ export default function AppShell() {
         {/* Search Modal */}
         <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 scroll-smooth">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 pb-20 lg:pb-8 scroll-smooth">
           <div className="mx-auto max-w-7xl animate-fade-in">
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>
           </div>
         </main>
+
+        {/* Mobile Navigation Bar */}
+        <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
       </div>
 
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />

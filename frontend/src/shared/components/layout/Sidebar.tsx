@@ -207,7 +207,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 <p className="px-3 text-[11px] font-bold tracking-[0.1em] text-sidebar-foreground/60 uppercase mb-2">
                   {t(navItem.groupKey)}
                 </p>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {groupItems.map((item) => (
                     <NavLink
                       key={item.href}
@@ -215,24 +215,26 @@ export default function Sidebar({ onClose }: SidebarProps) {
                       onClick={onClose}
                       className={({ isActive }) =>
                         cn(
-                          'sidebar-item group relative',
-                          isActive && 'active'
+                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer select-none group relative',
+                          isActive 
+                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/25 font-bold translate-x-1' 
+                            : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                         )
                       }
                     >
                       {({ isActive }) => (
                         <>
-                          {/* Active Indicator Line (RTL safe) */}
+                          {/* Active Indicator Line */}
                           {isActive && (
-                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-sidebar-primary rounded-e-full shadow-[0_0_8px_var(--sidebar-primary)]" />
+                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-amber-400 rounded-e-full shadow-[0_0_10px_#f59e0b]" />
                           )}
                           <item.icon className={cn(
                             "w-4 h-4 shrink-0 transition-transform duration-200",
-                            isActive ? "text-white scale-110" : "text-sidebar-foreground/70 group-hover:text-white group-hover:scale-110"
+                            isActive ? "text-amber-300 scale-110" : "text-sidebar-foreground/70 group-hover:text-white group-hover:scale-110"
                           )} />
                           <span className={cn(
                             "flex-1 truncate transition-colors duration-200",
-                            isActive ? "font-semibold text-white" : "font-medium text-sidebar-foreground/80 group-hover:text-white"
+                            isActive ? "font-bold text-white" : "font-medium"
                           )}>
                             {t(item.labelKey)}
                           </span>
@@ -252,13 +254,31 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   to={navItem.href}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    cn('sidebar-item group', isActive && 'active')
+                    cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer select-none group relative',
+                      isActive 
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/25 font-bold translate-x-1' 
+                        : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
+                    )
                   }
                 >
-                  <navItem.icon className="w-4 h-4 shrink-0 text-sidebar-foreground/70 group-hover:text-white" />
-                  <span className="flex-1 truncate font-medium text-sidebar-foreground/80 group-hover:text-white">
-                    {t(navItem.labelKey)}
-                  </span>
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-amber-400 rounded-e-full shadow-[0_0_10px_#f59e0b]" />
+                      )}
+                      <navItem.icon className={cn(
+                        "w-4 h-4 shrink-0 transition-transform duration-200",
+                        isActive ? "text-amber-300 scale-110" : "text-sidebar-foreground/70 group-hover:text-white group-hover:scale-110"
+                      )} />
+                      <span className={cn(
+                        "flex-1 truncate transition-colors duration-200",
+                        isActive ? "font-bold text-white" : "font-medium"
+                      )}>
+                        {t(navItem.labelKey)}
+                      </span>
+                    </>
+                  )}
                 </NavLink>
               </div>
             )

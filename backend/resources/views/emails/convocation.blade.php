@@ -27,11 +27,13 @@
                                 <td style="padding:22px 28px 20px;">
                                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                         <tr>
-                                            {{-- Logo SVG ENCG --}}
-                                            <td width="64" valign="middle">
-                                                <div style="width:56px;height:56px;background:#ffffff;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:56px;">
-                                                    <span style="font-size:18px;font-weight:900;color:#0f2863;letter-spacing:-1px;display:block;width:56px;text-align:center;">ENCG</span>
-                                                </div>
+                                            {{-- Logo ENCG Officiel --}}
+                                            <td width="70" valign="middle">
+                                                @php
+                                                    $emailLogoPath = public_path('logo-encg.png');
+                                                    $emailLogoSrc = file_exists($emailLogoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($emailLogoPath)) : 'https://encg.usmba.ac.ma/wp-content/uploads/2021/04/logo-encg.png';
+                                                @endphp
+                                                <img src="{{ $emailData['logoBase64'] ?? $emailLogoSrc }}" alt="ENCG Fès" style="max-height:55px;width:auto;display:block;border-radius:6px;background:#ffffff;padding:3px;" />
                                             </td>
                                             <td width="16"></td>
                                             <td valign="middle">
@@ -78,7 +80,9 @@
                                 <tr style="background:#0f2863;">
                                     <th style="padding:11px 14px;color:#fff;font-size:11px;font-weight:700;text-align:left;letter-spacing:0.5px;text-transform:uppercase;">Date &amp; Heure</th>
                                     <th style="padding:11px 14px;color:#fff;font-size:11px;font-weight:700;text-align:left;letter-spacing:0.5px;text-transform:uppercase;">Module</th>
+                                    <th style="padding:11px 14px;color:#fff;font-size:11px;font-weight:700;text-align:left;letter-spacing:0.5px;text-transform:uppercase;">Enseignant</th>
                                     <th style="padding:11px 14px;color:#fff;font-size:11px;font-weight:700;text-align:center;letter-spacing:0.5px;text-transform:uppercase;">Salle</th>
+                                    <th style="padding:11px 14px;color:#fff;font-size:11px;font-weight:700;text-align:center;letter-spacing:0.5px;text-transform:uppercase;">Place</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,8 +94,14 @@
                                     <td style="padding:11px 14px;font-size:13px;border-top:1px solid #f3f4f6;font-weight:600;color:#1a202c;">
                                         {{ $exam['moduleName'] }}
                                     </td>
-                                    <td style="padding:11px 14px;font-size:13px;border-top:1px solid #f3f4f6;text-align:center;color:#374151;">
+                                    <td style="padding:11px 14px;font-size:12.5px;border-top:1px solid #f3f4f6;color:#4b5563;">
+                                        {{ $exam['professorName'] ?? 'Prof. ENCG' }}
+                                    </td>
+                                    <td style="padding:11px 14px;font-size:13px;border-top:1px solid #f3f4f6;text-align:center;color:#374151;font-weight:600;">
                                         {{ $exam['roomName'] }}
+                                    </td>
+                                    <td style="padding:11px 14px;font-size:13px;border-top:1px solid #f3f4f6;text-align:center;color:#0f2863;font-weight:700;">
+                                        {{ $exam['seatNumber'] ?? '-' }}
                                     </td>
                                 </tr>
                                 @endforeach

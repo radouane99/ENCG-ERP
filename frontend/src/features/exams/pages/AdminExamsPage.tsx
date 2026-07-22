@@ -216,23 +216,23 @@ export default function AdminExamsPage() {
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
-      <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#0f2863] flex items-center justify-center">
-            <Calendar className="w-6 h-6" />
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-[#0f2863] flex items-center justify-center shrink-0">
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#0f2863] italic">{t('exams.title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0f2863] italic">{t('exams.title')}</h1>
             <p className="text-xs text-slate-500">{t('exams.subtitle')}</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full lg:w-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full lg:w-auto">
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">{t('exams.filters.filiere')}</label>
               <select 
-                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-48"
+                className="h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 outline-none w-full"
                 value={selectedFiliereId}
                 onChange={(e) => setSelectedFiliereId(e.target.value ? Number(e.target.value) : '')}
               >
@@ -245,7 +245,7 @@ export default function AdminExamsPage() {
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">{t('exams.filters.session')}</label>
               <select 
-                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-32"
+                className="h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 outline-none w-full"
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value ? Number(e.target.value) : '')}
               >
@@ -258,7 +258,7 @@ export default function AdminExamsPage() {
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">Semestre</label>
               <select 
-                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-24"
+                className="h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 outline-none w-full"
                 value={selectedSemesterNum}
                 onChange={(e) => setSelectedSemesterNum(e.target.value ? Number(e.target.value) : '')}
               >
@@ -270,28 +270,28 @@ export default function AdminExamsPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
             <button 
               onClick={handleReset}
-              className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2 border border-red-200">
-              <Trash2 className="w-4 h-4" /> REMISE À ZÉRO
+              className="btn-interactive flex-1 sm:flex-none justify-center bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs flex items-center gap-1.5 border border-red-200 dark:border-red-900/50">
+              <Trash2 className="w-3.5 h-3.5" /> REMISE À ZÉRO
             </button>
             <button 
               onClick={openCustomGenModal}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-100 flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-amber-300" />
-              PLANIFICATION SUR MESURE (TRI & OPTIONS)
+              className="btn-interactive flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-amber-300" />
+              SUR MESURE (TRI & 2/JOUR)
             </button>
             <button 
               onClick={handleAutoGenerate}
               disabled={isAutoGenerating}
-              className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-              {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Zap className="w-4 h-4 text-amber-400" />} 
+              className="btn-interactive flex-1 sm:flex-none justify-center bg-[#0f2863] dark:bg-indigo-950 hover:bg-[#1a387e] dark:hover:bg-indigo-900 text-white px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5 disabled:opacity-70 disabled:cursor-not-allowed border border-blue-900/50">
+              {isAutoGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />} 
               AUTO-GÉNÉRER
             </button>
             <button 
               onClick={() => setShowManualModal(true)}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2"> {t('exams.actions.manual')}</button>
+              className="btn-interactive flex-1 sm:flex-none justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-slate-200 dark:border-slate-700"> {t('exams.actions.manual')}</button>
           </div>
         </div>
       </div>

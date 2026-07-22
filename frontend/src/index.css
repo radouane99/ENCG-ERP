@@ -375,4 +375,80 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+
+  /* ── Mobile Touch Targets & Responsive Layout Utilities ── */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .responsive-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .responsive-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: var(--card);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  }
+
+  @media (min-width: 640px) {
+    .responsive-filter-bar {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  /* ── Interactive Card Hover Lift & Glow ── */
+  .card-hover-lift {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+  }
+  .card-hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.12);
+  }
+  .dark .card-hover-lift:hover {
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  /* ── Premium Micro-Animated Buttons ── */
+  .btn-interactive {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+  }
+  .btn-interactive:hover {
+    transform: translateY(-1.5px);
+  }
+  .btn-interactive:active {
+    transform: translateY(0) scale(0.97);
+  }
 }
+
+/* Prevent auto-zoom on mobile safari when focusing inputs */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+

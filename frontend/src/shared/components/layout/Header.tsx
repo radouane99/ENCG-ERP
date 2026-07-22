@@ -26,12 +26,12 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
   }
 
   return (
-    <header className="h-16 border-b border-[var(--border)] bg-[var(--background)/80] backdrop-blur-xl flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300">
+    <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-sm">
       
       {/* Mobile Hamburger Menu */}
       <button 
         onClick={onOpenSidebar}
-        className="lg:hidden p-2 -ms-2 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+        className="lg:hidden p-2 -ms-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
         aria-label="Ouvrir le menu"
       >
         <Menu className="w-5 h-5" />
@@ -40,18 +40,18 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
       {/* Search */}
       <div className="flex-1 max-w-md">
         <div className="relative group">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--color-primary)] transition-colors" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
           <button
             onClick={onOpenCommand}
             className={cn(
-              'w-full flex items-center justify-between ps-9 pe-4 py-2 text-sm rounded-xl',
-              'bg-[var(--input)] border border-transparent text-[var(--muted-foreground)]',
-              'hover:bg-[var(--background)] hover:border-[var(--border)] hover:shadow-sm',
-              'transition-all duration-200 text-start'
+              'w-full flex items-center justify-between ps-9 pe-4 py-2 text-xs sm:text-sm rounded-xl',
+              'bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-slate-500 dark:text-slate-400',
+              'hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-500/50 hover:shadow-md dark:hover:shadow-indigo-500/10',
+              'transition-all duration-200 text-start cursor-pointer'
             )}
           >
             {t('search')}
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-[var(--background)] rounded border border-[var(--border)] text-[var(--muted-foreground)] shadow-sm">
+            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 shadow-xs">
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
