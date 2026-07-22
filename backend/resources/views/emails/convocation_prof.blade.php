@@ -39,6 +39,15 @@
 
     <p><strong>Note importante :</strong> L'accès aux salles d'examen nécessite la présentation de la version électronique ou imprimée de ce document (incluant votre QR Code unique pour l'émargement).</p>
     
+    @if(isset($emailData['confirmUrl']))
+    <div style="text-align: center; margin: 30px 0;">
+        <p style="margin-bottom: 10px;">Veuillez confirmer la réception de cet ordre de mission :</p>
+        <a href="{{ $emailData['confirmUrl'] }}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            Je confirme ma présence
+        </a>
+    </div>
+    @endif
+
     <p style="margin-top: 30px;">Cordialement,<br>
     <strong>Administration ENCG Fès</strong></p>
     

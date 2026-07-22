@@ -275,7 +275,8 @@ class ExamConvocationService
             $emailData = [
                 'professorName' => $professor->name,
                 'sessionName' => $session->name,
-                'exams' => $profExamsData
+                'exams' => $profExamsData,
+                'confirmUrl' => url('/api/verify/surveillance/' . $profExamsData[0]['qrToken'] . '/confirm')
             ];
 
             if (class_exists(Pdf::class) && class_exists(\App\Mail\ProfessorConvocationEmail::class)) {
@@ -492,6 +493,69 @@ class ExamConvocationService
     }
 
     /**
+     * Get global live stats for an entire session
+     */
+    public function getGlobalLiveStats(int $sessionId): array
+    {
+        $session = ExamSession::with(['exams.module.filiere', 'exams.group'])->find($sessionId);
+        if (!$session) {
+            return ['success' => false, 'message' => 'Session not found'];
+        }
+
+        $examIds = $session->exams->pluck('id');
+
+        // Students Stats
+        $totalStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->count();
+        $presentStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->count();
+
+        // Professors Stats (Surveillants)
+        $totalSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->count();
+        $presentSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->where('has_attended', true)->count();
+        $confirmedSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->whereNotNull('confirmed_at')->count();
+
+        // Latest Scans (Students)
+        $latestStudentScans = DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->whereIn('exam_seatings.exam_id', $examIds)
+            ->where('exam_seatings.is_present', true)
+            ->select('users.name as student_name', 'exam_seatings.updated_at as scan_time')
+            ->orderBy('exam_seatings.updated_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Latest Confirmations (Professors)
+        $latestProfConfirmations = DB::table('exam_surveillances')
+            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
+            ->whereIn('exam_surveillances.exam_id', $examIds)
+            ->whereNotNull('exam_surveillances.confirmed_at')
+            ->select('users.name as professor_name', 'exam_surveillances.confirmed_at as confirm_time')
+            ->orderBy('exam_surveillances.confirmed_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return [
+            'success' => true,
+            'data' => [
+                'session_name' => $session->name,
+                'students' => [
+                    'total' => $totalStudents,
+                    'present' => $presentStudents,
+                    'absent' => $totalStudents - $presentStudents,
+                    'latest_scans' => $latestStudentScans
+                ],
+                'professors' => [
+                    'total' => $totalSurveillants,
+                    'present' => $presentSurveillants,
+                    'confirmed' => $confirmedSurveillants,
+                    'absent' => $totalSurveillants - $presentSurveillants,
+                    'latest_confirmations' => $latestProfConfirmations
+                ]
+            ]
+        ];
+    }
+
+    /**
      * Notify absents
      */
     public function notifyAbsents(int $examId): array
@@ -652,7 +716,8 @@ class ExamConvocationService
                 'exam_surveillances.role',
                 'exam_surveillances.has_attended',
                 'exam_surveillances.sent_at',
-                'exam_surveillances.qr_token'
+                'exam_surveillances.qr_token',
+                'exam_surveillances.confirmed_at'
             );
 
         $surveillantsList = $surveillantQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();

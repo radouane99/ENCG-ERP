@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X } from 'lucide-react'
+import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -132,6 +132,17 @@ export default function AdminConvocationsPage() {
       refetchStats();
     },
     onError: () => notify('Erreur lors de l\'envoi des emails.', 'error')
+  })
+
+  const batchWhatsAppSurveillantsMutation = useMutation({
+    mutationFn: (survIds: number[]) => examsApi.sendBatchSurveillantsWhatsApp(selectedSessionId!, survIds),
+    onSuccess: () => {
+      notify('Messages WhatsApp envoyés avec succès !');
+      setSelectedSurveillants(new Set());
+      refetchList();
+      refetchStats();
+    },
+    onError: () => notify('Erreur lors de l\'envoi des messages WhatsApp.', 'error')
   })
 
   const stats = sessionStats
@@ -649,6 +660,14 @@ export default function AdminConvocationsPage() {
                             {batchEmailSurveillantsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                             Envoyer Emails
                           </button>
+                          <button
+                            onClick={() => batchWhatsAppSurveillantsMutation.mutate(Array.from(selectedSurveillants))}
+                            disabled={batchWhatsAppSurveillantsMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                          >
+                            {batchWhatsAppSurveillantsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                            WhatsApp
+                          </button>
                         </div>
                       </div>
                     )}
@@ -710,10 +729,13 @@ export default function AdminConvocationsPage() {
                               {s.role === 'principal' ? 'Principal' : 'Assistant'}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-center">
+                          <td className="px-5 py-3 text-center flex flex-col gap-1 items-center justify-center">
                             {s.sent_at
-                              ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
+                              ? <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-bold">Envoyée</span>
                               : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
+                            {s.confirmed_at && (
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Confirmé</span>
+                            )}
                           </td>
                           <td className="px-5 py-3 text-right">
                             <div className="flex items-center justify-end gap-2">

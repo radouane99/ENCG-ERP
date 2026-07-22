@@ -57,6 +57,12 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function globalLiveStats(int $sessionId): JsonResponse
+    {
+        $result = $this->convocationService->getGlobalLiveStats($sessionId);
+        return response()->json($result);
+    }
+
     public function sessionList(Request $request, int $sessionId): JsonResponse
     {
         $filters = $request->only(['filiere']);
@@ -109,6 +115,38 @@ class ConvocationController extends Controller
 
         $result = $this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds);
         return response()->json($result);
+    }
+
+    public function sendBatchSurveillantsWhatsApp(Request $request, int $sessionId, \App\Services\WhatsAppService $whatsappService): JsonResponse
+    {
+        $surveillanceIds = $request->input('surveillance_ids', []);
+        
+        if (empty($surveillanceIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
+        }
+
+        $surveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
+            ->join('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->whereIn('exam_surveillances.id', $surveillanceIds)
+            ->select('exam_surveillances.id', 'exam_surveillances.qr_token', 'users.id as user_id', 'users.phone', 'users.name', 'exams.exam_date', 'exams.start_time', 'modules.name as module')
+            ->get();
+
+        $sentCount = 0;
+        foreach ($surveillances as $surv) {
+            $phone = $surv->phone ?? '+212600000000'; // Default mockup phone
+            $confirmUrl = url('/api/verify/surveillance/' . $surv->qr_token . '/confirm');
+            $message = "Bonjour Pr. {$surv->name},\n\nVous êtes convoqué pour la surveillance de l'examen {$surv->module} le {$surv->exam_date} à {$surv->start_time}.\n\nVeuillez confirmer votre présence en cliquant sur ce lien : {$confirmUrl}";
+            
+            $whatsappService->sendMessage($surv->user_id, $phone, $message);
+            $sentCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$sentCount} messages WhatsApp envoyés avec succès."
+        ]);
     }
 
     public function scanQr(Request $request): JsonResponse
@@ -541,5 +579,81 @@ class ConvocationController extends Controller
         $zip->close();
 
         return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    public function confirmReception($token): JsonResponse
+    {
+        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->where('qr_token', $token)
+            ->first();
+
+        if (!$surveillance) {
+            return response()->json(['success' => false, 'message' => 'Jeton invalide ou expiré.'], 404);
+        }
+
+        \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->where('id', $surveillance->id)
+            ->update(['confirmed_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Merci, votre présence a été confirmée avec succès.'
+        ]);
+    }
+
+    public function myConvocations(Request $request): JsonResponse
+    {
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['success' => false, 'data' => []]);
+        }
+
+        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->join('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
+            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+            ->where('exam_seatings.student_id', $student->id)
+            ->select(
+                'exam_seatings.id as seating_id',
+                'modules.name as module_name',
+                'exam_sessions.name as session_name',
+                'exam_sessions.type as session_type',
+                'exams.exam_date',
+                'exams.start_time',
+                'rooms.name as room_name',
+                'exam_seatings.seat_number',
+                'exam_seatings.qr_token'
+            )
+            ->orderBy('exams.exam_date', 'desc')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $seatings]);
+    }
+
+    public function mySurveillances(Request $request): JsonResponse
+    {
+        $surveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->join('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->join('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
+            ->leftJoin('rooms', 'exams.room_id', '=', 'rooms.id')
+            ->where('exam_surveillances.professor_id', $request->user()->id)
+            ->select(
+                'exam_surveillances.id as surveillance_id',
+                'modules.name as module_name',
+                'exam_sessions.name as session_name',
+                'exam_sessions.type as session_type',
+                'exams.exam_date',
+                'exams.start_time',
+                'rooms.name as room_name',
+                'exam_surveillances.role',
+                'exam_surveillances.qr_token',
+                'exam_surveillances.confirmed_at'
+            )
+            ->orderBy('exams.exam_date', 'desc')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $surveillances]);
     }
 }

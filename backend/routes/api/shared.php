@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/documents/verify/{documentId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyDocument'])->name('document.verify');
 Route::get('/verify/pv/{moduleId}/{groupId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [\App\Http\Controllers\Api\StudentCardController::class, 'verify']);
+Route::get('/verify/surveillance/{token}/confirm', [\App\Http\Controllers\Api\ConvocationController::class, 'confirmReception']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (\Illuminate\Http\Request $request) {

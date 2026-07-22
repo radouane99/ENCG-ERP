@@ -44,6 +44,18 @@ export const examsApi = {
     const response = await api.get(`/exam-planning/${examId}/live-stats`); // Temp reuse
     return response.data;
   },
+  getGlobalLiveStats: async (sessionId: number) => {
+    const response = await api.get(`/convocations/session/${sessionId}/live-stats`);
+    return response.data;
+  },
+  getIncidents: async (sessionId?: number) => {
+    const response = await api.get(`/exam-incidents`, { params: { session_id: sessionId } });
+    return response.data;
+  },
+  reportIncident: async (data: any) => {
+    const response = await api.post(`/exam-incidents`, data);
+    return response.data;
+  },
   // Convocations Dashboard
   getConvocationSessionStats: async (sessionId: number) => {
     const response = await api.get(`/convocations/session/${sessionId}/stats`);
@@ -142,7 +154,11 @@ export const examsApi = {
     return response.data;
   },
   sendBatchSurveillantsEmails: async (sessionId: number, surveillanceIds: number[]) => {
-    const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-surveillants-emails`, { surveillance_ids: surveillanceIds });
+    const response = await api.post(`/convocations/session/${sessionId}/send-batch-surveillants-emails`, { surveillance_ids: surveillanceIds });
+    return response.data;
+  },
+  sendBatchSurveillantsWhatsApp: async (sessionId: number, surveillanceIds: number[]) => {
+    const response = await api.post(`/convocations/session/${sessionId}/send-batch-surveillants-whatsapp`, { surveillance_ids: surveillanceIds });
     return response.data;
   },
   notifyAbsents: async (examId: number) => {

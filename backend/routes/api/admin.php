@@ -314,6 +314,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         Route::post('/session/{sessionId}/send-batch-emails', [ConvocationController::class, 'sendBatchEmails']);
         Route::post('/session/{sessionId}/surveillants-batch-pdf', [PdfExportController::class, 'batchDownloadSurveillantsPdf']);
         Route::post('/session/{sessionId}/send-batch-surveillants-emails', [ConvocationController::class, 'sendBatchSurveillantsEmails']);
+        Route::post('/session/{sessionId}/send-batch-surveillants-whatsapp', [ConvocationController::class, 'sendBatchSurveillantsWhatsApp']);
     });
 
     // Convocations Lifecycle
@@ -321,10 +322,17 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
         Route::post('/send-session', [ConvocationController::class, 'sendSession']);
         Route::get('/session/{sessionId}/stats', [ConvocationController::class, 'sessionStats']);
+        Route::get('/session/{sessionId}/live-stats', [ConvocationController::class, 'globalLiveStats']);
         Route::get('/session/{sessionId}/list', [ConvocationController::class, 'sessionList']);
         
         Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
         Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);
+    });
+
+    // Exam Incidents
+    Route::prefix('exam-incidents')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
     });
 
     // Retakes
