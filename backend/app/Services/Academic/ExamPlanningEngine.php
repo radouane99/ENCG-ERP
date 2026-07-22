@@ -135,40 +135,50 @@ class ExamPlanningEngine
     /**
      * Auto-generate exams using intelligent scheduling constraints
      */
-    public function autoGenerateIntelligentBatch(int $filiereId, int $sessionId, ?int $semesterNumber = null): array
-    {
+    public function autoGenerateIntelligentBatch(
+        int $filiereId,
+        int $sessionId,
+        ?int $semesterNumber = null,
+        int $modulesPerDay = 1,
+        string $daySlotMode = 'matin',
+        ?array $customModuleIds = null,
+        ?string $customStartDate = null
+    ): array {
         $session = \App\Models\ExamSession::with('semester')->findOrFail($sessionId);
         
         $isAutomne = $session->semester->number === 1;
         
-        $modulesQuery = \App\Models\Module::where('filiere_id', $filiereId);
-        
-        if ($semesterNumber) {
-            $modulesQuery->where('semester_number', $semesterNumber);
+        if (!empty($customModuleIds)) {
+            $allModules = \App\Models\Module::whereIn('id', $customModuleIds)->get()->keyBy('id');
+            $modules = collect();
+            foreach ($customModuleIds as $mId) {
+                if ($allModules->has($mId)) {
+                    $modules->push($allModules->get($mId));
+                }
+            }
         } else {
-            $modulesQuery->when($isAutomne, function($q) {
-                // Automne: S1, S3, S5, S7, S9 => impaire
-                $q->whereRaw('semester_number % 2 != 0');
-            }, function($q) {
-                // Printemps: S2, S4, S6, S8, S10 => paire
-                $q->whereRaw('semester_number % 2 = 0');
-            });
+            $modulesQuery = \App\Models\Module::where('filiere_id', $filiereId);
+            if ($semesterNumber) {
+                $modulesQuery->where('semester_number', $semesterNumber);
+            } else {
+                $modulesQuery->when($isAutomne, function($q) {
+                    $q->whereRaw('semester_number % 2 != 0');
+                }, function($q) {
+                    $q->whereRaw('semester_number % 2 = 0');
+                });
+            }
+            $modules = $modulesQuery->get();
         }
-        
-        $modules = $modulesQuery->get();
             
         // Order rooms by capacity ascending to find the smallest suitable room
         $rooms = \App\Models\Room::orderBy('capacity', 'asc')->get();
-        
-        // We only filter modules by semester type. We don't filter groups because 
-        // the engine uses any group as a default 'group_id' placeholder in the exams table.
         $groups = \App\Models\Group::where('filiere_id', $filiereId)->get();
 
         if ($modules->isEmpty()) throw new Exception("Aucun module pour cette filière dans cette session.");
         if ($groups->isEmpty()) throw new Exception("Aucun groupe pour cette filière.");
         if ($rooms->isEmpty()) throw new Exception("Aucune salle disponible.");
 
-        $startDate = \Carbon\Carbon::parse($session->start_date);
+        $startDate = $customStartDate ? \Carbon\Carbon::parse($customStartDate) : \Carbon\Carbon::parse($session->start_date);
         $endDate = \Carbon\Carbon::parse($session->end_date);
         $currentDate = $startDate->copy();
 
@@ -193,27 +203,59 @@ class ExamPlanningEngine
                 $q->whereIn('name', ['vacataire', 'doctorant']);
             })->get();
             
-            // Fallback if no specific roles
             if ($professors->isEmpty()) $professors = \App\Models\User::limit(5)->get();
             if ($vacataires->isEmpty()) $vacataires = \App\Models\User::limit(5)->get();
-             $examsCreated = 0;
-            $busyProfessors = []; // Track busy professors by date and slot: 'YYYY-MM-DD_matin' => [id1, id2]
+            
+            $examsCreated = 0;
+            $busyProfessors = [];
+            $moduleIndexInDay = 0;
 
             foreach ($modules as $module) {
-                // Règle 1: Semestres impairs le matin, pairs l'après-midi
-                $semesterNumber = $module->semester_number ?? 1;
-                $isOddSemester = ($semesterNumber % 2 !== 0);
-                $startTime = $isOddSemester ? '09:00:00' : '14:00:00';
+                $semNum = $module->semester_number ?? 1;
                 
+                if ($modulesPerDay >= 2) {
+                    if ($daySlotMode === 'pm') {
+                        // Both modules in Afternoon (14:00 & 16:15)
+                        if ($moduleIndexInDay === 0) {
+                            $startTime = '14:00:00';
+                            $timeSlot = 'apres_midi_1';
+                        } else {
+                            $startTime = '16:15:00';
+                            $timeSlot = 'apres_midi_2';
+                        }
+                    } elseif ($daySlotMode === 'split') {
+                        // 1 Morning (09:00) & 1 Afternoon (14:00)
+                        if ($moduleIndexInDay === 0) {
+                            $startTime = '09:00:00';
+                            $timeSlot = 'matin';
+                        } else {
+                            $startTime = '14:00:00';
+                            $timeSlot = 'apres_midi';
+                        }
+                    } else {
+                        // Default 'matin': Both modules in Morning back-to-back (08:30 & 10:45)
+                        if ($moduleIndexInDay === 0) {
+                            $startTime = '08:30:00';
+                            $timeSlot = 'matin_1';
+                        } else {
+                            $startTime = '10:45:00';
+                            $timeSlot = 'matin_2';
+                        }
+                    }
+                } else {
+                    $isOddSemester = ($semNum % 2 !== 0);
+                    $startTime = $isOddSemester ? '09:00:00' : '14:00:00';
+                    $timeSlot = $isOddSemester ? 'matin' : 'apres_midi';
+                }
+
                 $dateStr = $currentDate->format('Y-m-d');
-                $timeSlot = $isOddSemester ? 'matin' : 'apres-midi';
                 $slotKey = $dateStr . '_' . $timeSlot;
 
                 if (!isset($busyProfessors[$slotKey])) {
                     $busyProfessors[$slotKey] = [];
                 }
 
-                // Traiter toute la filière comme un seul bloc (pas par groupe)
+                // Traiter toute la filière comme un seul bloc
                 $students = DB::table('student_registrations')
                     ->join('groups', 'student_registrations.group_id', '=', 'groups.id')
                     ->where('groups.filiere_id', $filiereId)
@@ -222,20 +264,18 @@ class ExamPlanningEngine
                     ->get();
                     
                 $studentCount = $students->count();
-                if ($studentCount == 0) $studentCount = 20; // Fallback
+                if ($studentCount == 0) $studentCount = 20;
 
                 $unassignedCount = $studentCount;
                 $studentsList = $students->pluck('student_id')->toArray();
                 
-                // Si on utilise le fallback, on génère un tableau de fausses IDs pour boucler
                 if (empty($studentsList) && $studentCount > 0) {
                     $studentsList = array_fill(0, $studentCount, null);
                 }
 
                 $availableRooms = clone $rooms;
-                $defaultGroupId = $groups->first()->id; // Requis par la DB
+                $defaultGroupId = $groups->first()->id;
 
-                // Répartir les étudiants de la filière sur une ou plusieurs salles
                 while ($unassignedCount > 0 && $availableRooms->count() > 0) {
                     $assignedRoom = null;
                     foreach ($availableRooms as $key => $room) {
@@ -248,7 +288,6 @@ class ExamPlanningEngine
                     }
 
                     if (!$assignedRoom) {
-                        // Prendre la plus grande salle dispo si aucune n'est assez grande seule
                         $assignedRoom = $availableRooms->last(); 
                         $availableRooms->pop();
                     }
@@ -257,7 +296,6 @@ class ExamPlanningEngine
                     $studentsForThisRoom = array_splice($studentsList, 0, $examCapacity);
                     $unassignedCount -= count($studentsForThisRoom);
 
-                    // Création de l'examen pour cette salle
                     $exam = Exam::create([
                         'module_id' => $module->id,
                         'group_id' => $defaultGroupId,
@@ -270,7 +308,6 @@ class ExamPlanningEngine
                     ]);
                     $examsCreated++;
 
-                    // Affectation des étudiants à cette salle
                     $seatings = [];
                     $seat = 1;
                     foreach ($studentsForThisRoom as $studentId) {
@@ -289,11 +326,8 @@ class ExamPlanningEngine
                         DB::table('exam_seatings')->insert($seatings);
                     }
 
-                    // Affectation intelligente de la surveillance
                     $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
-                    if ($availablePresidents->isEmpty()) {
-                        $availablePresidents = $professors;
-                    }
+                    if ($availablePresidents->isEmpty()) $availablePresidents = $professors;
                     
                     $president = $availablePresidents->random();
                     $busyProfessors[$slotKey][] = $president->id;
@@ -308,7 +342,6 @@ class ExamPlanningEngine
                     ]);
 
                     $numVacataires = $examCapacity >= 40 ? 2 : 1; 
-
                     if ($vacataires->isNotEmpty()) {
                         $availableVacataires = $vacataires->whereNotIn('id', $busyProfessors[$slotKey]);
                         $actualNumToAssign = min($numVacataires, $availableVacataires->count());
@@ -331,11 +364,19 @@ class ExamPlanningEngine
                     }
                 }
 
-                // Avancer d'un jour pour le module suivant
-                $currentDate->addDay();
-                // Éviter les dimanches (optionnel)
-                if ($currentDate->isSunday()) $currentDate->addDay();
-                
+                // Advance day or slot
+                if ($modulesPerDay >= 2) {
+                    $moduleIndexInDay++;
+                    if ($moduleIndexInDay >= $modulesPerDay) {
+                        $moduleIndexInDay = 0;
+                        $currentDate->addDay();
+                        if ($currentDate->isSunday()) $currentDate->addDay();
+                    }
+                } else {
+                    $currentDate->addDay();
+                    if ($currentDate->isSunday()) $currentDate->addDay();
+                }
+
                 if ($currentDate->gt($endDate)) {
                     $currentDate = $startDate->copy();
                 }
@@ -344,7 +385,7 @@ class ExamPlanningEngine
             DB::commit();
             return [
                 'success' => true,
-                'message' => "Génération intelligente terminée avec $examsCreated examens créés et affectés (Salles optimisées, Surveillants affectés matin/soir)."
+                'message' => "Génération personnalisée terminée avec $examsCreated examens créés ($modulesPerDay module(s) par jour, ordre sur mesure)."
             ];
 
         } catch (Exception $e) {

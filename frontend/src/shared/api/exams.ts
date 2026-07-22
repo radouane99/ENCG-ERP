@@ -74,9 +74,13 @@ export const examsApi = {
     const response = await api.post('/convocations/send-session', { session_id: sessionId });
     return response.data;
   },
-  generateSession: async (sessionId: number, filiereId: number, semesterNumber?: number) => {
+  generateSession: async (sessionId: number, filiereId: number, semesterNumber?: number, options?: { modules_per_day?: number; day_slot_mode?: string; module_ids?: number[]; start_date?: string }) => {
     const data: any = { session_id: sessionId, filiere_id: filiereId };
     if (semesterNumber) data.semester_number = semesterNumber;
+    if (options?.modules_per_day) data.modules_per_day = options.modules_per_day;
+    if (options?.day_slot_mode) data.day_slot_mode = options.day_slot_mode;
+    if (options?.module_ids && options.module_ids.length > 0) data.module_ids = options.module_ids;
+    if (options?.start_date) data.start_date = options.start_date;
     const response = await api.post('/exam-planning/auto-generate-batch', data);
     return response.data;
   },
@@ -95,9 +99,13 @@ export const examsApi = {
     const response = await api.post('/exam-planning/check-conflict', data);
     return response.data;
   },
-  getStudentConvocations: async (studentId: number) => {
-    const response = await api.get(`/exam-planning/student/${studentId}`);
-    return response.data;
+  getStudentConvocations: async (studentId?: number) => {
+    if (studentId) {
+      const response = await api.get(`/exam-planning/student/${studentId}`);
+      return response.data;
+    }
+    const response = await api.get('/student-portal/convocations');
+    return response.data.convocations;
   },
   downloadConvocationPdf: async (convocationId: number) => {
     const response = await api.get(`/exam-planning/student/${convocationId}/download`, {
@@ -160,12 +168,6 @@ export const examsApi = {
   sendBatchSurveillantsWhatsApp: async (sessionId: number, surveillanceIds: number[]) => {
     const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-surveillants-whatsapp`, { surveillance_ids: surveillanceIds });
     return response.data;
-  },
-
-  // Student Portal (Convocations)
-  getStudentConvocations: async () => {
-    const response = await api.get('/student-portal/convocations');
-    return response.data.convocations;
   },
   downloadStudentConvocation: async (id: number) => {
     const response = await api.get(`/student-portal/convocations/${id}/download`, { responseType: 'blob' });

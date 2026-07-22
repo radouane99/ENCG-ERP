@@ -140,10 +140,28 @@ class ExamPlanningController extends Controller
             'filiere_id' => 'required|integer',
             'session_id' => 'required|integer',
             'semester_number' => 'nullable|integer',
+            'modules_per_day' => 'nullable|integer|in:1,2',
+            'day_slot_mode' => 'nullable|string|in:matin,pm,split',
+            'module_ids' => 'nullable|array',
+            'module_ids.*' => 'integer',
+            'start_date' => 'nullable|date',
         ]);
 
         $semesterNumber = $validated['semester_number'] ?? null;
-        $result = $this->engine->autoGenerateIntelligentBatch($validated['filiere_id'], $validated['session_id'], $semesterNumber);
+        $modulesPerDay = $validated['modules_per_day'] ?? 1;
+        $daySlotMode = $validated['day_slot_mode'] ?? 'matin';
+        $moduleIds = $validated['module_ids'] ?? null;
+        $startDate = $validated['start_date'] ?? null;
+
+        $result = $this->engine->autoGenerateIntelligentBatch(
+            $validated['filiere_id'],
+            $validated['session_id'],
+            $semesterNumber,
+            $modulesPerDay,
+            $daySlotMode,
+            $moduleIds,
+            $startDate
+        );
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2 } from 'lucide-react'
+import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2, Sliders, ArrowUp, ArrowDown, Sparkles, Clock, ListOrdered, Zap } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -60,6 +60,81 @@ export default function AdminExamsPage() {
   const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
   const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
   const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
+
+  // Custom planning state
+  const [showCustomGenModal, setShowCustomGenModal] = useState(false)
+  const [modulesPerDay, setModulesPerDay] = useState<number>(2) // Default 2 modules / day as requested!
+  const [daySlotMode, setDaySlotMode] = useState<'matin' | 'pm' | 'split'>('matin') // Default 'matin' (both exams in Morning back-to-back!)
+  const [customStartDate, setCustomStartDate] = useState<string>('')
+  const [orderedModuleList, setOrderedModuleList] = useState<any[]>([])
+  const [selectedModuleIds, setSelectedModuleIds] = useState<Set<number>>(new Set())
+
+  const openCustomGenModal = () => {
+    if (!selectedSessionId || !selectedFiliereId) {
+      handleNotify("Veuillez sélectionner une filière et une session d'abord.", 'error');
+      return;
+    }
+
+    const sessionObj = examSessions?.find((s: any) => s.id === Number(selectedSessionId));
+    if (sessionObj?.start_date) {
+      setCustomStartDate(sessionObj.start_date.substring(0, 10));
+    } else {
+      setCustomStartDate(new Date().toISOString().substring(0, 10));
+    }
+
+    const filtered = (modules || []).filter((m: any) => {
+      if (m.filiere_id !== Number(selectedFiliereId)) return false;
+      if (selectedSemesterNum && m.semester_number !== Number(selectedSemesterNum)) return false;
+      return true;
+    });
+
+    setOrderedModuleList(filtered);
+    setSelectedModuleIds(new Set(filtered.map((m: any) => m.id)));
+    setShowCustomGenModal(true);
+  }
+
+  const handleMoveModule = (index: number, direction: 'up' | 'down') => {
+    const newList = [...orderedModuleList];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newList.length) return;
+    const temp = newList[index];
+    newList[index] = newList[targetIndex];
+    newList[targetIndex] = temp;
+    setOrderedModuleList(newList);
+  }
+
+  const handleToggleModuleSelect = (id: number) => {
+    const newSet = new Set(selectedModuleIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedModuleIds(newSet);
+  }
+
+  const handleCustomAutoGenerate = async () => {
+    if (!selectedSessionId || !selectedFiliereId) return;
+    setIsAutoGenerating(true);
+    try {
+      const activeIds = orderedModuleList.filter(m => selectedModuleIds.has(m.id)).map(m => m.id);
+      const res = await examsApi.generateSession(
+        Number(selectedSessionId),
+        Number(selectedFiliereId),
+        selectedSemesterNum ? Number(selectedSemesterNum) : undefined,
+        {
+          modules_per_day: modulesPerDay,
+          day_slot_mode: daySlotMode,
+          module_ids: activeIds,
+          start_date: customStartDate || undefined
+        }
+      );
+      handleNotify(res.message || 'Génération sur mesure effectuée avec succès !', 'success');
+      setShowCustomGenModal(false);
+      window.location.reload();
+    } catch (error: any) {
+      handleNotify(error.response?.data?.message || 'Erreur lors de la génération.', 'error');
+    } finally {
+      setIsAutoGenerating(false);
+    }
+  }
   const [showManualModal, setShowManualModal] = useState(false)
   const [manualForm, setManualForm] = useState({
     module_id: 1,
@@ -201,18 +276,22 @@ export default function AdminExamsPage() {
               className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2 border border-red-200">
               <Trash2 className="w-4 h-4" /> REMISE À ZÉRO
             </button>
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-blue-600">
-              <input type="checkbox" className="rounded border-slate-300 text-blue-600" /> {t('exams.actions.overwrite')}</label>
+            <button 
+              onClick={openCustomGenModal}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-100 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-amber-300" />
+              PLANIFICATION SUR MESURE (TRI & OPTIONS)
+            </button>
             <button 
               onClick={handleAutoGenerate}
               disabled={isAutoGenerating}
               className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-              {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <ZapIcon className="w-4 h-4 text-amber-400" />} 
+              {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Zap className="w-4 h-4 text-amber-400" />} 
               AUTO-GÉNÉRER
             </button>
             <button 
               onClick={() => setShowManualModal(true)}
-              className="bg-[#0f2863] hover:bg-[#1a387e] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2"> {t('exams.actions.manual')}</button>
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2"> {t('exams.actions.manual')}</button>
           </div>
         </div>
       </div>
@@ -224,6 +303,240 @@ export default function AdminExamsPage() {
         )}>
           {notificationType === 'success' ? <CheckSquare className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           <span className="text-sm font-medium">{notificationMsg}</span>
+        </div>
+      )}
+
+      {/* Modal Planification Sur Mesure & Triage */}
+      {showCustomGenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-100">
+                  <Sliders className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[#0f2863]">Planification Sur Mesure (Tri & Modules / Jour)</h2>
+                  <p className="text-xs text-slate-500">Choisissez l'ordre (triage) des modules et la répartition par jour (ex: 2 modules / jour).</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCustomGenModal(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">X</button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Paramètres de répartition */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
+                    Nombre de modules par jour
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setModulesPerDay(1)}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all border",
+                        modulesPerDay === 1 ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                      )}
+                    >
+                      1 Module / Jour
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setModulesPerDay(2)}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1",
+                        modulesPerDay === 2 ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                      )}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      2 Modules / Jour
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1.5">
+                    {modulesPerDay === 2 
+                      ? "2 examens programmés la même journée"
+                      : "1 examen par jour calendaire"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
+                    Date de début des examens
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none font-medium bg-white"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1.5">
+                    Première journée de la session d'examens
+                  </p>
+                </div>
+
+                {modulesPerDay === 2 && (
+                  <div className="sm:col-span-2 pt-2 border-t border-slate-200/60">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2 flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                      Créneaux des 2 modules (Même demi-journée vs Séparés)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDaySlotMode('matin')}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col justify-between",
+                          daySlotMode === 'matin' ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        )}
+                      >
+                        <span>☀️ Matinée continue</span>
+                        <span className={cn("text-[10px] font-normal mt-1", daySlotMode === 'matin' ? "text-indigo-100" : "text-slate-400")}>
+                          08h30 & 10h45 (Libre l'après-midi)
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDaySlotMode('pm')}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col justify-between",
+                          daySlotMode === 'pm' ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        )}
+                      >
+                        <span>🌙 Après-midi continu</span>
+                        <span className={cn("text-[10px] font-normal mt-1", daySlotMode === 'pm' ? "text-indigo-100" : "text-slate-400")}>
+                          14h00 & 16h15 (Libre le matin)
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDaySlotMode('split')}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col justify-between",
+                          daySlotMode === 'split' ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        )}
+                      >
+                        <span>🔄 Séparés (Matin & PM)</span>
+                        <span className={cn("text-[10px] font-normal mt-1", daySlotMode === 'split' ? "text-indigo-100" : "text-slate-400")}>
+                          09h00 (Matin) & 14h00 (PM)
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Triage des modules */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <ListOrdered className="w-4 h-4 text-indigo-600" />
+                    Ordre de passage des modules (Triage) & Sélection
+                  </h3>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {selectedModuleIds.size} / {orderedModuleList.length} retenus
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {orderedModuleList.map((m: any, idx: number) => {
+                    const isSelected = selectedModuleIds.has(m.id);
+                    const dayIndex = modulesPerDay === 2 ? Math.floor(idx / 2) : idx;
+                    
+                    let slotTime = '09:00 - 11:00';
+                    if (modulesPerDay === 2) {
+                      if (daySlotMode === 'pm') {
+                        slotTime = idx % 2 === 0 ? '14:00 - 16:00 (Après-midi 1)' : '16:15 - 18:15 (Après-midi 2)';
+                      } else if (daySlotMode === 'split') {
+                        slotTime = idx % 2 === 0 ? '09:00 - 11:00 (Matin)' : '14:00 - 16:00 (Après-midi)';
+                      } else {
+                        slotTime = idx % 2 === 0 ? '08:30 - 10:30 (Matin 1)' : '10:45 - 12:45 (Matin 2)';
+                      }
+                    }
+                    
+                    return (
+                      <div
+                        key={m.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-xl border transition-all",
+                          isSelected ? "bg-white border-slate-200 shadow-sm" : "bg-slate-50 border-slate-200 opacity-60"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleModuleSelect(m.id)}
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                          />
+                          <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                            #{idx + 1}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{m.name}</p>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                              <span className="font-semibold text-indigo-600">Semestre S{m.semester_number || 1}</span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-indigo-500" /> Jour {dayIndex + 1} ({slotTime})</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => handleMoveModule(idx, 'up')}
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            title="Monter d'un cran"
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === orderedModuleList.length - 1}
+                            onClick={() => handleMoveModule(idx, 'down')}
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            title="Descendre d'un cran"
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {orderedModuleList.length === 0 && (
+                    <div className="text-center py-8 text-xs text-slate-400">
+                      Aucun module trouvé pour la filière/semestre sélectionné.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 px-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <button
+                onClick={() => setShowCustomGenModal(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCustomAutoGenerate}
+                disabled={isAutoGenerating || selectedModuleIds.size === 0}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-200 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-amber-300" />}
+                Lancer la Génération ({selectedModuleIds.size} modules)
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
