@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <title>Convocations en lot</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; font-size: 12px; }
         .page-break { page-break-after: always; }
-        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0f2863; padding-bottom: 10px; }
-        .logo { max-height: 80px; }
-        .title { color: #0f2863; font-size: 24px; font-weight: bold; margin: 10px 0; text-transform: uppercase; }
-        .subtitle { color: #666; font-size: 14px; }
-        .info-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-        .info-row { margin-bottom: 8px; font-size: 14px; }
+        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 15px; box-sizing: border-box; }
+        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #0f2863; padding-bottom: 10px; }
+        .logo { max-height: 60px; }
+        .title { color: #0f2863; font-size: 20px; font-weight: bold; margin: 5px 0; text-transform: uppercase; }
+        .subtitle { color: #666; font-size: 12px; }
+        .info-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+        .info-row { margin-bottom: 5px; font-size: 13px; }
         .info-label { font-weight: bold; color: #475569; display: inline-block; width: 150px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background-color: #0f2863; color: white; padding: 10px; text-align: left; font-size: 12px; text-transform: uppercase; }
-        td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
-        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-        .qr-code { text-align: center; margin-top: 30px; }
-        .signature { margin-top: 50px; text-align: right; padding-right: 50px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background-color: #0f2863; color: white; padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; }
+        td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+        .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        .qr-code { text-align: center; margin-top: 10px; }
+        .signature { margin-top: 20px; text-align: right; padding-right: 50px; }
     </style>
 </head>
 <body>
@@ -65,10 +65,10 @@
                 </tbody>
             </table>
 
-            <div style="display: table; width: 100%; margin-top: 40px;">
+            <div style="display: table; width: 100%; margin-top: 15px;">
                 <div style="display: table-cell; width: 50%; vertical-align: top;">
-                    <h4 style="color: #0f2863; margin-bottom: 10px;">Consignes importantes:</h4>
-                    <ul style="font-size: 12px; color: #475569; padding-left: 20px; line-height: 1.6;">
+                    <h4 style="color: #0f2863; margin-bottom: 5px;">Consignes importantes:</h4>
+                    <ul style="font-size: 11px; color: #475569; padding-left: 20px; line-height: 1.4; margin-top: 0;">
                         <li>Présence obligatoire 15 minutes avant le début de l'épreuve.</li>
                         <li>Les téléphones portables et montres connectées sont strictement interdits.</li>
                         <li>Aucune sortie n'est autorisée durant la première moitié de l'épreuve.</li>
@@ -78,7 +78,7 @@
                 <div style="display: table-cell; width: 50%; text-align: center; vertical-align: middle;">
                     @if(!empty($data['qr_token']))
                         <div class="qr-code">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ urlencode($data['qr_token']) }}" alt="QR Code" style="border: 4px solid white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($data['qr_token']) }}" alt="QR Code" style="border: 4px solid white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                             <div style="font-size: 10px; color: #94a3b8; margin-top: 5px;">QR de Vérification Officiel</div>
                         </div>
                     @endif
@@ -86,8 +86,8 @@
             </div>
 
             <div class="signature">
-                <p style="font-size: 14px; font-weight: bold; color: #334155;">La Direction des Études</p>
-                <div style="width: 150px; border-bottom: 1px dashed #cbd5e1; margin-left: auto; margin-top: 40px;"></div>
+                <p style="font-size: 13px; font-weight: bold; color: #334155; margin-bottom: 5px;">La Direction des Études</p>
+                <div style="width: 150px; border-bottom: 1px dashed #cbd5e1; margin-left: auto; margin-top: 25px;"></div>
             </div>
 
             <div class="footer">
