@@ -10,6 +10,8 @@ export interface User {
   avatar_path?: string | null
   name_ar?: string | null
   phone?: string | null
+  cin?: string | null
+  cne?: string | null
   roles: string[]
   permissions: string[]
   institution_id: number
