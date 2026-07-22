@@ -280,7 +280,7 @@ class ExamConvocationService
             ];
 
             try {
-                $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
+                $pdf = Pdf::loadView('emails.convocation_prof', ['emailData' => $emailData]);
                 Mail::to($professor->email)->send(
                     new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
                 );
