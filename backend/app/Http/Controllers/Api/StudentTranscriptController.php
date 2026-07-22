@@ -154,7 +154,9 @@ class StudentTranscriptController extends Controller
         // Generate verification token & QR Code URL
         $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y-m-d'));
         $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/transcript/{$verifyToken}";
-        $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+        
+        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate($verifyUrl);
+        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 
         $logoPath = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';

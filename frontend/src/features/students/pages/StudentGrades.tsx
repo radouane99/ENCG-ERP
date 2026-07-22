@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, FlaskConical, Download, AlertCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
-
+import { motion, AnimatePresence } from 'framer-motion';
 export default function StudentGrades() {
   const { t, i18n } = useTranslation(['students', 'common']);
   const isRtl = i18n.language === 'ar';
@@ -13,6 +13,7 @@ export default function StudentGrades() {
     queryKey: ['student-grades'],
     queryFn: () => api.get('/student-portal/grades').then(res => res.data)
   });
+  const [isRevealed, setIsRevealed] = useState(false);
 
   if (isLoading) {
     return <div className="flex h-[50vh] items-center justify-center"><Spinner size="lg" /></div>;
@@ -78,13 +79,19 @@ export default function StudentGrades() {
         <div className="relative z-10 text-right">
           <div className="text-xs font-bold text-teal-200 uppercase tracking-widest mb-1">MOYENNE ANNUELLE</div>
           <div className="flex items-baseline justify-end gap-1">
-            <span className="text-6xl font-black text-white">{Number(overallAvg).toFixed(2)}</span>
+            <span className="text-6xl font-black text-white">
+              {isRevealed ? Number(overallAvg).toFixed(2) : "?.??"}
+            </span>
             <span className="text-2xl font-bold text-teal-200">/ 20</span>
           </div>
-          {overallAvg >= 10 && (
-            <div className="mt-3 inline-flex items-center gap-1.5 bg-teal-800/40 border border-teal-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">
+          {isRevealed && overallAvg >= 10 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 inline-flex items-center gap-1.5 bg-teal-800/40 border border-teal-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm"
+            >
               ANNÉE VALIDÉE <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
@@ -95,8 +102,31 @@ export default function StudentGrades() {
           <h2 className="text-2xl font-black text-[#001A4B]">Mes Notes</h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto relative min-h-[300px]">
+          
+          <AnimatePresence>
+            {!isRevealed && grades.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 backdrop-blur-md rounded-2xl"
+              >
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsRevealed(true)}
+                  className="bg-[#001A4B] text-white px-8 py-4 rounded-2xl font-black text-xl shadow-2xl flex items-center gap-3 hover:bg-blue-900 transition-colors"
+                >
+                  <AlertCircle className="w-6 h-6 text-blue-300" />
+                  RÉVÉLER MES RÉSULTATS
+                </motion.button>
+                <p className="text-sm font-bold text-[#001A4B]/60 mt-4">Prêt à découvrir vos notes de la délibération ?</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <table className={cn("w-full text-left transition-all duration-1000", !isRevealed && grades.length > 0 ? "filter blur-lg opacity-30 select-none" : "")}>
             <thead>
               <tr className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-slate-100">
                 <th className="pb-4 pl-4 w-1/3">MODULE</th>
