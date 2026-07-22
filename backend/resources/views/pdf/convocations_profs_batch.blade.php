@@ -123,7 +123,9 @@
                 <div style="display: table-cell; width: 50%; text-align: right; vertical-align: top;">
                     <div class="signature-title">Administration ENCG Fès</div>
                     <div style="text-align: right; margin-top: 15px;">
-                        @if(!empty($data['qr_token']))
+                        @if(!empty($data['qrCodeBase64']))
+                            <img src="data:image/svg+xml;base64,{{ $data['qrCodeBase64'] }}" alt="QR Code" style="border: 2px solid #000; padding: 2px; float: right; margin-left: 20px; width: 90px; height: 90px;">
+                        @elseif(!empty($data['qr_token']))
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($data['qr_token']) }}" alt="QR Code" style="border: 2px solid #000; padding: 2px; float: right; margin-left: 20px;">
                         @endif
                         <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">
