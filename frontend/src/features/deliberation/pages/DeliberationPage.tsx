@@ -3,11 +3,13 @@ import { Search, Calculator, CheckCircle2, AlertTriangle, Users } from 'lucide-r
 import { cn } from '@shared/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import api from '@shared/lib/api'
 import { Spinner } from '@shared/components/ui/Spinner'
 
 export default function DeliberationPage() {
   const { t } = useTranslation('deliberation')
+  const navigate = useNavigate()
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['deliberations'],
     queryFn: async () => {
@@ -58,7 +60,10 @@ export default function DeliberationPage() {
                    </span>
                 </td>
                 <td className="px-6 py-4 text-end">
-                  <button className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 transition-colors flex items-center gap-2 ms-auto">
+                  <button 
+                    onClick={() => navigate(`/exams/deliberations/${s.id}/jury`)}
+                    className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 transition-colors flex items-center gap-2 ms-auto"
+                  >
                     <Calculator className="w-3.5 h-3.5"/> {t('open_jury')}
                   </button>
                 </td>

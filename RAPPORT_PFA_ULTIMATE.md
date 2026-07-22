@@ -92,12 +92,20 @@ sequenceDiagram
 ```
 
 ### 3.4. Le Moteur de Délibération (Apogée Next-Gen) (`deliberation`)
-C'est le module le plus critique (modèle `Deliberation`).
-- **Saisie des Notes** : Grille sécurisée pour les professeurs.
-- **Règles d'Architecture Pédagogique ENCG** :
-  - Validation normale : Moyenne Module >= 10/20.
-  - Compensation Semestrielle : Si Moyenne Semestre >= 10 ET aucune note éliminatoire (< 5).
-  - Validation Annuelle : Basculer un étudiant d'une année à l'autre automatiquement (Modèle `StudentPathway`).
+C'est le module le plus critique et complexe du système, basé sur le modèle `Deliberation` et le service intelligent `DeliberationEngine`.
+- **Saisie des Notes** : Grille sécurisée pour les professeurs (Grade Lock System).
+- **Règles d'Architecture Pédagogique ENCG (Apogée)** :
+  - **Validé (V)** : Moyenne Module >= 10/20.
+  - **Validé par Compensation (VC)** : Moyenne Semestre >= 10 ET aucune note éliminatoire (< 6). Le module < 10 est compensé.
+  - **Non Validé (NV) / Rattrapage (RAT)** : Note éliminatoire ou échec global.
+  - **Discipline** : En cas de fraude (décision du Conseil de Discipline), la note du module ou du semestre est automatiquement annulée (0/20) de façon irréversible.
+
+#### Scénario Métier Complet : De la Saisie au PV Officiel
+1. **Clôture des Notes** : Les professeurs valident leurs notes sur l'ERP. L'administration verrouille la période de saisie.
+2. **Ouverture du Jury** : Le responsable de scolarité clique sur "Ouvrir Jury". L'ERP génère instantanément une **Matrice de Délibération** (tableau croisé dynamique).
+3. **Le Conseil de Jury (Live)** : La matrice est projetée sur grand écran. Les étudiants sont codés par couleur (Vert = Admis, Orange = Compensé, Rouge = Ajourné).
+4. **Le Système de Rachat** : Si le jury décide d'aider un étudiant (ex: moyenne de 9.95), l'administrateur utilise le bouton de "Rachat" pour ajuster la note (ex: passer à 10). La matrice se rafraîchit en temps réel sous les yeux du jury, et la base de données garde une trace indélébile (Audit Trail) de la modification.
+5. **Générer le PV** : Une fois la session clôturée, l'ERP génère un fichier PDF officiel format "Paysage" regroupant toute la promotion, avec les espaces de signature pour le Président du Jury et la Direction, prêt à être archivé.
 
 ### 3.5. Gestion des Stages, PFA et PFE (`internships`, `finalprojects`)
 - **Workflow Numérique** : L'étudiant soumet son offre de stage (`Internship`), l'administration la valide, et le professeur l'évalue (`InternshipEvaluation`).
