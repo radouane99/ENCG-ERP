@@ -25,45 +25,59 @@ class ExamConvocationService
         foreach ($session->exams as $exam) {
             $generatedCount = 0;
             
+            // First, update any existing seatings that don't have a QR token
+            $existingSeatings = DB::table('exam_seatings')
+                ->where('exam_id', $exam->id)
+                ->get();
+
+            $existingStudentIds = $existingSeatings->pluck('student_id')->toArray();
+            $generatedCount = $existingSeatings->max('seat_number') ?? 0;
+
+            foreach ($existingSeatings as $seating) {
+                if (empty($seating->qr_token)) {
+                    DB::table('exam_seatings')
+                        ->where('id', $seating->id)
+                        ->update(['qr_token' => Str::uuid()->toString()]);
+                    $totalGenerated++;
+                }
+            }
+
+            // Only fetch students to create new seatings if this is a manually created exam without complete seatings
+            // Or if we specifically want to enforce all students of a group are seated
             $students = collect();
             if ($exam->group_id && $exam->group) {
+                // If it's a specific group exam (e.g. manual creation)
                 $students = $exam->group->students;
             } elseif ($exam->module && $exam->module->filiere_id) {
+                // If no group, take the whole filiere
                 $students = \App\Models\Student::whereHas('pathways', function ($q) use ($exam) {
                     $q->where('filiere_id', $exam->module->filiere_id)
                       ->where('is_current', true);
                 })->get();
             }
 
-            foreach ($students as $student) {
-                $seating = DB::table('exam_seatings')
-                    ->where('exam_id', $exam->id)
-                    ->where('student_id', $student->id)
-                    ->first();
-
+            // Only insert new seatings if there are NO existing seatings for this exam.
+            // (If auto-generated, seatings are already distributed across rooms, we shouldn't insert missing students into every room).
+            if ($existingSeatings->isEmpty() && $students->isNotEmpty()) {
                 $roomId = $exam->room_id ?? $exam->room?->id;
                 if (!$roomId) {
-                    throw new \InvalidArgumentException("Cannot generate convocation: exam {$exam->id} has no assigned room.");
+                    continue; // Skip if no room assigned
                 }
 
-                if (!$seating) {
-                    DB::table('exam_seatings')->insert([
-                        'exam_id' => $exam->id,
-                        'student_id' => $student->id,
-                        'room_id' => $roomId,
-                        'seat_number' => $generatedCount + 1,
-                        'qr_token' => Str::uuid()->toString(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $totalGenerated++;
-                } elseif (empty($seating->qr_token)) {
-                    DB::table('exam_seatings')
-                        ->where('id', $seating->id)
-                        ->update(['qr_token' => Str::uuid()->toString()]);
-                    $totalGenerated++;
+                foreach ($students as $student) {
+                    if (!in_array($student->id, $existingStudentIds)) {
+                        DB::table('exam_seatings')->insert([
+                            'exam_id' => $exam->id,
+                            'student_id' => $student->id,
+                            'room_id' => $roomId,
+                            'seat_number' => ++$generatedCount,
+                            'qr_token' => Str::uuid()->toString(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $totalGenerated++;
+                    }
                 }
-                $generatedCount++;
             }
         }
 

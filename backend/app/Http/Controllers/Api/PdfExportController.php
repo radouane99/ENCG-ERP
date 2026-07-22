@@ -87,10 +87,23 @@ class PdfExportController extends Controller
             $exams = [];
             foreach ($allStudentSeatings as $s) {
                 if ($s->exam) {
+                    $profName = '-';
+                    if ($s->exam->module_id) {
+                        $profData = \Illuminate\Support\Facades\DB::table('module_professor')
+                            ->join('users', 'module_professor.professor_id', '=', 'users.id')
+                            ->where('module_professor.module_id', $s->exam->module_id)
+                            ->select('users.last_name', 'users.first_name')
+                            ->first();
+                        if ($profData) {
+                            $profName = mb_strtoupper($profData->last_name) . ' ' . $profData->first_name;
+                        }
+                    }
+
                     $exams[] = [
                         'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
                         'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
                         'module' => $s->exam->module->name ?? 'Module N/A',
+                        'enseignant' => $profName,
                         'room' => $s->room->name ?? 'Salle N/A',
                         'seat' => $s->seat_number ?? 'N/A',
                         'qr_token' => $s->qr_token
@@ -140,10 +153,23 @@ class PdfExportController extends Controller
         $exams = [];
         foreach ($allSeatings as $s) {
             if ($s->exam) {
+                $profName = '-';
+                if ($s->exam->module_id) {
+                    $profData = \Illuminate\Support\Facades\DB::table('module_professor')
+                        ->join('users', 'module_professor.professor_id', '=', 'users.id')
+                        ->where('module_professor.module_id', $s->exam->module_id)
+                        ->select('users.last_name', 'users.first_name')
+                        ->first();
+                    if ($profData) {
+                        $profName = mb_strtoupper($profData->last_name) . ' ' . $profData->first_name;
+                    }
+                }
+
                 $exams[] = [
                     'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
                     'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
                     'module' => $s->exam->module->name ?? 'Module N/A',
+                    'enseignant' => $profName,
                     'room' => $s->room->name ?? 'Salle N/A',
                     'seat' => $s->seat_number ?? 'N/A',
                     'qr_token' => $s->qr_token
