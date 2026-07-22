@@ -414,12 +414,20 @@ class ExamConvocationService
             ];
 
             if (class_exists(Pdf::class) && class_exists(ConvocationEmail::class)) {
-                $pdf = Pdf::loadView('emails.convocation', $examData);
-                Mail::to($student->user->email)->send(
-                    new ConvocationEmail($examData, $pdf->output())
-                );
+                try {
+                    $pdf = Pdf::loadView('emails.convocation', $examData);
+                    Mail::to($student->user->email)->send(
+                        new ConvocationEmail($examData, $pdf->output())
+                    );
+                    // Mark as sent
+                    DB::table('exam_seatings')
+                        ->where('id', $seating->id)
+                        ->update(['sent_at' => now()]);
+                    $sentCount++;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Error sending convocation email to student ID ' . $student->id . ': ' . $e->getMessage(), ['exception' => $e]);
+                }
             }
-            $sentCount++;
         }
 
         return [
