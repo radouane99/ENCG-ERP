@@ -335,6 +335,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::prefix('exam-incidents')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
+        Route::get('/{id}/download-pdf', [\App\Http\Controllers\Api\ExamIncidentController::class, 'downloadPdf']);
     });
 
     // Retakes

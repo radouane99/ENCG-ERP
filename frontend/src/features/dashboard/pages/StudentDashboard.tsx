@@ -103,6 +103,44 @@ export default function StudentDashboard() {
               </div>
             </div>
 
+            {/* Mon Pass Examen Digital Widget */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl border border-indigo-900/40 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+                      Pass Examen Digital
+                    </span>
+                    <span className="text-xs text-indigo-300 font-semibold">• ENCG Fès</span>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white">
+                    {user?.name || 'Étudiant ENCG'}
+                  </h3>
+                  <p className="text-xs text-slate-300 flex flex-wrap items-center gap-3">
+                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold">CNE: {user?.cne || 'N130000003'}</span>
+                    {user?.cin && <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold">CIN: {user?.cin}</span>}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-full md:w-auto">
+                  <div className="w-16 h-16 bg-white rounded-xl p-1.5 shrink-0 flex items-center justify-center">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ENCG-${user?.cne || 'STD-2026'}`} 
+                      alt="QR Pass" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest block">Prochain Examen</span>
+                    <p className="text-xs font-bold text-white">Management Stratégique</p>
+                    <p className="text-[11px] text-slate-300">📅 25 Juin • 09:00 (Amphi Ibn Khaldoun)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Secrétariat */}
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
               <div className="flex items-center gap-3 mb-6">

@@ -223,5 +223,12 @@ export const examsApi = {
   updateExamAttendance: async (qrToken: string, status: 'present' | 'late' | 'absent') => {
     const response = await api.post(`/convocations/update-attendance/${qrToken}`, { status });
     return response.data;
+  },
+  exportConvocationsZip: async (filiereId?: number) => {
+    const response = await api.get('/convocations/export-zip', {
+      params: { filiere_id: filiereId },
+      responseType: 'blob'
+    });
+    return response.data;
   }
 };

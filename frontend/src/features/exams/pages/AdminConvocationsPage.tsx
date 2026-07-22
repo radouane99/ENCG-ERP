@@ -69,29 +69,38 @@ export default function AdminConvocationsPage() {
 
   // Send all convocations emails
   const sendMutation = useMutation({
-    mutationFn: () => examsApi.sendSessionEmails(selectedSessionId!),
-    onSuccess: (data) => {
-      notify(data.message || 'Emails envoyés avec succès !')
+    mutationFn: () => {
+      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      return examsApi.sendSessionEmails(activeSessionId)
+    },
+    onSuccess: (data: any) => {
+      notify(data?.message || 'Emails envoyés avec succès !')
       refetchStats()
       refetchList()
     },
-    onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de l\'envoi.', 'error')
+    onError: (err: any) => notify(err?.response?.data?.message || 'Erreur lors de l\'envoi.', 'error')
   })
 
   // Auto-assign proctors
   const assignMutation = useMutation({
-    mutationFn: () => examsApi.autoAssignProctors(selectedSessionId!),
-    onSuccess: (data) => {
-      notify(data.message || 'Surveillants affectés automatiquement !')
+    mutationFn: () => {
+      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      return examsApi.autoAssignProctors(activeSessionId)
+    },
+    onSuccess: (data: any) => {
+      notify(data?.message || 'Surveillants affectés automatiquement !')
       refetchStats()
       refetchList()
     },
-    onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de l\'affectation.', 'error')
+    onError: (err: any) => notify(err?.response?.data?.message || 'Erreur lors de l\'affectation.', 'error')
   })
 
   // Batch actions - Students
   const batchDownloadMutation = useMutation({
-    mutationFn: (seatingIds: number[]) => examsApi.batchDownloadPdf(selectedSessionId!, seatingIds),
+    mutationFn: (seatingIds: number[]) => {
+      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      return examsApi.batchDownloadPdf(activeSessionId, seatingIds)
+    },
     onSuccess: (blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -106,14 +115,21 @@ export default function AdminConvocationsPage() {
   })
 
   const batchEmailMutation = useMutation({
-    mutationFn: (seatingIds: number[]) => examsApi.sendBatchEmails(selectedSessionId!, seatingIds),
-    onSuccess: () => {
-      notify('Emails envoyés avec succès !');
-      setSelectedSeatings(new Set());
-      refetchList();
-      refetchStats();
+    mutationFn: (seatingIds: number[]) => {
+      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      return examsApi.sendBatchEmails(activeSessionId, seatingIds)
     },
-    onError: () => notify('Erreur lors de l\'envoi des emails.', 'error')
+    onSuccess: (data: any) => {
+      if (data?.success === false) {
+        notify(data?.message || 'Erreur lors de l\'envoi des emails.', 'error')
+      } else {
+        notify(data?.message || 'Convocations transmises et emails envoyés avec succès !')
+        setSelectedSeatings(new Set())
+        refetchList()
+        refetchStats()
+      }
+    },
+    onError: (err: any) => notify(err?.response?.data?.message || 'Erreur lors de l\'envoi des emails.', 'error')
   })
 
   // Batch actions - Surveillants
@@ -206,6 +222,23 @@ export default function AdminConvocationsPage() {
       a.remove();
     } catch (error) {
       notify('Erreur lors du téléchargement.', 'error');
+    }
+  };
+
+  const handleExportZip = async () => {
+    try {
+      notify('Génération du package ZIP des convocations en cours...');
+      const blob = await examsApi.exportConvocationsZip();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Convocations_ENCG_Export_${new Date().toISOString().slice(0,10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      notify('Archive ZIP téléchargée avec succès !');
+    } catch (error) {
+      notify('Erreur lors de la génération du fichier ZIP.', 'error');
     }
   };
 
@@ -624,6 +657,13 @@ export default function AdminConvocationsPage() {
                           {groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} étudiant(s) sélectionné(s) ({groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} convocation(s) au total — {selectedSeatings.size} modules)
                         </span>
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleExportZip}
+                            className="flex-1 sm:flex-none justify-center bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5"
+                            title="Exporter un fichier ZIP regroupe"
+                          >
+                            <Download className="w-3.5 h-3.5" /> Exporter ZIP
+                          </button>
                           <button
                             onClick={() => batchDownloadMutation.mutate(Array.from(selectedSeatings))}
                             disabled={batchDownloadMutation.isPending}

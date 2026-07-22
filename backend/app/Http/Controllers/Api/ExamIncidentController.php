@@ -60,4 +60,35 @@ class ExamIncidentController extends Controller
             'data' => $incident
         ], 201);
     }
+
+    /**
+     * Download official PDF Procès-Verbal for an incident.
+     */
+    public function downloadPdf(int $id)
+    {
+        $incident = ExamIncident::with(['exam.module.filiere', 'student.user', 'reporter'])->findOrFail($id);
+        
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.pv_incident', [
+            'incident_id' => $incident->id,
+            'incident_type' => $incident->type,
+            'incident_date' => $incident->created_at ? $incident->created_at->format('d/m/Y H:i') : date('d/m/Y H:i'),
+            'student_name' => $incident->student?->user?->name ?? 'N/A',
+            'cne' => $incident->student?->cne ?? 'N/A',
+            'cin' => $incident->student?->cin ?? $incident->student?->user?->cin ?? 'N/A',
+            'filiere_name' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun',
+            'seat_number' => 'Assigné',
+            'module_name' => $incident->exam?->module?->name ?? 'N/A',
+            'room_name' => 'Salle d\'Examen',
+            'exam_date' => $incident->exam?->exam_date ? \Carbon\Carbon::parse($incident->exam->exam_date)->format('d/m/Y') : date('d/m/Y'),
+            'exam_time' => $incident->exam?->start_time ?? '09:00',
+            'professor_name' => $incident->reporter?->name ?? 'Surveillant Responsable',
+            'description' => $incident->description,
+            'logoBase64' => $logoBase64,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("PV_Incident_{$incident->id}.pdf");
+    }
 }

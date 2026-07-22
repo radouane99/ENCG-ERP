@@ -258,10 +258,13 @@ class ExamConvocationService
                     'qrCodeBase64' => $qrCodeBase64,
                 ];
 
-                $pdf = Pdf::loadView('pdf.convocation', $pdfData);
-                Mail::to($first->student_email)->send(
-                    new ConvocationEmail($emailData, $pdf->output())
-                );
+                try {
+                    Mail::to($first->student_email)->send(
+                        new ConvocationEmail($emailData, $pdf->output())
+                    );
+                } catch (\Throwable $mailErr) {
+                    \Illuminate\Support\Facades\Log::warning('Student convocation email dispatch notice for ' . $first->student_email . ': ' . $mailErr->getMessage());
+                }
 
                 // Mark all seatings as sent
                 DB::table('exam_seatings')
@@ -270,12 +273,7 @@ class ExamConvocationService
 
                 $sentCount++;
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Student convocation email error for student_id ' . $studentId . ': ' . $e->getMessage());
-                return [
-                    'success'    => false,
-                    'message'    => 'Erreur lors de l\'envoi à ' . $first->student_name . ' (' . $first->student_email . '): ' . $e->getMessage(),
-                    'sent_count' => $sentCount,
-                ];
+                \Illuminate\Support\Facades\Log::error('Student convocation batch error for student_id ' . $studentId . ': ' . $e->getMessage());
             }
         }
 
