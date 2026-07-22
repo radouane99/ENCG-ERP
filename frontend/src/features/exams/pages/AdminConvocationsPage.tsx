@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { examsApi } from '@shared/api/exams'
@@ -17,8 +18,11 @@ export default function AdminConvocationsPage() {
   const [searchStudent, setSearchStudent] = useState('')
 
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
-    setNotification({ msg, type })
-    setTimeout(() => setNotification(null), 4000)
+    if (type === 'success') {
+      toast.success(msg);
+    } else {
+      toast.error(msg);
+    }
   }
 
   // Fetch all exam sessions
