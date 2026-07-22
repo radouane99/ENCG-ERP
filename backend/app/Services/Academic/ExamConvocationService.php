@@ -280,20 +280,16 @@ class ExamConvocationService
             ];
 
             if (class_exists(Pdf::class) && class_exists(\App\Mail\ProfessorConvocationEmail::class)) {
-                try {
-                    $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
-                    Mail::to($professor->email)->send(
-                        new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
-                    );
+                $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
+                Mail::to($professor->email)->send(
+                    new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
+                );
+                
+                DB::table('exam_surveillances')
+                    ->whereIn('id', $profSurveillances->pluck('id'))
+                    ->update(['sent_at' => now()]);
                     
-                    DB::table('exam_surveillances')
-                        ->whereIn('id', $profSurveillances->pluck('id'))
-                        ->update(['sent_at' => now()]);
-                        
-                    $sentCount++;
-                } catch (\Exception $e) {
-                    // Log email error but continue
-                }
+                $sentCount++;
             }
         }
 
