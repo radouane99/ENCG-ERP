@@ -113,8 +113,30 @@ class ConvocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
         }
 
-        $result = $this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds);
-        return response()->json($result);
+        // DEBUG: Return exactly what we received and found in DB
+        $session = \App\Models\ExamSession::with(['exams'])->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+        
+        $found = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->whereIn('exam_id', $examIds)
+            ->whereIn('id', $surveillanceIds)
+            ->select('id', 'professor_id', 'exam_id', 'qr_token')
+            ->get();
+
+        $professor = null;
+        if ($found->isNotEmpty()) {
+            $professor = \App\Models\User::find($found->first()->professor_id);
+        }
+
+        return response()->json([
+            'debug' => true,
+            'received_ids' => $surveillanceIds,
+            'session_id' => $sessionId,
+            'session_exam_ids' => $examIds,
+            'found_surveillances' => $found,
+            'professor_email' => $professor?->email,
+            'professor_name' => $professor?->name,
+        ]);
     }
 
     public function sendBatchSurveillantsWhatsApp(Request $request, int $sessionId, \App\Services\WhatsAppService $whatsappService): JsonResponse
