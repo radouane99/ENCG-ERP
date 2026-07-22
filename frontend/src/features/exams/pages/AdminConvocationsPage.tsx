@@ -17,6 +17,8 @@ export default function AdminConvocationsPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [searchStudent, setSearchStudent] = useState('')
 
+  const [selectedStudentDetail, setSelectedStudentDetail] = useState<any | null>(null)
+
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
       toast.success(msg);
@@ -207,6 +209,38 @@ export default function AdminConvocationsPage() {
 
   const filieres = [...new Set(students.map((s: any) => s.filiere))].filter(Boolean)
 
+  const groupedStudents = Object.values(students.reduce((acc, curr) => {
+    const key = curr.student_id ? `std_${curr.student_id}` : (curr.cne || curr.student_name);
+    if (!acc[key]) {
+      acc[key] = {
+        id: curr.id,
+        student_id: curr.student_id || curr.id,
+        student_name: curr.student_name,
+        cne: curr.cne,
+        filiere: curr.filiere,
+        group_name: curr.group_name,
+        all_seating_ids: [],
+        exams: [],
+        sent_at: curr.sent_at,
+        all_sent: true,
+        any_sent: false,
+        has_qr: true,
+      }
+    }
+    acc[key].all_seating_ids.push(curr.id);
+    acc[key].exams.push(curr);
+    if (curr.sent_at) {
+      acc[key].any_sent = true;
+      if (!acc[key].sent_at) acc[key].sent_at = curr.sent_at;
+    } else {
+      acc[key].all_sent = false;
+    }
+    if (!curr.qr_token) {
+      acc[key].has_qr = false;
+    }
+    return acc;
+  }, {} as Record<string, any>));
+
   const groupedSurveillants = Object.values(surveillants.reduce((acc, curr) => {
     if (!acc[curr.professor_name]) {
       acc[curr.professor_name] = {
@@ -226,15 +260,31 @@ export default function AdminConvocationsPage() {
     return acc;
   }, {} as Record<string, any>));
 
-  const filteredStudents = students.filter((s: any) => 
+  const filteredStudents = groupedStudents.filter((s: any) => 
     s.student_name?.toLowerCase().includes(searchStudent.toLowerCase()) || 
     s.cne?.toLowerCase().includes(searchStudent.toLowerCase()) ||
-    s.filiere?.toLowerCase().includes(searchStudent.toLowerCase())
+    s.filiere?.toLowerCase().includes(searchStudent.toLowerCase()) ||
+    s.exams?.some((e: any) => e.exam_name?.toLowerCase().includes(searchStudent.toLowerCase()))
   )
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const isStudentSelected = (student: any) => {
+    return student.all_seating_ids.length > 0 && student.all_seating_ids.every((id: number) => selectedSeatings.has(id));
+  }
+
+  const handleSelectStudent = (student: any) => {
+    const newSet = new Set(selectedSeatings);
+    if (isStudentSelected(student)) {
+      student.all_seating_ids.forEach((id: number) => newSet.delete(id));
+    } else {
+      student.all_seating_ids.forEach((id: number) => newSet.add(id));
+    }
+    setSelectedSeatings(newSet);
+  }
+
+  const handleSelectAllStudents = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedSeatings(new Set(filteredStudents.map((s: any) => s.id)))
+      const allIds = filteredStudents.flatMap((s: any) => s.all_seating_ids);
+      setSelectedSeatings(new Set(allIds))
     } else {
       setSelectedSeatings(new Set())
     }
@@ -563,7 +613,7 @@ export default function AdminConvocationsPage() {
                     {selectedSeatings.size > 0 && (
                       <div className="bg-blue-50 border-b border-blue-100 p-3 px-5 flex items-center justify-between sticky top-0 z-10">
                         <span className="text-blue-800 font-bold text-sm">
-                          {selectedSeatings.size} étudiant(s) sélectionné(s)
+                          {groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} étudiant(s) sélectionné(s) ({selectedSeatings.size} convocation(s) au total)
                         </span>
                         <div className="flex gap-2">
                           <button
@@ -580,7 +630,7 @@ export default function AdminConvocationsPage() {
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
                           >
                             {batchEmailMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                            Envoyer Emails
+                            Envoyer Emails ({groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} notification(s))
                           </button>
                         </div>
                       </div>
@@ -591,82 +641,102 @@ export default function AdminConvocationsPage() {
                           <th className="px-5 py-3 text-left w-10">
                             <input
                               type="checkbox"
-                              checked={filteredStudents.length > 0 && selectedSeatings.size === filteredStudents.length}
-                              onChange={handleSelectAll}
+                              checked={filteredStudents.length > 0 && filteredStudents.every((s: any) => isStudentSelected(s))}
+                              onChange={handleSelectAllStudents}
                               className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
                           </th>
                           <th className="px-5 py-3 text-left font-bold">Étudiant</th>
                           <th className="px-5 py-3 text-left font-bold">CNE</th>
                           <th className="px-5 py-3 text-left font-bold">Filière / Groupe</th>
-                          <th className="px-5 py-3 text-left font-bold">Examen</th>
-                          <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
+                          <th className="px-5 py-3 text-left font-bold">Examens & Modules</th>
                           <th className="px-5 py-3 text-center font-bold">QR</th>
                           <th className="px-5 py-3 text-center font-bold">Statut</th>
                           <th className="px-5 py-3 text-right font-bold">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
-                        {filteredStudents.map((s: any) => (
-                          <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSeatings.has(s.id) ? "bg-blue-50/30" : "")}>
-                            <td className="px-5 py-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedSeatings.has(s.id)}
-                                onChange={() => handleSelectOne(s.id)}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              />
-                            </td>
-                            <td className="px-5 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
-                                {(s.student_name || 'E').charAt(0).toUpperCase()}
-                              </div>
-                              <span className="font-medium text-slate-700">{s.student_name}</span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-3 text-slate-500 font-mono text-xs">{s.cne || '—'}</td>
-                          <td className="px-5 py-3">
-                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">{s.filiere}</span>
-                            {s.group_name && <span className="ml-1 text-[10px] text-slate-400">· {s.group_name}</span>}
-                          </td>
-                          <td className="px-5 py-3 text-slate-600 text-xs font-medium">{s.exam_name}</td>
-                          <td className="px-5 py-3 text-slate-500 text-xs">
-                            {s.exam_date ? new Date(s.exam_date).toLocaleDateString('fr-FR') : '—'}
-                            {s.start_time && <span className="ml-2 font-medium">{s.start_time?.substring(0, 5)}</span>}
-                          </td>
-                          <td className="px-5 py-3 text-center">
-                            {s.qr_token
-                              ? <span className="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500">✓ QR</span>
-                              : <span className="text-[10px] text-red-400">—</span>}
-                          </td>
-                          <td className="px-5 py-3 text-center">
-                            {s.sent_at
-                              ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
-                              : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handlePreviewStudentPdf(s.id); }}
-                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Voir la convocation"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDownloadStudentPdf(s.id); }}
-                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Télécharger"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                        {filteredStudents.map((s: any) => {
+                          const isSelected = isStudentSelected(s);
+                          return (
+                            <tr key={s.student_id || s.cne} className={cn("hover:bg-slate-50/60 transition-colors", isSelected ? "bg-blue-50/30" : "")}>
+                              <td className="px-5 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleSelectStudent(s)}
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
+                                    {(s.student_name || 'E').charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="font-medium text-slate-700">{s.student_name}</span>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">{s.cne || '—'}</td>
+                              <td className="px-5 py-3">
+                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">{s.filiere}</span>
+                                {s.group_name && <span className="ml-1 text-[10px] text-slate-400">· {s.group_name}</span>}
+                              </td>
+                              <td className="px-5 py-3">
+                                <button
+                                  onClick={() => setSelectedStudentDetail(s)}
+                                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 group"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                                  <span>{s.exams.length} module{s.exams.length > 1 ? 's' : ''}</span>
+                                  <ChevronRight className="w-3 h-3 text-indigo-400" />
+                                </button>
+                              </td>
+                              <td className="px-5 py-3 text-center">
+                                {s.has_qr
+                                  ? <span className="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500">✓ QR</span>
+                                  : <span className="text-[10px] text-amber-500 font-medium">Partiel</span>}
+                              </td>
+                              <td className="px-5 py-3 text-center">
+                                {s.all_sent ? (
+                                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
+                                ) : s.any_sent ? (
+                                  <span className="px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[10px] font-bold">Partielle</span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedStudentDetail(s); }}
+                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center gap-1 transition-colors"
+                                    title="Voir le détail des examens"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-slate-500" />
+                                    Détails
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDownloadStudentPdf(s.all_seating_ids[0]); }}
+                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    title="Télécharger la convocation PDF"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); batchEmailMutation.mutate(s.all_seating_ids); }}
+                                    disabled={batchEmailMutation.isPending}
+                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                    title="Envoyer l'email de convocation"
+                                  >
+                                    <Mail className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </>
                 )}
               </div>
@@ -799,6 +869,138 @@ export default function AdminConvocationsPage() {
             )}
           </div>
         </>
+      )}
+      {/* Student Exam Details Modal */}
+      {selectedStudentDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-black shadow-md shadow-indigo-100">
+                  {(selectedStudentDetail.student_name || 'E').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                    {selectedStudentDetail.student_name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                    <span className="font-mono bg-slate-200/70 px-2 py-0.5 rounded font-bold text-slate-700">
+                      CNE: {selectedStudentDetail.cne || '—'}
+                    </span>
+                    <span>•</span>
+                    <span className="font-bold text-blue-600">{selectedStudentDetail.filiere}</span>
+                    {selectedStudentDetail.group_name && <span>• {selectedStudentDetail.group_name}</span>}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedStudentDetail(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              <div className="flex items-center justify-between bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 px-4 text-xs font-semibold text-blue-900">
+                <span className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Convocation regroupée pour les examens de la session
+                </span>
+                <span className="px-2.5 py-1 bg-blue-600 text-white rounded-full font-black text-[11px]">
+                  {selectedStudentDetail.exams.length} modules planifiés
+                </span>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left">#</th>
+                      <th className="px-4 py-2.5 text-left">Module / Examen</th>
+                      <th className="px-4 py-2.5 text-left">Date & Heure</th>
+                      <th className="px-4 py-2.5 text-left">Salle</th>
+                      <th className="px-4 py-2.5 text-center">Table N°</th>
+                      <th className="px-4 py-2.5 text-center">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {selectedStudentDetail.exams.map((ex: any, idx: number) => (
+                      <tr key={ex.id || idx} className="hover:bg-slate-50/50">
+                        <td className="px-4 py-3 font-bold text-slate-400">{idx + 1}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-800">{ex.exam_name}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{ex.exam_date ? new Date(ex.exam_date).toLocaleDateString('fr-FR') : '—'}</span>
+                            {ex.start_time && <span className="font-bold text-slate-700 ml-1">{ex.start_time.substring(0, 5)}</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-slate-700 font-medium">
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                            {ex.room_name || 'Salle non assignée'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center font-mono font-bold text-slate-700">
+                          {ex.seat_number ? `N° ${ex.seat_number}` : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {ex.sent_at ? (
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyé</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 px-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePreviewStudentPdf(selectedStudentDetail.all_seating_ids[0])}
+                  className="px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  Aperçu Convocation
+                </button>
+                <button
+                  onClick={() => handleDownloadStudentPdf(selectedStudentDetail.all_seating_ids[0])}
+                  className="px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  Télécharger PDF
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    batchEmailMutation.mutate(selectedStudentDetail.all_seating_ids);
+                    setSelectedStudentDetail(null);
+                  }}
+                  disabled={batchEmailMutation.isPending}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 shadow-sm shadow-blue-200"
+                >
+                  {batchEmailMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  Envoyer l'Email (Toutes Convocations)
+                </button>
+                <button
+                  onClick={() => setSelectedStudentDetail(null)}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -752,9 +752,11 @@ class ExamConvocationService
             ->join('modules', 'exams.module_id', '=', 'modules.id')
             ->join('filieres', 'modules.filiere_id', '=', 'filieres.id')
             ->leftJoin('groups', 'exams.group_id', '=', 'groups.id')
+            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
             ->whereIn('exam_seatings.exam_id', $examIds)
             ->select(
                 'exam_seatings.id',
+                'exam_seatings.student_id',
                 'users.name as student_name',
                 'students.cne',
                 'filieres.code as filiere',
@@ -762,6 +764,8 @@ class ExamConvocationService
                 'modules.name as exam_name',
                 'exams.exam_date',
                 'exams.start_time',
+                'rooms.name as room_name',
+                'exam_seatings.seat_number',
                 'exam_seatings.qr_token',
                 'exam_seatings.sent_at',
                 'exam_seatings.is_present'
