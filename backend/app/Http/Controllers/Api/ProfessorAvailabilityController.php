@@ -12,11 +12,9 @@ class ProfessorAvailabilityController extends Controller
 {
     public function index(): JsonResponse
     {
-        // Get all teaching staff
-        $professors = User::whereHas('roles', function($q) {
-            $q->whereIn('name', ['professor', 'department-head', 'vacataire', 'doctorant']);
-        })->get();
-
+        // Get all teaching staff using the Professor model to ensure we get permanent staff
+        $professorProfiles = \App\Models\Professor::with(['user', 'department'])->get();
+        
         $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
         $academicYearId = $academicYear ? $academicYear->id : 1;
 
@@ -25,9 +23,12 @@ class ProfessorAvailabilityController extends Controller
             ->get()
             ->keyBy('professor_id');
 
-        $data = $professors->map(function ($prof) use ($availabilities) {
+        $data = $professorProfiles->map(function ($profProfile) use ($availabilities) {
+            $prof = $profProfile->user;
+            if (!$prof) return null;
+
             $avail = $availabilities->get($prof->id);
-            $departmentName = optional(optional($prof->professor)->department)->name ?? 'Inconnu';
+            $departmentName = $profProfile->department->name ?? 'Inconnu';
             
             $days = [];
             if ($avail && $avail->availability_data) {
@@ -40,8 +41,7 @@ class ProfessorAvailabilityController extends Controller
                 $creneauxText = implode(', ', $days) . ' (' . $creneauxText . ')';
             }
 
-            $roleName = $prof->roles->first()->name ?? 'professor';
-            $contrat = match($roleName) {
+            $contrat = match($profProfile->contract_type) {
                 'vacataire' => 'Vacataire',
                 'doctorant' => 'Doctorant',
                 default => 'Permanent'
@@ -57,7 +57,7 @@ class ProfessorAvailabilityController extends Controller
                 'creneaux' => $creneauxText,
                 'date' => $avail ? $avail->updated_at->format('d/m/Y H:i') : '-',
             ];
-        });
+        })->filter();
 
         return response()->json([
             'success' => true,
