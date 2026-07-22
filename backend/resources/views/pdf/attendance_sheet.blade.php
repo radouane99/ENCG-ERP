@@ -63,8 +63,8 @@
                 <td>{{ $index + 1 }}</td>
                 <td class="text-left">
                     <div style="font-weight: bold; color: #0f2863;">{{ $seating->student->cne ?? $seating->student->user->cne ?? 'N/A' }}</div>
-                    @if(!empty($seating->student->cin ?? $seating->student->user->cin))
-                        <div style="font-size: 8px; color: #475569;">CIN: {{ $seating->student->cin ?? $seating->student->user->cin }}</div>
+                    @if(!empty($seating->student->user->cin ?? $seating->student->cin))
+                        <div style="font-size: 8px; color: #475569;">CIN: {{ $seating->student->user->cin ?? $seating->student->cin }}</div>
                     @endif
                 </td>
                 <td class="text-left uppercase">{{ $seating->student->user->name ?? $seating->student->user->first_name . ' ' . $seating->student->user->last_name }}</td>

@@ -690,7 +690,7 @@ class ConvocationController extends Controller
                 'exam_seatings.sent_at',
                 'exam_seatings.status',
                 'students.cne',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(students.cin, users.cin, "N/A") as cin'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(users.cin, "N/A") as cin'),
                 'users.name as student_name',
                 'users.email as student_email',
                 'users.avatar',

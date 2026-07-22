@@ -28,7 +28,7 @@ class StudentService
                   ->orWhere('users.phone', 'like', "%{$search}%")
                   ->orWhere('students.student_number', 'like', "%{$search}%")
                   ->orWhere('students.cne', 'like', "%{$search}%")
-                  ->orWhere('students.cin', 'like', "%{$search}%")
+                  ->orWhere('users.cin', 'like', "%{$search}%")
                   ->orWhere('students.massar_code', 'like', "%{$search}%");
             });
         }

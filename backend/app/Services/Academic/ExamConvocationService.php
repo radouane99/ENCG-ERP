@@ -172,7 +172,7 @@ class ExamConvocationService
                 'exam_seatings.qr_token',
                 'exam_seatings.seat_number',
                 'students.cne',
-                DB::raw('COALESCE(students.cin, users.cin, "N/A") as student_cin'),
+                DB::raw('COALESCE(users.cin, "N/A") as student_cin'),
                 'users.name as student_name',
                 'users.email as student_email',
                 'modules.name as module_name',
