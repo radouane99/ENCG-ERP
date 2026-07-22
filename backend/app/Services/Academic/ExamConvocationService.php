@@ -472,9 +472,9 @@ class ExamConvocationService
 
         // Students metrics
         $totalSeatings = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->count();
-        $generated = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('qr_token')->count();
-        $sent = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('sent_at')->count();
-        $present = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->count();
+        $generated = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('qr_token')->distinct('student_id')->count('student_id');
+        $sent = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('sent_at')->distinct('student_id')->count('student_id');
+        $present = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->distinct('student_id')->count('student_id');
         $totalDistinctStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->distinct('student_id')->count('student_id');
 
         // Surveillants metrics

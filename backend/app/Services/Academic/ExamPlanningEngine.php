@@ -137,11 +137,29 @@ class ExamPlanningEngine
      */
     public function autoGenerateIntelligentBatch(int $filiereId, int $sessionId): array
     {
-        $session = \App\Models\ExamSession::findOrFail($sessionId);
-        $modules = \App\Models\Module::where('filiere_id', $filiereId)->get();
+        $session = \App\Models\ExamSession::with('semester')->findOrFail($sessionId);
+        
+        $isAutomne = $session->semester->number === 1;
+        
+        $modules = \App\Models\Module::where('filiere_id', $filiereId)
+            ->when($isAutomne, function($q) {
+                // Automne: S1, S3, S5, S7, S9 => impaire
+                $q->whereRaw('semester_number % 2 != 0');
+            }, function($q) {
+                // Printemps: S2, S4, S6, S8, S10 => paire
+                $q->whereRaw('semester_number % 2 = 0');
+            })
+            ->get();
+            
         // Order rooms by capacity ascending to find the smallest suitable room
         $rooms = \App\Models\Room::orderBy('capacity', 'asc')->get();
-        $groups = \App\Models\Group::where('filiere_id', $filiereId)->get();
+        $groups = \App\Models\Group::where('filiere_id', $filiereId)
+            ->when($isAutomne, function($q) {
+                $q->whereRaw('semester_number % 2 != 0');
+            }, function($q) {
+                $q->whereRaw('semester_number % 2 = 0');
+            })
+            ->get();
 
         if ($modules->isEmpty()) throw new Exception("Aucun module pour cette filière.");
         if ($groups->isEmpty()) throw new Exception("Aucun groupe pour cette filière.");
@@ -153,9 +171,10 @@ class ExamPlanningEngine
 
         DB::beginTransaction();
         try {
-            // Delete existing exams and convocations for this filiere & session
+            // Delete existing exams and convocations for this filiere & session (all modules of the filiere)
+            $allFiliereModules = \App\Models\Module::where('filiere_id', $filiereId)->pluck('id');
             $existingExamIds = Exam::where('exam_session_id', $sessionId)
-                ->whereIn('module_id', $modules->pluck('id'))
+                ->whereIn('module_id', $allFiliereModules)
                 ->pluck('id');
             
             DB::table('exam_seatings')->whereIn('exam_id', $existingExamIds)->delete();
