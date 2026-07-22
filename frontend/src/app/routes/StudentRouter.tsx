@@ -17,7 +17,7 @@ const StudentClubsHub = lazy(() => import('@features/students/pages/StudentClubs
 const StudentDigitalLibrary = lazy(() => import('@features/students/pages/StudentDigitalLibrary'))
 const StudentGamification = lazy(() => import('@features/students/pages/StudentGamification'))
 const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/StudentAbsencesPage'))
-const StudentGuichetPage = lazy(() => import('@features/guichet/pages/StudentGuichetPage'))
+const StudentGuichetPage = lazy(() => import('@features/students/pages/StudentGuichetPage'))
 
 export default function StudentRouter() {
   return (

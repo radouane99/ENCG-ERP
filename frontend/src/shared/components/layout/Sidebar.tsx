@@ -106,6 +106,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { labelKey: 'nav.item_33', href: '/student/grades', icon: BarChart3, roles: ['student'] },
       { labelKey: 'nav.item_student_card', href: '/student/card', icon: IdCard, roles: ['student'] },
       { labelKey: 'nav.item_student_convocations', href: '/student/convocations', icon: Mail, roles: ['student'] },
+      { labelKey: 'Guichet Électronique', href: '/student/documents', icon: FileSignature, roles: ['student'] },
       { labelKey: 'nav.item_34', href: '/student/requests', icon: MessageSquare, roles: ['student'] },
       { labelKey: 'nav.item_35', href: '/student/portfolio', icon: Crown, roles: ['student'] },
       { labelKey: 'nav.item_36', href: '/student/clubs', icon: Users, roles: ['student'] },
@@ -138,6 +139,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupKey: 'nav.group_9',
     items: [
       { labelKey: 'nav.item_44', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
+      { labelKey: 'Guichet Électronique', href: '/admin/guichet', icon: FileSignature, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_blockchain', href: '/admin/blockchain-diplomas', icon: ShieldCheck, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_activity_logs', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
       { labelKey: 'nav.item_45', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },

@@ -203,7 +203,7 @@ const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
 const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminAnalyticsDashboard'))
-const AdminGuichetDashboard = lazy(() => import('@features/guichet/ui/admin-dashboard/AdminGuichetDashboard'))
+const AdminGuichetPage = lazy(() => import('@features/admin/pages/AdminGuichetPage'))
 
 // ── Route Guard ────────────────────────────────────────────────
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -476,7 +476,7 @@ export default function RootRouter() {
             <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />
             <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
-            <Route path="/admin/guichet" element={<AdminGuichetDashboard />} />
+            <Route path="/admin/guichet" element={<AdminGuichetPage />} />
           </Route>
           <Route path="/classroom" element={<ClassroomPage />} />
           <Route path="/classroom/show/:classId/:groupId" element={<ClassroomShowPage />} />
