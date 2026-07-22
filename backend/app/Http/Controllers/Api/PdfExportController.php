@@ -170,12 +170,19 @@ class PdfExportController extends Controller
         $session = \App\Models\ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
         $examIds = $session->exams->pluck('id');
 
-        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+        $selectedSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
             ->whereIn('exam_id', $examIds)
             ->whereIn('id', $seatingIds)
             ->get();
 
-        $professors = \App\Models\User::whereIn('id', $allSurveillances->pluck('professor_id')->unique())->get();
+        $profIds = $selectedSurveillances->pluck('professor_id')->unique();
+        
+        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->whereIn('exam_id', $examIds)
+            ->whereIn('professor_id', $profIds)
+            ->get();
+
+        $professors = \App\Models\User::whereIn('id', $profIds)->get();
         $professorsData = [];
 
         foreach ($professors as $prof) {
@@ -201,23 +208,24 @@ class PdfExportController extends Controller
                 return strcmp($dateA, $dateB);
             });
 
+            $token = $profSurvs->first()->qr_token ?? \Illuminate\Support\Str::random(16);
+            $verifyUrl = url("/api/v1/admin/convocations/verify/{$token}");
+            $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verifyUrl));
+
             $professorsData[] = [
-                'person_name' => $prof->last_name . ' ' . $prof->first_name,
+                'person_name' => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
                 'person_id' => $prof->cin ?? 'N/A',
                 'person_role' => 'Professeur',
                 'filiere_name' => 'Corps Professoral ENCG',
                 'session_type' => $session->type ?? 'ORDINAIRE',
                 'session_name' => $session->name ?? 'Session Principale',
                 'exams' => $exams,
-                'qr_token' => $profSurvs->first()->qr_token ?? null,
+                'qrCodeBase64' => $qrCodeBase64,
                 'id' => $profSurvs->first()->id,
                 'created_at' => clone $session->created_at
             ];
         }
 
-        // We can reuse the `pdf.convocations_batch` template since the structure is the same,
-        // or create a dedicated one if we want specific wording. The user said "kif derna m3a etudians".
-        // Let's use `convocations_profs_batch` for safety to allow differences later.
         $pdf = $this->getPdfInstance('pdf.convocations_profs_batch', [
             'professorsData' => $professorsData
         ]);
@@ -323,15 +331,19 @@ class PdfExportController extends Controller
             return strcmp($dateA, $dateB);
         });
 
+        $token = $allSurveillances->first()->qr_token ?? \Illuminate\Support\Str::random(16);
+        $verifyUrl = url("/api/v1/admin/convocations/verify/{$token}");
+        $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verifyUrl));
+
         $professorsData = [[
-            'person_name' => $prof->last_name . ' ' . $prof->first_name,
+            'person_name' => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
             'person_id' => $prof->cin ?? 'N/A',
             'person_role' => 'Professeur',
             'filiere_name' => 'Corps Professoral ENCG',
             'session_type' => $session->type ?? 'ORDINAIRE',
             'session_name' => $session->name ?? 'Session Principale',
             'exams' => $exams,
-            'qr_token' => $allSurveillances->first()->qr_token ?? null,
+            'qrCodeBase64' => $qrCodeBase64,
             'id' => $allSurveillances->first()->id,
             'created_at' => clone $session->created_at
         ]];

@@ -347,6 +347,13 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         Route::post('/alert', [ProfessorAvailabilityController::class, 'alert']);
     });
 
+    // Blockchain Certification
+    Route::prefix('blockchain')->group(function () {
+        Route::get('/certificates', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'getLedger']);
+        Route::post('/certify-promo', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'certifyPromo']);
+        Route::post('/verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+    });
+
     // Schedule Change Requests
     Route::prefix('schedule-change-requests')->group(function () {
         Route::get('/', [ScheduleChangeRequestController::class, 'index']);

@@ -61,18 +61,48 @@ class StudentConvocationController extends Controller
         }
 
         $verificationUrl = url("/api/v1/admin/convocations/verify/{$convocation->qr_token}");
-        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verificationUrl));
+        $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verificationUrl));
+
+        $niveauName = 'Année en cours';
+        if ($convocation->exam && $convocation->exam->module && $convocation->exam->module->semester_id) {
+            $semId = $convocation->exam->module->semester_id;
+            if ($semId == 1 || $semId == 2) $niveauName = '1ère Année';
+            elseif ($semId == 3 || $semId == 4) $niveauName = '2ème Année';
+            elseif ($semId == 5 || $semId == 6) $niveauName = '3ème Année';
+            elseif ($semId == 7 || $semId == 8) $niveauName = '4ème Année';
+            elseif ($semId == 9 || $semId == 10) $niveauName = '5ème Année';
+        }
+        
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.convocation', [
             'convocation' => $convocation,
-            'exam' => $convocation->exam,
-            'student' => $convocation->student,
-            'room' => $convocation->room,
-            'qrCode' => $qrCode,
+            'exams' => [
+                [
+                    'date' => $convocation->exam->exam_date ? \Carbon\Carbon::parse($convocation->exam->exam_date)->format('d/m/Y') : 'À déterminer',
+                    'time' => $convocation->exam->start_time ? substr($convocation->exam->start_time, 0, 5) : '09:00',
+                    'module' => $convocation->exam->module->name ?? 'Module',
+                    'room' => $convocation->room->name ?? '-',
+                    'seat' => 'Table N° ' . ($convocation->seat_number ?? 1),
+                    'enseignant' => '-'
+                ]
+            ],
+            'session_name' => "Session de Fin de Semestre",
+            'session_type' => "ORDINAIRE",
+            'person_name' => ($convocation->student->user->first_name ?? '') . ' ' . ($convocation->student->user->last_name ?? ''),
+            'person_role' => 'Étudiant',
+            'person_id' => $convocation->student->cne ?? 'N/A',
+            'filiere_name' => $convocation->student->latestPathway?->filiere?->name ?? 'Tronc Commun',
+            'niveau_name' => $niveauName,
+            'qrCodeBase64' => $qrCodeBase64,
+            'logoBase64' => $logoBase64,
             'date' => now()->format('d/m/Y')
         ]);
 
-        return $pdf->download("Convocation_{$convocation->exam->module->name}_{$convocation->student->last_name}.pdf");
+        $firstName = str_replace(' ', '_', strtolower($convocation->student->user->first_name ?? ''));
+        $lastName = str_replace(' ', '_', strtolower($convocation->student->user->last_name ?? ''));
+        return $pdf->download("convocation_{$lastName}_{$firstName}.pdf");
     }
 
     public function walletPass(int $id, Request $request): JsonResponse

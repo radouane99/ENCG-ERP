@@ -99,6 +99,11 @@ class Student extends Model
         return $this->hasMany(Grade::class);
     }
 
+    public function blockchainCertificates(): HasMany
+    {
+        return $this->hasMany(BlockchainCertificate::class);
+    }
+
     public function pathways(): HasMany
     {
         return $this->hasMany(StudentPathway::class);

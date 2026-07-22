@@ -73,7 +73,7 @@
                 <div class="info-label">Niveau</div>
                 <div class="info-colon">:</div>
                 <div class="info-value">
-                    Année en cours
+                    {{ $niveau_name ?? 'Année en cours' }}
                     <span style="display:inline-block; margin-left: 100px;">Option &nbsp;:&nbsp; -</span>
                 </div>
             </div>
@@ -140,7 +140,9 @@
             <div style="display: table-cell; width: 50%; text-align: right; vertical-align: top;">
                 <div class="signature-title">Chargée de la Scolarité et des Affaires Estudiantines</div>
                 <div style="text-align: right; margin-top: 15px;">
-                    @if(!empty($qr_token))
+                    @if(!empty($qrCodeBase64))
+                        <img src="data:image/svg+xml;base64,{{ $qrCodeBase64 }}" alt="QR Code" style="border: 2px solid #000; padding: 2px; float: right; margin-left: 20px; width: 90px; height: 90px;">
+                    @elseif(!empty($qr_token))
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($qr_token) }}" alt="QR Code" style="border: 2px solid #000; padding: 2px; float: right; margin-left: 20px;">
                     @endif
                     <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">

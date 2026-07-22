@@ -271,9 +271,21 @@ class ConvocationController extends Controller
             ];
         }
 
+        $firstExam = $seatings->first()?->exam;
+        $niveauName = 'Année en cours';
+        if ($firstExam && $firstExam->module && $firstExam->module->semester_id) {
+            $semId = $firstExam->module->semester_id;
+            if ($semId == 1 || $semId == 2) $niveauName = '1ère Année';
+            elseif ($semId == 3 || $semId == 4) $niveauName = '2ème Année';
+            elseif ($semId == 5 || $semId == 6) $niveauName = '3ème Année';
+            elseif ($semId == 7 || $semId == 8) $niveauName = '4ème Année';
+            elseif ($semId == 9 || $semId == 10) $niveauName = '5ème Année';
+        }
+
         $token = \Illuminate\Support\Str::random(16);
         $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/convocation/{$token}";
-        $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+        $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verifyUrl));
+        
         $logoPath = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
@@ -284,13 +296,16 @@ class ConvocationController extends Controller
             'person_role' => 'Étudiant',
             'person_id' => $student->student_number ?? $student->cne_cme ?? 'N/A',
             'filiere_name' => $student->latestPathway?->filiere?->name ?? 'Tronc Commun',
+            'niveau_name' => $niveauName,
             'exams' => $exams,
-            'qrBase64' => $qrBase64,
+            'qrCodeBase64' => $qrCodeBase64,
             'logoBase64' => $logoBase64,
             'date' => now()->format('d/m/Y')
         ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
 
-        return $pdf->download("Convocation_Etudiant_{$sessionType}_{$studentId}.pdf");
+        $firstName = str_replace(' ', '_', strtolower($student->user->first_name ?? ''));
+        $lastName = str_replace(' ', '_', strtolower($student->user->last_name ?? ''));
+        return $pdf->download("convocation_{$lastName}_{$firstName}.pdf");
     }
 
     /**
