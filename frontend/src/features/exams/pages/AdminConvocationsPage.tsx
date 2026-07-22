@@ -321,7 +321,7 @@ export default function AdminConvocationsPage() {
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#0f2863] flex items-center gap-3">
             <FileText className="w-7 h-7 text-blue-600" />
@@ -329,9 +329,14 @@ export default function AdminConvocationsPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Génération, affectation des surveillants et envoi des convocations
-
           </p>
         </div>
+        <button
+          onClick={() => navigate('/admin/exams/scan')}
+          className="btn-interactive bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 self-start sm:self-auto"
+        >
+          <QrCode className="w-4 h-4 text-amber-300" /> SCANNER QR EN DIRECT
+        </button>
       </div>
 
       {/* Notification */}

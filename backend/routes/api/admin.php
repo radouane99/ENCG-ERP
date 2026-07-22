@@ -327,6 +327,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         
         Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
         Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);
+        Route::get('/scan-verify/{qrToken}', [ConvocationController::class, 'scanVerify']);
+        Route::post('/update-attendance/{qrToken}', [ConvocationController::class, 'updateAttendanceStatus']);
     });
 
     // Exam Incidents

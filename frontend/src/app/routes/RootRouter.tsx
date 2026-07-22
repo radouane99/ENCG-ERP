@@ -193,6 +193,7 @@ const AdminExamLiveAttendanceReportPage = lazy(() => import('@features/exams/pag
 const AdminExamEditPage = lazy(() => import('@features/exams/pages/AdminExamEditPage'))
 const AdminRetakePage = lazy(() => import('@features/exams/pages/AdminRetakePage'))
 const AdminConvocationsPage = lazy(() => import('@features/exams/pages/AdminConvocationsPage'))
+const AdminExamScanPage = lazy(() => import('@features/exams/pages/AdminExamScanPage'))
 const AdminPrintProfessorsConvocationPage = lazy(() => import('@features/exams/pages/AdminPrintProfessorsConvocationPage'))
 const AdminProfessorAvailabilityPage = lazy(() => import('@features/exams/pages/AdminProfessorAvailabilityPage'))
 const AdminScheduleChangeRequestsPage = lazy(() => import('@features/exams/pages/AdminScheduleChangeRequestsPage'))
@@ -471,6 +472,7 @@ export default function RootRouter() {
             <Route path="/admin/exams/:id/live-attendance/report" element={<AdminExamLiveAttendanceReportPage />} />
             <Route path="/admin/retake" element={<AdminRetakePage />} />
             <Route path="/admin/convocations" element={<AdminConvocationsPage />} />
+            <Route path="/admin/exams/scan" element={<AdminExamScanPage />} />
             <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
             <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
             <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />

@@ -51,17 +51,22 @@
         <thead>
             <tr>
                 <th style="width: 40px;">N°</th>
-                <th class="text-left" style="width: 120px;">CNE / MASSAR</th>
+                <th class="text-left" style="width: 140px;">CNE &amp; CIN</th>
                 <th class="text-left">NOM ET PRÉNOM</th>
-                <th style="width: 60px;">N° PLACE</th>
-                <th style="width: 150px;">SIGNATURE</th>
+                <th style="width: 65px;">N° TABLE</th>
+                <th style="width: 140px;">SIGNATURE ÉTUDIANT</th>
             </tr>
         </thead>
         <tbody>
             @foreach($students as $index => $seating)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td class="text-left">{{ $seating->student->user->cne ?? $seating->student->student_number ?? 'N/A' }}</td>
+                <td class="text-left">
+                    <div style="font-weight: bold; color: #0f2863;">{{ $seating->student->cne ?? $seating->student->user->cne ?? 'N/A' }}</div>
+                    @if(!empty($seating->student->cin ?? $seating->student->user->cin))
+                        <div style="font-size: 8px; color: #475569;">CIN: {{ $seating->student->cin ?? $seating->student->user->cin }}</div>
+                    @endif
+                </td>
                 <td class="text-left uppercase">{{ $seating->student->user->name ?? $seating->student->user->first_name . ' ' . $seating->student->user->last_name }}</td>
                 <td><strong style="color: #0f2863;">{{ $seating->seat_number }}</strong></td>
                 <td></td>

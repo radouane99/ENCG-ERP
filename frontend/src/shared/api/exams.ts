@@ -215,5 +215,13 @@ export const examsApi = {
   updateScheduleChangeStatus: async (id: number, status: 'approved' | 'rejected') => {
     const response = await api.patch(`/schedule-change-requests/${id}/status`, { status });
     return response.data;
+  },
+  scanVerifyQr: async (qrToken: string) => {
+    const response = await api.get(`/convocations/scan-verify/${qrToken}`);
+    return response.data;
+  },
+  updateExamAttendance: async (qrToken: string, status: 'present' | 'late' | 'absent') => {
+    const response = await api.post(`/convocations/update-attendance/${qrToken}`, { status });
+    return response.data;
   }
 };

@@ -668,4 +668,94 @@ class ConvocationController extends Controller
 
         return response()->json(['success' => true, 'data' => $surveillances]);
     }
+
+    /**
+     * Real-time QR Code Scan verification for supervisor / admin
+     */
+    public function scanVerify(Request $request, string $qrToken): JsonResponse
+    {
+        $seating = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->join('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
+            ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
+            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
+            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
+            ->where('exam_seatings.qr_token', $qrToken)
+            ->select(
+                'exam_seatings.id as seating_id',
+                'exam_seatings.seat_number',
+                'exam_seatings.sent_at',
+                'exam_seatings.status',
+                'students.cne',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(students.cin, users.cin, "N/A") as cin'),
+                'users.name as student_name',
+                'users.email as student_email',
+                'users.avatar',
+                'modules.name as module_name',
+                'filieres.name as filiere_name',
+                'exam_sessions.name as session_name',
+                'exams.exam_date',
+                'exams.start_time',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(seating_rooms.name, exam_rooms.name, "Salle N/A") as room_name')
+            )
+            ->first();
+
+        if (!$seating) {
+            return response()->json([
+                'success' => false,
+                'valid' => false,
+                'message' => 'Convocation ou QR Code invalide (Non trouvé).'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'valid' => true,
+            'data' => [
+                'seating_id' => $seating->seating_id,
+                'student_name' => $seating->student_name,
+                'cne' => $seating->cne,
+                'cin' => $seating->cin,
+                'filiere' => $seating->filiere_name,
+                'avatar' => $seating->avatar,
+                'module_name' => $seating->module_name,
+                'session_name' => $seating->session_name,
+                'exam_date' => $seating->exam_date ? \Carbon\Carbon::parse($seating->exam_date)->format('d/m/Y') : 'N/A',
+                'exam_time' => $seating->start_time ? substr($seating->start_time, 0, 5) : '09:00',
+                'room_name' => $seating->room_name,
+                'seat_number' => $seating->seat_number ? ('N° ' . $seating->seat_number) : '—',
+                'status' => $seating->status ?? 'sent',
+                'sent_at' => $seating->sent_at,
+            ]
+        ]);
+    }
+
+    /**
+     * Real-time attendance status update (present, late, absent)
+     */
+    public function updateAttendanceStatus(Request $request, string $qrToken): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:present,late,absent'
+        ]);
+
+        $updated = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->where('qr_token', $qrToken)
+            ->update([
+                'status' => $validated['status'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json(['success' => false, 'message' => 'Émargement introuvable.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Émargement mis à jour avec succès : ' . strtoupper($validated['status'])
+        ]);
+    }
 }
