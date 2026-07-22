@@ -93,6 +93,24 @@ export const examsApi = {
     });
     return response.data;
   },
+  previewConvocationPdf: async (convocationId: number) => {
+    const response = await api.get(`/exam-planning/student/${convocationId}/preview`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  downloadSurveillantConvocationPdf: async (surveillanceId: number) => {
+    const response = await api.get(`/exam-planning/surveillant/${surveillanceId}/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  previewSurveillantConvocationPdf: async (surveillanceId: number) => {
+    const response = await api.get(`/exam-planning/surveillant/${surveillanceId}/preview`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
   downloadAttendanceSheetPdf: async (examId: number) => {
     const response = await api.get(`/admin/exams/${examId}/attendance-sheet`, {
       responseType: 'blob'

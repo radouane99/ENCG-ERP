@@ -305,6 +305,10 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         Route::get('/student/{id}/download', [PdfExportController::class, 'studentConvocationPdf']);
         Route::get('/student/{id}/preview', [PdfExportController::class, 'studentConvocationPreview']);
         
+        // Surveillant endpoints
+        Route::get('/surveillant/{id}/download', [PdfExportController::class, 'surveillantConvocationPdf']);
+        Route::get('/surveillant/{id}/preview', [PdfExportController::class, 'surveillantConvocationPreview']);
+        
         // Batch actions
         Route::post('/session/{sessionId}/batch-pdf', [PdfExportController::class, 'batchPdf']);
         Route::post('/session/{sessionId}/send-batch-emails', [ConvocationController::class, 'sendBatchEmails']);

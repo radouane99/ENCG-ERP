@@ -139,6 +139,56 @@ export default function AdminConvocationsPage() {
   const students: any[] = convocationList?.students || []
   const surveillants: any[] = convocationList?.surveillants || []
 
+  const handlePreviewStudentPdf = async (seatingId: number) => {
+    try {
+      const blob = await examsApi.previewConvocationPdf(seatingId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      notify('Erreur lors de la prévisualisation.', 'error');
+    }
+  };
+
+  const handleDownloadStudentPdf = async (seatingId: number) => {
+    try {
+      const blob = await examsApi.downloadConvocationPdf(seatingId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `convocation_${seatingId}.pdf`; // Will be overridden by Content-Disposition if present, but good fallback
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (error) {
+      notify('Erreur lors du téléchargement.', 'error');
+    }
+  };
+
+  const handlePreviewSurveillantPdf = async (surveillanceId: number) => {
+    try {
+      const blob = await examsApi.previewSurveillantConvocationPdf(surveillanceId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      notify('Erreur lors de la prévisualisation.', 'error');
+    }
+  };
+
+  const handleDownloadSurveillantPdf = async (surveillanceId: number) => {
+    try {
+      const blob = await examsApi.downloadSurveillantConvocationPdf(surveillanceId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `convocation_prof_${surveillanceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (error) {
+      notify('Erreur lors du téléchargement.', 'error');
+    }
+  };
+
   const filieres = [...new Set(students.map((s: any) => s.filiere))].filter(Boolean)
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -539,6 +589,24 @@ export default function AdminConvocationsPage() {
                               ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
                               : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
                           </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handlePreviewStudentPdf(s.id); }}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Voir la convocation"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDownloadStudentPdf(s.id); }}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Télécharger"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -601,6 +669,7 @@ export default function AdminConvocationsPage() {
                         <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
                         <th className="px-5 py-3 text-center font-bold">Rôle</th>
                         <th className="px-5 py-3 text-center font-bold">Statut Envoi</th>
+                        <th className="px-5 py-3 text-right font-bold">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -645,6 +714,24 @@ export default function AdminConvocationsPage() {
                             {s.sent_at
                               ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
                               : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handlePreviewSurveillantPdf(s.id); }}
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                title="Voir la convocation"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDownloadSurveillantPdf(s.id); }}
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                title="Télécharger"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

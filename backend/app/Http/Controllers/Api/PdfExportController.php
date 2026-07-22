@@ -50,7 +50,8 @@ class PdfExportController extends Controller
         $seating = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])->findOrFail($seatingId);
         
         $pdf = $this->generateSingleConvocationPdf($seating);
-        return $pdf->download("convocation_etudiant_{$seatingId}.pdf");
+        $name = ($seating->student->user->last_name ?? 'Etudiant') . '_' . ($seating->student->user->first_name ?? '');
+        return $pdf->download("Convocation_{$name}.pdf");
     }
 
     public function studentConvocationPreview($seatingId)
@@ -59,6 +60,27 @@ class PdfExportController extends Controller
         
         $pdf = $this->generateSingleConvocationPdf($seating);
         return $pdf->stream("convocation_preview.pdf", ["Attachment" => false]);
+    }
+
+    public function surveillantConvocationPdf($surveillanceId)
+    {
+        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
+        if (!$surveillance) abort(404, 'Surveillance introuvable');
+        
+        $pdf = $this->generateSingleSurveillantConvocationPdf($surveillanceId);
+        $prof = \App\Models\User::find($surveillance->professor_id);
+        $name = ($prof->last_name ?? 'Professeur') . '_' . ($prof->first_name ?? '');
+        
+        return $pdf->download("Convocation_Surveillance_{$name}.pdf");
+    }
+
+    public function surveillantConvocationPreview($surveillanceId)
+    {
+        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
+        if (!$surveillance) abort(404, 'Surveillance introuvable');
+
+        $pdf = $this->generateSingleSurveillantConvocationPdf($surveillanceId);
+        return $pdf->stream("convocation_surveillance_preview.pdf", ["Attachment" => false]);
     }
 
     public function batchPdf(Request $request)
@@ -259,6 +281,63 @@ class PdfExportController extends Controller
             'session_type' => $seating->exam->session->type ?? 'ORDINAIRE',
             'session_name' => $seating->exam->session->name ?? 'Session Principale',
             'exams' => $exams
+        ]);
+    }
+
+    private function generateSingleSurveillantConvocationPdf($surveillanceId)
+    {
+        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
+        if (!$surveillance) abort(404, 'Surveillance introuvable');
+        
+        $prof = \App\Models\User::find($surveillance->professor_id);
+        $exam = \App\Models\Exam::find($surveillance->exam_id);
+        $sessionId = $exam->exam_session_id;
+        $session = \App\Models\ExamSession::with(['exams.module', 'exams.room'])->find($sessionId);
+        
+        $examIds = $session->exams->pluck('id');
+        
+        // Fetch ALL surveillances for this professor in the same session
+        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->where('professor_id', $prof->id)
+            ->whereIn('exam_id', $examIds)
+            ->get();
+
+        $exams = [];
+        foreach ($allSurveillances as $s) {
+            $sessExam = $session->exams->firstWhere('id', $s->exam_id);
+            if ($sessExam) {
+                $exams[] = [
+                    'date' => $sessExam->exam_date ? $sessExam->exam_date->format('d/m/Y') : 'N/A',
+                    'time' => $sessExam->start_time ? substr($sessExam->start_time, 0, 5) . ' - ' . date('H:i', strtotime($sessExam->start_time) + ($sessExam->duration_minutes * 60)) : 'N/A',
+                    'module' => $sessExam->module->name ?? 'N/A',
+                    'room' => $sessExam->room->name ?? 'N/A',
+                    'role' => $s->role ?? 'Surveillant'
+                ];
+            }
+        }
+
+        // Sort exams by date and time
+        usort($exams, function($a, $b) {
+            $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
+            $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
+            return strcmp($dateA, $dateB);
+        });
+
+        $professorsData = [[
+            'person_name' => $prof->last_name . ' ' . $prof->first_name,
+            'person_id' => $prof->cin ?? 'N/A',
+            'person_role' => 'Professeur',
+            'filiere_name' => 'Corps Professoral ENCG',
+            'session_type' => $session->type ?? 'ORDINAIRE',
+            'session_name' => $session->name ?? 'Session Principale',
+            'exams' => $exams,
+            'qr_token' => $allSurveillances->first()->qr_token ?? null,
+            'id' => $allSurveillances->first()->id,
+            'created_at' => clone $session->created_at
+        ]];
+
+        return $this->getPdfInstance('pdf.convocations_profs_batch', [
+            'professorsData' => $professorsData
         ]);
     }
 
