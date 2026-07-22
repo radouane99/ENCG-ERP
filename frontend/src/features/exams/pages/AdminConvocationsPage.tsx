@@ -210,15 +210,17 @@ export default function AdminConvocationsPage() {
   const groupedSurveillants = Object.values(surveillants.reduce((acc, curr) => {
     if (!acc[curr.professor_name]) {
       acc[curr.professor_name] = {
-        id: curr.id, // Use the first surveillance ID to trigger backend APIs
+        id: curr.id, // Representative ID used for selection key
+        all_ids: [], // All surveillance IDs for this professor (all séances)
         professor_name: curr.professor_name,
         seances_count: 0,
         sent_at: curr.sent_at,
         confirmed_at: curr.confirmed_at,
       }
     }
+    acc[curr.professor_name].all_ids.push(curr.id); // Collect every surveillance ID
     acc[curr.professor_name].seances_count += 1;
-    // We can assume sent_at is true if any is sent
+    // sent_at = true if any séance was sent
     if (curr.sent_at) acc[curr.professor_name].sent_at = curr.sent_at;
     if (curr.confirmed_at) acc[curr.professor_name].confirmed_at = curr.confirmed_at;
     return acc;
@@ -696,7 +698,13 @@ export default function AdminConvocationsPage() {
                             Télécharger PDFs
                           </button>
                           <button
-                            onClick={() => batchEmailSurveillantsMutation.mutate(Array.from(selectedSurveillants))}
+                            onClick={() => {
+                              // Collect ALL surveillance IDs for all selected professors
+                              const allIds = groupedSurveillants
+                                .filter((s: any) => selectedSurveillants.has(s.id))
+                                .flatMap((s: any) => s.all_ids)
+                              batchEmailSurveillantsMutation.mutate(allIds)
+                            }}
                             disabled={batchEmailSurveillantsMutation.isPending}
                             className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
                           >
