@@ -25,19 +25,30 @@ class ExamConvocationService
         foreach ($session->exams as $exam) {
             $generatedCount = 0;
             
-            // First, update any existing seatings that don't have a QR token
+            // First, update any existing seatings that don't have a QR token, room_id, or seat_number
             $existingSeatings = DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
                 ->get();
 
             $existingStudentIds = $existingSeatings->pluck('student_id')->toArray();
             $generatedCount = $existingSeatings->max('seat_number') ?? 0;
+            $defaultRoomId = $exam->room_id ?? $exam->room?->id ?? \App\Models\Room::first()?->id;
 
-            foreach ($existingSeatings as $seating) {
+            foreach ($existingSeatings as $index => $seating) {
+                $updates = [];
                 if (empty($seating->qr_token)) {
+                    $updates['qr_token'] = Str::uuid()->toString();
+                }
+                if (empty($seating->room_id) && $defaultRoomId) {
+                    $updates['room_id'] = $defaultRoomId;
+                }
+                if (empty($seating->seat_number)) {
+                    $updates['seat_number'] = $index + 1;
+                }
+                if (!empty($updates)) {
                     DB::table('exam_seatings')
                         ->where('id', $seating->id)
-                        ->update(['qr_token' => Str::uuid()->toString()]);
+                        ->update($updates);
                     $totalGenerated++;
                 }
             }
@@ -752,7 +763,8 @@ class ExamConvocationService
             ->join('modules', 'exams.module_id', '=', 'modules.id')
             ->join('filieres', 'modules.filiere_id', '=', 'filieres.id')
             ->leftJoin('groups', 'exams.group_id', '=', 'groups.id')
-            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
+            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
             ->whereIn('exam_seatings.exam_id', $examIds)
             ->select(
                 'exam_seatings.id',
@@ -764,7 +776,7 @@ class ExamConvocationService
                 'modules.name as exam_name',
                 'exams.exam_date',
                 'exams.start_time',
-                'rooms.name as room_name',
+                DB::raw('COALESCE(seating_rooms.name, exam_rooms.name) as room_name'),
                 'exam_seatings.seat_number',
                 'exam_seatings.qr_token',
                 'exam_seatings.sent_at',
