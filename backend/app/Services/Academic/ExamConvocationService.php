@@ -163,74 +163,85 @@ class ExamConvocationService
     }
 
     /**
-     * Send emails for selected seatings
+     * Send emails for selected seatings — one email per student with all their exams
      */
     public function sendBatchEmails(int $sessionId, array $seatingIds): array
     {
-        $session = ExamSession::with(['exams.group.students.user', 'exams.module', 'exams.room'])->findOrFail($sessionId);
+        $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
         $examIds = $session->exams->pluck('id');
-        
+
+        // Fetch selected seatings with student info, grouped by student
         $seatings = DB::table('exam_seatings')
-            ->whereIn('exam_id', $examIds)
-            ->whereIn('id', $seatingIds)
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->join('modules', 'exams.module_id', '=', 'modules.id')
+            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+            ->whereIn('exam_seatings.exam_id', $examIds)
+            ->whereIn('exam_seatings.id', $seatingIds)
+            ->select(
+                'exam_seatings.id as seating_id',
+                'exam_seatings.student_id',
+                'exam_seatings.qr_token',
+                'users.name as student_name',
+                'users.email as student_email',
+                'modules.name as module_name',
+                'exams.exam_date',
+                'exams.start_time',
+                'rooms.name as room_name'
+            )
+            ->orderBy('exams.exam_date')
             ->get()
-            ->groupBy('exam_id');
+            ->groupBy('student_id');
 
         $sentCount = 0;
 
-        foreach ($session->exams as $exam) {
-            if (!$seatings->has($exam->id)) continue;
+        foreach ($seatings as $studentId => $studentSeatings) {
+            $first = $studentSeatings->first();
+            if (!$first->student_email) continue;
 
-            $examSeatings = $seatings->get($exam->id)->keyBy('student_id');
-            if ($examSeatings->isEmpty()) continue;
-
-            $students = collect();
-            if ($exam->group_id && $exam->group) {
-                $students = $exam->group->students;
-            } elseif ($exam->module && $exam->module->filiere_id) {
-                $students = \App\Models\Student::with('user')->whereHas('pathways', function ($q) use ($exam) {
-                    $q->where('filiere_id', $exam->module->filiere_id)
-                      ->where('is_current', true);
-                })->get();
-            }
-
-            foreach ($students as $student) {
-                if (!$student->user || !$student->user->email) continue;
-
-                $seating = $examSeatings->get($student->id);
-                if (!$seating || !$seating->qr_token) continue;
-
-                $examData = [
-                    'studentName' => $student->user->name,
-                    'moduleName' => $exam->module->name ?? 'N/A',
-                    'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
-                    'examTime' => $exam->start_time ?? 'N/A',
-                    'roomName' => $exam->room->name ?? 'N/A',
-                    'qrToken' => $seating->qr_token,
+            // Build list of all exams for this student
+            $examsData = $studentSeatings->map(function ($s) {
+                return [
+                    'moduleName' => $s->module_name ?? 'N/A',
+                    'examDate'   => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
+                    'examTime'   => $s->start_time ? substr($s->start_time, 0, 5) : 'N/A',
+                    'roomName'   => $s->room_name ?? 'N/A',
+                    'qrToken'    => $s->qr_token,
                 ];
+            })->values()->toArray();
 
-                if (class_exists(Pdf::class) && class_exists(ConvocationEmail::class)) {
-                    try {
-                        $pdf = Pdf::loadView('emails.convocation', $examData);
-                        Mail::to($student->user->email)->send(
-                            new ConvocationEmail($examData, $pdf->output())
-                        );
-                        
-                        DB::table('exam_seatings')
-                            ->where('id', $seating->id)
-                            ->update(['sent_at' => now()]);
-                            
-                        $sentCount++;
-                    } catch (\Exception $e) {
-                        // Log email error but continue
-                    }
-                }
+            $emailData = [
+                'studentName' => $first->student_name,
+                'sessionName' => $session->name,
+                'exams'       => $examsData,
+            ];
+
+            try {
+                $pdf = Pdf::loadView('emails.convocation', ['emailData' => $emailData]);
+                Mail::to($first->student_email)->send(
+                    new ConvocationEmail($emailData, $pdf->output())
+                );
+
+                // Mark all seatings as sent
+                DB::table('exam_seatings')
+                    ->whereIn('id', $studentSeatings->pluck('seating_id'))
+                    ->update(['sent_at' => now()]);
+
+                $sentCount++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Student convocation email error for student_id ' . $studentId . ': ' . $e->getMessage());
+                return [
+                    'success'    => false,
+                    'message'    => 'Erreur lors de l\'envoi à ' . $first->student_name . ' (' . $first->student_email . '): ' . $e->getMessage(),
+                    'sent_count' => $sentCount,
+                ];
             }
         }
 
         return [
             'success' => true,
-            'message' => "{$sentCount} convocations envoyées avec succès."
+            'message' => "{$sentCount} étudiant(s) ont reçu leur convocation par email."
         ];
     }
 

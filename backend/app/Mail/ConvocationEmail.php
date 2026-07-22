@@ -43,7 +43,7 @@ class ConvocationEmail extends Mailable
     {
         return new Content(
             view: 'emails.convocation',
-            with: $this->examData,
+            with: ['emailData' => $this->examData],
         );
     }
 
