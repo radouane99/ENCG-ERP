@@ -102,7 +102,7 @@ const DeliberationJuryPage = lazy(() => import('@features/deliberation/pages/Del
 
 const InternshipsPage = lazy(() => import('@features/internships/pages/InternshipsPage'))
 const FinalProjectsPage = lazy(() => import('@features/finalprojects/pages/FinalProjectsPage'))
-const PFEPage = lazy(() => import('@features/finalprojects/pages/PFEPage'))
+
 
 const MessagesPage = lazy(() => import('@features/communication/pages/MessagesPage'))
 const AnnouncementsPage = lazy(() => import('@features/communication/pages/AnnouncementsPage'))
