@@ -90,7 +90,8 @@ class PdfExportController extends Controller
                     $profName = '-';
                     if ($s->exam->module_id) {
                         $profData = \Illuminate\Support\Facades\DB::table('module_professor')
-                            ->join('users', 'module_professor.professor_id', '=', 'users.id')
+                            ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                            ->join('users', 'professors.user_id', '=', 'users.id')
                             ->where('module_professor.module_id', $s->exam->module_id)
                             ->select('users.last_name', 'users.first_name')
                             ->first();
@@ -221,7 +222,8 @@ class PdfExportController extends Controller
                 $profName = '-';
                 if ($s->exam->module_id) {
                     $profData = \Illuminate\Support\Facades\DB::table('module_professor')
-                        ->join('users', 'module_professor.professor_id', '=', 'users.id')
+                        ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                        ->join('users', 'professors.user_id', '=', 'users.id')
                         ->where('module_professor.module_id', $s->exam->module_id)
                         ->select('users.last_name', 'users.first_name')
                         ->first();

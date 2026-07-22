@@ -8,35 +8,35 @@
         .page-break { page-break-after: always; }
         .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 15px; box-sizing: border-box; position: relative; }
         
-        .header { margin-bottom: 20px; }
-        .logo-container { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1.5px solid #000; padding-bottom: 10px; }
-        .logo { max-height: 50px; }
+        .header { margin-bottom: 10px; }
+        .logo-container { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1.5px solid #000; padding-bottom: 5px; }
+        .logo { max-height: 45px; }
         
-        .title-block { text-align: center; margin: 20px 0; border-bottom: 1px solid #000; padding-bottom: 15px; }
-        .title-main { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
-        .title-sub { font-size: 18px; font-weight: bold; }
+        .title-block { text-align: center; margin: 10px 0; border-bottom: 1px solid #000; padding-bottom: 10px; }
+        .title-main { font-size: 18px; font-weight: bold; margin-bottom: 2px; }
+        .title-sub { font-size: 15px; font-weight: bold; }
         
-        .student-info { margin-bottom: 20px; display: table; width: 100%; }
+        .student-info { margin-bottom: 10px; display: table; width: 100%; }
         .info-row { display: table-row; }
-        .info-label { display: table-cell; font-weight: bold; width: 130px; padding: 3px 0; font-size: 13px; }
-        .info-colon { display: table-cell; width: 15px; font-weight: bold; font-size: 13px; }
-        .info-value { display: table-cell; font-weight: bold; font-size: 13px; text-transform: uppercase; }
+        .info-label { display: table-cell; font-weight: bold; width: 120px; padding: 2px 0; font-size: 11px; }
+        .info-colon { display: table-cell; width: 10px; font-weight: bold; font-size: 11px; }
+        .info-value { display: table-cell; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         
-        .info-right-col { display: table-cell; width: 100px; font-weight: bold; font-size: 13px; text-align: right; padding-right: 15px; }
-        .info-right-val { display: table-cell; font-weight: bold; font-size: 13px; width: 100px; }
+        .info-right-col { display: table-cell; width: 100px; font-weight: bold; font-size: 11px; text-align: right; padding-right: 15px; }
+        .info-right-val { display: table-cell; font-weight: bold; font-size: 11px; width: 100px; }
 
-        .instruction { font-size: 13px; font-weight: bold; margin: 20px 0 10px 0; }
+        .instruction { font-size: 11px; font-weight: bold; margin: 10px 0 5px 0; }
         
-        table.exams-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5px solid #000; }
-        .exams-table th, .exams-table td { border: 1px solid #000; padding: 6px; text-align: center; }
-        .exams-table th { font-weight: bold; font-size: 13px; text-align: center; }
+        table.exams-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1.5px solid #000; }
+        .exams-table th, .exams-table td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 10px; }
+        .exams-table th { font-weight: bold; font-size: 11px; text-align: center; }
         .exams-table td.col-matiere { text-align: left; }
         
-        .rules-title { font-weight: bold; font-size: 14px; text-decoration: underline; margin-bottom: 10px; }
-        .rules-text { font-size: 9.5px; line-height: 1.3; text-align: justify; margin-bottom: 30px; }
+        .rules-title { font-weight: bold; font-size: 11px; text-decoration: underline; margin-bottom: 5px; }
+        .rules-text { font-size: 8px; line-height: 1.2; text-align: justify; margin-bottom: 15px; }
         
         .signature-block { text-align: right; padding-right: 20px; }
-        .signature-title { font-weight: bold; font-size: 13px; margin-bottom: 10px; }
+        .signature-title { font-weight: bold; font-size: 11px; margin-bottom: 5px; }
         .qr-code { text-align: right; display: inline-block; }
         
     </style>
