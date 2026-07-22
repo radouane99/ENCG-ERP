@@ -104,13 +104,19 @@ class ExamPlanningController extends Controller
         $validated = $request->validate([
             'filiere_id' => 'nullable|integer',
             'session_id' => 'required|integer',
+            'semester_number' => 'nullable|integer',
         ]);
 
         $query = \App\Models\Exam::where('exam_session_id', $validated['session_id']);
         
-        if (!empty($validated['filiere_id'])) {
+        if (!empty($validated['filiere_id']) || !empty($validated['semester_number'])) {
             $query->whereHas('module', function($q) use ($validated) {
-                $q->where('filiere_id', $validated['filiere_id']);
+                if (!empty($validated['filiere_id'])) {
+                    $q->where('filiere_id', $validated['filiere_id']);
+                }
+                if (!empty($validated['semester_number'])) {
+                    $q->where('semester_number', $validated['semester_number']);
+                }
             });
         }
 
@@ -133,9 +139,11 @@ class ExamPlanningController extends Controller
         $validated = $request->validate([
             'filiere_id' => 'required|integer',
             'session_id' => 'required|integer',
+            'semester_number' => 'nullable|integer',
         ]);
 
-        $result = $this->engine->autoGenerateIntelligentBatch($validated['filiere_id'], $validated['session_id']);
+        $semesterNumber = $validated['semester_number'] ?? null;
+        $result = $this->engine->autoGenerateIntelligentBatch($validated['filiere_id'], $validated['session_id'], $semesterNumber);
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }

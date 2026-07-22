@@ -62,13 +62,16 @@ export const examsApi = {
     const response = await api.post('/convocations/send-session', { session_id: sessionId });
     return response.data;
   },
-  generateSession: async (sessionId: number, filiereId: number) => {
-    const response = await api.post('/exam-planning/auto-generate-batch', { session_id: sessionId, filiere_id: filiereId });
+  generateSession: async (sessionId: number, filiereId: number, semesterNumber?: number) => {
+    const data: any = { session_id: sessionId, filiere_id: filiereId };
+    if (semesterNumber) data.semester_number = semesterNumber;
+    const response = await api.post('/exam-planning/auto-generate-batch', data);
     return response.data;
   },
-  resetSession: async (sessionId: number, filiereId?: number) => {
+  resetSession: async (sessionId: number, filiereId?: number, semesterNumber?: number) => {
     const data: any = { session_id: sessionId };
     if (filiereId) data.filiere_id = filiereId;
+    if (semesterNumber) data.semester_number = semesterNumber;
     const response = await api.delete('/exam-planning/reset', { data });
     return response.data;
   },

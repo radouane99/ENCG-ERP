@@ -57,6 +57,7 @@ export default function AdminExamsPage() {
   }
 
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
   const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
   const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
   const [showManualModal, setShowManualModal] = useState(false)
@@ -78,7 +79,7 @@ export default function AdminExamsPage() {
     }
     setIsAutoGenerating(true)
     try {
-      const res = await examsApi.generateSession(Number(selectedSessionId), Number(selectedFiliereId))
+      const res = await examsApi.generateSession(Number(selectedSessionId), Number(selectedFiliereId), selectedSemesterNum ? Number(selectedSemesterNum) : undefined)
       handleNotify(res.message || t('exams.messages.auto_success'), 'success')
       // Need to invalidate queries here if queryClient is available, but the component uses useQuery
       // Let's force a reload for simplicity if needed, or rely on window.location
@@ -102,7 +103,7 @@ export default function AdminExamsPage() {
     if (!confirm(message)) return;
     
     try {
-      const res = await examsApi.resetSession(Number(selectedSessionId), selectedFiliereId ? Number(selectedFiliereId) : undefined);
+      const res = await examsApi.resetSession(Number(selectedSessionId), selectedFiliereId ? Number(selectedFiliereId) : undefined, selectedSemesterNum ? Number(selectedSemesterNum) : undefined);
       handleNotify(res.message || 'Remise à zéro réussie', 'success');
       window.location.reload();
     } catch (error: any) {
@@ -176,6 +177,19 @@ export default function AdminExamsPage() {
                 <option value="">{t('exams.filters.session_empty')}</option>
                 {examSessions?.map((s: any) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-blue-600">Semestre</label>
+              <select 
+                className="h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-600 outline-none w-24"
+                value={selectedSemesterNum}
+                onChange={(e) => setSelectedSemesterNum(e.target.value ? Number(e.target.value) : '')}
+              >
+                <option value="">Tous</option>
+                {[1,2,3,4,5,6,7,8,9,10].map(s => (
+                  <option key={s} value={s}>S{s}</option>
                 ))}
               </select>
             </div>

@@ -135,33 +135,36 @@ class ExamPlanningEngine
     /**
      * Auto-generate exams using intelligent scheduling constraints
      */
-    public function autoGenerateIntelligentBatch(int $filiereId, int $sessionId): array
+    public function autoGenerateIntelligentBatch(int $filiereId, int $sessionId, ?int $semesterNumber = null): array
     {
         $session = \App\Models\ExamSession::with('semester')->findOrFail($sessionId);
         
         $isAutomne = $session->semester->number === 1;
         
-        $modules = \App\Models\Module::where('filiere_id', $filiereId)
-            ->when($isAutomne, function($q) {
+        $modulesQuery = \App\Models\Module::where('filiere_id', $filiereId);
+        
+        if ($semesterNumber) {
+            $modulesQuery->where('semester_number', $semesterNumber);
+        } else {
+            $modulesQuery->when($isAutomne, function($q) {
                 // Automne: S1, S3, S5, S7, S9 => impaire
                 $q->whereRaw('semester_number % 2 != 0');
             }, function($q) {
                 // Printemps: S2, S4, S6, S8, S10 => paire
                 $q->whereRaw('semester_number % 2 = 0');
-            })
-            ->get();
+            });
+        }
+        
+        $modules = $modulesQuery->get();
             
         // Order rooms by capacity ascending to find the smallest suitable room
         $rooms = \App\Models\Room::orderBy('capacity', 'asc')->get();
-        $groups = \App\Models\Group::where('filiere_id', $filiereId)
-            ->when($isAutomne, function($q) {
-                $q->whereRaw('semester_number % 2 != 0');
-            }, function($q) {
-                $q->whereRaw('semester_number % 2 = 0');
-            })
-            ->get();
+        
+        // We only filter modules by semester type. We don't filter groups because 
+        // the engine uses any group as a default 'group_id' placeholder in the exams table.
+        $groups = \App\Models\Group::where('filiere_id', $filiereId)->get();
 
-        if ($modules->isEmpty()) throw new Exception("Aucun module pour cette filière.");
+        if ($modules->isEmpty()) throw new Exception("Aucun module pour cette filière dans cette session.");
         if ($groups->isEmpty()) throw new Exception("Aucun groupe pour cette filière.");
         if ($rooms->isEmpty()) throw new Exception("Aucune salle disponible.");
 
