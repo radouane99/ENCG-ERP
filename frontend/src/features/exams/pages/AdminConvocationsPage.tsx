@@ -792,4 +792,4 @@ export default function AdminConvocationsPage() {
   )
 }
 
-export default AdminConvocationsPage
+
