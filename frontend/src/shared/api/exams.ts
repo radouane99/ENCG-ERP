@@ -75,10 +75,6 @@ export const examsApi = {
     const response = await api.delete('/exam-planning/reset', { data });
     return response.data;
   },
-  sendSessionEmails: async (sessionId: number) => {
-    const response = await api.post('/convocations/send-session', { session_id: sessionId });
-    return response.data;
-  },
   createExam: async (data: ExamPayload) => {
     const response = await api.post('/exam-planning/store', data);
     return response.data;
