@@ -161,6 +161,27 @@ export const examsApi = {
     const response = await api.post(`/convocations/session/${sessionId}/send-batch-surveillants-whatsapp`, { surveillance_ids: surveillanceIds });
     return response.data;
   },
+
+  // Student Portal (Convocations)
+  getStudentConvocations: async () => {
+    const response = await api.get('/student-portal/convocations');
+    return response.data.convocations;
+  },
+  downloadStudentConvocation: async (id: number) => {
+    const response = await api.get(`/student-portal/convocations/${id}/download`, { responseType: 'blob' });
+    return response.data;
+  },
+  declareAbsence: async (id: number, data: FormData) => {
+    const response = await api.post(`/student-portal/convocations/${id}/declare-absence`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+  askExamAssistant: async (examId: number, query: string) => {
+    const response = await api.post(`/student-portal/ai/exam-assistant`, { exam_id: examId, query });
+    return response.data;
+  },
+  
   notifyAbsents: async (examId: number) => {
     const response = await api.post(`/exam-planning/${examId}/notify-absents`);
     return response.data;

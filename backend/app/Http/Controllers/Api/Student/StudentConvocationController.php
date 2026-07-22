@@ -74,4 +74,49 @@ class StudentConvocationController extends Controller
 
         return $pdf->download("Convocation_{$convocation->exam->module->name}_{$convocation->student->last_name}.pdf");
     }
+
+    public function walletPass(int $id, Request $request): JsonResponse
+    {
+        // In a real scenario, this would generate and return a .pkpass file.
+        // Here we simulate the generation of the pass.
+        
+        $seating = \App\Models\ExamSeating::with(['exam.module', 'room'])
+            ->where('id', $id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Passbook generated successfully',
+            'pass_url' => url("/api/v1/student-portal/convocations/{$id}/download") // fallback to PDF for simulation
+        ]);
+    }
+
+    public function declareAbsence(int $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'reason' => 'required|string',
+            'certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'
+        ]);
+
+        $seating = \App\Models\ExamSeating::findOrFail($id);
+        
+        $path = null;
+        if ($request->hasFile('certificate')) {
+            $path = $request->file('certificate')->store('certificates', 'public');
+        }
+
+        \App\Models\ExamIncident::create([
+            'exam_id' => $seating->exam_id,
+            'student_id' => $seating->student_id,
+            'type' => 'absence_justifiee',
+            'description' => $request->input('reason'),
+            'attachment_path' => $path,
+            'reported_by' => $request->user()->id
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Absence déclarée avec succès.'
+        ]);
+    }
 }

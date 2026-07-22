@@ -44,6 +44,7 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
         Route::post('tutor', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'tutorQuery']);
         Route::get('simulate-grade', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'simulateGrade']);
         Route::get('career-recommendations', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'getCareerRecommendations']);
+        Route::post('exam-assistant', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'examAssistant']);
     });
 
     // Digital Library
@@ -60,6 +61,8 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     Route::prefix('convocations')->group(function () {
         Route::get('/', [StudentConvocationController::class, 'index']);
         Route::get('/{id}/download', [StudentConvocationController::class, 'download']);
+        Route::get('/{id}/wallet-pass', [StudentConvocationController::class, 'walletPass']);
+        Route::post('/{id}/declare-absence', [StudentConvocationController::class, 'declareAbsence']);
     });
 
     // CEDOC Dashboard
