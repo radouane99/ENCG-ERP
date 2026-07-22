@@ -306,14 +306,15 @@ class PdfExportController extends Controller
             } catch (\Throwable $e2) {}
         }
 
-        $firstModuleSem = $allSeatings->first()->exam->module->semester_number ?? 1;
+        $firstModuleSem = (int) ($allSeatings->first()->exam->module->semester_number ?? 1);
+        $niveauName = ($firstModuleSem <= 2) ? '1ère Année' : (($firstModuleSem <= 4) ? '2ème Année' : (($firstModuleSem <= 6) ? '3ème Année' : (($firstModuleSem <= 8) ? '4ème Année' : '5ème Année')));
 
         return $this->getPdfInstance('pdf.convocation', [
             'person_name'  => strtoupper(($student->user->last_name ?? '') . ' ' . ($student->user->first_name ?? $student->user->name ?? '')),
             'person_role'  => 'Étudiant',
             'person_id'    => $student->cne ?? $student->user->cin ?? 'N/A',
             'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun ENCG',
-            'niveau_name'  => 'Semestre S' . $firstModuleSem,
+            'niveau_name'  => $niveauName,
             'session_type' => $seating->exam->session->type ?? 'ORDINAIRE',
             'session_name' => $seating->exam->session->name ?? 'Session Principale',
             'exams'        => $exams,

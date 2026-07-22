@@ -203,6 +203,7 @@ class ExamConvocationService
                 'exam_seatings.qr_token',
                 'exam_seatings.seat_number',
                 'students.cne',
+                DB::raw('COALESCE(students.cin, users.cin, "N/A") as student_cin'),
                 'users.name as student_name',
                 'users.email as student_email',
                 'modules.name as module_name',
@@ -272,13 +273,17 @@ class ExamConvocationService
                     ];
                 })->values()->toArray();
 
+                $semNum = (int) ($first->semester_number ?? 1);
+                $niveauName = ($semNum <= 2) ? '1ère Année' : (($semNum <= 4) ? '2ème Année' : (($semNum <= 6) ? '3ème Année' : (($semNum <= 8) ? '4ème Année' : '5ème Année')));
+
                 $pdfData = [
                     'session_name' => $session->name,
                     'session_type' => 'ORDINAIRE',
                     'person_id'    => $first->cne ?? 'N/A',
+                    'person_cin'   => $first->student_cin ?? 'N/A',
                     'person_name'  => strtoupper($first->student_name),
                     'filiere_name' => $first->filiere_name ?? 'N/A',
-                    'niveau_name'  => 'S' . ($first->semester_number ?? 1),
+                    'niveau_name'  => $niveauName,
                     'exams'        => $pdfExamsData,
                     'qr_token'     => $qrToken,
                     'qrCodeBase64' => $qrCodeBase64,

@@ -217,6 +217,7 @@ export default function AdminConvocationsPage() {
         student_id: curr.student_id || curr.id,
         student_name: curr.student_name,
         cne: curr.cne,
+        cin: curr.cin || curr.student_cin,
         filiere: curr.filiere,
         group_name: curr.group_name,
         all_seating_ids: [],
@@ -613,7 +614,7 @@ export default function AdminConvocationsPage() {
                     {selectedSeatings.size > 0 && (
                       <div className="bg-blue-50 border-b border-blue-100 p-3 px-4 sm:px-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sticky top-0 z-10">
                         <span className="text-blue-800 font-bold text-xs sm:text-sm">
-                          {groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} étudiant(s) sélectionné(s) ({selectedSeatings.size} convocation(s) au total)
+                          {groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} étudiant(s) sélectionné(s) ({groupedStudents.filter((s: any) => s.all_seating_ids.some((id: number) => selectedSeatings.has(id))).length} convocation(s) au total — {selectedSeatings.size} modules)
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -648,7 +649,7 @@ export default function AdminConvocationsPage() {
                             />
                           </th>
                           <th className="px-5 py-3 text-left font-bold">Étudiant</th>
-                          <th className="px-5 py-3 text-left font-bold">CNE</th>
+                          <th className="px-5 py-3 text-left font-bold">CNE / CIN</th>
                           <th className="px-5 py-3 text-left font-bold">Filière / Groupe</th>
                           <th className="px-5 py-3 text-left font-bold">Examens & Modules</th>
                           <th className="px-5 py-3 text-center font-bold">QR</th>
@@ -677,7 +678,10 @@ export default function AdminConvocationsPage() {
                                   <span className="font-medium text-slate-700">{s.student_name}</span>
                                 </div>
                               </td>
-                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">{s.cne || '—'}</td>
+                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">
+                                <div className="font-bold text-slate-700">{s.cne || '—'}</div>
+                                {s.cin && <div className="text-[10px] text-slate-400 font-semibold">CIN: {s.cin}</div>}
+                              </td>
                               <td className="px-5 py-3">
                                 <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">{s.filiere}</span>
                                 {s.group_name && <span className="ml-1 text-[10px] text-slate-400">· {s.group_name}</span>}
@@ -892,6 +896,11 @@ export default function AdminConvocationsPage() {
                     <span className="font-mono bg-slate-200/70 px-2 py-0.5 rounded font-bold text-slate-700">
                       CNE: {selectedStudentDetail.cne || '—'}
                     </span>
+                    {selectedStudentDetail.cin && (
+                      <span className="font-mono bg-slate-200/70 px-2 py-0.5 rounded font-bold text-slate-700">
+                        CIN: {selectedStudentDetail.cin}
+                      </span>
+                    )}
                     <span>•</span>
                     <span className="font-bold text-blue-600">{selectedStudentDetail.filiere}</span>
                     {selectedStudentDetail.group_name && <span>• {selectedStudentDetail.group_name}</span>}

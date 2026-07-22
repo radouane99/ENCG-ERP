@@ -63,15 +63,12 @@ class StudentConvocationController extends Controller
         $verificationUrl = url("/api/v1/admin/convocations/verify/{$convocation->qr_token}");
         $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verificationUrl));
 
-        $niveauName = 'Année en cours';
-        if ($convocation->exam && $convocation->exam->module && $convocation->exam->module->semester_id) {
-            $semId = $convocation->exam->module->semester_id;
-            if ($semId == 1 || $semId == 2) $niveauName = '1ère Année';
-            elseif ($semId == 3 || $semId == 4) $niveauName = '2ème Année';
-            elseif ($semId == 5 || $semId == 6) $niveauName = '3ème Année';
-            elseif ($semId == 7 || $semId == 8) $niveauName = '4ème Année';
-            elseif ($semId == 9 || $semId == 10) $niveauName = '5ème Année';
-        }
+        $semId = (int) ($convocation->exam?->module?->semester_number ?? $convocation->exam?->module?->semester_id ?? 1);
+        if ($semId <= 2) $niveauName = '1ère Année';
+        elseif ($semId <= 4) $niveauName = '2ème Année';
+        elseif ($semId <= 6) $niveauName = '3ème Année';
+        elseif ($semId <= 8) $niveauName = '4ème Année';
+        else $niveauName = '5ème Année';
         
         $logoPath = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';

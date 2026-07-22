@@ -63,9 +63,14 @@
 
         <div class="student-info">
             <div class="info-row">
-                <div class="info-label">Matricule / CNE</div>
+                <div class="info-label">CNE / CIN</div>
                 <div class="info-colon">:</div>
-                <div class="info-value">{{ $person_id ?? 'N/A' }}</div>
+                <div class="info-value">
+                    {{ $person_id ?? 'N/A' }}
+                    @if(!empty($person_cin) && $person_cin !== 'N/A')
+                        &nbsp;&nbsp;|&nbsp;&nbsp; CIN : {{ $person_cin }}
+                    @endif
+                </div>
             </div>
             <div class="info-row">
                 <div class="info-label">Nom & prénom</div>

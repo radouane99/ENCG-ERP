@@ -272,15 +272,12 @@ class ConvocationController extends Controller
         }
 
         $firstExam = $seatings->first()?->exam;
-        $niveauName = 'Année en cours';
-        if ($firstExam && $firstExam->module && $firstExam->module->semester_id) {
-            $semId = $firstExam->module->semester_id;
-            if ($semId == 1 || $semId == 2) $niveauName = '1ère Année';
-            elseif ($semId == 3 || $semId == 4) $niveauName = '2ème Année';
-            elseif ($semId == 5 || $semId == 6) $niveauName = '3ème Année';
-            elseif ($semId == 7 || $semId == 8) $niveauName = '4ème Année';
-            elseif ($semId == 9 || $semId == 10) $niveauName = '5ème Année';
-        }
+        $semId = (int) ($firstExam?->module?->semester_number ?? $firstExam?->module?->semester_id ?? 1);
+        if ($semId <= 2) $niveauName = '1ère Année';
+        elseif ($semId <= 4) $niveauName = '2ème Année';
+        elseif ($semId <= 6) $niveauName = '3ème Année';
+        elseif ($semId <= 8) $niveauName = '4ème Année';
+        else $niveauName = '5ème Année';
 
         $token = \Illuminate\Support\Str::random(16);
         $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/convocation/{$token}";
