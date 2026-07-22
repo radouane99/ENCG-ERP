@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle } from 'lucide-react'
+import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -14,6 +14,7 @@ export default function AdminConvocationsPage() {
   const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set())
   const [selectedSurveillants, setSelectedSurveillants] = useState<Set<number>>(new Set())
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [searchStudent, setSearchStudent] = useState('')
 
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     setNotification({ msg, type })
@@ -202,9 +203,32 @@ export default function AdminConvocationsPage() {
 
   const filieres = [...new Set(students.map((s: any) => s.filiere))].filter(Boolean)
 
+  const groupedSurveillants = Object.values(surveillants.reduce((acc, curr) => {
+    if (!acc[curr.professor_name]) {
+      acc[curr.professor_name] = {
+        id: curr.id, // Use the first surveillance ID to trigger backend APIs
+        professor_name: curr.professor_name,
+        seances_count: 0,
+        sent_at: curr.sent_at,
+        confirmed_at: curr.confirmed_at,
+      }
+    }
+    acc[curr.professor_name].seances_count += 1;
+    // We can assume sent_at is true if any is sent
+    if (curr.sent_at) acc[curr.professor_name].sent_at = curr.sent_at;
+    if (curr.confirmed_at) acc[curr.professor_name].confirmed_at = curr.confirmed_at;
+    return acc;
+  }, {} as Record<string, any>));
+
+  const filteredStudents = students.filter((s: any) => 
+    s.student_name?.toLowerCase().includes(searchStudent.toLowerCase()) || 
+    s.cne?.toLowerCase().includes(searchStudent.toLowerCase()) ||
+    s.filiere?.toLowerCase().includes(searchStudent.toLowerCase())
+  )
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedSeatings(new Set(students.map((s: any) => s.id)))
+      setSelectedSeatings(new Set(filteredStudents.map((s: any) => s.id)))
     } else {
       setSelectedSeatings(new Set())
     }
@@ -219,7 +243,7 @@ export default function AdminConvocationsPage() {
 
   const handleSelectAllSurveillants = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedSurveillants(new Set(surveillants.map((s: any) => s.id)))
+      setSelectedSurveillants(new Set(groupedSurveillants.map((s: any) => s.id)))
     } else {
       setSelectedSurveillants(new Set())
     }
@@ -247,7 +271,8 @@ export default function AdminConvocationsPage() {
             Gestion des Convocations
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Génération, affectation des surveillants et envoi des convocations aux étudiants
+            Génération, affectation des surveillants et envoi des convocations
+
           </p>
         </div>
       </div>
@@ -515,6 +540,20 @@ export default function AdminConvocationsPage() {
                   </div>
                 ) : (
                   <>
+                    <div className="flex items-center justify-between p-4 bg-white border-b border-slate-100">
+                      <div className="relative w-72">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Search className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Rechercher (Nom, CNE, Filière)..."
+                          value={searchStudent}
+                          onChange={(e) => setSearchStudent(e.target.value)}
+                        />
+                      </div>
+                    </div>
                     {selectedSeatings.size > 0 && (
                       <div className="bg-blue-50 border-b border-blue-100 p-3 px-5 flex items-center justify-between sticky top-0 z-10">
                         <span className="text-blue-800 font-bold text-sm">
@@ -546,7 +585,7 @@ export default function AdminConvocationsPage() {
                           <th className="px-5 py-3 text-left w-10">
                             <input
                               type="checkbox"
-                              checked={students.length > 0 && selectedSeatings.size === students.length}
+                              checked={filteredStudents.length > 0 && selectedSeatings.size === filteredStudents.length}
                               onChange={handleSelectAll}
                               className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
@@ -562,7 +601,7 @@ export default function AdminConvocationsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
-                        {students.map((s: any) => (
+                        {filteredStudents.map((s: any) => (
                           <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSeatings.has(s.id) ? "bg-blue-50/30" : "")}>
                             <td className="px-5 py-3">
                               <input
@@ -677,22 +716,19 @@ export default function AdminConvocationsPage() {
                         <th className="px-5 py-3 text-left w-10">
                           <input
                             type="checkbox"
-                            checked={surveillants.length > 0 && selectedSurveillants.size === surveillants.length}
+                            checked={groupedSurveillants.length > 0 && selectedSurveillants.size === groupedSurveillants.length}
                             onChange={handleSelectAllSurveillants}
                             className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                           />
                         </th>
                         <th className="px-5 py-3 text-left font-bold">Professeur</th>
-                        <th className="px-5 py-3 text-left font-bold">Examen</th>
-                        <th className="px-5 py-3 text-left font-bold">Salle</th>
-                        <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
-                        <th className="px-5 py-3 text-center font-bold">Rôle</th>
+                        <th className="px-5 py-3 text-center font-bold">Nombre de séances</th>
                         <th className="px-5 py-3 text-center font-bold">Statut Envoi</th>
                         <th className="px-5 py-3 text-right font-bold">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {surveillants.map((s: any) => (
+                      {groupedSurveillants.map((s: any) => (
                         <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSurveillants.has(s.id) ? "bg-amber-50/30" : "")}>
                           <td className="px-5 py-3">
                             <input
@@ -710,23 +746,9 @@ export default function AdminConvocationsPage() {
                               <span className="font-medium text-slate-700">{s.professor_name}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-slate-600 text-xs font-medium">{s.exam_name}</td>
-                          <td className="px-5 py-3">
-                            <span className="flex items-center gap-1 text-slate-500 text-xs">
-                              <MapPin className="w-3 h-3 text-slate-400" />
-                              {s.room_name || '—'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-slate-500 text-xs">
-                            {s.exam_date ? new Date(s.exam_date).toLocaleDateString('fr-FR') : '—'}
-                            {s.start_time && <span className="ml-2 font-medium">{s.start_time?.substring(0, 5)}</span>}
-                          </td>
                           <td className="px-5 py-3 text-center">
-                            <span className={cn(
-                              'px-2 py-0.5 rounded-full text-[10px] font-bold',
-                              s.role === 'principal' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-slate-100 text-slate-500'
-                            )}>
-                              {s.role === 'principal' ? 'Principal' : 'Assistant'}
+                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">
+                              {s.seances_count} {s.seances_count > 1 ? 'séances' : 'séance'}
                             </span>
                           </td>
                           <td className="px-5 py-3 text-center flex flex-col gap-1 items-center justify-center">
@@ -769,3 +791,5 @@ export default function AdminConvocationsPage() {
     </div>
   )
 }
+
+export default AdminConvocationsPage
