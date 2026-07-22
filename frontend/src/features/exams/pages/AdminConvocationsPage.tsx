@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search, QrCode } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
@@ -7,6 +8,7 @@ import api from '@shared/lib/api'
 import { examsApi } from '@shared/api/exams'
 
 export default function AdminConvocationsPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'surveillants'>('overview')
