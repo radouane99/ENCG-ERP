@@ -48,10 +48,11 @@ export default function AdminConvocationsPage() {
 
   // Generate all convocations for session
   const generateMutation = useMutation({
-    mutationFn: () => examsApi.generateSession(selectedSessionId!),
+    mutationFn: () => examsApi.generateSessionConvocations(selectedSessionId!),
     onSuccess: (data) => {
       notify(data.message || `${data.generated_count || 0} convocations générées avec succès !`)
       refetchStats()
+      refetchList()
     },
     onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de la génération.', 'error')
   })
@@ -62,6 +63,7 @@ export default function AdminConvocationsPage() {
     onSuccess: (data) => {
       notify(data.message || 'Emails envoyés avec succès !')
       refetchStats()
+      refetchList()
     },
     onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de l\'envoi.', 'error')
   })
