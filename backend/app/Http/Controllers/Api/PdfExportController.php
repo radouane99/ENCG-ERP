@@ -137,6 +137,71 @@ class PdfExportController extends Controller
         return $pdf->download('convocations_lot.pdf');
     }
 
+    public function batchDownloadSurveillantsPdf(Request $request, $sessionId)
+    {
+        $seatingIds = $request->input('seating_ids', []); // Actually surveillance_ids
+        if (empty($seatingIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
+        }
+
+        $session = \App\Models\ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+
+        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
+            ->whereIn('exam_id', $examIds)
+            ->whereIn('id', $seatingIds)
+            ->get();
+
+        $professors = \App\Models\User::whereIn('id', $allSurveillances->pluck('professor_id')->unique())->get();
+        $professorsData = [];
+
+        foreach ($professors as $prof) {
+            $profSurvs = $allSurveillances->where('professor_id', $prof->id);
+            $exams = [];
+
+            foreach ($profSurvs as $s) {
+                $exam = $session->exams->firstWhere('id', $s->exam_id);
+                if ($exam) {
+                    $exams[] = [
+                        'date' => $exam->exam_date ? $exam->exam_date->format('d/m/Y') : 'N/A',
+                        'time' => $exam->start_time ? substr($exam->start_time, 0, 5) . ' - ' . date('H:i', strtotime($exam->start_time) + ($exam->duration_minutes * 60)) : 'N/A',
+                        'module' => $exam->module->name ?? 'N/A',
+                        'room' => $exam->room->name ?? 'N/A',
+                        'role' => $s->role ?? 'Surveillant'
+                    ];
+                }
+            }
+
+            usort($exams, function($a, $b) {
+                $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
+                $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
+                return strcmp($dateA, $dateB);
+            });
+
+            $professorsData[] = [
+                'person_name' => $prof->last_name . ' ' . $prof->first_name,
+                'person_id' => $prof->cin ?? 'N/A',
+                'person_role' => 'Professeur',
+                'filiere_name' => 'Corps Professoral ENCG',
+                'session_type' => $session->type ?? 'ORDINAIRE',
+                'session_name' => $session->name ?? 'Session Principale',
+                'exams' => $exams,
+                'qr_token' => $profSurvs->first()->qr_token ?? null,
+                'id' => $profSurvs->first()->id,
+                'created_at' => clone $session->created_at
+            ];
+        }
+
+        // We can reuse the `pdf.convocations_batch` template since the structure is the same,
+        // or create a dedicated one if we want specific wording. The user said "kif derna m3a etudians".
+        // Let's use `convocations_profs_batch` for safety to allow differences later.
+        $pdf = $this->getPdfInstance('pdf.convocations_profs_batch', [
+            'professorsData' => $professorsData
+        ]);
+        
+        return $pdf->download('convocations_surveillants_lot.pdf');
+    }
+
     private function generateSingleConvocationPdf($seating)
     {
         $student = $seating->student;

@@ -99,6 +99,18 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function sendBatchSurveillantsEmails(Request $request, int $sessionId): JsonResponse
+    {
+        $surveillanceIds = $request->input('surveillance_ids', []);
+        
+        if (empty($surveillanceIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
+        }
+
+        $result = $this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds);
+        return response()->json($result);
+    }
+
     public function scanQr(Request $request): JsonResponse
     {
         $validated = $request->validate([

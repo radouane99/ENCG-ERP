@@ -12,6 +12,7 @@ export default function AdminConvocationsPage() {
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [selectedFiliere, setSelectedFiliere] = useState('')
   const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set())
+  const [selectedSurveillants, setSelectedSurveillants] = useState<Set<number>>(new Set())
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -79,7 +80,7 @@ export default function AdminConvocationsPage() {
     onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de l\'affectation.', 'error')
   })
 
-  // Batch actions
+  // Batch actions - Students
   const batchDownloadMutation = useMutation({
     mutationFn: (seatingIds: number[]) => examsApi.batchDownloadPdf(selectedSessionId!, seatingIds),
     onSuccess: (blob) => {
@@ -106,6 +107,33 @@ export default function AdminConvocationsPage() {
     onError: () => notify('Erreur lors de l\'envoi des emails.', 'error')
   })
 
+  // Batch actions - Surveillants
+  const batchDownloadSurveillantsMutation = useMutation({
+    mutationFn: (survIds: number[]) => examsApi.batchDownloadSurveillantsPdf(selectedSessionId!, survIds),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `convocations_profs_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      notify('PDF Surveillants téléchargé avec succès !');
+    },
+    onError: () => notify('Erreur lors du téléchargement.', 'error')
+  })
+
+  const batchEmailSurveillantsMutation = useMutation({
+    mutationFn: (survIds: number[]) => examsApi.sendBatchSurveillantsEmails(selectedSessionId!, survIds),
+    onSuccess: () => {
+      notify('Emails envoyés aux surveillants avec succès !');
+      setSelectedSurveillants(new Set());
+      refetchList();
+      refetchStats();
+    },
+    onError: () => notify('Erreur lors de l\'envoi des emails.', 'error')
+  })
+
   const stats = sessionStats
 
   const students: any[] = convocationList?.students || []
@@ -126,6 +154,21 @@ export default function AdminConvocationsPage() {
     if (newSet.has(id)) newSet.delete(id)
     else newSet.add(id)
     setSelectedSeatings(newSet)
+  }
+
+  const handleSelectAllSurveillants = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedSurveillants(new Set(surveillants.map((s: any) => s.id)))
+    } else {
+      setSelectedSurveillants(new Set())
+    }
+  }
+
+  const handleSelectOneSurveillant = (id: number) => {
+    const newSet = new Set(selectedSurveillants)
+    if (newSet.has(id)) newSet.delete(id)
+    else newSet.add(id)
+    setSelectedSurveillants(newSet)
   }
 
   const handlePreview = (id: number) => {
@@ -515,20 +558,62 @@ export default function AdminConvocationsPage() {
                     Aucun surveillant affecté. Cliquez sur "Auto-Affecter" pour que l'IA répartisse les surveillants.
                   </div>
                 ) : (
+                  <>
+                    {selectedSurveillants.size > 0 && (
+                      <div className="bg-amber-50 border-b border-amber-100 p-3 px-5 flex items-center justify-between sticky top-0 z-10">
+                        <span className="text-amber-800 font-bold text-sm">
+                          {selectedSurveillants.size} surveillant(s) sélectionné(s)
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => batchDownloadSurveillantsMutation.mutate(Array.from(selectedSurveillants))}
+                            disabled={batchDownloadSurveillantsMutation.isPending}
+                            className="bg-white border border-amber-200 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                          >
+                            {batchDownloadSurveillantsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                            Télécharger PDFs
+                          </button>
+                          <button
+                            onClick={() => batchEmailSurveillantsMutation.mutate(Array.from(selectedSurveillants))}
+                            disabled={batchEmailSurveillantsMutation.isPending}
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                          >
+                            {batchEmailSurveillantsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                            Envoyer Emails
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   <table className="w-full text-sm">
                     <thead className="text-[9px] text-slate-400 uppercase tracking-wider bg-slate-50/80 border-b border-slate-100">
                       <tr>
+                        <th className="px-5 py-3 text-left w-10">
+                          <input
+                            type="checkbox"
+                            checked={surveillants.length > 0 && selectedSurveillants.size === surveillants.length}
+                            onChange={handleSelectAllSurveillants}
+                            className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                          />
+                        </th>
                         <th className="px-5 py-3 text-left font-bold">Professeur</th>
                         <th className="px-5 py-3 text-left font-bold">Examen</th>
                         <th className="px-5 py-3 text-left font-bold">Salle</th>
                         <th className="px-5 py-3 text-left font-bold">Date & Heure</th>
                         <th className="px-5 py-3 text-center font-bold">Rôle</th>
-                        <th className="px-5 py-3 text-center font-bold">Présence</th>
+                        <th className="px-5 py-3 text-center font-bold">Statut Envoi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                       {surveillants.map((s: any) => (
-                        <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
+                        <tr key={s.id} className={cn("hover:bg-slate-50/60 transition-colors", selectedSurveillants.has(s.id) ? "bg-amber-50/30" : "")}>
+                          <td className="px-5 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedSurveillants.has(s.id)}
+                              onChange={() => handleSelectOneSurveillant(s.id)}
+                              className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                            />
+                          </td>
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold shrink-0">
@@ -557,14 +642,15 @@ export default function AdminConvocationsPage() {
                             </span>
                           </td>
                           <td className="px-5 py-3 text-center">
-                            {s.has_attended
-                              ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Présent</span>
-                              : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">Non confirmé</span>}
+                            {s.sent_at
+                              ? <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">Envoyée</span>
+                              : <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">En attente</span>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </>
                 )}
               </div>
             )}

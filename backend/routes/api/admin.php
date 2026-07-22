@@ -308,6 +308,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
         // Batch actions
         Route::post('/session/{sessionId}/batch-pdf', [PdfExportController::class, 'batchPdf']);
         Route::post('/session/{sessionId}/send-batch-emails', [ConvocationController::class, 'sendBatchEmails']);
+        Route::post('/session/{sessionId}/surveillants-batch-pdf', [PdfExportController::class, 'batchDownloadSurveillantsPdf']);
+        Route::post('/session/{sessionId}/send-batch-surveillants-emails', [ConvocationController::class, 'sendBatchSurveillantsEmails']);
     });
 
     // Convocations Lifecycle

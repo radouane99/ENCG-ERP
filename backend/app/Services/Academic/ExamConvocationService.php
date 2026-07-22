@@ -79,6 +79,18 @@ class ExamConvocationService
                     }
                 }
             }
+
+            // Also generate QR tokens for professors (surveillances)
+            $existingSurveillances = DB::table('exam_surveillances')
+                ->where('exam_id', $exam->id)
+                ->whereNull('qr_token')
+                ->get();
+
+            foreach ($existingSurveillances as $surveillance) {
+                DB::table('exam_surveillances')
+                    ->where('id', $surveillance->id)
+                    ->update(['qr_token' => Str::uuid()->toString()]);
+            }
         }
 
         return [
@@ -219,6 +231,74 @@ class ExamConvocationService
         return [
             'success' => true,
             'message' => "{$sentCount} convocations envoyées avec succès."
+        ];
+    }
+
+    /**
+     * Send emails for selected surveillances (professors)
+     */
+    public function sendBatchSurveillantsEmails(int $sessionId, array $surveillanceIds): array
+    {
+        $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
+        $examIds = $session->exams->pluck('id');
+        
+        $surveillances = DB::table('exam_surveillances')
+            ->whereIn('exam_id', $examIds)
+            ->whereIn('id', $surveillanceIds)
+            ->get()
+            ->groupBy('professor_id');
+
+        $sentCount = 0;
+
+        foreach ($surveillances as $professorId => $profSurveillances) {
+            $professor = \App\Models\User::find($professorId);
+            if (!$professor || !$professor->email) continue;
+
+            // Collect all exams for this professor
+            $profExamsData = [];
+            foreach ($profSurveillances as $surv) {
+                $exam = $session->exams->firstWhere('id', $surv->exam_id);
+                if (!$exam) continue;
+
+                $profExamsData[] = [
+                    'moduleName' => $exam->module->name ?? 'N/A',
+                    'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
+                    'examTime' => $exam->start_time ?? 'N/A',
+                    'roomName' => $exam->room->name ?? 'N/A',
+                    'role' => $surv->role ?? 'Surveillant',
+                    'qrToken' => $surv->qr_token,
+                ];
+            }
+
+            if (empty($profExamsData)) continue;
+
+            $emailData = [
+                'professorName' => $professor->name,
+                'sessionName' => $session->name,
+                'exams' => $profExamsData
+            ];
+
+            if (class_exists(Pdf::class) && class_exists(\App\Mail\ProfessorConvocationEmail::class)) {
+                try {
+                    $pdf = Pdf::loadView('emails.convocation_prof', $emailData);
+                    Mail::to($professor->email)->send(
+                        new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
+                    );
+                    
+                    DB::table('exam_surveillances')
+                        ->whereIn('id', $profSurveillances->pluck('id'))
+                        ->update(['sent_at' => now()]);
+                        
+                    $sentCount++;
+                } catch (\Exception $e) {
+                    // Log email error but continue
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => "{$sentCount} e-mails envoyés avec succès aux surveillants."
         ];
     }
 
@@ -570,7 +650,9 @@ class ExamConvocationService
                 'exams.exam_date',
                 'exams.start_time',
                 'exam_surveillances.role',
-                'exam_surveillances.has_attended'
+                'exam_surveillances.has_attended',
+                'exam_surveillances.sent_at',
+                'exam_surveillances.qr_token'
             );
 
         $surveillantsList = $surveillantQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();

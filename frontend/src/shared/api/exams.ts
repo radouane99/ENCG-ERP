@@ -117,6 +117,16 @@ export const examsApi = {
     const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-emails`, { seating_ids: seatingIds });
     return response.data;
   },
+  batchDownloadSurveillantsPdf: async (sessionId: number, surveillanceIds: number[]) => {
+    const response = await api.post(`/exam-planning/session/${sessionId}/surveillants-batch-pdf`, { seating_ids: surveillanceIds }, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  sendBatchSurveillantsEmails: async (sessionId: number, surveillanceIds: number[]) => {
+    const response = await api.post(`/exam-planning/session/${sessionId}/send-batch-surveillants-emails`, { surveillance_ids: surveillanceIds });
+    return response.data;
+  },
   notifyAbsents: async (examId: number) => {
     const response = await api.post(`/exam-planning/${examId}/notify-absents`);
     return response.data;
