@@ -58,38 +58,67 @@ class StudentService
                 $allowedSemesters = null;
             }
 
-            $query->where(function ($q) use ($filiereId, $requestedSem, $allowedSemesters, $groupId) {
-                // 1. Regular enrolled students in the corresponding academic year (same semester pair S1/S2, S3/S4, etc.)
-                $q->whereHas('pathways', function ($q2) use ($filiereId, $allowedSemesters, $groupId) {
-                    if ($filiereId !== null) {
-                        $q2->where('filiere_id', $filiereId);
-                    }
-                    if ($allowedSemesters !== null) {
-                        $q2->whereIn('current_semester', $allowedSemesters);
-                    }
-                    if ($groupId !== null) {
-                        $q2->where('group_id', $groupId);
-                    }
+            // Filiere Filter
+            if ($filiereId !== null) {
+                $query->where(function ($q) use ($filiereId) {
+                    $q->where('students.filiere_id', $filiereId)
+                      ->orWhereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
+                      ->orWhereExists(function ($rQ) use ($filiereId) {
+                          $rQ->select(DB::raw(1))
+                             ->from('student_registrations')
+                             ->whereColumn('student_registrations.student_id', 'students.id')
+                             ->where('student_registrations.filiere_id', $filiereId);
+                      });
                 });
+            }
 
-                // 2. "Réservistes": Students carrying over modules from this requested semester
-                if ($requestedSem !== null || $filiereId !== null) {
-                    $q->orWhereExists(function ($q2) use ($requestedSem, $filiereId) {
-                        $q2->select(DB::raw(1))
-                           ->from('student_module_retakes')
-                           ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
-                           ->whereColumn('student_module_retakes.student_id', 'students.id')
-                           ->where('student_module_retakes.status', 'pending');
-                           
-                        if ($requestedSem !== null) {
-                            $q2->where('modules.semester_number', $requestedSem);
-                        }
-                        if ($filiereId !== null) {
-                            $q2->where('modules.filiere_id', $filiereId);
-                        }
-                    });
+            // Semester Filter (Pairs S1+S2, S3+S4, etc.)
+            if ($allowedSemesters !== null) {
+                $query->where(function ($q) use ($allowedSemesters, $requestedSem) {
+                    $q->whereIn('students.current_semester', $allowedSemesters)
+                      ->orWhereHas('pathways', fn($p) => $p->whereIn('current_semester', $allowedSemesters))
+                      ->orWhereExists(function ($rQ) use ($allowedSemesters) {
+                          $rQ->select(DB::raw(1))
+                             ->from('student_registrations')
+                             ->whereColumn('student_registrations.student_id', 'students.id')
+                             ->whereIn('student_registrations.semester_number', $allowedSemesters);
+                      })
+                      ->orWhereExists(function ($retakeQ) use ($requestedSem) {
+                          $retakeQ->select(DB::raw(1))
+                                 ->from('student_module_retakes')
+                                 ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
+                                 ->whereColumn('student_module_retakes.student_id', 'students.id')
+                                 ->where('student_module_retakes.status', 'pending')
+                                 ->where('modules.semester_number', $requestedSem);
+                      });
+                });
+            }
+
+            // Group Filter (Matches sibling groups across S1/S2 e.g. TC-S1-G1 <-> TC-S2-G1)
+            if ($groupId !== null) {
+                $targetGroup = \App\Models\Group::find($groupId);
+                $matchingGroupIds = [$groupId];
+
+                if ($targetGroup && $targetGroup->name) {
+                    preg_match('/(G\d+|Group\s*\d+|G\s*\d+)$/i', $targetGroup->name, $matches);
+                    if (!empty($matches[1])) {
+                        $suffix = $matches[1];
+                        $siblingIds = \App\Models\Group::where('name', 'like', "%{$suffix}")->pluck('id')->toArray();
+                        $matchingGroupIds = array_unique(array_merge($matchingGroupIds, $siblingIds));
+                    }
                 }
-            });
+
+                $query->where(function ($q) use ($matchingGroupIds) {
+                    $q->whereIn('students.group_id', $matchingGroupIds)
+                      ->orWhereHas('pathways', fn($p) => $p->whereIn('group_id', $matchingGroupIds))
+                      ->orWhereExists(function ($rQ) use ($matchingGroupIds) {
+                          $rQ->select(DB::raw(1))
+                             ->from('student_registrations')
+                             ->whereColumn('student_registrations.student_id', 'students.id')
+                             ->whereIn('student_registrations.group_id', $matchingGroupIds);
+                      });
+                });
+            }
         }
 
         // Validate sort field to prevent SQL injection
@@ -178,12 +207,38 @@ class StudentService
                 $filiere = \App\Models\Filiere::where('code', $filiereCode)->orWhere('id', $filiereCode)->first();
                 if ($filiere) {
                     $academicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+                    $academicYearId = $academicYear ? $academicYear->id : 1;
+
                     $student->pathways()->create([
                         'filiere_id' => $filiere->id,
                         'current_semester' => $semester,
-                        'academic_year_id' => $academicYear ? $academicYear->id : 1,
+                        'group_id' => $data['group_id'] ?? null,
+                        'academic_year_id' => $academicYearId,
                         'is_current' => true,
                     ]);
+
+                    // Automatically create registrations for BOTH semesters of the academic year (e.g. S1 and S2)
+                    $sem1 = ($semester % 2 === 1) ? (int)$semester : ((int)$semester - 1);
+                    $sem2 = $sem1 + 1;
+
+                    foreach ([$sem1, $sem2] as $sNum) {
+                        if ($sNum >= 1 && $sNum <= 10) {
+                            \Illuminate\Support\Facades\DB::table('student_registrations')->updateOrInsert(
+                                [
+                                    'student_id' => $student->id,
+                                    'academic_year_id' => $academicYearId,
+                                    'semester_number' => $sNum,
+                                ],
+                                [
+                                    'filiere_id' => $filiere->id,
+                                    'group_id' => $data['group_id'] ?? null,
+                                    'status' => 'active',
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]
+                            );
+                        }
+                    }
                 }
             }
 
