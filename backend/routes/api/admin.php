@@ -96,6 +96,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
     Route::post('/deliberations/simulate', [DeliberationController::class, 'simulate']);
+    Route::post('/complaints/grade-appeal', [ComplaintController::class, 'submitGradeAppeal']);
+    Route::get('/complaints/grade-appeals', [ComplaintController::class, 'listGradeAppeals']);
+    Route::post('/complaints/grade-appeals/{id}/resolve', [ComplaintController::class, 'resolveGradeAppeal']);
     Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
     Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
     Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);

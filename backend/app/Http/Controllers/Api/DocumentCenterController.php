@@ -52,41 +52,44 @@ class DocumentCenterController extends Controller
 
         if (in_array($type, ['attestation_scolarite', 'attestation', 'scolarite'])) {
             $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($id);
-            $pdf = Pdf::loadView('pdf.attestation', [
-                'student' => $student->user ? (object)[
-                    'first_name' => $student->user->first_name,
-                    'last_name' => $student->user->last_name,
-                    'cne' => $student->cne_cme ?? $student->student_number,
-                    'student_number' => $student->student_number,
-                    'latestPathway' => $student->latestPathway
-                ] : $student,
+            $pdf = Pdf::loadView('pdf.attestation_officielle', [
+                'type' => 'ATTESTATION DE SCOLARITÉ',
+                'student' => (object)[
+                    'first_name' => $student->user?->first_name ?? $student->first_name,
+                    'last_name' => $student->user?->last_name ?? $student->last_name,
+                    'cne' => $student->cne_cme ?? $student->cne ?? $student->student_number,
+                    'cin' => $student->user?->cin ?? $student->cin ?? 'N/A',
+                    'filiere' => $student->latestPathway?->filiere?->name ?? 'Tronc Commun ENCG Fès',
+                ],
                 'year' => $year,
                 'date' => $date,
+                'token' => $token,
                 'qrBase64' => $qrBase64,
                 'logoBase64' => $logoBase64
             ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
             
-            return $pdf->download("Attestation_Scolarite_{$student->id}.pdf");
+            return $pdf->download("Attestation_Scolarite_Officielle_{$student->id}.pdf");
         }
 
         if (in_array($type, ['attestation_reussite', 'reussite'])) {
             $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($id);
-            $pdf = Pdf::loadView('pdf.attestation_reussite', [
-                'student' => $student->user ? (object)[
-                    'first_name' => $student->user->first_name,
-                    'last_name' => $student->user->last_name,
-                    'cne' => $student->cne_cme ?? $student->student_number,
-                    'cin' => $student->user->cin ?? 'N/A',
-                    'student_number' => $student->student_number,
-                    'latestPathway' => $student->latestPathway
-                ] : $student,
+            $pdf = Pdf::loadView('pdf.attestation_officielle', [
+                'type' => 'ATTESTATION DE RÉUSSITE',
+                'student' => (object)[
+                    'first_name' => $student->user?->first_name ?? $student->first_name,
+                    'last_name' => $student->user?->last_name ?? $student->last_name,
+                    'cne' => $student->cne_cme ?? $student->cne ?? $student->student_number,
+                    'cin' => $student->user?->cin ?? $student->cin ?? 'N/A',
+                    'filiere' => $student->latestPathway?->filiere?->name ?? 'Tronc Commun ENCG Fès',
+                ],
                 'year' => $year,
                 'date' => $date,
+                'token' => $token,
                 'qrBase64' => $qrBase64,
                 'logoBase64' => $logoBase64
             ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true]);
 
-            return $pdf->download("Attestation_Reussite_{$student->id}.pdf");
+            return $pdf->download("Attestation_Reussite_Officielle_{$student->id}.pdf");
         }
 
         if (in_array($type, ['attestation_decharge', 'decharge'])) {
