@@ -54,8 +54,13 @@ class GroupController extends Controller
         return response()->json(['message' => 'Groupe créé avec succès.', 'data' => $group], 201);
     }
 
-    public function update(Request $request, Group $group): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $group = Group::find($id);
+        if (!$group) {
+            return response()->json(['message' => 'Groupe introuvable.'], 404);
+        }
+
         $academicYearId = $request->input('academic_year_id') ?? $group->academic_year_id;
 
         $validated = $request->validate([
@@ -81,8 +86,13 @@ class GroupController extends Controller
         return response()->json(['message' => 'Groupe mis à jour.', 'data' => $group]);
     }
 
-    public function destroy(Group $group): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $group = Group::find($id);
+        if (!$group) {
+            return response()->json(['success' => true, 'message' => 'Groupe déjà supprimé.']);
+        }
+
         try {
             // Clean up foreign key references before deletion
             \Illuminate\Support\Facades\DB::table('student_registrations')->where('group_id', $group->id)->update(['group_id' => null]);
