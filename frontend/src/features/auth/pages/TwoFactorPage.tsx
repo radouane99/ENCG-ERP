@@ -1,4 +1,4 @@
-import { useState, useRef, KeyboardEvent, ClipboardEvent } from 'react'
+import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, ArrowRight, Loader2, KeyRound } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
@@ -12,8 +12,13 @@ export default function TwoFactorPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   // Redirect if not in 2FA flow
+  useEffect(() => {
+    if (!requiresTwoFactor) {
+      navigate('/login', { replace: true })
+    }
+  }, [requiresTwoFactor, navigate])
+
   if (!requiresTwoFactor) {
-    navigate('/login')
     return null
   }
 
