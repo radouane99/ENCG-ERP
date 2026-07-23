@@ -18,7 +18,10 @@ return new class extends Migration
             $table->string('name');
             $table->date('start_date');
             $table->date('end_date');
+            $table->string('type')->default('academic');
+            $table->text('description')->nullable();
             $table->boolean('is_recurring')->default(false);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 

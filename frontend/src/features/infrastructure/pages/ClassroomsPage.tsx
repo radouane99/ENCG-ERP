@@ -8,14 +8,14 @@ import { Upload } from 'lucide-react'
 
 interface Room {
   id: number; name: string; code: string; type: string;
-  capacity: number; has_projector: boolean; has_ac: boolean; is_available: boolean;
+  capacity: number; exam_capacity?: number; has_projector: boolean; has_ac: boolean; is_available: boolean;
 }
-interface Stats { total: number; available: number; amphitheatres: number; total_capacity: number; }
+interface Stats { total: number; available: number; amphitheatres: number; total_capacity: number; total_exam_capacity?: number; }
 
 const TYPE_LABELS: Record<string, string> = { classroom: 'Salle', amphitheatre: 'Amphithéâtre', lab: 'Laboratoire', seminar: 'Salle de séminaire', admin: 'Bureau Admin' }
 const TYPE_COLORS: Record<string, string> = { classroom: 'bg-primary/10 text-primary border-primary/20', amphitheatre: 'bg-purple-500/10 text-purple-600 border-purple-500/20', lab: 'bg-green-500/10 text-green-600 border-green-500/20', seminar: 'bg-amber-500/10 text-amber-600 border-amber-500/20', admin: 'bg-muted text-muted-foreground border-border' }
 
-const EMPTY = { name: '', code: '', type: 'classroom', capacity: 30, has_projector: true, has_ac: false, is_available: true }
+const EMPTY = { name: '', code: '', type: 'classroom', capacity: 30, exam_capacity: 15, has_projector: true, has_ac: false, is_available: true }
 
 export default function ClassroomsPage() {
   const [rooms, setRooms] = useState<Room[]>([])
@@ -37,7 +37,7 @@ export default function ClassroomsPage() {
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY }); setShowModal(true) }
   const openEdit = (r: Room) => {
     setEditingId(r.id)
-    setForm({ name: r.name, code: r.code, type: r.type, capacity: r.capacity, has_projector: r.has_projector, has_ac: r.has_ac, is_available: r.is_available })
+    setForm({ name: r.name, code: r.code, type: r.type, capacity: r.capacity, exam_capacity: r.exam_capacity || Math.floor(r.capacity / 2), has_projector: r.has_projector, has_ac: r.has_ac, is_available: r.is_available })
     setShowModal(true)
   }
 
@@ -56,8 +56,16 @@ export default function ClassroomsPage() {
     catch { toast.error('Erreur.') }
   }
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(p => ({ ...p, [k]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.type === 'number' ? +e.target.value : e.target.value }))
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const val = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.type === 'number' ? +e.target.value : e.target.value;
+    setForm(p => {
+      const next = { ...p, [k]: val };
+      if (k === 'capacity' && typeof val === 'number') {
+        next.exam_capacity = Math.floor(val / 2);
+      }
+      return next;
+    });
+  }
 
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1"
@@ -71,7 +79,7 @@ export default function ClassroomsPage() {
         modelName="Salles"
         templateName="Fichier Modèle d'Infrastructure"
         templateDesc={
-          <>Téléchargez et remplissez le gabarit pré-formaté. Il contient les colonnes requises : <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">name</span> (nom de la salle), <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">capacity</span> (nombre de places), et <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">type</span> (catégorie de salle).</>
+          <>Téléchargez et remplissez le gabarit pré-formaté. Il contient les colonnes requises : <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">name</span> (nom de la salle), <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">capacity</span> (places cours), et <span className="text-red-500 font-mono text-xs bg-red-50 px-1 py-0.5 rounded">type</span> (catégorie de salle).</>
         }
         instructions={<>Les types de salles autorisés sont : <strong>course</strong> (Amphithéâtre / Cours magistral), <strong>TD</strong> (Travaux Dirigés), et <strong>TP</strong> (Laboratoire informatique ou technique).</>}
         apiModel="rooms"
@@ -93,7 +101,7 @@ export default function ClassroomsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#0f2863] italic">Infrastructures &amp; Salles</h1>
-            <p className="text-slate-500 mt-1 text-sm">Gestion complète des amphis, salles de cours TD et laboratoires TP de l'UPF.</p>
+            <p className="text-slate-500 mt-1 text-sm">Gestion complète des amphis, salles de cours TD et laboratoires TP avec capacités cours &amp; examen.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -118,14 +126,15 @@ export default function ClassroomsPage() {
               <tr>
                 <th className="px-8 py-5 font-bold tracking-wider">Nom de la salle</th>
                 <th className="px-6 py-5 font-bold tracking-wider text-center">Catégorie</th>
-                <th className="px-6 py-5 font-bold tracking-wider text-center">Capacité</th>
+                <th className="px-6 py-5 font-bold tracking-wider text-center">Capacité Cours</th>
+                <th className="px-6 py-5 font-bold tracking-wider text-center">Capacité Examen</th>
                 <th className="px-8 py-5 font-bold tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {rooms.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-slate-400 font-medium">Aucune salle trouvée.</td>
+                  <td colSpan={5} className="text-center py-12 text-slate-400 font-medium">Aucune salle trouvée.</td>
                 </tr>
               ) : rooms.map(r => {
                 let badgeClass = "bg-slate-100 text-slate-600";
@@ -141,6 +150,8 @@ export default function ClassroomsPage() {
                   displayType = "LABO TP";
                 }
                 
+                const examCap = r.exam_capacity ?? Math.floor(r.capacity / 2);
+
                 return (
                   <tr key={r.id} className="bg-white hover:bg-slate-50/80 transition-colors group">
                     <td className="px-8 py-5 flex items-center gap-4">
@@ -155,7 +166,12 @@ export default function ClassroomsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <span className="font-bold text-slate-500 text-xs tracking-wider">{r.capacity} SIÈGES</span>
+                      <span className="font-bold text-slate-600 text-xs tracking-wider">{r.capacity} SIÈGES</span>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <span className="font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full text-xs tracking-wider border border-purple-200/60">
+                        {examCap} PLACES
+                      </span>
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -171,7 +187,7 @@ export default function ClassroomsPage() {
         )}
       </div>
 
-      {/* Modal CRUD (Keeping it for functionality) */}
+      {/* Modal CRUD */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -198,9 +214,14 @@ export default function ClassroomsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Capacité *</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Capacité Cours *</label>
                   <input required type="number" min="1" value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Capacité Examen (Espacement Anti-Triche)</label>
+                <input type="number" min="1" value={form.exam_capacity} onChange={set('exam_capacity')} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" placeholder="50% de la capacité par défaut" />
+                <p className="text-[11px] text-slate-400 mt-1">Par défaut : 50% de la capacité cours (laisse une place vide entre chaque étudiant).</p>
               </div>
               
               <div className="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-slate-100">

@@ -23,6 +23,7 @@ class RoomController extends Controller
             'code'          => $r->code,
             'type'          => $r->type,
             'capacity'      => $r->capacity,
+            'exam_capacity' => $r->exam_capacity ?? (int) floor($r->capacity / 2),
             'has_projector' => $r->has_projector,
             'has_ac'        => $r->has_ac,
             'is_available'  => $r->is_available,
@@ -31,10 +32,11 @@ class RoomController extends Controller
         return response()->json([
             'data'  => $rooms,
             'stats' => [
-                'total'           => $rooms->count(),
-                'available'       => $rooms->where('is_available', true)->count(),
-                'amphitheatres'   => $rooms->where('type', 'amphitheatre')->count(),
-                'total_capacity'  => $rooms->sum('capacity'),
+                'total'               => $rooms->count(),
+                'available'           => $rooms->where('is_available', true)->count(),
+                'amphitheatres'       => $rooms->where('type', 'amphitheatre')->count(),
+                'total_capacity'      => $rooms->sum('capacity'),
+                'total_exam_capacity' => $rooms->sum('exam_capacity'),
             ]
         ]);
     }
@@ -48,10 +50,14 @@ class RoomController extends Controller
             'code'          => 'required|string|max:20|unique:rooms,code',
             'type'          => 'required|in:classroom,amphitheatre,lab,seminar,admin',
             'capacity'      => 'required|integer|min:1',
+            'exam_capacity' => 'nullable|integer|min:1',
             'has_projector' => 'boolean',
             'has_ac'        => 'boolean',
             'is_available'  => 'boolean',
         ]);
+        if (empty($validated['exam_capacity'])) {
+            $validated['exam_capacity'] = (int) floor($validated['capacity'] / 2);
+        }
         $validated['institution_id'] = 1;
         $room = Room::create($validated);
         return response()->json(['message' => 'Salle créée avec succès.', 'data' => $room], 201);
@@ -66,6 +72,7 @@ class RoomController extends Controller
             'code'          => 'sometimes|required|string|max:20|unique:rooms,code,' . $room->id,
             'type'          => 'sometimes|required|in:classroom,amphitheatre,lab,seminar,admin',
             'capacity'      => 'sometimes|required|integer|min:1',
+            'exam_capacity' => 'nullable|integer|min:1',
             'has_projector' => 'boolean',
             'has_ac'        => 'boolean',
             'is_available'  => 'boolean',

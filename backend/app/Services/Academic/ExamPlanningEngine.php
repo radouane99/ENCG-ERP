@@ -37,13 +37,13 @@ class ExamPlanningEngine
         }
 
         // Calculate total capacity
-        // For exams, we use 50% capacity to leave an empty seat between students to prevent cheating
-        $totalExamCapacity = $rooms->sum('capacity') / 2;
+        // For exams, we use configured exam_capacity (or 50% fallback) to leave an empty seat between students
+        $totalExamCapacity = $rooms->sum(fn ($r) => $r->exam_capacity ?? floor($r->capacity / 2));
 
         if ($students->count() > $totalExamCapacity) {
             throw new Exception(
                 "Capacité insuffisante. Vous avez " . $students->count() . 
-                " étudiants mais la capacité d'examen (50% de la salle) n'est que de " . floor($totalExamCapacity) . " places."
+                " étudiants mais la capacité d'examen disponible n'est que de " . floor($totalExamCapacity) . " places."
             );
         }
 
@@ -59,7 +59,7 @@ class ExamPlanningEngine
             $seatings = [];
 
             foreach ($rooms as $room) {
-                $examCapacity = floor($room->capacity / 2);
+                $examCapacity = $room->exam_capacity ?? floor($room->capacity / 2);
                 
                 for ($seat = 1; $seat <= $examCapacity; $seat++) {
                     if ($studentIndex >= $students->count()) break; // All students placed

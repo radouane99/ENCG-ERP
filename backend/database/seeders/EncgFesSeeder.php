@@ -1850,14 +1850,16 @@ class EncgFesSeeder extends Seeder
     private function seedHolidays(): void
     {
         $holidays = [
-            ['name' => 'Aïd Al-Adha 2025',        'start_date' => '2025-06-06', 'end_date' => '2025-06-09', 'is_recurring' => false],
-            ['name' => 'Fête du Trône',             'start_date' => '2025-07-30', 'end_date' => '2025-07-30', 'is_recurring' => true],
-            ['name' => 'Aïd Al-Mawlid 2025',       'start_date' => '2025-09-04', 'end_date' => '2025-09-05', 'is_recurring' => false],
-            ['name' => 'Marché de la Marche Verte', 'start_date' => '2025-11-06', 'end_date' => '2025-11-06', 'is_recurring' => true],
-            ['name' => 'Fête de l\'Indépendance',  'start_date' => '2025-11-18', 'end_date' => '2025-11-18', 'is_recurring' => true],
-            ['name' => 'Nouvel An 2026',             'start_date' => '2026-01-01', 'end_date' => '2026-01-01', 'is_recurring' => true],
-            ['name' => 'Manifeste de l\'Indépendance', 'start_date' => '2026-01-11', 'end_date' => '2026-01-11', 'is_recurring' => true],
-            ['name' => 'Fête du Travail',           'start_date' => '2026-05-01', 'end_date' => '2026-05-01', 'is_recurring' => true],
+            ['name' => 'Aïd Al-Adha 2025',        'start_date' => '2025-06-06', 'end_date' => '2025-06-09', 'type' => 'religious', 'is_recurring' => false],
+            ['name' => 'Fête du Trône',             'start_date' => '2025-07-30', 'end_date' => '2025-07-30', 'type' => 'national',  'is_recurring' => true],
+            ['name' => 'Aïd Al-Mawlid 2025',       'start_date' => '2025-09-04', 'end_date' => '2025-09-05', 'type' => 'religious', 'is_recurring' => false],
+            ['name' => 'Vacances d\'Automne',       'start_date' => '2025-10-26', 'end_date' => '2025-11-02', 'type' => 'academic',  'is_recurring' => true],
+            ['name' => 'Marché de la Marche Verte', 'start_date' => '2025-11-06', 'end_date' => '2025-11-06', 'type' => 'national',  'is_recurring' => true],
+            ['name' => 'Fête de l\'Indépendance',  'start_date' => '2025-11-18', 'end_date' => '2025-11-18', 'type' => 'national',  'is_recurring' => true],
+            ['name' => 'Vacances d\'Hiver',         'start_date' => '2026-01-25', 'end_date' => '2026-02-01', 'type' => 'academic',  'is_recurring' => true],
+            ['name' => 'Nouvel An 2026',             'start_date' => '2026-01-01', 'end_date' => '2026-01-01', 'type' => 'national',  'is_recurring' => true],
+            ['name' => 'Manifeste de l\'Indépendance', 'start_date' => '2026-01-11', 'end_date' => '2026-01-11', 'type' => 'national',  'is_recurring' => true],
+            ['name' => 'Fête du Travail',           'start_date' => '2026-05-01', 'end_date' => '2026-05-01', 'type' => 'national',  'is_recurring' => true],
         ];
         foreach ($holidays as &$h) {
             $h['created_at'] = now();

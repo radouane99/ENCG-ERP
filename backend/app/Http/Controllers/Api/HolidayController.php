@@ -24,6 +24,7 @@ class HolidayController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'type' => 'required|string',
+            'description' => 'nullable|string',
         ]);
 
         $holiday = Holiday::create($validated);
@@ -44,6 +45,7 @@ class HolidayController extends Controller
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
             'type' => 'sometimes|string',
+            'description' => 'nullable|string',
         ]);
 
         $holiday->update($validated);

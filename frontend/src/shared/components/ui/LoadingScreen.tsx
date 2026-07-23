@@ -12,12 +12,16 @@ export function LoadingScreen() {
       aria-label="Chargement de l'application ENCG ERP"
     >
       <div className="flex flex-col items-center gap-5 animate-fade-in">
-        {/* Logo mark — colored ring */}
+        {/* Logo mark — ENCG Logo */}
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] flex items-center justify-center shadow-lg">
-            <span className="text-white font-black text-xl tracking-tight">E</span>
+          <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-900 p-3 flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800">
+            <img
+              src="/logo-encg.png"
+              alt="ENCG ERP Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          <div className="absolute -inset-1 rounded-2xl border-2 border-[color-mix(in srgb, var(--color-primary) 0.300%, transparent)] animate-pulse" />
+          <div className="absolute -inset-1 rounded-2xl border-2 border-indigo-500/30 dark:border-indigo-400/20 animate-pulse" />
         </div>
 
         <Spinner size="lg" label="Chargement en cours..." />
