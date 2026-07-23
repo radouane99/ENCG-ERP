@@ -585,72 +585,106 @@ export default function AdminStudentCardsPage() {
             return (
               <div 
                 key={cardData.student_id}
-                className="relative bg-white border border-slate-300 rounded-xl overflow-hidden p-2 flex flex-col justify-between shadow-sm font-sans mx-auto"
+                className="relative bg-white border border-slate-300 rounded-[14px] overflow-hidden flex flex-col justify-between shadow-md font-sans mx-auto box-border"
                 style={{ pageBreakInside: 'avoid', width: '86mm', height: '54mm' }}
               >
-                {/* Header with Official Logo Image */}
-                <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-                  <div className="flex items-center gap-1.5">
-                    <img src="/logo-encg.png" alt="ENCG Fès" className="h-6 w-auto object-contain" />
+                {/* Top Gradient Banner Header */}
+                <div className="bg-gradient-to-r from-[#0b1f4f] via-[#0f2863] to-[#1d3d82] text-white px-2.5 py-1.5 flex items-center justify-between border-b-2 border-amber-400/90 relative overflow-hidden">
+                  {/* Watermark Logo Background */}
+                  <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                    <img src="/logo-encg.png" alt="" className="h-16 w-auto" />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 z-10">
+                    <div className="bg-white p-0.5 rounded-md shadow-sm shrink-0">
+                      <img src="/logo-encg.png" alt="ENCG Fès" className="h-5 w-auto object-contain" />
+                    </div>
                     <div>
-                      <h2 className="text-[7px] font-black text-blue-950 uppercase tracking-tight leading-none">
+                      <h2 className="text-[7.5px] font-black text-amber-300 uppercase tracking-wide leading-none">
                         ÉCOLE NATIONALE DE COMMERCE ET DE GESTION
                       </h2>
-                      <p className="text-[5.5px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-0.5">
-                        UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH - FÈS
+                      <p className="text-[5.5px] text-slate-200 font-bold uppercase tracking-wider leading-none mt-0.5">
+                        UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — FÈS
                       </p>
                     </div>
                   </div>
-                  <span className="text-[5.5px] font-black text-blue-900 bg-blue-50 px-1 py-0.5 rounded border border-blue-200 shrink-0">
-                    {academicYear}
-                  </span>
+
+                  <div className="z-10 text-right shrink-0">
+                    <span className="bg-amber-400 text-[#0f2863] text-[6px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                      {academicYear}
+                    </span>
+                    <p className="text-[4.5px] text-slate-300 font-extrabold uppercase mt-0.5">CARTE ÉTUDIANT</p>
+                  </div>
                 </div>
 
-                {/* Middle Body: Photo + Student Details + QR Code */}
-                <div className="flex items-center gap-2 my-0.5">
-                  {/* Student Photo */}
-                  <div className="w-[18mm] h-[22mm] bg-slate-100 rounded-md border-2 border-blue-900 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                    {cardData.photo_url ? (
-                      <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-blue-950 text-white flex items-center justify-center font-black text-xs">
-                        {cardData.student.name.charAt(0)}
-                      </div>
-                    )}
+                {/* Main Body */}
+                <div className="px-2.5 py-1 flex items-center gap-2.5 flex-1 min-h-0 bg-gradient-to-b from-slate-50/50 to-white">
+                  {/* Photo Container */}
+                  <div className="relative shrink-0">
+                    <div className="w-[19mm] h-[23mm] bg-white rounded-lg border-2 border-[#0f2863] flex items-center justify-center overflow-hidden shadow-sm">
+                      {cardData.photo_url ? (
+                        <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#0f2863] text-amber-300 flex items-center justify-center font-black text-xs">
+                          {cardData.student.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#0f2863] text-amber-300 text-[4.5px] font-black px-1 rounded uppercase tracking-tighter whitespace-nowrap shadow-2xs">
+                      OFFICIEL
+                    </span>
                   </div>
 
-                  {/* Details */}
+                  {/* Metadata Details */}
                   <div className="flex-1 min-w-0 space-y-0.5">
-                    <p className="text-[5px] text-slate-400 font-bold uppercase tracking-wider leading-none">Nom & Prénom</p>
-                    <p className="text-[8.5px] font-black text-slate-900 leading-tight truncate">{cardData.student.name}</p>
-                    <div className="flex gap-2 text-[6px] font-mono text-slate-600 font-bold">
-                      <span>CNE: {cardData.student.cne}</span>
-                      <span>CIN: {cardData.student.cin || 'N/A'}</span>
+                    <div>
+                      <span className="text-[4.5px] text-slate-400 font-extrabold uppercase tracking-wider leading-none block">Nom & Prénom / Full Name</span>
+                      <h3 className="text-[9.5px] font-black text-slate-900 leading-tight truncate">{cardData.student.name}</h3>
                     </div>
-                    <div className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 flex justify-between items-center text-[5.5px]">
-                      <span className="font-extrabold text-blue-900 truncate max-w-[80px]">{cardData.student.filiere}</span>
-                      <span className="font-extrabold text-slate-700 shrink-0">{cardData.student.group}</span>
+
+                    <div className="grid grid-cols-2 gap-1 text-[6px] font-mono font-bold text-slate-700 bg-slate-100/80 px-1.5 py-0.5 rounded border border-slate-200/80">
+                      <span>CNE: <strong className="text-slate-900">{cardData.student.cne}</strong></span>
+                      <span>CIN: <strong className="text-slate-900">{cardData.student.cin || 'N/A'}</strong></span>
+                    </div>
+
+                    {/* Filière & Option */}
+                    <div className="space-y-0.2">
+                      <div className="flex items-center justify-between text-[6px] font-extrabold">
+                        <span className="text-[#0f2863] truncate max-w-[110px]" title={cardData.student.filiere}>
+                          📚 {cardData.student.filiere}
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 px-1 rounded font-black text-[5.5px] shrink-0 border border-amber-200">
+                          {cardData.student.group}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Verification QR Code */}
-                  <div className="flex flex-col items-center shrink-0">
-                    <div className="bg-white p-0.5 rounded border border-slate-200">
-                      <QRCode value={verificationUrl} size={30} level="H" />
+                  {/* Holographic Verification QR */}
+                  <div className="flex flex-col items-center justify-center shrink-0 space-y-0.5 border-l border-slate-200 pl-1.5">
+                    <div className="bg-white p-0.5 rounded-md border border-slate-300 shadow-2xs">
+                      <QRCode value={verificationUrl} size={32} level="H" />
                     </div>
-                    <span className="text-[4.5px] text-slate-400 font-bold uppercase mt-0.5">Scannez QR</span>
+                    <span className="text-[4px] font-extrabold text-blue-900 uppercase tracking-tighter text-center leading-none">
+                      SÉCURITÉ QR
+                    </span>
                   </div>
                 </div>
 
-                {/* Footer Barcode & Expiration */}
-                <div className="border-t border-dashed border-slate-300 pt-0.5 flex items-center justify-between text-[5px]">
+                {/* Footer Barcode & Legal Disclaimer */}
+                <div className="bg-[#0f2863] text-white px-2 py-0.5 flex items-center justify-between text-[5px] border-t border-amber-400/80">
                   <div className="flex items-center gap-1.5">
-                    <Barcode value={cardNumber} height={14} className="w-[60px]" />
-                    <span className="font-mono text-slate-600 font-bold">{cardNumber}</span>
+                    <div className="bg-white px-1 py-0.2 rounded shrink-0">
+                      <Barcode value={cardNumber} height={12} className="w-[50px]" />
+                    </div>
+                    <span className="font-mono text-amber-300 font-bold tracking-wider">{cardNumber}</span>
                   </div>
-                  <span className="text-slate-400 font-medium">
-                    Valable jusqu'au {cardData.expires_at ? new Date(cardData.expires_at).toLocaleDateString('fr-FR') : '31/08/' + (new Date().getFullYear() + 1)}
-                  </span>
+                  
+                  <div className="text-right">
+                    <span className="text-slate-200 font-semibold block">
+                      Valable jusqu'au <strong className="text-amber-300">{cardData.expires_at ? new Date(cardData.expires_at).toLocaleDateString('fr-FR') : '31/08/' + (new Date().getFullYear() + 1)}</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
             );

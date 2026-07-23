@@ -38,8 +38,8 @@ class AdminDocumentRequestController extends Controller
                 'time' => $documentRequest->requested_at?->diffForHumans() ?? $documentRequest->created_at?->diffForHumans(),
                 'status' => $status,
                 'reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
-                'url' => $generatedDocument ? url("/api/admin/document-requests/{$documentRequest->id}/download") : null,
-                'preview_url' => $generatedDocument ? url("/api/admin/document-requests/{$documentRequest->id}/download") : null,
+                'url' => url("/api/admin/document-requests/{$documentRequest->id}/download"),
+                'preview_url' => url("/api/admin/document-requests/{$documentRequest->id}/preview"),
             ];
         });
 
@@ -88,12 +88,43 @@ class AdminDocumentRequestController extends Controller
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
         if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
-            return response()->json(['message' => 'Document not ready or not found'], 404);
+            $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
+            $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
         }
 
-        return Storage::disk('private')->download(
-            $generatedDocument->file_path,
-            basename($generatedDocument->file_path)
-        );
+        if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
+            return Storage::disk('private')->download(
+                $generatedDocument->file_path,
+                basename($generatedDocument->file_path)
+            );
+        }
+
+        return response()->json(['message' => 'Document not ready or not found'], 404);
+    }
+
+    public function preview(DocumentRequest $documentRequest)
+    {
+        $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+
+        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
+            try {
+                $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
+                $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+            } catch (\Throwable $e) {
+                // Return json error or fallback
+            }
+        }
+
+        if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
+            return response()->file(
+                Storage::disk('private')->path($generatedDocument->file_path),
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . basename($generatedDocument->file_path) . '"',
+                ]
+            );
+        }
+
+        return response()->json(['message' => 'Document preview unavailable'], 404);
     }
 }
