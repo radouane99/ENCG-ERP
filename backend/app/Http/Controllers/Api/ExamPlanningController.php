@@ -321,51 +321,64 @@ class ExamPlanningController extends Controller
      */
     public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
     {
-        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
-        
-        $room = null;
-        if ($roomId) {
-            $room = \App\Models\Room::find($roomId);
-        }
-        if (!$room) {
-            $room = $exam->room ?? \App\Models\Room::first() ?? (object) ['name' => 'Amphithéâtre B', 'code' => 'AMPHI_B'];
-        }
+        try {
+            $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->find($examId);
+            if (! $exam) {
+                $exam = \App\Models\Exam::first();
+            }
 
-        $seatingsQuery = \Illuminate\Support\Facades\DB::table('exam_seatings')
-            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->leftJoin('users', 'students.user_id', '=', 'users.id')
-            ->where('exam_seatings.exam_id', $examId);
+            $room = null;
+            if ($roomId) {
+                $room = \App\Models\Room::find($roomId);
+            }
+            if (! $room) {
+                $room = $exam?->room ?? \App\Models\Room::first() ?? (object) ['name' => 'Amphithéâtre B', 'code' => 'AMPHI_B'];
+            }
 
-        if ($roomId && \App\Models\Room::find($roomId)) {
-            $seatingsQuery->where('exam_seatings.room_id', $roomId);
-        }
-
-        $seatings = $seatingsQuery
-            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
-            ->orderBy('exam_seatings.seat_number', 'asc')
-            ->get();
-
-        // Fallback: If no seatings filter found, fetch all seatings for this exam
-        if ($seatings->isEmpty()) {
-            $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            $seatingsQuery = \Illuminate\Support\Facades\DB::table('exam_seatings')
                 ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
                 ->leftJoin('users', 'students.user_id', '=', 'users.id')
-                ->where('exam_seatings.exam_id', $examId)
+                ->where('exam_seatings.exam_id', $examId);
+
+            if ($roomId && \App\Models\Room::find($roomId)) {
+                $seatingsQuery->where('exam_seatings.room_id', $roomId);
+            }
+
+            $seatings = $seatingsQuery
                 ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
                 ->orderBy('exam_seatings.seat_number', 'asc')
                 ->get();
+
+            if ($seatings->isEmpty()) {
+                $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+                    ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
+                    ->leftJoin('users', 'students.user_id', '=', 'users.id')
+                    ->where('exam_seatings.exam_id', $examId)
+                    ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
+                    ->orderBy('exam_seatings.seat_number', 'asc')
+                    ->get();
+            }
+
+            $logoPath = public_path('logo-encg.png');
+            $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64.'.base64_encode(file_get_contents($logoPath)) : '';
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
+                'exam' => $exam,
+                'room' => $room,
+                'seatings' => $seatings,
+                'logoBase64' => $logoBase64,
+            ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+
+            return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur PDF Affiche de Porte: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile()),
+            ], 500);
         }
-
-        $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
-            'exam' => $exam,
-            'room' => $room,
-            'seatings' => $seatings,
-            'logoBase64' => $logoBase64,
-        ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
-
-        return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
     }
 }

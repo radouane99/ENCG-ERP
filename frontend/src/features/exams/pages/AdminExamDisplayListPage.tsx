@@ -48,10 +48,20 @@ export default function AdminExamDisplayListPage() {
 
                 for (const ep of endpoints) {
                   try {
-                    res = await api.get(ep, { responseType: 'blob' });
-                    if (res && res.data) break;
-                  } catch {
-                    // Try next endpoint
+                    const response = await api.get(ep, { responseType: 'blob' });
+                    if (response && response.data) {
+                      // Check if returned data is JSON error instead of PDF
+                      if (response.data.type === 'application/json') {
+                        const errorText = await response.data.text();
+                        console.error('PDF Server Error Details:', errorText);
+                        alert(`Erreur Serveur PDF: ${errorText}`);
+                        return;
+                      }
+                      res = response;
+                      break;
+                    }
+                  } catch (err: any) {
+                    console.error('Endpoint attempt error:', ep, err);
                   }
                 }
 
