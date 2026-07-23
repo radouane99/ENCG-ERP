@@ -149,10 +149,10 @@ class ReservisteController extends Controller
 
         $settings['derogation'] = [
             'status' => $validated['status'],
-            'reference' => $validated['reference'] ?? 'DEROG-' . date('Y') . '-' . rand(100, 999),
+            'reference' => $validated['reference'] ?? null,
             'granted_at' => now()->toDateTimeString(),
             'granted_by' => $request->user() ? ($request->user()->name ?? $request->user()->email) : 'Administration',
-            'notes' => $validated['notes'] ?? 'Dérogation accordée par le Conseil d\'Établissement ENCG',
+            'notes' => $validated['notes'] ?? null,
         ];
 
         $student->update(['settings' => $settings]);

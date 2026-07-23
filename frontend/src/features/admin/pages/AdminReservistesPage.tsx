@@ -112,8 +112,8 @@ export default function AdminReservistesPage() {
   const handleOpenDerogationModal = (student: any) => {
     setSelectedStudent(student)
     setDerogationStatus(student.derogation?.status || 'accordee')
-    setDerogationRef(student.derogation?.reference || `DEROG-2026-${student.filiere_code}-${Math.floor(100 + Math.random() * 900)}`)
-    setDerogationNotes(student.derogation?.notes || 'Autorisation exceptionnelle de réinscription accordée par le Conseil d\'Établissement ENCG.')
+    setDerogationRef(student.derogation?.reference || '')
+    setDerogationNotes(student.derogation?.notes || '')
     setIsModalOpen(true)
   }
 
