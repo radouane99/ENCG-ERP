@@ -203,9 +203,55 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </button>
       )}
 
-      {/* Logo */}
-      <div className="flex items-center justify-center px-6 py-6 border-b border-sidebar-border bg-gradient-to-b from-white/[0.02] to-transparent">
+      {/* Logo & Quick Language Switcher */}
+      <div className="flex flex-col items-center justify-center px-6 py-5 border-b border-sidebar-border bg-gradient-to-b from-white/[0.02] to-transparent gap-3">
         <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain drop-shadow-sm" />
+
+        {/* Quick Language Selector */}
+        <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/10 w-full justify-between text-[11px] font-bold">
+          <button
+            onClick={() => {
+              i18n.changeLanguage('fr');
+              document.documentElement.dir = 'ltr';
+              document.documentElement.lang = 'fr';
+              localStorage.setItem('i18nextLng', 'fr');
+            }}
+            className={cn(
+              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
+              i18n.language === 'fr' || !i18n.language ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <span>🇫🇷</span> FR
+          </button>
+          <button
+            onClick={() => {
+              i18n.changeLanguage('ar');
+              document.documentElement.dir = 'rtl';
+              document.documentElement.lang = 'ar';
+              localStorage.setItem('i18nextLng', 'ar');
+            }}
+            className={cn(
+              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
+              i18n.language === 'ar' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <span>🇲🇦</span> العربية
+          </button>
+          <button
+            onClick={() => {
+              i18n.changeLanguage('en');
+              document.documentElement.dir = 'ltr';
+              document.documentElement.lang = 'en';
+              localStorage.setItem('i18nextLng', 'en');
+            }}
+            className={cn(
+              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
+              i18n.language === 'en' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <span>🇬🇧</span> EN
+          </button>
+        </div>
       </div>
 
       {/* Institution badge */}

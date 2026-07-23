@@ -17,6 +17,9 @@ export function LanguageSwitcher() {
 
   const handleSelect = (code: string) => {
     i18n.changeLanguage(code);
+    document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = code;
+    localStorage.setItem('i18nextLng', code);
     setIsOpen(false);
   };
 
