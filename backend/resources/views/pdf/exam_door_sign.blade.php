@@ -107,7 +107,9 @@
     <table class="header-table">
         <tr>
             <td style="width: 20%;">
-                <img src="{{ public_path('logo-encg.png') }}" style="max-height: 50px;" alt="ENCG Fès">
+                @if(!empty($logoBase64))
+                    <img src="{{ $logoBase64 }}" style="max-height: 50px;" alt="ENCG Fès">
+                @endif
             </td>
             <td class="header-title" style="width: 80%;">
                 <h1>Royaume du Maroc — ENCG Fès</h1>

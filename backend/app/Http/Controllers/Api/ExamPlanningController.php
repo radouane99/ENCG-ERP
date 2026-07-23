@@ -332,8 +332,8 @@ class ExamPlanningController extends Controller
         }
 
         $seatingsQuery = \Illuminate\Support\Facades\DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
+            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->where('exam_seatings.exam_id', $examId);
 
         if ($roomId && \App\Models\Room::find($roomId)) {
@@ -348,19 +348,23 @@ class ExamPlanningController extends Controller
         // Fallback: If no seatings filter found, fetch all seatings for this exam
         if ($seatings->isEmpty()) {
             $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
-                ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-                ->join('users', 'students.user_id', '=', 'users.id')
+                ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
+                ->leftJoin('users', 'students.user_id', '=', 'users.id')
                 ->where('exam_seatings.exam_id', $examId)
                 ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
                 ->orderBy('exam_seatings.seat_number', 'asc')
                 ->get();
         }
 
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
             'exam' => $exam,
             'room' => $room,
-            'seatings' => $seatings
-        ])->setPaper('a4', 'portrait');
+            'seatings' => $seatings,
+            'logoBase64' => $logoBase64,
+        ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
         return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
     }
