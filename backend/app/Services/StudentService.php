@@ -61,10 +61,9 @@ class StudentService
             // Filiere Filter
             if ($filiereId !== null) {
                 $query->where(function ($q) use ($filiereId) {
-                    $q->where('students.filiere_id', $filiereId)
-                      ->orWhereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
+                    $q->whereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
                       ->orWhereExists(function ($rQ) use ($filiereId) {
-                          $rQ->select(DB::raw(1))
+                          $rQ->selectRaw('1')
                              ->from('student_registrations')
                              ->whereColumn('student_registrations.student_id', 'students.id')
                              ->where('student_registrations.filiere_id', $filiereId);
@@ -75,22 +74,24 @@ class StudentService
             // Semester Filter (Pairs S1+S2, S3+S4, etc.)
             if ($allowedSemesters !== null) {
                 $query->where(function ($q) use ($allowedSemesters, $requestedSem) {
-                    $q->whereIn('students.current_semester', $allowedSemesters)
-                      ->orWhereHas('pathways', fn($p) => $p->whereIn('current_semester', $allowedSemesters))
+                    $q->whereHas('pathways', fn($p) => $p->whereIn('current_semester', $allowedSemesters))
                       ->orWhereExists(function ($rQ) use ($allowedSemesters) {
-                          $rQ->select(DB::raw(1))
+                          $rQ->selectRaw('1')
                              ->from('student_registrations')
                              ->whereColumn('student_registrations.student_id', 'students.id')
                              ->whereIn('student_registrations.semester_number', $allowedSemesters);
-                      })
-                      ->orWhereExists(function ($retakeQ) use ($requestedSem) {
-                          $retakeQ->select(DB::raw(1))
-                                 ->from('student_module_retakes')
-                                 ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
-                                 ->whereColumn('student_module_retakes.student_id', 'students.id')
-                                 ->where('student_module_retakes.status', 'pending')
-                                 ->where('modules.semester_number', $requestedSem);
                       });
+
+                    if ($requestedSem !== null && \Illuminate\Support\Facades\Schema::hasTable('student_module_retakes')) {
+                        $q->orWhereExists(function ($retakeQ) use ($requestedSem) {
+                            $retakeQ->selectRaw('1')
+                                   ->from('student_module_retakes')
+                                   ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
+                                   ->whereColumn('student_module_retakes.student_id', 'students.id')
+                                   ->where('student_module_retakes.status', 'pending')
+                                   ->where('modules.semester_number', $requestedSem);
+                        });
+                    }
                 });
             }
 
@@ -104,15 +105,16 @@ class StudentService
                     if (!empty($matches[1])) {
                         $suffix = $matches[1];
                         $siblingIds = \App\Models\Group::where('name', 'like', "%{$suffix}")->pluck('id')->toArray();
-                        $matchingGroupIds = array_unique(array_merge($matchingGroupIds, $siblingIds));
+                        $matchingGroupIds = array_merge($matchingGroupIds, $siblingIds);
                     }
                 }
 
+                $matchingGroupIds = array_values(array_unique(array_map('intval', $matchingGroupIds)));
+
                 $query->where(function ($q) use ($matchingGroupIds) {
-                    $q->whereIn('students.group_id', $matchingGroupIds)
-                      ->orWhereHas('pathways', fn($p) => $p->whereIn('group_id', $matchingGroupIds))
+                    $q->whereHas('pathways', fn($p) => $p->whereIn('group_id', $matchingGroupIds))
                       ->orWhereExists(function ($rQ) use ($matchingGroupIds) {
-                          $rQ->select(DB::raw(1))
+                          $rQ->selectRaw('1')
                              ->from('student_registrations')
                              ->whereColumn('student_registrations.student_id', 'students.id')
                              ->whereIn('student_registrations.group_id', $matchingGroupIds);

@@ -27,23 +27,31 @@ class StudentController extends Controller
         $sortField = $request->input('sort', 'last_name');
         $sortOrder = $request->input('order', 'asc');
 
-        $paginated = $this->studentService->getPaginatedStudents(
-            $request->only(['search', 'status', 'filiere_id', 'semester', 'group_id']),
-            $perPage,
-            $sortField,
-            $sortOrder
-        );
+        try {
+            $paginated = $this->studentService->getPaginatedStudents(
+                $request->only(['search', 'status', 'filiere_id', 'semester', 'group_id']),
+                $perPage,
+                $sortField,
+                $sortOrder
+            );
 
-        // [Phase 8] Return StudentResource collection — frontend already expects response.data
-        return response()->json([
-            'data' => StudentResource::collection($paginated->getCollection()),
-            'meta' => [
-                'total'        => $paginated->total(),
-                'per_page'     => $paginated->perPage(),
-                'current_page' => $paginated->currentPage(),
-                'last_page'    => $paginated->lastPage(),
-            ],
-        ]);
+            return response()->json([
+                'data' => StudentResource::collection($paginated->getCollection()),
+                'meta' => [
+                    'total'        => $paginated->total(),
+                    'per_page'     => $paginated->perPage(),
+                    'current_page' => $paginated->currentPage(),
+                    'last_page'    => $paginated->lastPage(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur StudentController index: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 
     public function store(\App\Http\Requests\Student\StoreStudentRequest $request, \App\Actions\Student\CreateStudentAction $action): JsonResponse
