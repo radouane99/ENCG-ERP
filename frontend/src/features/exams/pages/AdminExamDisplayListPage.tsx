@@ -3,6 +3,7 @@ import { ChevronLeft, Download, FileText, ArrowLeft, Loader2 } from 'lucide-reac
 import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
+import api from '@shared/lib/api'
 
 export default function AdminExamDisplayListPage() {
   const { id } = useParams()
@@ -33,8 +34,29 @@ export default function AdminExamDisplayListPage() {
           <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au Planning
           </Link>
-          <button className="h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-            <Download className="w-4 h-4" /> Télécharger PDF
+          <button
+            onClick={async () => {
+              if (!id) return;
+              try {
+                const roomId = exam?.room_id || exam?.room?.id || 1;
+                const res = await api.get(`/admin/exams/${id}/rooms/${roomId}/door-sign-pdf`, {
+                  responseType: 'blob'
+                });
+                const blob = new Blob([res.data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Affiche_Porte_Exam_${id}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              } catch (e) {
+                console.error('Erreur lors du téléchargement de l\'affiche de porte', e);
+              }
+            }}
+            className="h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4" /> Imprimer Affiche de Porte (PDF)
           </button>
         </div>
       </div>

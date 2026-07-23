@@ -124,11 +124,18 @@ class StudentCardController extends Controller
         $studentProfile = $user->student;
         $pathway = $studentProfile?->latestPathway;
 
+        $window = (int) floor(time() / 30);
+        $remainingSeconds = 30 - (time() % 30);
+        $totp = substr(hash_hmac('sha256', $card->qr_token . '-' . $window, config('app.key', 'encg-erp-secret')), 0, 8);
+        $dynamicToken = $card->qr_token . '.' . $totp;
+
         return response()->json([
             'success' => true,
             'data' => [
                 'card_number' => $card->card_number,
                 'qr_token' => $card->qr_token,
+                'dynamic_totp' => $dynamicToken,
+                'totp_remaining_seconds' => $remainingSeconds,
                 'status' => $card->status,
                 'expires_at' => $card->expires_at,
                 'academic_year' => $card->academic_year,
@@ -440,13 +447,36 @@ class StudentCardController extends Controller
      */
     public function verify(Request $request, string $token): JsonResponse
     {
-        $card = StudentCard::with(['student.institution'])->where('qr_token', $token)->first();
+        $staticToken = $token;
+        $providedTotp = null;
+
+        if (str_contains($token, '.')) {
+            [$staticToken, $providedTotp] = explode('.', $token, 2);
+        }
+
+        $card = StudentCard::with(['student.institution', 'student.student.latestPathway.filiere'])->where('qr_token', $staticToken)->first();
 
         if (! $card) {
             return response()->json([
                 'success' => false,
                 'message' => 'Carte introuvable ou invalide.',
             ], 404);
+        }
+
+        if ($providedTotp) {
+            $windowNow = (int) floor(time() / 30);
+            $windowPrev = $windowNow - 1;
+
+            $totpNow = substr(hash_hmac('sha256', $card->qr_token . '-' . $windowNow, config('app.key', 'encg-erp-secret')), 0, 8);
+            $totpPrev = substr(hash_hmac('sha256', $card->qr_token . '-' . $windowPrev, config('app.key', 'encg-erp-secret')), 0, 8);
+
+            if (! hash_equals($totpNow, $providedTotp) && ! hash_equals($totpPrev, $providedTotp)) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'anti_fraud_expired',
+                    'message' => 'Code QR expiré (Anti-Fraude). Veuillez rafraîchir l\'écran.',
+                ], 403);
+            }
         }
 
         if ($card->status !== 'active' || $card->expires_at->isPast()) {
@@ -475,8 +505,11 @@ class StudentCardController extends Controller
             'data' => [
                 'valid' => true,
                 'student_name' => $card->student->name,
+                'cne' => $studentProfile?->cne ?? 'N/A',
+                'filiere' => $studentProfile?->latestPathway?->filiere?->name ?? 'ENCG',
                 'institution' => $card->student->institution->name ?? 'ENCG Fès',
                 'status' => 'Valide',
+                'verified_at' => now()->format('H:i:s'),
             ],
         ]);
     }

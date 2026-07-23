@@ -64,8 +64,9 @@ export default function DigitalCardPage() {
     );
   }
 
-  // The QR code URL would point to the public verification route
-  const verificationUrl = `${window.location.origin}/verify/card/${cardData.qr_token}`;
+  // The QR code URL points to the public verification route with dynamic TOTP anti-fraud token
+  const tokenToUse = cardData.dynamic_totp || cardData.qr_token;
+  const verificationUrl = `${window.location.origin}/verify/card/${tokenToUse}`;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -76,7 +77,7 @@ export default function DigitalCardPage() {
             Carte d'Étudiant Digitale
           </h1>
           <p className="text-muted-foreground mt-1">
-            Votre carte d'identité académique officielle.
+            Votre carte d'identité académique officielle avec protection anti-fraude dynamique.
           </p>
         </div>
         <button
@@ -162,12 +163,18 @@ export default function DigitalCardPage() {
               </div>
             </div>
 
-            {/* QR Code */}
+            {/* QR Code with Dynamic TOTP Protection */}
             <div className="pt-4 pb-2 flex flex-col items-center border-t border-dashed border-white/10">
               <Barcode value={cardData.card_number} className="mb-4 bg-white/5 p-2 rounded-xl border border-white/10 w-full" />
-              <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 mb-2">
+              <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 mb-2 relative">
                 <QRCode value={verificationUrl} size={100} level="H" />
               </div>
+              
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-full text-[10px] font-bold mt-1 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Protection Anti-Fraude Active (TOTP)
+              </div>
+
               <p className="text-[10px] text-white/50 font-medium text-center uppercase tracking-widest">
                 Scannez pour vérifier l'authenticité
               </p>

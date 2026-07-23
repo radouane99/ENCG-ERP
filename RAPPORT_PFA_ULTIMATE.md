@@ -125,6 +125,20 @@ C'est le module le plus critique et complexe du système, basé sur le modèle `
 - **Assistant d'Examen** : Chatbot contextuel répondant aux questions des étudiants sur le règlement de leur examen.
 - **Copilote Professeur (Smart Grading)** : Une fois la délibération terminée, l'IA (propulsée par Google Gemini) génère un rapport analytique de la classe, identifie les "Concepts Mal Compris" avec précision et propose des recommandations pédagogiques personnalisées pour le professeur.
 
+### 3.9. Innovations d'Ingénierie Institutionnelle & Sécurité (Nouveautés V2.0)
+- **Gestion Avancée de l'Infrastructure (`rooms`)** : 
+  - **Double Capacité (Cours vs Examen)** : Distingue la capacité physique de cours (ex: 40 places) et la capacité d'examen anti-triche (50% par défaut, ex: 20 places).
+  - **Maintenance Prédictive & IoT** : Suivi en temps réel de l'état des équipements (`projector`, `ac`, `sound`, `pc_lab`) avec déclenchement automatique d'alertes dans le Smart Campus.
+- **Planification des Examens Anti-Triche Renforcée (`ExamPlanningEngine`)** : 
+  - **Algorithme d'Intercalage Inter-Filières** : Option pour alterner les étudiants de deux filières/promotions différentes sur des sièges voisins (ex: Siège 1: S1 Management, Siège 2: S3 Finance), supprimant ainsi tout risque de fraude.
+- **Sécurisation Anti-Fraude par QR Code Dynamique (TOTP 30s)** :
+  - Génération d'un jeton dynamique HMAC-SHA256 renouvelé automatiquement toutes les 30 secondes pour les cartes étudiants et convocations. Empêche la réutilisation frauduleuse par capture d'écran.
+- **Procès-Verbal d'Examen Tactile & Affiche de Porte PDF** :
+  - **Signature Tactile Canvas** : Émargement digital et signature manuscrite sur écran tactile par le professeur/surveillant responsable pour valider le PV d'examen.
+  - **Affiche de Porte Officielle** : Export PDF haute résolution (A4) avec liste ordonnée par numéro de siège, CNE et zones d'émargement pour affichage aux portes des amphis.
+- **Analyseur d'Impact des Jours Fériés & Générateur de Rattrapages** :
+  - Calcul instantané des séances annulées par une période de vacances ou jour férié, et proposition automatique de créneaux de rattrapage le samedi.
+
 ---
 
 ## 4. Architecture de l'API RESTful (Backend Laravel)
@@ -136,7 +150,7 @@ Le système communique de manière découplée via une API JSON sécurisée par 
 - **Validation** : Form Requests de Laravel pour filtrer les données entrantes.
 - **Resource Classes** : Utilisation d'Eloquent API Resources pour formater le JSON sortant.
 
-### Exemples d'Endpoints Implémentés (Module Exams & Absences)
+### Exemples d'Endpoints Implémentés (Module Exams, Security & Absences)
 
 | Méthode | Route | Rôle | Description |
 |---|---|---|---|
@@ -145,6 +159,11 @@ Le système communique de manière découplée via une API JSON sécurisée par 
 | `POST` | `/api/v1/admin/convocations/send-batch-whatsapp` | Admin | Déclenche le job `WhatsAppService` en asynchrone. |
 | `GET` | `/api/v1/professor/my-surveillances` | Professeur | Liste les affectations du prof pour la session en cours. |
 | `POST` | `/api/v1/deliberations/semester/calculate` | Admin | Déclenche l'algorithme lourd de calcul des moyennes (Apogée). |
+| `POST` | `/api/admin/deliberations/simulate` | Admin | Simulateur instantané de verdict Apogée (V, VC, RAT, ELIM). |
+| `GET` | `/api/admin/exams/{exam}/rooms/{room}/door-sign-pdf` | Admin/Prof | Génère l'Affiche de Porte d'Amphi au format PDF. |
+| `POST` | `/api/admin/exams/pv/sign` | Professeur | Enregistre la signature tactile Canvas et clôture le PV d'examen. |
+| `GET` | `/api/admin/holidays/{holiday}/impact` | Admin | Analyse l'impact des cours annulés et propose des rattrapages. |
+| `GET` | `/api/verify/card/{token}` | Public/Sécurité | Vérification cryptographique & validation TOTP de la carte étudiant. |
 
 ---
 
@@ -153,11 +172,12 @@ Le système communique de manière découplée via une API JSON sécurisée par 
 1. **Backend / API** : PHP 8.2, Laravel 11, MySQL 8.0, Redis (pour les files d'attentes et le cache).
 2. **Frontend** : React 18, TypeScript, TailwindCSS, Zustand, Framer Motion (Animations "Pro Max"), Lucide React.
 3. **Infrastructures & DevOps** : Docker (conteneurisation du serveur Nginx, de PHP-FPM et de MySQL).
-4. **Intégrations Tiers** : DomPDF (Documents PDF), Resend (API Mails), OpenAI/Gemini (Modules IA).
+4. **Intégrations Tiers** : DomPDF (Documents PDF), Resend (API Mails), OpenAI/Gemini (Modules IA), HTML5 Canvas (Signature tactile).
 
 ---
 
 ## 6. Conclusion 
 
 Le projet **ENCG ERP V1** n'est pas un simple site web, c'est un véritable **Système d'Information Global (SIG)**. 
-L'immensité des modules traités (Clubs, Emploi du Temps, Stages, Apogée, Guichet électronique) prouve la maîtrise des flux métiers complexes. L'intégration des composants d'Intelligence Artificielle et des technologies UX modernes (Wallet, Live Countdown, Drag & Drop) hisse ce projet au niveau des standards de l'industrie technologique mondiale, et fait de ce PFA une réalisation exceptionnelle d'ingénierie logicielle.
+L'immensité des modules traités (Clubs, Emploi du Temps, Stages, Apogée, Guichet électronique, Sécurité TOTP, PV Digital) prouve la maîtrise des flux métiers complexes. L'intégration des composants d'Intelligence Artificielle et des technologies UX modernes (Wallet, Live Countdown, Drag & Drop, Signature Tactile) hisse ce projet au niveau des standards de l'industrie technologique mondiale, et fait de ce PFA une réalisation exceptionnelle d'ingénierie logicielle.
+

@@ -104,6 +104,34 @@ class DeliberationController extends Controller
         ]);
     }
 
+    /**
+     * Instant Apogée Deliberation Verdict Simulator (V, VC, RAT, ELIM, DISCIPLINE).
+     */
+    public function simulate(Request $request): JsonResponse
+    {
+        $studentId = $request->input('student_id');
+        $semesterId = $request->input('semester_id', 1);
+
+        $student = Student::findOrFail($studentId);
+        $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
+
+        $deliberation = $this->engine->calculateSemesterDeliberation($student, $modules);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'student_name' => $student->user?->name ?? 'Étudiant',
+                'cne' => $student->cne ?? 'N/A',
+                'semester_average' => $deliberation['semester_average'],
+                'verdict' => $deliberation['decision'],
+                'is_admitted' => $deliberation['is_admitted'],
+                'has_eliminatory' => $deliberation['has_eliminatory'],
+                'is_disciplinary' => $deliberation['is_disciplinary'],
+                'modules' => $deliberation['module_results'],
+            ],
+        ]);
+    }
+
     public function getStudentTranscript(Request $request): JsonResponse
     {
         $student = $request->user()?->student;

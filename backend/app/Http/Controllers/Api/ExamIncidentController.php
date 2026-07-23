@@ -91,4 +91,69 @@ class ExamIncidentController extends Controller
 
         return $pdf->download("PV_Incident_{$incident->id}.pdf");
     }
+
+    /**
+     * Store Digital Exam PV Signature (Touchscreen / Canvas Signature).
+     */
+    public function storePvSignature(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'exam_id' => 'required|exists:exams,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'signature_data' => 'required|string', // Base64 data URI
+            'present_count' => 'nullable|integer',
+            'absent_count' => 'nullable|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        $pv = \Illuminate\Support\Facades\DB::table('exam_pv_signatures')->insertGetId([
+            'exam_id' => $validated['exam_id'],
+            'room_id' => $validated['room_id'] ?? null,
+            'signed_by_id' => $request->user()->id ?? null,
+            'signature_data' => $validated['signature_data'],
+            'present_count' => $validated['present_count'] ?? 0,
+            'absent_count' => $validated['absent_count'] ?? 0,
+            'notes' => $validated['notes'] ?? null,
+            'signed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Procès-Verbal signé et archivé avec succès.',
+            'pv_id' => $pv,
+        ]);
+    }
+
+    /**
+     * Download Official Signed Exam PV PDF.
+     */
+    public function downloadOfficialPvPdf(int $examId, ?int $roomId = null)
+    {
+        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        $room = $roomId ? \App\Models\Room::find($roomId) : $exam->room;
+
+        $pv = \Illuminate\Support\Facades\DB::table('exam_pv_signatures')
+            ->where('exam_id', $examId)
+            ->when($roomId, fn($q) => $q->where('room_id', $roomId))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $user = $pv && $pv->signed_by_id ? \App\Models\User::find($pv->signed_by_id) : request()->user();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_pv_official', [
+            'exam' => $exam,
+            'room' => $room ?? (object) ['name' => 'Salle d\'Examen'],
+            'totalCount' => ($pv->present_count ?? 0) + ($pv->absent_count ?? 0),
+            'presentCount' => $pv->present_count ?? 0,
+            'absentCount' => $pv->absent_count ?? 0,
+            'notes' => $pv->notes ?? '',
+            'signedBy' => $user ?? (object) ['name' => 'Surveillant Responsable'],
+            'signatureData' => $pv->signature_data ?? null,
+            'signedAt' => $pv ? \Carbon\Carbon::parse($pv->signed_at)->format('d/m/Y H:i') : date('d/m/Y H:i'),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("PV_Officiel_Examen_{$examId}.pdf");
+    }
 }
