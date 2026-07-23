@@ -136,10 +136,8 @@ export default function AdminStudentCardsPage() {
 
   // Launch browser printing
   const handlePrintSelected = () => {
-    // Only print students who actually have cards generated
-    const cardsToPrint = selectedCards.filter(c => c.status !== 'not_generated');
-    if (cardsToPrint.length === 0) {
-      toast.error('Aucune carte active ou générée dans votre sélection.');
+    if (selectedCards.length === 0) {
+      toast.error('Veuillez sélectionner au moins un étudiant à imprimer.');
       return;
     }
     
@@ -187,29 +185,30 @@ export default function AdminStudentCardsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-7xl mx-auto no-print">
-      {/* Printable Area Wrapper (rendered hidden on screen, shown in print) */}
+    <>
       <style>{`
         @media print {
-          body * {
-            visibility: hidden;
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
           }
-          .print-cards-grid, .print-cards-grid * {
-            visibility: visible;
-          }
-          .print-cards-grid {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white;
-            color: black;
+          body {
+            background: white !important;
+            color: black !important;
           }
           .no-print {
             display: none !important;
           }
+          .print-cards-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+          }
         }
       `}</style>
+
+      <div className="space-y-6 p-6 max-w-7xl mx-auto no-print">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -561,90 +560,101 @@ export default function AdminStudentCardsPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Grid wrapper visible only during print */}
       {selectedCards.length > 0 && (
-        <div className="print-cards-grid hidden print:grid print:grid-cols-2 print:gap-10 print:p-8">
-          {selectedCards.filter(c => c.status !== 'not_generated').map((cardData) => {
-            const verificationUrl = `${window.location.origin}/verify/card/${cardData.qr_token}`;
+        <div className="print-cards-grid hidden print:grid print:grid-cols-2 print:gap-6 print:p-6">
+          {selectedCards.map((cardData) => {
+            const cardNumber = cardData.card_number !== 'Non générée' && cardData.card_number
+              ? cardData.card_number 
+              : `ENCG-${new Date().getFullYear()}-${String(cardData.student_id).padStart(5, '0')}`;
+            
+            const qrToken = cardData.qr_token || `STUDENT-${cardData.student_id}-${cardData.student.cne}`;
+            const verificationUrl = `${window.location.origin}/verify/card/${qrToken}`;
+            const academicYear = cardData.academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
             
             return (
               <div 
                 key={cardData.student_id}
-                className="relative w-full max-w-[320px] bg-white border border-slate-300 rounded-3xl overflow-hidden p-6 space-y-6 flex flex-col justify-between shadow-sm"
-                style={{ pageBreakInside: 'avoid', height: '480px' }}
+                className="relative w-full max-w-[340px] bg-white border border-slate-300 rounded-3xl overflow-hidden p-6 space-y-4 flex flex-col justify-between shadow-sm mx-auto"
+                style={{ pageBreakInside: 'avoid', height: '460px' }}
               >
                 {/* Header */}
-                <div className="text-center pb-3 border-b border-slate-200">
-                  <h2 className="text-slate-800 font-bold text-sm leading-tight uppercase tracking-wide">
-                    {cardData.institution.name}
+                <div className="text-center pb-3 border-b border-slate-200 relative">
+                  <h2 className="text-slate-900 font-extrabold text-xs uppercase tracking-wider">
+                    {cardData.institution?.name || 'Université Sidi Mohamed Ben Abdellah'}
                   </h2>
-                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                    Carte d'Étudiant Digitale
+                  <p className="text-blue-700 text-[11px] font-black uppercase tracking-widest mt-0.5">
+                    École Nationale de Commerce et de Gestion
+                  </p>
+                  <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">
+                    Carte d'Étudiant Officielle
                   </p>
                 </div>
 
                 {/* Expiration Tag & status info */}
                 <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
-                  <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-300">
-                    {cardData.academic_year}
-                  </span>
-                  <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    Officiel
+                  <span className="inline-flex px-2 py-0.5 rounded text-[8px] font-bold uppercase bg-blue-50 text-blue-800 border border-blue-200">
+                    {academicYear}
                   </span>
                 </div>
 
                 {/* Body info */}
-                <div className="flex gap-4 items-start">
-                  <div className="w-20 h-24 bg-slate-100 rounded-xl border border-slate-300 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="flex gap-4 items-center">
+                  <div className="w-20 h-24 bg-slate-100 rounded-xl border border-slate-300 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
                     {cardData.photo_url ? (
                       <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-200" />
+                      <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xl">
+                        {cardData.student.name.charAt(0)}
+                      </div>
                     )}
                   </div>
                   
-                  <div className="space-y-1 pt-1 text-slate-800">
-                    <p className="text-[9px] text-slate-500 font-semibold uppercase">Nom & Prénom</p>
-                    <p className="text-md font-bold leading-tight">{cardData.student.name}</p>
-                    <p className="text-[9px] font-mono text-slate-600 mt-1">CNE: {cardData.student.cne}</p>
+                  <div className="space-y-1 text-slate-800 flex-1 min-w-0">
+                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">Nom & Prénom</p>
+                    <p className="text-sm font-extrabold leading-tight text-slate-900 truncate">{cardData.student.name}</p>
+                    <p className="text-[10px] font-mono text-slate-600 mt-1 font-semibold">CNE: {cardData.student.cne}</p>
+                    <p className="text-[10px] font-mono text-slate-600 font-semibold">CIN: {cardData.student.cin || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-slate-800 text-xs pt-1">
+                <div className="grid grid-cols-2 gap-2 text-slate-800 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <div>
-                    <span className="text-[9px] text-slate-500 font-bold uppercase block">Filière</span>
-                    <span className="font-semibold truncate block">{cardData.student.filiere}</span>
+                    <span className="text-[8px] text-slate-400 font-bold uppercase block">Filière</span>
+                    <span className="font-bold text-[11px] truncate block text-slate-800">{cardData.student.filiere}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-500 font-bold uppercase block">Niveau / Groupe</span>
-                    <span className="font-semibold block">{cardData.student.group}</span>
+                    <span className="text-[8px] text-slate-400 font-bold uppercase block">Groupe / Niveau</span>
+                    <span className="font-bold text-[11px] block text-slate-800">{cardData.student.group}</span>
                   </div>
                 </div>
 
                 {/* Barcode & QR Code Section */}
-                <div className="border-t border-dashed border-slate-300 pt-4 flex items-center justify-between">
+                <div className="border-t border-dashed border-slate-300 pt-3 flex items-center justify-between">
                   <div className="flex flex-col items-start gap-1">
-                    <Barcode value={cardData.card_number} height={35} className="w-[120px]" />
+                    <Barcode value={cardNumber} height={32} className="w-[125px]" />
+                    <span className="text-[8px] font-mono text-slate-500 font-bold">{cardNumber}</span>
                   </div>
                   
                   <div className="flex flex-col items-center">
-                    <div className="bg-white p-1 rounded-lg border border-slate-200">
-                      <QRCode value={verificationUrl} size={65} level="H" />
+                    <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                      <QRCode value={verificationUrl} size={58} level="H" />
                     </div>
-                    <span className="text-[7px] text-slate-500 mt-0.5">Scannez pour valider</span>
+                    <span className="text-[7px] text-slate-400 mt-0.5 font-bold uppercase">Scanner pour vérifier</span>
                   </div>
                 </div>
 
                 {/* Bottom disclaimer */}
-                <div className="text-[8px] text-slate-400 text-center border-t border-slate-100 pt-2">
-                  Valable jusqu'au {cardData.expires_at ? new Date(cardData.expires_at).toLocaleDateString('fr-FR') : '—'}
+                <div className="text-[8px] text-slate-400 text-center border-t border-slate-100 pt-1.5 font-medium">
+                  Valable jusqu'au {cardData.expires_at ? new Date(cardData.expires_at).toLocaleDateString('fr-FR') : '31/08/' + (new Date().getFullYear() + 1)}
                 </div>
               </div>
             );
           })}
         </div>
       )}
-    </div>
+    </>
   );
 }
