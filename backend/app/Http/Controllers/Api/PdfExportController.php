@@ -741,7 +741,7 @@ class PdfExportController extends Controller
             ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->where('exam_seatings.exam_id', $examId)
-            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
+            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.cne', 'users.cin')
             ->orderBy('exam_seatings.seat_number', 'asc')
             ->get();
 
