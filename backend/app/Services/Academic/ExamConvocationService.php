@@ -269,6 +269,8 @@ class ExamConvocationService
                     'qrCodeBase64' => $qrCodeBase64,
                 ];
 
+                $pdf = Pdf::loadView('pdf.convocation', $pdfData);
+
                 try {
                     Mail::to($first->student_email)->send(
                         new ConvocationEmail($emailData, $pdf->output())
