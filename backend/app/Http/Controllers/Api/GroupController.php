@@ -94,21 +94,48 @@ class GroupController extends Controller
         }
 
         try {
-            // Clean up foreign key references before deletion
-            \Illuminate\Support\Facades\DB::table('student_registrations')->where('group_id', $group->id)->update(['group_id' => null]);
-            \Illuminate\Support\Facades\DB::table('students')->where('group_id', $group->id)->update(['group_id' => null]);
-            \Illuminate\Support\Facades\DB::table('exam_seatings')->where('group_id', $group->id)->delete();
-            \Illuminate\Support\Facades\DB::table('exams')->where('group_id', $group->id)->update(['group_id' => null]);
+            \Illuminate\Support\Facades\DB::transaction(function () use ($group) {
+                $tablesWithGroupId = [
+                    'student_registrations',
+                    'students',
+                    'exam_seatings',
+                    'exams',
+                    'schedules',
+                    'attendance_sessions',
+                    'module_pv_signatures',
+                    'module_professor',
+                    'vacations',
+                    'forum_posts',
+                    'convocations',
+                    'grade_appeals',
+                    'deliberation_verdicts',
+                    'deliberations',
+                ];
 
-            $group->delete();
+                foreach ($tablesWithGroupId as $table) {
+                    if (\Illuminate\Support\Facades\Schema::hasTable($table) && \Illuminate\Support\Facades\Schema::hasColumn($table, 'group_id')) {
+                        try {
+                            \Illuminate\Support\Facades\DB::table($table)->where('group_id', $group->id)->delete();
+                        } catch (\Throwable $t) {
+                            try {
+                                \Illuminate\Support\Facades\DB::table($table)->where('group_id', $group->id)->update(['group_id' => null]);
+                            } catch (\Throwable $t2) {
+                                // continue
+                            }
+                        }
+                    }
+                }
+
+                $group->delete();
+            });
 
             return response()->json(['success' => true, 'message' => 'Groupe supprimé avec succès.']);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Erreur lors de la suppression du groupe: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Impossible de supprimer ce groupe car il est lié à d\'autres enregistrements.'
-            ], 422);
+                'message' => 'Impossible de supprimer ce groupe: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
