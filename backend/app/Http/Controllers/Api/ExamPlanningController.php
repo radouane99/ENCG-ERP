@@ -29,13 +29,15 @@ class ExamPlanningController extends Controller
             'room_ids' => 'required|array',
             'room_ids.*' => 'integer',
             'professor_ids' => 'required|array',
-            'professor_ids.*' => 'integer'
+            'professor_ids.*' => 'integer',
+            'secondary_group_id' => 'nullable|integer',
         ]);
 
         $result = $this->engine->generatePlan(
             $validated['exam_id'],
             $validated['room_ids'],
-            $validated['professor_ids']
+            $validated['professor_ids'],
+            $validated['secondary_group_id'] ?? null
         );
 
         return response()->json($result, $result['success'] ? 200 : 400);
@@ -312,5 +314,30 @@ class ExamPlanningController extends Controller
         ])->setPaper('a4', 'landscape')->setOptions(['isRemoteEnabled' => true]);
 
         return $pdf->download("Planning_Examens_{$sessionType}_2026.pdf");
+    }
+
+    /**
+     * Download Exam Room Door Sign PDF (Affiche de Porte).
+     */
+    public function downloadDoorSignPdf(Request $request, int $examId, int $roomId)
+    {
+        $exam = \App\Models\Exam::with(['module.filiere', 'group'])->findOrFail($examId);
+        $room = \App\Models\Room::findOrFail($roomId);
+
+        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->where('exam_seatings.exam_id', $examId)
+            ->where('exam_seatings.room_id', $roomId)
+            ->select('exam_seatings.seat_number', 'students.last_name', 'students.first_name', 'students.cne', 'students.cin')
+            ->orderBy('exam_seatings.seat_number', 'asc')
+            ->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
+            'exam' => $exam,
+            'room' => $room,
+            'seatings' => $seatings
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Affiche_Porte_{$room->code}_{$examId}.pdf");
     }
 }

@@ -13,6 +13,16 @@ class Room extends Model
 
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return [
+            'equipment_status' => 'array',
+            'has_projector' => 'boolean',
+            'has_ac' => 'boolean',
+            'is_available' => 'boolean',
+        ];
+    }
+
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);

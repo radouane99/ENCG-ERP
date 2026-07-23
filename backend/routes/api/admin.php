@@ -91,8 +91,10 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/exams', [AdminExamController::class, 'index']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
     Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
+    Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
     Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
     Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
+    Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     Route::apiResource('holidays', HolidayController::class);
 
     // AI Predictive Analytics

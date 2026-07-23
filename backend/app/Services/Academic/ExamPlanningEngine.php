@@ -13,22 +13,52 @@ class ExamPlanningEngine
     /**
      * Generate Seating Plan and Surveillance for an Exam
      */
-    public function generatePlan(int $examId, array $roomIds, array $professorIds): array
+    public function generatePlan(int $examId, array $roomIds, array $professorIds, ?int $secondaryGroupId = null): array
     {
         $exam = Exam::with(['group'])->findOrFail($examId);
         
-        // Find all students registered in this group's module
-        $students = DB::table('student_registrations')
+        // Find all students registered in primary group's module
+        $studentsA = DB::table('student_registrations')
             ->join('students', 'student_registrations.student_id', '=', 'students.id')
             ->where('student_registrations.group_id', $exam->group_id)
             ->where('student_registrations.academic_year_id', $exam->examSession->academic_year_id ?? 1)
-            ->select('students.id', 'students.last_name', 'students.first_name')
+            ->select('students.id', 'students.last_name', 'students.first_name', DB::raw("'$exam->group_id' as group_tag"))
             ->orderBy('students.last_name')
             ->orderBy('students.first_name')
             ->get();
 
-        if ($students->isEmpty()) {
-            throw new Exception("Aucun étudiant inscrit dans ce groupe.");
+        if ($studentsA->isEmpty()) {
+            throw new Exception("Aucun étudiant inscrit dans ce groupe principal.");
+        }
+
+        $studentsB = collect();
+        if ($secondaryGroupId && $secondaryGroupId != $exam->group_id) {
+            $studentsB = DB::table('student_registrations')
+                ->join('students', 'student_registrations.student_id', '=', 'students.id')
+                ->where('student_registrations.group_id', $secondaryGroupId)
+                ->where('student_registrations.academic_year_id', $exam->examSession->academic_year_id ?? 1)
+                ->select('students.id', 'students.last_name', 'students.first_name', DB::raw("'$secondaryGroupId' as group_tag"))
+                ->orderBy('students.last_name')
+                ->orderBy('students.first_name')
+                ->get();
+        }
+
+        // Combine students: if secondary group exists, interleave them!
+        $students = collect();
+        if ($studentsB->isNotEmpty()) {
+            $indexA = 0;
+            $indexB = 0;
+            $maxCount = max($studentsA->count(), $studentsB->count());
+            for ($i = 0; $i < $maxCount; $i++) {
+                if ($indexA < $studentsA->count()) {
+                    $students->push($studentsA[$indexA++]);
+                }
+                if ($indexB < $studentsB->count()) {
+                    $students->push($studentsB[$indexB++]);
+                }
+            }
+        } else {
+            $students = $studentsA;
         }
 
         $rooms = Room::whereIn('id', $roomIds)->get();
@@ -68,7 +98,7 @@ class ExamPlanningEngine
                         'exam_id' => $examId,
                         'student_id' => $students[$studentIndex]->id,
                         'room_id' => $room->id,
-                        'seat_number' => $seat, // Seats could be 1, 3, 5, 7 for 50% capacity logically
+                        'seat_number' => $seat,
                         'created_at' => now(),
                         'updated_at' => now()
                     ];

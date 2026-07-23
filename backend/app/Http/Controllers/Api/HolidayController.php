@@ -67,4 +67,65 @@ class HolidayController extends Controller
             'message' => 'Jour férié supprimé'
         ]);
     }
+
+    /**
+     * Calculate impact of a holiday on teaching schedules and propose catch-ups.
+     */
+    public function impact($id)
+    {
+        $holiday = Holiday::findOrFail($id);
+        $startDate = \Carbon\Carbon::parse($holiday->start_date);
+        $endDate = \Carbon\Carbon::parse($holiday->end_date);
+
+        $affectedDays = [];
+        $cancelledSessions = [];
+        $current = $startDate->copy();
+
+        while ($current->lte($endDate)) {
+            $dayOfWeek = $current->dayOfWeekIso; // 1 = Mon, 7 = Sun
+            
+            $schedules = \Illuminate\Support\Facades\DB::table('schedules')
+                ->join('modules', 'schedules.module_id', '=', 'modules.id')
+                ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
+                ->where('schedules.day_of_week', $dayOfWeek)
+                ->where('schedules.is_active', true)
+                ->select(
+                    'schedules.id as schedule_id',
+                    'schedules.start_time',
+                    'schedules.end_time',
+                    'modules.name as module_name',
+                    'groups.name as group_name',
+                    'schedules.professor_id'
+                )
+                ->get();
+
+            if ($schedules->isNotEmpty()) {
+                $affectedDays[] = [
+                    'date' => $current->format('Y-m-d'),
+                    'day_name' => $current->locale('fr')->dayName,
+                    'sessions_count' => $schedules->count(),
+                ];
+
+                foreach ($schedules as $s) {
+                    $cancelledSessions[] = [
+                        'date' => $current->format('Y-m-d'),
+                        'module_name' => $s->module_name,
+                        'group_name' => $s->group_name ?? 'Tous les groupes',
+                        'time' => substr($s->start_time, 0, 5) . ' - ' . substr($s->end_time, 0, 5),
+                        'suggested_catchup_date' => $current->copy()->next(\Carbon\Carbon::SATURDAY)->format('Y-m-d')
+                    ];
+                }
+            }
+
+            $current->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'holiday' => $holiday,
+            'total_cancelled_sessions' => count($cancelledSessions),
+            'affected_days' => $affectedDays,
+            'cancelled_sessions' => $cancelledSessions,
+        ]);
+    }
 }

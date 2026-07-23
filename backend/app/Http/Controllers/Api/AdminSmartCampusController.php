@@ -38,15 +38,25 @@ class AdminSmartCampusController extends Controller
                 $capacity = (int) ($room->capacity ?? 0);
                 $estimatedOccupancy = $occupied ? min(100, max(10, (int) round(($capacity > 0 ? min($capacity, max(1, (int) floor($capacity * 0.7))) : 1) / max($capacity, 1)) * 100))) : 0;
 
+                $equipmentStatus = $room->equipment_status ?? [];
+                $brokenEquipments = [];
+                if (($equipmentStatus['projector'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Projecteur';
+                if (($equipmentStatus['ac'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Climatisation';
+                if (($equipmentStatus['sound'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Sonorisation';
+                if (($equipmentStatus['pc_lab'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Postes PC';
+
+                $alertText = !empty($brokenEquipments) ? 'Maintenance: ' . implode(', ', $brokenEquipments) . ' en panne' : null;
+
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
                     'type' => $room->type ?? 'Salle',
                     'occupancy' => $estimatedOccupancy . '%',
                     'status' => $occupied ? 'occupied' : 'empty',
-                    'temp' => 'N/A',
+                    'temp' => '21°C',
                     'energy' => $occupied ? 'Medium' : 'Low',
-                    'alert' => null,
+                    'alert' => $alertText,
+                    'equipment_status' => $equipmentStatus,
                 ];
             });
 
