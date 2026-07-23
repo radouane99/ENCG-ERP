@@ -50,18 +50,20 @@ export default function AdminExamDisplayListPage() {
                   try {
                     const response = await api.get(ep, { responseType: 'blob' });
                     if (response && response.data) {
-                      // Check if returned data is JSON error instead of PDF
-                      if (response.data.type === 'application/json') {
-                        const errorText = await response.data.text();
-                        console.error('PDF Server Error Details:', errorText);
-                        alert(`Erreur Serveur PDF: ${errorText}`);
-                        return;
-                      }
                       res = response;
                       break;
                     }
                   } catch (err: any) {
                     console.error('Endpoint attempt error:', ep, err);
+                    if (err.response && err.response.data) {
+                      try {
+                        const text = await err.response.data.text();
+                        console.error('SERVER EXCEPTION DETAILS:', text);
+                        alert(`Détails Erreur Serveur (500):\n${text}`);
+                      } catch (e) {
+                        console.error('Could not read error blob text', e);
+                      }
+                    }
                   }
                 }
 

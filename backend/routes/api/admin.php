@@ -91,10 +91,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/exams', [AdminExamController::class, 'index']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
     Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
-    Route::get('/admin/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
-    Route::get('/admin/exams/{exam}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
-    Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
-    Route::get('/exams/{exam}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
+    Route::get('/admin/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/admin/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);
     Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);

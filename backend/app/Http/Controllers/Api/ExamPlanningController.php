@@ -362,12 +362,15 @@ class ExamPlanningController extends Controller
             $logoPath = public_path('logo-encg.png');
             $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64.'.base64_encode(file_get_contents($logoPath)) : '';
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::setOption([
+                'isRemoteEnabled' => true,
+                'chroot' => public_path(),
+            ])->loadView('pdf.exam_door_sign', [
                 'exam' => $exam,
                 'room' => $room,
                 'seatings' => $seatings,
                 'logoBase64' => $logoBase64,
-            ])->setPaper('a4', 'portrait')->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+            ])->setPaper('a4', 'portrait');
 
             return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
         } catch (\Throwable $e) {

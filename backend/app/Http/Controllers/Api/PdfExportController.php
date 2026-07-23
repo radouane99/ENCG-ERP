@@ -718,5 +718,40 @@ class PdfExportController extends Controller
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
+
+    /**
+     * Download Exam Room Door Sign PDF (Affiche de Porte).
+     */
+    public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
+    {
+        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->find($examId);
+        if (!$exam) {
+            $exam = \App\Models\Exam::first();
+        }
+
+        $room = null;
+        if ($roomId) {
+            $room = \App\Models\Room::find($roomId);
+        }
+        if (!$room) {
+            $room = $exam?->room ?? \App\Models\Room::first() ?? (object) ['name' => 'Amphithéâtre B', 'code' => 'AMPHI_B'];
+        }
+
+        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->where('exam_seatings.exam_id', $examId)
+            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
+            ->orderBy('exam_seatings.seat_number', 'asc')
+            ->get();
+
+        $pdf = $this->getPdfInstance('pdf.exam_door_sign', [
+            'exam' => $exam,
+            'room' => $room,
+            'seatings' => $seatings,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
+    }
 }
 
