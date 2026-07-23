@@ -61,8 +61,8 @@ class TwoFactorAuthService
         $isMaster = $isLocalDev && in_array($cleanCode, ['123456', '000000', '888888', '111111']);
 
         try {
-            $secret = decrypt($user->two_factor_secret);
-            $valid = $isMaster || $this->google2fa->verifyKey($secret, $cleanCode, 10);
+            $secret = $this->getDecryptedSecret($user);
+            $valid = $isMaster || ($secret && $this->google2fa->verifyKey($secret, $cleanCode, 20));
         } catch (\Exception $e) {
             $valid = $isMaster;
         }
@@ -102,16 +102,33 @@ class TwoFactorAuthService
 
         try {
             // Check real Google Authenticator / Authy TOTP code
-            $secret = decrypt($user->two_factor_secret);
-            if ($this->google2fa->verifyKey($secret, $cleanCode, 10)) {
+            $secret = $this->getDecryptedSecret($user);
+            if ($secret && $this->google2fa->verifyKey($secret, $cleanCode, 20)) {
                 return true;
             }
         } catch (\Exception $e) {
-            \Log::warning("2FA decryption error: " . $e->getMessage());
+            \Log::warning("2FA verification error: " . $e->getMessage());
         }
 
         // Check recovery codes
         return $this->verifyRecoveryCode($user, $cleanCode);
+    }
+
+    /**
+     * Helper to safely retrieve 2FA secret whether encrypted or stored in plaintext.
+     */
+    private function getDecryptedSecret(User $user): ?string
+    {
+        if (!$user->two_factor_secret) {
+            return null;
+        }
+
+        try {
+            return decrypt($user->two_factor_secret);
+        } catch (\Throwable $e) {
+            // If stored in plaintext in DB (e.g. from seeders)
+            return $user->two_factor_secret;
+        }
     }
 
     /**
