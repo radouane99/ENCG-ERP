@@ -64,9 +64,14 @@ export default function GroupsPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Supprimer ce groupe ?')) return
-    try { await api.delete(`/groups/${id}`); toast.success('Supprimé.'); fetchData() }
-    catch { toast.error('Erreur.') }
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?')) return
+    try { 
+      await api.delete(`/groups/${id}`); 
+      toast.success('Groupe supprimé avec succès.'); 
+      fetchData() 
+    } catch (err: any) { 
+      toast.error(err?.response?.data?.message || 'Erreur lors de la suppression du groupe.') 
+    }
   }
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -154,9 +159,9 @@ export default function GroupsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(g)} className="text-amber-500 hover:text-amber-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(g.id)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button onClick={() => openEdit(g)} className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Modifier"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(g.id)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
