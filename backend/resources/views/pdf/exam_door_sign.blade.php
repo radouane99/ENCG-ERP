@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Affiche de Porte — {{ $room->name }}</title>
+    <title>Affiche de Porte — {{ $room->name ?? 'Salle' }}</title>
     <style>
         @page {
             margin: 15mm;
@@ -121,7 +121,7 @@
             <tr>
                 <td style="width: 30%;">
                     <div class="banner-label">Local / Salle</div>
-                    <div class="banner-val">{{ $room->name }}</div>
+                    <div class="banner-val">{{ $room->name ?? 'Salle d\'Examen' }}</div>
                 </td>
                 <td style="width: 45%;">
                     <div class="banner-label">Module / Examen</div>
@@ -135,7 +135,7 @@
             <tr>
                 <td style="padding-top: 8px;">
                     <div class="banner-label">Date & Horaire</div>
-                    <div class="banner-val">{{ $exam->date }} ({{ $exam->start_time ?? '09:00' }} - {{ $exam->end_time ?? '11:00' }})</div>
+                    <div class="banner-val">{{ $exam->exam_date ?? $exam->date ?? date('d/m/Y') }} ({{ $exam->start_time ?? '09:00' }} - {{ $exam->end_time ?? '11:00' }})</div>
                 </td>
                 <td style="padding-top: 8px;" colspan="2">
                     <div class="banner-label">Groupe / Filière</div>
@@ -158,13 +158,17 @@
             @forelse($seatings as $seating)
                 <tr>
                     <td style="text-align: center;">
-                        <span class="seat-badge">Siège {{ sprintf('%02d', $seating->seat_number) }}</span>
+                        <span class="seat-badge">Siège {{ sprintf('%02d', $seating->seat_number ?? 1) }}</span>
                     </td>
                     <td style="font-weight: bold; color: #1e293b;">
-                        {{ strtoupper($seating->student->last_name ?? '') }} {{ ucfirst($seating->student->first_name ?? '') }}
+                        @if(!empty($seating->last_name) || !empty($seating->first_name))
+                            {{ strtoupper($seating->last_name ?? '') }} {{ ucfirst($seating->first_name ?? '') }}
+                        @else
+                            {{ $seating->full_name ?? $seating->student_name ?? 'Étudiant' }}
+                        @endif
                     </td>
                     <td style="font-family: monospace; color: #475569;">
-                        {{ $seating->student->cne ?? $seating->student->cin ?? 'N/A' }}
+                        {{ $seating->cne ?? $seating->cin ?? 'N/A' }}
                     </td>
                     <td style="border-bottom: 1px dotted #cbd5e1;"></td>
                 </tr>
