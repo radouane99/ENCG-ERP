@@ -73,6 +73,8 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Examens Planifiés', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Gestion Convocations', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Scanner QR en Direct', href: '/admin/exams/scan', icon: Scan, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Délibérations & Jurys', href: '/exams/deliberations', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'PV Globaux & Notes', href: '/admin/grades/pv', icon: ScrollText, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Session Rattrapage', href: '/admin/retake', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Saisie des Notes', href: '/admin/grades', icon: Edit3, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },
       { label: 'Verrouillage Épreuves', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
