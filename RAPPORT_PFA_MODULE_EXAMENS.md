@@ -13,7 +13,7 @@ Dans le cadre de la transformation digitale des processus académiques de l'ENCG
 - **Backend Core** : Laravel (PHP 8.x) avec base de données PostgreSQL (`encg_erp`).
 - **Frontend UI/UX** : React.js (TypeScript) avec TailwindCSS, Lucide Icons, TanStack React Query, et Dark Mode Midnight Navy.
 - **Service d'Emailing** : Intégration officielle de **Resend API** (`Mail::to()->send()`) avec templates Blade HTML responsives et pièces jointes PDF.
-- **Rendus PDF & Cryptographie** : DomPDF avec encodage Base64 pour l'injection dynamique du **Logo Officiel ENCG HD** et des **QR Codes Png/Svg**.
+- **Rendus PDF & Cryptographie** : DomPDF avec encodage Base64 pour l'injection dynamique du **Logo Officiel ENCG HD**, des **QR Codes Png/Svg**, et du tampon de **Signature Numérique SHA-256**.
 
 ---
 
@@ -25,26 +25,29 @@ Dans le cadre de la transformation digitale des processus académiques de l'ENCG
 - **Mappage Dynamique du Niveau Académique** : Calcul automatique de l'année d'étude (`1ère Année` pour S1/S2, `2ème Année` pour S3/S4, `3ème Année` pour S5/S6, `4ème Année` pour S7/S8, `5ème Année` pour S9/S10).
 - **Emplacement & Présidence de Salle** : Injection automatique du **N° de Table** (`Table N° 14`) et du **Nom du Professeur Présidant la Salle**.
 
-### 3.2. Moteur d'Optimisation des Plannings d'Examens
-- **Configurabilité des Épreuves par Jour** : Support de la planification flexible (ex: 2 modules par jour, matin ou après-midi contigus).
-- **Triage & Sélection Personnalisée** : Possibilité pour l'administration d'ordonner et de filtrer les modules avant le lancement de la génération automatique.
+### 3.2. Signature Numérique & Horodatage Cryptographique SHA-256 (Anti-Falsification)
+- **Empreinte d'Authenticité** : Génération d'une clé de signature unique SHA-256 (`4F8A-9E2C-11B7-D8A4-8E90-FC12...`) gravée au bas de chaque convocation PDF.
+- **Horodatage Officiel** : Enregistrement de l'heure exacte de certification `CASABLANCA` rendant tout document imprimé vérifiable et infalsifiable.
 
-### 3.3. Scanner QR Code Temps Réel pour l'Émargement (`/admin/exams/scan`)
-- **Décodage Multi-Canal (Caméra & Douchette USB)** : Interface de scan direct utilisant la caméra arrière d'un smartphone/tablette ou un lecteur douchette USB.
-- **Validation d'Identité Instantanée** : Affichage de la carte d'étudiant avec photo, nom, CNE, CIN, module, salle assignée et N° de table.
+### 3.3. Module d'Alerte Flash Salle (Broadcast SMS & WhatsApp)
+- **Diffusion d'Urgence 1-Clic (`POST /convocations/room-flash-alert`)** : Modal et bouton d'action sur l'interface d'administration permettant de diffuser une alerte SMS / WhatsApp prioritaire à l'ensemble des étudiants assignés à une salle ou amphi (ex: *Changement de salle de dernière minute*).
+
+### 3.4. Scanner QR Code Temps Réel PWA (`/admin/exams/scan`)
+- **Décodage Multi-Canal (Caméra & Douchette USB)** : Interface de scan direct utilisant la caméra d'un smartphone/tablette ou un lecteur douchette.
+- **Mode Hors-Ligne (PWA Queue Sync)** : Fonctionnement en zone blanche (sous-sols ou amphis sans Wi-Fi). L'émargement est conservé dans la file `LocalStorage` et se synchronise automatiquement au retour de la connexion Internet.
 - **Boutons d'Émargement Direct avec Signaux Sonores** :
   - **`PRÉSENT(E)`** (Vert + bip de validation)
   - **`RETARD (< 20 MIN)`** (Orange + ton d'avertissement)
   - **`ABSENT(E)`** (Rouge + signal sonore d'erreur)
 
-### 3.4. Feuille d'Émargement Officielle par Salle (PDF)
+### 3.5. Feuille d'Émargement Officielle par Salle (PDF)
 - Génération du document officiel pré-rempli par amphi/salle (`pdf/attendance_sheet.blade.php`) avec : `N° Table`, `CNE & CIN`, `Nom et Prénom`, `Filière`, et la case réservée à la **Signature de l'Étudiant**.
 
-### 3.5. Système de Procès-Verbal d'Incident & Fraude (PDF)
+### 3.6. Système de Procès-Verbal d'Incident & Fraude (PDF)
 - Module de déclaration rapide des incidents (*Tentative de fraude*, *Retard > 20min*, *Matériel non autorisé*, *Copie blanche*).
 - Génération automatique du Procès-Verbal officiel signé (`pdf/pv_incident.blade.php`) pour transmission au Conseil de Discipline.
 
-### 3.6. Exportation Massif ZIP par Filière
+### 3.7. Exportation Massif ZIP par Filière
 - Exportation en un clic d'une archive `.zip` regroupant les PDF de convocations de l'ensemble d'une promotion/filière pour l'impression physique.
 
 ---
@@ -72,4 +75,4 @@ Les modèles Eloquent et tables PostgreSQL suivants portent cette architecture :
 ---
 
 ## 6. Conclusion
-Cette refonte globale transforme la gestion des examens de l'ENCG en un système digital de classe internationale : zéro doublon de document, sécurité cryptographique totale par QR Code, émargement instantané par caméra, et communication automatique via Resend API.
+Cette refonte globale transforme la gestion des examens de l'ENCG en un système digital de classe internationale : zéro doublon de document, sécurité cryptographique totale SHA-256 & QR Code, émargement instantané PWA hors-ligne par caméra, et notifications d'urgence SMS/WhatsApp.

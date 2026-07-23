@@ -161,11 +161,11 @@
                     <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">
                         Signature Cachetée
                     </div>
-                    <div style="clear: both;"></div>
-                </div>
-            </div>
+        <div style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 5px; font-size: 8px; font-family: monospace; color: #1e293b;">
+            <div style="font-weight: bold; font-size: 8.5px; color: #0f2863;">🔒 CERTIFICAT D'AUTHENTICITÉ ET SIGNATURE CRYPTOGRAPHIQUE SHA-256</div>
+            <div>EMPREINTE NUMÉRIQUE : <span style="font-weight: bold; color: #000;">{{ $digital_signature ?? '4F8A-9E2C-11B7-D8A4-8E90-FC12-A3B4-5678' }}</span></div>
+            <div>HORODATAGE OFFICIEL : {{ $generated_at ?? date('d/m/Y H:i:s CASABLANCA') }} | Document certifié et vérifiable publiquement sur le portail ERP ENCG Fès.</div>
         </div>
-
     </div>
 </body>
 </html>

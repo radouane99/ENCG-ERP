@@ -55,8 +55,10 @@ Le système est divisé en plusieurs grands pôles interactifs :
 *Objectif : Digitaliser la session d'examen de A à Z avec traçabilité totale et zéro redondance.*
 - **Convocation Unique Regroupée par Étudiant (1 Doc / 1 Mail)** : Regroupement de l'ensemble des modules prévus (ex: 7 modules) sur un seul document PDF et un seul email transmises via l'API officielle Resend.
 - **Double Identification CNE & CIN** : Intégration systématique du CNE (ex: `N130000003`) et du CIN (ex: `CD70633`), avec calcul automatique du Niveau Académique (`1ère` à `5ème Année`).
+- **Signature Numérique & Horodatage Cryptographique SHA-256** : Empreinte de sécurité unique (`4F8A-9E2C-11B7-D8A4-8E90...`) et horodatage officiel `CASABLANCA` gravés sur chaque PDF pour parer toute falsification.
 - **Placement & Présidence de Salle** : Affectation automatique du N° de Table (`Table N° 14`) et du professeur surveillant président de salle.
-- **Scanner QR Code Temps Réel (`/admin/exams/scan`)** : Application de contrôle d'accès par caméra mobile/tablette ou lecteur douchette USB avec validation visuelle d'identité et boutons d'émargement instantané (`Présent`, `Retard`, `Absent`) couplés à des retours sonores synthétisés.
+- **Scanner QR Code Temps Réel PWA (`/admin/exams/scan`)** : Application de contrôle d'accès par caméra mobile/tablette ou douchette avec mode hors-ligne PWA (file `LocalStorage`) et auto-synchronisation lors du retour réseau.
+- **Alerte Flash Salle (Broadcast SMS & WhatsApp)** : Dispositif d'urgence permettant de diffuser en 1 clic un message SMS/WhatsApp à l'ensemble des étudiants d'un amphi ou d'une salle (`POST /convocations/room-flash-alert`).
 - **Feuille d'Émargement Officielle par Salle (PDF)** : Génération automatique du document officiel imprimable par amphi/salle pré-rempli pour la signature physique des étudiants.
 - **Système de Procès-Verbal d'Incident & Fraude (PDF)** : Déclaration rapide des fraudes et incidents avec édition du PV officiel disciplinaire.
 - **Exportation ZIP par Filière** : Génération en 1 clic d'une archive `.zip` regroupant toutes les convocations PDF d'une promotion.

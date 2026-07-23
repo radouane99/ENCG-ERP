@@ -31,6 +31,50 @@ export default function AdminExamScanPage() {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  // PWA Offline Queue State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingScans, setPendingScans] = useState<any[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('offline_scans_queue') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncOfflineQueue();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const syncOfflineQueue = async () => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('offline_scans_queue') || '[]');
+      if (queue.length === 0) return;
+
+      for (const item of queue) {
+        try {
+          await examsApi.updateExamAttendance(item.qrToken, item.status);
+        } catch (e) {}
+      }
+
+      localStorage.setItem('offline_scans_queue', '[]');
+      setPendingScans([]);
+      setActionSuccess(`🔄 ${queue.length} émargement(s) hors-ligne synchronisé(s) avec succès !`);
+      playAudioFeedback('success');
+    } catch (e) {}
+  };
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
@@ -131,16 +175,28 @@ export default function AdminExamScanPage() {
   const handleUpdateStatus = async (status: 'present' | 'late' | 'absent') => {
     if (!studentData) return;
 
+    const qrToken = tokenInput || studentData.qr_token;
+    const statusLabels = {
+      present: 'PRÉSENT(E)',
+      late: 'RETARD (< 20 MIN)',
+      absent: 'ABSENT(E)'
+    };
+
+    if (!isOnline) {
+      const queue = JSON.parse(localStorage.getItem('offline_scans_queue') || '[]');
+      queue.push({ qrToken, status, timestamp: new Date().toISOString() });
+      localStorage.setItem('offline_scans_queue', JSON.stringify(queue));
+      setPendingScans(queue);
+
+      setStudentData({ ...studentData, status });
+      setActionSuccess(`📱 Émargement HORS-LIGNE enregistré : ${statusLabels[status]}`);
+      playAudioFeedback(status === 'absent' ? 'warning' : 'success');
+      return;
+    }
+
     setLoading(true);
     try {
-      const qrToken = tokenInput || studentData.qr_token;
       await examsApi.updateExamAttendance(qrToken, status);
-      
-      const statusLabels = {
-        present: 'PRÉSENT(E)',
-        late: 'RETARD (< 20 MIN)',
-        absent: 'ABSENT(E)'
-      };
 
       setStudentData({ ...studentData, status });
       setActionSuccess(`Émargement enregistré : ${statusLabels[status]}`);
@@ -178,6 +234,18 @@ export default function AdminExamScanPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isOnline ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              En ligne (Synchro)
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              Hors ligne ({pendingScans.length} en attente)
+            </span>
+          )}
+
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"

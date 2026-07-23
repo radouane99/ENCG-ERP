@@ -21,6 +21,33 @@ export default function AdminConvocationsPage() {
 
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<any | null>(null)
 
+  // Alerte Flash Salle Modal State
+  const [flashAlertModalOpen, setFlashAlertModalOpen] = useState(false)
+  const [flashRoomName, setFlashRoomName] = useState('Amphi A')
+  const [flashMessage, setFlashMessage] = useState('')
+  const [isSendingFlash, setIsSendingFlash] = useState(false)
+
+  const handleSendFlashAlert = async () => {
+    if (!flashMessage.trim()) {
+      notify('Veuillez saisir le message d\'urgence.', 'error');
+      return;
+    }
+    setIsSendingFlash(true);
+    try {
+      const res = await api.post('/convocations/room-flash-alert', {
+        room_name: flashRoomName,
+        message: flashMessage
+      });
+      notify(res.data.message || 'Alerte Flash transmise avec succès !');
+      setFlashAlertModalOpen(false);
+      setFlashMessage('');
+    } catch (e) {
+      notify('Erreur lors de la transmission de l\'alerte.', 'error');
+    } finally {
+      setIsSendingFlash(false);
+    }
+  };
+
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
       toast.success(msg);
@@ -366,12 +393,20 @@ export default function AdminConvocationsPage() {
             Génération, affectation des surveillants et envoi des convocations
           </p>
         </div>
-        <button
-          onClick={() => navigate('/admin/exams/scan')}
-          className="btn-interactive bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 self-start sm:self-auto"
-        >
-          <QrCode className="w-4 h-4 text-amber-300" /> SCANNER QR EN DIRECT
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setFlashAlertModalOpen(true)}
+            className="btn-interactive bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-500/20 flex items-center justify-center gap-2"
+          >
+            <Zap className="w-4 h-4 text-white fill-white" /> ALERTE FLASH SALLE
+          </button>
+          <button
+            onClick={() => navigate('/admin/exams/scan')}
+            className="btn-interactive bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2"
+          >
+            <QrCode className="w-4 h-4 text-amber-300" /> SCANNER QR EN DIRECT
+          </button>
+        </div>
       </div>
 
       {/* Notification */}
@@ -1058,6 +1093,85 @@ export default function AdminConvocationsPage() {
                   Fermer
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Alerte Flash Salle */}
+      {flashAlertModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white fill-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Alerte Flash Salle (SMS & WhatsApp)</h3>
+                  <p className="text-xs text-amber-100">Notification d'urgence immédiate</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setFlashAlertModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Salle ou Amphithéâtre Concerné
+                </label>
+                <select
+                  value={flashRoomName}
+                  onChange={(e) => setFlashRoomName(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-bold text-slate-800"
+                >
+                  <option value="Amphi A">Amphithéâtre A</option>
+                  <option value="Amphi B">Amphithéâtre B</option>
+                  <option value="Amphi C">Amphithéâtre C</option>
+                  <option value="Salle 1">Salle 1</option>
+                  <option value="Salle 2">Salle 2</option>
+                  <option value="Salle 3">Salle 3</option>
+                  <option value="Salle 4">Salle 4</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Message d'Urgence (SMS & WhatsApp Broadcast)
+                </label>
+                <textarea
+                  rows={4}
+                  value={flashMessage}
+                  onChange={(e) => setFlashMessage(e.target.value)}
+                  placeholder="Ex: URGENT ENCG - L'examen de Comptabilité prévu en Salle 4 est transféré en Amphi B à 09h30 !"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs text-slate-800 placeholder-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 px-6 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setFlashAlertModalOpen(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSendFlashAlert}
+                disabled={isSendingFlash}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 shadow-md shadow-amber-500/20"
+              >
+                {isSendingFlash ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+                Envoyer l'Alerte Diffusée
+              </button>
             </div>
           </div>
         </div>

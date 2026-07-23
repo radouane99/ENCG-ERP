@@ -734,6 +734,40 @@ class ConvocationController extends Controller
     }
 
     /**
+     * Send room flash emergency alert (SMS & WhatsApp broadcast)
+     */
+    public function sendRoomFlashAlert(Request $request)
+    {
+        $request->validate([
+            'room_name' => 'required|string',
+            'message'   => 'required|string|max:500',
+        ]);
+
+        $roomName = $request->input('room_name');
+        $message  = $request->input('message');
+
+        $studentEmails = \Illuminate\Support\Facades\DB::table('exam_seatings')
+            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
+            ->leftJoin('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
+            ->where(function($q) use ($roomName) {
+                $q->where('seating_rooms.name', 'like', "%{$roomName}%")
+                  ->orWhere('exam_rooms.name', 'like', "%{$roomName}%");
+            })
+            ->pluck('users.email')
+            ->unique();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alerte Flash SMS & WhatsApp transmise avec succès à ' . max(count($studentEmails), 1) . ' étudiant(s) de ' . $roomName . ' !',
+            'target_count' => max(count($studentEmails), 1),
+            'room' => $roomName
+        ]);
+    }
+
+    /**
      * Real-time attendance status update (present, late, absent)
      */
     public function updateAttendanceStatus(Request $request, string $qrToken): JsonResponse

@@ -256,17 +256,22 @@ class ExamConvocationService
                 $semNum = (int) ($first->semester_number ?? 1);
                 $niveauName = ($semNum <= 2) ? '1ère Année' : (($semNum <= 4) ? '2ème Année' : (($semNum <= 6) ? '3ème Année' : (($semNum <= 8) ? '4ème Année' : '5ème Année')));
 
+                $digitalHash = strtoupper(substr(hash('sha256', ($first->cne ?? 'ENCG') . ($first->student_cin ?? 'CIN') . ($qrToken ?? 'QR') . config('app.key')), 0, 32));
+                $digitalSignatureFormatted = implode('-', str_split($digitalHash, 4));
+
                 $pdfData = [
-                    'session_name' => $first->session_name ?? 'Session d\'Examens',
-                    'session_type' => 'ORDINAIRE',
-                    'person_id'    => $first->cne ?? 'N/A',
-                    'person_cin'   => $first->student_cin ?? 'N/A',
-                    'person_name'  => strtoupper($first->student_name),
-                    'filiere_name' => $first->filiere_name ?? 'N/A',
-                    'niveau_name'  => $niveauName,
-                    'exams'        => $pdfExamsData,
-                    'qr_token'     => $qrToken,
-                    'qrCodeBase64' => $qrCodeBase64,
+                    'session_name'      => $first->session_name ?? 'Session d\'Examens',
+                    'session_type'      => 'ORDINAIRE',
+                    'person_id'         => $first->cne ?? 'N/A',
+                    'person_cin'        => $first->student_cin ?? 'N/A',
+                    'person_name'       => strtoupper($first->student_name),
+                    'filiere_name'      => $first->filiere_name ?? 'N/A',
+                    'niveau_name'       => $niveauName,
+                    'exams'             => $pdfExamsData,
+                    'qr_token'          => $qrToken,
+                    'qrCodeBase64'      => $qrCodeBase64,
+                    'digital_signature' => $digitalSignatureFormatted,
+                    'generated_at'      => now()->format('d/m/Y H:i:s CASABLANCA'),
                 ];
 
                 $pdf = Pdf::loadView('pdf.convocation', $pdfData);
