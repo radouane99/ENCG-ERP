@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Target, 
@@ -16,12 +16,117 @@ import {
   Zap, 
   Edit3, 
   CalendarDays,
-  Award
+  Award,
+  ChevronDown,
+  Check,
+  Search
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { Spinner } from '@shared/components/ui/Spinner'
+
+// Custom Modern Popover Select Component
+interface CustomSelectOption {
+  value: string
+  label: string
+  code?: string
+  badge?: string
+}
+
+interface CustomSelectProps {
+  value: string
+  onChange: (val: string) => void
+  options: CustomSelectOption[]
+  placeholder: string
+  icon?: React.ElementType
+  disabled?: boolean
+}
+
+function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disabled = false }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const selectedOption = options.find(o => String(o.value) === String(value))
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "w-full px-4 py-3.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-between shadow-xs text-left",
+          disabled 
+            ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 border-slate-200" 
+            : isOpen 
+              ? "border-[#0f2863] ring-4 ring-[#0f2863]/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" 
+              : value 
+                ? "bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-[#0f2863] dark:text-indigo-300"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+        )}
+      >
+        <div className="flex items-center gap-3 line-clamp-1 pr-2">
+          {Icon && <Icon className={cn("w-4 h-4 shrink-0", value ? "text-[#0f2863] dark:text-indigo-400" : "text-slate-400")} />}
+          <span className={cn("line-clamp-1", !value && "text-slate-400 font-medium")}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+        </div>
+        <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200", isOpen && "rotate-180 text-[#0f2863]")} />
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 space-y-1 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+          {options.length === 0 ? (
+            <div className="p-3 text-center text-xs text-slate-400 font-bold italic">
+              Aucune option disponible
+            </div>
+          ) : (
+            options.map((opt) => {
+              const isSelected = String(opt.value) === String(value)
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    setIsOpen(false)
+                  }}
+                  className={cn(
+                    "w-full px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between text-left cursor-pointer",
+                    isSelected 
+                      ? "bg-[#0f2863] text-white shadow-md" 
+                      : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  )}
+                >
+                  <div className="flex items-center gap-2 line-clamp-1">
+                    {opt.code && (
+                      <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-black uppercase font-mono", isSelected ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300")}>
+                        {opt.code}
+                      </span>
+                    )}
+                    <span className="line-clamp-1">{opt.label}</span>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminGradesPage() {
   const navigate = useNavigate()
@@ -247,16 +352,17 @@ export default function AdminGradesPage() {
               {filiere && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
             </div>
 
-            <select
+            <CustomSelect
               value={filiere}
-              onChange={(e) => setFiliere(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs cursor-pointer"
-            >
-              <option value="">-- Sélectionnez une filière ENCG --</option>
-              {filieres.map((f: any) => (
-                <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-              ))}
-            </select>
+              onChange={setFiliere}
+              options={filieres.map((f: any) => ({
+                value: String(f.id),
+                label: `${f.name} (${f.code || 'ENCG'})`,
+                code: f.code || 'ENCG'
+              }))}
+              placeholder="-- Sélectionnez une filière ENCG --"
+              icon={Building2}
+            />
           </div>
 
           {/* Step 2: Semestre */}
@@ -279,16 +385,17 @@ export default function AdminGradesPage() {
               {semestre && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
             </div>
 
-            <select
+            <CustomSelect
               value={semestre}
-              onChange={(e) => setSemestre(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs cursor-pointer"
-            >
-              <option value="">-- Tous les semestres (S1 - S10) --</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
-                <option key={s} value={s}>Semestre {s}</option>
-              ))}
-            </select>
+              onChange={setSemestre}
+              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => ({
+                value: String(s),
+                label: `Semestre ${s}`,
+                code: `S${s}`
+              }))}
+              placeholder="-- Tous les semestres (S1 - S10) --"
+              icon={Layers}
+            />
           </div>
 
           {/* Step 3: Groupe */}
@@ -312,17 +419,21 @@ export default function AdminGradesPage() {
               {groupe && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
             </div>
 
-            <select
+            <CustomSelect
               value={groupe}
-              onChange={(e) => setGroupe(e.target.value)}
+              onChange={setGroupe}
               disabled={!filiere || !semestre}
-              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <option value="">Tous les groupes (Facultatif)</option>
-              {groupes.map((g: any) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Tous les groupes (Facultatif)', code: 'ALL' },
+                ...groupes.map((g: any) => ({
+                  value: String(g.id),
+                  label: g.name,
+                  code: g.name
+                }))
+              ]}
+              placeholder="Tous les groupes (Facultatif)"
+              icon={Users}
+            />
           </div>
 
           {/* Step 4: Module */}
@@ -346,17 +457,18 @@ export default function AdminGradesPage() {
               {module && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
             </div>
 
-            <select
+            <CustomSelect
               value={module}
-              onChange={(e) => setModule(e.target.value)}
+              onChange={setModule}
               disabled={!filiere || !semestre}
-              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <option value="">-- Sélectionnez un module --</option>
-              {modules.map((m: any) => (
-                <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
-              ))}
-            </select>
+              options={modules.map((m: any) => ({
+                value: String(m.id),
+                label: `${m.name} (${m.code || 'MOD'})`,
+                code: m.code || 'MOD'
+              }))}
+              placeholder="-- Sélectionnez un module --"
+              icon={BookOpen}
+            />
           </div>
 
         </div>
