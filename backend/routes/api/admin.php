@@ -72,7 +72,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -91,6 +91,8 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/exams', [AdminExamController::class, 'index']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
     Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
+    Route::get('/admin/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
+    Route::get('/admin/exams/{exam}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
     Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
     Route::get('/exams/{exam}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
     Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);

@@ -39,12 +39,27 @@ export default function AdminExamDisplayListPage() {
               if (!id) return;
               try {
                 let res;
-                try {
-                  res = await api.get(`/admin/exams/${id}/door-sign-pdf`, { responseType: 'blob' });
-                } catch {
-                  const roomId = exam?.room_id || exam?.room?.id || 1;
-                  res = await api.get(`/admin/exams/${id}/rooms/${roomId}/door-sign-pdf`, { responseType: 'blob' });
+                const endpoints = [
+                  `/admin/exams/${id}/door-sign-pdf`,
+                  `/exams/${id}/door-sign-pdf`,
+                  `/admin/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`,
+                  `/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`
+                ];
+
+                for (const ep of endpoints) {
+                  try {
+                    res = await api.get(ep, { responseType: 'blob' });
+                    if (res && res.data) break;
+                  } catch {
+                    // Try next endpoint
+                  }
                 }
+
+                if (!res || !res.data) {
+                  window.open(`/api/admin/exams/${id}/door-sign-pdf`, '_blank');
+                  return;
+                }
+
                 const blob = new Blob([res.data], { type: 'application/pdf' });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
