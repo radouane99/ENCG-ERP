@@ -147,14 +147,25 @@ class ExamConvocationService
      */
     public function sendBatchEmails(int $sessionId, array $seatingIds): array
     {
-        $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
-        $examIds = $session->exams->pluck('id');
+        // Extract student IDs from requested seatings
+        $studentIds = DB::table('exam_seatings')
+            ->whereIn('id', $seatingIds)
+            ->pluck('student_id')
+            ->unique();
 
-        // Fetch selected seatings with student info, grouped by student
+        if ($studentIds->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Aucun étudiant correspondant sélectionné.'
+            ];
+        }
+
+        // Fetch all seatings for these students
         $seatings = DB::table('exam_seatings')
             ->join('students', 'exam_seatings.student_id', '=', 'students.id')
             ->join('users', 'students.user_id', '=', 'users.id')
             ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
+            ->join('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
             ->join('modules', 'exams.module_id', '=', 'modules.id')
             ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
             ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
@@ -164,8 +175,7 @@ class ExamConvocationService
                      ->where('exam_surveillances.role', '=', 'president_salle');
             })
             ->leftJoin('users as prof_users', 'exam_surveillances.professor_id', '=', 'prof_users.id')
-            ->whereIn('exam_seatings.exam_id', $examIds)
-            ->whereIn('exam_seatings.id', $seatingIds)
+            ->whereIn('exam_seatings.student_id', $studentIds)
             ->select(
                 'exam_seatings.id as seating_id',
                 'exam_seatings.student_id',
@@ -178,6 +188,7 @@ class ExamConvocationService
                 'modules.name as module_name',
                 'modules.semester_number',
                 'filieres.name as filiere_name',
+                'exam_sessions.name as session_name',
                 'exams.exam_date',
                 'exams.start_time',
                 DB::raw("COALESCE(seating_rooms.name, exam_rooms.name, 'Salle non assignée') as room_name"),
@@ -212,7 +223,7 @@ class ExamConvocationService
 
             $emailData = [
                 'studentName' => $first->student_name,
-                'sessionName' => $session->name,
+                'sessionName' => $first->session_name ?? 'Session d\'Examens',
                 'logoBase64'  => $logoBase64,
                 'exams'       => $examsData,
             ];
@@ -246,7 +257,7 @@ class ExamConvocationService
                 $niveauName = ($semNum <= 2) ? '1ère Année' : (($semNum <= 4) ? '2ème Année' : (($semNum <= 6) ? '3ème Année' : (($semNum <= 8) ? '4ème Année' : '5ème Année')));
 
                 $pdfData = [
-                    'session_name' => $session->name,
+                    'session_name' => $first->session_name ?? 'Session d\'Examens',
                     'session_type' => 'ORDINAIRE',
                     'person_id'    => $first->cne ?? 'N/A',
                     'person_cin'   => $first->student_cin ?? 'N/A',
@@ -262,16 +273,21 @@ class ExamConvocationService
                     Mail::to($first->student_email)->send(
                         new ConvocationEmail($emailData, $pdf->output())
                     );
+
+                    // Mark all seatings as sent only on successful mail send
+                    DB::table('exam_seatings')
+                        ->whereIn('id', $studentSeatings->pluck('seating_id'))
+                        ->update(['sent_at' => now()]);
+
+                    $sentCount++;
                 } catch (\Throwable $mailErr) {
-                    \Illuminate\Support\Facades\Log::warning('Student convocation email dispatch notice for ' . $first->student_email . ': ' . $mailErr->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Resend email error for ' . $first->student_email . ': ' . $mailErr->getMessage());
+                    return [
+                        'success' => false,
+                        'message' => 'Erreur Resend pour (' . $first->student_email . '): ' . $mailErr->getMessage(),
+                        'sent_count' => $sentCount,
+                    ];
                 }
-
-                // Mark all seatings as sent
-                DB::table('exam_seatings')
-                    ->whereIn('id', $studentSeatings->pluck('seating_id'))
-                    ->update(['sent_at' => now()]);
-
-                $sentCount++;
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Student convocation batch error for student_id ' . $studentId . ': ' . $e->getMessage());
             }
