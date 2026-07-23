@@ -1,83 +1,75 @@
-# Rapport PFA - Module de Gestion des Examens et Convocations (ENCG)
+# 🎓 Rapport PFA - Module de Gestion des Examens & Convocations (ENCG ERP V1)
 
-Ce document récapitule l'ensemble des fonctionnalités implémentées pour le module "Gestion des Examens et Convocations" de l'ERP de l'ENCG. Il est structuré de manière à faciliter la rédaction de votre rapport de Projet de Fin d'Année (PFA).
+Ce document récapitule l'ensemble des fonctionnalités et innovations technologiques implémentées pour le module **"Gestion des Examens et Convocations"** de l'ERP de l'ENCG Fès. Il constitue la section dédiée aux examens pour votre mémoire/rapport de Projet de Fin d'Année (PFA).
+
+---
 
 ## 1. Introduction et Contexte
-Dans le cadre de la digitalisation des processus académiques de l'ENCG, le module "Exams & Convocations" a été conçu pour automatiser et sécuriser l'affectation, la convocation et le suivi des étudiants et des professeurs surveillants lors des sessions d'examens. Ce module remplace les processus manuels par un système interactif, sécurisé par des QR Codes, et enrichi par l'Intelligence Artificielle.
-
-## 2. Architecture Technique
-- **Backend** : Framework Laravel (PHP) avec base de données MySQL.
-- **Frontend** : React (TypeScript) avec l'écosystème de composants modernes (TailwindCSS, Lucide Icons, React Query).
-- **Communication** : API RESTful sécurisée par Sanctum.
-- **Génération Documentaire** : Utilisation de DomPDF pour la génération des convocations professionnelles avec en-têtes dynamiques.
+Dans le cadre de la transformation digitale des processus académiques de l'ENCG, le module **"Exams & Convocations"** a été conçu pour automatiser, sécuriser et rationaliser l'affectation des places, la convocation des étudiants et le suivi en temps réel lors des sessions d'examens. Ce module remplace les flux manuels chronophages par un système omnicanal interactif, sécurisé par cryptographie (QR Code), et enrichi par des algorithmes d'optimisation d'emploi du temps.
 
 ---
 
-## 3. Fonctionnalités Administratives (Scolarité)
-
-### 3.1. Génération Intelligente des Convocations
-- Génération en masse des convocations PDF pour les étudiants et "Ordres de Surveillance" pour les professeurs.
-- Injection automatique d'un **QR Code Unique et Crypté** (Token) sur chaque document PDF permettant de vérifier l'authenticité et d'enregistrer la présence (Scanning).
-
-### 3.2. Communication Multi-Canal (Email & WhatsApp)
-- **Batch Emails** : Envoi en masse des convocations par e-mail avec des templates responsives (Blade) incluant des boutons d'actions dynamiques.
-- **Intégration WhatsApp** : Simulation d'envoi de messages WhatsApp personnalisés (via un `WhatsAppService`) stockant l'historique des envois dans une table dédiée (`notification_logs`).
-
-### 3.3. Dashboard Live Global (Temps Réel)
-- Suivi en temps réel de la session d'examen : taux d'étudiants présents/absents et taux de confirmation des surveillants.
-- Les données se rafraîchissent dynamiquement grâce aux scans des QR codes effectués à la porte de l'amphi.
-
-### 3.4. Registre Numérique des Incidents
-- Création d'une table `exam_incidents` pour répertorier de manière structurée les fraudes, les retards, et les absences (justifiées ou non).
-- Interface d'administration pour consulter l'historique des incidents et télécharger des rapports disciplinaires.
+## 2. Architecture Technique & Intégration
+- **Backend Core** : Laravel (PHP 8.x) avec base de données PostgreSQL (`encg_erp`).
+- **Frontend UI/UX** : React.js (TypeScript) avec TailwindCSS, Lucide Icons, TanStack React Query, et Dark Mode Midnight Navy.
+- **Service d'Emailing** : Intégration officielle de **Resend API** (`Mail::to()->send()`) avec templates Blade HTML responsives et pièces jointes PDF.
+- **Rendus PDF & Cryptographie** : DomPDF avec encodage Base64 pour l'injection dynamique du **Logo Officiel ENCG HD** et des **QR Codes Png/Svg**.
 
 ---
 
-## 4. Portail Professeur (Self-Service)
+## 3. Innovations Fonctionnelles Administratives (Scolarité)
 
-### 4.1. Consultation des Affectations
-- Page "Mes Surveillances" permettant au professeur de visualiser toutes ses affectations (Session, Module, Salle, Heure, Rôle : Principal ou Assistant).
+### 3.1. Convocation Réglementaire Unique Regroupée par Étudiant
+- **Zéro Redondance (1 Document / 1 Email par Étudiant)** : L'algorithme regroupe l'ensemble des épreuves (ex: les 7 modules de la session) sur **un seul document PDF officiel** et dans **un seul email**.
+- **Double Identification Sécurisée** : Intégration conjointe du **CNE** (ex: `N130000003`) et du **CIN** (ex: `CD70633`) sur tous les documents.
+- **Mappage Dynamique du Niveau Académique** : Calcul automatique de l'année d'étude (`1ère Année` pour S1/S2, `2ème Année` pour S3/S4, `3ème Année` pour S5/S6, `4ème Année` pour S7/S8, `5ème Année` pour S9/S10).
+- **Emplacement & Présidence de Salle** : Injection automatique du **N° de Table** (`Table N° 14`) et du **Nom du Professeur Présidant la Salle**.
 
-### 4.2. Confirmation Dynamique de Réception
-- Implémentation d'un système de confirmation (colonne `confirmed_at`).
-- Le professeur peut cliquer sur un bouton "Je confirme ma présence" directement depuis l'e-mail reçu, le message WhatsApp, ou depuis son portail ERP.
-- La confirmation se met à jour en temps réel sur le tableau de bord de la scolarité pour garantir que chaque salle sera couverte.
+### 3.2. Moteur d'Optimisation des Plannings d'Examens
+- **Configurabilité des Épreuves par Jour** : Support de la planification flexible (ex: 2 modules par jour, matin ou après-midi contigus).
+- **Triage & Sélection Personnalisée** : Possibilité pour l'administration d'ordonner et de filtrer les modules avant le lancement de la génération automatique.
 
----
+### 3.3. Scanner QR Code Temps Réel pour l'Émargement (`/admin/exams/scan`)
+- **Décodage Multi-Canal (Caméra & Douchette USB)** : Interface de scan direct utilisant la caméra arrière d'un smartphone/tablette ou un lecteur douchette USB.
+- **Validation d'Identité Instantanée** : Affichage de la carte d'étudiant avec photo, nom, CNE, CIN, module, salle assignée et N° de table.
+- **Boutons d'Émargement Direct avec Signaux Sonores** :
+  - **`PRÉSENT(E)`** (Vert + bip de validation)
+  - **`RETARD (< 20 MIN)`** (Orange + ton d'avertissement)
+  - **`ABSENT(E)`** (Rouge + signal sonore d'erreur)
 
-## 5. Portail Étudiant ("Mes Convocations Pro Max")
+### 3.4. Feuille d'Émargement Officielle par Salle (PDF)
+- Génération du document officiel pré-rempli par amphi/salle (`pdf/attendance_sheet.blade.php`) avec : `N° Table`, `CNE & CIN`, `Nom et Prénom`, `Filière`, et la case réservée à la **Signature de l'Étudiant**.
 
-Afin d'offrir une expérience étudiant exceptionnelle, le portail a été enrichi avec 5 innovations majeures :
+### 3.5. Système de Procès-Verbal d'Incident & Fraude (PDF)
+- Module de déclaration rapide des incidents (*Tentative de fraude*, *Retard > 20min*, *Matériel non autorisé*, *Copie blanche*).
+- Génération automatique du Procès-Verbal officiel signé (`pdf/pv_incident.blade.php`) pour transmission au Conseil de Discipline.
 
-### 5.1. Apple Wallet & Google Pass (Billet Numérique)
-- En plus du PDF classique, l'étudiant peut télécharger sa convocation sous forme de carte pass (format `.pkpass`) pour l'ajouter à l'application Wallet de son smartphone.
-- Le QR Code est ainsi accessible instantanément sur l'écran de verrouillage le jour de l'examen.
-
-### 5.2. Live Countdown & Alertes
-- Un algorithme calcule et affiche un compte à rebours clignotant pour chaque examen (ex : `⏳ 2j 5h 15m`).
-- Les statuts se mettent à jour automatiquement (ex : "Examen passé").
-
-### 5.3. Détection de Chevauchement (Conflicts Checker)
-- Le système analyse automatiquement l'emploi du temps de l'étudiant dès l'affichage de ses convocations.
-- Si deux examens se déroulent le même jour à la même heure (ex: modules de rattrapage), une bannière d'alerte critique apparaît pour l'inciter à demander un aménagement immédiat à la scolarité.
-
-### 5.4. Déclaration d'Absence avec Upload de Certificat
-- Un bouton rouge "Signaler une absence" permet à l'étudiant de prévenir la scolarité en cas de force majeure.
-- L'étudiant téléverse une photo de son **certificat médical** directement via une modale sécurisée.
-- Le fichier est stocké sur le serveur (via le champ `attachment_path` de la table des incidents) et l'absence est notée "justifiée".
-
-### 5.5. AI Exam Assistant (IA Embarquée)
-- Intégration d'un mini-chatbot IA sous chaque convocation.
-- L'assistant lit le contexte du module et répond aux questions fréquentes de l'étudiant : *« La calculatrice est-elle autorisée pour la Comptabilité ? », « Y a-t-il des points négatifs au QCM ? »*.
+### 3.6. Exportation Massif ZIP par Filière
+- Exportation en un clic d'une archive `.zip` regroupant les PDF de convocations de l'ensemble d'une promotion/filière pour l'impression physique.
 
 ---
 
-## 6. Structure de la Base de Données (Nouvelles Tables)
-Pour réaliser ce module, plusieurs modèles conceptuels de données ont été créés/modifiés :
-- `exam_seatings` : Gère le placement de l'étudiant, son QR Token unique, et sa présence.
-- `exam_surveillances` : Gère l'affectation du professeur, son rôle, et l'horodatage de sa confirmation (`confirmed_at`).
-- `exam_incidents` : Gère le journal de bord des examens (Fraudes, Absences avec `attachment_path` pour les justificatifs).
-- `notification_logs` : Historise l'ensemble des envois (WhatsApp/Email) avec statuts de livraison.
+## 4. Innovations Portails Étudiant & Professeur
 
-## 7. Conclusion
-Ce module transforme totalement l'expérience des examens à l'ENCG. Il décharge l'administration des tâches chronophages (impression, vérification manuelle), responsabilise les professeurs via la confirmation en ligne, et modernise l'interaction avec les étudiants grâce au Wallet numérique et à l'Intelligence Artificielle.
+### 4.1. "Mon Pass Examen Digital" (Espace Étudiant)
+- **Widget Carte Numérique (`StudentDashboard.tsx`)** : Carte interactive intégrant un compte à rebours avant le prochain examen, l'affichage de l'amphi/salle, du N° de table, et un **QR Code accessible hors-ligne**.
+- **Apple Wallet & Google Pass** : Format `.pkpass` téléchargeable pour affichage sur l'écran de verrouillage.
+
+### 4.2. Confirmation de Réception (Espace Professeur)
+- Validation en 1 clic de la réception de l'Ordre de Surveillance depuis le mail ou l'espace enseignant (`confirmed_at`), répercutée en live sur le dashboard de la scolarité.
+
+---
+
+## 5. Structure et Évolution de la Base de Données
+
+Les modèles Eloquent et tables PostgreSQL suivants portent cette architecture :
+- `exam_sessions` : Sessions d'examens (Principale/Ordinaire, Rattrapage).
+- `exams` : Épreuves associées aux modules, salles, dates et heures.
+- `exam_seatings` : Registre des placements des étudiants avec `qr_token`, `seat_number`, `status` (`present`, `late`, `absent`) et horodatage d'envoi (`sent_at`).
+- `exam_surveillances` : Affectation des surveillants avec rôles (`president_salle`, `assistant`) et confirmation (`confirmed_at`).
+- `exam_incidents` : Journal officiel des incidents et fraudes avec pièces jointes.
+
+---
+
+## 6. Conclusion
+Cette refonte globale transforme la gestion des examens de l'ENCG en un système digital de classe internationale : zéro doublon de document, sécurité cryptographique totale par QR Code, émargement instantané par caméra, et communication automatique via Resend API.

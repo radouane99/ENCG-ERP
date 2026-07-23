@@ -52,12 +52,14 @@ Le système est divisé en plusieurs grands pôles interactifs :
 - **Relevés de notes dynamiques** : Génération de PDF officiels en un clic.
 
 ### 3.3. Module d'Excellence : Gestion des Examens & Convocations
-*Objectif : Digitaliser la session d'examen de A à Z.*
-- **Génération Intelligente** : Auto-affectation des places (Exam Seatings) pour les étudiants et des surveillances pour les professeurs, avec création de Convocations PDF.
-- **Communication Multi-Canal (WhatsApp & Email)** : Envoi en lot des convocations via e-mail et WhatsApp. Historisation des envois dans `notification_logs`.
-- **Confirmation Dynamique** : Les professeurs confirment la réception de leur ordre de surveillance en 1 clic depuis WhatsApp, mettant à jour le statut en temps réel pour l'administration.
-- **Live Global Dashboard** : L'administration surveille en temps réel le taux de présence dans toutes les salles d'examen (les QR codes des convocations sont scannés à l'entrée des amphis).
-- **Registre des Incidents** : Déclaration des fraudes, retards et absences injustifiées centralisée avec génération de rapports disciplinaires.
+*Objectif : Digitaliser la session d'examen de A à Z avec traçabilité totale et zéro redondance.*
+- **Convocation Unique Regroupée par Étudiant (1 Doc / 1 Mail)** : Regroupement de l'ensemble des modules prévus (ex: 7 modules) sur un seul document PDF et un seul email transmises via l'API officielle Resend.
+- **Double Identification CNE & CIN** : Intégration systématique du CNE (ex: `N130000003`) et du CIN (ex: `CD70633`), avec calcul automatique du Niveau Académique (`1ère` à `5ème Année`).
+- **Placement & Présidence de Salle** : Affectation automatique du N° de Table (`Table N° 14`) et du professeur surveillant président de salle.
+- **Scanner QR Code Temps Réel (`/admin/exams/scan`)** : Application de contrôle d'accès par caméra mobile/tablette ou lecteur douchette USB avec validation visuelle d'identité et boutons d'émargement instantané (`Présent`, `Retard`, `Absent`) couplés à des retours sonores synthétisés.
+- **Feuille d'Émargement Officielle par Salle (PDF)** : Génération automatique du document officiel imprimable par amphi/salle pré-rempli pour la signature physique des étudiants.
+- **Système de Procès-Verbal d'Incident & Fraude (PDF)** : Déclaration rapide des fraudes et incidents avec édition du PV officiel disciplinaire.
+- **Exportation ZIP par Filière** : Génération en 1 clic d'une archive `.zip` regroupant toutes les convocations PDF d'une promotion.
 
 ---
 
