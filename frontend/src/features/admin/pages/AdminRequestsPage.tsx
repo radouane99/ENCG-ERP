@@ -57,6 +57,23 @@ export default function AdminRequestsPage() {
     }
   }
 
+  const handleSendEmail = async (requestId: number) => {
+    try {
+      toast.loading("Envoi de la notification e-mail via Resend...", { id: `email-${requestId}` })
+      const res = await api.post(`/admin/document-requests/${requestId}/send-email-notification`)
+      toast.success(res.data.message || "Notification email envoyée avec succès !", { id: `email-${requestId}` })
+      
+      setRequests(prev => prev.map(r => r.id === requestId ? {
+        ...r,
+        email_sent: true,
+        email_sent_at: res.data.email_sent_at || new Date().toISOString(),
+        email_recipient: res.data.email_recipient || r.email_recipient
+      } : r))
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Échec de l'envoi de l'e-mail.", { id: `email-${requestId}` })
+    }
+  }
+
   // Handle Drag & Drop Kanban Dropping
   const handleKanbanDragOver = (e: React.DragEvent, colStatus: string) => {
     e.preventDefault()
@@ -127,12 +144,11 @@ export default function AdminRequestsPage() {
   }
 
   const pendingRequests = requests.filter(r => r.status === 'pending')
-  const approvedRequests = requests.filter(r => r.status === 'approved')
+  const approvedRequests = requests.filter(r => r.status === 'approved' || r.status === 'ready')
   const rejectedRequests = requests.filter(r => r.status === 'rejected')
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto pb-20">
-      {/* Header */}
       <div className="flex flex-col items-center justify-center text-center space-y-2 mb-4">
         <h1 className="text-3xl font-black text-[#0f2863] tracking-tight">{t('requests.title') || 'Gestion des Demandes Administratives'}</h1>
         <p className="text-slate-500 font-medium text-sm max-w-xl">
@@ -140,7 +156,6 @@ export default function AdminRequestsPage() {
         </p>
       </div>
 
-      {/* Banner & Drag and Drop File Upload Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         <div className="lg:col-span-2 bg-gradient-to-br from-[#0f2863] via-[#1a387e] to-[#0b1f4f] p-8 text-white rounded-[2rem] shadow-xl relative overflow-hidden flex flex-col justify-between">
           <div className="relative z-10 space-y-2">
@@ -169,7 +184,6 @@ export default function AdminRequestsPage() {
           </div>
         </div>
 
-        {/* Drag & Drop File Upload Dropzone */}
         <div 
           onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
           onDragLeave={() => setIsDraggingFile(false)}
@@ -205,27 +219,10 @@ export default function AdminRequestsPage() {
           <span className="mt-3 px-3 py-1 bg-slate-100 text-slate-700 text-[10px] font-extrabold uppercase rounded-full border border-slate-200">
             Parcourir les fichiers
           </span>
-
-          {uploadedFiles.length > 0 && (
-            <div className="w-full mt-4 space-y-2 text-left" onClick={(e) => e.stopPropagation()}>
-              {uploadedFiles.slice(-2).map((file, idx) => (
-                <div key={idx} className="bg-slate-100 p-2 rounded-xl border border-slate-200 flex items-center justify-between text-[10px]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-                    <span className="font-bold text-slate-800 truncate max-w-[120px]">{file.name}</span>
-                  </div>
-                  <span className="font-mono text-emerald-600 font-bold shrink-0">{file.progress}%</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Interactive Kanban Board with Drag & Drop */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        
-        {/* Column: EN ATTENTE */}
         <div className="bg-slate-50/80 rounded-[2rem] p-4 flex flex-col h-[780px] border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-4 px-2 pt-2">
             <h3 className="text-xs font-black text-amber-600 uppercase tracking-wider flex items-center gap-2">
@@ -252,12 +249,12 @@ export default function AdminRequestsPage() {
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
                 onApprove={() => handleUpdateStatus(req.id, 'approved')}
                 onReject={() => handleUpdateStatus(req.id, 'rejected')}
+                onSendEmail={() => handleSendEmail(req.id)}
               />
             ))}
           </div>
         </div>
 
-        {/* Column: APPROUVÉ (Dropzone) */}
         <div 
           onDragOver={(e) => handleKanbanDragOver(e, 'approved')}
           onDragLeave={handleKanbanDragLeave}
@@ -279,23 +276,19 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="flex-1 space-y-4 overflow-y-auto pr-1">
-            {approvedRequests.length === 0 ? (
-              <div className="text-center text-slate-400 text-xs py-12 border-2 border-dashed border-slate-200 rounded-2xl p-4">
-                <p className="font-semibold">Glissez une demande ici pour l'approuver !</p>
-              </div>
-            ) : approvedRequests.map(req => (
+            {approvedRequests.map(req => (
               <RequestCard 
                 t={t} 
                 key={req.id} 
                 request={req}
                 onDragStart={() => setDraggedRequestId(req.id)}
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
+                onSendEmail={() => handleSendEmail(req.id)}
               />
             ))}
           </div>
         </div>
 
-        {/* Column: REFUSÉ (Dropzone) */}
         <div 
           onDragOver={(e) => handleKanbanDragOver(e, 'rejected')}
           onDragLeave={handleKanbanDragLeave}
@@ -317,22 +310,18 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="flex-1 space-y-4 overflow-y-auto pr-1">
-            {rejectedRequests.length === 0 ? (
-              <div className="text-center text-slate-400 text-xs py-12 border-2 border-dashed border-slate-200 rounded-2xl p-4">
-                <p className="font-semibold">Glissez une demande ici pour la refuser</p>
-              </div>
-            ) : rejectedRequests.map(req => (
+            {rejectedRequests.map(req => (
               <RequestCard 
                 t={t} 
                 key={req.id} 
                 request={req}
                 onDragStart={() => setDraggedRequestId(req.id)}
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
+                onSendEmail={() => handleSendEmail(req.id)}
               />
             ))}
           </div>
         </div>
-
       </div>
 
       <DocumentViewerModal 
@@ -351,6 +340,7 @@ function RequestCard({
   onPreview, 
   onApprove, 
   onReject, 
+  onSendEmail,
   onDragStart,
   t 
 }: { 
@@ -358,6 +348,7 @@ function RequestCard({
   onPreview: () => void, 
   onApprove?: () => void, 
   onReject?: () => void,
+  onSendEmail?: () => void,
   onDragStart?: () => void,
   t: (key: string) => string 
 }) {
@@ -390,17 +381,19 @@ function RequestCard({
         </p>
       </div>
 
-      {/* Email Notification Status Indicator */}
       {request.status !== 'pending' && (
         <div className="mb-3">
           {request.email_sent ? (
-            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200" title={`Envoyé le ${request.email_sent_at ? new Date(request.email_sent_at).toLocaleTimeString('fr-FR') : ''}`}>
-              <Mail className="w-3 h-3 text-emerald-600" /> Notification Email Envoyée ({request.email_recipient || 'Étudiant'})
+            <span className="inline-flex items-center gap-1.5 text-[9px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs" title={`Envoyé le ${request.email_sent_at ? new Date(request.email_sent_at).toLocaleTimeString('fr-FR') : ''}`}>
+              <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" /> Notification Email Envoyée ({request.email_recipient || 'Étudiant'})
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-              <Mail className="w-3 h-3 text-amber-600" /> Notification Email Prête / Resend
-            </span>
+            <button 
+              onClick={onSendEmail}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-[9px] uppercase tracking-wider rounded-lg shadow-2xs transition-colors cursor-pointer"
+            >
+              <Mail className="w-3.5 h-3.5" /> Envoyer Notification Email
+            </button>
           )}
         </div>
       )}

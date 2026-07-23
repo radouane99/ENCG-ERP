@@ -19,9 +19,9 @@ class AdmissionController extends Controller
     /**
      * Display a listing of applications for a specific campaign.
      */
-    public function index($campaignId): JsonResponse
+    public function index($campaignId = null): JsonResponse
     {
-        $applications = $this->admissionService->getApplicationsForCampaign((int) $campaignId);
+        $applications = $this->admissionService->getApplicationsForCampaign($campaignId ? (int) $campaignId : null);
         
         $stats = [
             'total' => $applications->count(),

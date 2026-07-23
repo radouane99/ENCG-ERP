@@ -131,4 +131,63 @@ class AdminDocumentRequestController extends Controller
 
         return response()->json(['message' => 'Document preview unavailable'], 404);
     }
+
+    public function sendEmailNotification(DocumentRequest $documentRequest): JsonResponse
+    {
+        $documentRequest->loadMissing(['student.user', 'documentType']);
+        $studentUser = $documentRequest->student?->user;
+
+        if (! $studentUser || ! $studentUser->email) {
+            return response()->json([
+                'success' => false,
+                'message' => "L'étudiant n'a pas d'adresse e-mail valide enregistrée."
+            ], 422);
+        }
+
+        $emailData = [
+            'student_name' => $studentUser->name,
+            'document_type' => $documentRequest->documentType?->name ?? 'Document Administratif',
+            'request_id' => $documentRequest->id,
+            'status' => $documentRequest->status,
+            'rejection_reason' => $documentRequest->admin_notes['reason'] ?? $documentRequest->admin_notes['rejection_reason'] ?? null,
+        ];
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($studentUser->email)->send(new \App\Mail\DocumentRequestStatusMail($emailData));
+
+            $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
+            $adminNotes['email_sent'] = true;
+            $adminNotes['email_sent_at'] = now()->toIso8601String();
+            $adminNotes['email_recipient'] = $studentUser->email;
+            $documentRequest->update(['admin_notes' => $adminNotes]);
+
+            \App\Models\NotificationLog::create([
+                'user_id' => $studentUser->id,
+                'type' => 'email',
+                'recipient' => $studentUser->email,
+                'message' => "Notification email envoyée avec succès à {$studentUser->email}.",
+                'status' => 'sent',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Notification e-mail envoyée avec succès à {$studentUser->email} !",
+                'email_sent' => true,
+                'email_sent_at' => $adminNotes['email_sent_at'],
+                'email_recipient' => $studentUser->email,
+            ]);
+        } catch (\Throwable $e) {
+            logger()->error('Failed sending manual email notification: ' . $e->getMessage());
+
+            $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
+            $adminNotes['email_sent'] = false;
+            $adminNotes['email_error'] = $e->getMessage();
+            $documentRequest->update(['admin_notes' => $adminNotes]);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de l'envoi de l'e-mail : " . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
