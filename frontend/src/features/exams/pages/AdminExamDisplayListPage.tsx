@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ChevronLeft, Download, FileText, ArrowLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft, Download, FileText, ArrowLeft, Loader2, Eye } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
@@ -14,6 +14,28 @@ export default function AdminExamDisplayListPage() {
     enabled: !!id
   })
 
+  const fetchPdfBlob = async () => {
+    if (!id) return null;
+    const endpoints = [
+      `/admin/exams/${id}/door-sign-pdf`,
+      `/exams/${id}/door-sign-pdf`,
+      `/admin/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`,
+      `/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`
+    ];
+
+    for (const ep of endpoints) {
+      try {
+        const response = await api.get(ep, { responseType: 'blob' });
+        if (response && response.data) {
+          return new Blob([response.data], { type: 'application/pdf' });
+        }
+      } catch (err: any) {
+        console.error('Endpoint attempt error:', ep, err);
+      }
+    }
+    return null;
+  };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-100"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
   }
@@ -21,8 +43,6 @@ export default function AdminExamDisplayListPage() {
   const exam = detailsData?.exam
   const students = detailsData?.seatings || []
   const surveillants = detailsData?.surveillances || []
-
-  // Removed hardcoded students
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
@@ -34,45 +54,26 @@ export default function AdminExamDisplayListPage() {
           <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au Planning
           </Link>
+          
           <button
             onClick={async () => {
-              if (!id) return;
-              try {
-                let res;
-                const endpoints = [
-                  `/admin/exams/${id}/door-sign-pdf`,
-                  `/exams/${id}/door-sign-pdf`,
-                  `/admin/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`,
-                  `/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`
-                ];
+              const blob = await fetchPdfBlob();
+              if (blob) {
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+              } else {
+                window.open(`/api/admin/exams/${id}/door-sign-pdf`, '_blank');
+              }
+            }}
+            className="h-10 px-4 rounded-xl border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <Eye className="w-4 h-4" /> Aperçu PDF (Navigateur)
+          </button>
 
-                for (const ep of endpoints) {
-                  try {
-                    const response = await api.get(ep, { responseType: 'blob' });
-                    if (response && response.data) {
-                      res = response;
-                      break;
-                    }
-                  } catch (err: any) {
-                    console.error('Endpoint attempt error:', ep, err);
-                    if (err.response && err.response.data) {
-                      try {
-                        const text = await err.response.data.text();
-                        console.error('SERVER EXCEPTION DETAILS:', text);
-                        alert(`Détails Erreur Serveur (500):\n${text}`);
-                      } catch (e) {
-                        console.error('Could not read error blob text', e);
-                      }
-                    }
-                  }
-                }
-
-                if (!res || !res.data) {
-                  window.open(`/api/admin/exams/${id}/door-sign-pdf`, '_blank');
-                  return;
-                }
-
-                const blob = new Blob([res.data], { type: 'application/pdf' });
+          <button
+            onClick={async () => {
+              const blob = await fetchPdfBlob();
+              if (blob) {
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -80,13 +81,11 @@ export default function AdminExamDisplayListPage() {
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-              } catch (e) {
-                console.error('Erreur lors du téléchargement de l\'affiche de porte', e);
               }
             }}
             className="h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
           >
-            <Download className="w-4 h-4" /> Imprimer Affiche de Porte (PDF)
+            <Download className="w-4 h-4" /> Télécharger PDF
           </button>
         </div>
       </div>

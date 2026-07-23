@@ -150,10 +150,9 @@
     <table class="seats-table">
         <thead>
             <tr>
-                <th style="width: 15%; text-align: center;">N° Siège</th>
-                <th style="width: 45%;">Nom & Prénom</th>
-                <th style="width: 20%;">CNE / Massar</th>
-                <th style="width: 20%;">Émargement</th>
+                <th style="width: 20%; text-align: center;">N° Siège</th>
+                <th style="width: 50%;">Nom & Prénom</th>
+                <th style="width: 30%;">CNE / Massar</th>
             </tr>
         </thead>
         <tbody>
@@ -172,11 +171,10 @@
                     <td style="font-family: monospace; color: #475569;">
                         {{ $seating->cne ?? $seating->cin ?? 'N/A' }}
                     </td>
-                    <td style="border-bottom: 1px dotted #cbd5e1;"></td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">
+                    <td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px;">
                         Aucun étudiant placé dans cette salle.
                     </td>
                 </tr>
