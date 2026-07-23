@@ -690,7 +690,7 @@ class ConvocationController extends Controller
                 'exam_seatings.sent_at',
                 'exam_seatings.status',
                 'students.cne',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(users.cin, "N/A") as cin'),
+                \Illuminate\Support\Facades\DB::raw("COALESCE(users.cin, 'N/A') as cin"),
                 'users.name as student_name',
                 'users.email as student_email',
                 'users.avatar',
@@ -699,7 +699,7 @@ class ConvocationController extends Controller
                 'exam_sessions.name as session_name',
                 'exams.exam_date',
                 'exams.start_time',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(seating_rooms.name, exam_rooms.name, "Salle N/A") as room_name')
+                \Illuminate\Support\Facades\DB::raw("COALESCE(seating_rooms.name, exam_rooms.name, 'Salle N/A') as room_name")
             )
             ->first();
 

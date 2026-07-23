@@ -172,7 +172,7 @@ class ExamConvocationService
                 'exam_seatings.qr_token',
                 'exam_seatings.seat_number',
                 'students.cne',
-                DB::raw('COALESCE(users.cin, "N/A") as student_cin'),
+                DB::raw("COALESCE(users.cin, 'N/A') as student_cin"),
                 'users.name as student_name',
                 'users.email as student_email',
                 'modules.name as module_name',
@@ -180,8 +180,8 @@ class ExamConvocationService
                 'filieres.name as filiere_name',
                 'exams.exam_date',
                 'exams.start_time',
-                DB::raw('COALESCE(seating_rooms.name, exam_rooms.name, "Salle non assignée") as room_name'),
-                DB::raw('COALESCE(prof_users.name, "Prof. Responsable") as professor_name')
+                DB::raw("COALESCE(seating_rooms.name, exam_rooms.name, 'Salle non assignée') as room_name"),
+                DB::raw("COALESCE(prof_users.name, 'Prof. Responsable') as professor_name")
             )
             ->orderBy('exams.exam_date')
             ->orderBy('exams.start_time')
