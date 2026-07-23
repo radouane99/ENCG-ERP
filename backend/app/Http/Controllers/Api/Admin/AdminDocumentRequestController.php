@@ -38,6 +38,10 @@ class AdminDocumentRequestController extends Controller
                 'time' => $documentRequest->requested_at?->diffForHumans() ?? $documentRequest->created_at?->diffForHumans(),
                 'status' => $status,
                 'reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
+                'email_sent' => $adminNotes['email_sent'] ?? false,
+                'email_sent_at' => $adminNotes['email_sent_at'] ?? null,
+                'email_recipient' => $adminNotes['email_recipient'] ?? $documentRequest->student?->user?->email ?? null,
+                'email_error' => $adminNotes['email_error'] ?? null,
                 'url' => url("/api/admin/document-requests/{$documentRequest->id}/download"),
                 'preview_url' => url("/api/admin/document-requests/{$documentRequest->id}/preview"),
             ];

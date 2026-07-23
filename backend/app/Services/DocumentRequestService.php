@@ -171,7 +171,37 @@ class DocumentRequestService
                             'rejection_reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
                         ];
 
-                        Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
+                        try {
+                            Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
+                            
+                            $currentNotes = is_array($fresh->admin_notes) ? $fresh->admin_notes : [];
+                            $currentNotes['email_sent'] = true;
+                            $currentNotes['email_sent_at'] = now()->toIso8601String();
+                            $currentNotes['email_recipient'] = $studentUser->email;
+                            $fresh->update(['admin_notes' => $currentNotes]);
+
+                            \App\Models\NotificationLog::create([
+                                'user_id' => $studentUser->id,
+                                'type' => 'email',
+                                'recipient' => $studentUser->email,
+                                'message' => "Email de statut [{$fresh->documentType?->name}] envoyé à {$studentUser->email}.",
+                                'status' => 'sent',
+                            ]);
+                        } catch (\Throwable $mailErr) {
+                            logger()->error('Email sending error: ' . $mailErr->getMessage());
+                            $currentNotes = is_array($fresh->admin_notes) ? $fresh->admin_notes : [];
+                            $currentNotes['email_sent'] = false;
+                            $currentNotes['email_error'] = $mailErr->getMessage();
+                            $fresh->update(['admin_notes' => $currentNotes]);
+
+                            \App\Models\NotificationLog::create([
+                                'user_id' => $studentUser->id,
+                                'type' => 'email',
+                                'recipient' => $studentUser->email ?? 'N/A',
+                                'message' => "Échec d'envoi d'email : " . $mailErr->getMessage(),
+                                'status' => 'failed',
+                            ]);
+                        }
                     }
                 }
             } catch (\Throwable $e) {

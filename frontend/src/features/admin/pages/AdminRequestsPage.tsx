@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Eye, Download, Clock, CheckCircle2, XCircle, Loader2, UploadCloud, File, FileText, Trash2, Check, ArrowRight } from 'lucide-react'
+import { Eye, Download, Clock, CheckCircle2, XCircle, Loader2, UploadCloud, File, FileText, Trash2, Check, ArrowRight, Mail } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import DocumentViewerModal from '@shared/components/ui/DocumentViewerModal'
 import api from '@shared/lib/api'
@@ -384,11 +384,26 @@ function RequestCard({
         <p className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">{request.role}</p>
       </div>
 
-      <div className="bg-slate-50 rounded-xl p-2.5 mb-3 border border-slate-100">
+      <div className="bg-slate-50 rounded-xl p-2.5 mb-2 border border-slate-100">
         <p className={cn("text-xs font-medium italic", request.status === 'rejected' ? 'text-red-500' : 'text-slate-600')}>
           {request.motif}
         </p>
       </div>
+
+      {/* Email Notification Status Indicator */}
+      {request.status !== 'pending' && (
+        <div className="mb-3">
+          {request.email_sent ? (
+            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200" title={`Envoyé le ${request.email_sent_at ? new Date(request.email_sent_at).toLocaleTimeString('fr-FR') : ''}`}>
+              <Mail className="w-3 h-3 text-emerald-600" /> Notification Email Envoyée ({request.email_recipient || 'Étudiant'})
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              <Mail className="w-3 h-3 text-amber-600" /> Notification Email Prête / Resend
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold">
         <span className="text-slate-400 uppercase tracking-wider text-[9px]">
