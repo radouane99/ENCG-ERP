@@ -21,7 +21,7 @@ class RequireAdmin2FA
         $adminRoles = ['super-admin', 'institution-admin', 'director'];
 
         if ($user && $user->hasAnyRole($adminRoles)) {
-            if (!$user->two_factor_confirmed_at) {
+            if (!$user->two_factor_confirmed_at && !$user->two_factor_secret) {
                 return response()->json([
                     'message' => '2FA is required for administrator accounts. Please complete 2FA setup.',
                     'requires_2fa_setup' => true

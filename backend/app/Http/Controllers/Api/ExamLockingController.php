@@ -16,12 +16,19 @@ class ExamLockingController extends Controller
      */
     public function index()
     {
-        $currentPhase = DB::table('institutions')->first()->settings['exam_lock_phase'] ?? 'Verrouillé';
+        $institution = \App\Models\Institution::first();
+        $settings = [];
+        if ($institution) {
+            $settings = is_array($institution->settings) 
+                ? $institution->settings 
+                : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
+        }
+        $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
         
         $audits = ExamLockingAudit::latest()->take(20)->get()->map(function($audit) {
             return [
                 'id' => $audit->id,
-                'date' => $audit->created_at->format('d/m/Y H:i:s'),
+                'date' => $audit->created_at ? $audit->created_at->format('d/m/Y H:i:s') : date('d/m/Y H:i:s'),
                 'user' => $audit->user_name,
                 'oldPhase' => $audit->old_phase,
                 'newPhase' => $audit->new_phase,
@@ -46,7 +53,18 @@ class ExamLockingController extends Controller
         ]);
 
         $institution = \App\Models\Institution::first();
-        $settings = $institution->settings ?? [];
+        if (! $institution) {
+            $institution = \App\Models\Institution::create([
+                'name' => 'ENCG Fès',
+                'code' => 'ENCG-FES',
+                'settings' => ['exam_lock_phase' => 'Verrouillé'],
+            ]);
+        }
+
+        $settings = is_array($institution->settings) 
+            ? $institution->settings 
+            : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
+
         $oldPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
         $newPhase = $request->new_phase;
 
