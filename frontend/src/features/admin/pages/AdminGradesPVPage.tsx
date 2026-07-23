@@ -52,6 +52,52 @@ export default function AdminGradesPVPage() {
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
 
+  // Jury & Dual PV State
+  const [pvType, setPvType] = useState<'semestriel' | 'annuel'>('semestriel')
+  const [juryStatus, setJuryStatus] = useState<any>(null)
+  const [loadingJury, setLoadingJury] = useState(false)
+  const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([])
+  const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null)
+
+  const fetchJury = async () => {
+    if (!selectedFiliere) return
+    setLoadingJury(true)
+    try {
+      const res = await api.get('/academic/deliberations/jury-status', {
+        params: {
+          filiere_id: selectedFiliere,
+          academic_year_id: 1,
+          semester_number: selectedSemester || 1,
+          type: pvType
+        }
+      })
+      setJuryStatus(res.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingJury(false)
+    }
+  }
+
+  const fetchAnnualCompensation = async () => {
+    if (!selectedFiliere) return
+    try {
+      const res = await api.get('/academic/deliberations/annual-compensation', {
+        params: { filiere_id: selectedFiliere, academic_year_id: 1 }
+      })
+      setAnnualCompensationData(res.data.data || [])
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  useEffect(() => {
+    fetchJury()
+    if (pvType === 'annuel') {
+      fetchAnnualCompensation()
+    }
+  }, [selectedFiliere, selectedSemester, pvType])
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
 
@@ -162,13 +208,24 @@ export default function AdminGradesPVPage() {
     const dataUrl = canvas.toDataURL('image/png')
     
     try {
-      const res = await api.post(`/modules/${moduleId}/pv/sign`, {
-        group_id: (groupId && groupId !== 'null') ? groupId : 'all',
-        signature_data: dataUrl
-      })
-      toast.success(res.data.message)
-      setShowSignatureModal(false)
-      refetchPV()
+      if (activeJurySigningId) {
+        const res = await api.post('/academic/deliberations/sign-jury', {
+          jury_id: activeJurySigningId,
+          signature_data: dataUrl
+        })
+        toast.success(res.data.message || "Signature du membre du jury enregistrée avec succès !")
+        setShowSignatureModal(false)
+        setActiveJurySigningId(null)
+        fetchJury()
+      } else {
+        const res = await api.post(`/modules/${moduleId}/pv/sign`, {
+          group_id: (groupId && groupId !== 'null') ? groupId : 'all',
+          signature_data: dataUrl
+        })
+        toast.success(res.data.message)
+        setShowSignatureModal(false)
+        refetchPV()
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erreur lors de la signature.")
     }
@@ -252,8 +309,38 @@ export default function AdminGradesPVPage() {
             {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            {isRtl ? 'اختر الشعبة والدورة للوصول لملاحظات ومحاضر الوحدة' : 'Sélectionnez la filière, le semestre et le module pour consulter et exporter le PV officiel.'}
+            {isRtl ? 'اختر نوع المحضر والشعبة للدورة واللجنة الرسمية' : 'Sélectionnez le type de PV (Semestriel ou Annuel Global) et la filière.'}
           </p>
+        </div>
+
+        {/* PV Type Toggle */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <button
+            type="button"
+            onClick={() => setPvType('semestriel')}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
+              pvType === 'semestriel' 
+                ? "bg-indigo-600 text-white shadow-md" 
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            )}
+          >
+            <Layers className="w-4 h-4" />
+            PV Semestriel (7 Modules)
+          </button>
+          <button
+            type="button"
+            onClick={() => setPvType('annuel')}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
+              pvType === 'annuel' 
+                ? "bg-indigo-600 text-white shadow-md" 
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            )}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            PV Annuel Global (14 Modules)
+          </button>
         </div>
       </div>
 
@@ -455,6 +542,156 @@ export default function AdminGradesPVPage() {
             )}
         </div>
       </div>
+
+      {/* Jury Committee Status Hub */}
+      {juryStatus && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-indigo-100 text-indigo-900 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  Commission Jury {pvType === 'annuel' ? 'Annuelle Global (14 Modules)' : `Semestrielle S${selectedSemester || 1} (7 Modules)`}
+                </span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                Suivi des Signatures du Jury de Délibération
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="block text-xs font-black text-slate-700 dark:text-slate-200">
+                  {juryStatus.signed_count} / {juryStatus.total_members} Signatures Récoltées
+                </span>
+                <div className="w-36 h-2 bg-slate-100 rounded-full overflow-hidden mt-1">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${juryStatus.total_members > 0 ? (juryStatus.signed_count / juryStatus.total_members) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={() => {
+                  window.open(`/api/v1/deliberations/export-pv-pdf?type=${pvType}&filiere_id=${selectedFiliere || 1}&semester_number=${selectedSemester || 1}`, '_blank')
+                }}
+                className="bg-[#0f2863] text-white rounded-xl text-xs font-bold px-4 py-2.5 shadow-md flex items-center gap-2 hover:bg-[#1a3a89]"
+              >
+                <Download className="w-4 h-4" /> Exporter PDF avec Tampons
+              </Button>
+            </div>
+          </div>
+
+          {/* Members Matrix */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {juryStatus.members?.map((member: any) => (
+              <div 
+                key={member.id}
+                className={cn(
+                  "p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3",
+                  member.status === 'signed' 
+                    ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20" 
+                    : "bg-slate-50 border-slate-200 dark:bg-slate-800/50"
+                )}
+              >
+                <div>
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-400">
+                    <span>{member.module_code || 'CHEF'}</span>
+                    <span className={cn("px-2 py-0.5 rounded-md text-[9px]", member.role === 'chef_filiere' ? "bg-purple-100 text-purple-900" : "bg-blue-100 text-blue-900")}>
+                      {member.role === 'chef_filiere' ? 'Président' : 'Professeur'}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 mt-1 line-clamp-1">
+                    {member.user_name}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                    {member.module_name}
+                  </p>
+                </div>
+
+                <div>
+                  {member.status === 'signed' ? (
+                    <div className="flex items-center justify-between text-[10px] text-emerald-700 font-extrabold bg-emerald-100/70 px-2.5 py-1 rounded-lg">
+                      <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Signé</span>
+                      <span className="font-mono text-[9px]">{member.digital_seal ? member.digital_seal.substring(0, 6) : 'OK'}</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setActiveJurySigningId(member.id)
+                        setShowSignatureModal(true)
+                      }}
+                      className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      ✍️ Signer votre part
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Annual Compensation Results (When PV Annuel Global is selected) */}
+      {pvType === 'annuel' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-4 print:hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                Bilan & Compensation Annuelle Globale (14 Modules)
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">Calcul des moyennes S1+S2 (ou S3+S4...) et décision finale d'استيفاء السنة</p>
+            </div>
+            <span className="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-black rounded-full">
+              Règle ENCG : Compensation à condition d'absence de note éliminatoire (&lt; 5.0)
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-400 font-black uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">CNE / Apogée</th>
+                  <th className="p-3">Nom & Prénom Étudiant</th>
+                  <th className="p-3">Moyenne S. Impair</th>
+                  <th className="p-3">Moyenne S. Pair</th>
+                  <th className="p-3">Moyenne Annuelle</th>
+                  <th className="p-3 text-right">Décision du Jury</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-semibold">
+                {annualCompensationData.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-6 text-slate-400 italic">
+                      Chargement des calculs de compensation annuelle...
+                    </td>
+                  </tr>
+                ) : annualCompensationData.map((row: any) => (
+                  <tr key={row.student_id} className="hover:bg-slate-50/80">
+                    <td className="p-3 font-mono font-bold text-slate-600">{row.cne}</td>
+                    <td className="p-3 font-extrabold text-slate-900 dark:text-white">{row.student_name}</td>
+                    <td className="p-3 font-bold text-indigo-600">{row.odd_semester_avg} /20</td>
+                    <td className="p-3 font-bold text-indigo-600">{row.even_semester_avg} /20</td>
+                    <td className="p-3 font-black text-slate-900">{row.annual_average} /20</td>
+                    <td className="p-3 text-right">
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase border",
+                        row.decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                        row.decision === 'V.Comp' ? "bg-blue-50 text-blue-700 border-blue-200" :
+                        row.decision === 'R' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                        "bg-red-50 text-red-700 border-red-200"
+                      )}>
+                        {row.decision === 'V' ? 'Validé' : row.decision === 'V.Comp' ? 'Validé p. Comp' : row.decision === 'R' ? 'Rattrapage' : 'Ajourné'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Analytics Dashboard (Jury Analytics) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden animate-in fade-in duration-300">

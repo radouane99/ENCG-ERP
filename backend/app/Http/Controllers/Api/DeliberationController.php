@@ -239,30 +239,114 @@ class DeliberationController extends Controller
         ]);
     }
 
-    public function exportPvPdf($id)
+    public function exportPvPdf($id, Request $request)
     {
-        $delib = \App\Models\Deliberation::with(['semester', 'filiere', 'academicYear'])->findOrFail($id);
-        $semesterId = $delib->semester_id;
-        $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
-        $students = Student::whereHas('registrations', function($q) use ($delib) {
-            $q->where('filiere_id', $delib->filiere_id)->where('academic_year_id', $delib->academic_year_id);
-        })->orderBy('last_name')->get();
+        $delib = \App\Models\Deliberation::with(['semester', 'filiere', 'academicYear'])->find($id);
+        $type = $request->query('type', 'semestriel');
+        $filiereId = $request->query('filiere_id', $delib ? $delib->filiere_id : 1);
+        $academicYearId = $request->query('academic_year_id', $delib ? $delib->academic_year_id : 1);
+        $semesterNum = $request->query('semester_number', $delib ? ($delib->semester ? $delib->semester->semester_number : 1) : 1);
 
-        $matrix = [];
-        foreach ($students as $student) {
-            $res = $this->engine->calculateSemesterDeliberation($student, $modules);
-            $matrix[] = [
-                'student' => mb_strtoupper($student->last_name) . ' ' . $student->first_name,
-                'cne' => $student->cne ?? 'N/A',
-                'semester_average' => $res['semester_average'],
-                'decision' => $res['decision'],
-                'modules' => $res['module_results']
-            ];
+        $delibService = new \App\Services\Academic\DeliberationService();
+        $juries = $delibService->autoComposeJury($filiereId, $academicYearId, $type === 'semestriel' ? $semesterNum : null, $type);
+
+        $filiere = \App\Models\Filiere::find($filiereId);
+        $academicYear = \App\Models\AcademicYear::find($academicYearId);
+
+        if ($type === 'annuel') {
+            $matrix = $delibService->calculateAnnualCompensation($filiereId, $academicYearId);
+            $modules = Module::where('filiere_id', $filiereId)->get();
+            $pdfView = 'pdf.pv_annuel';
+        } else {
+            $pvResult = $delibService->getSemesterPVWithReservistes($filiereId, $academicYearId, $semesterNum);
+            $modules = $pvResult['modules'];
+            $matrix = $pvResult['matrix'];
+            $pdfView = 'pdf.pv_semestriel';
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.pv_deliberation', compact('delib', 'modules', 'matrix'))
-                ->setPaper('a4', 'landscape');
-        
-        return $pdf->download('pv_deliberation_' . $delib->id . '.pdf');
+        $viewData = [
+            'filiere' => $filiere,
+            'academicYear' => $academicYear,
+            'semesterNumber' => $semesterNum,
+            'type' => $type,
+            'modules' => $modules,
+            'matrix' => $matrix,
+            'juries' => $juries,
+        ];
+
+        if (view()->exists($pdfView)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($pdfView, $viewData)->setPaper('a4', 'landscape');
+            return $pdf->download("pv_{$type}_filiere_{$filiereId}.pdf");
+        }
+
+        return response()->json(['message' => 'PV généré avec succès.', 'data' => $viewData]);
+    }
+
+    /**
+     * Obtenir l'état de la commission du jury et des توقيعات
+     */
+    public function getJuryStatus(Request $request): JsonResponse
+    {
+        $filiereId = (int) $request->query('filiere_id', 1);
+        $academicYearId = (int) $request->query('academic_year_id', 1);
+        $semesterNum = $request->query('semester_number') ? (int) $request->query('semester_number') : 1;
+        $type = $request->query('type', 'semestriel');
+
+        $delibService = new \App\Services\Academic\DeliberationService();
+        $juries = $delibService->autoComposeJury($filiereId, $academicYearId, $type === 'semestriel' ? $semesterNum : null, $type);
+
+        $totalMembers = count($juries);
+        $signedCount = collect($juries)->where('status', 'signed')->count();
+
+        return response()->json([
+            'success' => true,
+            'type' => $type,
+            'total_members' => $totalMembers,
+            'signed_count' => $signedCount,
+            'members' => $juries
+        ]);
+    }
+
+    /**
+     * Signer le PV par un membre du jury
+     */
+    public function signJury(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'jury_id' => 'required|integer',
+            'signature_data' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié.'], 401);
+        }
+
+        $delibService = new \App\Services\Academic\DeliberationService();
+        $result = $delibService->signJuryPv($validated['jury_id'], $user->id, $validated['signature_data'], $request->ip());
+
+        if ($result['status'] === 'error') {
+            return response()->json(['message' => $result['message']], 404);
+        }
+
+        return response()->json([
+            'message' => 'Tsignature enregistrée avec succès.',
+            'digital_seal' => $result['digital_seal'],
+            'signed_at' => $result['signed_at']
+        ]);
+    }
+
+    /**
+     * Récupérer les résultats de compensation annuelle (S1+S2)
+     */
+    public function getAnnualCompensation(Request $request): JsonResponse
+    {
+        $filiereId = (int) $request->query('filiere_id', 1);
+        $academicYearId = (int) $request->query('academic_year_id', 1);
+
+        $delibService = new \App\Services\Academic\DeliberationService();
+        $results = $delibService->calculateAnnualCompensation($filiereId, $academicYearId);
+
+        return response()->json(['data' => $results]);
     }
 }}

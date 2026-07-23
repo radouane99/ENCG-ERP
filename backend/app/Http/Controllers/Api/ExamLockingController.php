@@ -33,6 +33,7 @@ class ExamLockingController extends Controller
                 'user' => $audit->user_name,
                 'oldPhase' => $audit->old_phase,
                 'newPhase' => $audit->new_phase,
+                'reason' => $audit->reason ?? 'Non précisé',
                 'ip' => $audit->ip_address,
                 'isRed' => $audit->new_phase === 'Verrouillage Total' || $audit->new_phase === 'Verrouillé',
             ];
@@ -53,6 +54,7 @@ class ExamLockingController extends Controller
         $request->validate([
             'new_phase' => 'required|string',
             'deadline' => 'nullable|string',
+            'reason' => 'nullable|string',
         ]);
 
         $institution = \App\Models\Institution::first();
@@ -71,6 +73,7 @@ class ExamLockingController extends Controller
         $oldPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
         $newPhase = $request->new_phase;
         $deadline = $request->input('deadline');
+        $reason = $request->input('reason', 'Changement de phase');
 
         if ($oldPhase !== $newPhase || $deadline !== null) {
             $settings['exam_lock_phase'] = $newPhase;
@@ -82,9 +85,10 @@ class ExamLockingController extends Controller
             $user = $request->user();
             ExamLockingAudit::create([
                 'user_id' => $user ? $user->id : null,
-                'user_name' => $user ? $user->name : 'Système',
+                'user_name' => $user ? ($user->name ?? $user->email) : 'Système',
                 'old_phase' => $oldPhase,
                 'new_phase' => $newPhase,
+                'reason' => $reason,
                 'ip_address' => $request->ip(),
             ]);
 

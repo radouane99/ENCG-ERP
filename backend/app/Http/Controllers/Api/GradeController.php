@@ -28,11 +28,23 @@ class GradeController extends Controller
         }
 
         $groupId = $request->query('group_id');
-        $studentsQuery = Student::whereHas('registrations', function ($q) use ($assessment, $academicYearId, $groupId) {
-            $q->where('filiere_id', $assessment->module->filiere_id)
-              ->where('academic_year_id', $academicYearId);
-            if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
-                $q->where('group_id', $groupId);
+        $retakeStudentIds = \Illuminate\Support\Facades\DB::table('student_module_retakes')
+            ->where('module_id', $assessment->module_id)
+            ->where('academic_year_id', $academicYearId)
+            ->pluck('student_id')
+            ->toArray();
+
+        $studentsQuery = Student::where(function($query) use ($assessment, $academicYearId, $groupId, $retakeStudentIds) {
+            $query->whereHas('registrations', function ($q) use ($assessment, $academicYearId, $groupId) {
+                $q->where('filiere_id', $assessment->module->filiere_id)
+                  ->where('academic_year_id', $academicYearId);
+                if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+                    $q->where('group_id', $groupId);
+                }
+            });
+
+            if (!empty($retakeStudentIds)) {
+                $query->orWhereIn('id', $retakeStudentIds);
             }
         });
 

@@ -202,6 +202,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
+    Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
+    Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
+    Route::get('academic/deliberations/annual-compensation', [DeliberationController::class, 'getAnnualCompensation']);
 
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);

@@ -246,4 +246,380 @@ class DeliberationService
             'global_status' => $globalAverage >= 10 ? 'passed' : 'failed'
         ];
     }
+
+    /**
+     * Génère le PV d'un semestre en intégrant les étudiants résidants/réguliers ET les étudiants RÉSERVISTES (avec Dettes)
+     * fusionnant leurs notes antérieurement validées (ex: 2024-2025) et les notes validées cette année.
+     */
+    public function getSemesterPVWithReservistes(int $filiereId, int $academicYearId, int $semesterNumber): array
+    {
+        $modules = DB::table('modules')
+            ->where('filiere_id', $filiereId)
+            ->where('semester_number', $semesterNumber)
+            ->get();
+
+        $moduleIds = $modules->pluck('id')->toArray();
+
+        // 1. Étudiants inscrits normalement dans ce semestre
+        $regularStudentIds = DB::table('student_registrations')
+            ->where('filiere_id', $filiereId)
+            ->where('academic_year_id', $academicYearId)
+            ->where('semester_number', $semesterNumber)
+            ->pluck('student_id')
+            ->toArray();
+
+        // 2. Étudiants RÉSERVISTES (qui repassent un module en dette dans ce semestre)
+        $reservisteStudentIds = DB::table('student_module_retakes')
+            ->whereIn('module_id', $moduleIds)
+            ->where('academic_year_id', $academicYearId)
+            ->pluck('student_id')
+            ->toArray();
+
+        $allStudentIds = array_unique(array_merge($regularStudentIds, $reservisteStudentIds));
+
+        $students = DB::table('students')
+            ->whereIn('id', $allStudentIds)
+            ->orderBy('last_name')
+            ->get();
+
+        $matrix = [];
+
+        foreach ($students as $student) {
+            $isReserviste = !in_array($student->id, $regularStudentIds);
+
+            // Fetch historical validations for this student
+            $historical = DB::table('module_validations')
+                ->where('student_id', $student->id)
+                ->whereIn('module_id', $moduleIds)
+                ->get()
+                ->keyBy('module_id');
+
+            // Fetch current grades for this student
+            $currentGrades = DB::table('grades')
+                ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
+                ->where('grades.student_id', $student->id)
+                ->whereIn('assessments.module_id', $moduleIds)
+                ->select(
+                    'assessments.module_id',
+                    'assessments.type',
+                    'assessments.weight',
+                    'grades.value',
+                    'grades.absent'
+                )
+                ->get()
+                ->groupBy('module_id');
+
+            $moduleResults = [];
+            $totalScore = 0;
+            $totalCoef = 0;
+            $hasEliminatory = false;
+            $hasPending = false;
+
+            foreach ($modules as $module) {
+                $coef = $module->coefficient ?? 1.0;
+                $totalCoef += $coef;
+
+                // Priority 1: Has historical validation from previous years
+                if ($historical->has($module->id)) {
+                    $histVal = $historical->get($module->id);
+                    $gradeVal = round($histVal->final_grade, 2);
+                    $moduleResults[$module->id] = [
+                        'grade' => $gradeVal,
+                        'formatted' => number_format($gradeVal, 2) . ' (V.Anté)',
+                        'status' => 'V.Anté',
+                        'is_historical' => true,
+                    ];
+                    $totalScore += ($gradeVal * $coef);
+                } 
+                // Priority 2: Evaluated in current academic year
+                elseif ($currentGrades->has($module->id)) {
+                    $mGrades = $currentGrades->get($module->id);
+                    $normalAssessments = $mGrades->filter(fn($g) => strtolower($g->type) !== 'rattrapage');
+                    $rattrapageAssessment = $mGrades->firstWhere(fn($g) => strtolower($g->type) === 'rattrapage');
+
+                    $score = 0;
+                    $absent = false;
+
+                    foreach ($normalAssessments as $g) {
+                        if ($g->absent) {
+                            $absent = true;
+                        } else {
+                            $score += ($g->value * ($g->weight / 100));
+                        }
+                    }
+
+                    // Check rattrapage if eligible
+                    if ($rattrapageAssessment && !$rattrapageAssessment->absent && $rattrapageAssessment->value !== null) {
+                        if ($rattrapageAssessment->value > $score) {
+                            $score = $rattrapageAssessment->value; // Take higher grade
+                        }
+                    }
+
+                    $score = round($score, 2);
+
+                    if ($absent || $score < 5.0) {
+                        $hasEliminatory = true;
+                    }
+
+                    $status = ($score >= 10.0) ? 'V' : (($score >= 5.0) ? 'RAT' : 'NV');
+
+                    $moduleResults[$module->id] = [
+                        'grade' => $score,
+                        'formatted' => number_format($score, 2),
+                        'status' => $status,
+                        'is_historical' => false,
+                    ];
+
+                    $totalScore += ($score * $coef);
+                } 
+                else {
+                    $hasPending = true;
+                    $moduleResults[$module->id] = [
+                        'grade' => null,
+                        'formatted' => '–',
+                        'status' => 'PENDING',
+                        'is_historical' => false,
+                    ];
+                }
+            }
+
+            $semesterAvg = $totalCoef > 0 ? round($totalScore / $totalCoef, 2) : 0;
+
+            if ($semesterAvg >= 10.0 && !$hasEliminatory) {
+                $decision = 'V';
+            } elseif ($semesterAvg >= 5.0) {
+                $decision = 'RAT';
+            } else {
+                $decision = 'AJ';
+            }
+
+            $matrix[] = [
+                'student_id' => $student->id,
+                'student' => mb_strtoupper($student->last_name) . ' ' . $student->first_name,
+                'cne' => $student->cne_cme ?? $student->student_number,
+                'is_reserviste' => $isReserviste,
+                'semester_average' => $semesterAvg,
+                'decision' => $decision,
+                'modules' => $moduleResults,
+            ];
+        }
+
+        return [
+            'modules' => $modules,
+            'matrix' => $matrix,
+        ];
+    }
+
+    /**
+     * Compose automatiquement la commission du jury (7 professeurs pour un semestre, 14 pour l'année + Chef de filière)
+     */
+    public function autoComposeJury(int $filiereId, int $academicYearId, ?int $semesterNumber = null, string $type = 'semestriel'): array
+    {
+        $query = DB::table('modules')
+            ->where('filiere_id', $filiereId)
+            ->where('is_active', true);
+
+        if ($type === 'semestriel' && $semesterNumber) {
+            $query->where('semester_number', $semesterNumber);
+        }
+
+        $modules = $query->get();
+
+        $juryMembers = [];
+        $addedUserIds = [];
+
+        foreach ($modules as $module) {
+            // Find professor assigned to this module
+            $profRecord = DB::table('module_professor')
+                ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                ->join('users', 'professors.user_id', '=', 'users.id')
+                ->where('module_id', $module->id)
+                ->select('users.id as user_id', 'users.name as user_name', 'users.email')
+                ->first();
+
+            $userId = $profRecord ? $profRecord->user_id : null;
+            $userName = $profRecord ? ($profRecord->user_name ?? $profRecord->email) : "Non assigné ({$module->name})";
+
+            $existing = DB::table('deliberation_juries')
+                ->where('filiere_id', $filiereId)
+                ->where('academic_year_id', $academicYearId)
+                ->where('type', $type)
+                ->where('module_id', $module->id)
+                ->when($semesterNumber, fn($q) => $q->where('semester_number', $semesterNumber))
+                ->first();
+
+            if (!$existing) {
+                $id = DB::table('deliberation_juries')->insertGetId([
+                    'filiere_id' => $filiereId,
+                    'academic_year_id' => $academicYearId,
+                    'semester_number' => $semesterNumber,
+                    'type' => $type,
+                    'user_id' => $userId,
+                    'module_id' => $module->id,
+                    'user_name' => $userName,
+                    'role' => 'professeur',
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $id = $existing->id;
+            }
+
+            if ($userId) $addedUserIds[] = $userId;
+
+            $juryMembers[] = [
+                'id' => $id,
+                'module_id' => $module->id,
+                'module_name' => $module->name,
+                'module_code' => $module->code,
+                'user_id' => $userId,
+                'user_name' => $userName,
+                'role' => 'professeur',
+                'status' => $existing->status ?? 'pending',
+                'signed_at' => $existing->signed_at ?? null,
+                'digital_seal' => $existing->digital_seal ?? null,
+            ];
+        }
+
+        // Add Chef de Filière / Président du jury if not already present
+        $chefFiliere = DB::table('filieres')
+            ->leftJoin('users', 'filieres.responsable_id', '=', 'users.id')
+            ->where('filieres.id', $filiereId)
+            ->select('users.id as user_id', 'users.name as user_name', 'users.email')
+            ->first();
+
+        $chefUserId = $chefFiliere ? $chefFiliere->user_id : null;
+        $chefName = $chefFiliere ? ($chefFiliere->user_name ?? $chefFiliere->email) : 'Chef de Filière';
+
+        $existingChef = DB::table('deliberation_juries')
+            ->where('filiere_id', $filiereId)
+            ->where('academic_year_id', $academicYearId)
+            ->where('type', $type)
+            ->where('role', 'chef_filiere')
+            ->when($semesterNumber, fn($q) => $q->where('semester_number', $semesterNumber))
+            ->first();
+
+        if (!$existingChef) {
+            $chefId = DB::table('deliberation_juries')->insertGetId([
+                'filiere_id' => $filiereId,
+                'academic_year_id' => $academicYearId,
+                'semester_number' => $semesterNumber,
+                'type' => $type,
+                'user_id' => $chefUserId,
+                'user_name' => $chefName,
+                'role' => 'chef_filiere',
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $chefId = $existingChef->id;
+        }
+
+        $juryMembers[] = [
+            'id' => $chefId,
+            'module_id' => null,
+            'module_name' => 'Coordination Globale',
+            'module_code' => 'CHEF',
+            'user_id' => $chefUserId,
+            'user_name' => $chefName,
+            'role' => 'chef_filiere',
+            'status' => $existingChef->status ?? 'pending',
+            'signed_at' => $existingChef->signed_at ?? null,
+            'digital_seal' => $existingChef->digital_seal ?? null,
+        ];
+
+        return $juryMembers;
+    }
+
+    /**
+     * Signe le PV de délibération par un membre du jury
+     */
+    public function signJuryPv(int $juryId, int $userId, string $signatureData, string $ipAddress): array
+    {
+        $jury = DB::table('deliberation_juries')->where('id', $juryId)->first();
+        if (!$jury) {
+            return ['status' => 'error', 'message' => 'Membre du jury introuvable.'];
+        }
+
+        $digitalSeal = hash('sha256', json_encode([
+            'jury_id' => $juryId,
+            'user_id' => $userId,
+            'filiere_id' => $jury->filiere_id,
+            'signed_at' => now()->toIso8601String(),
+            'ip' => $ipAddress,
+        ]));
+
+        DB::table('deliberation_juries')
+            ->where('id', $juryId)
+            ->update([
+                'status' => 'signed',
+                'signed_at' => now(),
+                'signature_data' => $signatureData,
+                'digital_seal' => $digitalSeal,
+                'ip_address' => $ipAddress,
+                'updated_at' => now(),
+            ]);
+
+        return [
+            'status' => 'success',
+            'digital_seal' => $digitalSeal,
+            'signed_at' => now()->toDateTimeString(),
+        ];
+    }
+
+    /**
+     * Calcule la compensation annuelle globale (S1+S2, S3+S4, etc.)
+     */
+    public function calculateAnnualCompensation(int $filiereId, int $academicYearId): array
+    {
+        $students = DB::table('students')
+            ->whereHas('registrations', fn($q) => $q->where('filiere_id', $filiereId)->where('academic_year_id', $academicYearId))
+            ->get();
+
+        $results = [];
+
+        foreach ($students as $student) {
+            // Fetch validated grades
+            $validations = DB::table('module_validations')
+                ->join('modules', 'module_validations.module_id', '=', 'modules.id')
+                ->where('module_validations.student_id', $student->id)
+                ->where('modules.filiere_id', $filiereId)
+                ->select('modules.semester_number', 'modules.coefficient', 'module_validations.final_grade')
+                ->get();
+
+            $oddGrades = $validations->filter(fn($v) => $v->semester_number % 2 !== 0);
+            $evenGrades = $validations->filter(fn($v) => $v->semester_number % 2 === 0);
+
+            $oddAvg = $oddGrades->avg('final_grade') ?? 0;
+            $evenAvg = $evenGrades->avg('final_grade') ?? 0;
+            $annualAvg = round(($oddAvg + $evenAvg) / 2, 2);
+
+            $hasEliminatory = $validations->pluck('final_grade')->contains(fn($g) => $g < 5.0);
+
+            if ($oddAvg >= 10.0 && $evenAvg >= 10.0) {
+                $decision = 'V'; // Validé
+            } elseif ($annualAvg >= 10.0 && !$hasEliminatory) {
+                $decision = 'V.Comp'; // Validé par compensation
+            } elseif ($annualAvg < 10.0 && $annualAvg >= 5.0) {
+                $decision = 'R'; // Rattrapage
+            } else {
+                $decision = 'AJ'; // Ajourné / Redoublant
+            }
+
+            $results[] = [
+                'student_id' => $student->id,
+                'student_name' => $student->first_name . ' ' . $student->last_name,
+                'cne' => $student->cne_cme ?? $student->student_number,
+                'odd_semester_avg' => round($oddAvg, 2),
+                'even_semester_avg' => round($evenAvg, 2),
+                'annual_average' => $annualAvg,
+                'decision' => $decision,
+            ];
+        }
+
+        return $results;
+    }
 }
+
