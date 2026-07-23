@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
+use App\Mail\DocumentRequestCreatedMail;
+use App\Mail\DocumentRequestStatusMail;
+use Illuminate\Support\Facades\Mail;
+
 class DocumentRequestService
 {
     public function __construct(
@@ -47,12 +51,73 @@ class DocumentRequestService
 
         $this->checkEligibility($student, $type);
 
-        return DocumentRequest::create([
+        $docRequest = DocumentRequest::create([
             'student_id' => $student->id,
             'document_type_id' => $type->id,
             'status' => 'pending',
             'requested_at' => now(),
         ]);
+
+        // 1. In-App Notification for Student & Admins
+        try {
+            $studentUser = $student->user;
+            if ($studentUser) {
+                DB::table('notifications')->insert([
+                    'id' => (string) Str::uuid(),
+                    'type' => 'App\\Notifications\\DocumentRequestCreatedNotification',
+                    'notifiable_type' => 'App\\Models\\User',
+                    'notifiable_id' => $studentUser->id,
+                    'data' => json_encode([
+                        'title' => 'Demande de document enregistrée',
+                        'message' => "Votre demande pour [{$type->name}] a été enregistrée avec succès.",
+                        'action_url' => '/student/requests',
+                        'type' => 'document_request',
+                        'created_at' => now()->toIso8601String(),
+                    ]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Notify Admin users in-app
+            $admins = \App\Models\User::whereIn('role', ['super-admin', 'institution-admin', 'director'])->get();
+            foreach ($admins as $admin) {
+                DB::table('notifications')->insert([
+                    'id' => (string) Str::uuid(),
+                    'type' => 'App\\Notifications\\NewDocumentRequestAdminNotification',
+                    'notifiable_type' => 'App\\Models\\User',
+                    'notifiable_id' => $admin->id,
+                    'data' => json_encode([
+                        'title' => 'Nouvelle demande de document',
+                        'message' => "L'étudiant {$studentUser?->name} ({$student->cne}) a demandé [{$type->name}].",
+                        'action_url' => '/admin/requests',
+                        'type' => 'document_request',
+                        'created_at' => now()->toIso8601String(),
+                    ]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Failed to insert in-app notifications on request creation: ' . $e->getMessage());
+        }
+
+        // 2. Email Notification to Admin via Resend Transport
+        try {
+            $emailData = [
+                'student_name' => $student->user?->name ?? 'Étudiant',
+                'student_cne' => $student->cne ?? 'N/A',
+                'document_type' => $type->name,
+                'request_id' => $docRequest->id,
+            ];
+
+            $adminMail = config('mail.from.address', 'admin@encg-fes.ma');
+            Mail::to($adminMail)->send(new DocumentRequestCreatedMail($emailData));
+        } catch (\Throwable $e) {
+            logger()->error('Failed sending DocumentRequestCreatedMail email: ' . $e->getMessage());
+        }
+
+        return $docRequest;
     }
 
     public function processRequest(DocumentRequest $request, string $status, ?array $adminNotes = null): DocumentRequest
@@ -61,14 +126,59 @@ class DocumentRequestService
             $request->update([
                 'status' => $status,
                 'admin_notes' => $adminNotes,
-                'processed_at' => in_array($status, ['ready', 'rejected'], true) ? now() : null,
+                'processed_at' => in_array($status, ['ready', 'approved'], true) ? now() : null,
             ]);
 
-            if ($status === 'ready') {
+            if (in_array($status, ['ready', 'approved'], true)) {
                 $this->generateDocumentPdf($request);
             }
 
-            return $request->fresh(['student.user', 'documentType']);
+            $fresh = $request->fresh(['student.user', 'documentType']);
+
+            // 1. In-App Notification for Student
+            try {
+                $studentUser = $fresh->student?->user;
+                if ($studentUser) {
+                    $isApproved = in_array($status, ['ready', 'approved'], true);
+                    $title = $isApproved ? 'Demande accordée & Document généré' : 'Demande non accordée';
+                    $message = $isApproved
+                        ? "Votre document [{$fresh->documentType?->name}] a été validé et est prêt au téléchargement."
+                        : "Votre demande pour [{$fresh->documentType?->name}] n'a pas été accordée." . (isset($adminNotes['reason']) ? " Motif: {$adminNotes['reason']}" : '');
+
+                    DB::table('notifications')->insert([
+                        'id' => (string) Str::uuid(),
+                        'type' => 'App\\Notifications\\DocumentRequestStatusUpdatedNotification',
+                        'notifiable_type' => 'App\\Models\\User',
+                        'notifiable_id' => $studentUser->id,
+                        'data' => json_encode([
+                            'title' => $title,
+                            'message' => $message,
+                            'action_url' => '/student/requests',
+                            'type' => 'document_request',
+                            'created_at' => now()->toIso8601String(),
+                        ]),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // 2. Email Notification to Student via Resend Transport
+                    if (!empty($studentUser->email)) {
+                        $emailData = [
+                            'student_name' => $studentUser->name,
+                            'document_type' => $fresh->documentType?->name ?? 'Document Administratif',
+                            'request_id' => $fresh->id,
+                            'status' => $status,
+                            'rejection_reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
+                        ];
+
+                        Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
+                    }
+                }
+            } catch (\Throwable $e) {
+                logger()->error('Failed sending status update in-app/email notifications: ' . $e->getMessage());
+            }
+
+            return $fresh;
         });
     }
 
