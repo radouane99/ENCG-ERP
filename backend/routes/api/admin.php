@@ -205,6 +205,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
     Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
     Route::get('academic/deliberations/annual-compensation', [DeliberationController::class, 'getAnnualCompensation']);
+    Route::get('admin/reservistes', [\App\Http\Controllers\Api\ReservisteController::class, 'index']);
+    Route::post('admin/reservistes/{studentId}/derogation', [\App\Http\Controllers\Api\ReservisteController::class, 'updateDerogation']);
+    Route::get('admin/reservistes/{studentId}/audit', [\App\Http\Controllers\Api\ReservisteController::class, 'getStudentAudit']);
+    Route::post('admin/reservistes/{studentId}/notify-email', [\App\Http\Controllers\Api\ReservisteController::class, 'sendNotificationEmail']);
 
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
