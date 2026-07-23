@@ -63,45 +63,48 @@ export default function AdminSmartCampus() {
       <div className="flex flex-col md:flex-row gap-8 flex-1 min-h-0">
         
         {/* Interactive Map */}
-        <div className="flex-1 bg-white rounded-[2rem] border border-white/10 shadow-sm relative overflow-hidden flex items-center justify-center">
-          <div className="absolute top-4 right-4 bg-white shadow-md rounded-lg p-2 flex flex-col gap-2 z-10">
-            <button className="p-2 hover:bg-white/[0.05] rounded-md transition-colors"><Maximize className="w-4 h-4 text-white/80" /></button>
+        <div className="flex-1 bg-slate-900 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden flex items-center justify-center">
+          <div className="absolute top-4 right-4 bg-slate-800 shadow-md rounded-lg p-2 flex flex-col gap-2 z-10 border border-slate-700">
+            <button className="p-2 hover:bg-slate-700 rounded-md transition-colors"><Maximize className="w-4 h-4 text-slate-300" /></button>
           </div>
 
           {/* 2D/3D Map Background */}
-          <div className="absolute inset-0 bg-[#f8fafc] flex flex-col items-center justify-center p-8">
-            <div className="text-gray-300 font-black text-2xl uppercase tracking-widest mb-8">Plan Interactif du Campus ENCG</div>
+          <div className="absolute inset-0 bg-[#0f172a] flex flex-col items-center justify-center p-8">
+            <div className="text-slate-400 font-black text-xl uppercase tracking-widest mb-8 flex items-center gap-2">
+              <Map className="w-5 h-5 text-indigo-400" />
+              Plan Interactif du Campus ENCG
+            </div>
             
             {/* Very abstract campus layout */}
-            <div className="w-full max-w-2xl aspect-video bg-white rounded-3xl border-4 border-white/10 shadow-inner relative p-4 grid grid-cols-4 grid-rows-3 gap-2">
+            <div className="w-full max-w-2xl aspect-video bg-slate-900 rounded-3xl border-4 border-slate-800 shadow-2xl relative p-4 grid grid-cols-4 grid-rows-3 gap-3">
               
-              <div className="col-span-2 row-span-2 bg-blue-50 border-2 border-blue-200 rounded-xl relative group cursor-pointer hover:bg-blue-100 transition-colors">
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <div className="col-span-2 row-span-2 bg-indigo-950/60 border-2 border-indigo-500/40 rounded-2xl relative group cursor-pointer hover:bg-indigo-900/60 transition-all p-4">
+                <div className="absolute top-3 right-3 flex gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-bold text-blue-900">Amphi Al Khwarizmi</span>
-                  <span className="text-xs text-blue-600">85% Occupé</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="font-extrabold text-white text-base">Amphi Al Khwarizmi</span>
+                  <span className="text-xs font-semibold text-indigo-300 mt-1">85% Occupé</span>
                 </div>
               </div>
 
-              <div className="col-span-2 row-span-1 bg-white/[0.05] border-2 border-white/10 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors">
-                <span className="font-bold text-white/50">Amphi Ibn Sina</span>
+              <div className="col-span-2 row-span-1 bg-slate-800/80 border-2 border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-all">
+                <span className="font-extrabold text-slate-300">Amphi Ibn Sina</span>
               </div>
 
-              <div className="col-span-1 row-span-1 bg-rose-50 border-2 border-rose-200 rounded-xl relative cursor-pointer hover:bg-rose-100 transition-colors flex items-center justify-center">
+              <div className="col-span-1 row-span-1 bg-rose-950/60 border-2 border-rose-500/40 rounded-2xl relative cursor-pointer hover:bg-rose-900/60 transition-all flex items-center justify-center p-2">
                 <div className="absolute -top-2 -right-2 bg-rose-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
-                  <AlertCircle className="w-3 h-3" />
+                  <AlertCircle className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-bold text-rose-900 text-center text-sm">Labo 3</span>
+                <span className="font-extrabold text-rose-200 text-center text-xs">Labo 3</span>
               </div>
 
-              <div className="col-span-1 row-span-1 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-emerald-100 transition-colors">
-                <span className="font-bold text-emerald-900">B12</span>
+              <div className="col-span-1 row-span-1 bg-emerald-950/60 border-2 border-emerald-500/40 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-emerald-900/60 transition-all">
+                <span className="font-extrabold text-emerald-300 text-sm">B12</span>
               </div>
 
-              <div className="col-span-4 row-span-1 bg-indigo-50 border-2 border-indigo-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-indigo-100 transition-colors">
-                <span className="font-bold text-indigo-900">Bibliothèque Centrale</span>
+              <div className="col-span-4 row-span-1 bg-blue-950/60 border-2 border-blue-500/40 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-blue-900/60 transition-all">
+                <span className="font-extrabold text-blue-200 text-base">Bibliothèque Centrale</span>
               </div>
 
             </div>
@@ -109,61 +112,68 @@ export default function AdminSmartCampus() {
         </div>
 
         {/* Sidebar Controls */}
-        <div className="w-full md:w-96 bg-white rounded-[2rem] border border-white/10 shadow-sm p-6 overflow-y-auto custom-scrollbar">
-          <h3 className="text-lg font-black text-white mb-6">État des Infrastructures</h3>
+        <div className="w-full md:w-96 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-y-auto custom-scrollbar">
+          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            État des Infrastructures
+          </h3>
           
           <div className="space-y-4">
             {rooms.map((room: any, idx: number) => (
               <div key={idx} className={cn(
                 "p-4 rounded-2xl border transition-all cursor-pointer hover:shadow-md",
-                room.alert ? "border-rose-200 bg-rose-50/50" : "border-white/5 hover:border-blue-200"
+                room.alert 
+                  ? "border-rose-200 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/30" 
+                  : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-300"
               )}>
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h4 className="font-bold text-white text-sm">{room.name}</h4>
-                    <span className="text-[10px] text-white/50 uppercase tracking-widest">{room.type}</span>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{room.name}</h4>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">{room.type}</span>
                   </div>
                   {room.alert && (
-                    <span className="bg-rose-100 text-rose-700 p-1.5 rounded-lg">
+                    <span className="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 p-1.5 rounded-lg">
                       <AlertCircle className="w-4 h-4" />
                     </span>
                   )}
                 </div>
 
                 {room.alert && (
-                  <div className="text-xs font-bold text-rose-600 mb-3">{room.alert}</div>
+                  <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-3">{room.alert}</div>
                 )}
 
-                <div className="flex items-center gap-3 text-xs font-medium text-white/70 mt-3 pt-3 border-t border-white/5">
-                  <div className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {room.occupancy}</div>
-                  <div className="flex items-center gap-1"><Thermometer className="w-3.5 h-3.5" /> {room.temp}</div>
-                  <div className="flex items-center gap-1"><Zap className={cn("w-3.5 h-3.5", room.energy === 'High' ? "text-amber-500" : "text-gray-400")} /> {room.energy}</div>
+                <div className="flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1"><Users className="w-3.5 h-3.5 text-slate-400" /> {room.occupancy}</div>
+                  <div className="flex items-center gap-1"><Thermometer className="w-3.5 h-3.5 text-slate-400" /> {room.temp}</div>
+                  <div className="flex items-center gap-1"><Zap className={cn("w-3.5 h-3.5", room.energy === 'High' ? "text-amber-500" : "text-slate-400")} /> {room.energy}</div>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="mt-8">
-            <h3 className="text-sm font-black text-white mb-4 uppercase tracking-widest">Caméras de Sécurité (IoT)</h3>
+            <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+              <Video className="w-4 h-4 text-rose-500" />
+              Caméras de Sécurité (IoT)
+            </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="aspect-video bg-gray-900 rounded-xl relative overflow-hidden group cursor-pointer">
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors"></div>
-                <div className="absolute top-2 left-2 flex items-center gap-1 text-[8px] text-white font-mono bg-black/50 px-1.5 py-0.5 rounded">
+              <div className="aspect-video bg-slate-900 rounded-xl relative overflow-hidden group cursor-pointer border border-slate-800 shadow-md">
+                <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors"></div>
+                <div className="absolute top-2 left-2 flex items-center gap-1 text-[8px] text-white font-mono bg-black/70 px-1.5 py-0.5 rounded font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> REC
                 </div>
-                <div className="absolute bottom-2 left-2 text-[10px] text-white/80">Portail Principal</div>
+                <div className="absolute bottom-2 left-2 text-[10px] text-white font-bold bg-slate-950/80 px-2 py-0.5 rounded">Portail Principal</div>
               </div>
-              <div className="aspect-video bg-gray-900 rounded-xl relative overflow-hidden group cursor-pointer">
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors"></div>
-                <div className="absolute top-2 left-2 flex items-center gap-1 text-[8px] text-white font-mono bg-black/50 px-1.5 py-0.5 rounded">
+              <div className="aspect-video bg-slate-900 rounded-xl relative overflow-hidden group cursor-pointer border border-slate-800 shadow-md">
+                <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition-colors"></div>
+                <div className="absolute top-2 left-2 flex items-center gap-1 text-[8px] text-white font-mono bg-black/70 px-1.5 py-0.5 rounded font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> REC
                 </div>
-                <div className="absolute bottom-2 left-2 text-[10px] text-white/80">Couloir A</div>
+                <div className="absolute bottom-2 left-2 text-[10px] text-white font-bold bg-slate-950/80 px-2 py-0.5 rounded">Couloir A</div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
@@ -12,12 +12,39 @@ import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip
 import { QRCodeSVG } from 'qrcode.react'
 
 export default function AdminGradesPVPage() {
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [searchParams] = useSearchParams()
   const moduleId = searchParams.get('module_id')
   const groupId = searchParams.get('group_id')
   const queryClient = useQueryClient()
+
+  // Selection states for selector bar
+  const [selectedFiliere, setSelectedFiliere] = useState('')
+  const [selectedSemester, setSelectedSemester] = useState('')
+  const [selectedGroup, setSelectedGroup] = useState(groupId || '')
+  const [filieres, setFilieres] = useState<any[]>([])
+  const [groupes, setGroupes] = useState<any[]>([])
+  const [modules, setModules] = useState<any[]>([])
+
+  useEffect(() => {
+    api.get('/filieres').then(r => setFilieres(r.data.data || r.data)).catch(console.error)
+  }, [])
+
+  useEffect(() => {
+    if (selectedFiliere) {
+      api.get('/groups', { params: { filiere_id: selectedFiliere, semester: selectedSemester || undefined } })
+        .then(r => setGroupes(r.data.data || r.data)).catch(console.error)
+    }
+  }, [selectedFiliere, selectedSemester])
+
+  useEffect(() => {
+    if (selectedFiliere && selectedSemester) {
+      api.get('/modules', { params: { filiere_id: selectedFiliere, semester: selectedSemester } })
+        .then(r => setModules(r.data.data || r.data)).catch(console.error)
+    }
+  }, [selectedFiliere, selectedSemester])
 
   const [session, setSession] = useState<'normale' | 'rattrapage'>('normale')
   const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
@@ -216,21 +243,125 @@ export default function AdminGradesPVPage() {
     window.print()
   }
 
+  const renderSelectorBar = () => (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4 mb-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <FileText className="w-6 h-6 text-indigo-600" />
+            {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            {isRtl ? 'اختر الشعبة والدورة للوصول لملاحظات ومحاضر الوحدة' : 'Sélectionnez la filière, le semestre et le module pour consulter et exporter le PV officiel.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+            {isRtl ? 'الشعبة' : 'Filière'}
+          </label>
+          <select
+            value={selectedFiliere}
+            onChange={(e) => setSelectedFiliere(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+          >
+            <option value="">-- {isRtl ? 'اختر الشعبة' : 'Sélectionnez une filière'} --</option>
+            {filieres.map((f: any) => (
+              <option key={f.id} value={f.id}>{f.name || f.code}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+            {isRtl ? 'الدورة' : 'Semestre'}
+          </label>
+          <select
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+          >
+            <option value="">-- {isRtl ? 'اختر الدورة' : 'Tous les semestres'} --</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
+              <option key={s} value={s}>Semestre {s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+            {isRtl ? 'الوحدة' : 'Module'}
+          </label>
+          <select
+            value={moduleId || ''}
+            onChange={(e) => {
+              if (e.target.value) {
+                navigate(`/admin/grades/pv?module_id=${e.target.value}${selectedGroup ? `&group_id=${selectedGroup}` : ''}`);
+              }
+            }}
+            disabled={modules.length === 0}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 disabled:opacity-50"
+          >
+            <option value="">-- {isRtl ? 'اختر الوحدة' : 'Sélectionnez un module'} --</option>
+            {modules.map((m: any) => (
+              <option key={m.id} value={m.id}>{m.name || m.code}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+            {isRtl ? 'الفوج (اختياري)' : 'Groupe (Optionnel)'}
+          </label>
+          <select
+            value={selectedGroup}
+            onChange={(e) => {
+              setSelectedGroup(e.target.value);
+              if (moduleId) {
+                navigate(`/admin/grades/pv?module_id=${moduleId}${e.target.value ? `&group_id=${e.target.value}` : ''}`);
+              }
+            }}
+            disabled={groupes.length === 0}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 disabled:opacity-50"
+          >
+            <option value="">-- {isRtl ? 'جميع الأفواج' : 'Tous les groupes'} --</option>
+            {groupes.map((g: any) => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+
   if (isLoadingPV) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Spinner size="lg" />
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        {renderSelectorBar()}
+        <div className="flex h-[40vh] items-center justify-center">
+          <Spinner size="lg" />
+        </div>
       </div>
     )
   }
 
   if (!pvData) {
     return (
-      <div className="p-6 max-w-4xl mx-auto text-center space-y-4">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-        <h3 className="text-lg font-bold">Impossible de charger le PV</h3>
-        <p className="text-sm text-slate-500">Une erreur est survenue lors de la récupération des notes de ce module.</p>
-        <Link to="/admin/grades" className="text-blue-500 underline text-sm">Retour à la liste</Link>
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        {renderSelectorBar()}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+            <FileText className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            {isRtl ? 'اختر وحدة لعرض المحضر الرسمي' : 'Sélectionnez un Module pour afficher le PV Officiel'}
+          </h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto">
+            {isRtl ? 'الرجاء اختيار الشعبة والدورة ثم الوحدة من القائمة أعلاه لتحميل وحساب المحضر.' : 'Veuillez sélectionner la filière, le semestre puis le module dans la barre ci-dessus pour charger et exporter le PV d\'évaluation.'}
+          </p>
+        </div>
       </div>
     )
   }
@@ -259,6 +390,11 @@ export default function AdminGradesPVPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto pb-24">
+      {/* Selector Bar */}
+      <div className="print:hidden">
+        {renderSelectorBar()}
+      </div>
+
       {/* Top action bar: Hidden during print */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-4">
