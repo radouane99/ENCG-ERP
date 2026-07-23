@@ -319,18 +319,42 @@ class ExamPlanningController extends Controller
     /**
      * Download Exam Room Door Sign PDF (Affiche de Porte).
      */
-    public function downloadDoorSignPdf(Request $request, int $examId, int $roomId)
+    public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
     {
-        $exam = \App\Models\Exam::with(['module.filiere', 'group'])->findOrFail($examId);
-        $room = \App\Models\Room::findOrFail($roomId);
+        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        
+        $room = null;
+        if ($roomId) {
+            $room = \App\Models\Room::find($roomId);
+        }
+        if (!$room) {
+            $room = $exam->room ?? \App\Models\Room::first() ?? (object) ['name' => 'Amphithéâtre B', 'code' => 'AMPHI_B'];
+        }
 
-        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+        $seatingsQuery = \Illuminate\Support\Facades\DB::table('exam_seatings')
             ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->where('exam_seatings.exam_id', $examId)
-            ->where('exam_seatings.room_id', $roomId)
-            ->select('exam_seatings.seat_number', 'students.last_name', 'students.first_name', 'students.cne', 'students.cin')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->where('exam_seatings.exam_id', $examId);
+
+        if ($roomId && \App\Models\Room::find($roomId)) {
+            $seatingsQuery->where('exam_seatings.room_id', $roomId);
+        }
+
+        $seatings = $seatingsQuery
+            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
             ->orderBy('exam_seatings.seat_number', 'asc')
             ->get();
+
+        // Fallback: If no seatings filter found, fetch all seatings for this exam
+        if ($seatings->isEmpty()) {
+            $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
+                ->join('students', 'exam_seatings.student_id', '=', 'students.id')
+                ->join('users', 'students.user_id', '=', 'users.id')
+                ->where('exam_seatings.exam_id', $examId)
+                ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.last_name', 'students.first_name', 'students.cne', 'users.cin')
+                ->orderBy('exam_seatings.seat_number', 'asc')
+                ->get();
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.exam_door_sign', [
             'exam' => $exam,
@@ -338,6 +362,6 @@ class ExamPlanningController extends Controller
             'seatings' => $seatings
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download("Affiche_Porte_{$room->code}_{$examId}.pdf");
+        return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
     }
 }

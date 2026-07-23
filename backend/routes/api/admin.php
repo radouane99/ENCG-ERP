@@ -92,6 +92,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
     Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
     Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
+    Route::get('/exams/{exam}/door-sign-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadDoorSignPdf']);
     Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);
     Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);

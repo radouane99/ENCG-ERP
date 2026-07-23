@@ -38,10 +38,13 @@ export default function AdminExamDisplayListPage() {
             onClick={async () => {
               if (!id) return;
               try {
-                const roomId = exam?.room_id || exam?.room?.id || 1;
-                const res = await api.get(`/admin/exams/${id}/rooms/${roomId}/door-sign-pdf`, {
-                  responseType: 'blob'
-                });
+                let res;
+                try {
+                  res = await api.get(`/admin/exams/${id}/door-sign-pdf`, { responseType: 'blob' });
+                } catch {
+                  const roomId = exam?.room_id || exam?.room?.id || 1;
+                  res = await api.get(`/admin/exams/${id}/rooms/${roomId}/door-sign-pdf`, { responseType: 'blob' });
+                }
                 const blob = new Blob([res.data], { type: 'application/pdf' });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
