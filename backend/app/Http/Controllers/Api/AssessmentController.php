@@ -88,17 +88,24 @@ class AssessmentController extends Controller
 
         $savedIds = [];
         foreach ($validated['assessments'] as $aData) {
-            $assessment = Assessment::updateOrCreate(
-                [
-                    'id' => $aData['id'] ?? null,
-                    'module_id' => $module->id
-                ],
-                [
-                    'type' => $aData['type'],
-                    'weight' => $aData['weight'],
-                    'date' => $aData['date'] ?? now()->format('Y-m-d')
-                ]
-            );
+            if (!empty($aData['id'])) {
+                $assessment = Assessment::where('id', $aData['id'])->where('module_id', $module->id)->first();
+                if ($assessment) {
+                    $assessment->update([
+                        'type' => $aData['type'],
+                        'weight' => floatval($aData['weight']),
+                    ]);
+                    $savedIds[] = $assessment->id;
+                    continue;
+                }
+            }
+
+            $assessment = Assessment::create([
+                'module_id' => $module->id,
+                'type' => $aData['type'],
+                'weight' => floatval($aData['weight']),
+                'date' => now()->format('Y-m-d')
+            ]);
             $savedIds[] = $assessment->id;
         }
 
