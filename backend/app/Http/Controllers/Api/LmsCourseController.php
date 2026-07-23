@@ -107,7 +107,7 @@ class LmsCourseController extends Controller
             $filePath = $request->file('file')->store('lms/materials', 'public');
         }
 
-        $academicYear = AcademicYear::where('is_active', true)->first();
+        $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
         if (!$academicYear) {
             return response()->json(['success' => false, 'message' => 'Année académique active introuvable.'], 404);
         }

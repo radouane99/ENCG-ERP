@@ -257,7 +257,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Admissions (TAFEM & Applications)
     Route::prefix('admissions')->group(function () {
         Route::get('/campaigns', [AdmissionCampaignController::class, 'index']);
+        Route::get('/tafem-stats', [AdmissionCampaignController::class, 'tafemStats']);
         Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
+        Route::post('/campaigns/{campaign}/calculate-seuil', [AdmissionCampaignController::class, 'calculateSeuil']);
+        Route::post('/campaigns/{campaign}/auto-repartition', [AdmissionCampaignController::class, 'autoRepartition']);
+        Route::get('/campaigns/{campaign}/export-pdf/{type}', [AdmissionCampaignController::class, 'exportPdf']);
         Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
         Route::delete('/applications/{application}', [AdmissionController::class, 'destroy']);
     });

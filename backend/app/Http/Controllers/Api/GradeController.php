@@ -20,7 +20,7 @@ class GradeController extends Controller
         
         $academicYearId = $request->query('academic_year_id');
         if (!$academicYearId) {
-            $academicYear = \App\Models\AcademicYear::where('is_current', true)->orWhere('is_active', true)->first();
+            $academicYear = \App\Models\AcademicYear::where('is_current', true)->first() ?? \App\Models\AcademicYear::first();
             if (!$academicYear) {
                 return response()->json(['success' => false, 'message' => 'Année académique active introuvable.'], 404);
             }
