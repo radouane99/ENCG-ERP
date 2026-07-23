@@ -51,6 +51,11 @@ class GroupService
     public function createGroup(array $data): Group
     {
         return DB::transaction(function () use ($data) {
+            if (empty($data['academic_year_id'])) {
+                $data['academic_year_id'] = \App\Models\AcademicYear::where('is_current', true)->value('id')
+                    ?? \App\Models\AcademicYear::first()?->id
+                    ?? 1;
+            }
             return Group::create($data);
         });
     }

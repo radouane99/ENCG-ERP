@@ -41,7 +41,12 @@ export default function GroupsPage() {
 
   useEffect(() => { fetchData() }, [])
 
-  const openCreate = () => { setEditingId(null); setForm({ ...EMPTY }); setShowModal(true) }
+  const openCreate = () => { 
+    setEditingId(null); 
+    const currentYearId = years.find((y: any) => y.is_current)?.id || years[0]?.id;
+    setForm({ ...EMPTY, academic_year_id: currentYearId ? currentYearId.toString() : '' }); 
+    setShowModal(true);
+  }
   const openEdit = (g: Group) => {
     setEditingId(g.id)
     setForm({ name: g.name, filiere_id: g.filiere_id?.toString() ?? '', academic_year_id: g.academic_year_id?.toString() ?? '', semester_number: g.semester_number, capacity: g.capacity })
