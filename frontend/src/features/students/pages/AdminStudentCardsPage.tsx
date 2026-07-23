@@ -190,20 +190,28 @@ export default function AdminStudentCardsPage() {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 5mm;
           }
-          body {
-            background: white !important;
-            color: black !important;
+          body * {
+            visibility: hidden !important;
           }
-          .no-print {
-            display: none !important;
+          .print-cards-grid, .print-cards-grid * {
+            visibility: visible !important;
           }
           .print-cards-grid {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: white !important;
+            z-index: 99999999 !important;
             display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 1rem !important;
-            padding: 1rem !important;
+            grid-template-columns: repeat(2, 86mm) !important;
+            gap: 10mm !important;
+            padding: 10mm !important;
+            align-content: start !important;
+            justify-content: center !important;
           }
         }
       `}</style>
