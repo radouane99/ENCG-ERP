@@ -10,6 +10,8 @@ export default function ExamLockingPage() {
   const isRtl = i18n.language === 'ar'
 
   const [currentPhase, setCurrentPhase] = useState('Verrouillé')
+  const [deadline, setDeadline] = useState<string>('')
+  const [deadlineInput, setDeadlineInput] = useState<string>('')
   const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingPhase, setUpdatingPhase] = useState<string | null>(null)
@@ -19,6 +21,8 @@ export default function ExamLockingPage() {
       setLoading(true)
       const res = await api.get('/admin/exam-locking')
       setCurrentPhase(res.data.current_phase || 'Verrouillé')
+      setDeadline(res.data.deadline || '')
+      setDeadlineInput(res.data.deadline || '')
       setAuditLogs(res.data.audits || [])
     } catch (err) {
       console.error(err)
@@ -37,7 +41,10 @@ export default function ExamLockingPage() {
     
     setUpdatingPhase(newPhase)
     try {
-      await api.post('/admin/exam-locking/change', { new_phase: newPhase })
+      await api.post('/admin/exam-locking/change', { 
+        new_phase: newPhase,
+        deadline: deadlineInput
+      })
       toast.success(`Phase mise à jour : ${newPhase}`)
       await fetchStatus()
     } catch (err: any) {
@@ -95,13 +102,32 @@ export default function ExamLockingPage() {
         
         {/* Active Phase Notification Banner */}
         {!isLocked && (
-          <div className="bg-emerald-50 border-2 border-emerald-300 text-emerald-900 p-5 rounded-3xl flex items-center gap-4 font-bold text-sm shadow-md animate-in slide-in-from-top duration-300">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <CheckCircle2 className="w-6 h-6" />
+          <div className="bg-emerald-50 border-2 border-emerald-300 text-emerald-900 p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-bold text-sm shadow-md animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="block text-emerald-950 font-black text-base">Phase « {currentPhase} » Ouverte</span>
+                <p className="text-emerald-700 text-xs font-semibold mt-0.5">Les professeurs et la scolarité peuvent actuellement saisir et modifier les notes pour cette session.</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <span className="block text-emerald-950 font-black text-base">Phase « {currentPhase} » Ouverte</span>
-              <p className="text-emerald-700 text-xs font-semibold mt-0.5">Les professeurs et la scolarité peuvent actuellement saisir et modifier les notes pour cette session.</p>
+
+            {/* Deadline Control */}
+            <div className="flex items-center gap-2 bg-emerald-100/80 px-4 py-2 rounded-2xl border border-emerald-300/80 text-xs font-bold text-emerald-950 shrink-0">
+              <span className="text-[10px] uppercase font-black tracking-wider text-emerald-800">Délai Limite:</span>
+              <input 
+                type="datetime-local" 
+                value={deadlineInput}
+                onChange={(e) => setDeadlineInput(e.target.value)}
+                className="bg-white border border-emerald-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 shadow-xs focus:ring-2 focus:ring-emerald-500 outline-hidden"
+              />
+              <button
+                onClick={() => handleUpdatePhase(currentPhase)}
+                className="px-3 py-1 bg-emerald-700 text-white rounded-lg text-xs font-black hover:bg-emerald-800 transition-all cursor-pointer shadow-xs"
+              >
+                Enregistrer Délai
+              </button>
             </div>
           </div>
         )}
@@ -122,7 +148,7 @@ export default function ExamLockingPage() {
             <p className="text-xs text-slate-500 font-bold max-w-xl leading-relaxed">
               {isLocked 
                 ? "Toutes les saisies d'examens sont verrouillées. Seul le contrôle continu (CC) reste modifiable."
-                : "Les notes d'examens et de rattrapage sont actuellement déverrouillées pour la session sélectionnée."}
+                : `Les notes d'examens et de rattrapage sont actuellement déverrouillées pour la session sélectionnée.${deadline ? ` Délai d'accès : ${new Date(deadline).toLocaleString('fr-FR')}` : ''}`}
             </p>
           </div>
 
@@ -171,9 +197,9 @@ export default function ExamLockingPage() {
                 </div>
 
                 <div className="bg-slate-50 rounded-2xl p-4 my-4 border border-slate-100">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS</span>
-                  <div className="flex items-center gap-2">
-                    {['S1', 'S3', 'S5', 'S7'].map(s => (
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS (Impairs)</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {['S1', 'S3', 'S5', 'S7', 'S9'].map(s => (
                       <span key={s} className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-xs font-black rounded-lg border border-amber-200">{s}</span>
                     ))}
                   </div>
@@ -216,9 +242,9 @@ export default function ExamLockingPage() {
                 </div>
 
                 <div className="bg-slate-50 rounded-2xl p-4 my-4 border border-slate-100">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS</span>
-                  <div className="flex items-center gap-2">
-                    {['S1', 'S3', 'S5', 'S7'].map(s => (
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS (Impairs)</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {['S1', 'S3', 'S5', 'S7', 'S9'].map(s => (
                       <span key={s} className="px-2.5 py-0.5 bg-blue-100 text-blue-900 text-xs font-black rounded-lg border border-blue-200">{s}</span>
                     ))}
                   </div>
@@ -255,15 +281,15 @@ export default function ExamLockingPage() {
                   <div>
                     <h4 className="text-lg font-black text-slate-900">Session Ordinaire Printemps</h4>
                     <p className="text-xs text-slate-500 mt-1 font-semibold leading-relaxed">
-                      Ouvre les colonnes CC1, CC2 et Examen pour les semestres S2, S4, S6, S8.
+                      Ouvre les colonnes CC1, CC2 et Examen pour les semestres S2, S4, S6, S8, S10.
                     </p>
                   </div>
                 </div>
 
                 <div className="bg-slate-50 rounded-2xl p-4 my-4 border border-slate-100">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS</span>
-                  <div className="flex items-center gap-2">
-                    {['S2', 'S4', 'S6', 'S8'].map(s => (
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS (Pairs)</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {['S2', 'S4', 'S6', 'S8', 'S10'].map(s => (
                       <span key={s} className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 text-xs font-black rounded-lg border border-emerald-200">{s}</span>
                     ))}
                   </div>
@@ -306,9 +332,9 @@ export default function ExamLockingPage() {
                 </div>
 
                 <div className="bg-slate-50 rounded-2xl p-4 my-4 border border-slate-100">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS</span>
-                  <div className="flex items-center gap-2">
-                    {['S2', 'S4', 'S6', 'S8'].map(s => (
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SEMESTRES CIBLÉS (Pairs)</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {['S2', 'S4', 'S6', 'S8', 'S10'].map(s => (
                       <span key={s} className="px-2.5 py-0.5 bg-purple-100 text-purple-900 text-xs font-black rounded-lg border border-purple-200">{s}</span>
                     ))}
                   </div>

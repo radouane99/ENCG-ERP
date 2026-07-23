@@ -83,10 +83,11 @@ class GradeController extends Controller
             }
         }
 
-        // [AUDIT SEC-04] Verify exam locking phases
+        // [AUDIT SEC-04] Verify exam locking phases & semester targeting
         $institution = \App\Models\Institution::first();
-        $settings = $institution->settings ?? [];
+        $settings = $institution ? (is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : [])) : [];
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
+        $deadline = $settings['exam_lock_deadline'] ?? null;
 
         $typeLower = strtolower(trim($assessment->type));
         $isRattrapageAssessment = str_contains($typeLower, 'rattrapage');
@@ -102,6 +103,40 @@ class GradeController extends Controller
             if ($isTotalLock) {
                 return response()->json([
                     'message' => 'Opération refusée : La saisie des examens est actuellement verrouillée par l\'administration. Seuls les contrôles continus (CC) sont autorisés.'
+                ], 403);
+            }
+
+            // Check deadline if configured
+            if (!empty($deadline)) {
+                try {
+                    $deadlineDt = \Carbon\Carbon::parse($deadline);
+                    if (now()->greaterThan($deadlineDt)) {
+                        return response()->json([
+                            'message' => "Opération refusée : Le délai limite de saisie des notes pour cette session (" . $deadlineDt->format('d/m/Y H:i') . ") est dépassé."
+                        ], 403);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore date parse errors
+                }
+            }
+
+            // Semester season targeting (Automne = S1, S3, S5, S7, S9 | Printemps = S2, S4, S6, S8, S10)
+            $moduleSemesterNum = (int) ($assessment->module->semester_number ?? 1);
+            $isAutomneModule = ($moduleSemesterNum % 2 !== 0); // Odd = Automne
+            $isPrintempsModule = ($moduleSemesterNum % 2 === 0); // Even = Printemps
+
+            $isAutomnePhase = str_contains($currentPhaseLower, 'automne');
+            $isPrintempsPhase = str_contains($currentPhaseLower, 'printemps');
+
+            if ($isAutomnePhase && $isPrintempsModule) {
+                return response()->json([
+                    'message' => "Opération refusée : La phase « {$currentPhase} » concerne uniquement les semestres خريفية / Automne (S1, S3, S5, S7, S9). Ce module appartient au semestre S{$moduleSemesterNum} (Printemps)."
+                ], 403);
+            }
+
+            if ($isPrintempsPhase && $isAutomneModule) {
+                return response()->json([
+                    'message' => "Opération refusée : La phase « {$currentPhase} » concerne uniquement les semestres ربيعية / Printemps (S2, S4, S6, S8, S10). Ce module appartient au semestre S{$moduleSemesterNum} (Automne)."
                 ], 403);
             }
 

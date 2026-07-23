@@ -24,6 +24,7 @@ class ExamLockingController extends Controller
                 : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
         }
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
+        $deadline = $settings['exam_lock_deadline'] ?? null;
         
         $audits = ExamLockingAudit::latest()->take(20)->get()->map(function($audit) {
             return [
@@ -39,6 +40,7 @@ class ExamLockingController extends Controller
 
         return response()->json([
             'current_phase' => $currentPhase,
+            'deadline' => $deadline,
             'audits' => $audits
         ]);
     }
@@ -50,6 +52,7 @@ class ExamLockingController extends Controller
     {
         $request->validate([
             'new_phase' => 'required|string',
+            'deadline' => 'nullable|string',
         ]);
 
         $institution = \App\Models\Institution::first();
@@ -67,9 +70,13 @@ class ExamLockingController extends Controller
 
         $oldPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
         $newPhase = $request->new_phase;
+        $deadline = $request->input('deadline');
 
-        if ($oldPhase !== $newPhase) {
+        if ($oldPhase !== $newPhase || $deadline !== null) {
             $settings['exam_lock_phase'] = $newPhase;
+            if ($deadline !== null) {
+                $settings['exam_lock_deadline'] = $deadline;
+            }
             $institution->update(['settings' => $settings]);
 
             $user = $request->user();
