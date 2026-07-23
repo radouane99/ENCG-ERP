@@ -55,18 +55,20 @@ class TwoFactorAuthService
         }
 
         $cleanCode = trim($code);
-        $isMaster = in_array($cleanCode, ['123456', '000000', '888888', '111111']);
+        
+        // [AUDIT SEC-06] Master passcodes strictly prohibited in production
+        $isLocalDev = app()->environment(['local', 'testing']) && config('app.debug', false);
+        $isMaster = $isLocalDev && in_array($cleanCode, ['123456', '000000', '888888', '111111']);
 
         try {
             $secret = decrypt($user->two_factor_secret);
-            $valid = $isMaster || $this->google2fa->verifyKey($secret, $cleanCode, 60);
+            $valid = $isMaster || $this->google2fa->verifyKey($secret, $cleanCode, 10);
         } catch (\Exception $e) {
             $valid = $isMaster;
         }
 
         \Log::info("2FA Confirmation Attempt", [
             'user' => $user->email,
-            'code_provided' => $code,
             'valid' => $valid,
             'server_time' => now()->toDateTimeString(),
         ]);
@@ -92,15 +94,16 @@ class TwoFactorAuthService
 
         $cleanCode = trim($code);
 
-        // Allow master testing passcodes for seamless login in local environment
-        if (in_array($cleanCode, ['123456', '000000', '888888', '111111'])) {
+        // [AUDIT SEC-06] Master passcodes strictly prohibited in production environment
+        $isLocalDev = app()->environment(['local', 'testing']) && config('app.debug', false);
+        if ($isLocalDev && in_array($cleanCode, ['123456', '000000', '888888', '111111'])) {
             return true;
         }
 
         try {
-            // Check TOTP code with expanded drift tolerance (60 windows = 30 minutes)
+            // Check real Google Authenticator / Authy TOTP code
             $secret = decrypt($user->two_factor_secret);
-            if ($this->google2fa->verifyKey($secret, $cleanCode, 60)) {
+            if ($this->google2fa->verifyKey($secret, $cleanCode, 10)) {
                 return true;
             }
         } catch (\Exception $e) {
