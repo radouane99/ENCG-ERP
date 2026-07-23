@@ -16,134 +16,149 @@ import {
 } from 'lucide-react'
 
 interface NavItem {
-  labelKey: string
+  label: string
+  labelAr?: string
   href: string
   icon: React.ElementType
   roles?: string[]
 }
 
 interface NavGroup {
-  groupKey: string
+  groupTitle: string
+  groupTitleAr?: string
   items: NavItem[]
 }
 
-// Keep existing navigation array exactly as it was
+// Complete, professionally organized navigation structure
 const navigation: (NavItem | NavGroup)[] = [
   {
-    labelKey: 'nav.item_0',
-    href: '/dashboard', icon: LayoutDashboard
+    label: 'Tableau de Bord',
+    labelAr: 'لوحة التحكم',
+    href: '/dashboard',
+    icon: LayoutDashboard
   },
   {
-    groupKey: 'nav.group_0',
+    groupTitle: 'PILOTAGE & DÉCISION',
+    groupTitleAr: 'القيادة والقرار',
     items: [
-      { labelKey: 'nav.item_1', href: '/admin/pilotage', icon: Target, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_2', href: '/admin/predictive-analytics', icon: BrainCircuit, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_3', href: '/admin/finance-dashboard', icon: Landmark, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_4', href: '/admin/analytics', icon: BarChart3, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Pilotage Académique', href: '/admin/pilotage', icon: Target, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Analytique IA', href: '/admin/predictive-analytics', icon: BrainCircuit, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Finance & Tableau', href: '/admin/finance-dashboard', icon: Landmark, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Statistiques Globales', href: '/admin/analytics', icon: BarChart3, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_1',
+    groupTitle: 'SCOLARITÉ & ÉTUDIANTS',
+    groupTitleAr: 'الشؤون الطلابية',
     items: [
-      { labelKey: 'nav.item_5', href: '/admin/academic', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_6', href: '/academic/departments', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_7', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_8', href: '/academic/modules', icon: Layers, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_9', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_10', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_11', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_student_cards', href: '/admin/student-cards', icon: IdCard, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_tafem', href: '/admin/tafem', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_mobility', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_12', href: '/admin/absences', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_13', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { labelKey: 'nav.item_14', href: '/admin/requests', icon: FileText, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Année & Affectations', href: '/admin/academic', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Départements', href: '/academic/departments', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Filières & Spécialités', href: '/academic/filieres', icon: BookOpen, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Modules & Éléments', href: '/academic/modules', icon: Layers, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Groupes & Sections', href: '/academic/groups', icon: Network, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Inscriptions', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion des Étudiants', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Cartes Étudiants', href: '/admin/student-cards', icon: IdCard, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Concours TAFEM', href: '/admin/tafem', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Mobilité Internationale', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Suivi des Absences', href: '/admin/absences', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Étudiants à Risque', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Demandes Administratives', href: '/admin/requests', icon: FileText, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_2',
+    groupTitle: 'EXAMENS & CONVOCATIONS',
+    groupTitleAr: 'الامتحانات والاستدعاءات',
     items: [
-      { labelKey: 'nav.item_15', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_16', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_17', href: '/admin/retake', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_18', href: '/admin/grades', icon: Edit3, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },
-      { labelKey: 'nav.item_19', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Examens Planifiés', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion Convocations', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Scanner QR en Direct', href: '/admin/exams/scan', icon: Scan, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Session Rattrapage', href: '/admin/retake', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Saisie des Notes', href: '/admin/grades', icon: Edit3, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },
+      { label: 'Verrouillage Épreuves', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_3',
+    groupTitle: 'CORPS PROFESSORAL & RH',
+    groupTitleAr: 'الأساتذة والموارد البشرية',
     items: [
-      { labelKey: 'nav.item_20', href: '/admin/users', icon: Users2, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_21', href: '/professors', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
-      { labelKey: 'nav.item_22', href: '/vacataires', icon: Briefcase, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
-      { labelKey: 'nav.item_23', href: '/admin/professor-availability', icon: Clock, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
-      { labelKey: 'nav.item_24', href: '/admin/schedule-change-requests', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion des Comptes', href: '/admin/users', icon: Users2, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Professeurs Permanents', href: '/professors', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'Enseignants Vacataires', href: '/vacataires', icon: Briefcase, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'Disponibilités Profs', href: '/admin/professor-availability', icon: Clock, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
+      { label: 'Changements Emploi du Temps', href: '/admin/schedule-change-requests', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_4',
+    groupTitle: 'EMPLOIS DU TEMPS & CAMPUS',
+    groupTitleAr: 'استعمالات الزمن والحرم',
     items: [
-      { labelKey: 'nav.item_25', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_26', href: '/infrastructure/classrooms', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_smart_campus', href: '/admin/smart-campus', icon: Landmark, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_27', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_28', href: '/academic/holidays', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Emplois du Temps', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Salles & Amphithéâtres', href: '/infrastructure/classrooms', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Smart Campus & IoT', href: '/admin/smart-campus', icon: Landmark, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Réservations de Salles', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Calendrier & Vacances', href: '/academic/holidays', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_5',
+    groupTitle: 'STAGES, PFE & VIE ÉTUDIANTE',
+    groupTitleAr: 'التداريب والأنشطة',
     items: [
-      { labelKey: 'nav.item_29', href: '/academic/internships', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { labelKey: 'nav.item_jury_pfe', href: '/admin/jury-pfe', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { labelKey: 'nav.item_30', href: '/admin/clubs', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_31', href: '/admin/clubs-room-requests', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Gestion des Stages & PFE', href: '/academic/internships', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Juries PFE & Soutenances', href: '/admin/jury-pfe', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Clubs & Associations', href: '/admin/clubs', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Réservations Salles Clubs', href: '/admin/clubs-room-requests', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
-    groupKey: 'nav.group_6',
+    groupTitle: 'ESPACE ÉTUDIANT',
+    groupTitleAr: 'فضاء الطالب',
     items: [
-      { labelKey: 'nav.item_32', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
-      { labelKey: 'nav.item_33', href: '/student/grades', icon: BarChart3, roles: ['student'] },
-      { labelKey: 'nav.item_student_card', href: '/student/card', icon: IdCard, roles: ['student'] },
-      { labelKey: 'nav.item_student_convocations', href: '/student/convocations', icon: Mail, roles: ['student'] },
-      { labelKey: 'Guichet Électronique', href: '/student/documents', icon: FileSignature, roles: ['student'] },
-      { labelKey: 'nav.item_34', href: '/student/requests', icon: MessageSquare, roles: ['student'] },
-      { labelKey: 'nav.item_35', href: '/student/portfolio', icon: Crown, roles: ['student'] },
-      { labelKey: 'nav.item_36', href: '/student/clubs', icon: Users, roles: ['student'] },
-      { labelKey: 'nav.item_student_mobility', href: '/student/mobility', icon: PlaneTakeoff, roles: ['student'] },
-      { labelKey: 'nav.item_student_library', href: '/student/library', icon: BookOpen, roles: ['student'] },
+      { label: 'Mon Emploi du Temps', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
+      { label: 'Mes Notes & Résultats', href: '/student/grades', icon: BarChart3, roles: ['student'] },
+      { label: 'Carte Numérique (Pass)', href: '/student/card', icon: IdCard, roles: ['student'] },
+      { label: 'Mes Convocations PDF', href: '/student/convocations', icon: Mail, roles: ['student'] },
+      { label: 'Guichet Électronique', href: '/student/documents', icon: FileSignature, roles: ['student'] },
+      { label: 'Demandes de Documents', href: '/student/requests', icon: MessageSquare, roles: ['student'] },
+      { label: 'Portfolio & Compétences', href: '/student/portfolio', icon: Crown, roles: ['student'] },
+      { label: 'Clubs Étudiants', href: '/student/clubs', icon: Users, roles: ['student'] },
+      { label: 'Mobilité & Échanges', href: '/student/mobility', icon: PlaneTakeoff, roles: ['student'] },
+      { label: 'Bibliothèque Numérique', href: '/student/library', icon: BookOpen, roles: ['student'] },
     ]
   },
   {
-    groupKey: 'nav.group_7',
+    groupTitle: 'ESPACE ENSEIGNANT',
+    groupTitleAr: 'فضاء الأستاذ',
     items: [
-      { labelKey: 'nav.item_37', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
-      { labelKey: 'nav.item_38', href: '/professor/absences', icon: Users2, roles: ['professor', 'vacataire'] },
-      { labelKey: 'nav.item_39', href: '/professor/qcm-generator', icon: Zap, roles: ['professor'] },
-      { labelKey: 'nav.item_prof_analytics', href: '/professor/analytics', icon: BarChart3, roles: ['professor'] },
-      { labelKey: 'nav.item_prof_proctoring', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },
-      { labelKey: 'nav.item_prof_grading', href: '/professor/smart-grading', icon: FileSignature, roles: ['professor'] },
-      { labelKey: 'nav.item_prof_scanner', href: '/professor/scanner', icon: Scan, roles: ['professor', 'vacataire'] },
+      { label: 'Cahier de Texte', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
+      { label: 'Saisie des Absences', href: '/professor/absences', icon: Users2, roles: ['professor', 'vacataire'] },
+      { label: 'Générateur QCM (IA)', href: '/professor/qcm-generator', icon: Zap, roles: ['professor'] },
+      { label: 'Analytique Classe', href: '/professor/analytics', icon: BarChart3, roles: ['professor'] },
+      { label: 'Mes Surveillances', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },
+      { label: 'Correction Intelligente', href: '/professor/smart-grading', icon: FileSignature, roles: ['professor'] },
+      { label: 'Scanner Présences', href: '/professor/scanner', icon: Scan, roles: ['professor', 'vacataire'] },
     ]
   },
   {
-    groupKey: 'nav.group_8',
+    groupTitle: 'OUTILS COLLABORATIFS',
+    groupTitleAr: 'أدوات التعاون',
     items: [
-      { labelKey: 'nav.item_40', href: '/classroom', icon: MonitorPlay, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
-      { labelKey: 'nav.item_41', href: '/admin/messages', icon: MessageSquare, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_42', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director'] },
-      { labelKey: 'nav.item_43', href: '/faq', icon: HelpCircle, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
+      { label: 'Classe Virtuelle', href: '/classroom', icon: MonitorPlay, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
+      { label: 'Messagerie Interne', href: '/admin/messages', icon: MessageSquare, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Cahiers de Textes Global', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Centre d\'Aide & FAQ', href: '/faq', icon: HelpCircle, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
     ]
   },
   {
-    groupKey: 'nav.group_9',
+    groupTitle: 'ADMINISTRATION SYSTÈME',
+    groupTitleAr: 'إدارة النظام',
     items: [
-      { labelKey: 'nav.item_44', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'Guichet Électronique', href: '/admin/guichet', icon: FileSignature, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_blockchain', href: '/admin/blockchain-diplomas', icon: ShieldCheck, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_activity_logs', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_45', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
-      { labelKey: 'nav.item_46', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Attestations & Relevés', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Guichet Électronique Admin', href: '/admin/guichet', icon: FileSignature, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Diplômes Blockchain', href: '/admin/blockchain-diplomas', icon: ShieldCheck, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Journal d\'Activités (Audit)', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Réseau Alumni', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Paramètres Système', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
     ]
   }
 ]
@@ -197,15 +212,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 custom-scrollbar">
-        {navigation.map((navItem) => {
-          if ('groupKey' in navItem) {
+        {navigation.map((navItem, idx) => {
+          if ('groupTitle' in navItem) {
             const groupItems = navItem.items.filter(item => !item.roles || hasAnyRole(item.roles))
             if (groupItems.length === 0) return null
 
             return (
-              <div key={navItem.groupKey} className="mt-6 first:mt-0">
+              <div key={navItem.groupTitle || idx} className="mt-6 first:mt-0">
                 <p className="px-3 text-[11px] font-bold tracking-[0.1em] text-sidebar-foreground/60 uppercase mb-2">
-                  {t(navItem.groupKey)}
+                  {isRtl ? (navItem.groupTitleAr || navItem.groupTitle) : navItem.groupTitle}
                 </p>
                 <div className="space-y-1">
                   {groupItems.map((item) => (
@@ -236,7 +251,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                             "flex-1 truncate transition-colors duration-200",
                             isActive ? "font-bold text-white" : "font-medium"
                           )}>
-                            {t(item.labelKey)}
+                            {isRtl ? (item.labelAr || item.label) : item.label}
                           </span>
                         </>
                       )}
@@ -275,7 +290,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                         "flex-1 truncate transition-colors duration-200",
                         isActive ? "font-bold text-white" : "font-medium"
                       )}>
-                        {t(navItem.labelKey)}
+                        {isRtl ? (navItem.labelAr || navItem.label) : navItem.label}
                       </span>
                     </>
                   )}
