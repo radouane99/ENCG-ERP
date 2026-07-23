@@ -50,6 +50,11 @@ Dans le cadre de la transformation digitale des processus académiques de l'ENCG
 ### 3.7. Exportation Massif ZIP par Filière
 - Exportation en un clic d'une archive `.zip` regroupant les PDF de convocations de l'ensemble d'une promotion/filière pour l'impression physique.
 
+### 3.8. Gestion Avancée des Étudiants Réservistes & Dettes d'Examens
+- **Inclusion Obligatoire dans les Convocations et Émargements** : Algorithme intégrant automatiquement les étudiants réservistes (étudiants en dette de modules des semestres précédents) dans les listes de convocation, les émargements et les places d'examens.
+- **Service d'Emailing Réserviste Dédié via Resend API** : Mailable Laravel `ReservisteRetakeNotificationMail` expédiant automatiquement des convocations emails responsives en HTML avec tableau récapitulatif des modules en dette et consignes d'examen.
+- **Audit du Cursus & Dérogations du Conseil d'Établissement** : Interface d'audit archivé (`/admin/reservistes`) permettant de consulter les notes antérieurement validées (`V.Anté`) et d'enregistrer les autorisations exceptionnelles de réinscription.
+
 ---
 
 ## 4. Innovations Portails Étudiant & Professeur

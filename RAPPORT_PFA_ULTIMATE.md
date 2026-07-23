@@ -139,6 +139,22 @@ C'est le module le plus critique et complexe du système, basé sur le modèle `
 - **Analyseur d'Impact des Jours Fériés & Générateur de Rattrapages** :
   - Calcul instantané des séances annulées par une période de vacances ou jour férié, et proposition automatique de créneaux de rattrapage le samedi.
 
+### 3.10. Moteurs Académiques Avancés : Dual PV Engine, Traçabilité des Dettes & Notifications Resend (Nouveautés Avancées V2.5)
+- **Moteur de Verrouillage des Épreuves & Deadlines (Exam Locking Driver)** :
+  - Filtrage et restriction des saisies selon la saison du semestre : Automne pour les semestres impairs (**S1, S3, S5, S7, S9**) et Printemps pour les semestres pairs (**S2, S4, S6, S8, S10**).
+  - Contrôle d'horodatage limite (`exam_lock_deadline`) avec rejet automatique des saisies hors délai et registre d'audit des motifs (`reason`).
+- **Moteur de Délibération Mutil-Jurys & PVs Mégas (Dual PV Engine)** :
+  - **PV Semestriel (7 Modules)** : Composition automatique de la commission (7 professeurs + Chef de Filière).
+  - **PV Annuel Global (14 Modules)** : Composition automatique du grand jury (14 professeurs + Chef de Filière & Direction).
+  - **Signatures Numériques & Tampons Cryptographiques SHA-256** : Signatures tactiles manuscrites sur canevas numérique et génération de tampons d'empreinte `SHA-256` imprimés sur les PDF `pv_semestriel.blade.php` et `pv_annuel.blade.php`.
+  - **Calcul de Compensation Annuelle ($S_1 + S_2$)** : Détermination des verdicts d'استيفاء السنة : Validé (`V`), Validé par Compensation (`V.Comp`), Rattrapage (`R`), Ajourné (`AJ`).
+- **Espace de Gestion des Étudiants Réservistes & Dérogations (`/admin/reservistes`)** :
+  - **Inclusion Omnicanale** : Intégration dynamique des étudiants en dette dans les feuilles de saisie des enseignants, listes de présence d'examens et PVs de délibération.
+  - **Fusion des Notes Historiques & Backup (`V.Anté`)** : Extraction des notes validées antérieurement à partir de `module_validations` et affichage avec l'indicateur `(V.Anté)`.
+  - **Audit du Cursus & Backup Historique** : Interface d'audit avec jauge de progression (`80% du cursus validé`), détail des modules archivés et impression directe du dossier.
+  - **Gestion des Dérogations du Conseil d'Établissement** : Numérisation des réinscriptions exceptionnelles avec numéros de référence officiels.
+  - **Notifications Email Resend (`ReservisteRetakeNotificationMail`)** : Expédition automatique en 1-clic de convocations emails HTML responsive récapitulant les modules en dette.
+
 ---
 
 ## 4. Architecture de l'API RESTful (Backend Laravel)

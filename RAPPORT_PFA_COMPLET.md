@@ -42,16 +42,29 @@ Le système est divisé en plusieurs grands pôles interactifs :
 - **Signature Numérique & QR Code** : Chaque document généré par l'administration est estampillé d'un QR Code unique. Toute personne scannant ce QR Code accède à une page publique de l'ENCG vérifiant l'authenticité du document, luttant ainsi contre la fraude documentaire.
 - **Workflow de validation** : Suivi de statut (En attente, Traité, Rejeté) avec notifications.
 
-### 3.2. Module "Apogée" : Délibérations & Notes (Core Engine)
-*Objectif : Remplacer l'ancien système de notation.*
+### 3.2. Module "Apogée" : Délibérations & Notes (Core Engine & Dual PVs)
+*Objectif : Remplacer l'ancien système de notation par une plateforme intelligente.*
 - **Saisie des notes (Grid)** : Interface type "Excel" pour les professeurs avec sauvegarde automatique.
-- **Moteur de Délibération Automatisé** :
-  - Calcul des moyennes par Module, par Semestre (S1, S2...) et par Année.
-  - Implémentation stricte du règlement ENCG : Validation si Note >= 10, Compensation si Moyenne Semestre >= 10 et aucune note éliminatoire (< 5).
-  - Génération automatique des statuts : "Validé", "V par Compensation", "Ajourné" (Rattrapage).
-- **Relevés de notes dynamiques** : Génération de PDF officiels en un clic.
+- **Moteur de Verrouillage des Épreuves & Deadlines (Exam Locking Driver)** :
+  - Restriction automatique des saisies de notes selon la saison du semestre : saison Automne dédiée exclusivement aux semestres impairs (**S1, S3, S5, S7, S9**) et saison Printemps dédiée aux semestres pairs (**S2, S4, S6, S8, S10**).
+  - Gestion des limites horodatées (`exam_lock_deadline`) avec rejet automatique des tentatives de saisie hors délai.
+  - Registre d'audit complet de verrouillage enregistrant le motif (`reason`), l'utilisateur, l'adresse IP et le timestamp.
+- **Moteur de Délibération Mutil-Jurys & PVs Mégas (Dual PV Engine)** :
+  - **PV Semestriel (7 Modules)** : Auto-composition de la commission restreinte (7 professeurs du semestre + Chef de Filière).
+  - **PV Annuel Global (14 Modules)** : Auto-composition du grand jury (14 professeurs de l'année + Chef de Filière & Direction).
+  - **Signatures Numériques & Tampons Cryptographiques SHA-256** : Chaque membre du jury signe son emplacement sur canevas tactile/numérique, générant une empreinte de sécurité unique `SHA-256` imprimée sur le document officiel.
+  - **Logique de Compensation Annuelle ($S_1 + S_2$)** : Calcul automatisé des moyennes annuelles et attribution des décisions officielles ENCG : Validé (`V`), Validé par Compensation (`V.Comp`), Rattrapage (`R`), Ajourné (`AJ`).
+  - **Templates PDF Officiels avec Tampons** : Édition instantanée des procès-verbaux d'évaluation via `pv_semestriel.blade.php` et `pv_annuel.blade.php`.
 
-### 3.3. Module d'Excellence : Gestion des Examens & Convocations
+### 3.3. Espace de Gestion des Étudiants Réservistes & Dérogations (`/admin/reservistes`)
+*Objectif : Suivre les étudiants en dette de modules et numériser les décisions du Conseil d'Établissement.*
+- **Inclusion Automatique Omnicanale** : Intégration systématique des étudiants réservistes (étudiants ayant des dettes de modules des années précédentes) dans l'ensemble des feuilles de saisie des enseignants, listes de présence d'examens et PVs de délibération.
+- **Fusion des Notes Historiques & Backup (`V.Anté`)** : Extraction automatique des notes validées lors des années antérieures (ex: 2024-2025) à partir de la table `module_validations` et affichage avec le macaron `(V.Anté)` ou `14.50*`.
+- **Audit du Cursus & Backup Historique** : Interface d'audit affichant la jauge de progression du cursus (`80% du cursus validé`), le détails des modules validés archivés et des modules en dette, avec bouton d'impression directe du dossier.
+- **Gestion des Dérogations** : Numérisation des autorisations exceptionnelles de réinscription délivrées par le Conseil d'Établissement ENCG avec numéro de référence officiel.
+- **Notifications Email Automatisées (Resend Mailable)** : Envoi d'emails de convocation responsive en 1 clic (`ReservisteRetakeNotificationMail`) récapitulant la liste des modules en dette à repasser.
+
+### 3.4. Module d'Excellence : Gestion des Examens & Convocations
 *Objectif : Digitaliser la session d'examen de A à Z avec traçabilité totale et zéro redondance.*
 - **Convocation Unique Regroupée par Étudiant (1 Doc / 1 Mail)** : Regroupement de l'ensemble des modules prévus (ex: 7 modules) sur un seul document PDF et un seul email transmises via l'API officielle Resend.
 - **Double Identification CNE & CIN** : Intégration systématique du CNE (ex: `N130000003`) et du CIN (ex: `CD70633`), avec calcul automatique du Niveau Académique (`1ère` à `5ème Année`).
