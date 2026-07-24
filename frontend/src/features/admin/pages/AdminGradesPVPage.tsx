@@ -1502,7 +1502,22 @@ export default function AdminGradesPVPage() {
           {/* 🔔 FEATURE 3: Jury Smart Alerts */}
           {(() => {
             const students = semesterPvData?.students || []
-            const borderlineStudents = students.filter((s: any) => s.moyenne_semestrielle !== null && parseFloat(s.moyenne_semestrielle) >= 9.50 && parseFloat(s.moyenne_semestrielle) < 10.00)
+            const isFraudStudent = (s: any) => {
+              return s.has_fraud || s.decision_global === 'FRAUDE' || (allExamIncidents || []).some((inc: any) => {
+                if (inc.type !== 'fraude' && !String(inc.type).includes('Fraude')) return false
+                const incStudentId = inc.student_id || inc.student?.id
+                const incCne = inc.cne || inc.student?.cne
+                const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase()
+                const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase()
+                return (
+                  (incStudentId && String(incStudentId) === String(s.student_id)) ||
+                  (incCne && String(incCne) === String(s.cne)) ||
+                  (incName && incName.length > 2 && fullName.includes(incName))
+                )
+              })
+            }
+
+            const borderlineStudents = students.filter((s: any) => !isFraudStudent(s) && s.moyenne_semestrielle !== null && parseFloat(s.moyenne_semestrielle) >= 9.50 && parseFloat(s.moyenne_semestrielle) < 10.00)
             const failingModules = (semesterPvData?.modules || []).filter((_m: any, i: number) => {
               const moduleFailRate = students.filter((s: any) => {
                 const grades = s.module_grades || {}
@@ -1543,13 +1558,29 @@ export default function AdminGradesPVPage() {
 
           {/* AI DELIBERATION ADVISOR WIDGET */}
           {(() => {
+            const studentsList = semesterPvData.students || []
+            const checkFraud = (s: any) => {
+              return s.has_fraud || s.decision_global === 'FRAUDE' || (allExamIncidents || []).some((inc: any) => {
+                if (inc.type !== 'fraude' && !String(inc.type).includes('Fraude')) return false
+                const incStudentId = inc.student_id || inc.student?.id
+                const incCne = inc.cne || inc.student?.cne
+                const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase()
+                const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase()
+                return (
+                  (incStudentId && String(incStudentId) === String(s.student_id)) ||
+                  (incCne && String(incCne) === String(s.cne)) ||
+                  (incName && incName.length > 2 && fullName.includes(incName))
+                )
+              })
+            }
 
-            const rachatCandidates = (semesterPvData.students || []).filter(
-              (s: any) => s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 9.50 && s.moyenne_semestrielle < 10.00
+            const rachatCandidates = studentsList.filter(
+              (s: any) => !checkFraud(s) && s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 9.50 && s.moyenne_semestrielle < 10.00
             )
-            const eliminatoireBlockers = (semesterPvData.students || []).filter(
-              (s: any) => s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 10.00 && (s.has_eliminatoire || s.decision_global === 'RAT')
+            const eliminatoireBlockers = studentsList.filter(
+              (s: any) => !checkFraud(s) && s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 10.00 && (s.has_eliminatoire || s.decision_global === 'RAT')
             )
+            const fraudBlockedCandidates = studentsList.filter((s: any) => checkFraud(s))
 
             return (
               <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-indigo-500/30 space-y-6 relative overflow-hidden">
@@ -1573,7 +1604,7 @@ export default function AdminGradesPVPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Candidates for Rachat */}
                   <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
                     <div className="flex items-center justify-between">
@@ -1620,10 +1651,9 @@ export default function AdminGradesPVPage() {
                   </div>
 
                   {/* Eliminatoire Blockers */}
-
                   <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-red-300 flex items-center gap-2">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-amber-200 flex items-center gap-2">
                         ⚠️ Bloqués par Note Éliminatoire ({eliminatoireBlockers.length})
                       </h4>
                       <span className="text-[10px] text-slate-400">Moyenne ≥10 mais Module &lt;6</span>
@@ -1640,14 +1670,42 @@ export default function AdminGradesPVPage() {
                               <div className="text-[10px] text-slate-300">Moyenne Semestrielle: <span className="font-mono text-emerald-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span></div>
                             </div>
                              <span className="px-2.5 py-1 bg-red-500/30 text-red-200 border border-red-400/40 rounded-lg text-[10px] font-black">
-                              {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10 (Refus Compensation)"}
+                              {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10"}
                              </span>
-
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
+
+                  {/* Fraud Exclusion Category */}
+                  <div className="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-300 flex items-center gap-2">
+                        🚫 Exclus du Rachat (Discipline & Fraude) ({fraudBlockedCandidates.length})
+                      </h4>
+                      <span className="text-[10px] text-rose-400 font-bold">Règle ENCG</span>
+                    </div>
+
+                    {fraudBlockedCandidates.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">Aucun dossier de fraude dans cette promotion.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {fraudBlockedCandidates.map((s: any) => (
+                          <div key={s.student_id} className="p-3 bg-rose-900/30 rounded-xl flex items-center justify-between text-xs border border-rose-500/30">
+                            <div>
+                              <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
+                              <div className="text-[10px] text-rose-300 font-mono font-bold">Décision: 🚨 FRAUDE (0.00)</div>
+                            </div>
+                            <span className="px-2.5 py-1 bg-rose-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm animate-pulse">
+                              Inéligible Rachat
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </div>
             )
@@ -2720,31 +2778,52 @@ export default function AdminGradesPVPage() {
                 }
 
                 return displayStudents.map((student: any) => {
-                  // In rattrapage tab only R students appear; input always enabled
-                  // In totale tab, show rattrapage columns + mark non-R rows as not eligible
                   const isRattrapage = student.decision_normale === 'R'
                   const rowGrades = student.grades_detail || {}
+
+                  const studentIncident = (allExamIncidents || []).find((inc: any) => {
+                    const incStudentId = inc.student_id || inc.student?.id
+                    const incCne = inc.cne || inc.student?.cne || inc.apogee
+                    const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || inc.student?.name || '').toLowerCase()
+                    const fullName = `${student.last_name || ''} ${student.first_name || ''}`.toLowerCase()
+                    return (
+                      (incStudentId && String(incStudentId) === String(student.student_id)) ||
+                      (incCne && String(incCne) === String(student.cne || student.apogee)) ||
+                      (incName && incName.length > 2 && fullName.includes(incName))
+                    )
+                  })
+
+                  const hasFraud = student.is_fraud || student.decision_normale === 'FRAUDE' || (studentIncident && (studentIncident.type === 'fraude' || String(studentIncident.type).includes('Fraude')))
 
                   return (
                     <tr
                       key={student.student_id}
                       className={cn(
                         "hover:bg-slate-50 transition-colors text-center font-medium",
-                        session === 'totale' && isRattrapage && "bg-amber-50/30",
-                        session === 'totale' && student.decision_normale === 'NV' && "bg-red-50/20 opacity-60"
+                        hasFraud && "bg-rose-50/50 border-l-4 border-l-rose-600",
+                        session === 'totale' && isRattrapage && !hasFraud && "bg-amber-50/30",
+                        session === 'totale' && student.decision_normale === 'NV' && !hasFraud && "bg-red-50/20 opacity-60"
                       )}
                     >
                       <td className="border border-slate-300 p-3 text-left font-bold text-slate-500">{student.apogee}</td>
                       <td className="border border-slate-300 p-3 text-left font-bold text-slate-800 uppercase">
                         {student.last_name} {student.first_name}
+                        {hasFraud && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white rounded font-black text-[9px]">
+                            🚨 FRAUDE
+                          </span>
+                        )}
                       </td>
 
                       {/* CC/Exam Grades */}
                       {displayAssessments.map((a: any) => {
-                        const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {};
+                        const isExamAssessment = a.type?.toLowerCase().includes('exam') || a.name?.toLowerCase().includes('exam')
+                        const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {}
                         return (
-                          <td key={a.id} className="border border-slate-300 p-3 font-semibold">
-                            {gradeInfo.is_absent ? (
+                          <td key={a.id} className={cn("border border-slate-300 p-3 font-semibold", hasFraud && isExamAssessment && "bg-rose-100 text-rose-700 font-black")}>
+                            {hasFraud && isExamAssessment ? (
+                              <span className="text-rose-700 font-black">0.00 (FRAUDE)</span>
+                            ) : gradeInfo.is_absent ? (
                               <span className="text-red-500 font-bold uppercase">ABI</span>
                             ) : (
                               gradeInfo.value !== null ? parseFloat(gradeInfo.value).toFixed(2) : '-'
@@ -2755,20 +2834,26 @@ export default function AdminGradesPVPage() {
 
                       {/* Moyenne Normale */}
                       <td className="border border-slate-300 p-3 bg-slate-100/20 font-bold text-sm text-[#0f2863]">
-                        {student.moyenne_normale !== null ? parseFloat(student.moyenne_normale).toFixed(2) : '-'}
+                        {hasFraud ? (
+                          <span className="text-rose-700 font-black">0.00</span>
+                        ) : (
+                          student.moyenne_normale !== null ? parseFloat(student.moyenne_normale).toFixed(2) : '-'
+                        )}
                       </td>
 
                       {/* Décision Normale */}
                       <td className="border border-slate-300 p-3 bg-slate-100/20">
                         <span className={cn(
                           "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                          hasFraud ? "bg-rose-600 text-white font-black animate-pulse shadow-xs" :
                           student.decision_normale === 'V' && "bg-green-50 text-green-700 border border-green-200",
                           student.decision_normale === 'R' && "bg-amber-50 text-amber-700 border border-amber-200",
                           student.decision_normale === 'NV' && "bg-red-50 text-red-700 border border-red-200"
                         )}>
-                          {student.decision_normale || '-'}
+                          {hasFraud ? '🚨 FRAUDE' : (student.decision_normale || '-')}
                         </span>
                       </td>
+
 
                       {/* Rattrapage columns — rattrapage tab or totale tab */}
                       {(session === 'rattrapage' || session === 'totale') && (

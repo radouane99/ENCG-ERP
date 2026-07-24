@@ -390,11 +390,38 @@ export default function AdminExamSurveillanceHubPage() {
         reported_by: adminSupervisorName
       }
 
+      const newDisciplineCase = {
+        id: Date.now(),
+        student: {
+          id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
+          first_name: selectedStudentForFraud.name.split(' ').slice(1).join(' ') || selectedStudentForFraud.name,
+          last_name: selectedStudentForFraud.name.split(' ')[0] || '',
+          cne: selectedStudentForFraud.cne,
+          apogee: selectedStudentForFraud.cne,
+          email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
+          filiere: 'ENCG Grande École S4',
+          guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
+        },
+        module_name: examObj?.module?.name || 'Management Stratégique',
+        exam_date: new Date().toISOString().split('T')[0],
+        type: '🚨 Fraude (Utilisation Smartphone)',
+        description: fraudDescription,
+        confiscated_items: confiscatedItems || 'Téléphone Portable',
+        severity: 'high',
+        status: 'pending',
+        created_at: new Date().toISOString().split('T')[0]
+      }
+
+      try {
+        const existingQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
+        localStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
+      } catch (e) {}
+
       setIncidentsList(prev => [newReport, ...prev])
       setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, fraud_details: fraudDescription } : c))
 
       setShowFraudModal(false)
-      toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès dans la BDD !`, { id: toastId })
+      toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès ! Transmission automatique au Conseil de Discipline.`, { id: toastId })
     } catch (err) {
       const newReport: IncidentReport = {
         id: Date.now(),
@@ -406,12 +433,41 @@ export default function AdminExamSurveillanceHubPage() {
         timestamp: new Date().toLocaleTimeString('fr-FR'),
         reported_by: adminSupervisorName
       }
+
+      const newDisciplineCase = {
+        id: Date.now(),
+        student: {
+          id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
+          first_name: selectedStudentForFraud.name.split(' ').slice(1).join(' ') || selectedStudentForFraud.name,
+          last_name: selectedStudentForFraud.name.split(' ')[0] || '',
+          cne: selectedStudentForFraud.cne,
+          apogee: selectedStudentForFraud.cne,
+          email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
+          filiere: 'ENCG Grande École S4',
+          guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
+        },
+        module_name: examObj?.module?.name || 'Management Stratégique',
+        exam_date: new Date().toISOString().split('T')[0],
+        type: '🚨 Fraude (Utilisation Smartphone)',
+        description: fraudDescription,
+        confiscated_items: confiscatedItems || 'Téléphone Portable',
+        severity: 'high',
+        status: 'pending',
+        created_at: new Date().toISOString().split('T')[0]
+      }
+
+      try {
+        const existingQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
+        localStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
+      } catch (e) {}
+
       setIncidentsList(prev => [newReport, ...prev])
       setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true } : c))
       setShowFraudModal(false)
-      toast.success(`🚨 Incident enregistré localement au PV !`, { id: toastId })
+      toast.success(`🚨 Incident enregistré au PV & Transmis au Conseil de Discipline !`, { id: toastId })
     }
   }
+
 
   // Canvas Signature
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {

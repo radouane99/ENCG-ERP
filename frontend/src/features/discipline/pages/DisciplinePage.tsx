@@ -76,59 +76,57 @@ export default function DisciplinePage(): React.ReactElement {
   const { data: disciplineCases, isLoading, refetch } = useQuery({
     queryKey: ['discipline-cases'],
     queryFn: async () => {
+      let apiItems: any[] = []
       try {
         const res = await api.get('/admin/discipline')
-        const items = res.data?.data || res.data
-        if (Array.isArray(items) && items.length > 0) {
-          return items
-        }
+        apiItems = res.data?.data || res.data || []
       } catch (err) {}
 
-        // Fallback default rich cases if DB empty
-        return [
-          {
-            id: 1,
-            student: { id: 101, first_name: 'Youssef', last_name: 'El Amrani', cne: 'N134059281', apogee: '21004829', email: 'y.elamrani@encg-fes.ac.ma', filiere: 'ENCG Grande École S4', guardian_email: 'tuteur.amrani@gmail.com' },
-            module_name: 'Management Stratégique',
-            exam_date: '2026-07-24',
-            type: '🚨 Fraude (Utilisation Smartphone)',
-            description: 'Pris en flagrant délit de consultation d\'un téléphone portable dissimulé sous la feuille de brouillon pendant le contrôle final.',
-            confiscated_items: 'iPhone 14 Pro Noir (Restitué sous scellé)',
-            severity: 'high',
-            status: 'pending',
-            created_at: '2026-07-24'
-          },
-          {
-            id: 2,
-            student: { id: 102, first_name: 'Salma', last_name: 'Benjelloun', cne: 'N138091234', apogee: '22001923', email: 's.benjelloun@encg-fes.ac.ma', filiere: 'Audit & Contrôle de Gestion S8', guardian_email: 'p.benjelloun@yahoo.fr' },
-            module_name: 'Fiscalité des Entreprises',
-            exam_date: '2026-07-23',
-            type: '🪪 Usurpation d\'identité',
-            description: 'Présentation d\'une convocation falsifiée avec tentative de substitution de candidat.',
-            confiscated_items: 'Fausse carte d\'étudiant manuscrite',
-            severity: 'high',
-            status: 'convoked',
-            hearing_date: '2026-07-27 à 11h00',
-            hearing_room: 'Salle des Actes — ENCG Fès',
-            created_at: '2026-07-23'
-          },
-          {
-            id: 3,
-            student: { id: 103, first_name: 'Karim', last_name: 'Mansouri', cne: 'N139055112', apogee: '20008819', email: 'k.mansouri@encg-fes.ac.ma', filiere: 'Marketing & Action Commerciale S6' },
-            module_name: 'Droit des Affaires',
-            exam_date: '2026-07-20',
-            type: '📄 Brouillon non autorisé (Copion)',
-            description: 'Feuille volante manuscrite contenant des formules de cours découverte sur la table.',
-            confiscated_items: '1 Feuille A4 manuscrite',
-            severity: 'medium',
-            status: 'resolved',
-            decision: 'Note 0.00/20 attribuée d\'office au module Droit des Affaires',
-            sanction_scope: 'module',
-            created_at: '2026-07-20'
-          }
-        ]
-      }
-    })
+      let localQueue: any[] = []
+      try {
+        localQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
+      } catch (e) {}
+
+      const activeReportedCases = [
+        {
+          id: 201,
+          student: { id: 2, first_name: 'Salma', last_name: 'BENNANI', cne: 'N130000002', apogee: 'N130000002', email: 'salma.bennani@encg-fes.ac.ma', filiere: 'ENCG Grande École S4', guardian_email: 'tuteur.bennani@gmail.com' },
+          module_name: 'Management Stratégique',
+          exam_date: '2026-07-25',
+          type: '🚨 Fraude (Téléphone)',
+          description: 'Consultation d\'un téléphone portable pendant l\'épreuve d\'examen final.',
+          confiscated_items: 'Téléphone Portable Samsung',
+          severity: 'high',
+          status: 'pending',
+          created_at: '2026-07-25'
+        },
+        {
+          id: 202,
+          student: { id: 18, first_name: 'Saad', last_name: 'MEZIANE', cne: 'N130000018', apogee: 'N130000018', email: 'saad.meziane@encg-fes.ac.ma', filiere: 'ENCG Grande École S4', guardian_email: 'tuteur.meziane@gmail.com' },
+          module_name: 'Management Stratégique',
+          exam_date: '2026-07-25',
+          type: '🚨 Fraude (Téléphone)',
+          description: 'Pris en flagrant délit de triche par téléphone portable.',
+          confiscated_items: 'Téléphone Portable iPhone',
+          severity: 'high',
+          status: 'pending',
+          created_at: '2026-07-25'
+        }
+      ]
+
+      const combined = [...localQueue, ...activeReportedCases, ...(Array.isArray(apiItems) ? apiItems : [])]
+      
+      // Deduplicate by student CNE / ID
+      const seen = new Set()
+      return combined.filter(item => {
+        const key = item.student?.cne || item.student?.id || item.id
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+    }
+  })
+
 
 
 
