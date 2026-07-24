@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   Search, 
@@ -16,7 +16,9 @@ import {
   Sparkles, 
   GraduationCap,
   Award,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  Check
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -35,6 +37,105 @@ interface Filiere {
   active: boolean;
   groups_count?: number;
   modules_count?: number;
+}
+
+function CustomChefSelect({
+  value,
+  onChange,
+  professors
+}: {
+  value: string
+  onChange: (val: string) => void
+  professors: any[]
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const selectedProf = professors.find(p => String(p.id) === String(value))
+
+  const filteredProfs = professors.filter(p => 
+    (p.name && p.name.toLowerCase().includes(search.toLowerCase())) || 
+    (p.email && p.email.toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 border border-amber-300 dark:border-amber-800 rounded-2xl bg-white dark:bg-slate-800 text-xs font-bold shadow-sm transition-all cursor-pointer hover:border-amber-500"
+      >
+        <div className="flex items-center gap-2 truncate">
+          <UserCheck className={cn("w-4 h-4 shrink-0", selectedProf ? "text-emerald-600" : "text-amber-500")} />
+          <span className="truncate text-slate-900 dark:text-white">
+            {selectedProf ? `👨‍🏫 ${selectedProf.name} (${selectedProf.email || 'Permanent'})` : '-- Sélectionner le Chef de Filière --'}
+          </span>
+        </div>
+        <ChevronDown className={cn("w-4 h-4 text-amber-600 transition-transform shrink-0", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl shadow-2xl overflow-hidden p-2 space-y-2 animate-in fade-in duration-150">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher un enseignant par nom ou email..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none text-slate-900 dark:text-white"
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-52 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+            <button
+              type="button"
+              onClick={() => { onChange(''); setIsOpen(false); }}
+              className={cn("w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer", !value ? "bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500")}
+            >
+              <X className="w-3.5 h-3.5 text-slate-400" /> -- Aucun Chef de Filière --
+            </button>
+
+            {filteredProfs.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400 font-medium">Aucun enseignant trouvé</div>
+            ) : (
+              filteredProfs.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { onChange(String(p.id)); setIsOpen(false); }}
+                  className={cn(
+                    "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between gap-2 cursor-pointer",
+                    String(value) === String(p.id) ? "bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200"
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-black flex items-center gap-1.5">
+                      <span>👨‍🏫 {p.name}</span>
+                    </div>
+                    <div className="text-[10px] opacity-80 truncate">{p.email || p.specialty}</div>
+                  </div>
+                  {String(value) === String(p.id) && <Check className="w-4 h-4 text-slate-950 shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function FiliereList() {
@@ -73,11 +174,42 @@ export default function FiliereList() {
   // Fetch users/professors for Chef de Filière dropdown
   const fetchProfessors = async () => {
     try {
-      const res = await api.get('/users');
-      const list = res.data.data || res.data || [];
-      setProfessors(list.filter((u: any) => ['admin', 'professor', 'teacher', 'super-admin'].includes(u.role)));
+      const [profRes, userRes] = await Promise.allSettled([
+        api.get('/hr/professors'),
+        api.get('/users')
+      ])
+
+      let profList: any[] = []
+
+      if (profRes.status === 'fulfilled') {
+        const raw = profRes.value.data?.data || profRes.value.data || []
+        if (Array.isArray(raw) && raw.length > 0) {
+          profList = raw.map((p: any) => ({
+            id: p.user_id || p.user?.id || p.id,
+            name: p.user?.name || `${p.last_name || ''} ${p.first_name || ''}`.trim() || p.name || 'Enseignant',
+            email: p.user?.email || p.email || '',
+            specialty: p.specialty || p.department?.name || 'Professeur Permanent'
+          }))
+        }
+      }
+
+      if (profList.length === 0 && userRes.status === 'fulfilled') {
+        const rawUsers = userRes.value.data?.data || userRes.value.data || []
+        if (Array.isArray(rawUsers)) {
+          profList = rawUsers
+            .filter((u: any) => ['admin', 'professor', 'teacher', 'super-admin', 'director'].includes(u.role))
+            .map((u: any) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              specialty: u.role === 'admin' ? 'Enseignant / Admin' : 'Professeur Permanent'
+            }))
+        }
+      }
+
+      setProfessors(profList)
     } catch (err) {
-      console.error("Erreur chargement des enseignants", err);
+      console.error("Erreur chargement des enseignants", err)
     }
   }
 
@@ -359,18 +491,13 @@ export default function FiliereList() {
                 <label className="block text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                   <UserCheck className="w-4 h-4 text-amber-600" /> Chef de Filière (Président du Jury)
                 </label>
-                <select 
-                  value={formData.responsable_id} 
-                  onChange={e => setFormData({...formData, responsable_id: e.target.value})}
-                  className="w-full px-4 py-3 border border-amber-300 dark:border-amber-800 rounded-xl bg-white dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
-                >
-                  <option value="">-- Sélectionner le Chef de Filière --</option>
-                  {professors.map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      👨‍🏫 {p.name} ({p.email})
-                    </option>
-                  ))}
-                </select>
+                
+                <CustomChefSelect
+                  value={formData.responsable_id}
+                  onChange={val => setFormData({ ...formData, responsable_id: val })}
+                  professors={professors}
+                />
+
                 <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
                   Le Chef de Filière sera automatiquement désigné comme Président du Jury de délibération.
                 </p>
