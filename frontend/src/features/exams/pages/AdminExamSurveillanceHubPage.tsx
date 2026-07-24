@@ -3,7 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import {
   ShieldCheck, ArrowLeft, Printer, Download, Search, CheckCircle2,
   XCircle, AlertTriangle, Clock, UserCheck, Eye, RefreshCw,
-  Sparkles, FileText, Lock, ShieldAlert, Award, UserX, AlertCircle, Check, X, Camera, QrCode
+  Sparkles, FileText, Lock, ShieldAlert, Award, UserX, AlertCircle, Check, X, Camera, QrCode,
+  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -11,6 +12,7 @@ import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { toast } from 'sonner'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface Candidate {
   id: number
@@ -41,8 +43,13 @@ export default function AdminExamSurveillanceHubPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  // View Mode: 'list' | 'grid' (Plan de Salle Visual Grid)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  
+  // Sound Feedback
+  const [soundEnabled, setSoundEnabled] = useState(true)
+
   // Admin Override Mode
-  const [isAdminOverride, setIsAdminOverride] = useState(true)
   const [adminSupervisorName, setAdminSupervisorName] = useState('Admin ENCG Fès (Responsable)')
 
   // Search & Filter
@@ -57,6 +64,13 @@ export default function AdminExamSurveillanceHubPage() {
   const [confiscatedItems, setConfiscatedItems] = useState('')
   const [incidentsList, setIncidentsList] = useState<IncidentReport[]>([])
 
+  // Camera QR Scanner Modal State
+  const [showQrScanModal, setShowQrScanModal] = useState(false)
+  const [scannedQrToken, setScannedQrToken] = useState('')
+
+  // Printable PV Preview Modal State
+  const [showPvPreviewModal, setShowPvPreviewModal] = useState(false)
+
   // Signature & Lock State
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -68,6 +82,44 @@ export default function AdminExamSurveillanceHubPage() {
 
   // Candidate State bound to DB
   const [candidates, setCandidates] = useState<Candidate[]>([])
+
+  // Sound Synth Generator
+  const playAudioFeedback = (type: 'present' | 'absent' | 'fraud' | 'click') => {
+    if (!soundEnabled) return
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      if (type === 'present') {
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime) // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08) // A5
+        gain.gain.setValueAtTime(0.15, ctx.currentTime)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.22)
+      } else if (type === 'absent') {
+        osc.frequency.setValueAtTime(330, ctx.currentTime) // E4
+        gain.gain.setValueAtTime(0.12, ctx.currentTime)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.15)
+      } else if (type === 'fraud') {
+        osc.frequency.setValueAtTime(880, ctx.currentTime)
+        osc.frequency.setValueAtTime(440, ctx.currentTime + 0.1)
+        gain.gain.setValueAtTime(0.2, ctx.currentTime)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.3)
+      } else {
+        osc.frequency.setValueAtTime(600, ctx.currentTime)
+        gain.gain.setValueAtTime(0.08, ctx.currentTime)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.08)
+      }
+    } catch (e) {}
+  }
 
   // 1. Fetch Real Exam Details & Seatings from DB
   const { data: detailsData, isLoading: isLoadingDetails, refetch: refetchDetails } = useQuery({
@@ -169,6 +221,8 @@ export default function AdminExamSurveillanceHubPage() {
       return
     }
 
+    playAudioFeedback(newStatus === 'present' ? 'present' : 'absent')
+
     setCandidates(prev => prev.map(c => {
       if (c.id === candidate.id) {
         const time = newStatus !== 'absent' ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
@@ -183,7 +237,63 @@ export default function AdminExamSurveillanceHubPage() {
       status: newStatus
     })
 
-    toast.success(`Statut mis à jour dans la base de données : ${newStatus.toUpperCase()}`)
+    toast.success(`${candidate.name} : Statut ${newStatus.toUpperCase()}`)
+  }
+
+  // ⚡ Batch Action: Mark ALL Present (1-Click)
+  const handleMarkAllPresent = () => {
+    if (isPvLocked) {
+      toast.error('Ce PV d\'examen est verrouillé.')
+      return
+    }
+    const toastId = toast.loading('Saisie rapide : Marquage de TOUS les candidats comme PRÉSENTS...')
+    const timeNow = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    
+    setCandidates(prev => prev.map(c => ({ ...c, status: 'present', checkin_time: c.checkin_time || timeNow })))
+    playAudioFeedback('present')
+
+    // Fire background updates
+    candidates.forEach(c => {
+      updateAttendanceMutation.mutate({ seating_id: c.seating_id, student_id: c.student_id, status: 'present' })
+    })
+
+    toast.success('✅ Tous les candidats de la salle ont été marqués PRÉSENTS !', { id: toastId })
+  }
+
+  // ⚡ Batch Action: Reset ALL Absent
+  const handleResetAllAbsent = () => {
+    if (isPvLocked) {
+      toast.error('Ce PV d\'examen est verrouillé.')
+      return
+    }
+    const toastId = toast.loading('Réinitialisation des présences...')
+    setCandidates(prev => prev.map(c => ({ ...c, status: 'absent', checkin_time: undefined })))
+    playAudioFeedback('absent')
+
+    candidates.forEach(c => {
+      updateAttendanceMutation.mutate({ seating_id: c.seating_id, student_id: c.student_id, status: 'absent' })
+    })
+
+    toast.success('Réinitialisation terminée : Tous les candidats marqués absents.', { id: toastId })
+  }
+
+  // QR Scan manual submit handler
+  const handleProcessScanCode = () => {
+    if (!scannedQrToken.trim()) return
+    const token = scannedQrToken.trim().toUpperCase()
+    
+    // Find candidate by CNE, ID or Seat
+    const candidate = candidates.find(c => c.cne.toUpperCase() === token || c.seat_number.toString().toUpperCase() === token || c.name.toUpperCase().includes(token))
+    
+    if (candidate) {
+      handleToggleStatus(candidate, 'present')
+      toast.success(`🎯 Check-in réussi : ${candidate.name} (${candidate.seat_number})`)
+      setScannedQrToken('')
+      setShowQrScanModal(false)
+    } else {
+      playAudioFeedback('fraud')
+      toast.error('❌ Convocation introuvable pour ce code.')
+    }
   }
 
   // Open Fraud Modal
@@ -207,6 +317,7 @@ export default function AdminExamSurveillanceHubPage() {
       return
     }
 
+    playAudioFeedback('fraud')
     const toastId = toast.loading("Enregistrement de l'incident dans la base de données...")
     try {
       await api.post(`/exam-incidents`, {
@@ -234,7 +345,6 @@ export default function AdminExamSurveillanceHubPage() {
       setShowFraudModal(false)
       toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès dans la BDD !`, { id: toastId })
     } catch (err) {
-      // Local fallback
       const newReport: IncidentReport = {
         id: Date.now(),
         student_name: selectedStudentForFraud.name,
@@ -359,7 +469,8 @@ export default function AdminExamSurveillanceHubPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest">
+                <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   Espace Administration ENCG — BDD Connectée
                 </span>
                 {isPvLocked && (
@@ -377,13 +488,32 @@ export default function AdminExamSurveillanceHubPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/admin/exams"
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSoundEnabled(v => !v)}
+              className={cn("px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border backdrop-blur-md", soundEnabled ? "bg-emerald-500/20 text-emerald-200 border-emerald-400/30" : "bg-white/10 text-white/60 border-white/20")}
+              title="Activer/Désactiver le signal sonore lors du check-in"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-white/50" />}
+              {soundEnabled ? 'Bip : ON' : 'Bip : OFF'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowQrScanModal(true)}
+              className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+            >
+              <Camera className="w-4 h-4 text-emerald-100" /> Scanner QR Caméra
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPvPreviewModal(true)}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
             >
-              <ArrowLeft className="w-4 h-4" /> Retour aux Examens
-            </Link>
+              <FileCheck className="w-4 h-4 text-sky-300" /> Aperçu PV PDF
+            </button>
 
             <button
               type="button"
@@ -418,7 +548,7 @@ export default function AdminExamSurveillanceHubPage() {
         {/* Admin Takeover Banner */}
         <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-md">
               🛡️
             </div>
             <div>
@@ -438,6 +568,55 @@ export default function AdminExamSurveillanceHubPage() {
               className="px-3 py-1.5 bg-white/20 border border-white/30 rounded-xl text-xs font-bold text-white placeholder-blue-200 outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
+        </div>
+      </div>
+
+      {/* ⚡ SAISIE RAPIDE & BATCH OPERATIONS TOOLBAR */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-amber-500 animate-bounce" /> Saisie Rapide (1-Clic) :
+          </span>
+          <Button
+            onClick={handleMarkAllPresent}
+            disabled={isPvLocked}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black px-4 shadow-md flex items-center gap-1.5"
+          >
+            <CheckSquare className="w-4 h-4" /> Tout Marquer PRÉSENT
+          </Button>
+
+          <Button
+            onClick={handleResetAllAbsent}
+            disabled={isPvLocked}
+            variant="outline"
+            className="border-slate-300 dark:border-slate-700 text-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"
+          >
+            <UserX className="w-4 h-4 text-red-500" /> Tout Réinitialiser (Absent)
+          </Button>
+        </div>
+
+        {/* View Switcher: List vs Room Grid */}
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+              viewMode === 'list' ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+            )}
+          >
+            <List className="w-4 h-4" /> Vue Tableau Liste
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+              viewMode === 'grid' ? "bg-white dark:bg-slate-900 text-[#0f2863] dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+            )}
+          >
+            <Grid className="w-4 h-4 text-indigo-600" /> 🗺️ Plan de Salle (Grille)
+          </button>
         </div>
       </div>
 
@@ -520,114 +699,184 @@ export default function AdminExamSurveillanceHubPage() {
           </div>
         </div>
 
-        {/* Student Attendance List */}
-        <div className="overflow-x-auto">
-          {isLoadingDetails ? (
-            <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
-              <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
-            </div>
-          ) : (
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
-                  <th className="p-3 w-14 text-center">N° Place</th>
-                  <th className="p-3">CNE / Apogée</th>
-                  <th className="p-3">Nom & Prénom</th>
-                  <th className="p-3 text-center">Statut Présence</th>
-                  <th className="p-3 text-center">Heure Check-in</th>
-                  <th className="p-3 text-center">Incident / Fraude</th>
-                  <th className="p-3 text-right">Actions Émargement (BDD)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredCandidates.map((student) => (
-                  <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
-                      {student.seat_number}
-                    </td>
-                    <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
-                      {student.cne}
-                    </td>
-                    <td className="p-3 font-black text-slate-900 dark:text-white">
-                      {student.name}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
-                        student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-                        student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-                        student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                      )}>
-                        {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
-                        {student.status === 'absent' && <XCircle className="w-3 h-3" />}
-                        {student.status === 'late' && <Clock className="w-3 h-3" />}
-                        {student.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center font-mono text-slate-500">
-                      {student.checkin_time || '—'}
-                    </td>
-                    <td className="p-3 text-center">
-                      {student.has_fraud ? (
-                        <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">—</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(student, 'present')}
-                          disabled={isPvLocked}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                            student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
-                          )}
-                        >
-                          Présent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(student, 'absent')}
-                          disabled={isPvLocked}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                            student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
-                          )}
-                        >
-                          Absent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(student, 'late')}
-                          disabled={isPvLocked}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                            student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
-                          )}
-                        >
-                          Retard
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenFraudModal(student)}
-                          disabled={isPvLocked}
-                          className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
-                          title="Signaler un incident de fraude"
-                        >
-                          🚨 Fraude
-                        </button>
-                      </div>
-                    </td>
+        {/* VIEW 1: TABLE LIST MODE */}
+        {viewMode === 'list' && (
+          <div className="overflow-x-auto">
+            {isLoadingDetails ? (
+              <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
+                <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
+              </div>
+            ) : (
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
+                    <th className="p-3 w-14 text-center">N° Place</th>
+                    <th className="p-3">CNE / Apogée</th>
+                    <th className="p-3">Nom & Prénom</th>
+                    <th className="p-3 text-center">Statut Présence</th>
+                    <th className="p-3 text-center">Heure Check-in</th>
+                    <th className="p-3 text-center">Incident / Fraude</th>
+                    <th className="p-3 text-right">Actions Émargement (BDD)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredCandidates.map((student) => (
+                    <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
+                        {student.seat_number}
+                      </td>
+                      <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
+                        {student.cne}
+                      </td>
+                      <td className="p-3 font-black text-slate-900 dark:text-white">
+                        {student.name}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
+                          student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+                          student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+                          student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        )}>
+                          {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
+                          {student.status === 'absent' && <XCircle className="w-3 h-3" />}
+                          {student.status === 'late' && <Clock className="w-3 h-3" />}
+                          {student.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center font-mono text-slate-500">
+                        {student.checkin_time || '—'}
+                      </td>
+                      <td className="p-3 text-center">
+                        {student.has_fraud ? (
+                          <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">—</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(student, 'present')}
+                            disabled={isPvLocked}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                              student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
+                            )}
+                          >
+                            Présent
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(student, 'absent')}
+                            disabled={isPvLocked}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                              student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
+                            )}
+                          >
+                            Absent
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(student, 'late')}
+                            disabled={isPvLocked}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                              student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
+                            )}
+                          >
+                            Retard
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenFraudModal(student)}
+                            disabled={isPvLocked}
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
+                            title="Signaler un incident de fraude"
+                          >
+                            🚨 Fraude
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* VIEW 2: INTERACTIVE ROOM SEATING GRID MODE (PLAN DE SALLE) */}
+        {viewMode === 'grid' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+              <span>🗺️ Représentation graphique de la salle d'examen (Amphi A) — Cliquez sur une table pour changer le statut :</span>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-emerald-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Présent</span>
+                <span className="flex items-center gap-1 text-red-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Absent</span>
+                <span className="flex items-center gap-1 text-amber-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Retard</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+              {filteredCandidates.map((student) => (
+                <div
+                  key={student.id}
+                  onClick={() => {
+                    if (isPvLocked) return
+                    const nextStatus = student.status === 'absent' ? 'present' : (student.status === 'present' ? 'late' : 'absent')
+                    handleToggleStatus(student, nextStatus)
+                  }}
+                  className={cn(
+                    "p-3.5 rounded-2xl border-2 transition-all cursor-pointer space-y-2 select-none relative overflow-hidden group hover:scale-105 shadow-xs",
+                    student.status === 'present' && "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800",
+                    student.status === 'absent' && "bg-red-50/80 dark:bg-red-950/30 border-red-300 dark:border-red-800/80",
+                    student.status === 'late' && "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-800",
+                    student.has_fraud && "ring-2 ring-rose-500"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 bg-white/80 dark:bg-slate-800 text-slate-900 dark:text-white rounded-md text-[10px] font-black border border-slate-200 dark:border-slate-700">
+                      {student.seat_number}
+                    </span>
+                    <span className={cn(
+                      "w-2.5 h-2.5 rounded-full",
+                      student.status === 'present' && "bg-emerald-500",
+                      student.status === 'absent' && "bg-red-500",
+                      student.status === 'late' && "bg-amber-500"
+                    )} />
+                  </div>
+
+                  <div>
+                    <div className="font-black text-xs text-slate-900 dark:text-white truncate" title={student.name}>
+                      {student.name}
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-500 truncate">
+                      {student.cne}
+                    </div>
+                  </div>
+
+                  <div className="pt-1 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[9px] font-bold">
+                    <span className={cn(
+                      student.status === 'present' && "text-emerald-700 dark:text-emerald-300",
+                      student.status === 'absent' && "text-red-700 dark:text-red-300",
+                      student.status === 'late' && "text-amber-700 dark:text-amber-300"
+                    )}>
+                      {student.status.toUpperCase()}
+                    </span>
+                    {student.checkin_time && (
+                      <span className="font-mono text-slate-400">{student.checkin_time}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reported Incidents Summary Box */}
@@ -681,6 +930,114 @@ export default function AdminExamSurveillanceHubPage() {
           </div>
           <div className="bg-white p-2 rounded-xl border border-emerald-300">
             <img src={signatureDataUrl} alt="Signature Surveillant" className="h-10 object-contain" />
+          </div>
+        </div>
+      )}
+
+      {/* 📷 CAMERA LIVE QR SCANNER MODAL */}
+      {showQrScanModal && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Scan Caméra QR Convocation</h3>
+                  <p className="text-xs text-slate-500">Scanner le QR Code de la convocation de l'étudiant</p>
+                </div>
+              </div>
+              <button onClick={() => setShowQrScanModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Camera Viewport Simulation */}
+            <div className="relative aspect-video bg-slate-950 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white border-2 border-emerald-500/50 shadow-inner">
+              <div className="absolute inset-8 border-2 border-dashed border-emerald-400/80 rounded-xl animate-pulse flex items-center justify-center">
+                <QrCode className="w-16 h-16 text-emerald-400/50" />
+              </div>
+              <span className="relative z-10 text-xs font-mono bg-black/60 px-3 py-1 rounded-full text-emerald-300">
+                📷 Caméra Active — Visez le QR Code
+              </span>
+            </div>
+
+            {/* Manual Code / Barcode Input */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ou Saisissez le Code / CNE Manuellement</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="ex: N134059281 ou A-01"
+                  value={scannedQrToken}
+                  onChange={e => setScannedQrToken(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleProcessScanCode()}
+                  className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <Button onClick={handleProcessScanCode} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
+                  Valider
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📜 PRINTABLE OFFICIAL EXAM PV PREVIEW MODAL */}
+      {showPvPreviewModal && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-3xl w-full shadow-2xl space-y-6 my-8">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Aperçu du Procès-Verbal d'Examen Officiel</h3>
+              <button onClick={() => setShowPvPreviewModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Official Document Preview Area */}
+            <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans">
+              <div className="text-center space-y-1 border-b border-slate-300 pb-4">
+                <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
+                <h3 className="font-bold text-slate-700">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200">
+                <div><b>Module :</b> {examObj?.module?.name || 'Management Stratégique'}</div>
+                <div><b>Date :</b> {new Date().toLocaleDateString('fr-FR')}</div>
+                <div><b>Filière :</b> {examObj?.module?.filiere?.name || 'ENCG Grande École'}</div>
+                <div><b>Salle :</b> {examObj?.room?.name || 'Amphi A'}</div>
+                <div><b>Surveillant Responsable :</b> {adminSupervisorName}</div>
+                <div><b>Présents / Total :</b> {presentCount} / {totalCount} ({presenceRate}%)</div>
+              </div>
+
+              {incidentsList.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-black text-rose-700">🚨 Incidents Constatés :</div>
+                  {incidentsList.map(i => (
+                    <div key={i.id} className="p-2 bg-rose-50 text-rose-900 rounded-lg text-[10px]">
+                      <b>{i.student_name} ({i.cne}) :</b> {i.description} {i.confiscated_items && `[Objet : ${i.confiscated_items}]`}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {signatureDataUrl && (
+                <div className="flex justify-end pt-4">
+                  <div className="text-center space-y-1">
+                    <div className="font-bold text-slate-700">Signature du Responsable :</div>
+                    <img src={signatureDataUrl} alt="Signature" className="h-12 object-contain mx-auto" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs">Fermer</Button>
+              <Button onClick={() => window.print()} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
+                🖨️ Imprimer la Fiche A4
+              </Button>
+            </div>
           </div>
         </div>
       )}
