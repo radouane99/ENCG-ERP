@@ -14,11 +14,11 @@ class FiliereService
     public function getAllFilieres(): Collection
     {
         try {
-            // Self-healing migration check for PostgreSQL UUID type on responsable_id
+            // Self-healing migration check for PostgreSQL BIGINT type on responsable_id
             $columnType = DB::selectOne("SELECT data_type FROM information_schema.columns WHERE table_name = 'filieres' AND column_name = 'responsable_id'");
-            if ($columnType && strtolower($columnType->data_type) !== 'uuid') {
+            if ($columnType && strtolower($columnType->data_type) !== 'bigint' && strtolower($columnType->data_type) !== 'integer') {
                 DB::statement("ALTER TABLE filieres DROP COLUMN IF EXISTS responsable_id CASCADE;");
-                DB::statement("ALTER TABLE filieres ADD COLUMN responsable_id UUID REFERENCES users(id) ON DELETE SET NULL;");
+                DB::statement("ALTER TABLE filieres ADD COLUMN responsable_id BIGINT REFERENCES users(id) ON DELETE SET NULL;");
             }
         } catch (\Throwable $e) {}
 

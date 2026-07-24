@@ -185,7 +185,7 @@ export default function FiliereList() {
         const raw = profRes.value.data?.data || profRes.value.data || []
         if (Array.isArray(raw) && raw.length > 0) {
           profList = raw.map((p: any) => ({
-            id: p.user_id || p.user?.id || p.id,
+            id: String(p.user_id || p.user?.id || p.id),
             name: p.user?.name || `${p.last_name || ''} ${p.first_name || ''}`.trim() || p.name || 'Enseignant',
             email: p.user?.email || p.email || '',
             specialty: p.specialty || p.department?.name || 'Professeur Permanent'
@@ -199,7 +199,7 @@ export default function FiliereList() {
           profList = rawUsers
             .filter((u: any) => ['admin', 'professor', 'teacher', 'super-admin', 'director'].includes(u.role))
             .map((u: any) => ({
-              id: u.id,
+              id: String(u.id),
               name: u.name,
               email: u.email,
               specialty: u.role === 'admin' ? 'Enseignant / Admin' : 'Professeur Permanent'
@@ -247,7 +247,9 @@ export default function FiliereList() {
     try {
       const payload = {
         ...formData,
-        responsable_id: formData.responsable_id || null
+        responsable_id: formData.responsable_id 
+          ? (!isNaN(Number(formData.responsable_id)) ? Number(formData.responsable_id) : formData.responsable_id)
+          : null
       }
       if (editingId) {
         await api.put(`/filieres/${editingId}`, payload);
