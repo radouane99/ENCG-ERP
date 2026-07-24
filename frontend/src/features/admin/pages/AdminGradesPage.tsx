@@ -486,7 +486,7 @@ export default function AdminGradesPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate(`/admin/grades/pv?filiere_id=${filiere}&semester=${semestre}&module_id=${module}${groupe ? `&group_id=${groupe}` : ''}`)}
+                onClick={() => navigate(`/admin/grades/pv?filiere_id=${filiere}&semester=${semestre}&module_id=${module}`)}
                 className="px-5 py-3 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-black shadow-sm transition-all cursor-pointer flex items-center gap-2"
               >
                 <FileText className="w-4 h-4 text-indigo-600" /> Consulter le PV

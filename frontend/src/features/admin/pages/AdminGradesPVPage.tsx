@@ -18,12 +18,15 @@ export default function AdminGradesPVPage() {
   const [searchParams] = useSearchParams()
   const moduleId = searchParams.get('module_id')
   const groupId = searchParams.get('group_id')
+  const filiereParam = searchParams.get('filiere_id')
+  const semesterParam = searchParams.get('semester')
   const queryClient = useQueryClient()
 
   // Selection states for selector bar
-  const [selectedFiliere, setSelectedFiliere] = useState('')
-  const [selectedSemester, setSelectedSemester] = useState('')
-  const [selectedGroup, setSelectedGroup] = useState(groupId || '')
+  const [selectedFiliere, setSelectedFiliere] = useState(filiereParam && filiereParam !== 'null' ? filiereParam : '')
+  const [selectedSemester, setSelectedSemester] = useState(semesterParam && semesterParam !== 'null' ? semesterParam : '')
+  const [selectedGroup, setSelectedGroup] = useState(groupId && groupId !== 'null' ? groupId : '')
+  const [selectedModule, setSelectedModule] = useState(moduleId && moduleId !== 'null' ? moduleId : '')
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [modules, setModules] = useState<any[]>([])
@@ -109,6 +112,21 @@ export default function AdminGradesPVPage() {
     }).then(res => res.data),
     enabled: !!moduleId,
   })
+
+  // Synchronize selection state when pvData arrives
+  useEffect(() => {
+    if (pvData?.module) {
+      if (pvData.module.filiere_id && !selectedFiliere) {
+        setSelectedFiliere(String(pvData.module.filiere_id))
+      }
+      if (pvData.module.semester_number && !selectedSemester) {
+        setSelectedSemester(String(pvData.module.semester_number))
+      }
+      if (pvData.module.id && !selectedModule) {
+        setSelectedModule(String(pvData.module.id))
+      }
+    }
+  }, [pvData])
 
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true)

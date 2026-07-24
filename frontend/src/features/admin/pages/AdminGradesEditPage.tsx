@@ -283,7 +283,7 @@ export default function AdminGradesEditPage() {
             📋 Historique d'Audit
           </Button>
           <Link 
-            to={`/admin/grades/pv?group_id=${searchParams.get('group_id')}&module_id=${moduleId}`}
+            to={`/admin/grades/pv?filiere_id=${searchParams.get('filiere_id') || ''}&semester=${searchParams.get('semester') || ''}&module_id=${moduleId}`}
             className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-sm h-10"
           >
             📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV'}
@@ -565,7 +565,7 @@ export default function AdminGradesEditPage() {
 
           <div className="p-6 w-full flex justify-between items-center border-t border-[var(--border)]">
             <Link 
-              to={`/admin/grades/pv?group_id=${searchParams.get('group_id')}&module_id=${moduleId}`}
+              to={`/admin/grades/pv?filiere_id=${searchParams.get('filiere_id') || ''}&semester=${searchParams.get('semester') || ''}&module_id=${moduleId}`}
               className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-5 py-3.5 rounded-2xl transition-all uppercase tracking-wider shadow-sm"
             >
               📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV de Module'}
