@@ -378,12 +378,21 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/update-attendance/{qrToken}', [ConvocationController::class, 'updateAttendanceStatus']);
     });
 
-    // Exam Incidents
+    // Exam Incidents & Discipline
     Route::prefix('exam-incidents')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
         Route::get('/{id}/download-pdf', [\App\Http\Controllers\Api\ExamIncidentController::class, 'downloadPdf']);
     });
+
+    // Discipline Council Routes
+    Route::get('/discipline', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
+    Route::post('/discipline/{id}/convoke', [\App\Http\Controllers\Api\ExamIncidentController::class, 'convoke']);
+    Route::post('/discipline/{id}/decide', [\App\Http\Controllers\Api\ExamIncidentController::class, 'decide']);
+
+    // Exam Analytics & Cartography Route
+    Route::get('/exam-analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
+
 
     // Retakes
     Route::prefix('retakes')->group(function () {

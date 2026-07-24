@@ -53,9 +53,50 @@ export default function AdminExamSurveillanceHubPage() {
   const [adminSupervisorName, setAdminSupervisorName] = useState('Admin ENCG Fès (Responsable)')
   const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('')
 
+  // Offline PWA Sync State
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0)
+
+  useEffect(() => {
+    // Check initial queue
+    try {
+      const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+      setOfflineQueueCount(queue.length)
+    } catch (e) {}
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      toast.success('🟢 Connexion Internet rétablie ! Synchronisation de la file d\'émargement...')
+      try {
+        const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+        if (queue.length > 0) {
+          queue.forEach((item: any) => {
+            updateAttendanceMutation.mutate({ seating_id: item.seating_id, student_id: item.student_id, status: item.status })
+          })
+          localStorage.removeItem(`offline_emargement_queue_${id}`)
+          setOfflineQueueCount(0)
+          toast.success(`✅ ${queue.length} émargement(s) hors-ligne synchronisés avec la BDD !`)
+        }
+      } catch (e) {}
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      toast.warning('🟡 Wi-Fi déconnecté. Mode PWA Hors-Ligne actif. Vos pointages seront conservés en local.')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [id])
+
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent' | 'late' | 'fraud'>('all')
+
 
   // Fraud Modal State
   const [showFraudModal, setShowFraudModal] = useState(false)
@@ -231,14 +272,25 @@ export default function AdminExamSurveillanceHubPage() {
       return c
     }))
 
-    updateAttendanceMutation.mutate({
-      seating_id: candidate.seating_id,
-      student_id: candidate.student_id,
-      status: newStatus
-    })
+    if (!navigator.onLine) {
+      try {
+        const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+        queue.push({ seating_id: candidate.seating_id, student_id: candidate.student_id, status: newStatus, timestamp: Date.now() })
+        localStorage.setItem(`offline_emargement_queue_${id}`, JSON.stringify(queue))
+        setOfflineQueueCount(queue.length)
+        toast.info(`💾 Pointage enregistré localement (${queue.length} en attente de synchro)`)
+      } catch (e) {}
+    } else {
+      updateAttendanceMutation.mutate({
+        seating_id: candidate.seating_id,
+        student_id: candidate.student_id,
+        status: newStatus
+      })
+    }
 
     toast.success(`${candidate.name} : Statut ${newStatus.toUpperCase()}`)
   }
+
 
   // ⚡ Batch Action: Mark ALL Present (1-Click)
   const handleMarkAllPresent = () => {
@@ -506,9 +558,12 @@ export default function AdminExamSurveillanceHubPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Espace Administration ENCG — BDD Connectée
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5",
+                    isOnline ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30" : "bg-amber-500/20 text-amber-300 border border-amber-400/30 animate-pulse"
+                  )}>
+                    <span className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-400 animate-pulse" : "bg-amber-400")} />
+                    {isOnline ? '🟢 Mode PWA En Ligne (BDD Sync)' : `🟡 Mode PWA Hors-Ligne (${offlineQueueCount} en attente)`}
                   </span>
                   {isPvLocked && (
                     <span className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
@@ -516,6 +571,7 @@ export default function AdminExamSurveillanceHubPage() {
                     </span>
                   )}
                 </div>
+
                 <h1 className="text-2xl font-black tracking-tight mt-1">
                   Hub de Surveillance d'Examen & Émargement Officiel
                 </h1>
@@ -1054,10 +1110,19 @@ export default function AdminExamSurveillanceHubPage() {
 
               {/* Official Document Preview Area */}
               <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans">
-                <div className="text-center space-y-1 border-b border-slate-300 pb-4">
-                  <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
-                  <h3 className="font-bold text-slate-700">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
+                <div className="flex items-center justify-between border-b border-slate-300 pb-4">
+                  <div className="flex items-center gap-3">
+                    <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-12 w-auto object-contain" />
+                    <div>
+                      <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
+                      <h3 className="font-bold text-slate-700 text-xs">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-black rounded-lg uppercase tracking-wider">
+                    DOCUMENT OFFICIEL
+                  </span>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-2 text-[11px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200">
                   <div><b>Module :</b> {examObj?.module?.name || 'Management Stratégique'}</div>
@@ -1230,29 +1295,36 @@ export default function AdminExamSurveillanceHubPage() {
       {/* 📜 DEDICATED OFFICIAL A4 PROCÈS-VERBAL PRINTABLE DOCUMENT (ONLY SHOWN DURING PRINTING) */}
       <div id="official-pv-printable" className="hidden print:block text-black bg-white">
         
-        {/* Institutional Header */}
-        <div className="border-b-2 border-[#0f2863] pb-4 mb-4 flex justify-between items-start">
-          <div className="space-y-1">
-            <div className="text-[10pt] font-black uppercase text-[#0f2863]">Royaume du Maroc</div>
-            <div className="text-[9pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
-            <div className="text-[9.5pt] font-black text-[#0f2863]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+        {/* Institutional Header with Official ENCG Logo */}
+        <div className="border-b-2 border-[#0f2863] pb-3 mb-3 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
+            <div>
+              <div className="text-[10pt] font-black uppercase text-[#0f2863] tracking-wide">Royaume du Maroc</div>
+              <div className="text-[8.5pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
+              <div className="text-[9.5pt] font-black text-[#0f2863] tracking-tight">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+              <div className="text-[8pt] font-bold text-slate-500 uppercase tracking-widest">Service des Examens & de la Scolarité</div>
+            </div>
           </div>
           <div className="text-right space-y-1">
-            <div className="text-[9pt] font-mono text-slate-500">ANNÉE ACADÉMIQUE 2025/2026</div>
-            <div className="text-[9pt] font-bold text-[#0f2863]">SERVICE DES EXAMENS</div>
-            <div className="text-[8pt] text-slate-400">Date d'édition : {new Date().toLocaleDateString('fr-FR')}</div>
+            <div className="px-3 py-1 bg-[#0f2863] text-white font-black text-[8.5pt] rounded tracking-wider inline-block uppercase">
+              PV D'EXAMEN OFFICIEL
+            </div>
+            <div className="text-[8.5pt] font-mono text-slate-700">Année Académique : <strong>2025/2026</strong></div>
+            <div className="text-[7.5pt] text-slate-400">Édité le : {new Date().toLocaleDateString('fr-FR')}</div>
           </div>
         </div>
 
         {/* Title */}
-        <div className="text-center my-4 space-y-1">
-          <h1 className="text-[14pt] font-black text-[#0f2863] uppercase tracking-wide">
+        <div className="text-center my-3 space-y-0.5">
+          <h1 className="text-[13pt] font-black text-[#0f2863] uppercase tracking-wide">
             PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT ET D'ÉMARGEMENT D'EXAMEN
           </h1>
-          <p className="text-[9pt] font-bold text-slate-600 italic">
+          <p className="text-[8.5pt] font-bold text-slate-600 italic">
             Session Ordinaire — Contrôle Final Semestriel
           </p>
         </div>
+
 
         {/* Exam Details Table Grid */}
         <table className="w-full text-[9pt] border-collapse border border-slate-400 mb-4">

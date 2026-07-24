@@ -87,6 +87,8 @@ const AttendancePage = lazy(() => import('@features/attendance/pages/AttendanceP
 const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPage'))
 const GradeEntryPage = lazy(() => import('@features/exams/components/GradeEntry'))
 const DeliberationPage = lazy(() => import('@features/deliberation/pages/DeliberationPage'))
+const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
+
 
 const DocumentRequestsPage = lazy(() => import('@features/documents/pages/AdminDocumentRequestsPage'))
 const DocumentTemplatesPage = lazy(() => import('@features/documents/pages/DocumentTemplatesPage'))
@@ -200,8 +202,8 @@ const AdminExamScanPage = lazy(() => import('@features/exams/pages/AdminExamScan
 const AdminPrintProfessorsConvocationPage = lazy(() => import('@features/exams/pages/AdminPrintProfessorsConvocationPage'))
 const AdminProfessorAvailabilityPage = lazy(() => import('@features/exams/pages/AdminProfessorAvailabilityPage'))
 const AdminScheduleChangeRequestsPage = lazy(() => import('@features/exams/pages/AdminScheduleChangeRequestsPage'))
-const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
 const AdminFinanceDashboard = lazy(() => import('@features/admin/pages/AdminFinanceDashboard'))
+
 const AdminBlockchainDiplomas = lazy(() => import('@features/admin/pages/AdminBlockchainDiplomas'))
 const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
@@ -346,6 +348,8 @@ export default function RootRouter() {
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
           <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
           <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+          <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
+
 
           
           {/* Convocations Officielles */}
