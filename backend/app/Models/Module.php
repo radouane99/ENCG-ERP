@@ -49,6 +49,22 @@ class Module extends Model
         return $this->hasMany(Assessment::class);
     }
 
+    /**
+     * Professors assigned to this module via the module_professor pivot table.
+     */
+    public function professors(): BelongsToMany
+    {
+        return $this->belongsToMany(Professor::class, 'module_professor', 'module_id', 'professor_id');
+    }
+
+    /**
+     * Resit eligibility records for students in this module.
+     */
+    public function resitEligibilities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ResitEligibility::class);
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];
