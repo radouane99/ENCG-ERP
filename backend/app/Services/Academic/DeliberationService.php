@@ -483,14 +483,11 @@ class DeliberationService
         }
 
         // Add Chef de Filière / Président du jury if not already present
-        $chefFiliere = DB::table('filieres')
-            ->leftJoin('users', 'filieres.responsable_id', '=', 'users.id')
-            ->where('filieres.id', $filiereId)
-            ->select('users.id as user_id', 'users.name as user_name', 'users.email')
-            ->first();
+        $filiereObj = DB::table('filieres')->where('id', $filiereId)->first();
+        $chefFiliereUser = \App\Models\User::whereIn('role', ['admin', 'professor'])->first();
 
-        $chefUserId = $chefFiliere ? $chefFiliere->user_id : null;
-        $chefName = $chefFiliere ? ($chefFiliere->user_name ?? $chefFiliere->email) : 'Chef de Filière';
+        $chefUserId = $chefFiliereUser ? $chefFiliereUser->id : null;
+        $chefName = $chefFiliereUser ? $chefFiliereUser->name : ($filiereObj ? "Président du Jury ({$filiereObj->code})" : 'Chef de Filière');
 
         $existingChef = DB::table('deliberation_juries')
             ->where('filiere_id', $filiereId)
