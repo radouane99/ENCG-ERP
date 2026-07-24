@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -8,7 +9,7 @@ import {
 import {
   Users, GraduationCap, BookOpen, Briefcase,
   TrendingUp, TrendingDown, UserCheck, RefreshCw,
-  AlertCircle, CheckCircle, Clock
+  AlertCircle, CheckCircle, Clock, ChevronRight
 } from 'lucide-react'
 import api from '@shared/lib/api'
 
@@ -44,6 +45,8 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  // #7 — Retake pending widget
+  const [retakePending, setRetakePending] = useState<number | null>(null)
 
   const fetchStats = async () => {
     try {
@@ -58,7 +61,13 @@ export default function AdminDashboard() {
     }
   }
 
-  useEffect(() => { fetchStats() }, [])
+  useEffect(() => {
+    fetchStats()
+    // #7 — Fetch pending retake count
+    api.get('/retakes', { params: { status: 'En attente' } })
+      .then((r: any) => setRetakePending(r.data?.stats?.enAttente ?? 0))
+      .catch(() => {})
+  }, [])
 
   const stats = data ? [
     {
@@ -106,6 +115,9 @@ export default function AdminDashboard() {
     { label: 'Taux Complétion Notes', value: `${data.gradesCompletionRate}%`, icon: <CheckCircle className="w-5 h-5" />, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' },
     { label: 'Réclamations (Attente)', value: data.pendingComplaintsCount, icon: <AlertCircle className="w-5 h-5" />, color: 'text-red-600 bg-red-500/10 border-red-500/20' },
   ] : []
+
+  // #7 — Retake widget visibility
+  const showRetakeAlert = retakePending !== null && retakePending > 0
 
   return (
     <div className="space-y-6 animate-in">
