@@ -60,7 +60,7 @@ function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disab
   }, [])
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div className={cn("relative w-full", isOpen && "z-50")} ref={dropdownRef}>
       <button
         type="button"
         disabled={disabled}
@@ -86,7 +86,7 @@ function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disab
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 space-y-1 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 space-y-1 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
           {options.length === 0 ? (
             <div className="p-3 text-center text-xs text-slate-400 font-bold italic">
               Aucune option disponible
@@ -311,7 +311,7 @@ export default function AdminGradesPage() {
       </div>
 
       {/* Main 4-Step Selector Panel */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-xl space-y-8 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-xl space-y-8 relative">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
           <div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
@@ -334,7 +334,7 @@ export default function AdminGradesPage() {
           
           {/* Step 1: Filière */}
           <div className={cn(
-            "p-6 rounded-3xl border transition-all space-y-3 relative",
+            "p-6 rounded-3xl border transition-all space-y-3 relative z-20",
             filiere ? "bg-indigo-50/40 border-indigo-200 dark:bg-indigo-950/20" : "bg-slate-50 border-slate-200 dark:bg-slate-800/40"
           )}>
             <div className="flex items-center justify-between">
@@ -367,7 +367,7 @@ export default function AdminGradesPage() {
 
           {/* Step 2: Semestre */}
           <div className={cn(
-            "p-6 rounded-3xl border transition-all space-y-3 relative",
+            "p-6 rounded-3xl border transition-all space-y-3 relative z-20",
             semestre ? "bg-indigo-50/40 border-indigo-200 dark:bg-indigo-950/20" : "bg-slate-50 border-slate-200 dark:bg-slate-800/40"
           )}>
             <div className="flex items-center justify-between">
@@ -400,7 +400,7 @@ export default function AdminGradesPage() {
 
           {/* Step 3: Groupe */}
           <div className={cn(
-            "p-6 rounded-3xl border transition-all space-y-3 relative",
+            "p-6 rounded-3xl border transition-all space-y-3 relative z-10",
             (!filiere || !semestre) && "opacity-40 pointer-events-none",
             groupe ? "bg-indigo-50/40 border-indigo-200 dark:bg-indigo-950/20" : "bg-slate-50 border-slate-200 dark:bg-slate-800/40"
           )}>
@@ -438,7 +438,7 @@ export default function AdminGradesPage() {
 
           {/* Step 4: Module */}
           <div className={cn(
-            "p-6 rounded-3xl border transition-all space-y-3 relative",
+            "p-6 rounded-3xl border transition-all space-y-3 relative z-10",
             (!filiere || !semestre) && "opacity-40 pointer-events-none",
             module ? "bg-indigo-50/40 border-indigo-200 dark:bg-indigo-950/20" : "bg-slate-50 border-slate-200 dark:bg-slate-800/40"
           )}>
