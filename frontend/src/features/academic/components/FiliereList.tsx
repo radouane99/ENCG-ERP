@@ -247,7 +247,7 @@ export default function FiliereList() {
     try {
       const payload = {
         ...formData,
-        responsable_id: formData.responsable_id ? Number(formData.responsable_id) : null
+        responsable_id: formData.responsable_id || null
       }
       if (editingId) {
         await api.put(`/filieres/${editingId}`, payload);

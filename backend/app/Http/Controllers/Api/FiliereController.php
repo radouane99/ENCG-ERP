@@ -67,7 +67,7 @@ class FiliereController extends Controller
 
         return response()->json([
             'message' => 'Filière mise à jour avec succès.',
-            'data' => $filiere
+            'data' => new \App\Http\Resources\FiliereResource($filiere->load('responsable'))
         ]);
     }
 
