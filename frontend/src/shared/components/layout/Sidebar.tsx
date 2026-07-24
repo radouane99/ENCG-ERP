@@ -12,8 +12,9 @@ import {
   Scan, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   LineChart, Network, Link2, Download, Lightbulb, MapPin, Ticket, Crown, Rocket, Gamepad2, Book,
   BrainCircuit, Map as MapIcon, Landmark, ShieldCheck, Globe, PlaneTakeoff, Microscope, Lock, Sparkles, Mail,
-  X, Layers, IdCard, Eye
+  X, Layers, IdCard, Eye, Calculator
 } from 'lucide-react'
+
 
 interface NavItem {
   label: string
@@ -76,8 +77,8 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Examens Planifiés', labelAr: 'الامتحانات المبرمجة', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Gestion Convocations', labelAr: 'إدارة الاستدعاءات', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Scanner QR en Direct', labelAr: 'ماسح الاستدعاءات المباشر', href: '/admin/exams/scan', icon: Scan, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Délibérations & Jurys', labelAr: 'المداولات ولجان التحكيم', href: '/exams/deliberations', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director'] },
-      {label: 'PV Globaux & Notes', labelAr: 'المحاضر العامة والنقاط', href: '/admin/grades/pv', icon: ScrollText, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Délibérations & PVs Officiels', labelAr: 'المداولات والمحاضر الرسمية', href: '/admin/grades/pv', icon: Calculator, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
+
       { label: 'Réservistes & Dérogations', labelAr: 'الطلبة الرواسب والديون', href: '/admin/reservistes', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Session Rattrapage', labelAr: 'دورة الدعم والتدارك', href: '/admin/retake', icon: RefreshCcw, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Saisie des Notes', labelAr: 'إدخال النقاط', href: '/admin/grades', icon: Edit3, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },

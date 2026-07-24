@@ -24,15 +24,16 @@ class ReservisteController extends Controller
         // Fetch all debt/retake records
         $retakesQuery = DB::table('student_module_retakes')
             ->join('students', 'student_module_retakes.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->join('modules', 'student_module_retakes.module_id', '=', 'modules.id')
             ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
             ->select(
                 'students.id as student_id',
-                'students.first_name',
-                'students.last_name',
+                DB::raw("COALESCE(users.first_name, users.name, 'Étudiant') as first_name"),
+                DB::raw("COALESCE(users.last_name, '') as last_name"),
                 'students.student_number',
                 'students.cne_cme',
-                'students.email',
+                DB::raw("COALESCE(users.email, students.email) as email"),
                 'modules.id as module_id',
                 'modules.code as module_code',
                 'modules.name as module_name',
@@ -50,12 +51,14 @@ class ReservisteController extends Controller
 
         if ($search) {
             $retakesQuery->where(function($q) use ($search) {
-                $q->where('students.first_name', 'like', "%{$search}%")
-                  ->orWhere('students.last_name', 'like', "%{$search}%")
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('users.first_name', 'like', "%{$search}%")
+                  ->orWhere('users.last_name', 'like', "%{$search}%")
                   ->orWhere('students.student_number', 'like', "%{$search}%")
                   ->orWhere('students.cne_cme', 'like', "%{$search}%");
             });
         }
+
 
         $retakeRecords = $retakesQuery->get();
 

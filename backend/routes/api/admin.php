@@ -205,8 +205,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('assessments/{assessment}/grades', [GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
-    Route::get('academic/deliberate', [DeliberationController::class, 'run']);
+
+    Route::get('admin/academic/deliberations', [DeliberationController::class, 'index']);
+    Route::match(['get', 'post'], 'academic/deliberate', [DeliberationController::class, 'run']);
+    Route::match(['get', 'post'], 'admin/deliberations/run', [DeliberationController::class, 'run']);
     Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
+
 
     Route::post('deliberations/apply-rachat', [GradeController::class, 'applyRachat']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);

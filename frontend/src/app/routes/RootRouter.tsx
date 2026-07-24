@@ -368,8 +368,10 @@ export default function RootRouter() {
           {/* Exams & Grades */}
           <Route path="/exams" element={<ExamSessionsPage />} />
 
-          <Route path="/exams/deliberations" element={<DeliberationPage />} />
+          <Route path="/exams/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
+          <Route path="/academic/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
           <Route path="/exams/deliberations/:id/jury" element={<DeliberationJuryPage />} />
+
 
           {/* Documents */}
           <Route path="/documents/requests" element={<DocumentRequestsPage />} />

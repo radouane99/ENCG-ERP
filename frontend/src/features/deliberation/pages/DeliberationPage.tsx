@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Search, Calculator, CheckCircle2, AlertTriangle, Users } from 'lucide-react'
+import { Search, Calculator, CheckCircle2, AlertTriangle, Users, FileText } from 'lucide-react'
+
+
 import { cn } from '@shared/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
@@ -28,23 +30,14 @@ export default function DeliberationPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/academic/deliberations')}
-            className="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-bold transition-all hover:bg-indigo-100 flex items-center gap-2"
-          >
-            <Calculator className="w-4 h-4 text-indigo-600" />
-            Moteur APOGEE & Verrouillage
-          </button>
-
-          <button
-            onClick={() => navigate('/academic/deliberations')}
+            onClick={() => navigate('/admin/grades/pv')}
             className="px-5 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
           >
-            <Calculator className="w-4 h-4 text-amber-300" />
-            Lancer une Délibération
+            <FileText className="w-4 h-4 text-amber-300" />
+            📜 Voir & Imprimer les PVs Officiels
           </button>
         </div>
       </div>
-
 
       <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left">
@@ -70,16 +63,16 @@ export default function DeliberationPage() {
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <div className="max-w-md mx-auto space-y-3">
                     <Calculator className="w-12 h-12 text-indigo-500 mx-auto" />
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100">Aucune session de délibération en cours</h3>
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100">Aucune session de délibération enregistrée</h3>
                     <p className="text-xs text-slate-500">
-                      Lancez le moteur de délibération semestrielle pour calculer automatiquement les compensations, moyennes et procès-verbaux d'évaluation.
+                      Consultez la matrice des délibérations et générez les Procès-Verbaux officiels directement depuis le hub des PVs.
                     </p>
                     <button
-                      onClick={() => navigate('/academic/deliberations')}
+                      onClick={() => navigate('/admin/grades/pv')}
                       className="mt-2 px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#15347d] transition-all inline-flex items-center gap-2"
                     >
-                      <Calculator className="w-4 h-4 text-amber-300" />
-                      Lancer la Délibération Semestrielle
+                      <FileText className="w-4 h-4 text-amber-300" />
+                      Ouvrir le Hub des PVs Officiels
                     </button>
                   </div>
                 </td>
@@ -99,14 +92,15 @@ export default function DeliberationPage() {
                 </td>
                 <td className="px-6 py-4 text-end">
                   <button 
-                    onClick={() => navigate(`/exams/deliberations/${s.id}/jury`)}
-                    className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 transition-colors flex items-center gap-2 ms-auto"
+                    onClick={() => navigate('/admin/grades/pv')}
+                    className="bg-[#0f2863] hover:bg-[#15347d] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 ms-auto cursor-pointer"
                   >
-                    <Calculator className="w-3.5 h-3.5"/> {t('open_jury')}
+                    <FileText className="w-3.5 h-3.5 text-amber-300"/> Imprimer le PV Officiel
                   </button>
                 </td>
               </tr>
             ))}
+
 
           </tbody>
         </table>
