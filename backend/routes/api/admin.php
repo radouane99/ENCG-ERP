@@ -193,7 +193,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
     Route::get('modules/export-bulk-pv-zip', [\App\Http\Controllers\Api\PdfExportController::class, 'exportBulkPvZip']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
+    Route::get('semester-pv', [GradeController::class, 'getSemesterPv']);
     Route::get('modules/{module}/pv/export-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportModulePvPdf']);
+
     Route::get('modules/{module}/pv/export-rattrapage-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRattrapage_PvPdf']); // #3
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
     Route::post('modules/{module}/generate-rattrapage-eligibilities', [GradeController::class, 'generateRattrapageEligibilities']); // Manual trigger
@@ -204,7 +206,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
+    Route::get('deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
+
     Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
     Route::get('academic/deliberations/annual-compensation', [DeliberationController::class, 'getAnnualCompensation']);
     Route::get('admin/reservistes', [\App\Http\Controllers\Api\ReservisteController::class, 'index']);

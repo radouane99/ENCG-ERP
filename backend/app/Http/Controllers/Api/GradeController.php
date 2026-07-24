@@ -412,8 +412,10 @@ class GradeController extends Controller
                         return str_contains(strtolower($a->type), 'exam') || str_contains(strtolower($a->type), 'examen');
                     });
 
-                    $rCalcVal = $rattrapageIsAbsent ? 0 : floatval($rattrapageGradeVal);
-                    
+                    $rRawVal = $rattrapageIsAbsent ? 0 : floatval($rattrapageGradeVal);
+                    // Capping rule: the resit exam grade itself cannot exceed 10.00/20 max
+                    $rCappedExamVal = min(10.00, $rRawVal);
+
                     if ($examAssessment) {
                         $newWeightedSum = 0;
                         $newTotalWeight = 0;
@@ -424,7 +426,7 @@ class GradeController extends Controller
                             $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
 
                             if ($a->id === $examAssessment->id) {
-                                $calcVal = $rCalcVal;
+                                $calcVal = $rCappedExamVal;
                             }
 
                             if ($calcVal !== null) {
@@ -433,10 +435,10 @@ class GradeController extends Controller
                             }
                         }
                         $rawMoyenneRattrapage = $newTotalWeight > 0 ? round($newWeightedSum * (100 / $newTotalWeight), 2) : 0;
-                        $cappedMoyenneRattrapage = $rawMoyenneRattrapage >= 10.00 ? 10.00 : $rawMoyenneRattrapage;
+                        $cappedMoyenneRattrapage = min(10.00, $rawMoyenneRattrapage);
                         $moyenneFinale = max($moyenneNormale ?? 0, $cappedMoyenneRattrapage);
                     } else {
-                        $cappedMoyenneRattrapage = $rCalcVal >= 10.00 ? 10.00 : $rCalcVal;
+                        $cappedMoyenneRattrapage = min(10.00, $rCappedExamVal);
                         $moyenneFinale = max($moyenneNormale ?? 0, $cappedMoyenneRattrapage);
                     }
 
@@ -445,6 +447,7 @@ class GradeController extends Controller
                     } else {
                         $decisionFinale = 'NV'; // Non Validé après Rattrapage
                     }
+
                 }
             }
 
@@ -1348,7 +1351,197 @@ class GradeController extends Controller
             'recommendation' => "Procès-verbal prêt pour validation finale par le Président du Jury."
         ]);
     }
+
+    /**
+     * Get consolidated Semester PV matrix for all 7 modules of a semester
+     */
+    public function getSemesterPv(Request $request): JsonResponse
+    {
+        $filiereId = intval($request->query('filiere_id', 1));
+        $semester = intval($request->query('semester', 1));
+        $groupId = $request->query('group_id');
+        $session = $request->query('session', 'normale');
+
+        $filiere = \App\Models\Filiere::find($filiereId);
+        $modules = \App\Models\Module::where('filiere_id', $filiereId)
+            ->where('semester_number', $semester)
+            ->with('assessments')
+            ->orderBy('id')
+            ->get();
+
+        if ($modules->isEmpty()) {
+            $modules = \App\Models\Module::where('filiere_id', $filiereId)->take(7)->get();
+        }
+
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
+            ?? \App\Models\AcademicYear::first();
+
+        $regQuery = \App\Models\StudentRegistration::where('filiere_id', $filiereId)
+            ->where('academic_year_id', $academicYear?->id ?? 1);
+
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+            $regQuery->where('group_id', intval($groupId));
+        }
+
+        $registrations = $regQuery->with(['student.user'])->get();
+
+        $studentsData = [];
+        $totalValids = 0;
+        $totalRattrapages = 0;
+        $totalElimines = 0;
+
+        foreach ($registrations as $reg) {
+            $student = $reg->student;
+            if (!$student) continue;
+
+            $moduleGrades = [];
+            $sumMoyennes = 0;
+            $countModules = 0;
+            $hasEliminatoire = false;
+            $hasRattrapageModule = false;
+            $hasVarModule = false;
+
+            foreach ($modules as $mod) {
+                $normaleAssessments = $mod->assessments->filter(fn($a) => strtolower(trim($a->type)) !== 'rattrapage');
+                $rattrapageAssessment = $mod->assessments->first(fn($a) => strtolower(trim($a->type)) === 'rattrapage');
+
+                $studentGrades = \App\Models\Grade::where('student_id', $student->id)
+                    ->whereIn('assessment_id', $mod->assessments->pluck('id'))
+                    ->get();
+
+                $weightedSum = 0;
+                $totalWeight = 0;
+
+                foreach ($normaleAssessments as $a) {
+                    $g = $studentGrades->firstWhere('assessment_id', $a->id);
+                    if ($g) {
+                        $val = $g->absent ? 0 : ($g->value !== null ? floatval($g->value) : null);
+                        if ($val !== null) {
+                            $weightedSum += $val * ($a->weight / 100);
+                            $totalWeight += $a->weight;
+                        }
+                    }
+                }
+
+                $moyNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
+                
+                $rattrapageGrade = $rattrapageAssessment 
+                    ? $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id) 
+                    : null;
+
+                $rVal = null;
+                if ($rattrapageGrade && !$rattrapageGrade->absent && $rattrapageGrade->value !== null) {
+                    $rVal = floatval($rattrapageGrade->value);
+                }
+
+                $finalModNote = $moyNormale;
+                $modDecision = 'NV';
+
+                if ($rVal !== null && $session !== 'normale') {
+                    $rCappedExam = min(10.00, $rVal);
+                    $newSum = 0;
+                    $newW = 0;
+                    $examA = $normaleAssessments->first(fn($a) => str_contains(strtolower($a->type), 'exam'));
+                    foreach ($normaleAssessments as $a) {
+                        $g = $studentGrades->firstWhere('assessment_id', $a->id);
+                        $val = ($a->id === $examA?->id) ? $rCappedExam : ($g ? ($g->absent ? 0 : floatval($g->value ?? 0)) : 0);
+                        $newSum += $val * ($a->weight / 100);
+                        $newW += $a->weight;
+                    }
+                    $rMoy = $newW > 0 ? round($newSum * (100 / $newW), 2) : 0;
+                    $finalModNote = max($moyNormale ?? 0, min(10.00, $rMoy));
+                }
+
+                if ($finalModNote !== null) {
+                    if ($finalModNote >= 10.00) {
+                        $modDecision = ($moyNormale !== null && $moyNormale >= 10.00) ? 'V' : 'VAR';
+                        if ($modDecision === 'VAR') $hasVarModule = true;
+                    } else {
+                        $modDecision = 'NV';
+                        $hasRattrapageModule = true;
+                    }
+
+                    if ($finalModNote < 6.00) {
+                        $hasEliminatoire = true;
+                    }
+
+                    $sumMoyennes += $finalModNote;
+                    $countModules++;
+                }
+
+                $moduleGrades[$mod->id] = [
+                    'module_id' => $mod->id,
+                    'module_code' => $mod->code,
+                    'module_name' => $mod->name,
+                    'note' => $finalModNote,
+                    'moy_normale' => $moyNormale,
+                    'rattrapage' => $rVal,
+                    'decision' => $modDecision,
+                ];
+            }
+
+            $moyenneSemestrielle = $countModules > 0 ? round($sumMoyennes / $countModules, 2) : null;
+
+            $decisionGlobal = 'NV';
+            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && !$hasEliminatoire);
+
+            if ($isSemesterValidated) {
+                $decisionGlobal = $hasVarModule ? 'VAR' : 'V';
+                $totalValids++;
+
+                // Apply Compensation to weak modules (6.00 <= note < 10.00) (Max 2 modules VPC)
+                $vpcCount = 0;
+                foreach ($moduleGrades as $mId => &$mInfo) {
+                    if ($mInfo['note'] !== null && $mInfo['note'] >= 6.00 && $mInfo['note'] < 10.00) {
+                        if ($vpcCount < 2) {
+                            $mInfo['decision'] = 'VPC'; // Validé Par Compensation
+                            $vpcCount++;
+                        }
+                    }
+                }
+                unset($mInfo);
+            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10)) {
+                $decisionGlobal = 'RAT';
+                $totalRattrapages++;
+            } else {
+                $totalElimines++;
+            }
+
+            $validatedCreditsCount = count(array_filter($moduleGrades, fn($m) => in_array($m['decision'], ['V', 'VAR', 'VPC', 'VC'])));
+
+
+            $studentsData[] = [
+                'student_id' => $student->id,
+                'student_number' => $student->student_number,
+                'apogee' => $student->cne_cme ?? $student->student_number,
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'module_grades' => $moduleGrades,
+                'moyenne_semestrielle' => $moyenneSemestrielle,
+                'has_eliminatoire' => $hasEliminatoire,
+                'decision_global' => $decisionGlobal,
+                'credits' => $validatedCreditsCount,
+            ];
+
+        }
+
+        return response()->json([
+            'filiere' => $filiere ? ['id' => $filiere->id, 'name' => $filiere->name, 'code' => $filiere->code] : null,
+            'semester' => $semester,
+            'session' => $session,
+            'modules' => $modules->map(fn($m) => ['id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'coefficient' => $m->coefficient ?? 1]),
+            'students' => $studentsData,
+            'stats' => [
+                'total_students' => count($studentsData),
+                'valids' => $totalValids,
+                'rattrapages' => $totalRattrapages,
+                'elimines' => $totalElimines,
+                'success_rate' => count($studentsData) > 0 ? round(($totalValids / count($studentsData)) * 100, 1) : 0,
+            ]
+        ]);
+    }
 }
+
 
 class GradesTemplateExport implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithTitle, \Maatwebsite\Excel\Concerns\WithStyles
 {

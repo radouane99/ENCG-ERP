@@ -115,7 +115,7 @@ export default function AdminGradesPVPage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
 
-  // Fetch consolidated PV data
+  // Fetch consolidated PV data for single module
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
     queryKey: ['module-pv', moduleId, groupId, viewAllGroups, session],
     queryFn: () => api.get(`/modules/${moduleId}/pv`, {
@@ -126,6 +126,21 @@ export default function AdminGradesPVPage() {
     }).then(res => res.data),
     enabled: !!moduleId,
   })
+
+  // Fetch full 7-module semester PV matrix
+  const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
+    queryKey: ['semester-pv', selectedFiliere, selectedSemester, session, selectedGroup],
+    queryFn: () => api.get('/semester-pv', {
+      params: {
+        filiere_id: selectedFiliere || 1,
+        semester: selectedSemester || 1,
+        session: session,
+        group_id: selectedGroup || 'all'
+      }
+    }).then(res => res.data),
+    enabled: (!moduleId || pvType === 'semestriel' || pvType === 'annuel') && !!selectedFiliere && !!selectedSemester,
+  })
+
 
 
   // Synchronize selection state when pvData arrives
@@ -526,6 +541,314 @@ export default function AdminGradesPVPage() {
     </div>
   )
 
+  if ((!moduleId || pvType === 'semestriel' || pvType === 'annuel') && (selectedFiliere || selectedSemester)) {
+    if (isLoadingSemesterPV) {
+      return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+          {renderSelectorBar()}
+          <div className="flex h-[40vh] items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        </div>
+      )
+    }
+
+    if (semesterPvData) {
+      return (
+        <div className="p-4 md:p-8 max-w-[1500px] mx-auto space-y-8 animate-in fade-in duration-500 font-sans pb-32">
+          {renderSelectorBar()}
+
+          {/* Header Hero Banner */}
+          <div className="bg-gradient-to-r from-[#0f2863] via-[#1e40af] to-[#3b82f6] text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="space-y-2 z-10">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-amber-300 border border-white/20">
+                  Procès-Verbal Semestriel Officiel ({semesterPvData.modules?.length || 7} Modules)
+                </span>
+                <span className="px-3 py-1 bg-emerald-500/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-300 border border-emerald-400/30">
+                  Session {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
+                </span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                {semesterPvData.filiere?.name || 'Tronc Commun ENCG'} — Semestre {semesterPvData.semester || selectedSemester}
+              </h2>
+              <p className="text-xs text-blue-100 font-medium">
+                Matrice consolidée des {semesterPvData.modules?.length || 7} modules avec calcul automatique des compensations (≥ 10/20) et éliminations APOGEE.
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap items-center gap-3 z-10">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl text-xs font-black backdrop-blur-md transition-all cursor-pointer flex items-center gap-2 shadow-sm"
+              >
+                <Printer className="w-4 h-4 text-amber-300" /> Imprimer PV
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(`/api/v1/deliberations/export-pv-pdf?type=semestriel&filiere_id=${selectedFiliere || 1}&semester_number=${selectedSemester || 1}&session=${session}`, '_blank')
+                }}
+                className="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" /> Exporter PDF Officiel (A3/A4)
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Analytics Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Effectif Total</span>
+              <div className="text-2xl font-black text-slate-800 dark:text-white mt-1">
+                {semesterPvData.stats?.total_students || 0} <span className="text-xs font-bold text-slate-400">Étudiants</span>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl shadow-sm">
+              <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Taux de Réussite</span>
+              <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+                {semesterPvData.stats?.success_rate || 0}% <span className="text-xs font-bold text-emerald-600/70">Validés</span>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl shadow-sm">
+              <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Session Rattrapage</span>
+              <div className="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
+                {semesterPvData.stats?.rattrapages || 0} <span className="text-xs font-bold text-amber-600/70">Candidats</span>
+              </div>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-5 rounded-2xl shadow-sm">
+              <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider">Non Validés / Éliminés</span>
+              <div className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
+                {semesterPvData.stats?.elimines || 0} <span className="text-xs font-bold text-red-600/70">Étudiants</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI DELIBERATION ADVISOR WIDGET */}
+          {(() => {
+            const rachatCandidates = (semesterPvData.students || []).filter(
+              (s: any) => s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 9.50 && s.moyenne_semestrielle < 10.00
+            )
+            const eliminatoireBlockers = (semesterPvData.students || []).filter(
+              (s: any) => s.moyenne_semestrielle !== null && s.moyenne_semestrielle >= 10.00 && s.has_eliminatoire
+            )
+
+            return (
+              <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-indigo-500/30 space-y-6 relative overflow-hidden">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-indigo-800/50 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-indigo-500 flex items-center justify-center shadow-lg animate-pulse">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                        Assistant IA de Délibération — Analyse Prédictive du Jury
+                      </h3>
+                      <p className="text-xs text-indigo-200">
+                        Analyse intelligente des notes, détection des candidats au rachat et propositions automatiques pour le Chef de Filière et le Président du Jury.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/40 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">
+                    Accès Privilégié : Admin, Chef de Filière & Département
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Candidates for Rachat */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                        🎯 Candidats Suggérés pour Rachat Jury ({rachatCandidates.length})
+                      </h4>
+                      <span className="text-[10px] text-slate-400">Seuil: 9.50 – 9.99/20</span>
+                    </div>
+
+                    {rachatCandidates.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">Aucun étudiant n'est dans la zone de rachat (9.50 - 9.99) pour ce semestre.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {rachatCandidates.map((s: any) => {
+                          const needed = (10.00 - Number(s.moyenne_semestrielle)).toFixed(2)
+                          return (
+                            <div key={s.student_id} className="p-3 bg-white/10 rounded-xl flex items-center justify-between text-xs border border-white/10">
+                              <div>
+                                <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
+                                <div className="text-[10px] text-slate-300">Code: {s.apogee} | Moyenne: <span className="font-mono text-amber-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span></div>
+                              </div>
+                              <span className="px-2.5 py-1 bg-amber-500/30 text-amber-200 border border-amber-400/40 rounded-lg text-[10px] font-black">
+                                +{needed} pt pour Valider (V)
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Eliminatoire Blockers */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-red-300 flex items-center gap-2">
+                        ⚠️ Bloqués par Note Éliminatoire ({eliminatoireBlockers.length})
+                      </h4>
+                      <span className="text-[10px] text-slate-400">Moyenne ≥10 mais Module &lt;6</span>
+                    </div>
+
+                    {eliminatoireBlockers.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">Aucun étudiant n'est bloqué par une note éliminatoire avec une moyenne ≥10.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {eliminatoireBlockers.map((s: any) => (
+                          <div key={s.student_id} className="p-3 bg-white/10 rounded-xl flex items-center justify-between text-xs border border-white/10">
+                            <div>
+                              <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
+                              <div className="text-[10px] text-slate-300">Moyenne Semestrielle: <span className="font-mono text-emerald-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span></div>
+                            </div>
+                            <span className="px-2.5 py-1 bg-red-500/30 text-red-200 border border-red-400/40 rounded-lg text-[10px] font-black">
+                              Note &lt; 6.00 à Revoir
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
+
+          {/* GRAND MATRIX TABLE FOR ALL 7 MODULES */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  Matrice Globale des 7 Modules (Compensation Semestrielle)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Moyenne Semestrielle = Somme des 7 modules / 7. Compensation accordée si Moyenne ≥ 10.00 et pas de note &lt; 6.00.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#0f2863] text-white border-b border-blue-900">
+                    <th className="py-4 px-4 font-black uppercase tracking-wider border-r border-blue-800/50 sticky left-0 bg-[#0f2863] z-20 shadow-md">Code Apogée</th>
+                    <th className="py-4 px-4 font-black uppercase tracking-wider border-r border-blue-800/50 sticky left-[110px] bg-[#0f2863] z-20 shadow-md min-w-[180px]">Nom & Prénom</th>
+                    
+                    {/* 7 Modules Column Headers */}
+                    {semesterPvData.modules?.map((m: any, idx: number) => (
+                      <th key={m.id} className="py-4 px-3 font-black text-center border-r border-blue-800/50 min-w-[115px]">
+                        <div className="text-[10px] text-amber-300">M0{idx+1}</div>
+                        <div className="font-mono text-xs">{m.code || `MOD-${m.id}`}</div>
+                        <div className="text-[9px] font-normal truncate max-w-[105px] mx-auto text-blue-200">{m.name}</div>
+                      </th>
+                    ))}
+
+                    <th className="py-4 px-4 font-black text-center bg-indigo-900 border-r border-blue-800/50 min-w-[120px]">Moyenne Semestrielle</th>
+                    <th className="py-4 px-4 font-black text-center bg-indigo-950 border-r border-blue-800/50 min-w-[80px]">Crédits</th>
+                    <th className="py-4 px-4 font-black text-center bg-indigo-900 min-w-[130px]">Décision Semestrielle</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
+                  {semesterPvData.students?.map((s: any, sIdx: number) => (
+                    <tr key={s.student_id} className={cn("transition-colors hover:bg-indigo-50/40 dark:hover:bg-slate-800/50", sIdx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-850')}>
+                      <td className="py-3 px-4 font-mono font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 sticky left-0 bg-white dark:bg-slate-900 z-10">
+                        {s.apogee}
+                      </td>
+                      <td className="py-3 px-4 font-black text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 sticky left-[110px] bg-white dark:bg-slate-900 z-10 whitespace-nowrap">
+                        {s.last_name?.toUpperCase()} {s.first_name}
+                      </td>
+
+                      {/* 7 Modules Grades Cells */}
+                      {semesterPvData.modules?.map((m: any) => {
+                        const mInfo = s.module_grades?.[m.id]
+                        const note = mInfo?.note
+                        const dec = mInfo?.decision
+
+                        return (
+                          <td key={m.id} className="py-3 px-3 text-center border-r border-slate-200 dark:border-slate-800 font-mono text-xs">
+                            {note !== null && note !== undefined ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className={cn(
+                                  "font-black text-xs",
+                                  note >= 10 ? "text-emerald-700 dark:text-emerald-400" : note < 6 ? "text-red-600 font-bold" : "text-amber-600 font-bold"
+                                )}>
+                                  {Number(note).toFixed(2)}
+                                </span>
+                                <span className={cn(
+                                  "text-[9px] px-1.5 py-0.2 rounded font-sans font-bold uppercase",
+                                  dec === 'V' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300" :
+                                  dec === 'VAR' ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" :
+                                  dec === 'VPC' || dec === 'VC' ? "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 font-black shadow-2xs" :
+                                  "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
+
+                                )}>
+                                  {dec || 'NV'}
+                                </span>
+
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 font-bold">–</span>
+                            )}
+                          </td>
+                        )
+                      })}
+
+                      {/* Moyenne Semestrielle Cell */}
+                      <td className="py-3 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-indigo-50/50 dark:bg-indigo-950/20">
+                        {s.moyenne_semestrielle !== null ? (
+                          <span className={cn(
+                            s.moyenne_semestrielle >= 10 ? "text-emerald-700 dark:text-emerald-300 font-black" : "text-red-600 dark:text-red-400 font-black"
+                          )}>
+                            {Number(s.moyenne_semestrielle).toFixed(2)}
+                          </span>
+                        ) : '–'}
+                      </td>
+
+                      {/* Credits Cell */}
+                      <td className="py-3 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-black text-xs">
+                        {s.credits}/{semesterPvData.modules?.length || 7}
+                      </td>
+
+                      {/* Décision Semestrielle Cell */}
+                      <td className="py-3 px-4 text-center">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-xs border inline-block",
+                          s.decision_global === 'V' ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200" :
+                          s.decision_global === 'VAR' ? "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200" :
+                          s.decision_global === 'RAT' ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-200" :
+                          "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-200"
+                        )}>
+                          {s.decision_global === 'V' ? 'Validé (V)' :
+                           s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
+                           s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
+                           'Non Validé (NV)'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  }
+
   if (isLoadingPV) {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -555,6 +878,7 @@ export default function AdminGradesPVPage() {
       </div>
     )
   }
+
 
   // Get CC and Exam assessments list for column headers
   const displayAssessments = pvData.assessments.filter((a: any) => a.type.toLowerCase() !== 'rattrapage')

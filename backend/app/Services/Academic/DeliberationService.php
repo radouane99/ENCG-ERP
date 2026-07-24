@@ -496,10 +496,11 @@ class DeliberationService
         }
 
         if (!$chefUserId) {
-            $chefFiliereUser = \App\Models\User::whereIn('role', ['admin', 'professor'])->first();
+            $chefFiliereUser = \App\Models\User::role(['admin', 'professor', 'super-admin'])->first() ?? \App\Models\User::first();
             $chefUserId = $chefFiliereUser ? $chefFiliereUser->id : null;
             $chefName = $chefFiliereUser ? $chefFiliereUser->name : ($filiereObj ? "Président du Jury ({$filiereObj->code})" : 'Chef de Filière');
         }
+
 
         $existingChef = DB::table('deliberation_juries')
             ->where('filiere_id', $filiereId)

@@ -80,7 +80,7 @@ class DocumentRequestService
             }
 
             // Notify Admin users in-app
-            $admins = \App\Models\User::whereIn('role', ['super-admin', 'institution-admin', 'director'])->get();
+            $admins = \App\Models\User::role(['super-admin', 'institution-admin', 'director', 'admin'])->get();
             foreach ($admins as $admin) {
                 DB::table('notifications')->insert([
                     'id' => (string) Str::uuid(),

@@ -802,9 +802,36 @@ class PdfExportController extends Controller
     }
 
     /**
+     * Export 7-Module Semester PV PDF (A3 Landscape)
+     */
+    public function exportSemesterPvPdf(Request $request)
+    {
+        $filiereId = intval($request->query('filiere_id', 1));
+        $semesterNum = intval($request->query('semester_number', $request->query('semester', 1)));
+        $session = $request->query('session', 'normale');
+
+        $gradeController = new \App\Http\Controllers\Api\GradeController();
+        $pvResponse = $gradeController->getSemesterPv($request);
+        $pvData = json_decode($pvResponse->getContent(), true);
+
+        $pdf = $this->getPdfInstance('pdf.pv_semestriel', [
+            'filiere' => $pvData['filiere'] ?? ['name' => 'ENCG Fès', 'code' => 'ENCG'],
+            'semester' => $semesterNum,
+            'session' => $session,
+            'modules' => $pvData['modules'] ?? [],
+            'students' => $pvData['students'] ?? [],
+            'stats' => $pvData['stats'] ?? [],
+            'date' => date('d/m/Y H:i'),
+        ])->setPaper('a3', 'landscape');
+
+        return $pdf->download("PV_Semestriel_S{$semesterNum}_ENCG.pdf");
+    }
+
+    /**
      * Download Exam Room Door Sign PDF (Affiche de Porte).
      */
     public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
+
     {
         $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->find($examId);
         if (!$exam) {
