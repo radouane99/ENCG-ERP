@@ -22,6 +22,7 @@ import {
   Search
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { Spinner } from '@shared/components/ui/Spinner'
@@ -171,6 +172,29 @@ export default function AdminGradesPage() {
     }
   }, [filiere, semestre])
 
+  const [progressSummary, setProgressSummary] = useState<any>(null)
+  const [sendingReminderId, setSendingReminderId] = useState<number | null>(null)
+
+  const fetchProgressSummary = () => {
+    api.get('/admin/grades/progress-summary').then(r => setProgressSummary(r.data)).catch(console.error)
+  }
+
+  useEffect(() => {
+    fetchProgressSummary()
+  }, [])
+
+  const handleSendReminder = async (modId: number) => {
+    setSendingReminderId(modId)
+    try {
+      const res = await api.post('/admin/grades/send-prof-reminder', { module_id: modId })
+      toast.success(res.data.message || 'Rappel envoyé avec succès !')
+    } catch (err) {
+      toast.error('Erreur lors de l\'envoi du rappel.')
+    } finally {
+      setSendingReminderId(null)
+    }
+  }
+
   const isFormComplete = filiere !== '' && semestre !== '' && module !== ''
 
   const handleOpenRegistry = () => {
@@ -285,6 +309,63 @@ export default function AdminGradesPage() {
           </div>
         </div>
       </div>
+
+      {/* Professor Grade Progress & Reminder Widget */}
+      {progressSummary && (
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-[2.5rem] p-8 shadow-xl border border-blue-800/40 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-400/30">
+                <Zap className="w-3.5 h-3.5" /> Avancement Global de Saisie des Enseignants
+              </div>
+              <h3 className="text-2xl font-black">
+                {progressSummary.overall_progress}% des épreuves saisies ({progressSummary.completed_modules}/{progressSummary.total_modules} Modules Complétés)
+              </h3>
+              <p className="text-xs text-blue-200 font-medium">
+                Suivi en temps réel de la complétude des registres de notes par les professeurs permanents et vacataires.
+              </p>
+            </div>
+
+            <div className="w-full md:w-64 bg-white/10 p-2 rounded-2xl border border-white/10 shrink-0">
+              <div className="w-full bg-slate-800 rounded-xl h-4 overflow-hidden p-0.5 border border-white/20">
+                <div 
+                  className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-lg transition-all duration-1000 shadow-sm"
+                  style={{ width: `${progressSummary.overall_progress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          {progressSummary.pending_modules && progressSummary.pending_modules.length > 0 && (
+            <div className="mt-6 border-t border-white/10 pt-6 space-y-3">
+              <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" /> Modules en Attente de Finalisation ({progressSummary.pending_modules.length})
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {progressSummary.pending_modules.slice(0, 6).map((pm: any) => (
+                  <div key={pm.module_id} className="bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/15 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black uppercase text-blue-300">{pm.code}</span>
+                      <h5 className="text-xs font-bold text-white truncate">{pm.name}</h5>
+                      <p className="text-[10px] text-white/70 truncate">Prof: {pm.professors}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={sendingReminderId === pm.module_id}
+                      onClick={() => handleSendReminder(pm.module_id)}
+                      className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-[10px] uppercase tracking-wider shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                    >
+                      {sendingReminderId === pm.module_id ? 'Envoi...' : '⏰ Relancer'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Filière Chips Selection Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md space-y-3">

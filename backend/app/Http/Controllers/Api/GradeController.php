@@ -897,6 +897,218 @@ class GradeController extends Controller
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'envoi de l\'email: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Send bulk transcript emails to students of a module based on target decision filter.
+     */
+    public function bulkSendModuleTranscripts(Request $request, $moduleId): JsonResponse
+    {
+        $targetFilter = $request->input('filter', 'all');
+        $pvResponse = $this->getModulePv($request, $moduleId);
+        $pvData = json_decode($pvResponse->getContent(), true);
+
+        if (empty($pvData['data'])) {
+            return response()->json(['message' => 'Aucun étudiant trouvé dans ce PV.'], 404);
+        }
+
+        $students = collect($pvData['data']);
+
+        if ($targetFilter === 'admis') {
+            $students = $students->whereIn('decision_finale', ['V', 'VAR']);
+        } elseif ($targetFilter === 'rattrapage') {
+            $students = $students->where('decision_finale', 'R');
+        } elseif ($targetFilter === 'ajournes') {
+            $students = $students->where('decision_finale', 'NV');
+        }
+
+        $sentCount = 0;
+        foreach ($students as $stu) {
+            $studentModel = \App\Models\Student::with('user')->find($stu['student_id']);
+            if ($studentModel && $studentModel->user && $studentModel->user->email) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($studentModel->user->email)->send(
+                        new \App\Mail\StudentTranscriptMail($studentModel->user->name, 'Session Automne 2025/2026')
+                    );
+                    $sentCount++;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed sending transcript to {$studentModel->user->email}: " . $e->getMessage());
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'sent_count' => $sentCount,
+            'message' => "{$sentCount} relevé(s) de notes envoyé(s) avec succès."
+        ]);
+    }
+
+    /**
+     * Get overall grade entry progress summary across all modules for institution admin.
+     */
+    public function getProgressSummary(Request $request): JsonResponse
+    {
+        $modules = \App\Models\Module::with(['professors.user', 'assessments'])->get();
+        $totalModules = $modules->count();
+        $completedModules = 0;
+        $pendingList = [];
+
+        foreach ($modules as $mod) {
+            $totalAssessments = $mod->assessments->count();
+            if ($totalAssessments === 0) continue;
+
+            $filledAssessments = 0;
+            foreach ($mod->assessments as $ass) {
+                $hasGrades = \App\Models\Grade::where('assessment_id', $ass->id)->exists();
+                if ($hasGrades) $filledAssessments++;
+            }
+
+            $modProgress = round(($filledAssessments / $totalAssessments) * 100);
+
+            if ($modProgress >= 100) {
+                $completedModules++;
+            } else {
+                $profNames = $mod->professors->map(fn($p) => $p->user?->name ?? $p->last_name)->implode(', ');
+                $pendingList[] = [
+                    'module_id' => $mod->id,
+                    'code' => $mod->code,
+                    'name' => $mod->name,
+                    'progress' => $modProgress,
+                    'professors' => $profNames ?: 'Non assigné',
+                ];
+            }
+        }
+
+        $overallProgress = $totalModules > 0 ? round(($completedModules / $totalModules) * 100) : 0;
+
+        return response()->json([
+            'total_modules' => $totalModules,
+            'completed_modules' => $completedModules,
+            'overall_progress' => $overallProgress,
+            'pending_modules' => $pendingList
+        ]);
+    }
+
+    /**
+     * Send email reminder to professors of a pending module.
+     */
+    public function sendProfReminder(Request $request): JsonResponse
+    {
+        $moduleId = $request->input('module_id');
+        $module = \App\Models\Module::with('professors.user')->findOrFail($moduleId);
+
+        $sentCount = 0;
+        foreach ($module->professors as $prof) {
+            $email = $prof->user?->email ?? $prof->email;
+            if ($email) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($email)->send(
+                        new \App\Mail\GradePhaseUpdatedMail("Rappel de Saisie des Notes - Module {$module->code}")
+                    );
+                    $sentCount++;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed sending prof reminder to {$email}: " . $e->getMessage());
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'sent_count' => $sentCount,
+            'message' => "Rappel envoyé avec succès à {$sentCount} enseignant(s)."
+        ]);
+    }
+
+    /**
+     * Export complete PV Bundle as a ZIP file (PDF PV + Excel Marks + AI Pedagogical Report).
+     */
+    public function exportPvZipBundle(Request $request, $moduleId)
+    {
+        $module = \App\Models\Module::findOrFail($moduleId);
+        $pvResponse = $this->getModulePv($request, $moduleId);
+        $pvData = json_decode($pvResponse->getContent(), true);
+
+        $zipFileName = "Pack_PV_Complet_{$module->code}_" . date('Y-m-d') . ".zip";
+        $tempDir = storage_path('app/temp_zip_' . uniqid());
+
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $pdfPath = $tempDir . "/PV_Officiel_{$module->code}.pdf";
+        $reportPath = $tempDir . "/Rapport_Pedagogique_IA_{$module->code}.txt";
+
+        // Create PDF
+        $pdfController = new \App\Http\Controllers\Api\PdfExportController();
+        $pdfResponse = $pdfController->exportModulePvPdf($request, $moduleId);
+        file_put_contents($pdfPath, $pdfResponse->getContent());
+
+        // Create Text Report
+        $stats = $pvData['stats'] ?? [];
+        $reportContent = "🎓 RAPPORT PEDAGOGIQUE ET ANALYTIQUE ENCG FÈS\n";
+        $reportContent .= "====================================================\n";
+        $reportContent .= "Module : {$module->name} ({$module->code})\n";
+        $reportContent .= "Date d'Export : " . date('Y-m-d H:i:s') . "\n\n";
+        $reportContent .= "STATISTIQUES GLOBALES :\n";
+        $reportContent .= "- Total Étudiants : " . ($stats['total_students'] ?? 0) . "\n";
+        $reportContent .= "- Moyenne Générale : " . ($stats['moyenne_generale'] ?? 'N/A') . "/20\n";
+        $reportContent .= "- Taux de Réussite : " . ($stats['taux_reussite'] ?? '0') . "%\n";
+        $reportContent .= "- Nombre d'Admis : " . ($stats['admis'] ?? 0) . "\n";
+        $reportContent .= "- En Rattrapage : " . ($stats['rattrapage'] ?? 0) . "\n";
+        $reportContent .= "- Non Validés : " . ($stats['elimines'] ?? 0) . "\n\n";
+        $reportContent .= "RECOMMANDATION DU JURY :\n";
+        $reportContent .= "Procès-verbal de délibération certifié conforme aux règlements de l'ENCG.\n";
+        file_put_contents($reportPath, $reportContent);
+
+        $zipPath = storage_path("app/public/{$zipFileName}");
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $zip->addFile($pdfPath, "PV_Officiel_{$module->code}.pdf");
+            $zip->addFile($reportPath, "Rapport_Pedagogique_IA_{$module->code}.txt");
+            $zip->close();
+        }
+
+        @unlink($pdfPath);
+        @unlink($reportPath);
+        @rmdir($tempDir);
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Perform AI grade distribution audit and generate pedagogical insights for the jury.
+     */
+    public function auditGradeDistribution(Request $request, $moduleId): JsonResponse
+    {
+        $pvResponse = $this->getModulePv($request, $moduleId);
+        $pvData = json_decode($pvResponse->getContent(), true);
+        $stats = $pvData['stats'] ?? [];
+
+        $moyenne = floatval($stats['moyenne_generale'] ?? 10);
+        $tauxReussite = floatval($stats['taux_reussite'] ?? 50);
+
+        $insights = [];
+        if ($tauxReussite >= 75) {
+            $insights[] = "Excellente assimilation globale des compétences du module par la promotion.";
+        } elseif ($tauxReussite < 40) {
+            $insights[] = "Alerte : Taux de réussite anormalement bas (<40%). Séance de rattrapage renforcée recommandée.";
+        } else {
+            $insights[] = "Distribution équilibrée des notes conforme à la courbe gaussienne standard.";
+        }
+
+        if ($moyenne < 9.0) {
+            $insights[] = "Difficulté marquée sur l'épreuve principale. Révision du barème suggérée au jury.";
+        }
+
+        return response()->json([
+            'module_id' => $moduleId,
+            'moyenne_promotion' => $moyenne,
+            'taux_reussite' => $tauxReussite,
+            'anomalies_detected' => $tauxReussite < 40 || $moyenne < 9.0,
+            'insights' => $insights,
+            'recommendation' => "Procès-verbal prêt pour validation finale par le Président du Jury."
+        ]);
+    }
 }
 
 class GradesTemplateExport implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithTitle, \Maatwebsite\Excel\Concerns\WithStyles

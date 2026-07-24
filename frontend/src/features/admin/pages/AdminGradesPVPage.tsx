@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers } from 'lucide-react'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
@@ -127,6 +127,57 @@ export default function AdminGradesPVPage() {
       }
     }
   }, [pvData])
+
+  // PRO MAX Suite States
+  const [isExportingZip, setIsExportingZip] = useState(false)
+  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
+  const [bulkFilter, setBulkFilter] = useState<'all' | 'admis' | 'rattrapage' | 'ajournes'>('all')
+  const [isSendingBulk, setIsSendingBulk] = useState(false)
+
+  // Query AI Grade Distribution Audit
+  const { data: aiAuditData } = useQuery({
+    queryKey: ['module-ai-audit', moduleId],
+    queryFn: () => api.get(`/modules/${moduleId}/ai-audit`).then(r => r.data),
+    enabled: !!moduleId,
+  })
+
+  const handleDownloadZipBundle = async () => {
+    if (!moduleId) return
+    setIsExportingZip(true)
+    const toastId = toast.loading(isRtl ? 'جاري تحضير حزمة PV الكاملة...' : 'Génération du Pack PV Complet (ZIP)...')
+    try {
+      const response = await api.get(`/modules/${moduleId}/pv/export-zip-bundle`, {
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Pack_PV_Complet_Module_${moduleId}.zip`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toast.success(isRtl ? 'تم تحميل حزمة ZIP بنجاح' : 'Pack PV Complet (ZIP) téléchargé avec succès !', { id: toastId })
+    } catch (err) {
+      toast.error('Erreur lors du téléchargement du Pack ZIP.', { id: toastId })
+    } finally {
+      setIsExportingZip(false)
+    }
+  }
+
+  const handleBulkSendEmails = async () => {
+    if (!moduleId) return
+    setIsSendingBulk(true)
+    const toastId = toast.loading(isRtl ? 'جاري إرسال النقط عبر الإيميل...' : 'Expédition des relevés de notes par email...')
+    try {
+      const res = await api.post(`/modules/${moduleId}/bulk-send-transcripts`, { filter: bulkFilter })
+      toast.success(res.data.message || 'Émails envoyés avec succès !', { id: toastId })
+      setShowBulkEmailModal(false)
+    } catch (err) {
+      toast.error('Erreur lors de l\'envoi des emails.', { id: toastId })
+    } finally {
+      setIsSendingBulk(false)
+    }
+  }
 
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true)
@@ -536,28 +587,34 @@ export default function AdminGradesPVPage() {
           >
             <Printer className="w-4 h-4" /> Aperçu Web
           </Button>
-            <Button
-              onClick={() => {
-                window.open(`/api/modules/export-bulk-pv-zip?semester=${selectedSemester}`, '_blank')
-              }}
-              variant="outline"
-              className="border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl flex items-center gap-2 text-xs font-bold"
-            >
-              📦 Export ZIP (Tous les PVs)
-            </Button>
+          <Button
+            onClick={handleDownloadZipBundle}
+            disabled={isExportingZip}
+            variant="outline"
+            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-xs font-bold shadow-sm"
+          >
+            {isExportingZip ? <Spinner className="text-indigo-600" /> : '📦 Pack PV Complet (ZIP)'}
+          </Button>
 
-            {pvData.signature ? (
-              <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> PV Signé & Clôturé
-              </span>
-            ) : (
-              <Button
-                onClick={() => setShowSignatureModal(true)}
-                className="bg-emerald-600 text-white hover:bg-emerald-750 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
-              >
-                ✍️ Signer le PV
-              </Button>
-            )}
+          <Button
+            onClick={() => setShowBulkEmailModal(true)}
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl flex items-center gap-2 text-xs font-bold shadow-md"
+          >
+            🚀 Diffusion Email
+          </Button>
+
+          {pvData.signature ? (
+            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> PV Signé & Clôturé
+            </span>
+          ) : (
+            <Button
+              onClick={() => setShowSignatureModal(true)}
+              className="bg-emerald-600 text-white hover:bg-emerald-750 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              ✍️ Signer le PV
+            </Button>
+          )}
         </div>
       </div>
 
@@ -707,6 +764,39 @@ export default function AdminGradesPVPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Gemini AI Grade Audit Copilot */}
+      {aiAuditData && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-xl border border-indigo-500/30 space-y-4 print:hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-400/30 flex items-center justify-center font-black text-xl shrink-0">
+                🧠
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-white uppercase tracking-wider">Copilote IA Délibération & Audit Boursier</h4>
+                <p className="text-xs text-indigo-200/80 font-medium">Analyse statistique de la promotion et recommandations pédagogiques pour le jury.</p>
+              </div>
+            </div>
+
+            <span className={cn(
+              "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shrink-0",
+              aiAuditData.anomalies_detected ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse" : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+            )}>
+              {aiAuditData.anomalies_detected ? '⚠️ Alerte Anomalie Détectée' : '✓ Distribution Conforme'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+            {aiAuditData.insights?.map((ins: string, idx: number) => (
+              <div key={idx} className="bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10 text-xs font-medium text-blue-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                {ins}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -1223,6 +1313,75 @@ export default function AdminGradesPVPage() {
                 className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl font-bold"
               >
                 ✓ Valider & Verrouiller
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Results Email Dispatcher Modal */}
+      {showBulkEmailModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl relative space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                🚀 Diffusion des Résultats par Email
+              </h3>
+              <button 
+                onClick={() => setShowBulkEmailModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm hover:bg-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium">
+              Sélectionnez le groupe cible d'étudiants pour l'expédition automatique du relevé de notes certifié par email via Resend API.
+            </p>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Filtre des Destinataires</label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setBulkFilter('all')}
+                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'all' ? "bg-[#0f2863] text-white border-[#0f2863]" : "bg-slate-50 border-slate-200 text-slate-700")}
+                >
+                  🎓 Tous les Étudiants ({totalStudents})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkFilter('admis')}
+                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'admis' ? "bg-emerald-600 text-white border-emerald-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                >
+                  ✅ Admis Uniquement ({valCount})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkFilter('rattrapage')}
+                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'rattrapage' ? "bg-amber-600 text-white border-amber-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                >
+                  ⚠️ Rattrapage ({ratCount})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkFilter('ajournes')}
+                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'ajournes' ? "bg-rose-600 text-white border-rose-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                >
+                  ❌ Non Validés ({nvCount})
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowBulkEmailModal(false)} className="rounded-xl font-bold text-xs">
+                Annuler
+              </Button>
+              <Button onClick={handleBulkSendEmails} disabled={isSendingBulk} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-lg">
+                {isSendingBulk ? <Spinner className="text-white" /> : '🚀 Lancer l\'Expédition'}
               </Button>
             </div>
           </div>

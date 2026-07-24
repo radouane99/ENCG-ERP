@@ -210,6 +210,13 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('admin/reservistes/{studentId}/audit', [\App\Http\Controllers\Api\ReservisteController::class, 'getStudentAudit']);
     Route::post('admin/reservistes/{studentId}/notify-email', [\App\Http\Controllers\Api\ReservisteController::class, 'sendNotificationEmail']);
 
+    // PRO MAX Deliberation & Grade Suite Endpoints
+    Route::post('modules/{module}/bulk-send-transcripts', [GradeController::class, 'bulkSendModuleTranscripts']);
+    Route::get('admin/grades/progress-summary', [GradeController::class, 'getProgressSummary']);
+    Route::post('admin/grades/send-prof-reminder', [GradeController::class, 'sendProfReminder']);
+    Route::get('modules/{module}/pv/export-zip-bundle', [GradeController::class, 'exportPvZipBundle']);
+    Route::get('modules/{module}/ai-audit', [GradeController::class, 'auditGradeDistribution']);
+
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
