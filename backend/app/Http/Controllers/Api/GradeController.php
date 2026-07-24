@@ -432,8 +432,8 @@ class GradeController extends Controller
 
         if ($sigRecord) {
             $signature = [
-                'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
-                'signed_at' => $sigRecord->signed_at->toIso8601String(),
+                'signed_by' => $sigRecord->signer?->name ?? ($sigRecord->signer?->email ?? 'Chef de Filière / Enseignant'),
+                'signed_at' => $sigRecord->signed_at ? $sigRecord->signed_at->toIso8601String() : null,
                 'signature_data' => $sigRecord->signature_data,
                 'ip_address' => $sigRecord->ip_address,
                 'digital_seal' => $sigRecord->digital_seal,
@@ -864,7 +864,7 @@ class GradeController extends Controller
             return [
                 'id' => $log->id,
                 'description' => $log->description,
-                'causer_name' => $log->causer->name ?? ($log->causer->email ?? 'Système'),
+                'causer_name' => $log->causer?->name ?? ($log->causer?->email ?? 'Système'),
                 'created_at' => $log->created_at->toIso8601String(),
             ];
         });
