@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2, Sliders, ArrowUp, ArrowDown, Sparkles, Clock, ListOrdered, Zap } from 'lucide-react'
+import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2, Sliders, ArrowUp, ArrowDown, Sparkles, Clock, ListOrdered, Zap, ShieldCheck } from 'lucide-react'
+
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -758,8 +759,12 @@ function ExamCard({ id, title, group, time, duration, room, surveillants, day, m
           <Monitor className="w-3.5 h-3.5 text-blue-500" /> {t('exams.card.btn_display')}</Link>
         <Link to={`/admin/exams/${id}/attendance-sheet`} className="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
           <CheckSquare className="w-3.5 h-3.5 text-amber-500" /> {t('exams.card.btn_attendance')}</Link>
+        <Link to={`/admin/exams/${id}/surveillance`} className="w-full bg-[#0f2863] hover:bg-[#1a387e] text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-sm">
+          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Surveillance Admin
+        </Link>
         <Link to={`/admin/exams/${id}/live-attendance`} className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span> {t('exams.card.btn_live')}</Link>
+
         <div className="flex gap-2 mt-2">
           <Link to={`/admin/exams/${id}/edit`} className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 py-1.5 rounded-lg flex items-center justify-center transition-colors">
             <Edit className="w-3.5 h-3.5" />

@@ -117,6 +117,8 @@ const TimetableAdminView = lazy(() => import('@features/academic/pages/Timetable
 const ExamLivePresence = lazy(() => import('@features/academic/pages/ExamLivePresence'))
 const ExamDisplayList = lazy(() => import('@features/academic/pages/ExamDisplayList'))
 const ExamAttendanceSheet = lazy(() => import('@features/academic/pages/ExamAttendanceSheet'))
+const AdminExamSurveillanceHubPage = lazy(() => import('@features/exams/pages/AdminExamSurveillanceHubPage'))
+
 const ConvocationDashboard = lazy(() => import('@features/academic/pages/ConvocationDashboard'))
 const StudentConvocationPdf = lazy(() => import('@features/academic/pages/StudentConvocationPdf'))
 const ProfessorConvocationPdf = lazy(() => import('@features/academic/pages/ProfessorConvocationPdf'))
@@ -342,6 +344,9 @@ export default function RootRouter() {
           <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
           <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
+          <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+          <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+
           
           {/* Convocations Officielles */}
           <Route path="/academic/convocations/dashboard" element={<AdminConvocationsUIPage />} />

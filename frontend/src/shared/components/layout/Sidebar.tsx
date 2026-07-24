@@ -75,7 +75,9 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'الامتحانات والاستدعاءات',
     items: [
       { label: 'Examens Planifiés', labelAr: 'الامتحانات المبرمجة', href: '/admin/exams', icon: FileSignature, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Surveillance & Émargement Admin', labelAr: 'الحراسة ومحاضر الغش', href: '/admin/exams/1/surveillance', icon: ShieldCheck, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Gestion Convocations', labelAr: 'إدارة الاستدعاءات', href: '/admin/convocations', icon: Mail, roles: ['super-admin', 'institution-admin', 'director'] },
+
       { label: 'Scanner QR en Direct', labelAr: 'ماسح الاستدعاءات المباشر', href: '/admin/exams/scan', icon: Scan, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Délibérations & PVs Officiels', labelAr: 'المداولات والمحاضر الرسمية', href: '/admin/grades/pv', icon: Calculator, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
 
