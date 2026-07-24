@@ -206,11 +206,16 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
     Route::get('academic/deliberate', [DeliberationController::class, 'run']);
-    Route::get('deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
+    Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
+
+    Route::post('deliberations/apply-rachat', [GradeController::class, 'applyRachat']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
+
 
     Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
     Route::get('academic/deliberations/annual-compensation', [DeliberationController::class, 'getAnnualCompensation']);
+    Route::get('academic/reports/{type}', [\App\Http\Controllers\Api\AcademicReportController::class, 'generate']);
+
     Route::get('admin/reservistes', [\App\Http\Controllers\Api\ReservisteController::class, 'index']);
     Route::post('admin/reservistes/{studentId}/derogation', [\App\Http\Controllers\Api\ReservisteController::class, 'updateDerogation']);
     Route::get('admin/reservistes/{studentId}/audit', [\App\Http\Controllers\Api\ReservisteController::class, 'getStudentAudit']);

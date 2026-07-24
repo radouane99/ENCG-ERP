@@ -451,4 +451,47 @@
   }
 }
 
+/* ────────────────────────────────────────────────────────────────
+   PRINT STYLES FOR OFFICIAL PV DOCUMENTS
+   ──────────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide app navigation, sidebar, headers, buttons, AI widgets */
+  aside, header, nav, button, input, select, .no-print,
+  [role="dialog"], iframe, .toast, footer {
+    display: none !important;
+  }
+
+  /* Full width print container */
+  main, .w-full {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9pt !important;
+  }
+
+  th, td {
+    border: 1px solid #333 !important;
+    padding: 4px 6px !important;
+    color: black !important;
+    background: white !important;
+  }
+}
+
+
 

@@ -115,7 +115,8 @@ class GradeController extends Controller
 
 
         // 2. Professor must be assigned to this module
-        if ($user->hasRole(['professor', 'vacataire'])) {
+        if ($user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);
@@ -911,7 +912,8 @@ class GradeController extends Controller
 
 
         // 2. Professor must be assigned to this module
-        if ($user->hasRole(['professor', 'vacataire'])) {
+        if ($user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);
@@ -1469,6 +1471,22 @@ class GradeController extends Controller
                     $countModules++;
                 }
 
+                // Check if student has a historical validation for this module from previous years (for reservists)
+                $histVal = \Illuminate\Support\Facades\DB::table('module_validations')
+                    ->where('student_id', $student->id)
+                    ->where('module_id', $mod->id)
+                    ->first();
+
+                $isHistorical = false;
+                $validationYear = $academicYear?->name ?? '2026/2027';
+
+                if ($histVal && floatval($histVal->final_grade) >= 10.00) {
+                    $finalModNote = floatval($histVal->final_grade);
+                    $modDecision = 'V';
+                    $isHistorical = true;
+                    $validationYear = '2025/2026';
+                }
+
                 $moduleGrades[$mod->id] = [
                     'module_id' => $mod->id,
                     'module_code' => $mod->code,
@@ -1477,30 +1495,38 @@ class GradeController extends Controller
                     'moy_normale' => $moyNormale,
                     'rattrapage' => $rVal,
                     'decision' => $modDecision,
+                    'validation_year' => $validationYear,
+                    'is_historical' => $isHistorical,
                 ];
+
             }
 
             $moyenneSemestrielle = $countModules > 0 ? round($sumMoyennes / $countModules, 2) : null;
 
+            // ENCG Compensation Rule: Max 2 weak modules (<10) allowed for compensation eligibility
+            $weakModulesCount = 0;
+            foreach ($moduleGrades as $mInfo) {
+                if ($mInfo['note'] !== null && $mInfo['note'] < 10.00) {
+                    $weakModulesCount++;
+                }
+            }
+
+            $canCompensate = ($weakModulesCount <= 2);
             $decisionGlobal = 'NV';
-            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && !$hasEliminatoire);
+            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && !$hasEliminatoire && $canCompensate);
 
             if ($isSemesterValidated) {
                 $decisionGlobal = $hasVarModule ? 'VAR' : 'V';
                 $totalValids++;
 
-                // Apply Compensation to weak modules (6.00 <= note < 10.00) (Max 2 modules VPC)
-                $vpcCount = 0;
+                // Apply Compensation code VPC to the weak modules (6.00 <= note < 10.00)
                 foreach ($moduleGrades as $mId => &$mInfo) {
                     if ($mInfo['note'] !== null && $mInfo['note'] >= 6.00 && $mInfo['note'] < 10.00) {
-                        if ($vpcCount < 2) {
-                            $mInfo['decision'] = 'VPC'; // Validé Par Compensation
-                            $vpcCount++;
-                        }
+                        $mInfo['decision'] = 'VPC'; // Validé Par Compensation
                     }
                 }
                 unset($mInfo);
-            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10)) {
+            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10) || !$canCompensate) {
                 $decisionGlobal = 'RAT';
                 $totalRattrapages++;
             } else {
@@ -1508,6 +1534,7 @@ class GradeController extends Controller
             }
 
             $validatedCreditsCount = count(array_filter($moduleGrades, fn($m) => in_array($m['decision'], ['V', 'VAR', 'VPC', 'VC'])));
+
 
 
             $studentsData[] = [

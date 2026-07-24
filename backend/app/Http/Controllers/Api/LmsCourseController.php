@@ -90,9 +90,9 @@ class LmsCourseController extends Controller
     /**
      * Upload a new learning material (Professor only)
      */
-    public function storeMaterial(Request $request, string $moduleId): JsonResponse
-    {
-        abort_unless($request->user()->hasRole(['super-admin', 'institution-admin', 'professor', 'vacataire']), 403);
+        $hasPermittedRole = $request->user()->roles->pluck('name')->intersect(['super-admin', 'super_admin', 'admin', 'institution-admin', 'professor', 'vacataire'])->isNotEmpty();
+        abort_unless($hasPermittedRole, 403);
+
 
         $request->validate([
             'title' => 'required|string|max:255',

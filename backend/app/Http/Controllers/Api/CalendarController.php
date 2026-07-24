@@ -57,9 +57,10 @@ class CalendarController extends Controller
         ]);
 
         // Only admins can move events
-        if (!$request->user()->hasRole('admin') && !$request->user()->hasRole('super-admin')) {
+        if (!$request->user()->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
+
 
         $eventId = $request->input('event_id');
         

@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import Sidebar from './Sidebar'
 import Header from './Header'
@@ -11,12 +11,16 @@ import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
 import InstallPrompt from '../pwa/InstallPrompt'
 
 import MobileBottomNav from './MobileBottomNav'
+import { cn } from '@shared/lib/utils'
 
 export default function AppShell() {
   const fetchUser = useAuthStore((s) => s.fetchUser)
   const [isCommandOpen, setIsCommandOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  const isFullWidthPage = location.pathname.startsWith('/admin/grades/pv') || location.pathname.startsWith('/exams/deliberations')
 
   useEffect(() => {
     fetchUser()
@@ -58,13 +62,14 @@ export default function AppShell() {
         {/* Search Modal */}
         <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 pb-20 lg:pb-8 scroll-smooth">
-          <div className="mx-auto max-w-7xl animate-fade-in">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-6 pb-20 lg:pb-8 scroll-smooth">
+          <div className={cn("mx-auto animate-fade-in", isFullWidthPage ? "max-w-none w-full px-0" : "max-w-7xl")}>
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>
           </div>
         </main>
+
 
         {/* Mobile Navigation Bar */}
         <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />

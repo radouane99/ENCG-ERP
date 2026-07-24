@@ -19,7 +19,8 @@ class AssessmentController extends Controller
         $user = $request->user();
 
         // 🛡️ ROLE-BASED ACCESS CONTROL (RBAC)
-        if ($user && $user->hasRole(['professor', 'vacataire'])) {
+        if ($user && $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);
@@ -50,7 +51,8 @@ class AssessmentController extends Controller
         $user = $request->user();
 
         // 🛡️ ROLE-BASED ACCESS CONTROL (RBAC)
-        if ($user && $user->hasRole(['professor', 'vacataire'])) {
+        if ($user && $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+
             $prof = \App\Models\Professor::where('user_id', $user->id)->first();
             if (!$prof) {
                 return response()->json(['message' => 'Profil professeur introuvable.'], 403);

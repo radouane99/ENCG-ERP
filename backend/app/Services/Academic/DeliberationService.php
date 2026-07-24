@@ -416,12 +416,12 @@ class DeliberationService
     public function autoComposeJury(int $filiereId, int $academicYearId, ?int $semesterNumber = null, string $type = 'semestriel'): array
     {
         $query = DB::table('modules')
-            ->where('filiere_id', $filiereId)
-            ->where('is_active', true);
+            ->where('filiere_id', $filiereId);
 
         if ($type === 'semestriel' && $semesterNumber) {
             $query->where('semester_number', $semesterNumber);
         }
+
 
         $modules = $query->get();
 
@@ -496,10 +496,11 @@ class DeliberationService
         }
 
         if (!$chefUserId) {
-            $chefFiliereUser = \App\Models\User::role(['admin', 'professor', 'super-admin'])->first() ?? \App\Models\User::first();
+            $chefFiliereUser = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['admin', 'professor', 'super-admin']))->first() ?? \App\Models\User::first();
             $chefUserId = $chefFiliereUser ? $chefFiliereUser->id : null;
             $chefName = $chefFiliereUser ? $chefFiliereUser->name : ($filiereObj ? "Président du Jury ({$filiereObj->code})" : 'Chef de Filière');
         }
+
 
 
         $existingChef = DB::table('deliberation_juries')

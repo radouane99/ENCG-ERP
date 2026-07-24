@@ -30,7 +30,8 @@ class ModuleController extends Controller
         }
 
         // 🛡️ ROLE-BASED ACCESS CONTROL (RBAC)
-        if ($request->user() && $request->user()->hasRole(['professor', 'vacataire'])) {
+        if ($request->user() && $request->user()->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+
             $prof = \App\Models\Professor::where('user_id', $request->user()->id)->first();
             if ($prof) {
                 $moduleIds = \Illuminate\Support\Facades\DB::table('module_professor')

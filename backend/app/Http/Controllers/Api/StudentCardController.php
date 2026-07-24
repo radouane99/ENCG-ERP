@@ -161,7 +161,8 @@ class StudentCardController extends Controller
     public function preview(Request $request): JsonResponse
     {
         $user = $request->user();
-        $isAdmin = $user->hasRole('admin') || $user->hasRole('super-admin') || $user->hasRole('super_admin') || $user->hasRole('institution-admin');
+        $isAdmin = $user->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty();
+
 
         $rules = [
             'student_id' => $isAdmin ? 'required|exists:users,id' : 'nullable|exists:users,id',
@@ -232,7 +233,8 @@ class StudentCardController extends Controller
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
-        $isAdmin = $user->hasRole('admin') || $user->hasRole('super-admin') || $user->hasRole('super_admin') || $user->hasRole('institution-admin');
+        $isAdmin = $user->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty();
+
 
         $rules = [
             'student_id' => $isAdmin ? 'required|exists:users,id' : 'nullable|exists:users,id',
