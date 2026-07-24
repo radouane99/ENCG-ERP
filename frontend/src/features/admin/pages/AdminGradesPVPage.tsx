@@ -49,7 +49,7 @@ export default function AdminGradesPVPage() {
     }
   }, [selectedFiliere, selectedSemester])
 
-  const [session, setSession] = useState<'normale' | 'rattrapage'>('normale')
+  const [session, setSession] = useState<'normale' | 'rattrapage' | 'totale'>('normale')
   const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [viewAllGroups, setViewAllGroups] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
@@ -917,11 +917,22 @@ export default function AdminGradesPVPage() {
             className={cn(
               "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
               session === 'rattrapage'
-                ? "bg-[#0f2863] text-white shadow-sm"
+                ? "bg-amber-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-200"
             )}
           >
             Session de Rattrapage
+          </button>
+          <button
+            onClick={() => setSession('totale')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              session === 'totale'
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Vue Totale (S.O + S.R)
           </button>
         </div>
 
@@ -1058,7 +1069,10 @@ export default function AdminGradesPVPage() {
           {/* Banner Title */}
           <div className="mt-4 pt-3 border-t border-slate-200 text-center">
             <h2 className="text-xl font-black uppercase tracking-wider text-[#0f2863]">
-              PROCES-VERBAL DE DELIBERATION - SESSION {session === 'normale' ? 'ORDINAIRE' : 'DE RATTRAPAGE'}
+              PROCES-VERBAL DE DELIBERATION -{' '}
+              {session === 'normale' && 'SESSION ORDINAIRE (NORMALE)'}
+              {session === 'rattrapage' && 'SESSION DE RATTRAPAGE'}
+              {session === 'totale' && 'VUE TOTALE — SESSION ORDINAIRE & RATTRAPAGE'}
             </h2>
             <p className="text-xs font-bold text-slate-600 mt-1 uppercase tracking-wide">
               MODULE : {pvData.module.code} - {pvData.module.name}
@@ -1075,7 +1089,7 @@ export default function AdminGradesPVPage() {
                   <th className="border border-slate-300 p-3 text-left">Code Apogée</th>
                   <th className="border border-slate-300 p-3 text-left">Nom & Prénom</th>
                   
-                  {/* Dynamic assessment columns */}
+                  {/* Dynamic assessment columns — hide rattrapage from header */}
                   {displayAssessments.map((a: any) => (
                     <th key={a.id} className="border border-slate-300 p-3 w-20">
                       {a.type} <span className="block text-[10px] font-medium text-slate-500">({a.weight}%)</span>
@@ -1085,8 +1099,8 @@ export default function AdminGradesPVPage() {
                   <th className="border border-slate-300 p-3 w-24 bg-slate-100/50">Moy. Normale</th>
                   <th className="border border-slate-300 p-3 w-20 bg-slate-100/50">Dés. Normale</th>
 
-                  {/* Rattrapage columns if in Resit view */}
-                  {session === 'rattrapage' && (
+                  {/* Rattrapage columns if in Resit or Total view */}
+                  {(session === 'rattrapage' || session === 'totale') && (
                     <>
                       <th className="border border-slate-300 p-3 w-28 bg-amber-50">Note Rattrapage</th>
                       <th className="border border-slate-300 p-3 w-24 bg-blue-50/50">Moy. Finale</th>
@@ -1096,12 +1110,42 @@ export default function AdminGradesPVPage() {
                 </tr>
               </thead>
               <tbody>
-                {pvData.data.map((student: any, idx: number) => {
-                  const isEligibleForRattrapage = student.decision_normale === 'R' || student.decision_normale === 'NV';
-                  const rowGrades = student.grades_detail || {};
+              {(() => {
+                // ─── Compute students to display per active session tab ─────────
+                // normale : all students
+                // rattrapage: ONLY students eligible (decision_normale === 'R') — note between 6 and 10
+                // totale  : all students (full combined view)
+                const allStudents: any[] = pvData.data || []
+                const displayStudents = session === 'rattrapage'
+                  ? allStudents.filter((s: any) => s.decision_normale === 'R')
+                  : allStudents
+
+                if (session === 'rattrapage' && displayStudents.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={99} className="text-center text-slate-400 italic py-8 text-sm">
+                        ✅ Aucun étudiant éligible au rattrapage pour ce module.<br/>
+                        <span className="text-xs">Tous les étudiants ont validé ou sont éliminés (NV).</span>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                return displayStudents.map((student: any) => {
+                  // In rattrapage tab only R students appear; input always enabled
+                  // In totale tab, show rattrapage columns + mark non-R rows as not eligible
+                  const isRattrapage = student.decision_normale === 'R'
+                  const rowGrades = student.grades_detail || {}
 
                   return (
-                    <tr key={student.student_id} className="hover:bg-slate-50 transition-colors text-center font-medium">
+                    <tr
+                      key={student.student_id}
+                      className={cn(
+                        "hover:bg-slate-50 transition-colors text-center font-medium",
+                        session === 'totale' && isRattrapage && "bg-amber-50/30",
+                        session === 'totale' && student.decision_normale === 'NV' && "bg-red-50/20 opacity-60"
+                      )}
+                    >
                       <td className="border border-slate-300 p-3 text-left font-bold text-slate-500">{student.apogee}</td>
                       <td className="border border-slate-300 p-3 text-left font-bold text-slate-800 uppercase">
                         {student.last_name} {student.first_name}
@@ -1138,45 +1182,53 @@ export default function AdminGradesPVPage() {
                         </span>
                       </td>
 
-                      {/* Rattrapage inputs / display */}
-                      {session === 'rattrapage' && (
+                      {/* Rattrapage columns — rattrapage tab or totale tab */}
+                      {(session === 'rattrapage' || session === 'totale') && (
                         <>
                           <td className="border border-slate-300 p-3 bg-amber-50/10 font-semibold">
-                            {isEligibleForRattrapage ? (
-                              <div className="flex items-center gap-2 justify-center print:hidden">
-                                <input
-                                  type="text"
-                                  placeholder="Note"
-                                  value={rattrapageGrades[student.student_id]?.value || ''}
-                                  disabled={rattrapageGrades[student.student_id]?.absent}
-                                  onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                                  className="w-16 p-1 border rounded-lg text-center font-bold text-slate-800 focus:border-blue-500 outline-none"
-                                />
-                                <label className="flex items-center gap-1 cursor-pointer">
+                            {(session === 'rattrapage' || isRattrapage) ? (
+                              <>
+                                <div className="flex items-center gap-2 justify-center print:hidden">
                                   <input
-                                    type="checkbox"
-                                    checked={rattrapageGrades[student.student_id]?.absent || false}
-                                    onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                                    className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                    type="text"
+                                    placeholder="Note"
+                                    value={rattrapageGrades[student.student_id]?.value || ''}
+                                    disabled={rattrapageGrades[student.student_id]?.absent || session === 'totale'}
+                                    onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
+                                    className="w-16 p-1 border rounded-lg text-center font-bold text-slate-800 focus:border-amber-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
                                   />
-                                  <span className="text-[10px] font-bold text-red-500">ABI</span>
-                                </label>
-                              </div>
+                                  {session === 'rattrapage' && (
+                                    <label className="flex items-center gap-1 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={rattrapageGrades[student.student_id]?.absent || false}
+                                        onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
+                                        className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                      />
+                                      <span className="text-[10px] font-bold text-red-500">ABI</span>
+                                    </label>
+                                  )}
+                                </div>
+                                <span className="hidden print:inline font-bold">
+                                  {student.rattrapage_absent ? 'ABI' : (student.rattrapage_note !== null ? parseFloat(student.rattrapage_note).toFixed(2) : '-')}
+                                </span>
+                              </>
                             ) : (
-                              <span className="text-slate-400 italic text-[10px]">Déjà Validé</span>
+                              <span className={cn(
+                                "text-[10px] font-bold italic",
+                                student.decision_normale === 'V' ? "text-green-600" : "text-red-500"
+                              )}>
+                                {student.decision_normale === 'V' ? '✅ Déjà Validé' : '❌ Éliminé (NV)'}
+                              </span>
                             )}
-                            {/* Hidden text showing resit notes during print */}
-                            <span className="hidden print:inline font-bold">
-                              {student.rattrapage_absent ? 'ABI' : (student.rattrapage_note !== null ? parseFloat(student.rattrapage_note).toFixed(2) : '-')}
-                            </span>
                           </td>
 
-                          {/* Moyenne Finale after resit */}
+                          {/* Moyenne Finale */}
                           <td className="border border-slate-300 p-3 bg-blue-50/10 font-bold text-sm text-[#0f2863]">
                             {student.moyenne_finale !== null ? parseFloat(student.moyenne_finale).toFixed(2) : '-'}
                           </td>
 
-                          {/* Décision Finale after resit */}
+                          {/* Décision Finale */}
                           <td className="border border-slate-300 p-3 bg-blue-50/10">
                             <span className={cn(
                               "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
@@ -1191,18 +1243,19 @@ export default function AdminGradesPVPage() {
                       )}
                     </tr>
                   )
-                })}
+                })
+              })()}
               </tbody>
             </table>
           </div>
 
-          {/* Rattrapage Saving action bar: Hidden during print */}
+          {/* Rattrapage Saving action bar — only in rattrapage tab, only for R students */}
           {session === 'rattrapage' && (
             <div className="mt-8 flex justify-end print:hidden">
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}
-                className="bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl flex items-center gap-2 text-xs font-bold"
+                className="bg-amber-600 text-white hover:bg-amber-700 rounded-xl flex items-center gap-2 text-xs font-bold"
               >
                 {saveMutation.isPending ? <Spinner className="text-white" /> : <Save className="w-4 h-4" />}
                 Enregistrer les notes de Rattrapage
