@@ -30,7 +30,7 @@ export const examsApi = {
   },
 
   // Retakes
-  getRetakes: async (params?: { filiere_id?: string; session?: string; reason?: string; status?: string }) => {
+  getRetakes: async (params?: { filiere_id?: string; module_id?: string; session?: string; reason?: string; status?: string }) => {
     const response = await api.get('/retakes', { params });
     return response.data;
   },

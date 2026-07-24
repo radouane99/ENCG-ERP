@@ -21,6 +21,7 @@ class RetakeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filiereId = $request->query('filiere_id');
+        $moduleId  = $request->query('module_id');
         $sessionId = $request->query('session');
         $reason    = $request->query('reason');
         $status    = $request->query('status');
@@ -34,6 +35,9 @@ class RetakeController extends Controller
 
         if ($filiereId) {
             $query->whereHas('module', fn($q) => $q->where('filiere_id', $filiereId));
+        }
+        if ($moduleId && $moduleId !== 'all') {
+            $query->where('module_id', $moduleId);
         }
         if ($sessionId && $sessionId !== 'all') {
             $query->where('exam_session_id', $sessionId);

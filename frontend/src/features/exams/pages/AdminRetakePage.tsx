@@ -61,7 +61,10 @@ export default function AdminRetakePage() {
   const [isLoading, setIsLoading]     = useState(true)
   const [search, setSearch]           = useState('')
   const [filterFiliere, setFilterFiliere] = useState('all')
+  const [filterModule, setFilterModule]   = useState('all')
+  const [filterReason, setFilterReason]   = useState('all')
   const [filieres, setFilieres]       = useState<{ id: number; name: string }[]>([])
+  const [modules, setModules]         = useState<{ id: number; name: string; code: string; filiere_id?: number }[]>([])
   const [updating, setUpdating]       = useState<number | null>(null)
   const [activeTab, setActiveTab]     = useState<ActiveTab>('pending')
   // #4 — Bulk selection
@@ -76,6 +79,7 @@ export default function AdminRetakePage() {
     try {
       const params: Record<string, string> = {}
       if (filterFiliere !== 'all') params.filiere_id = filterFiliere
+      if (filterModule !== 'all') params.module_id = filterModule
       const res = await examsApi.getRetakes(params)
       setStudents(res.data || [])
       if (res.stats) setStats(res.stats)
@@ -84,7 +88,7 @@ export default function AdminRetakePage() {
     } finally {
       setIsLoading(false)
     }
-  }, [filterFiliere])
+  }, [filterFiliere, filterModule])
 
   useEffect(() => { fetchRetakes() }, [fetchRetakes])
 
@@ -92,11 +96,22 @@ export default function AdminRetakePage() {
     api.get('/filieres').then((res: { data: { data: { id: number; name: string }[] } }) => {
       setFilieres((res.data?.data || []).map((f) => ({ id: f.id, name: f.name })))
     }).catch(() => {})
+
+    api.get('/modules').then((res: { data: { data: { id: number; name: string; code: string; filiere_id?: number }[] } }) => {
+      setModules((res.data?.data || res.data || []).map((m) => ({ id: m.id, name: m.name, code: m.code, filiere_id: m.filiere_id })))
+    }).catch(() => {})
+
     // #5 — Load saved deadline
     api.get('/institution-settings/retake_justification_deadline').then((r: { data: { value?: string } }) => {
       if (r.data?.value) setDeadline(r.data.value)
     }).catch(() => {})
   }, [])
+
+  // Filter modules based on selected filiere
+  const availableModules = filterFiliere === 'all'
+    ? modules
+    : modules.filter(m => String(m.filiere_id) === filterFiliere)
+
 
   // ── Single status update ───────────────────────────────────────────────
   const handleUpdateStatus = async (id: number, status: RetakeStatus) => {
@@ -176,12 +191,20 @@ export default function AdminRetakePage() {
     if (activeTab === 'refused') return s.status === 'Refusé'
     return true
   })
-  const filtered = tabFiltered.filter(s =>
-    !search ||
-    s.nom.toLowerCase().includes(search.toLowerCase()) ||
-    s.cne.toLowerCase().includes(search.toLowerCase()) ||
-    s.module.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = tabFiltered.filter(s => {
+    const matchesSearch = !search ||
+      s.nom.toLowerCase().includes(search.toLowerCase()) ||
+      s.cne.toLowerCase().includes(search.toLowerCase()) ||
+      s.module.toLowerCase().includes(search.toLowerCase())
+
+    const rLower = s.raison.toLowerCase()
+    const matchesReason = filterReason === 'all' ||
+      (filterReason === 'note' && (rLower.includes('note') || rLower.includes('insuff'))) ||
+      (filterReason === 'absence' && rLower.includes('absence')) ||
+      (filterReason === 'fraude' && (rLower.includes('fraude') || rLower.includes('élimin')))
+
+    return matchesSearch && matchesReason
+  })
 
   const TABS: { key: ActiveTab; label: string; count: number; activeColor: string }[] = [
     { key: 'pending', label: '⚡ À décider (Absences)', count: stats.enAttente, activeColor: 'bg-amber-500 text-white' },
@@ -259,47 +282,140 @@ export default function AdminRetakePage() {
         ))}
       </div>
 
-      {/* Main Table Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex border-b border-slate-100">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setSelectedIds(new Set()) }}
-              className={cn(
-                'relative flex items-center gap-2 px-6 py-3.5 text-xs font-bold transition-all',
-                activeTab === tab.key ? tab.activeColor : 'text-slate-500 hover:bg-slate-50'
-              )}
-            >
-              {tab.label}
-              <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-black', activeTab === tab.key ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>
-                {tab.count}
-              </span>
-              {tab.key === 'pending' && stats.enAttente > 0 && activeTab !== 'pending' && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              )}
-            </button>
-          ))}
+      {/* Dedicated Filter Selector Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider flex items-center gap-2">
+              <Layers className="w-4 h-4 text-indigo-600" />
+              Sélecteur de Cohorte & Module
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Filtrer par filière, par module spécifique et par motif d'éligibilité.</p>
+          </div>
 
-          {/* Filters right side */}
-          <div className="flex-1 flex items-center justify-end gap-3 px-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
-                className="pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-[#0f2863] w-40" />
-            </div>
-            <div className="relative">
-              <Layers className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <select value={filterFiliere} onChange={e => setFilterFiliere(e.target.value)}
-                className="pl-8 pr-6 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 outline-none appearance-none cursor-pointer">
-                <option value="all">Toutes filières</option>
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Filiere Selector */}
+            <div className="relative flex-1 md:w-56">
+              <Layers className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={filterFiliere}
+                onChange={e => {
+                  setFilterFiliere(e.target.value)
+                  setFilterModule('all')
+                }}
+                className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-white appearance-none cursor-pointer"
+              >
+                <option value="all">🎓 Toutes les filières</option>
                 {filieres.map(f => <option key={f.id} value={String(f.id)}>{f.name}</option>)}
               </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Module Selector */}
+            <div className="relative flex-1 md:w-64">
+              <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={filterModule}
+                onChange={e => setFilterModule(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-white appearance-none cursor-pointer"
+              >
+                <option value="all">📚 Tous les modules</option>
+                {availableModules.map(m => (
+                  <option key={m.id} value={String(m.id)}>[{m.code}] {m.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Reason Selector */}
+            <div className="relative flex-1 md:w-48">
+              <select
+                value={filterReason}
+                onChange={e => setFilterReason(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-white cursor-pointer"
+              >
+                <option value="all">🔍 Tous les motifs</option>
+                <option value="note">✓ Note insuffisante (6-10)</option>
+                <option value="absence">📋 Absences</option>
+                <option value="fraude">⚠ Fraude / Éliminé</option>
+              </select>
             </div>
           </div>
         </div>
+
+        {/* Quick Module Summary Pills */}
+        {students.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Modules concernés :</span>
+            {Array.from(new Set(students.map(s => s.module))).map(modName => {
+              const count = students.filter(s => s.module === modName).length
+              const isSelected = filterModule !== 'all' && modules.find(m => String(m.id) === filterModule)?.name === modName
+              return (
+                <button
+                  key={modName}
+                  onClick={() => {
+                    const found = modules.find(m => m.name === modName)
+                    setFilterModule(isSelected ? 'all' : (found ? String(found.id) : 'all'))
+                  }}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 border",
+                    isSelected
+                      ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  )}
+                >
+                  <BookOpen className="w-3 h-3" />
+                  <span className="max-w-[180px] truncate">{modName}</span>
+                  <span className={cn("px-1.5 py-0.2 rounded-full text-[9px] font-black", isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700")}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Tab bar */}
+        <div className="flex flex-col sm:flex-row border-b border-slate-100 items-stretch sm:items-center justify-between">
+          <div className="flex border-b sm:border-b-0 border-slate-100">
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => { setActiveTab(tab.key); setSelectedIds(new Set()) }}
+                className={cn(
+                  'relative flex items-center gap-2 px-6 py-3.5 text-xs font-bold transition-all',
+                  activeTab === tab.key ? tab.activeColor : 'text-slate-500 hover:bg-slate-50'
+                )}
+              >
+                {tab.label}
+                <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-black', activeTab === tab.key ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>
+                  {tab.count}
+                </span>
+                {tab.key === 'pending' && stats.enAttente > 0 && activeTab !== 'pending' && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Quick Search inside Table Header */}
+          <div className="p-3 sm:p-0 sm:pr-4 flex items-center">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher étudiant, CNE..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-[#0f2863]"
+              />
+            </div>
+          </div>
+        </div>
+
 
         {/* Alerts */}
         {activeTab === 'pending' && stats.enAttente === 0 && !isLoading && (
