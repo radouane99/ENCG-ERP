@@ -33,6 +33,7 @@ class FiliereController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'nullable|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
+            'responsable_id' => 'nullable|exists:users,id',
             'duration_years' => 'required|integer|min:1|max:7',
             'is_active' => 'boolean'
         ]);
@@ -41,13 +42,13 @@ class FiliereController extends Controller
 
         return response()->json([
             'message' => 'Filière créée avec succès.',
-            'data' => new \App\Http\Resources\FiliereResource($filiere)
+            'data' => new \App\Http\Resources\FiliereResource($filiere->load('responsable'))
         ], 201);
     }
 
     public function show(Filiere $filiere): JsonResponse
     {
-        return response()->json(['data' => $filiere->load('department')]);
+        return response()->json(['data' => $filiere->load(['department', 'responsable'])]);
     }
 
     public function update(Request $request, Filiere $filiere): JsonResponse
@@ -57,6 +58,7 @@ class FiliereController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'type' => 'nullable|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
+            'responsable_id' => 'nullable|exists:users,id',
             'duration_years' => 'sometimes|required|integer|min:1|max:7',
             'is_active' => 'boolean'
         ]);
