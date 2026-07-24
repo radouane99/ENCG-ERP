@@ -42,7 +42,8 @@ interface DisciplineCase {
   created_at: string
 }
 
-export default function DisciplinePage() {
+export default function DisciplinePage(): React.ReactElement {
+
   const { t, i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
@@ -77,8 +78,12 @@ export default function DisciplinePage() {
     queryFn: async () => {
       try {
         const res = await api.get('/admin/discipline')
-        return res.data?.data || res.data
-      } catch (err) {
+        const items = res.data?.data || res.data
+        if (Array.isArray(items) && items.length > 0) {
+          return items
+        }
+      } catch (err) {}
+
         // Fallback default rich cases if DB empty
         return [
           {
@@ -123,8 +128,9 @@ export default function DisciplinePage() {
           }
         ]
       }
-    }
-  })
+    })
+
+
 
   // Submit Convocation Mutation
   const sendConvocationMutation = useMutation({

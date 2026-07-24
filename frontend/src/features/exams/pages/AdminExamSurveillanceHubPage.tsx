@@ -372,11 +372,12 @@ export default function AdminExamSurveillanceHubPage() {
     try {
       await api.post(`/exam-incidents`, {
         exam_id: Number(id),
-        student_id: selectedStudentForFraud.student_id,
+        student_id: selectedStudentForFraud.student_id || selectedStudentForFraud.id,
         type: fraudType,
         description: fraudDescription,
         confiscated_items: confiscatedItems
       })
+
 
       const newReport: IncidentReport = {
         id: Date.now(),

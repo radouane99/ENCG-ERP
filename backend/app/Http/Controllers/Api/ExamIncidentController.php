@@ -129,21 +129,34 @@ class ExamIncidentController extends Controller
             $exam = \App\Models\Exam::find($validated['exam_id']);
             if ($exam && $exam->module_id) {
                 $assessment = \App\Models\Assessment::where('module_id', $exam->module_id)->first();
-                if ($assessment) {
-                    \App\Models\Grade::updateOrCreate(
-                        [
-                            'student_id' => $validated['student_id'],
-                            'assessment_id' => $assessment->id,
-                        ],
-                        [
-                            'note' => 0.00,
-                            'absent' => false,
-                            'is_fraud' => true,
-                            'decision' => 'FRAUDE',
-                            'comments' => 'Règle ENCG : Note 0.00 appliquée d\'office pour motif de FRAUDE — Dossier en attente du Conseil de Discipline'
-                        ]
-                    );
+                if (!$assessment) {
+                    $assessment = \App\Models\Assessment::create([
+                        'module_id' => $exam->module_id,
+                        'name' => 'Examen Final',
+                        'type' => 'examen',
+                        'weight' => 100
+                    ]);
                 }
+                \App\Models\Grade::updateOrCreate(
+                    [
+                        'student_id' => $validated['student_id'],
+                        'assessment_id' => $assessment->id,
+                    ],
+                    [
+                        'note' => 0.00,
+                        'absent' => false,
+                        'is_fraud' => true,
+                        'decision' => 'FRAUDE',
+                        'comments' => 'Règle ENCG : Note 0.00 appliquée d\'office pour motif de FRAUDE — Dossier transmis au Conseil de Discipline'
+                    ]
+                );
+
+                try {
+                    DB::table('module_validations')->updateOrInsert(
+                        ['student_id' => $validated['student_id'], 'module_id' => $exam->module_id],
+                        ['note' => 0.00, 'decision' => 'FRAUDE', 'updated_at' => now()]
+                    );
+                } catch (\Throwable $e) {}
             }
 
             // Update seating presence status
@@ -152,6 +165,7 @@ class ExamIncidentController extends Controller
                 ->where('student_id', $validated['student_id'])
                 ->update(['is_present' => false, 'updated_at' => now()]);
         }
+
 
         return response()->json([
             'success' => true,

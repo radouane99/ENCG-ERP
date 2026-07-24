@@ -367,6 +367,13 @@ export default function AdminGradesPVPage() {
     enabled: (!moduleId || pvType === 'semestriel' || pvType === 'annuel') && !!selectedFiliere && !!selectedSemester,
   })
 
+  // Fetch real exam incidents to bind fraud 0.00 sanction to PV matrix
+  const { data: allExamIncidents = [] } = useQuery({
+    queryKey: ['all-exam-incidents-for-pv'],
+    queryFn: () => api.get('/exam-incidents').then(res => res.data?.data || res.data || []),
+  })
+
+
 
 
   // Synchronize selection state when pvData arrives
@@ -1753,7 +1760,22 @@ export default function AdminGradesPVPage() {
 
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
                       {filteredStudents.map((s: any, sIdx: number) => {
+                        const studentIncident = (allExamIncidents || []).find((inc: any) => {
+
+                          const incStudentId = inc.student_id || inc.student?.id
+                          const incCne = inc.cne || inc.student?.cne
+                          const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase()
+                          const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase()
+                          return (
+                            (incStudentId && String(incStudentId) === String(s.student_id)) ||
+                            (incCne && String(incCne) === String(s.cne)) ||
+                            (incName && incName.length > 2 && fullName.includes(incName))
+                          )
+                        })
+                        const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || (studentIncident && (studentIncident.type === 'fraude' || String(studentIncident.type).includes('Fraude')))
+
                         const statusColorBorder = 
+                          hasStudentFraud ? 'border-l-4 border-l-rose-600' :
                           s.decision_global === 'V' || s.decision_global === 'VAR' ? 'border-l-4 border-l-emerald-500' :
                           s.decision_global === 'RAT' ? 'border-l-4 border-l-amber-500' :
                           'border-l-4 border-l-red-500'
@@ -1765,6 +1787,11 @@ export default function AdminGradesPVPage() {
                             </td>
                             <td className="py-3.5 px-4 font-black text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 sticky left-[110px] bg-white dark:bg-slate-900 z-10 whitespace-nowrap">
                               {s.last_name?.toUpperCase()} {s.first_name}
+                              {hasStudentFraud && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white rounded font-black text-[9px] uppercase">
+                                  🚨 FRAUDE
+                                </span>
+                              )}
                             </td>
 
                             {/* 7 Modules 3 Sub-columns data */}
@@ -1772,7 +1799,7 @@ export default function AdminGradesPVPage() {
                               const mInfo = s.module_grades?.[m.id]
                               const note = mInfo?.note
                               const dec = mInfo?.decision
-                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE'
+                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (studentIncident?.module_id === m.id || !studentIncident?.module_id))
 
                               const noteStyle = 
                                 isFraud ? 'text-rose-700 dark:text-rose-300 font-black bg-rose-100/90 dark:bg-rose-950/80 px-1 py-0.5 rounded border border-rose-400' :
@@ -1816,20 +1843,26 @@ export default function AdminGradesPVPage() {
 
                             {/* Moyenne Semestrielle Cell */}
                             <td className="py-3.5 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-indigo-50/50 dark:bg-indigo-950/20">
-                              {s.moyenne_semestrielle !== null ? (
-                                <span className={cn(
-                                  "px-3 py-1 rounded-xl text-sm font-black inline-block shadow-2xs font-mono",
-                                  s.moyenne_semestrielle >= 10 ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-200"
-                                )}>
-                                  {Number(s.moyenne_semestrielle).toFixed(2)}
+                              {hasStudentFraud ? (
+                                <span className="px-3 py-1 rounded-xl text-xs font-black inline-block shadow-2xs font-mono bg-rose-600 text-white animate-pulse">
+                                  0.00 (FRAUDE)
                                 </span>
-                              ) : '–'}
+                              ) : (
+                                s.moyenne_semestrielle !== null ? (
+                                  <span className={cn(
+                                    "px-3 py-1 rounded-xl text-sm font-black inline-block shadow-2xs font-mono",
+                                    s.moyenne_semestrielle >= 10 ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-200"
+                                  )}>
+                                    {Number(s.moyenne_semestrielle).toFixed(2)}
+                                  </span>
+                                ) : '–'
+                              )}
                             </td>
 
                             {/* Credits Cell */}
                             <td className="py-3.5 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-black text-xs">
                               <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-mono font-bold">
-                                {s.credits}/{semesterPvData.modules?.length || 7}
+                                {hasStudentFraud ? '0' : s.credits}/{semesterPvData.modules?.length || 7}
                               </span>
                             </td>
 
@@ -1837,19 +1870,18 @@ export default function AdminGradesPVPage() {
                             <td className="py-3.5 px-4 text-center">
                               <span className={cn(
                                 "px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm border inline-block",
-                                s.has_fraud || s.decision_global === 'FRAUDE' ? "bg-rose-600 text-white border-rose-700 font-black animate-pulse shadow-md" :
+                                hasStudentFraud ? "bg-rose-600 text-white border-rose-700 font-black animate-pulse shadow-md" :
                                 s.decision_global === 'V' ? "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200" :
                                 s.decision_global === 'VAR' ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200" :
                                 s.decision_global === 'RAT' ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/50 dark:text-orange-200" :
                                 "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-200"
                               )}>
-                                {s.has_fraud || s.decision_global === 'FRAUDE' ? '🚨 CONSEIL DISCIPLINE (0/20)' :
+                                {hasStudentFraud ? '🚨 CONSEIL DISCIPLINE (0/20)' :
                                  s.decision_global === 'V' ? 'Validé (V)' :
                                  s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
                                  s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
                                  'Non Validé (NV)'}
                               </span>
-
                             </td>
                           </tr>
                         )
@@ -1857,6 +1889,7 @@ export default function AdminGradesPVPage() {
                     </tbody>
                   </table>
                 </div>
+
               )
             })()}
           </div>
