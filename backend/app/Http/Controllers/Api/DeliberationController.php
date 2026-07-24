@@ -167,7 +167,9 @@ class DeliberationController extends Controller
                 'subtitle' => 'Résultats délibérés publiés',
             ],
         ]);
-        public function showJury($id): JsonResponse
+    }
+
+    public function showJury($id): JsonResponse
     {
         $delib = \App\Models\Deliberation::with(['semester', 'filiere', 'academicYear'])->findOrFail($id);
         
@@ -349,4 +351,4 @@ class DeliberationController extends Controller
 
         return response()->json(['data' => $results]);
     }
-}}
+}
