@@ -164,6 +164,24 @@ export default function AdminGradesPVPage() {
     }
   }
 
+  const [isGeneratingEligibilities, setIsGeneratingEligibilities] = useState(false)
+
+  const handleGenerateEligibilities = async () => {
+    if (!moduleId) return
+    setIsGeneratingEligibilities(true)
+    const toastId = toast.loading('Génération des éligibilités rattrapage en cours...')
+    try {
+      const res = await api.post(`/modules/${moduleId}/generate-rattrapage-eligibilities`, {
+        group_id: viewAllGroups ? null : (groupId || null)
+      })
+      toast.success(res.data.message || 'Éligibilités générées avec succès !', { id: toastId })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erreur lors de la génération.', { id: toastId })
+    } finally {
+      setIsGeneratingEligibilities(false)
+    }
+  }
+
   const handleBulkSendEmails = async () => {
     if (!moduleId) return
     setIsSendingBulk(true)
@@ -1251,7 +1269,17 @@ export default function AdminGradesPVPage() {
 
           {/* Rattrapage Saving action bar — only in rattrapage tab, only for R students */}
           {session === 'rattrapage' && (
-            <div className="mt-8 flex justify-end print:hidden">
+            <div className="mt-8 flex justify-between items-center print:hidden">
+              <Button
+                type="button"
+                onClick={handleGenerateEligibilities}
+                disabled={isGeneratingEligibilities}
+                variant="outline"
+                className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-xl flex items-center gap-2 text-xs font-bold"
+              >
+                {isGeneratingEligibilities ? <Spinner className="text-amber-600" /> : '🔄'}
+                Générer / Actualiser les éligibilités Rattrapage
+              </Button>
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}

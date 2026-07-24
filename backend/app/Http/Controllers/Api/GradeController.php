@@ -660,27 +660,118 @@ class GradeController extends Controller
                 continue;
             }
 
-            // Only create eligibility record for candidates who need a decision
-            if ($examSession) {
-                \App\Models\ResitEligibility::updateOrCreate(
-                    [
-                        'student_id'      => $student->id,
-                        'module_id'       => $module->id,
-                        'exam_session_id' => $examSession->id,
-                    ],
-                    [
-                        'is_eligible' => $isEligible,
-                        'reason'      => $reason,
-                        'status'      => $status,
-                    ]
-                );
-            }
+            // Create/update eligibility — exam_session_id is now optional
+            \App\Models\ResitEligibility::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'module_id'  => $module->id,
+                ],
+                [
+                    'exam_session_id' => $examSession?->id,
+                    'is_eligible'     => $isEligible,
+                    'reason'          => $reason,
+                    'status'          => $status,
+                ]
+            );
         }
 
         return response()->json([
-            'message'     => 'PV signé avec succès. Les candidats au rattrapage ont été générés automatiquement.',
-            'signed_at'   => now()->toIso8601String(),
-            'digital_seal'=> $digitalSeal,
+            'message'      => 'PV signé avec succès. Les candidats au rattrapage ont été générés automatiquement.',
+            'signed_at'    => now()->toIso8601String(),
+            'digital_seal' => $digitalSeal,
+        ]);
+    }
+
+    /**
+     * Re-generate rattrapage eligibilities for a module (without requiring re-signing).
+     *
+     * Can be called manually from the PV page when eligibilities are missing.
+     * Idempotent: uses updateOrCreate so it's safe to call multiple times.
+     */
+    public function generateRattrapageEligibilities(Request $request, $moduleId): JsonResponse
+    {
+        $module = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+        $groupId = $request->input('group_id') ?? $request->query('group_id');
+        $user = $request->user();
+
+        $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
+        $examSession = \App\Models\ExamSession::where('type', 'normale')
+            ->orWhere('type', 'ordinaire')->latest()->first();
+
+        $query = \App\Models\StudentRegistration::query();
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+            $query->where('group_id', intval($groupId));
+        } else {
+            $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
+                         ?? \App\Models\AcademicYear::first();
+            $query->where('filiere_id', $module->filiere_id)
+                  ->where('academic_year_id', $academicYear?->id ?? 1);
+        }
+        $registrations = $query->with('student.user')->get();
+
+        $created = 0;
+        $updated = 0;
+
+        foreach ($registrations as $reg) {
+            $student = $reg->student;
+            if (!$student) continue;
+
+            $studentGrades = \App\Models\Grade::where('student_id', $student->id)
+                ->whereIn('assessment_id', $normaleAssessments->pluck('id'))
+                ->get();
+
+            $weightedSum    = 0;
+            $totalWeight    = 0;
+            $hasAnyAbsent   = false;
+
+            foreach ($normaleAssessments as $a) {
+                $grade = $studentGrades->firstWhere('assessment_id', $a->id);
+                if (!$grade) continue;
+                if ($grade->absent) {
+                    $hasAnyAbsent = true;
+                    $totalWeight += $a->weight;
+                } elseif ($grade->value !== null) {
+                    $weightedSum += floatval($grade->value) * ($a->weight / 100);
+                    $totalWeight += $a->weight;
+                }
+            }
+
+            $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
+
+            if ($hasAnyAbsent && ($moyenneNormale === null || $moyenneNormale < 10)) {
+                $isEligible = true;
+                $reason     = 'Absence à justifier';
+                $status     = 'En attente';
+            } elseif ($moyenneNormale !== null && $moyenneNormale >= 6 && $moyenneNormale < 10) {
+                $isEligible = true;
+                $reason     = 'Note insuffisante (moy. ' . number_format($moyenneNormale, 2) . '/20)';
+                $status     = 'Accordé';
+            } else {
+                // Validé (≥10) or éliminatoire (<6) — skip
+                continue;
+            }
+
+            $exists = \App\Models\ResitEligibility::where('student_id', $student->id)
+                ->where('module_id', $module->id)->exists();
+
+            \App\Models\ResitEligibility::updateOrCreate(
+                ['student_id' => $student->id, 'module_id' => $module->id],
+                [
+                    'exam_session_id' => $examSession?->id,
+                    'is_eligible'     => $isEligible,
+                    'reason'          => $reason,
+                    'status'          => $status,
+                ]
+            );
+
+            $exists ? $updated++ : $created++;
+        }
+
+        return response()->json([
+            'message' => "Éligibilités générées avec succès : {$created} créées, {$updated} mises à jour.",
+            'created' => $created,
+            'updated' => $updated,
+            'total'   => $created + $updated,
         ]);
     }
 
