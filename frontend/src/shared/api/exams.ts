@@ -30,12 +30,26 @@ export const examsApi = {
   },
 
   // Retakes
-  getRetakes: async () => {
-    const response = await api.get('/retakes');
-    return response.data.data;
+  getRetakes: async (params?: { filiere_id?: string; session?: string; reason?: string; status?: string }) => {
+    const response = await api.get('/retakes', { params });
+    return response.data;
   },
-  updateRetakeStatus: async (id: number, status: 'Accordé' | 'Refusé') => {
-    const response = await api.patch(`/retakes/${id}/status`, { status });
+  updateRetakeStatus: async (id: number, status: 'Accordé' | 'Refusé' | 'En attente', note?: string) => {
+    const response = await api.patch(`/retakes/${id}/status`, { status, note });
+    return response.data;
+  },
+  // #4 — Bulk update
+  bulkUpdateRetakeStatus: async (ids: number[], status: 'Accordé' | 'Refusé', note?: string) => {
+    const response = await api.post('/retakes/bulk-status', { ids, status, note });
+    return response.data;
+  },
+  // #6 — Student uploads justification document
+  uploadRetakeJustification: async (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append('document', file);
+    const response = await api.post(`/retakes/${id}/upload-justification`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 

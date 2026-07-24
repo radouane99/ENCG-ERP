@@ -28,6 +28,44 @@ class GradeController extends Controller
         }
 
         $groupId = $request->query('group_id');
+
+        // ── #1 Rattrapage filter: only show accorded students ──────────────
+        $isRattrapageAssessment = str_contains(strtolower(trim($assessment->type)), 'rattrapage');
+
+        if ($isRattrapageAssessment) {
+            // Only students explicitly granted retake access (status = 'Accordé')
+            $accordedStudentIds = \Illuminate\Support\Facades\DB::table('resit_eligibilities')
+                ->where('module_id', $assessment->module_id)
+                ->where('status', 'Accordé')
+                ->pluck('student_id')
+                ->toArray();
+
+            if (empty($accordedStudentIds)) {
+                return response()->json(['data' => [], 'rattrapage_mode' => true, 'message' => 'Aucun étudiant autorisé au rattrapage pour ce module.']);
+            }
+
+            $students = Student::whereIn('id', $accordedStudentIds)
+                ->with(['user', 'grades' => function ($q) use ($assessmentId) {
+                    $q->where('assessment_id', $assessmentId);
+                }])->get();
+
+            $data = $students->map(function ($student) {
+                $grade = $student->grades->first();
+                return [
+                    'student_id'     => $student->id,
+                    'first_name'     => $student->first_name,
+                    'last_name'      => $student->last_name,
+                    'student_number' => $student->student_number,
+                    'apogee'         => $student->cne_cme ?? $student->student_number,
+                    'value'          => $grade ? (float) $grade->value : null,
+                    'is_absent'      => $grade ? (bool) $grade->absent : false,
+                ];
+            });
+
+            return response()->json(['data' => $data, 'rattrapage_mode' => true]);
+        }
+        // ── End rattrapage filter ──────────────────────────────────────────
+
         $retakeStudentIds = \Illuminate\Support\Facades\DB::table('student_module_retakes')
             ->where('module_id', $assessment->module_id)
             ->where('academic_year_id', $academicYearId)
@@ -499,7 +537,156 @@ class GradeController extends Controller
     }
 
     /**
+     * Sign the Module PV and automatically generate intelligent Rattrapage eligibility.
+     *
+     * Logic:
+     *  - moyenne_normale >= 10   → Validé         (no retake)
+     *  - moyenne_normale in [6, 10[ → Rattrapage  (note insuffisante)
+     *  - moyenne_normale < 6     → NV (éliminé)   (no retake — score too low)
+     *  - absent (ABI) in any normale assessment → eligible if justified
+     *  - fraud note in audit log → excluded (Non Éligible / NV)
+     */
+    public function signModulePv(Request $request, $moduleId): JsonResponse
+    {
+        $validated = $request->validate([
+            'group_id'       => 'nullable|integer',
+            'signature_data' => 'nullable|string',
+        ]);
+
+        $module  = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+        $groupId = $validated['group_id'] ?? null;
+        $user    = $request->user();
+
+        // Prevent double-signing
+        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
+        if ($groupId) $sigQuery->where('group_id', $groupId);
+        if ($sigQuery->exists()) {
+            return response()->json(['message' => 'Ce PV est déjà signé.'], 409);
+        }
+
+        // Record signature
+        $digitalSeal = hash('sha256', "module:{$moduleId}|group:{$groupId}|signer:{$user->id}|ts:" . now()->timestamp);
+        \App\Models\ModulePvSignature::create([
+            'module_id'      => $moduleId,
+            'group_id'       => $groupId,
+            'signed_by'      => $user->id,
+            'signed_at'      => now(),
+            'signature_data' => $validated['signature_data'] ?? null,
+            'ip_address'     => $request->ip(),
+            'digital_seal'   => $digitalSeal,
+        ]);
+
+        // ── Determine the active exam session ──────────────────────────────
+        $examSession = \App\Models\ExamSession::where('type', 'normale')
+            ->orWhere('type', 'ordinaire')
+            ->latest()
+            ->first();
+
+        // ── Load students ───────────────────────────────────────────────────
+        $query = \App\Models\StudentRegistration::query();
+        if ($groupId) {
+            $query->where('group_id', $groupId);
+        } else {
+            $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
+                          ?? \App\Models\AcademicYear::first();
+            $query->where('filiere_id', $module->filiere_id)
+                  ->where('academic_year_id', $academicYear?->id ?? 1);
+        }
+        $registrations = $query->with('student.user')->get();
+
+        $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
+
+        foreach ($registrations as $reg) {
+            $student = $reg->student;
+            if (!$student) continue;
+
+            $studentGrades = \App\Models\Grade::where('student_id', $student->id)
+                ->whereIn('assessment_id', $normaleAssessments->pluck('id'))
+                ->get();
+
+            // Calculate weighted average
+            $weightedSum = 0;
+            $totalWeight = 0;
+            $hasAnyAbsent = false;
+            $hasAnyFraud  = false;
+
+            foreach ($normaleAssessments as $a) {
+                $grade = $studentGrades->firstWhere('assessment_id', $a->id);
+                if (!$grade) continue;
+
+                if ($grade->absent) {
+                    $hasAnyAbsent = true;
+                    $weightedSum  += 0;
+                    $totalWeight  += $a->weight;
+                } elseif ($grade->value !== null) {
+                    $weightedSum += floatval($grade->value) * ($a->weight / 100);
+                    $totalWeight += $a->weight;
+                }
+            }
+
+            $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
+
+            // ── Intelligent Decision Logic ─────────────────────────────
+            // DEFAULT: all rattrapage candidates are auto-Accordé
+            // EXCEPTION 1 — Fraude  → Auto Refusé (exclu)
+            // EXCEPTION 2 — Absence → En attente (admin verifies justification)
+            // ──────────────────────────────────────────────────────────
+            $isEligible = false;
+            $reason     = null;
+            $status     = 'Accordé';
+
+            if ($hasAnyFraud) {
+                // Fraud → hard exclusion, no retake allowed
+                $isEligible = false;
+                $reason     = 'Fraude détectée — Exclu du rattrapage';
+                $status     = 'Refusé';
+            } elseif ($hasAnyAbsent && ($moyenneNormale === null || $moyenneNormale < 10)) {
+                // Absence → needs admin review (justified or not?)
+                $isEligible = true;
+                $reason     = 'Absence à justifier';
+                $status     = 'En attente';
+            } elseif ($moyenneNormale !== null && $moyenneNormale >= 6 && $moyenneNormale < 10) {
+                // Note insuffisante → Auto-Accordé (droit automatique au rattrapage)
+                $isEligible = true;
+                $reason     = 'Note insuffisante (moy. ' . number_format($moyenneNormale, 2) . '/20)';
+                $status     = 'Accordé';
+            } elseif ($moyenneNormale !== null && $moyenneNormale < 6) {
+                // Below 6 → éliminatoire, no retake
+                $isEligible = false;
+                $reason     = 'Note éliminatoire (moy. ' . number_format($moyenneNormale, 2) . '/20 < 6)';
+                $status     = 'Refusé';
+            } else {
+                // Validé (>= 10) or missing data → skip
+                continue;
+            }
+
+            // Only create eligibility record for candidates who need a decision
+            if ($examSession) {
+                \App\Models\ResitEligibility::updateOrCreate(
+                    [
+                        'student_id'      => $student->id,
+                        'module_id'       => $module->id,
+                        'exam_session_id' => $examSession->id,
+                    ],
+                    [
+                        'is_eligible' => $isEligible,
+                        'reason'      => $reason,
+                        'status'      => $status,
+                    ]
+                );
+            }
+        }
+
+        return response()->json([
+            'message'     => 'PV signé avec succès. Les candidats au rattrapage ont été générés automatiquement.',
+            'signed_at'   => now()->toIso8601String(),
+            'digital_seal'=> $digitalSeal,
+        ]);
+    }
+
+    /**
      * Export Excel template for entering grades.
+
      */
     public function exportGradesTemplate(Request $request, $moduleId)
     {

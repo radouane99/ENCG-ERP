@@ -372,6 +372,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::prefix('retakes')->group(function () {
         Route::get('/', [RetakeController::class, 'index']);
         Route::patch('/{id}/status', [RetakeController::class, 'updateStatus']);
+        Route::post('/bulk-status', [RetakeController::class, 'bulkUpdateStatus']);          // #4 Bulk
+        Route::post('/{id}/upload-justification', [RetakeController::class, 'uploadJustification']); // #6 Upload
     });
 
     // Professor Availability

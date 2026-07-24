@@ -12,12 +12,24 @@ class ResitEligibility extends Model
 
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'student_id', 'module_id', 'exam_session_id',
+        'is_eligible', 'reason', 'status',
+        // #8 — Decision tracking
+        'decided_by', 'decided_at',
+        // #6 — Justification document upload
+        'justification_document',
+    ];
+
     protected function casts(): array
     {
         return [
-        'is_eligible' => 'boolean',
-    ];
+            'is_eligible' => 'boolean',
+            'decided_at'  => 'datetime',
+        ];
     }
+
+    // ── Relationships ─────────────────────────────────────────────────────
 
     public function student(): BelongsTo
     {
@@ -32,5 +44,11 @@ class ResitEligibility extends Model
     public function examSession(): BelongsTo
     {
         return $this->belongsTo(ExamSession::class);
+    }
+
+    /** #8 — Who made the decision */
+    public function decidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'decided_by');
     }
 }
