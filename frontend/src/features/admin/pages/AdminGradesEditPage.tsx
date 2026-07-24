@@ -146,8 +146,23 @@ export default function AdminGradesEditPage() {
     })
   }
 
+  // Fetch module details for dynamic filename export
+  const { data: moduleDetails } = useQuery({
+    queryKey: ['module-details', moduleId],
+    queryFn: () => api.get(`/modules/${moduleId}`).then(res => res.data.data || res.data),
+    enabled: !!moduleId,
+  })
+
   const handleExportExcel = async () => {
     try {
+      const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
+      const assessmentType = selectedAssessment ? selectedAssessment.type : 'Saisie'
+      const moduleCode = moduleDetails?.code || `MOD_${moduleId}`
+      const rawModuleName = moduleDetails?.name || 'Module'
+      const cleanModuleName = rawModuleName.replace(/[^a-zA-Z0-9_\-\s]/g, '').trim().replace(/\s+/g, '_')
+      
+      const fileName = `Canevas_Notes_${moduleCode}_${cleanModuleName}_${assessmentType}.xlsx`
+
       const response = await api.get(`/modules/${moduleId}/export-grades`, {
         params: { group_id: viewAllGroups ? 'all' : searchParams.get('group_id') },
         responseType: 'blob'
@@ -155,11 +170,11 @@ export default function AdminGradesEditPage() {
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `Canevas_Notes_Module_${moduleId}.xlsx`)
+      link.setAttribute('download', fileName)
       document.body.appendChild(link)
       link.click()
       link.remove()
-      toast.success(isRtl ? 'تم تحميل ملف الاكسل' : 'Canevas Excel téléchargé avec succès')
+      toast.success(isRtl ? `تم تحميل كشف النقاط: ${fileName}` : `Canevas Excel (${fileName}) téléchargé avec succès !`)
     } catch (err) {
       toast.error(isRtl ? 'حدث خطأ أثناء تحميل الملف' : 'Erreur lors du téléchargement du canevas Excel.')
     }

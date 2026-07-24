@@ -552,15 +552,18 @@ class GradeController extends Controller
             $rows[] = $row;
         }
 
-        $groupName = 'Module';
+        $groupName = 'Tous_Les_Groupes';
         if ($groupId && $groupId !== 'all') {
             $group = \Illuminate\Support\Facades\DB::table('groups')->where('id', $groupId)->first();
             if ($group) {
-                $groupName = $group->name;
+                $groupName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $group->name);
             }
         }
 
-        $fileName = "Canevas_Notes_{$module->code}_{$groupName}.xlsx";
+        $cleanModuleName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $module->name);
+        $cleanModuleCode = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $module->code);
+
+        $fileName = "Canevas_Notes_{$cleanModuleCode}_{$cleanModuleName}_{$groupName}.xlsx";
 
         return \Maatwebsite\Excel\Facades\Excel::download(new GradesTemplateExport($headings, $rows, "Canevas Notes"), $fileName);
     }
