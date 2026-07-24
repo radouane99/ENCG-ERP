@@ -605,21 +605,24 @@ export default function AdminGradesPVPage() {
 
           {pvData.signature ? (
             <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> PV Signé & Clôturé
+              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> Signé par l'Enseignant : {pvData.signature.signer_name || 'Professeur Responsable'}
             </span>
           ) : (
             <Button
-              onClick={() => setShowSignatureModal(true)}
-              className="bg-emerald-600 text-white hover:bg-emerald-750 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+              onClick={() => {
+                setActiveJurySigningId(null)
+                setShowSignatureModal(true)
+              }}
+              className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
             >
-              ✍️ Signer le PV
+              ✍️ Signer le PV de Module (Enseignant)
             </Button>
           )}
         </div>
       </div>
 
-      {/* Jury Committee Status Hub */}
-      {juryStatus && (
+      {/* Jury Committee Status Hub (Pour Délibération Semestrielle et Annuelle Globale) */}
+      {juryStatus && pvType === 'annuel' && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
