@@ -549,32 +549,43 @@ class GradeController extends Controller
     public function signModulePv(Request $request, $moduleId): JsonResponse
     {
         $validated = $request->validate([
-            'group_id'       => 'nullable|integer',
+            'group_id'       => 'nullable',
             'signature_data' => 'nullable|string',
         ]);
+        $module   = \App\Models\Module::with('assessments')->findOrFail($moduleId);
+        $rawGroup = $request->input('group_id');
+        $groupId  = ($rawGroup && !in_array($rawGroup, ['all', 'null', 'undefined', ''], true)) ? intval($rawGroup) : null;
+        $user     = $request->user();
 
-        $module  = \App\Models\Module::with('assessments')->findOrFail($moduleId);
-        $groupId = $validated['group_id'] ?? null;
-        $user    = $request->user();
-
-        // Prevent double-signing
-        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
-        if ($groupId) $sigQuery->where('group_id', $groupId);
-        if ($sigQuery->exists()) {
-            return response()->json(['message' => 'Ce PV est déjà signé.'], 409);
+        // Determine target group IDs for signature
+        if ($groupId) {
+            $targetGroupIds = [$groupId];
+        } else {
+            $targetGroupIds = \App\Models\Group::where('filiere_id', $module->filiere_id)->pluck('id')->toArray();
+            if (empty($targetGroupIds)) {
+                $firstGroup = \App\Models\Group::first();
+                $targetGroupIds = $firstGroup ? [$firstGroup->id] : [1];
+            }
         }
 
-        // Record signature
-        $digitalSeal = hash('sha256', "module:{$moduleId}|group:{$groupId}|signer:{$user->id}|ts:" . now()->timestamp);
-        \App\Models\ModulePvSignature::create([
-            'module_id'      => $moduleId,
-            'group_id'       => $groupId,
-            'signed_by'      => $user->id,
-            'signed_at'      => now(),
-            'signature_data' => $validated['signature_data'] ?? null,
-            'ip_address'     => $request->ip(),
-            'digital_seal'   => $digitalSeal,
-        ]);
+        $digitalSeal = hash('sha256', "module:{$moduleId}|signer:{$user->id}|ts:" . now()->timestamp);
+        $signatureRecord = null;
+
+        foreach ($targetGroupIds as $gId) {
+            $signatureRecord = \App\Models\ModulePvSignature::updateOrCreate(
+                [
+                    'module_id' => $moduleId,
+                    'group_id'  => $gId,
+                ],
+                [
+                    'signed_by'      => $user->id,
+                    'signed_at'      => now(),
+                    'signature_data' => $validated['signature_data'] ?? null,
+                    'ip_address'     => $request->ip(),
+                    'digital_seal'   => $digitalSeal,
+                ]
+            );
+        }
 
         // ── Determine the active exam session ──────────────────────────────
         $examSession = \App\Models\ExamSession::where('type', 'normale')
@@ -605,19 +616,25 @@ class GradeController extends Controller
                 ->get();
 
             // Calculate weighted average
-            $weightedSum = 0;
-            $totalWeight = 0;
-            $hasAnyAbsent = false;
-            $hasAnyFraud  = false;
+            $weightedSum   = 0;
+            $totalWeight   = 0;
+            $hasExamAbsent = false;
+            $hasAnyFraud   = false;
 
             foreach ($normaleAssessments as $a) {
                 $grade = $studentGrades->firstWhere('assessment_id', $a->id);
                 if (!$grade) continue;
 
+                $typeLower = strtolower(trim($a->type));
+                $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen');
+
                 if ($grade->absent) {
-                    $hasAnyAbsent = true;
-                    $weightedSum  += 0;
-                    $totalWeight  += $a->weight;
+                    if ($isExamAssessment) {
+                        $hasExamAbsent = true;
+                    }
+                    // Both CC and Exam absence count as 0/20 in average calculation
+                    $weightedSum += 0;
+                    $totalWeight += $a->weight;
                 } elseif ($grade->value !== null) {
                     $weightedSum += floatval($grade->value) * ($a->weight / 100);
                     $totalWeight += $a->weight;
@@ -627,31 +644,28 @@ class GradeController extends Controller
             $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
 
             // ── Intelligent Decision Logic ─────────────────────────────
-            // DEFAULT: all rattrapage candidates are auto-Accordé
-            // EXCEPTION 1 — Fraude  → Auto Refusé (exclu)
-            // EXCEPTION 2 — Absence → En attente (admin verifies justification)
+            // 1. Fraude ➔ Auto Refusé (Exclu)
+            // 2. Absence à l'Examen Principal ➔ En attente (Justificatif requis)
+            // 3. Note insuffisante (6 <= moy < 10) ➔ Auto Accordé
+            // 4. Note éliminatoire (moy < 6) ➔ Refusé
             // ──────────────────────────────────────────────────────────
             $isEligible = false;
             $reason     = null;
             $status     = 'Accordé';
 
             if ($hasAnyFraud) {
-                // Fraud → hard exclusion, no retake allowed
                 $isEligible = false;
                 $reason     = 'Fraude détectée — Exclu du rattrapage';
                 $status     = 'Refusé';
-            } elseif ($hasAnyAbsent && ($moyenneNormale === null || $moyenneNormale < 10)) {
-                // Absence → needs admin review (justified or not?)
+            } elseif ($hasExamAbsent) {
                 $isEligible = true;
-                $reason     = 'Absence à justifier';
+                $reason     = 'Absence à l\'examen principal — Justificatif requis';
                 $status     = 'En attente';
             } elseif ($moyenneNormale !== null && $moyenneNormale >= 6 && $moyenneNormale < 10) {
-                // Note insuffisante → Auto-Accordé (droit automatique au rattrapage)
                 $isEligible = true;
                 $reason     = 'Note insuffisante (moy. ' . number_format($moyenneNormale, 2) . '/20)';
                 $status     = 'Accordé';
             } elseif ($moyenneNormale !== null && $moyenneNormale < 6) {
-                // Below 6 → éliminatoire, no retake
                 $isEligible = false;
                 $reason     = 'Note éliminatoire (moy. ' . number_format($moyenneNormale, 2) . '/20 < 6)';
                 $status     = 'Refusé';
@@ -720,15 +734,23 @@ class GradeController extends Controller
                 ->whereIn('assessment_id', $normaleAssessments->pluck('id'))
                 ->get();
 
-            $weightedSum    = 0;
-            $totalWeight    = 0;
-            $hasAnyAbsent   = false;
+            $weightedSum   = 0;
+            $totalWeight   = 0;
+            $hasExamAbsent = false;
 
             foreach ($normaleAssessments as $a) {
                 $grade = $studentGrades->firstWhere('assessment_id', $a->id);
                 if (!$grade) continue;
+
+                $typeLower = strtolower(trim($a->type));
+                $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen');
+
                 if ($grade->absent) {
-                    $hasAnyAbsent = true;
+                    if ($isExamAssessment) {
+                        $hasExamAbsent = true;
+                    }
+                    // Both CC and Exam absence count as 0/20 in average calculation
+                    $weightedSum += 0;
                     $totalWeight += $a->weight;
                 } elseif ($grade->value !== null) {
                     $weightedSum += floatval($grade->value) * ($a->weight / 100);
@@ -738,16 +760,20 @@ class GradeController extends Controller
 
             $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
 
-            if ($hasAnyAbsent && ($moyenneNormale === null || $moyenneNormale < 10)) {
+            if ($hasExamAbsent) {
                 $isEligible = true;
-                $reason     = 'Absence à justifier';
+                $reason     = 'Absence à l\'examen principal — Justificatif requis';
                 $status     = 'En attente';
             } elseif ($moyenneNormale !== null && $moyenneNormale >= 6 && $moyenneNormale < 10) {
                 $isEligible = true;
                 $reason     = 'Note insuffisante (moy. ' . number_format($moyenneNormale, 2) . '/20)';
                 $status     = 'Accordé';
+            } elseif ($moyenneNormale !== null && $moyenneNormale < 6) {
+                $isEligible = false;
+                $reason     = 'Note éliminatoire (moy. ' . number_format($moyenneNormale, 2) . '/20 < 6)';
+                $status     = 'Refusé';
             } else {
-                // Validé (≥10) or éliminatoire (<6) — skip
+                // Validé (≥10) — skip
                 continue;
             }
 

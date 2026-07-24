@@ -621,21 +621,22 @@ export default function AdminGradesPVPage() {
             🚀 Diffusion Email
           </Button>
 
-          {pvData.signature ? (
-            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> Signé par l'Enseignant : {pvData.signature.signer_name || 'Professeur Responsable'}
+          {pvData.signature && (
+            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold shadow-sm">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> Signé ({pvData.signature.signed_by || 'Enseignant'})
             </span>
-          ) : (
-            <Button
-              onClick={() => {
-                setActiveJurySigningId(null)
-                setShowSignatureModal(true)
-              }}
-              className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
-            >
-              ✍️ Signer le PV de Module (Enseignant)
-            </Button>
           )}
+
+          <Button
+            onClick={() => {
+              setActiveJurySigningId(null)
+              setShowSignatureModal(true)
+            }}
+            className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+          >
+            ✍️ {pvData.signature ? 'Re-signer le PV de Module' : 'Signer le PV de Module (Enseignant)'}
+          </Button>
+
         </div>
       </div>
 
