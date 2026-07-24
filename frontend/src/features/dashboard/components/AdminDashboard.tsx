@@ -188,6 +188,30 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* #7 — Retake Alert Widget */}
+      {showRetakeAlert && (
+        <Link to="/admin/retake?tab=pending" className="block group">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm hover:shadow-md transition-all hover:border-amber-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-800">
+                  ⚡ {retakePending} dossier(s) d'absence en attente de décision
+                </p>
+                <p className="text-xs text-amber-600 mt-0.5">
+                  Ces étudiants attendent votre décision pour le rattrapage — cliquez pour traiter
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-amber-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
+              Traiter maintenant <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Enrollment Trend */}

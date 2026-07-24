@@ -684,8 +684,90 @@ class PdfExportController extends Controller
     }
 
     /**
+     * #3 — Export the official "PV de Rattrapage" PDF for a module.
+     * Only includes students whose resit eligibility status = 'Accordé'.
+     */
+    public function exportRattrapage_PvPdf(Request $request, $moduleId)
+    {
+        $module = \App\Models\Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
+
+        $accorded = \App\Models\ResitEligibility::where('module_id', $moduleId)
+            ->where('status', 'Accordé')
+            ->with('student')
+            ->get();
+
+        if ($accorded->isEmpty()) {
+            return response()->json(['message' => 'Aucun étudiant accordé pour ce module.'], 404);
+        }
+
+        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
+
+        $data = $accorded->map(function ($eligibility) use ($rattrapageAssessment) {
+            $student = $eligibility->student;
+            if (!$student) return null;
+
+            $rGrade           = $rattrapageAssessment
+                ? \App\Models\Grade::where('student_id', $student->id)->where('assessment_id', $rattrapageAssessment->id)->first()
+                : null;
+            $rattrapageVal    = $rGrade?->value;
+            $rattrapageAbsent = $rGrade ? (bool) $rGrade->absent : false;
+
+            if ($rattrapageAbsent)          $decisionFinale = 'ABI';
+            elseif ($rattrapageVal !== null) $decisionFinale = floatval($rattrapageVal) >= 10 ? 'VAR' : 'NV';
+            else                            $decisionFinale = 'Non saisi';
+
+            return [
+                'student_id'        => $student->id,
+                'apogee'            => $student->student_number ?? $student->id,
+                'last_name'         => $student->last_name,
+                'first_name'        => $student->first_name,
+                'raison'            => $eligibility->reason,
+                'rattrapage_note'   => $rattrapageVal,
+                'rattrapage_absent' => $rattrapageAbsent,
+                'decision_finale'   => $decisionFinale,
+                'grades_detail'     => [],
+                'moyenne_normale'   => null,
+                'decision_normale'  => 'R',
+                'moyenne_finale'    => $rattrapageVal !== null ? (float) $rattrapageVal : null,
+            ];
+        })->filter()->values();
+
+        $sigRecord  = \App\Models\ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
+        $signature  = $sigRecord ? ['signed_by' => $sigRecord->signer?->name ?? 'N/A', 'signed_at' => now()->format('d/m/Y H:i')] : null;
+        $logoPath   = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+        $verifyUrl  = url("/verify/pv-rattrapage/{$moduleId}");
+        try {
+            $qrSvg    = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($verifyUrl);
+        }
+
+        $pdf = Pdf::setOption(['isRemoteEnabled' => true, 'chroot' => public_path()])
+            ->loadView('pdf.module_pv', [
+                'module'             => $module,
+                'session'            => 'rattrapage',
+                'normaleAssessments' => collect(),
+                'students'           => $data,
+                'signature'          => $signature,
+                'logoBase64'         => $logoBase64,
+                'qrBase64'           => $qrBase64,
+                'verifyUrl'          => $verifyUrl,
+                'perimetre'          => 'Session Rattrapage',
+                'academicYear'       => '2026/2027',
+                'semester'           => 'S' . ($module->semester_number ?? 1),
+                'date'               => date('d/m/Y H:i'),
+            ])->setPaper('a4', 'landscape');
+
+        return $pdf->download("PV_Rattrapage_{$module->code}.pdf");
+    }
+
+    /**
      * Export all PVs for a filiere/semester as a Zip archive.
      */
+
+
     public function exportBulkPvZip(Request $request)
     {
         $filiereId = $request->query('filiere_id');
