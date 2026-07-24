@@ -12,8 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('filieres', function (Blueprint $table) {
+            if (Schema::hasColumn('filieres', 'responsable_id')) {
+                try {
+                    $table->dropForeign(['responsable_id']);
+                } catch (\Throwable $e) {}
+                try {
+                    $table->dropColumn('responsable_id');
+                } catch (\Throwable $e) {}
+            }
+        });
+
+        Schema::table('filieres', function (Blueprint $table) {
             if (!Schema::hasColumn('filieres', 'responsable_id')) {
-                $table->foreignId('responsable_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->uuid('responsable_id')->nullable();
+                $table->foreign('responsable_id')->references('id')->on('users')->nullOnDelete();
             }
         });
     }
