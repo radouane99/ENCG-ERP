@@ -21,7 +21,7 @@ class FiliereResource extends JsonResource
             'active' => (bool) $this->is_active,
             'duration_years' => $this->duration_years,
             'department_id' => $this->department_id,
-            'groups_count' => \Illuminate\Support\Facades\DB::table('student_groups')->where('filiere_id', $this->id)->count(),
+            'groups_count' => $this->groups_count ?? \Illuminate\Support\Facades\DB::table('groups')->where('filiere_id', $this->id)->count(),
             'modules_count' => $this->modules_count ?? \Illuminate\Support\Facades\DB::table('modules')->where('filiere_id', $this->id)->count(),
         ];
     }

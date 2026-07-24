@@ -41,6 +41,11 @@ class Filiere extends Model
         return $this->hasMany(Module::class);
     }
 
+    public function groups(): HasMany
+    {
+        return $this->hasMany(Group::class);
+    }
+
     public function responsable(): BelongsTo
     {
         return $this->belongsTo(User::class, 'responsable_id');
