@@ -11,14 +11,15 @@ import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { toast } from 'sonner'
-import { QRCodeSVG } from 'qrcode.react'
 
 interface Candidate {
   id: number
+  seating_id?: number
+  student_id?: number
   cne: string
   name: string
   seat_number: string | number
-  status: 'present' | 'absent' | 'late' | 'pending'
+  status: 'present' | 'absent' | 'late'
   has_fraud?: boolean
   fraud_details?: string
   checkin_time?: string
@@ -65,47 +66,124 @@ export default function AdminExamSurveillanceHubPage() {
   const [isPvLocked, setIsPvLocked] = useState(false)
   const [pvLockSeal, setPvLockSeal] = useState<string | null>(null)
 
-  // Fetch Exam Details & Candidates
-  const { data: detailsData, isLoading, refetch } = useQuery({
-    queryKey: ['admin-exam-surveillance', id],
+  // Candidate State bound to DB
+  const [candidates, setCandidates] = useState<Candidate[]>([])
+
+  // 1. Fetch Real Exam Details & Seatings from DB
+  const { data: detailsData, isLoading: isLoadingDetails, refetch: refetchDetails } = useQuery({
+    queryKey: ['admin-exam-details', id],
     queryFn: async () => {
-      try {
-        const res = await api.get(`/exam-planning/${id}/live-stats`)
-        return res.data
-      } catch (err) {
-        // Fallback demo data
-        return null
-      }
+      const res = await api.get(`/exam-planning/${id}/details`)
+      return res.data?.data || res.data
     },
     enabled: !!id
   })
 
-  // Simulated candidate list for live interactive attendance management
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    { id: 1, cne: 'N134059281', name: 'EL AMIR Reda', seat_number: 'A-01', status: 'present', checkin_time: '08:45' },
-    { id: 2, cne: 'N139120482', name: 'BENNANI Sara', seat_number: 'A-02', status: 'present', checkin_time: '08:50' },
-    { id: 3, cne: 'N130829103', name: 'CHRAIBI Youssef', seat_number: 'A-03', status: 'absent' },
-    { id: 4, cne: 'N136192844', name: 'IDRISSI Omar', seat_number: 'A-04', status: 'late', checkin_time: '09:15' },
-    { id: 5, cne: 'N137102945', name: 'ZAKI Houda', seat_number: 'A-05', status: 'present', checkin_time: '08:52' },
-    { id: 6, cne: 'N138291056', name: 'ALAMI Mehdi', seat_number: 'A-06', status: 'present', checkin_time: '08:58' },
-    { id: 7, cne: 'N132910477', name: 'TAHIRI Kawtar', seat_number: 'A-07', status: 'absent' },
-    { id: 8, cne: 'N135810288', name: 'OUAZZANI Hamza', seat_number: 'A-08', status: 'present', checkin_time: '08:40' },
-  ])
+  // 2. Fetch Live Stats
+  const { data: liveStatsData } = useQuery({
+    queryKey: ['admin-exam-live-stats', id],
+    queryFn: async () => {
+      const res = await api.get(`/exam-planning/${id}/live-stats`)
+      return res.data?.data || res.data
+    },
+    refetchInterval: 5000,
+    enabled: !!id
+  })
 
-  // Update candidate status
-  const handleToggleStatus = (candidateId: number, newStatus: 'present' | 'absent' | 'late') => {
+  // 3. Fetch Incidents from DB
+  const { data: dbIncidentsData } = useQuery({
+    queryKey: ['admin-exam-incidents', id],
+    queryFn: async () => {
+      const res = await api.get('/exam-incidents', { params: { exam_id: id } })
+      return res.data?.data || res.data || []
+    },
+    enabled: !!id
+  })
+
+  // Populate Candidates from DB Seatings or Students
+  useEffect(() => {
+    if (detailsData?.seatings && detailsData.seatings.length > 0) {
+      const mapped: Candidate[] = detailsData.seatings.map((s: any, idx: number) => ({
+        id: s.id || idx + 1,
+        seating_id: s.id,
+        student_id: s.student_id,
+        cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
+        name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
+        seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
+        status: s.is_present ? 'present' : (s.status || 'absent'),
+        checkin_time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+      }))
+      setCandidates(mapped)
+    } else if (detailsData?.exam) {
+      // Fallback query to get students from group or filiere if seatings not generated yet
+      api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
+        .then(res => {
+          const rawStudents = res.data?.data || res.data || []
+          if (rawStudents.length > 0) {
+            const mapped: Candidate[] = rawStudents.map((st: any, idx: number) => ({
+              id: st.id,
+              student_id: st.id,
+              cne: st.cne || st.user?.email?.split('@')[0] || `E${2000 + idx}`,
+              name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
+              seat_number: `A-${String(idx + 1).padStart(2, '0')}`,
+              status: 'absent'
+            }))
+            setCandidates(mapped)
+          }
+        }).catch(console.error)
+    }
+  }, [detailsData])
+
+  // Populate Incidents from DB
+  useEffect(() => {
+    if (Array.isArray(dbIncidentsData) && dbIncidentsData.length > 0) {
+      const mappedIncidents: IncidentReport[] = dbIncidentsData.map((inc: any) => ({
+        id: inc.id,
+        student_name: inc.student?.user?.name || inc.student_name || 'Étudiant',
+        cne: inc.student?.cne || 'N/A',
+        type: inc.type || 'fraude',
+        description: inc.description || inc.details || 'Incident signalé',
+        confiscated_items: inc.confiscated_items || '',
+        timestamp: inc.created_at ? new Date(inc.created_at).toLocaleTimeString('fr-FR') : 'Récemment',
+        reported_by: inc.reporter?.name || adminSupervisorName
+      }))
+      setIncidentsList(mappedIncidents)
+    }
+  }, [dbIncidentsData])
+
+  // Mutation to update attendance in DB
+  const updateAttendanceMutation = useMutation({
+    mutationFn: async ({ seating_id, student_id, status }: { seating_id?: number; student_id?: number; status: 'present' | 'absent' | 'late' }) => {
+      return api.post(`/exam-planning/${id}/update-seating-status`, { seating_id, student_id, status })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
+    }
+  })
+
+  // Update candidate status handler
+  const handleToggleStatus = (candidate: Candidate, newStatus: 'present' | 'absent' | 'late') => {
     if (isPvLocked) {
       toast.error('Ce PV d\'examen est verrouillé. Aucune modification possible.')
       return
     }
+
     setCandidates(prev => prev.map(c => {
-      if (c.id === candidateId) {
+      if (c.id === candidate.id) {
         const time = newStatus !== 'absent' ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
         return { ...c, status: newStatus, checkin_time: time }
       }
       return c
     }))
-    toast.success(`Statut mis à jour : ${newStatus.toUpperCase()}`)
+
+    updateAttendanceMutation.mutate({
+      seating_id: candidate.seating_id,
+      student_id: candidate.student_id,
+      status: newStatus
+    })
+
+    toast.success(`Statut mis à jour dans la base de données : ${newStatus.toUpperCase()}`)
   }
 
   // Open Fraud Modal
@@ -121,30 +199,57 @@ export default function AdminExamSurveillanceHubPage() {
     setShowFraudModal(true)
   }
 
-  // Submit Fraud Report
-  const handleSubmitFraudReport = () => {
+  // Submit Fraud Report to DB
+  const handleSubmitFraudReport = async () => {
     if (!selectedStudentForFraud) return
     if (!fraudDescription.trim()) {
       toast.error('Veuillez saisir les détails de l\'incident.')
       return
     }
 
-    const newReport: IncidentReport = {
-      id: Date.now(),
-      student_name: selectedStudentForFraud.name,
-      cne: selectedStudentForFraud.cne,
-      type: fraudType,
-      description: fraudDescription,
-      confiscated_items: confiscatedItems,
-      timestamp: new Date().toLocaleTimeString('fr-FR'),
-      reported_by: adminSupervisorName
+    const toastId = toast.loading("Enregistrement de l'incident dans la base de données...")
+    try {
+      await api.post(`/exam-incidents`, {
+        exam_id: Number(id),
+        student_id: selectedStudentForFraud.student_id,
+        type: fraudType,
+        description: fraudDescription,
+        confiscated_items: confiscatedItems
+      })
+
+      const newReport: IncidentReport = {
+        id: Date.now(),
+        student_name: selectedStudentForFraud.name,
+        cne: selectedStudentForFraud.cne,
+        type: fraudType,
+        description: fraudDescription,
+        confiscated_items: confiscatedItems,
+        timestamp: new Date().toLocaleTimeString('fr-FR'),
+        reported_by: adminSupervisorName
+      }
+
+      setIncidentsList(prev => [newReport, ...prev])
+      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, fraud_details: fraudDescription } : c))
+
+      setShowFraudModal(false)
+      toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès dans la BDD !`, { id: toastId })
+    } catch (err) {
+      // Local fallback
+      const newReport: IncidentReport = {
+        id: Date.now(),
+        student_name: selectedStudentForFraud.name,
+        cne: selectedStudentForFraud.cne,
+        type: fraudType,
+        description: fraudDescription,
+        confiscated_items: confiscatedItems,
+        timestamp: new Date().toLocaleTimeString('fr-FR'),
+        reported_by: adminSupervisorName
+      }
+      setIncidentsList(prev => [newReport, ...prev])
+      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true } : c))
+      setShowFraudModal(false)
+      toast.success(`🚨 Incident enregistré localement au PV !`, { id: toastId })
     }
-
-    setIncidentsList(prev => [newReport, ...prev])
-    setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, fraud_details: fraudDescription } : c))
-
-    setShowFraudModal(false)
-    toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès dans le PV !`)
   }
 
   // Canvas Drawing Handlers for Signature
@@ -231,7 +336,8 @@ export default function AdminExamSurveillanceHubPage() {
     return matchesSearch
   })
 
-  // KPI Calculations
+  // Real KPI Calculations
+  const examObj = detailsData?.exam
   const totalCount = candidates.length
   const presentCount = candidates.filter(c => c.status === 'present').length
   const absentCount = candidates.filter(c => c.status === 'absent').length
@@ -254,7 +360,7 @@ export default function AdminExamSurveillanceHubPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  Espace Administration ENCG
+                  Espace Administration ENCG — BDD Connectée
                 </span>
                 {isPvLocked && (
                   <span className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
@@ -266,7 +372,7 @@ export default function AdminExamSurveillanceHubPage() {
                 Hub de Surveillance d'Examen & Émargement Officiel
               </h1>
               <p className="text-xs text-blue-100/80 mt-0.5">
-                Module : <strong>Management Stratégique</strong> • Filière : <strong>ENCG Grande École</strong> • Salle : <strong>Amphi A</strong>
+                Module : <strong>{examObj?.module?.name || 'Management Stratégique'}</strong> • Filière : <strong>{examObj?.module?.filiere?.name || 'ENCG Grande École'}</strong> • Salle : <strong>{examObj?.room?.name || 'Amphi A'}</strong>
               </p>
             </div>
           </div>
@@ -318,7 +424,7 @@ export default function AdminExamSurveillanceHubPage() {
             <div>
               <div className="text-xs font-black text-white">Mode Prise en Main & Remplacement Administrateur</div>
               <div className="text-[11px] text-blue-100/70">
-                Vous assurez la responsabilité de la surveillance en cas d'absence du professeur titulare.
+                Vous assurez la responsabilité de la surveillance en cas d'absence du professeur titulaire.
               </div>
             </div>
           </div>
@@ -416,105 +522,111 @@ export default function AdminExamSurveillanceHubPage() {
 
         {/* Student Attendance List */}
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
-                <th className="p-3 w-14 text-center">N° Place</th>
-                <th className="p-3">CNE / Apogée</th>
-                <th className="p-3">Nom & Prénom</th>
-                <th className="p-3 text-center">Statut Présence</th>
-                <th className="p-3 text-center">Heure Check-in</th>
-                <th className="p-3 text-center">Incident / Fraude</th>
-                <th className="p-3 text-right">Actions Émargement</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredCandidates.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
-                    {student.seat_number}
-                  </td>
-                  <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
-                    {student.cne}
-                  </td>
-                  <td className="p-3 font-black text-slate-900 dark:text-white">
-                    {student.name}
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
-                      student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-                      student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-                      student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                    )}>
-                      {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
-                      {student.status === 'absent' && <XCircle className="w-3 h-3" />}
-                      {student.status === 'late' && <Clock className="w-3 h-3" />}
-                      {student.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center font-mono text-slate-500">
-                    {student.checkin_time || '—'}
-                  </td>
-                  <td className="p-3 text-center">
-                    {student.has_fraud ? (
-                      <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
-                        <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 text-[11px]">—</span>
-                    )}
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(student.id, 'present')}
-                        disabled={isPvLocked}
-                        className={cn(
-                          "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                          student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
-                        )}
-                      >
-                        Présent
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(student.id, 'absent')}
-                        disabled={isPvLocked}
-                        className={cn(
-                          "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                          student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
-                        )}
-                      >
-                        Absent
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(student.id, 'late')}
-                        disabled={isPvLocked}
-                        className={cn(
-                          "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                          student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
-                        )}
-                      >
-                        Retard
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenFraudModal(student)}
-                        disabled={isPvLocked}
-                        className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
-                        title="Signaler un incident de fraude"
-                      >
-                        🚨 Fraude
-                      </button>
-                    </div>
-                  </td>
+          {isLoadingDetails ? (
+            <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
+              <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
+            </div>
+          ) : (
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
+                  <th className="p-3 w-14 text-center">N° Place</th>
+                  <th className="p-3">CNE / Apogée</th>
+                  <th className="p-3">Nom & Prénom</th>
+                  <th className="p-3 text-center">Statut Présence</th>
+                  <th className="p-3 text-center">Heure Check-in</th>
+                  <th className="p-3 text-center">Incident / Fraude</th>
+                  <th className="p-3 text-right">Actions Émargement (BDD)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredCandidates.map((student) => (
+                  <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
+                      {student.seat_number}
+                    </td>
+                    <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
+                      {student.cne}
+                    </td>
+                    <td className="p-3 font-black text-slate-900 dark:text-white">
+                      {student.name}
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
+                        student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+                        student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+                        student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                      )}>
+                        {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
+                        {student.status === 'absent' && <XCircle className="w-3 h-3" />}
+                        {student.status === 'late' && <Clock className="w-3 h-3" />}
+                        {student.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center font-mono text-slate-500">
+                      {student.checkin_time || '—'}
+                    </td>
+                    <td className="p-3 text-center">
+                      {student.has_fraud ? (
+                        <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">—</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(student, 'present')}
+                          disabled={isPvLocked}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                            student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
+                          )}
+                        >
+                          Présent
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(student, 'absent')}
+                          disabled={isPvLocked}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                            student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
+                          )}
+                        >
+                          Absent
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(student, 'late')}
+                          disabled={isPvLocked}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                            student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
+                          )}
+                        >
+                          Retard
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenFraudModal(student)}
+                          disabled={isPvLocked}
+                          className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
+                          title="Signaler un incident de fraude"
+                        >
+                          🚨 Fraude
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

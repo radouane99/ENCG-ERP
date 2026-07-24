@@ -39,18 +39,22 @@ class ExamAttendanceController extends Controller
         // ou dans `attendances` si on scanne vraiment.
         // On va simuler un vrai comptage depuis la table `attendances` en utilisant le module_id
         
-        // Nombre d'étudiants marqués présents aujourd'hui pour ce module
-        $present = Attendance::whereHas('session', function($q) use ($exam) {
-            $q->where('module_id', $exam->module_id)
-              ->whereDate('date', $exam->exam_date ?? today());
-        })->where('status', 'present')->count();
-        
-        // Si aucune session d'attendance trouvée, on simule basé sur les notes (grades) si elles existent
+        // Nombre d'étudiants marqués présents pour cet examen dans exam_seatings
+        $present = \DB::table('exam_seatings')
+            ->where('exam_id', $examId)
+            ->where('is_present', true)
+            ->count();
+
+        // Si pas d'émargement encore enregistré dans exam_seatings, compter via attendance_sessions ou grades
         if ($present === 0 && $totalStudents > 0) {
-             $present = \App\Models\Grade::whereHas('assessment', function($q) use ($exam) {
-                 $q->where('module_id', $exam->module_id);
-             })->where('absent', false)->count();
+            $present = \DB::table('attendance_records')
+                ->whereHas('session', function($q) use ($exam) {
+                    $q->where('module_id', $exam->module_id);
+                })
+                ->where('status', 'present')
+                ->count();
         }
+
 
         if ($totalStudents === 0) {
             return response()->json([

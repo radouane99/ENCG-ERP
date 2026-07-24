@@ -338,8 +338,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         // New Convocations & Live routes
         Route::post('/{sessionId}/auto-assign-proctors', [ConvocationController::class, 'autoAssign']);
         // Old endpoints are replaced by the /convocations group below
-        Route::get('/{examId}/live-stats', [ExamAttendanceController::class, 'getLiveStats']);
+        Route::get('/{examId}/live-stats', [ConvocationController::class, 'liveStats']);
         Route::get('/{examId}/details', [ConvocationController::class, 'getDetails']);
+        Route::post('/{examId}/update-seating-status', [ConvocationController::class, 'updateSeatingStatus']);
+
         // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
         Route::post('/{examId}/notify-absents', [ConvocationController::class, 'notifyAbsents']);
         Route::post('/{examId}/generate-convocations', [ConvocationController::class, 'generate']);

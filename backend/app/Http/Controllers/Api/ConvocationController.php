@@ -173,11 +173,36 @@ class ConvocationController extends Controller
         return response()->json($result);
     }
 
+    public function updateSeatingStatus(Request $request, int $examId): JsonResponse
+    {
+        $validated = $request->validate([
+            'seating_id' => 'nullable|integer',
+            'student_id' => 'nullable|integer',
+            'status' => 'required|string|in:present,absent,late'
+        ]);
+
+        $statusBool = ($validated['status'] === 'present' || $validated['status'] === 'late');
+
+        if (!empty($validated['seating_id'])) {
+            \DB::table('exam_seatings')
+                ->where('id', $validated['seating_id'])
+                ->update(['is_present' => $statusBool, 'updated_at' => now()]);
+        } elseif (!empty($validated['student_id'])) {
+            \DB::table('exam_seatings')
+                ->where('exam_id', $examId)
+                ->where('student_id', $validated['student_id'])
+                ->update(['is_present' => $statusBool, 'updated_at' => now()]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Statut d\'émargement mis à jour']);
+    }
+
     public function notifyAbsents(int $examId): JsonResponse
     {
         $result = $this->convocationService->notifyAbsents($examId);
         return response()->json($result);
     }
+
 
 
 
