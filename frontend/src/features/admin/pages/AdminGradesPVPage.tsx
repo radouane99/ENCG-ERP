@@ -49,7 +49,18 @@ export default function AdminGradesPVPage() {
     }
   }, [selectedFiliere, selectedSemester])
 
-  const [session, setSession] = useState<'normale' | 'rattrapage' | 'totale'>('normale')
+  const sessionParam = searchParams.get('session')
+  const [session, setSession] = useState<'normale' | 'rattrapage' | 'totale'>(
+    sessionParam === 'rattrapage' || sessionParam === 'totale' ? sessionParam : 'normale'
+  )
+
+  useEffect(() => {
+    const s = searchParams.get('session')
+    if (s === 'rattrapage' || s === 'totale' || s === 'normale') {
+      setSession(s)
+    }
+  }, [searchParams])
+
   const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
   const [viewAllGroups, setViewAllGroups] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
@@ -106,12 +117,16 @@ export default function AdminGradesPVPage() {
 
   // Fetch consolidated PV data
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
-    queryKey: ['module-pv', moduleId, groupId, viewAllGroups],
+    queryKey: ['module-pv', moduleId, groupId, viewAllGroups, session],
     queryFn: () => api.get(`/modules/${moduleId}/pv`, {
-      params: { group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all') }
+      params: {
+        group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all'),
+        session: session
+      }
     }).then(res => res.data),
     enabled: !!moduleId,
   })
+
 
   // Synchronize selection state when pvData arrives
   useEffect(() => {
@@ -307,9 +322,10 @@ export default function AdminGradesPVPage() {
       } else {
         const res = await api.post(`/modules/${moduleId}/pv/sign`, {
           group_id: (groupId && groupId !== 'null') ? groupId : 'all',
+          session: session,
           signature_data: dataUrl
         })
-        toast.success(res.data.message)
+        toast.success(res.data.message || `PV (${session}) signé et verrouillé avec succès !`)
         setShowSignatureModal(false)
         refetchPV()
       }
@@ -623,7 +639,8 @@ export default function AdminGradesPVPage() {
 
           {pvData.signature && (
             <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" /> Signé ({pvData.signature.signed_by || 'Enseignant'})
+              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" />
+              Signé ({pvData.signature.signed_by || 'Enseignant'}) — {session === 'normale' ? 'PV Ordinaire' : session === 'rattrapage' ? 'PV Rattrapage' : 'PV Vue Totale'}
             </span>
           )}
 
@@ -634,7 +651,7 @@ export default function AdminGradesPVPage() {
             }}
             className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
           >
-            ✍️ {pvData.signature ? 'Re-signer le PV de Module' : 'Signer le PV de Module (Enseignant)'}
+            ✍️ {pvData.signature ? `Re-signer le PV (${session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})` : `Signer le PV (${session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})`}
           </Button>
 
         </div>

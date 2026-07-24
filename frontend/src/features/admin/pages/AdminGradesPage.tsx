@@ -138,6 +138,7 @@ export default function AdminGradesPage() {
   const [semestre, setSemestre] = useState('')
   const [groupe, setGroupe] = useState('')
   const [module, setModule] = useState('')
+  const [selectedSession, setSelectedSession] = useState<'normale' | 'rattrapage'>('normale')
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [modules, setModules] = useState<any[]>([])
@@ -393,22 +394,46 @@ export default function AdminGradesPage() {
 
       {/* Main 4-Step Selector Panel */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-xl space-y-8 relative">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-6 gap-4">
           <div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
               <Target className="w-6 h-6 text-indigo-600" />
               Sélecteur de Cohorte & Matrice des Notes
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              Suivez les 4 étapes numérotées ci-dessous pour accéder au registre de saisie officiel.
+              Choisissez d'abord la session (Ordinaire ou Rattrapage), puis suivez les 4 étapes.
             </p>
           </div>
 
-          {isFormComplete && (
-            <span className="px-4 py-1.5 bg-emerald-100 text-emerald-900 rounded-full text-xs font-black uppercase tracking-wider animate-pulse flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Matrice Prête
-            </span>
-          )}
+          {/* Session Type Toggle */}
+          <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setSelectedSession('normale')}
+              className={cn(
+                "px-5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                selectedSession === 'normale'
+                  ? "bg-[#0f2863] text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              )}
+            >
+              <Zap className="w-3.5 h-3.5 text-blue-300" />
+              Session Ordinaire
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedSession('rattrapage')}
+              className={cn(
+                "px-5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                selectedSession === 'rattrapage'
+                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              Session Rattrapage
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -556,30 +581,52 @@ export default function AdminGradesPage() {
 
         {/* Selection Confirmation Card (When Selection Complete) */}
         {isFormComplete && (
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800 p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className={cn(
+            "p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300 border shadow-md",
+            selectedSession === 'rattrapage'
+              ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-300 dark:border-amber-800"
+              : "bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800"
+          )}>
             <div>
-              <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-300 tracking-widest">SÉLECTION CONFIRMÉE</span>
-              <h4 className="text-base font-black text-slate-900 dark:text-white mt-0.5">
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border inline-block mb-1",
+                selectedSession === 'rattrapage'
+                  ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200"
+                  : "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200"
+              )}>
+                SÉLECTION CONFIRMÉE — SESSION {selectedSession === 'normale' ? 'ORDINAIRE (NORMALE)' : 'DE RATTRAPAGE'}
+              </span>
+              <h4 className="text-base font-black text-slate-900 dark:text-white">
                 {selectedFiliereObj?.code || 'FILIÈRE'} — Semestre {semestre} — {selectedModuleObj?.name || 'Module'}
               </h4>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate(`/admin/grades/pv?filiere_id=${filiere}&semester=${semestre}&module_id=${module}`)}
+                onClick={() => navigate(`/admin/grades/pv?session=${selectedSession}&filiere_id=${filiere}&semester=${semestre}&module_id=${module}`)}
                 className="px-5 py-3 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-black shadow-sm transition-all cursor-pointer flex items-center gap-2"
               >
-                <FileText className="w-4 h-4 text-indigo-600" /> Consulter le PV
+                <FileText className="w-4 h-4 text-indigo-600" /> Consulter le PV ({selectedSession === 'normale' ? 'Ordinaire' : 'Rattrapage'})
               </button>
 
-              <button
-                type="button"
-                onClick={handleOpenRegistry}
-                className="px-6 py-3.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6] text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4 text-amber-300" /> Open Registre des Notes <ArrowRight className="w-4 h-4" />
-              </button>
+              {selectedSession === 'rattrapage' ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/admin/grades/pv?session=rattrapage&filiere_id=${filiere}&semester=${semestre}&module_id=${module}`)}
+                  className="px-6 py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-200" /> Accéder à la Saisie du Rattrapage <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleOpenRegistry}
+                  className="px-6 py-3.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6] text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4 text-amber-300" /> Open Registre des Notes <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         )}

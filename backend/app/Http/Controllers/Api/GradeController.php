@@ -218,13 +218,15 @@ class GradeController extends Controller
                 ->first();
             $groupId = $registration ? $registration->group_id : null;
             
-            if ($groupId) {
+            if ($groupId && !$isRattrapageAssessment) {
                 $isSigned = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)
-                    ->where('group_id', $groupId)
+                    ->where(function($q) use ($groupId) {
+                        $q->where('group_id', $groupId)->orWhereNull('group_id');
+                    })
                     ->exists();
                 if ($isSigned) {
                     return response()->json([
-                        'message' => 'Opération refusée : Le PV de délibération pour ce groupe a été signé électroniquement et verrouillé.'
+                        'message' => 'Opération refusée : Le PV de délibération pour ce groupe a été signé électroniquement et verrouillé pour la session ordinaire.'
                     ], 403);
                 }
             }
@@ -430,19 +432,23 @@ class GradeController extends Controller
                                 $newTotalWeight += $a->weight;
                             }
                         }
-                        $moyenneRattrapage = $newTotalWeight > 0 ? ($newWeightedSum * (100 / $newTotalWeight)) : 0;
-                        $moyenneFinale = max($moyenneNormale ?? 0, round($moyenneRattrapage, 2));
+                        $rawMoyenneRattrapage = $newTotalWeight > 0 ? round($newWeightedSum * (100 / $newTotalWeight), 2) : 0;
+                        $cappedMoyenneRattrapage = $rawMoyenneRattrapage >= 10.00 ? 10.00 : $rawMoyenneRattrapage;
+                        $moyenneFinale = max($moyenneNormale ?? 0, $cappedMoyenneRattrapage);
                     } else {
-                        $moyenneFinale = max($moyenneNormale ?? 0, $rCalcVal);
+                        $cappedMoyenneRattrapage = $rCalcVal >= 10.00 ? 10.00 : $rCalcVal;
+                        $moyenneFinale = max($moyenneNormale ?? 0, $cappedMoyenneRattrapage);
                     }
 
-                    if ($moyenneFinale >= 10) {
-                        $decisionFinale = 'VAR'; // Validé Après Rattrapage
+                    if ($moyenneFinale >= 10.00) {
+                        $decisionFinale = ($moyenneNormale !== null && $moyenneNormale >= 10.00) ? 'V' : 'VAR';
                     } else {
                         $decisionFinale = 'NV'; // Non Validé après Rattrapage
                     }
                 }
             }
+
+
 
             return [
                 'student_id' => $student->id,
@@ -460,13 +466,21 @@ class GradeController extends Controller
             ];
         });
 
+        $requestedSession = $request->query('session', 'normale');
+        if (!in_array($requestedSession, ['normale', 'rattrapage', 'totale'], true)) {
+            $requestedSession = 'normale';
+        }
+
         $signature = null;
         $sigGroupId = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? intval($groupId) : null;
         $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
         if ($sigGroupId) {
             $sigQuery->where('group_id', $sigGroupId);
         }
-        $sigRecord = $sigQuery->with('signer')->first();
+        $sigQuery->where(function($q) use ($requestedSession) {
+            $q->where('session', $requestedSession);
+        });
+        $sigRecord = $sigQuery->with('signer')->latest()->first();
 
         if ($sigRecord) {
             $signature = [
@@ -475,6 +489,7 @@ class GradeController extends Controller
                 'signature_data' => $sigRecord->signature_data,
                 'ip_address' => $sigRecord->ip_address,
                 'digital_seal' => $sigRecord->digital_seal,
+                'session' => $sigRecord->session ?? $requestedSession,
             ];
         }
 
@@ -550,11 +565,16 @@ class GradeController extends Controller
     {
         $validated = $request->validate([
             'group_id'       => 'nullable',
+            'session'        => 'nullable|string|in:normale,rattrapage,totale',
             'signature_data' => 'nullable|string',
         ]);
         $module   = \App\Models\Module::with('assessments')->findOrFail($moduleId);
         $rawGroup = $request->input('group_id');
         $groupId  = ($rawGroup && !in_array($rawGroup, ['all', 'null', 'undefined', ''], true)) ? intval($rawGroup) : null;
+        $session  = $request->input('session', 'normale');
+        if (!in_array($session, ['normale', 'rattrapage', 'totale'], true)) {
+            $session = 'normale';
+        }
         $user     = $request->user();
 
         // Determine target group IDs for signature
@@ -568,7 +588,7 @@ class GradeController extends Controller
             }
         }
 
-        $digitalSeal = hash('sha256', "module:{$moduleId}|signer:{$user->id}|ts:" . now()->timestamp);
+        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|signer:{$user->id}|ts:" . now()->timestamp);
         $signatureRecord = null;
 
         foreach ($targetGroupIds as $gId) {
@@ -576,6 +596,7 @@ class GradeController extends Controller
                 [
                     'module_id' => $moduleId,
                     'group_id'  => $gId,
+                    'session'   => $session,
                 ],
                 [
                     'signed_by'      => $user->id,
