@@ -1772,8 +1772,10 @@ export default function AdminGradesPVPage() {
                               const mInfo = s.module_grades?.[m.id]
                               const note = mInfo?.note
                               const dec = mInfo?.decision
+                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE'
 
                               const noteStyle = 
+                                isFraud ? 'text-rose-700 dark:text-rose-300 font-black bg-rose-100/90 dark:bg-rose-950/80 px-1 py-0.5 rounded border border-rose-400' :
                                 note === null || note === undefined ? '' :
                                 note >= 10.00 ? 'text-emerald-700 dark:text-emerald-300 font-extrabold' :
                                 note >= 6.00 ? 'text-amber-700 dark:text-amber-300 font-extrabold' :
@@ -1782,17 +1784,18 @@ export default function AdminGradesPVPage() {
                               return (
                                 <React.Fragment key={m.id}>
                                   <td className={cn("py-3 px-2 text-center border-r border-slate-200 dark:border-slate-800 font-mono text-xs", noteStyle)}>
-                                    {note !== null && note !== undefined ? Number(note).toFixed(2) : '–'}
+                                    {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
                                   </td>
                                   <td className="py-3 px-1.5 text-center border-r border-slate-200 dark:border-slate-800">
                                     <span className={cn(
                                       "text-[9px] px-1.5 py-0.5 rounded-full font-sans font-black uppercase tracking-wider",
+                                      isFraud ? "bg-rose-600 text-white shadow-md font-black animate-pulse" :
                                       dec === 'V' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300" :
                                       dec === 'VAR' ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" :
                                       dec === 'VPC' || dec === 'VC' ? "bg-indigo-100 text-indigo-950 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 font-black" :
                                       "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
                                     )}>
-                                      {dec || 'NV'}
+                                      {isFraud ? '🚨 FRAUDE' : (dec || 'NV')}
                                     </span>
                                   </td>
                                   <td className="py-3 px-1.5 text-center border-r border-slate-200 dark:border-slate-800">
@@ -1808,6 +1811,7 @@ export default function AdminGradesPVPage() {
                                 </React.Fragment>
                               )
                             })}
+
 
 
                             {/* Moyenne Semestrielle Cell */}
@@ -1833,16 +1837,19 @@ export default function AdminGradesPVPage() {
                             <td className="py-3.5 px-4 text-center">
                               <span className={cn(
                                 "px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm border inline-block",
+                                s.has_fraud || s.decision_global === 'FRAUDE' ? "bg-rose-600 text-white border-rose-700 font-black animate-pulse shadow-md" :
                                 s.decision_global === 'V' ? "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200" :
                                 s.decision_global === 'VAR' ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200" :
                                 s.decision_global === 'RAT' ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/50 dark:text-orange-200" :
                                 "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-200"
                               )}>
-                                {s.decision_global === 'V' ? 'Validé (V)' :
+                                {s.has_fraud || s.decision_global === 'FRAUDE' ? '🚨 CONSEIL DISCIPLINE (0/20)' :
+                                 s.decision_global === 'V' ? 'Validé (V)' :
                                  s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
                                  s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
                                  'Non Validé (NV)'}
                               </span>
+
                             </td>
                           </tr>
                         )

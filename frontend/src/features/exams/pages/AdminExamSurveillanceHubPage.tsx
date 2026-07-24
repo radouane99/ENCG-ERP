@@ -4,7 +4,7 @@ import {
   ShieldCheck, ArrowLeft, Printer, Download, Search, CheckCircle2,
   XCircle, AlertTriangle, Clock, UserCheck, Eye, RefreshCw,
   Sparkles, FileText, Lock, ShieldAlert, Award, UserX, AlertCircle, Check, X, Camera, QrCode,
-  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus
+  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus, Package
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -49,8 +49,9 @@ export default function AdminExamSurveillanceHubPage() {
   // Sound Feedback
   const [soundEnabled, setSoundEnabled] = useState(true)
 
-  // Admin Override Mode
+  // Admin Override Mode & Exam Metadata
   const [adminSupervisorName, setAdminSupervisorName] = useState('Admin ENCG Fès (Responsable)')
+  const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('')
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('')
@@ -96,13 +97,13 @@ export default function AdminExamSurveillanceHubPage() {
       gain.connect(ctx.destination)
 
       if (type === 'present') {
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime) // D5
-        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08) // A5
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime)
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08)
         gain.gain.setValueAtTime(0.15, ctx.currentTime)
         osc.start()
         osc.stop(ctx.currentTime + 0.22)
       } else if (type === 'absent') {
-        osc.frequency.setValueAtTime(330, ctx.currentTime) // E4
+        osc.frequency.setValueAtTime(330, ctx.currentTime)
         gain.gain.setValueAtTime(0.12, ctx.currentTime)
         osc.start()
         osc.stop(ctx.currentTime + 0.15)
@@ -167,7 +168,6 @@ export default function AdminExamSurveillanceHubPage() {
       }))
       setCandidates(mapped)
     } else if (detailsData?.exam) {
-      // Fallback query to get students from group or filiere if seatings not generated yet
       api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
         .then(res => {
           const rawStudents = res.data?.data || res.data || []
@@ -252,7 +252,6 @@ export default function AdminExamSurveillanceHubPage() {
     setCandidates(prev => prev.map(c => ({ ...c, status: 'present', checkin_time: c.checkin_time || timeNow })))
     playAudioFeedback('present')
 
-    // Fire background updates
     candidates.forEach(c => {
       updateAttendanceMutation.mutate({ seating_id: c.seating_id, student_id: c.student_id, status: 'present' })
     })
@@ -277,12 +276,11 @@ export default function AdminExamSurveillanceHubPage() {
     toast.success('Réinitialisation terminée : Tous les candidats marqués absents.', { id: toastId })
   }
 
-  // QR Scan manual submit handler
+  // Process QR Code Scan
   const handleProcessScanCode = () => {
     if (!scannedQrToken.trim()) return
     const token = scannedQrToken.trim().toUpperCase()
     
-    // Find candidate by CNE, ID or Seat
     const candidate = candidates.find(c => c.cne.toUpperCase() === token || c.seat_number.toString().toUpperCase() === token || c.name.toUpperCase().includes(token))
     
     if (candidate) {
@@ -309,7 +307,7 @@ export default function AdminExamSurveillanceHubPage() {
     setShowFraudModal(true)
   }
 
-  // Submit Fraud Report to DB
+  // Submit Fraud Report
   const handleSubmitFraudReport = async () => {
     if (!selectedStudentForFraud) return
     if (!fraudDescription.trim()) {
@@ -362,7 +360,7 @@ export default function AdminExamSurveillanceHubPage() {
     }
   }
 
-  // Canvas Drawing Handlers for Signature
+  // Canvas Signature
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -420,7 +418,7 @@ export default function AdminExamSurveillanceHubPage() {
     toast.success('✍️ Signature du surveillant enregistrée !')
   }
 
-  // Seal & Lock PV
+  // Lock PV
   const handleLockPV = async () => {
     if (!signatureDataUrl) {
       toast.error('Veuillez signer le PV avant de le clôturer.')
@@ -454,698 +452,985 @@ export default function AdminExamSurveillanceHubPage() {
   const lateCount = candidates.filter(c => c.status === 'late').length
   const fraudCount = incidentsList.length
   const presenceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0
+  const finalCopiesCount = customCopiesCount !== '' ? Number(customCopiesCount) : presentCount
+
+  // Trigger Print Only A4 PV Document
+  const handlePrintOfficialPV = () => {
+    window.print()
+  }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-6 pb-24 animate-in fade-in">
+    <>
+      {/* 🖨️ STRICT A4 PRINTABLE DOCUMENT CSS RULES */}
+      <style>{`
+        @media print {
+          body {
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .no-print, header, sidebar, nav, button, .print\\:hidden, #root > div > header, #root > div > aside {
+            display: none !important;
+          }
+          #official-pv-printable {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm 15mm !important;
+            background: white !important;
+            color: black !important;
+            font-family: Arial, sans-serif !important;
+          }
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+        }
+      `}</style>
 
-      {/* Top Banner Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#254ea8] text-white p-8 rounded-3xl shadow-xl space-y-6">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-amber-400 font-bold shadow-lg shrink-0">
-              <ShieldCheck className="w-8 h-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Espace Administration ENCG — BDD Connectée
-                </span>
-                {isPvLocked && (
-                  <span className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
-                    🔒 PV Scellé (SHA-256)
+      {/* WEB APPLICATION DASHBOARD CONTAINER (HIDDEN WHEN PRINTING) */}
+      <div className="space-y-6 max-w-7xl mx-auto p-6 pb-24 animate-in fade-in print:hidden">
+
+        {/* Top Banner Header */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#254ea8] text-white p-8 rounded-3xl shadow-xl space-y-6">
+          <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-amber-400 font-bold shadow-lg shrink-0">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Espace Administration ENCG — BDD Connectée
                   </span>
-                )}
-              </div>
-              <h1 className="text-2xl font-black tracking-tight mt-1">
-                Hub de Surveillance d'Examen & Émargement Officiel
-              </h1>
-              <p className="text-xs text-blue-100/80 mt-0.5">
-                Module : <strong>{examObj?.module?.name || 'Management Stratégique'}</strong> • Filière : <strong>{examObj?.module?.filiere?.name || 'ENCG Grande École'}</strong> • Salle : <strong>{examObj?.room?.name || 'Amphi A'}</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setSoundEnabled(v => !v)}
-              className={cn("px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border backdrop-blur-md", soundEnabled ? "bg-emerald-500/20 text-emerald-200 border-emerald-400/30" : "bg-white/10 text-white/60 border-white/20")}
-              title="Activer/Désactiver le signal sonore lors du check-in"
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-white/50" />}
-              {soundEnabled ? 'Bip : ON' : 'Bip : OFF'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowQrScanModal(true)}
-              className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <Camera className="w-4 h-4 text-emerald-100" /> Scanner QR Caméra
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowPvPreviewModal(true)}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
-            >
-              <FileCheck className="w-4 h-4 text-sky-300" /> Aperçu PV PDF
-            </button>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
-            >
-              <Printer className="w-4 h-4" /> Imprimer Fiche
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowSignatureModal(true)}
-              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all flex items-center gap-2"
-            >
-              <FileText className="w-4 h-4" /> {signatureDataUrl ? '✓ PV Signé' : '✍️ Signer le PV'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleLockPV}
-              disabled={isPvLocked}
-              className={cn(
-                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-2",
-                isPvLocked ? "bg-red-900 text-red-300 cursor-not-allowed" : "bg-gradient-to-r from-red-600 to-rose-700 text-white hover:scale-105"
-              )}
-            >
-              <Lock className="w-4 h-4" /> {isPvLocked ? '🔒 PV Clôturé' : '🔒 Clôturer le PV'}
-            </button>
-          </div>
-        </div>
-
-        {/* Admin Takeover Banner */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-md">
-              🛡️
-            </div>
-            <div>
-              <div className="text-xs font-black text-white">Mode Prise en Main & Remplacement Administrateur</div>
-              <div className="text-[11px] text-blue-100/70">
-                Vous assurez la responsabilité de la surveillance en cas d'absence du professeur titulaire.
+                  {isPvLocked && (
+                    <span className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+                      🔒 PV Scellé (SHA-256)
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl font-black tracking-tight mt-1">
+                  Hub de Surveillance d'Examen & Émargement Officiel
+                </h1>
+                <p className="text-xs text-blue-100/80 mt-0.5">
+                  Module : <strong>{examObj?.module?.name || 'Management Stratégique'}</strong> • Filière : <strong>{examObj?.module?.filiere?.name || 'ENCG Grande École'}</strong> • Salle : <strong>{examObj?.room?.name || 'Amphi A'}</strong>
+                </p>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-xs text-blue-100 font-bold">Surveillant Responsable :</span>
-            <input
-              type="text"
-              value={adminSupervisorName}
-              onChange={e => setAdminSupervisorName(e.target.value)}
-              disabled={isPvLocked}
-              className="px-3 py-1.5 bg-white/20 border border-white/30 rounded-xl text-xs font-bold text-white placeholder-blue-200 outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-        </div>
-      </div>
 
-      {/* ⚡ SAISIE RAPIDE & BATCH OPERATIONS TOOLBAR */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-amber-500 animate-bounce" /> Saisie Rapide (1-Clic) :
-          </span>
-          <Button
-            onClick={handleMarkAllPresent}
-            disabled={isPvLocked}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black px-4 shadow-md flex items-center gap-1.5"
-          >
-            <CheckSquare className="w-4 h-4" /> Tout Marquer PRÉSENT
-          </Button>
-
-          <Button
-            onClick={handleResetAllAbsent}
-            disabled={isPvLocked}
-            variant="outline"
-            className="border-slate-300 dark:border-slate-700 text-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"
-          >
-            <UserX className="w-4 h-4 text-red-500" /> Tout Réinitialiser (Absent)
-          </Button>
-        </div>
-
-        {/* View Switcher: List vs Room Grid */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setViewMode('list')}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
-              viewMode === 'list' ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
-            )}
-          >
-            <List className="w-4 h-4" /> Vue Tableau Liste
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('grid')}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
-              viewMode === 'grid' ? "bg-white dark:bg-slate-900 text-[#0f2863] dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
-            )}
-          >
-            <Grid className="w-4 h-4 text-indigo-600" /> 🗺️ Plan de Salle (Grille)
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Effectif Attendu</span>
-          <div className="text-2xl font-black text-slate-800 dark:text-white mt-1">
-            {totalCount} <span className="text-xs font-bold text-slate-400">Étudiants</span>
-          </div>
-        </div>
-
-        <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Présents</span>
-          <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
-            {presentCount} <span className="text-xs font-bold text-emerald-600/70">({presenceRate}%)</span>
-          </div>
-        </div>
-
-        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider">Absents</span>
-          <div className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
-            {absentCount} <span className="text-xs font-bold text-red-600/70">Étudiants</span>
-          </div>
-        </div>
-
-        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Retards</span>
-          <div className="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
-            {lateCount} <span className="text-xs font-bold text-amber-600/70">Étudiants</span>
-          </div>
-        </div>
-
-        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Incidents / Fraudes</span>
-          <div className="text-2xl font-black text-rose-700 dark:text-rose-300 mt-1">
-            {fraudCount} <span className="text-xs font-bold text-rose-600/70">Signalés</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-6">
-
-        {/* Toolbar & Filters */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Rechercher par nom ou CNE/Apogée..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-[#0f2863]"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            {[
-              { id: 'all', label: 'Tous' },
-              { id: 'present', label: 'Présents' },
-              { id: 'absent', label: 'Absents' },
-              { id: 'late', label: 'Retards' },
-              { id: 'fraud', label: 'Incidents 🚨' },
-            ].map(f => (
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
-                key={f.id}
                 type="button"
-                onClick={() => setStatusFilter(f.id as any)}
+                onClick={() => setSoundEnabled(v => !v)}
+                className={cn("px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border backdrop-blur-md", soundEnabled ? "bg-emerald-500/20 text-emerald-200 border-emerald-400/30" : "bg-white/10 text-white/60 border-white/20")}
+                title="Activer/Désactiver le signal sonore lors du check-in"
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-white/50" />}
+                {soundEnabled ? 'Bip : ON' : 'Bip : OFF'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowQrScanModal(true)}
+                className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <Camera className="w-4 h-4 text-emerald-100" /> Scanner QR Caméra
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPvPreviewModal(true)}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
+              >
+                <FileCheck className="w-4 h-4 text-sky-300" /> Aperçu PV PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintOfficialPV}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" /> Imprimer PV Officiel A4
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSignatureModal(true)}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
+              >
+                <FileText className="w-4 h-4" /> {signatureDataUrl ? '✓ PV Signé' : '✍️ Signer le PV'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLockPV}
+                disabled={isPvLocked}
                 className={cn(
-                  "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                  statusFilter === f.id
-                    ? "bg-[#0f2863] text-white shadow-md"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                  "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-2",
+                  isPvLocked ? "bg-red-900 text-red-300 cursor-not-allowed" : "bg-gradient-to-r from-red-600 to-rose-700 text-white hover:scale-105"
                 )}
               >
-                {f.label}
+                <Lock className="w-4 h-4" /> {isPvLocked ? '🔒 PV Clôturé' : '🔒 Clôturer le PV'}
               </button>
-            ))}
+            </div>
+          </div>
+
+          {/* Admin Takeover & Copies Count Banner */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-md">
+                  🛡️
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white">Responsable de Surveillance</div>
+                  <div className="text-[11px] text-blue-100/70">Nom affiché sur le PV officiel imprimable.</div>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={adminSupervisorName}
+                onChange={e => setAdminSupervisorName(e.target.value)}
+                disabled={isPvLocked}
+                className="w-48 px-3 py-1.5 bg-white/20 border border-white/30 rounded-xl text-xs font-bold text-white placeholder-blue-200 outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-400 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-md">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white">Copies Rendues & Scellées</div>
+                  <div className="text-[11px] text-blue-100/70">Inscrit sur l'enveloppe d'examen officiellement.</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder={presentCount.toString()}
+                  value={customCopiesCount}
+                  onChange={e => setCustomCopiesCount(e.target.value !== '' ? Number(e.target.value) : '')}
+                  disabled={isPvLocked}
+                  className="w-20 px-3 py-1.5 bg-white/20 border border-white/30 rounded-xl text-xs font-black text-white text-center outline-none focus:ring-2 focus:ring-teal-300"
+                />
+                <span className="text-xs font-bold text-teal-200">Copies</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* VIEW 1: TABLE LIST MODE */}
-        {viewMode === 'list' && (
-          <div className="overflow-x-auto">
-            {isLoadingDetails ? (
-              <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
-                <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
-              </div>
-            ) : (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
-                    <th className="p-3 w-14 text-center">N° Place</th>
-                    <th className="p-3">CNE / Apogée</th>
-                    <th className="p-3">Nom & Prénom</th>
-                    <th className="p-3 text-center">Statut Présence</th>
-                    <th className="p-3 text-center">Heure Check-in</th>
-                    <th className="p-3 text-center">Incident / Fraude</th>
-                    <th className="p-3 text-right">Actions Émargement (BDD)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {filteredCandidates.map((student) => (
-                    <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
-                        {student.seat_number}
-                      </td>
-                      <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
-                        {student.cne}
-                      </td>
-                      <td className="p-3 font-black text-slate-900 dark:text-white">
-                        {student.name}
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
-                          student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-                          student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-                          student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                        )}>
-                          {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
-                          {student.status === 'absent' && <XCircle className="w-3 h-3" />}
-                          {student.status === 'late' && <Clock className="w-3 h-3" />}
-                          {student.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center font-mono text-slate-500">
-                        {student.checkin_time || '—'}
-                      </td>
-                      <td className="p-3 text-center">
-                        {student.has_fraud ? (
-                          <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
-                            <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">—</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(student, 'present')}
-                            disabled={isPvLocked}
-                            className={cn(
-                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                              student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
-                            )}
-                          >
-                            Présent
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(student, 'absent')}
-                            disabled={isPvLocked}
-                            className={cn(
-                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                              student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
-                            )}
-                          >
-                            Absent
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(student, 'late')}
-                            disabled={isPvLocked}
-                            className={cn(
-                              "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
-                              student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
-                            )}
-                          >
-                            Retard
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenFraudModal(student)}
-                            disabled={isPvLocked}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
-                            title="Signaler un incident de fraude"
-                          >
-                            🚨 Fraude
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+        {/* ⚡ SAISIE RAPIDE & BATCH OPERATIONS TOOLBAR */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-amber-500 animate-bounce" /> Saisie Rapide (1-Clic) :
+            </span>
+            <Button
+              onClick={handleMarkAllPresent}
+              disabled={isPvLocked}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black px-4 shadow-md flex items-center gap-1.5"
+            >
+              <CheckSquare className="w-4 h-4" /> Tout Marquer PRÉSENT
+            </Button>
 
-        {/* VIEW 2: INTERACTIVE ROOM SEATING GRID MODE (PLAN DE SALLE) */}
-        {viewMode === 'grid' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>🗺️ Représentation graphique de la salle d'examen (Amphi A) — Cliquez sur une table pour changer le statut :</span>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-emerald-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Présent</span>
-                <span className="flex items-center gap-1 text-red-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Absent</span>
-                <span className="flex items-center gap-1 text-amber-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Retard</span>
-              </div>
+            <Button
+              onClick={handleResetAllAbsent}
+              disabled={isPvLocked}
+              variant="outline"
+              className="border-slate-300 dark:border-slate-700 text-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"
+            >
+              <UserX className="w-4 h-4 text-red-500" /> Tout Réinitialiser (Absent)
+            </Button>
+          </div>
+
+          {/* View Switcher: List vs Room Grid */}
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                viewMode === 'list' ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <List className="w-4 h-4" /> Vue Tableau Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                viewMode === 'grid' ? "bg-white dark:bg-slate-900 text-[#0f2863] dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <Grid className="w-4 h-4 text-indigo-600" /> 🗺️ Plan de Salle (Grille)
+            </button>
+          </div>
+        </div>
+
+        {/* KPI Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Effectif Attendu</span>
+            <div className="text-2xl font-black text-slate-800 dark:text-white mt-1">
+              {totalCount} <span className="text-xs font-bold text-slate-400">Étudiants</span>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Présents</span>
+            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+              {presentCount} <span className="text-xs font-bold text-emerald-600/70">({presenceRate}%)</span>
+            </div>
+          </div>
+
+          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider">Absents</span>
+            <div className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
+              {absentCount} <span className="text-xs font-bold text-red-600/70">Étudiants</span>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Retards</span>
+            <div className="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
+              {lateCount} <span className="text-xs font-bold text-amber-600/70">Étudiants</span>
+            </div>
+          </div>
+
+          <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Incidents / Fraudes</span>
+            <div className="text-2xl font-black text-rose-700 dark:text-rose-300 mt-1">
+              {fraudCount} <span className="text-xs font-bold text-rose-600/70">Signalés</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-6">
+
+          {/* Toolbar & Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Rechercher par nom ou CNE/Apogée..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-[#0f2863]"
+              />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
-              {filteredCandidates.map((student) => (
-                <div
-                  key={student.id}
-                  onClick={() => {
-                    if (isPvLocked) return
-                    const nextStatus = student.status === 'absent' ? 'present' : (student.status === 'present' ? 'late' : 'absent')
-                    handleToggleStatus(student, nextStatus)
-                  }}
+            <div className="flex items-center gap-2">
+              {[
+                { id: 'all', label: 'Tous' },
+                { id: 'present', label: 'Présents' },
+                { id: 'absent', label: 'Absents' },
+                { id: 'late', label: 'Retards' },
+                { id: 'fraud', label: 'Incidents 🚨' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setStatusFilter(f.id as any)}
                   className={cn(
-                    "p-3.5 rounded-2xl border-2 transition-all cursor-pointer space-y-2 select-none relative overflow-hidden group hover:scale-105 shadow-xs",
-                    student.status === 'present' && "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800",
-                    student.status === 'absent' && "bg-red-50/80 dark:bg-red-950/30 border-red-300 dark:border-red-800/80",
-                    student.status === 'late' && "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-800",
-                    student.has_fraud && "ring-2 ring-rose-500"
+                    "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                    statusFilter === f.id
+                      ? "bg-[#0f2863] text-white shadow-md"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-white/80 dark:bg-slate-800 text-slate-900 dark:text-white rounded-md text-[10px] font-black border border-slate-200 dark:border-slate-700">
-                      {student.seat_number}
-                    </span>
-                    <span className={cn(
-                      "w-2.5 h-2.5 rounded-full",
-                      student.status === 'present' && "bg-emerald-500",
-                      student.status === 'absent' && "bg-red-500",
-                      student.status === 'late' && "bg-amber-500"
-                    )} />
-                  </div>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                  <div>
-                    <div className="font-black text-xs text-slate-900 dark:text-white truncate" title={student.name}>
-                      {student.name}
-                    </div>
-                    <div className="text-[10px] font-mono text-slate-500 truncate">
-                      {student.cne}
-                    </div>
-                  </div>
+          {/* VIEW 1: TABLE LIST MODE */}
+          {viewMode === 'list' && (
+            <div className="overflow-x-auto">
+              {isLoadingDetails ? (
+                <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
+                  <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
+                </div>
+              ) : (
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-black text-[10px]">
+                      <th className="p-3 w-14 text-center">N° Place</th>
+                      <th className="p-3">CNE / Apogée</th>
+                      <th className="p-3">Nom & Prénom</th>
+                      <th className="p-3 text-center">Statut Présence</th>
+                      <th className="p-3 text-center">Heure Check-in</th>
+                      <th className="p-3 text-center">Incident / Fraude</th>
+                      <th className="p-3 text-right">Actions Émargement (BDD)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredCandidates.map((student) => (
+                      <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="p-3 text-center font-black text-slate-800 dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
+                          {student.seat_number}
+                        </td>
+                        <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
+                          {student.cne}
+                        </td>
+                        <td className="p-3 font-black text-slate-900 dark:text-white">
+                          {student.name}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
+                            student.status === 'present' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+                            student.status === 'absent' && "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+                            student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                          )}>
+                            {student.status === 'present' && <CheckCircle2 className="w-3 h-3" />}
+                            {student.status === 'absent' && <XCircle className="w-3 h-3" />}
+                            {student.status === 'late' && <Clock className="w-3 h-3" />}
+                            {student.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center font-mono text-slate-500">
+                          {student.checkin_time || '—'}
+                        </td>
+                        <td className="p-3 text-center">
+                          {student.has_fraud ? (
+                            <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] flex items-center justify-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-rose-600" /> Incident Signalé
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(student, 'present')}
+                              disabled={isPvLocked}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                                student.status === 'present' ? "bg-emerald-600 text-white" : "bg-slate-100 hover:bg-emerald-100 text-slate-700"
+                              )}
+                            >
+                              Présent
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(student, 'absent')}
+                              disabled={isPvLocked}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                                student.status === 'absent' ? "bg-red-600 text-white" : "bg-slate-100 hover:bg-red-100 text-slate-700"
+                              )}
+                            >
+                              Absent
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(student, 'late')}
+                              disabled={isPvLocked}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer",
+                                student.status === 'late' ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-amber-100 text-slate-700"
+                              )}
+                            >
+                              Retard
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenFraudModal(student)}
+                              disabled={isPvLocked}
+                              className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black rounded-lg text-[10px] transition-all cursor-pointer"
+                              title="Signaler un incident de fraude"
+                            >
+                              🚨 Fraude
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
 
-                  <div className="pt-1 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[9px] font-bold">
-                    <span className={cn(
-                      student.status === 'present' && "text-emerald-700 dark:text-emerald-300",
-                      student.status === 'absent' && "text-red-700 dark:text-red-300",
-                      student.status === 'late' && "text-amber-700 dark:text-amber-300"
-                    )}>
-                      {student.status.toUpperCase()}
-                    </span>
-                    {student.checkin_time && (
-                      <span className="font-mono text-slate-400">{student.checkin_time}</span>
+          {/* VIEW 2: INTERACTIVE ROOM SEATING GRID MODE */}
+          {viewMode === 'grid' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                <span>🗺️ Représentation graphique de la salle d'examen (Amphi A) — Cliquez sur une table pour changer le statut :</span>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1 text-emerald-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Présent</span>
+                  <span className="flex items-center gap-1 text-red-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Absent</span>
+                  <span className="flex items-center gap-1 text-amber-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Retard</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+                {filteredCandidates.map((student) => (
+                  <div
+                    key={student.id}
+                    onClick={() => {
+                      if (isPvLocked) return
+                      const nextStatus = student.status === 'absent' ? 'present' : (student.status === 'present' ? 'late' : 'absent')
+                      handleToggleStatus(student, nextStatus)
+                    }}
+                    className={cn(
+                      "p-3.5 rounded-2xl border-2 transition-all cursor-pointer space-y-2 select-none relative overflow-hidden group hover:scale-105 shadow-xs",
+                      student.status === 'present' && "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800",
+                      student.status === 'absent' && "bg-red-50/80 dark:bg-red-950/30 border-red-300 dark:border-red-800/80",
+                      student.status === 'late' && "bg-amber-50/80 dark:bg-amber-950/30 border-amber-400 dark:border-amber-800",
+                      student.has_fraud && "ring-2 ring-rose-500"
                     )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 bg-white/80 dark:bg-slate-800 text-slate-900 dark:text-white rounded-md text-[10px] font-black border border-slate-200 dark:border-slate-700">
+                        {student.seat_number}
+                      </span>
+                      <span className={cn(
+                        "w-2.5 h-2.5 rounded-full",
+                        student.status === 'present' && "bg-emerald-500",
+                        student.status === 'absent' && "bg-red-500",
+                        student.status === 'late' && "bg-amber-500"
+                      )} />
+                    </div>
+
+                    <div>
+                      <div className="font-black text-xs text-slate-900 dark:text-white truncate" title={student.name}>
+                        {student.name}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-500 truncate">
+                        {student.cne}
+                      </div>
+                    </div>
+
+                    <div className="pt-1 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[9px] font-bold">
+                      <span className={cn(
+                        student.status === 'present' && "text-emerald-700 dark:text-emerald-300",
+                        student.status === 'absent' && "text-red-700 dark:text-red-300",
+                        student.status === 'late' && "text-amber-700 dark:text-amber-300"
+                      )}>
+                        {student.status.toUpperCase()}
+                      </span>
+                      {student.checkin_time && (
+                        <span className="font-mono text-slate-400">{student.checkin_time}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Reported Incidents Summary Box */}
+        {incidentsList.length > 0 && (
+          <div className="bg-rose-50/50 dark:bg-rose-950/20 border-2 border-rose-200 dark:border-rose-800/60 rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-rose-900 dark:text-rose-200 flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-rose-600" />
+                Registre Officiel des Incidents & Cas de Fraude ({incidentsList.length})
+              </h3>
+              <span className="text-xs text-rose-600 font-bold">Inscrit au PV Officiel d'Examen</span>
+            </div>
+
+            <div className="space-y-3">
+              {incidentsList.map((inc) => (
+                <div key={inc.id} className="p-4 bg-white dark:bg-slate-900 border border-rose-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-slate-900 dark:text-white">{inc.student_name}</span>
+                      <span className="font-mono text-slate-500">({inc.cne})</span>
+                      <span className="px-2 py-0.5 bg-rose-100 text-rose-800 font-black rounded text-[9px] uppercase">
+                        {inc.type}
+                      </span>
+                    </div>
+                    <div className="text-slate-600 dark:text-slate-300 font-medium">{inc.description}</div>
+                    {inc.confiscated_items && (
+                      <div className="text-rose-700 font-bold text-[11px]">📦 Objets confisqués : {inc.confiscated_items}</div>
+                    )}
+                  </div>
+                  <div className="text-right text-slate-400 font-mono text-[10px]">
+                    Signalé à {inc.timestamp}<br />
+                    Par : {inc.reported_by}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Reported Incidents Summary Box */}
-      {incidentsList.length > 0 && (
-        <div className="bg-rose-50/50 dark:bg-rose-950/20 border-2 border-rose-200 dark:border-rose-800/60 rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-rose-900 dark:text-rose-200 flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              Registre Officiel des Incidents & Cas de Fraude ({incidentsList.length})
-            </h3>
-            <span className="text-xs text-rose-600 font-bold">Inscrit au PV Officiel d'Examen</span>
+        {/* Signature Preview Banner if signed */}
+        {signatureDataUrl && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 rounded-3xl p-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                ✓
+              </div>
+              <div>
+                <div className="font-black text-emerald-950 dark:text-emerald-200 text-sm">PV d'Examen Signé & Certifié</div>
+                <div className="text-xs text-emerald-700 dark:text-emerald-400">Responsable : {adminSupervisorName}</div>
+              </div>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-emerald-300">
+              <img src={signatureDataUrl} alt="Signature Surveillant" className="h-10 object-contain" />
+            </div>
           </div>
+        )}
 
-          <div className="space-y-3">
-            {incidentsList.map((inc) => (
-              <div key={inc.id} className="p-4 bg-white dark:bg-slate-900 border border-rose-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-slate-900 dark:text-white">{inc.student_name}</span>
-                    <span className="font-mono text-slate-500">({inc.cne})</span>
-                    <span className="px-2 py-0.5 bg-rose-100 text-rose-800 font-black rounded text-[9px] uppercase">
-                      {inc.type}
-                    </span>
+        {/* 📷 CAMERA LIVE QR SCANNER MODAL */}
+        {showQrScanModal && (
+          <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                    <Camera className="w-5 h-5" />
                   </div>
-                  <div className="text-slate-600 dark:text-slate-300 font-medium">{inc.description}</div>
-                  {inc.confiscated_items && (
-                    <div className="text-rose-700 font-bold text-[11px]">📦 Objets confisqués : {inc.confiscated_items}</div>
-                  )}
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">Scan Caméra QR Convocation</h3>
+                    <p className="text-xs text-slate-500">Scanner le QR Code de la convocation de l'étudiant</p>
+                  </div>
                 </div>
-                <div className="text-right text-slate-400 font-mono text-[10px]">
-                  Signalé à {inc.timestamp}<br />
-                  Par : {inc.reported_by}
+                <button onClick={() => setShowQrScanModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Camera Viewport Simulation */}
+              <div className="relative aspect-video bg-slate-950 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white border-2 border-emerald-500/50 shadow-inner">
+                <div className="absolute inset-8 border-2 border-dashed border-emerald-400/80 rounded-xl animate-pulse flex items-center justify-center">
+                  <QrCode className="w-16 h-16 text-emerald-400/50" />
+                </div>
+                <span className="relative z-10 text-xs font-mono bg-black/60 px-3 py-1 rounded-full text-emerald-300">
+                  📷 Caméra Active — Visez le QR Code
+                </span>
+              </div>
+
+              {/* Manual Code / Barcode Input */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ou Saisissez le Code / CNE Manuellement</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="ex: N134059281 ou A-01"
+                    value={scannedQrToken}
+                    onChange={e => setScannedQrToken(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleProcessScanCode()}
+                    className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <Button onClick={handleProcessScanCode} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
+                    Valider
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Signature Preview Banner if signed */}
-      {signatureDataUrl && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 rounded-3xl p-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-              ✓
-            </div>
-            <div>
-              <div className="font-black text-emerald-950 dark:text-emerald-200 text-sm">PV d'Examen Signé & Certifié</div>
-              <div className="text-xs text-emerald-700 dark:text-emerald-400">Responsable : {adminSupervisorName}</div>
             </div>
           </div>
-          <div className="bg-white p-2 rounded-xl border border-emerald-300">
-            <img src={signatureDataUrl} alt="Signature Surveillant" className="h-10 object-contain" />
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* 📷 CAMERA LIVE QR SCANNER MODAL */}
-      {showQrScanModal && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Scan Caméra QR Convocation</h3>
-                  <p className="text-xs text-slate-500">Scanner le QR Code de la convocation de l'étudiant</p>
-                </div>
+        {/* 📜 PRINTABLE OFFICIAL EXAM PV PREVIEW MODAL */}
+        {showPvPreviewModal && (
+          <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-3xl w-full shadow-2xl space-y-6 my-8">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Aperçu du Procès-Verbal d'Examen Officiel</h3>
+                <button onClick={() => setShowPvPreviewModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button onClick={() => setShowQrScanModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Camera Viewport Simulation */}
-            <div className="relative aspect-video bg-slate-950 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white border-2 border-emerald-500/50 shadow-inner">
-              <div className="absolute inset-8 border-2 border-dashed border-emerald-400/80 rounded-xl animate-pulse flex items-center justify-center">
-                <QrCode className="w-16 h-16 text-emerald-400/50" />
+              {/* Official Document Preview Area */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans">
+                <div className="text-center space-y-1 border-b border-slate-300 pb-4">
+                  <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
+                  <h3 className="font-bold text-slate-700">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200">
+                  <div><b>Module :</b> {examObj?.module?.name || 'Management Stratégique'}</div>
+                  <div><b>Date :</b> {new Date().toLocaleDateString('fr-FR')}</div>
+                  <div><b>Filière :</b> {examObj?.module?.filiere?.name || 'ENCG Grande École'}</div>
+                  <div><b>Salle :</b> {examObj?.room?.name || 'Amphi A'}</div>
+                  <div><b>Surveillant Responsable :</b> {adminSupervisorName}</div>
+                  <div><b>Copies Rendues :</b> <strong className="text-teal-700 font-bold">{finalCopiesCount} copies</strong></div>
+                </div>
+
+                {incidentsList.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="font-black text-rose-700">🚨 Incidents Constatés :</div>
+                    {incidentsList.map(i => (
+                      <div key={i.id} className="p-2 bg-rose-50 text-rose-900 rounded-lg text-[10px]">
+                        <b>{i.student_name} ({i.cne}) :</b> {i.description} {i.confiscated_items && `[Objet : ${i.confiscated_items}]`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {signatureDataUrl && (
+                  <div className="flex justify-end pt-4">
+                    <div className="text-center space-y-1">
+                      <div className="font-bold text-slate-700">Signature du Responsable :</div>
+                      <img src={signatureDataUrl} alt="Signature" className="h-12 object-contain mx-auto" />
+                    </div>
+                  </div>
+                )}
               </div>
-              <span className="relative z-10 text-xs font-mono bg-black/60 px-3 py-1 rounded-full text-emerald-300">
-                📷 Caméra Active — Visez le QR Code
-              </span>
-            </div>
 
-            {/* Manual Code / Barcode Input */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ou Saisissez le Code / CNE Manuellement</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="ex: N134059281 ou A-01"
-                  value={scannedQrToken}
-                  onChange={e => setScannedQrToken(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleProcessScanCode()}
-                  className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <Button onClick={handleProcessScanCode} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
-                  Valider
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs">Fermer</Button>
+                <Button onClick={handlePrintOfficialPV} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
+                  🖨️ Imprimer le PV Officiel A4
                 </Button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 📜 PRINTABLE OFFICIAL EXAM PV PREVIEW MODAL */}
-      {showPvPreviewModal && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-3xl w-full shadow-2xl space-y-6 my-8">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">Aperçu du Procès-Verbal d'Examen Officiel</h3>
-              <button onClick={() => setShowPvPreviewModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Official Document Preview Area */}
-            <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans">
-              <div className="text-center space-y-1 border-b border-slate-300 pb-4">
-                <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
-                <h3 className="font-bold text-slate-700">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200">
-                <div><b>Module :</b> {examObj?.module?.name || 'Management Stratégique'}</div>
-                <div><b>Date :</b> {new Date().toLocaleDateString('fr-FR')}</div>
-                <div><b>Filière :</b> {examObj?.module?.filiere?.name || 'ENCG Grande École'}</div>
-                <div><b>Salle :</b> {examObj?.room?.name || 'Amphi A'}</div>
-                <div><b>Surveillant Responsable :</b> {adminSupervisorName}</div>
-                <div><b>Présents / Total :</b> {presentCount} / {totalCount} ({presenceRate}%)</div>
-              </div>
-
-              {incidentsList.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-black text-rose-700">🚨 Incidents Constatés :</div>
-                  {incidentsList.map(i => (
-                    <div key={i.id} className="p-2 bg-rose-50 text-rose-900 rounded-lg text-[10px]">
-                      <b>{i.student_name} ({i.cne}) :</b> {i.description} {i.confiscated_items && `[Objet : ${i.confiscated_items}]`}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {signatureDataUrl && (
-                <div className="flex justify-end pt-4">
-                  <div className="text-center space-y-1">
-                    <div className="font-bold text-slate-700">Signature du Responsable :</div>
-                    <img src={signatureDataUrl} alt="Signature" className="h-12 object-contain mx-auto" />
+        {/* Fraud Incident Modal */}
+        {showFraudModal && selectedStudentForFraud && (
+          <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-rose-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold">
+                    🚨
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">Signalement de Fraude / Incident</h3>
+                    <p className="text-xs text-slate-500">Candidat : {selectedStudentForFraud.name} ({selectedStudentForFraud.cne})</p>
                   </div>
                 </div>
+                <button onClick={() => setShowFraudModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3.5 text-xs text-rose-900 space-y-1">
+                  <div className="font-black flex items-center gap-1.5 text-rose-800">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                    Règle Réglementaire ENCG — Sanction Automatique
+                  </div>
+                  <p className="text-[11px] opacity-90">
+                    Tout signalement de fraude attribue <strong>d'office la note 0.00 / 20</strong> au module concerné dans la matrice des délibérations avec la mention <strong>"FRAUDE"</strong>. Le dossier est transmis au Conseil de Discipline.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Type d'Incident *</label>
+                  <select
+                    value={fraudType}
+                    onChange={e => setFraudType(e.target.value as any)}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
+                  >
+                    <option value="fraude">🚨 Fraude / Triche (Téléphone, copion, aides illicites)</option>
+                    <option value="usurpation">🪪 Usurpation d'identité / Substitution</option>
+                    <option value="retard">⏱️ Retard majeur (&gt; 30 minutes)</option>
+                    <option value="refus_signature">📄 Refus de signer la feuille d'émargement</option>
+                    <option value="perturbation">⚠️ Perturbation du déroulement de l'épreuve</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Portée de la Sanction (Conseil de Discipline)</label>
+                  <select
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
+                  >
+                    <option value="module">📘 Module Unique — Note 0.00/20 attribuée au module de l'examen [Défaut]</option>
+                    <option value="semestre">📚 Semestre Entier — Note 0.00/20 étendue à tous les modules de la session</option>
+                    <option value="exclusion">🚫 Annulation Année Académique / Exclusion Temporaire</option>
+                  </select>
+                </div>
+
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Description des Faits *</label>
+                  <textarea
+                    value={fraudDescription}
+                    onChange={e => setFraudDescription(e.target.value)}
+                    placeholder="Expliquez en détail les circonstances constatées par l'équipe de surveillance..."
+                    rows={3}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Objets Confisqués (Optionnel)</label>
+                  <input
+                    type="text"
+                    value={confiscatedItems}
+                    onChange={e => setConfiscatedItems(e.target.value)}
+                    placeholder="ex: iPhone 13 Noir, Feuille A4 manuscrite dissimulée"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <Button variant="outline" onClick={() => setShowFraudModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
+                <Button onClick={handleSubmitFraudReport} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs px-6 shadow-lg">
+                  🚨 Enregistrer l'Incident au PV
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Signature Modal */}
+        {showSignatureModal && (
+          <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 className="text-base font-black text-slate-900 dark:text-white">✍️ Signature du Responsable de Surveillance</h3>
+                <button onClick={() => setShowSignatureModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50">
+                <canvas
+                  ref={canvasRef}
+                  width={400}
+                  height={160}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="w-full h-40 cursor-crosshair touch-none"
+                />
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <button type="button" onClick={clearCanvas} className="text-slate-500 font-bold hover:underline">Effacer</button>
+                <Button onClick={handleSaveSignature} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
+                  ✓ Valider la Signature
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* 📜 DEDICATED OFFICIAL A4 PROCÈS-VERBAL PRINTABLE DOCUMENT (ONLY SHOWN DURING PRINTING) */}
+      <div id="official-pv-printable" className="hidden print:block text-black bg-white">
+        
+        {/* Institutional Header */}
+        <div className="border-b-2 border-[#0f2863] pb-4 mb-4 flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="text-[10pt] font-black uppercase text-[#0f2863]">Royaume du Maroc</div>
+            <div className="text-[9pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
+            <div className="text-[9.5pt] font-black text-[#0f2863]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+          </div>
+          <div className="text-right space-y-1">
+            <div className="text-[9pt] font-mono text-slate-500">ANNÉE ACADÉMIQUE 2025/2026</div>
+            <div className="text-[9pt] font-bold text-[#0f2863]">SERVICE DES EXAMENS</div>
+            <div className="text-[8pt] text-slate-400">Date d'édition : {new Date().toLocaleDateString('fr-FR')}</div>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center my-4 space-y-1">
+          <h1 className="text-[14pt] font-black text-[#0f2863] uppercase tracking-wide">
+            PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT ET D'ÉMARGEMENT D'EXAMEN
+          </h1>
+          <p className="text-[9pt] font-bold text-slate-600 italic">
+            Session Ordinaire — Contrôle Final Semestriel
+          </p>
+        </div>
+
+        {/* Exam Details Table Grid */}
+        <table className="w-full text-[9pt] border-collapse border border-slate-400 mb-4">
+          <tbody>
+            <tr>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold w-1/4">Intitulé du Module :</td>
+              <td className="p-2 border border-slate-400 font-black text-[#0f2863]" colSpan={3}>
+                {examObj?.module?.name || 'Management Stratégique'}
+              </td>
+            </tr>
+            <tr>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Filière / Promotion :</td>
+              <td className="p-2 border border-slate-400 font-semibold">{examObj?.module?.filiere?.name || 'ENCG Grande École'}</td>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Groupe / Section :</td>
+              <td className="p-2 border border-slate-400 font-semibold">{examObj?.group?.name || 'Tous Groupes'}</td>
+            </tr>
+            <tr>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Lieu / Salle :</td>
+              <td className="p-2 border border-slate-400 font-bold text-slate-900">{examObj?.room?.name || 'Amphi A'}</td>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Horaires :</td>
+              <td className="p-2 border border-slate-400 font-mono">{examObj?.start_time?.substring(0, 5) || '09:00'} - {examObj?.end_time?.substring(0, 5) || '11:00'}</td>
+            </tr>
+            <tr>
+              <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Surveillant Responsable :</td>
+              <td className="p-2 border border-slate-400 font-bold" colSpan={3}>
+                {adminSupervisorName}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Bilan d'Émargement & Enveloppe summary box */}
+        <div className="border-2 border-[#0f2863] rounded-lg p-3 mb-4 bg-slate-50 text-[9.5pt] font-sans">
+          <div className="font-black text-[#0f2863] uppercase tracking-wider mb-2 text-center border-b border-slate-300 pb-1">
+            📦 BILAN OFFICIEL DU DÉROULEMENT ET RESTITUTION DES COPIES
+          </div>
+          <div className="grid grid-cols-4 gap-4 text-center font-bold">
+            <div className="p-2 bg-white rounded border border-slate-300">
+              <span className="text-[8pt] text-slate-500 block uppercase">Effectif Convoqué</span>
+              <span className="text-[12pt] font-black text-slate-900">{totalCount}</span>
+            </div>
+            <div className="p-2 bg-white rounded border border-slate-300">
+              <span className="text-[8pt] text-slate-500 block uppercase">Candidats Présents</span>
+              <span className="text-[12pt] font-black text-emerald-700">{presentCount}</span>
+            </div>
+            <div className="p-2 bg-white rounded border border-slate-300">
+              <span className="text-[8pt] text-slate-500 block uppercase">Candidats Absents</span>
+              <span className="text-[12pt] font-black text-red-700">{absentCount}</span>
+            </div>
+            <div className="p-2 bg-white rounded border border-slate-300">
+              <span className="text-[8pt] text-slate-500 block uppercase">Copies Rendues & Scellées</span>
+              <span className="text-[12pt] font-black text-[#0f2863]">{finalCopiesCount} copies</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Absentees Nominative Table if any */}
+        {absentCount > 0 && (
+          <div className="mb-4">
+            <div className="font-black text-red-700 text-[9pt] uppercase mb-1">
+              ❌ Liste Nominative des Candidats Absents ({absentCount}) :
+            </div>
+            <table className="w-full text-[8.5pt] border-collapse border border-slate-400">
+              <thead>
+                <tr className="bg-red-50 text-red-900 font-bold">
+                  <th className="p-1.5 border border-slate-400 text-center w-12">N° Place</th>
+                  <th className="p-1.5 border border-slate-400 text-left w-32">CNE / Apogée</th>
+                  <th className="p-1.5 border border-slate-400 text-left">Nom et Prénom</th>
+                  <th className="p-1.5 border border-slate-400 text-center w-28">Motif / Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.filter(c => c.status === 'absent').map((c, i) => (
+                  <tr key={i}>
+                    <td className="p-1.5 border border-slate-400 text-center font-bold">{c.seat_number}</td>
+                    <td className="p-1.5 border border-slate-400 font-mono">{c.cne}</td>
+                    <td className="p-1.5 border border-slate-400 font-bold uppercase">{c.name}</td>
+                    <td className="p-1.5 border border-slate-400 text-center font-bold text-red-700">ABI (Absent)</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Incident / Fraud Table if any */}
+        {incidentsList.length > 0 && (
+          <div className="mb-4">
+            <div className="font-black text-rose-700 text-[9pt] uppercase mb-1">
+              🚨 Procès-Verbal des Incidents de Discipline & Fraudes ({incidentsList.length}) :
+            </div>
+            <table className="w-full text-[8.5pt] border-collapse border border-slate-400">
+              <thead>
+                <tr className="bg-rose-100 text-rose-900 font-bold">
+                  <th className="p-1.5 border border-slate-400 text-left w-40">Étudiant</th>
+                  <th className="p-1.5 border border-slate-400 text-left w-24">Type</th>
+                  <th className="p-1.5 border border-slate-400 text-left">Description des faits</th>
+                  <th className="p-1.5 border border-slate-400 text-left w-36">Objets Confisqués</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incidentsList.map((inc, i) => (
+                  <tr key={i}>
+                    <td className="p-1.5 border border-slate-400 font-bold">{inc.student_name} ({inc.cne})</td>
+                    <td className="p-1.5 border border-slate-400 font-bold uppercase text-rose-800">{inc.type}</td>
+                    <td className="p-1.5 border border-slate-400">{inc.description}</td>
+                    <td className="p-1.5 border border-slate-400 font-bold">{inc.confiscated_items || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Full Candidates Attendance Table */}
+        <div className="mb-4">
+          <div className="font-black text-[#0f2863] text-[9pt] uppercase mb-1">
+            📋 Registre d'Émargement des Candidats :
+          </div>
+          <table className="w-full text-[8.5pt] border-collapse border border-slate-400">
+            <thead>
+              <tr className="bg-slate-100 text-[#0f2863] font-bold text-[8pt] uppercase">
+                <th className="p-1.5 border border-slate-400 w-10 text-center">Place</th>
+                <th className="p-1.5 border border-slate-400 w-28 text-left">CNE</th>
+                <th className="p-1.5 border border-slate-400 text-left">Nom & Prénom</th>
+                <th className="p-1.5 border border-slate-400 w-24 text-center">Émargement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {candidates.map((c, i) => (
+                <tr key={i} className={c.status === 'absent' ? 'bg-red-50/50' : ''}>
+                  <td className="p-1.5 border border-slate-400 text-center font-bold">{c.seat_number}</td>
+                  <td className="p-1.5 border border-slate-400 font-mono">{c.cne}</td>
+                  <td className="p-1.5 border border-slate-400 font-bold uppercase">{c.name}</td>
+                  <td className="p-1.5 border border-slate-400 text-center font-bold">
+                    {c.status === 'present' && <span className="text-emerald-700">✓ Présent ({c.checkin_time || 'OK'})</span>}
+                    {c.status === 'late' && <span className="text-amber-700">⏱️ Retard ({c.checkin_time})</span>}
+                    {c.status === 'absent' && <span className="text-red-700 font-bold">ABSENT</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Official Signatures & SHA-256 Seal Block */}
+        <div className="mt-6 pt-4 border-t-2 border-slate-400 grid grid-cols-2 gap-8 text-[9pt]">
+          <div className="border border-slate-300 rounded p-3 text-center space-y-2">
+            <div className="font-bold text-[#0f2863]">Signature du Surveillant Responsable :</div>
+            <div className="text-[8pt] text-slate-500">{adminSupervisorName}</div>
+            <div className="h-16 flex items-center justify-center">
+              {signatureDataUrl ? (
+                <img src={signatureDataUrl} alt="Signature" className="h-14 object-contain" />
+              ) : (
+                <span className="text-slate-400 italic text-[8pt]">(Non signé électroniquement)</span>
               )}
             </div>
+          </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs">Fermer</Button>
-              <Button onClick={() => window.print()} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
-                🖨️ Imprimer la Fiche A4
-              </Button>
+          <div className="border border-slate-300 rounded p-3 text-center space-y-2">
+            <div className="font-bold text-[#0f2863]">Certification Service des Examens :</div>
+            <div className="text-[8pt] text-slate-500">École Nationale de Commerce et de Gestion de Fès</div>
+            <div className="h-16 flex items-center justify-center gap-3">
+              <QRCodeSVG value={`https://encg.usmba.ac.ma/verify-exam-pv?id=${id}&seal=${pvLockSeal || 'OFFICIAL-PV'}`} size={56} />
+              <div className="text-left text-[7pt] font-mono text-slate-600 space-y-0.5">
+                <div><b>Sceau SHA-256 :</b></div>
+                <div className="break-all">{pvLockSeal || 'SHA256:ENCRYPTED-OFFICIAL-STAMP-ENCG'}</div>
+              </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Fraud Incident Modal */}
-      {showFraudModal && selectedStudentForFraud && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-rose-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold">
-                  🚨
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Signalement de Fraude / Incident</h3>
-                  <p className="text-xs text-slate-500">Candidat : {selectedStudentForFraud.name} ({selectedStudentForFraud.cne})</p>
-                </div>
-              </div>
-              <button onClick={() => setShowFraudModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Type d'Incident *</label>
-                <select
-                  value={fraudType}
-                  onChange={e => setFraudType(e.target.value as any)}
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
-                >
-                  <option value="fraude">🚨 Fraude / Triche (Téléphone, copion, aides illicites)</option>
-                  <option value="usurpation">🪪 Usurpation d'identité / Substitution</option>
-                  <option value="retard">⏱️ Retard majeur (&gt; 30 minutes)</option>
-                  <option value="refus_signature">📄 Refus de signer la feuille d'émargement</option>
-                  <option value="perturbation">⚠️ Perturbation du déroulement de l'épreuve</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Description des Faits *</label>
-                <textarea
-                  value={fraudDescription}
-                  onChange={e => setFraudDescription(e.target.value)}
-                  placeholder="Expliquez en détail les circonstances constatées par l'équipe de surveillance..."
-                  rows={3}
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none resize-none"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Objets Confisqués (Optionnel)</label>
-                <input
-                  type="text"
-                  value={confiscatedItems}
-                  onChange={e => setConfiscatedItems(e.target.value)}
-                  placeholder="ex: iPhone 13 Noir, Feuille A4 manuscrite dissimulée"
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <Button variant="outline" onClick={() => setShowFraudModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
-              <Button onClick={handleSubmitFraudReport} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs px-6 shadow-lg">
-                🚨 Enregistrer l'Incident au PV
-              </Button>
-            </div>
-          </div>
+        {/* Footer */}
+        <div className="mt-6 text-center text-[7.5pt] text-slate-500 border-t border-slate-300 pt-2">
+          École Nationale de Commerce et de Gestion (ENCG Fès) — B.P. 26A Allal Ben Abdellah, Fès | Tél: +212 535 60 03 54 | Document Officiel Infalsifiable
         </div>
-      )}
 
-      {/* Signature Modal */}
-      {showSignatureModal && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">✍️ Signature du Responsable de Surveillance</h3>
-              <button onClick={() => setShowSignatureModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50">
-              <canvas
-                ref={canvasRef}
-                width={400}
-                height={160}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-                className="w-full h-40 cursor-crosshair touch-none"
-              />
-            </div>
-
-            <div className="flex justify-between items-center text-xs">
-              <button type="button" onClick={clearCanvas} className="text-slate-500 font-bold hover:underline">Effacer</button>
-              <Button onClick={handleSaveSignature} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
-                ✓ Valider la Signature
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
+      </div>
+    </>
   )
 }

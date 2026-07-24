@@ -54,11 +54,45 @@ class ExamIncidentController extends Controller
             'description' => $validated['description']
         ]);
 
+        // 🚨 ENCG AUTOMATIC SANCTION RULE FOR FRAUD:
+        // If type is 'fraude', automatically assign 0.00 / 20 note with decision 'FRAUDE' to the student's module
+        if ($validated['type'] === 'fraude') {
+            $exam = \App\Models\Exam::find($validated['exam_id']);
+            if ($exam && $exam->module_id) {
+                // Find or create assessment for this module
+                $assessment = \App\Models\Assessment::where('module_id', $exam->module_id)->first();
+                if ($assessment) {
+                    \App\Models\Grade::updateOrCreate(
+                        [
+                            'student_id' => $validated['student_id'],
+                            'assessment_id' => $assessment->id,
+                        ],
+                        [
+                            'note' => 0.00,
+                            'absent' => false,
+                            'is_fraud' => true,
+                            'decision' => 'FRAUDE',
+                            'comments' => 'Règle ENCG : Note 0.00 appliquée d\'office pour motif de FRAUDE — Dossier en attente du Conseil de Discipline'
+                        ]
+                    );
+                }
+            }
+
+            // Update seating presence status
+            \DB::table('exam_seatings')
+                ->where('exam_id', $validated['exam_id'])
+                ->where('student_id', $validated['student_id'])
+                ->update(['is_present' => false, 'updated_at' => now()]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Incident enregistré avec succès.',
+            'message' => $validated['type'] === 'fraude' 
+                ? '🚨 Incident de FRAUDE enregistré avec succès ! La note 0.00/20 avec motif "FRAUDE" a été automatiquement appliquée au PV du module.' 
+                : 'Incident enregistré avec succès.',
             'data' => $incident
         ], 201);
+
     }
 
     /**
