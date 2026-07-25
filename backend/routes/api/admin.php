@@ -110,6 +110,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // AI Predictive Analytics
     Route::get('/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
     Route::post('/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
+    Route::get('/admin/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
+    Route::post('/admin/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
 
     Route::prefix('discipline')->group(function () {
         Route::get('/', [DisciplineController::class, 'index']);
