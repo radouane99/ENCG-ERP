@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Tent, Search, Users, CheckCircle2, XCircle, Clock, Sparkles,
-  Plus, DollarSign, FileText, Printer, Check, X, Calendar, BarChart2,
-  ShieldCheck, TrendingUp, Award, Send
+  Tent, Search, Sparkles,
+  DollarSign, Printer, Check, X, Calendar, BarChart2,
+  ShieldCheck, Send
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
@@ -18,7 +18,22 @@ export default function AdminClubsPage() {
   const [budgetAmount, setBudgetAmount] = useState('')
   const [budgetReason, setBudgetReason] = useState('')
 
-  // Fetch real clubs
+  // ── Helpers to normalise Club fields ──────────────────────────────────────
+  // The clubs table uses president_name (varchar), is_active (boolean),
+  // category (varchar). There is NO president FK relation.
+  const getClubPresident = (club: any): string => {
+    if (club.president_name) return club.president_name
+    if (club.president && typeof club.president === 'object')
+      return `${club.president.first_name ?? ''} ${club.president.last_name ?? ''}`.trim()
+    return 'Bureau des Étudiants ENCG'
+  }
+
+  const isClubActive = (club: any): boolean => {
+    if (typeof club.is_active === 'boolean') return club.is_active
+    return club.status === 'active'
+  }
+
+  // ── Data fetching ─────────────────────────────────────────────────────────
   const { data: clubs, isLoading } = useQuery({
     queryKey: ['admin-clubs'],
     queryFn: async () => {
@@ -30,8 +45,8 @@ export default function AdminClubsPage() {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      api.put(`/clubs/${id}`, { status }),
+    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+      api.put(`/clubs/${id}`, { is_active }),
     onSuccess: () => {
       toast.success('Statut du club mis à jour !')
       queryClient.invalidateQueries({ queryKey: ['admin-clubs'] })
@@ -39,10 +54,12 @@ export default function AdminClubsPage() {
     onError: () => toast.error('Erreur de mise à jour')
   })
 
+  // ── PDF generators ────────────────────────────────────────────────────────
   const handlePrintAgrement = (club: any) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Attestation d'Agrément - ${club.name}</title>
+    const president = getClubPresident(club)
+    win.document.write(`<!DOCTYPE html><html><head><title>Attestation d'Agrement - ${club.name}</title>
       <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#0f2863;max-width:800px;margin:0 auto}
       .header{text-align:center;border-bottom:3px double #0f2863;padding-bottom:20px;margin-bottom:30px}
       .title{font-size:20px;font-weight:900;color:#0f2863;text-transform:uppercase;margin-top:10px}
@@ -51,26 +68,27 @@ export default function AdminClubsPage() {
       .lbl{font-weight:bold;color:#64748b}.val{font-weight:900;color:#0f2863}
       .footer{margin-top:50px;display:flex;justify-content:space-between;font-size:12px;font-weight:bold}</style>
       </head><body>
-      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC — ENCG FÈS</div>
-      <div style="font-size:11px;color:#64748b;font-weight:800">DIRECTION DES AFFAIRES ÉTUDIANTES & VIE ASSOCIATIVE</div>
-      <div class="title">ATTESTATION OFFICIELLE D'AGRÉMENT DU CLUB</div></div>
+      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC - ENCG FES</div>
+      <div style="font-size:11px;color:#64748b;font-weight:800">DIRECTION DES AFFAIRES ETUDIANTES &amp; VIE ASSOCIATIVE</div>
+      <div class="title">ATTESTATION OFFICIELLE D'AGREMENT DU CLUB</div></div>
       <div class="box">
       <div class="row"><span class="lbl">Nom du Club :</span><span class="val">${club.name}</span></div>
-      <div class="row"><span class="lbl">Président :</span><span class="val" style="color:#2563eb">${club.president ? `${club.president.first_name} ${club.president.last_name}` : 'Bureau des Étudiants'}</span></div>
-      <div class="row"><span class="lbl">Membres Actifs :</span><span class="val">${club.members_count || 30} Membres</span></div>
-      <div class="row"><span class="lbl">Subvention Annuelle :</span><span class="val" style="color:#16a34a">${club.budget || '15,000'} DH</span></div>
-      <div class="row"><span class="lbl">Statut d'Agrément :</span><span class="val" style="color:#16a34a">AGRÉMENT OFFICIEL ACCORDÉ ✅</span></div>
+      <div class="row"><span class="lbl">President :</span><span class="val" style="color:#2563eb">${president}</span></div>
+      <div class="row"><span class="lbl">Membres Actifs :</span><span class="val">${club.members_count || club.members?.length || 30} Membres</span></div>
+      <div class="row"><span class="lbl">Categorie :</span><span class="val">${club.category || 'Associatif'}</span></div>
+      <div class="row"><span class="lbl">Statut d'Agrement :</span><span class="val" style="color:#16a34a">AGREMENT OFFICIEL ACCORDE</span></div>
       </div>
-      <p style="font-size:12px;color:#475569">Cette attestation certifie que le club est légalement reconnu par la Direction de l'ENCG Fès pour mener des activités culturelles, scientifiques et sportives sur le campus.</p>
-      <div class="footer"><div>Le Président du Club</div><div>Le Directeur des Affaires Étudiantes</div><div>Le Directeur de l'ENCG Fès</div></div>
+      <p style="font-size:12px;color:#475569">Cette attestation certifie que le club est legalement reconnu par la Direction de l'ENCG Fes pour mener des activites culturelles, scientifiques et sportives sur le campus.</p>
+      <div class="footer"><div>Le President du Club</div><div>Le Directeur des Affaires Etudiantes</div><div>Le Directeur de l'ENCG Fes</div></div>
       <script>window.print();</script></body></html>`)
     win.document.close()
-    toast.success('Attestation d\'agrément officielle générée !')
+    toast.success('Attestation d\'agrement officielle generee !')
   }
 
   const handlePrintRapportImpact = (club: any) => {
     const win = window.open('', '_blank')
     if (!win) return
+    const membersCount = club.members_count || club.members?.length || 48
     win.document.write(`<!DOCTYPE html><html><head><title>Rapport d'Impact - ${club.name}</title>
       <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#0f2863;max-width:800px;margin:0 auto}
       .header{text-align:center;border-bottom:3px double #0f2863;padding-bottom:20px;margin-bottom:30px}
@@ -80,53 +98,57 @@ export default function AdminClubsPage() {
       .kpi-val{font-size:28px;font-weight:900;color:#0f2863}.kpi-lbl{font-size:11px;font-weight:bold;color:#64748b;text-transform:uppercase}
       .footer{margin-top:50px;display:flex;justify-content:space-between;font-size:12px;font-weight:bold}</style>
       </head><body>
-      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC — ENCG FÈS</div>
-      <div class="title">RAPPORT ANNUEL D'IMPACT — ${club.name.toUpperCase()}</div>
-      <div style="font-size:11px;color:#64748b">Année Universitaire 2025-2026</div></div>
+      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC - ENCG FES</div>
+      <div class="title">RAPPORT ANNUEL D'IMPACT - ${club.name.toUpperCase()}</div>
+      <div style="font-size:11px;color:#64748b">Annee Universitaire 2025-2026</div></div>
       <div class="kpi">
-        <div class="kpi-card"><div class="kpi-val">${club.members_count || 48}</div><div class="kpi-lbl">Membres Actifs</div></div>
-        <div class="kpi-card"><div class="kpi-val">12</div><div class="kpi-lbl">Événements Organisés</div></div>
+        <div class="kpi-card"><div class="kpi-val">${membersCount}</div><div class="kpi-lbl">Membres Actifs</div></div>
+        <div class="kpi-card"><div class="kpi-val">${club.events || 12}</div><div class="kpi-lbl">Evenements Organises</div></div>
         <div class="kpi-card"><div class="kpi-val">94%</div><div class="kpi-lbl">Taux Satisfaction</div></div>
       </div>
-      <div class="footer"><div>Le Président du Club</div><div>Le Directeur des Affaires Étudiantes</div></div>
+      <div class="footer"><div>Le President du Club</div><div>Le Directeur des Affaires Etudiantes</div></div>
       <script>window.print();</script></body></html>`)
     win.document.close()
-    toast.success('Rapport d\'impact annuel généré !')
+    toast.success('Rapport d\'impact annuel genere !')
   }
 
   const handleSubmitBudget = (e: React.FormEvent) => {
     e.preventDefault()
-    toast.success(`Demande de subvention de ${budgetAmount} DH soumise à la Direction Administrative !`)
+    toast.success(`Demande de subvention de ${budgetAmount} DH soumise a la Direction Administrative !`)
     setShowBudgetModal(null)
     setBudgetAmount('')
     setBudgetReason('')
   }
 
+  // ── Default data (shown when DB is empty) ─────────────────────────────────
   const defaultClubs = [
-    { id: 1, name: 'Club Enactus ENCG Fès', description: 'Entrepreneuriat social et projets d\'impact durable à l\'échelle nationale et internationale.', status: 'active', members_count: 48, budget: '25,000', president: { first_name: 'Amine', last_name: 'Tazi' }, events: 12 },
-    { id: 2, name: 'Club Finance & Trading', description: 'Organisation de simulations boursières, conférences bancaires et ateliers de modélisation financière.', status: 'active', members_count: 35, budget: '18,000', president: { first_name: 'Sara', last_name: 'Benjeloun' }, events: 8 },
-    { id: 3, name: 'Club Art & Culture', description: 'Promotion du théâtre, de la musique et des arts plastiques au sein du campus de l\'ENCG Fès.', status: 'pending', members_count: 22, budget: '12,000', president: { first_name: 'Karim', last_name: 'Bennani' }, events: 5 }
+    { id: 1, name: 'Club Enactus ENCG Fes', description: 'Entrepreneuriat social et projets d\'impact durable a l\'echelle nationale et internationale.', is_active: true, category: 'scientific', members_count: 48, budget: '25,000', president_name: 'Amine Tazi', events: 12 },
+    { id: 2, name: 'Club Finance & Trading', description: 'Organisation de simulations boursieres, conferences bancaires et ateliers de modelisation financiere.', is_active: true, category: 'scientific', members_count: 35, budget: '18,000', president_name: 'Sara Benjeloun', events: 8 },
+    { id: 3, name: 'Club Art & Culture', description: 'Promotion du theatre, de la musique et des arts plastiques au sein du campus de l\'ENCG Fes.', is_active: false, category: 'cultural', members_count: 22, budget: '12,000', president_name: 'Karim Bennani', events: 5 }
   ]
 
   const displayedList = (clubs && clubs.length > 0) ? clubs : defaultClubs
 
   const filteredList = displayedList.filter((item: any) => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.president && item.president.last_name.toLowerCase().includes(search.toLowerCase()))
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter
+    const presidentStr = getClubPresident(item).toLowerCase()
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || presidentStr.includes(search.toLowerCase())
+    const active = isClubActive(item)
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'active' && active) ||
+      (statusFilter === 'pending' && !active)
     return matchesSearch && matchesStatus
   })
 
   const calendarEvents = [
-    { club: 'Club Enactus', event: 'Conférence Impact Social', date: '12 Août 2026', room: 'Amphi Al Khwarizmi', color: 'bg-indigo-500' },
-    { club: 'Club Finance', event: 'Simulation Boursière 2026', date: '15 Août 2026', room: 'Salle B10', color: 'bg-amber-500' },
-    { club: 'Club Art & Culture', event: 'Soirée Culturelle ENCG', date: '20 Août 2026', room: 'Amphi Ibn Sina', color: 'bg-emerald-500' },
+    { club: 'Club Enactus', event: 'Conference Impact Social', date: '12 Aout 2026', room: 'Amphi Al Khwarizmi', color: 'bg-indigo-500' },
+    { club: 'Club Finance', event: 'Simulation Boursiere 2026', date: '15 Aout 2026', room: 'Salle B10', color: 'bg-amber-500' },
+    { club: 'Club Art & Culture', event: 'Soiree Culturelle ENCG', date: '20 Aout 2026', room: 'Amphi Ibn Sina', color: 'bg-emerald-500' },
   ]
 
   return (
     <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
 
-      {/* ── Deep Navy Hero Banner ── */}
+      {/* Deep Navy Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
@@ -137,18 +159,18 @@ export default function AdminClubsPage() {
             </div>
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Vie Étudiante & Associations — ENCG Fès
+                <Sparkles className="w-4 h-4 text-amber-400" /> Vie Etudiante & Associations — ENCG Fes
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
                 Annuaire des Clubs & BDE
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
-                Supervision globale des associations étudiantes, gestion des subventions budgétaires, calendrier inter-clubs et agrément officiel.
+                Supervision globale des associations etudiantes, gestion des subventions budgetaires, calendrier inter-clubs et agrement officiel.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setShowCalendarModal(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all text-xs border border-white/20 cursor-pointer"
@@ -167,13 +189,13 @@ export default function AdminClubsPage() {
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">CLUBS AGRÉÉS</span>
             <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">
-              {displayedList.filter((c: any) => c.status === 'active').length} Actifs
+              {displayedList.filter((c: any) => isClubActive(c)).length} Actifs
             </span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE D'AGRÉMENT</span>
             <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">
-              {displayedList.filter((c: any) => c.status === 'pending').length} Dossiers
+              {displayedList.filter((c: any) => !isClubActive(c)).length} Dossiers
             </span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
@@ -183,7 +205,7 @@ export default function AdminClubsPage() {
         </div>
       </div>
 
-      {/* ── Search & Filter Bar ── */}
+      {/* Search & Filter Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2rem] shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -191,29 +213,27 @@ export default function AdminClubsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par nom de club ou président..."
+            placeholder="Rechercher par nom de club ou president..."
             className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all"
           />
         </div>
         <div className="flex items-center gap-2">
-          {['all', 'active', 'pending', 'rejected'].map((st) => (
+          {['all', 'active', 'pending'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
               className={cn(
                 "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
-                statusFilter === st
-                  ? "bg-[#0f2863] text-white shadow-md"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
+                statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
               )}
             >
-              {st === 'all' ? 'Tous' : st === 'active' ? 'Agréés' : st === 'pending' ? 'En Attente' : 'Rejetés'}
+              {st === 'all' ? 'Tous' : st === 'active' ? 'Agréés' : 'En Attente'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Club Cards Grid ── */}
+      {/* Club Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-full flex justify-center py-16">
@@ -224,95 +244,103 @@ export default function AdminClubsPage() {
             <Tent className="w-10 h-10 text-slate-300 mx-auto" />
             <p className="font-bold text-slate-400 text-sm">Aucun club trouvé.</p>
           </div>
-        ) : filteredList.map((club: any) => (
-          <div key={club.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5 group">
+        ) : filteredList.map((club: any) => {
+          const active = isClubActive(club)
+          const president = getClubPresident(club)
+          const membersCount = club.members_count ?? club.members?.length ?? 30
 
-            {/* Club Header */}
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-2xl shadow-md shrink-0">
-                  {club.name.charAt(0)}
+          return (
+            <div key={club.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5">
+
+              {/* Club Header */}
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-2xl shadow-md shrink-0">
+                    {club.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight">{club.name}</h3>
+                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                      Pdt : {president}
+                    </p>
+                    {club.category && (
+                      <p className="text-[10px] font-bold text-slate-400 capitalize mt-0.5">{club.category}</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight">{club.name}</h3>
-                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
-                    Pdt : {club.president ? `${club.president.first_name} ${club.president.last_name}` : 'BDE ENCG'}
-                  </p>
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0",
+                  active ? "bg-emerald-50 text-emerald-600 border-emerald-300" : "bg-amber-50 text-amber-600 border-amber-300"
+                )}>
+                  {active ? '✅ Agréé' : '⏳ Attente'}
+                </span>
+              </div>
+
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2">
+                {club.description}
+              </p>
+
+              {/* KPI Mini Row */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl p-2.5 border border-indigo-100 dark:border-indigo-900/60">
+                  <p className="text-[10px] font-black text-indigo-400 uppercase">Membres</p>
+                  <p className="text-base font-black text-indigo-600 font-mono">{membersCount}</p>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/60 rounded-2xl p-2.5 border border-amber-100 dark:border-amber-900/60">
+                  <p className="text-[10px] font-black text-amber-400 uppercase">Événements</p>
+                  <p className="text-base font-black text-amber-600 font-mono">{club.events ?? club.events_count ?? 0}</p>
+                </div>
+                <div className="bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl p-2.5 border border-emerald-100 dark:border-emerald-900/60">
+                  <p className="text-[10px] font-black text-emerald-400 uppercase">Budget</p>
+                  <p className="text-sm font-black text-emerald-600">{club.budget || '15K'} DH</p>
                 </div>
               </div>
-              <span className={cn(
-                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0",
-                club.status === 'active' ? "bg-emerald-50 text-emerald-600 border-emerald-300" :
-                club.status === 'rejected' ? "bg-rose-50 text-rose-600 border-rose-300" : "bg-amber-50 text-amber-600 border-amber-300"
-              )}>
-                {club.status === 'active' ? '✅ Agrée' : club.status === 'rejected' ? 'Rejeté' : '⏳ Attente'}
-              </span>
-            </div>
 
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 -mt-2">
-              {club.description}
-            </p>
-
-            {/* KPI Mini Row */}
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl p-2.5 border border-indigo-100 dark:border-indigo-900/60">
-                <p className="text-[10px] font-black text-indigo-400 uppercase">Membres</p>
-                <p className="text-base font-black text-indigo-600 font-mono">{club.members_count || 30}</p>
-              </div>
-              <div className="bg-amber-50 dark:bg-amber-950/60 rounded-2xl p-2.5 border border-amber-100 dark:border-amber-900/60">
-                <p className="text-[10px] font-black text-amber-400 uppercase">Événements</p>
-                <p className="text-base font-black text-amber-600 font-mono">{club.events || 8}</p>
-              </div>
-              <div className="bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl p-2.5 border border-emerald-100 dark:border-emerald-900/60">
-                <p className="text-[10px] font-black text-emerald-400 uppercase">Budget</p>
-                <p className="text-sm font-black text-emerald-600">{club.budget || '15K'} DH</p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePrintAgrement(club)}
-                  className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer flex items-center justify-center gap-1"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" /> Agrément PDF
-                </button>
-                <button
-                  onClick={() => handlePrintRapportImpact(club)}
-                  className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-black text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1"
-                >
-                  <BarChart2 className="w-3.5 h-3.5" /> Rapport Impact
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowBudgetModal(club)}
-                  className="flex-1 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 font-black text-xs rounded-xl transition-all border border-emerald-200 cursor-pointer flex items-center justify-center gap-1"
-                >
-                  <DollarSign className="w-3.5 h-3.5" /> Débloquer Budget
-                </button>
-                {club.status === 'pending' && (
+              {/* Actions */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => updateStatusMutation.mutate({ id: club.id, status: 'active' })}
-                    className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1"
+                    onClick={() => handlePrintAgrement(club)}
+                    className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer flex items-center justify-center gap-1"
                   >
-                    <Check className="w-3.5 h-3.5" /> Approuver
+                    <ShieldCheck className="w-3.5 h-3.5" /> Agrément PDF
                   </button>
-                )}
+                  <button
+                    onClick={() => handlePrintRapportImpact(club)}
+                    className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-black text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" /> Rapport Impact
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowBudgetModal(club)}
+                    className="flex-1 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 font-black text-xs rounded-xl transition-all border border-emerald-200 cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" /> Débloquer Budget
+                  </button>
+                  {!active && (
+                    <button
+                      onClick={() => updateStatusMutation.mutate({ id: club.id, is_active: true })}
+                      className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Approuver
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      {/* ── Modal Calendrier Inter-Clubs (Anti-Collision) ── */}
+      {/* Modal Calendrier Inter-Clubs */}
       {showCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Détecteur Anti-Collision d'Événements</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Détecteur Anti-Collision</span>
                 <h2 className="text-lg font-black">Calendrier Consolidé Inter-Clubs</h2>
               </div>
               <button onClick={() => setShowCalendarModal(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer"><X className="w-4 h-4" /></button>
@@ -343,14 +371,14 @@ export default function AdminClubsPage() {
         </div>
       )}
 
-      {/* ── Modal Déblocage Budget Subvention ── */}
+      {/* Modal Déblocage Budget */}
       {showBudgetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Guichet de Financement Associatif</span>
-                <h2 className="text-lg font-black">Déblocage Subvention — {showBudgetModal.name}</h2>
+                <h2 className="text-base font-black">Déblocage — {showBudgetModal.name}</h2>
               </div>
               <button onClick={() => setShowBudgetModal(null)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
@@ -359,26 +387,16 @@ export default function AdminClubsPage() {
                 <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Montant de la Subvention (DH) *</label>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    required
-                    type="number"
-                    value={budgetAmount}
-                    onChange={(e) => setBudgetAmount(e.target.value)}
+                  <input required type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)}
                     placeholder="Ex: 5000"
-                    className="w-full pl-11 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none"
-                  />
+                    className="w-full pl-11 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Motif & Justification du Déblocage *</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={budgetReason}
-                  onChange={(e) => setBudgetReason(e.target.value)}
+                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Motif & Justification *</label>
+                <textarea required rows={3} value={budgetReason} onChange={(e) => setBudgetReason(e.target.value)}
                   placeholder="Ex: Organisation de la Semaine de l'Entrepreneuriat Social 2026..."
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none"
-                />
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none" />
               </div>
               <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" onClick={() => setShowBudgetModal(null)} className="px-5 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-100 rounded-xl cursor-pointer">ANNULER</button>
