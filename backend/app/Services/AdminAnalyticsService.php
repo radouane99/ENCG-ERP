@@ -5,103 +5,141 @@ namespace App\Services;
 use App\Models\AcademicProject;
 use App\Models\DocumentRequest;
 use App\Models\StudentRegistration;
+use App\Models\Student;
+use App\Models\Filiere;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminAnalyticsService
 {
     /**
-     * Cache duration in seconds (10 minutes)
-     */
-    private const CACHE_TTL = 600;
-
-    /**
-     * Get statistics for Document Requests
+     * Get statistics for Document Requests from REAL DB
      */
     public function getDocumentRequestStats(): array
     {
-        return Cache::remember('admin.analytics.document_requests', self::CACHE_TTL, function () {
-            $total = DocumentRequest::count();
-            
-            $statusBreakdown = DocumentRequest::select('status', DB::raw('count(*) as count'))
+        $total = Schema::hasTable('document_requests') ? DocumentRequest::count() : 0;
+        
+        $statusBreakdown = Schema::hasTable('document_requests')
+            ? DB::table('document_requests')
+                ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->get()
-                ->map(fn($item) => ['name' => ucfirst((string)$item->status), 'value' => $item->count])
-                ->toArray();
+                ->map(fn($item) => ['name' => ucfirst((string)$item->status), 'value' => (int)$item->count])
+                ->toArray()
+            : [];
 
-            $monthlyTrend = DocumentRequest::select(
-                DB::raw("DATE_FORMAT(requested_at, '%Y-%m') as month"),
-                DB::raw('count(*) as count')
-            )
-            ->whereNotNull('requested_at')
-            ->groupBy('month')
-            ->orderBy('month', 'asc')
-            ->limit(12)
-            ->get()
-            ->toArray();
+        // Strict mode compatible date group
+        $monthlyTrend = Schema::hasTable('document_requests')
+            ? DB::table('document_requests')
+                ->select(
+                    DB::raw("DATE_FORMAT(COALESCE(requested_at, created_at), '%Y-%m') as month"),
+                    DB::raw('count(*) as count')
+                )
+                ->whereNotNull(DB::raw("COALESCE(requested_at, created_at)"))
+                ->groupBy(DB::raw("DATE_FORMAT(COALESCE(requested_at, created_at), '%Y-%m')"))
+                ->orderBy(DB::raw("DATE_FORMAT(COALESCE(requested_at, created_at), '%Y-%m')"), 'asc')
+                ->limit(12)
+                ->get()
+                ->map(fn($item) => ['month' => $item->month, 'count' => (int)$item->count])
+                ->toArray()
+            : [];
 
-            return [
-                'total' => $total,
-                'status_breakdown' => $statusBreakdown,
-                'monthly_trend' => $monthlyTrend,
-                'pending_count' => collect($statusBreakdown)->firstWhere('name', 'Pending')['value'] ?? collect($statusBreakdown)->firstWhere('name', 'pending')['value'] ?? 0,
-            ];
-        });
+        $pendingCount = Schema::hasTable('document_requests') 
+            ? DocumentRequest::whereIn('status', ['pending', 'en_attente', 'submitted', 'draft'])->count()
+            : 0;
+
+        return [
+            'total' => $total,
+            'status_breakdown' => $statusBreakdown,
+            'monthly_trend' => $monthlyTrend,
+            'pending_count' => $pendingCount,
+        ];
     }
 
     /**
-     * Get statistics for Academic Projects (Internships & PFEs)
+     * Get statistics for Academic Projects from REAL DB
      */
     public function getAcademicProjectStats(): array
     {
-        return Cache::remember('admin.analytics.academic_projects', self::CACHE_TTL, function () {
-            $total = AcademicProject::count();
+        $total = Schema::hasTable('academic_projects') ? AcademicProject::count() : (Schema::hasTable('internships') ? DB::table('internships')->count() : 0);
 
-            $typeDistribution = AcademicProject::select('type', DB::raw('count(*) as count'))
+        $typeDistribution = [];
+        if (Schema::hasTable('academic_projects') && AcademicProject::count() > 0) {
+            $typeDistribution = DB::table('academic_projects')
+                ->select('type', DB::raw('count(*) as count'))
                 ->groupBy('type')
                 ->get()
                 ->map(fn($item) => [
                     'name' => $item->type === 'internship' ? 'Stage' : ($item->type === 'final_project' ? 'PFE' : ucfirst((string)$item->type)), 
-                    'value' => $item->count
+                    'value' => (int)$item->count
                 ])
                 ->toArray();
+        } elseif (Schema::hasTable('internships')) {
+            $typeDistribution = DB::table('internships')
+                ->select('type', DB::raw('count(*) as count'))
+                ->groupBy('type')
+                ->get()
+                ->map(fn($item) => [
+                    'name' => ucfirst((string)$item->type),
+                    'value' => (int)$item->count
+                ])
+                ->toArray();
+        }
 
-            $completedCount = AcademicProject::whereIn('status', ['completed', 'validated', 'approved'])->count();
-            $activeCount = AcademicProject::whereIn('status', ['ongoing', 'in_progress', 'pending'])->count();
-            
-            $completionRate = $total > 0 ? round(($completedCount / $total) * 100, 2) : 0;
+        $completedCount = Schema::hasTable('academic_projects') 
+            ? AcademicProject::whereIn('status', ['completed', 'validated', 'approved'])->count() 
+            : (Schema::hasTable('internships') ? DB::table('internships')->whereIn('status', ['validated', 'completed'])->count() : 0);
 
-            return [
-                'total' => $total,
-                'type_distribution' => $typeDistribution,
-                'active_count' => $activeCount,
-                'completion_rate' => $completionRate,
-            ];
-        });
+        $activeCount = Schema::hasTable('academic_projects')
+            ? AcademicProject::whereIn('status', ['ongoing', 'in_progress', 'pending'])->count()
+            : (Schema::hasTable('internships') ? DB::table('internships')->whereIn('status', ['in_progress', 'ongoing', 'submitted'])->count() : 0);
+        
+        $completionRate = $total > 0 ? round(($completedCount / $total) * 100, 1) : 0;
+
+        return [
+            'total' => $total,
+            'type_distribution' => $typeDistribution,
+            'active_count' => $activeCount,
+            'completion_rate' => $completionRate,
+        ];
     }
 
     /**
-     * Get statistics for Student Registrations grouped by Filiere
+     * Get statistics for Student Activity & Filière Breakdown from REAL DB
      */
     public function getStudentActivityStats(): array
     {
-        return Cache::remember('admin.analytics.student_activity', self::CACHE_TTL, function () {
-            // Get latest active registrations grouped by filiere
-            $filiereBreakdown = StudentRegistration::join('filieres', 'student_registrations.filiere_id', '=', 'filieres.id')
-                ->select('filieres.name as filiere_name', DB::raw('count(*) as student_count'))
-                ->whereIn('student_registrations.status', ['active', 'registered', 'validated', 'enrolled'])
+        $totalActiveStudents = Student::whereNull('deleted_at')->count();
+
+        $filiereBreakdown = [];
+
+        if (Schema::hasTable('student_registrations') && StudentRegistration::count() > 0) {
+            $filiereBreakdown = DB::table('student_registrations')
+                ->join('filieres', 'student_registrations.filiere_id', '=', 'filieres.id')
+                ->select('filieres.name as filiere_name', DB::raw('count(DISTINCT student_registrations.student_id) as student_count'))
                 ->groupBy('filieres.id', 'filieres.name')
                 ->orderByDesc('student_count')
                 ->get()
-                ->map(fn($item) => ['name' => $item->filiere_name, 'value' => $item->student_count])
+                ->map(fn($item) => ['name' => $item->filiere_name, 'value' => (int)$item->student_count])
                 ->toArray();
+        }
 
-            $totalActiveStudents = array_sum(array_column($filiereBreakdown, 'value'));
+        // Fallback: group directly by filieres if filiere_id is on students or student_pathways
+        if (empty($filiereBreakdown) && Schema::hasTable('filieres')) {
+            $filiereBreakdown = DB::table('filieres')
+                ->leftJoin('student_pathways', 'filieres.id', '=', 'student_pathways.filiere_id')
+                ->select('filieres.name as filiere_name', DB::raw('count(DISTINCT student_pathways.student_id) as student_count'))
+                ->groupBy('filieres.id', 'filieres.name')
+                ->orderByDesc('student_count')
+                ->get()
+                ->map(fn($item) => ['name' => $item->filiere_name, 'value' => (int)$item->student_count])
+                ->toArray();
+        }
 
-            return [
-                'total_active' => $totalActiveStudents,
-                'filiere_breakdown' => $filiereBreakdown,
-            ];
-        });
+        return [
+            'total_active' => $totalActiveStudents,
+            'filiere_breakdown' => $filiereBreakdown,
+        ];
     }
 }

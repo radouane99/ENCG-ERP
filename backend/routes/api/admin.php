@@ -87,6 +87,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes
+    Route::get('/admin/analytics', [AdminAnalyticsController::class, 'index']);
+    Route::get('/analytics', [AdminAnalyticsController::class, 'index']);
     Route::get('/smart-campus', [AdminSmartCampusController::class, 'getCampusData']);
     Route::get('/exams', [AdminExamController::class, 'index']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
