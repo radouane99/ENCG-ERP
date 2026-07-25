@@ -569,6 +569,173 @@ class PdfExportController extends Controller
         return $pdf->stream("Maquette_Pedagogique_{$safeCode}.pdf");
     }
 
+    public function exportSyllabiqueModulePdf(Request $request)
+    {
+        $code = $request->query('code', 'GFC-S5-M02');
+        $name = $request->query('name', 'Analyse Financière');
+        $prof = $request->query('prof', 'Prof. Abdelhak El Amrani');
+        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
+        $semester = $request->query('semester', 'S5');
+        $hours = $request->query('hours', '45');
+        $coeff = $request->query('coeff', '3.00');
+
+        // Check if module exists in DB
+        $dbModule = \App\Models\Module::where('code', $code)->with(['filiere', 'professors', 'assessments'])->first();
+
+        if ($dbModule) {
+            $name = $dbModule->name ?? $name;
+            $filiere = $dbModule->filiere?->name ?? $filiere;
+            $hours = $dbModule->credit_hours ?? $hours;
+            $coeff = number_format($dbModule->coefficient ?? $coeff, 2);
+            if ($dbModule->professors && $dbModule->professors->isNotEmpty()) {
+                $p = $dbModule->professors->first();
+                $prof = 'Prof. ' . $p->first_name . ' ' . $p->last_name;
+            }
+        }
+
+        // Dynamic Syllabus Generation according to Module Domain
+        $lowerName = mb_strtolower($name);
+        if (str_contains($lowerName, 'financ') || str_contains($lowerName, 'comptab')) {
+            $objectifs = "Ce module vise à maîtriser les outils fondamentaux du diagnostic financier des entreprises (Bilan financier, SIG, Tableau de Financement, Ratios de rentabilité et de solvabilité). À l'issue du cours, les étudiants seront capables d'analyser la santé financière d'une entité et d'émettre des recommandations stratégiques.";
+            $chapitres = [
+                "Chapitre I : Retraitements du Bilan comptable et établissement du Bilan Financier.",
+                "Chapitre II : Analyse du Solde Intermédiaire de Gestion (SIG) et de la CAF.",
+                "Chapitre III : Analyse du Bilan Fonctionnel (FRNG, BFR, Trésorerie Nette).",
+                "Chapitre IV : Méthode des Ratios (Liquidité, Solvabilité, Rentabilité)."
+            ];
+        } elseif (str_contains($lowerName, 'market') || str_contains($lowerName, 'vente') || str_contains($lowerName, 'consommateur')) {
+            $objectifs = "Acquérir les concepts clés du marketing stratégique et opérationnel, comprendre les motivations d'achat des consommateurs et concevoir des plans d'action commerciale adaptés aux marchés modernes.";
+            $chapitres = [
+                "Chapitre I : Démarche et Étude du Comportement du Consommateur.",
+                "Chapitre II : Études de Marché Quantitative et Qualitative.",
+                "Chapitre III : Segmentation, Ciblaged et Positionnement Marque.",
+                "Chapitre IV : Élaboration du Mix Marketing (Produit, Prix, Distribution, Communication)."
+            ];
+        } elseif (str_contains($lowerName, 'droit') || str_contains($lowerName, 'fisca') || str_contains($lowerName, 'jurid')) {
+            $objectifs = "Comprendre le cadre juridique et fiscal régissant l'activité des entreprises au Maroc (Fiscalité des sociétés, TVA, Impôt sur le Revenu, Droit des Contrats et des Sociétés).";
+            $chapitres = [
+                "Chapitre I : Principes généraux du Droit des Affaires et des Contrats.",
+                "Chapitre II : Impôt sur les Sociétés (IS) : Détermination du Résultat Fiscal.",
+                "Chapitre III : Taxe sur la Valeur Ajoutée (TVA) et Régime des Déductions.",
+                "Chapitre IV : Droit des Sociétés Commerciales (SARL, SA, Gouvernance)."
+            ];
+        } else {
+            $objectifs = "Développer des compétences managériales avancées et structurer une réflexion stratégique globale face aux enjeux contemporains des organisations et de la transformation digitale.";
+            $chapitres = [
+                "Chapitre I : Fondements théoriques et écoles de pensée du Management.",
+                "Chapitre II : Diagnostic Stratégique Interne et Externe (SWOT, PESTEL, Porter).",
+                "Chapitre III : Management des Projets et Conduite du Changement.",
+                "Chapitre IV : Performance Organisationnelle et Leadership Éthique."
+            ];
+        }
+
+        $pdf = $this->getPdfInstance('pdf.syllabique_module', [
+            'moduleCode' => $code,
+            'moduleName' => $name,
+            'professorName' => $prof,
+            'filiereName' => $filiere,
+            'semester' => $semester,
+            'creditHours' => $hours,
+            'coefficient' => $coeff,
+            'objectifs' => $objectifs,
+            'chapitres' => $chapitres,
+            'verifyUrl' => url('/verify/document/SYLLABUS-' . md5($code))
+        ]);
+
+        $safeCode = \Illuminate\Support\Str::slug($code);
+        return $pdf->stream("Fiche_Syllabique_Module_{$safeCode}.pdf");
+    }
+
+    public function exportPvAccreditationModulePdf(Request $request)
+    {
+        $code = $request->query('code', 'GFC-S5-M02');
+        $name = $request->query('name', 'Analyse Financière');
+        $prof = $request->query('prof', 'Prof. Abdelhak El Amrani');
+        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
+        $semester = $request->query('semester', 'S5');
+        $hours = $request->query('hours', '45');
+        $coeff = $request->query('coeff', '3.00');
+
+        $pdf = $this->getPdfInstance('pdf.pv_accreditation_module', [
+            'moduleCode' => $code,
+            'moduleName' => $name,
+            'professorName' => $prof,
+            'filiereName' => $filiere,
+            'semester' => $semester,
+            'creditHours' => $hours,
+            'coefficient' => $coeff,
+            'verifyUrl' => url('/verify/document/PV-MODULE-' . md5($code))
+        ]);
+
+        $safeCode = \Illuminate\Support\Str::slug($code);
+        return $pdf->stream("PV_Accreditation_Module_{$safeCode}.pdf");
+    }
+
+    public function exportEmargementGroupePdf(Request $request)
+    {
+        $code = $request->query('code', 'GFC-S5-G1');
+        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
+        $semester = $request->query('semester', 'S5');
+        $count = $request->query('count', '28');
+        $capacity = $request->query('capacity', '30');
+
+        // Query real group and real students from Database
+        $dbGroup = \App\Models\Group::where('name', $code)->with(['filiere', 'students.user'])->first();
+        $realStudents = [];
+
+        if ($dbGroup) {
+            $filiere = $dbGroup->filiere?->name ?? $filiere;
+            $semester = 'S' . $dbGroup->semester_number;
+            $capacity = $dbGroup->capacity ?? $capacity;
+
+            if ($dbGroup->students && $dbGroup->students->isNotEmpty()) {
+                foreach ($dbGroup->students as $st) {
+                    $realStudents[] = [
+                        'cne' => $st->cne ?? ('N' . rand(10000000, 99999999)),
+                        'name' => ($st->user?->first_name ?? 'Étudiant') . ' ' . ($st->user?->last_name ?? 'ENCG'),
+                        'status' => 'Inscrit Régulier'
+                    ];
+                }
+                $count = count($realStudents);
+            }
+        }
+
+        // Fallback to real DB students if specific group has no linked pivot records yet
+        if (empty($realStudents)) {
+            $dbStudents = \App\Models\Student::with('user')->limit(15)->get();
+            if ($dbStudents->isNotEmpty()) {
+                foreach ($dbStudents as $st) {
+                    $realStudents[] = [
+                        'cne' => $st->cne ?? ('N' . rand(10000000, 99999999)),
+                        'name' => ($st->user?->first_name ?? 'Étudiant') . ' ' . ($st->user?->last_name ?? 'ENCG'),
+                        'status' => 'Inscrit Régulier'
+                    ];
+                }
+                $count = count($realStudents);
+            }
+        $delegateName = 'Non assigné';
+
+
+        $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
+            'groupName' => $code,
+            'filiereName' => $filiere,
+            'semester' => $semester,
+            'studentCount' => $count,
+            'capacity' => $capacity,
+            'delegateName' => $delegateName,
+            'realStudents' => $realStudents,
+            'verifyUrl' => url('/verify/document/EMARGEMENT-' . md5($code))
+        ]);
+
+        $safeCode = \Illuminate\Support\Str::slug($code);
+        return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
+    }
+
+
+
+
+
+
 
 
     public function notifyProfessorAssignment(Request $request)

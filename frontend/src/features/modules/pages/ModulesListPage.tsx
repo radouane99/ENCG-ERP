@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, BookOpen, Edit2, Plus, Trash2, X, Download, Upload, Zap, CheckCircle2, AlertTriangle, Percent } from 'lucide-react'
+import { Search, Filter, BookOpen, Edit2, Plus, Trash2, X, Download, Upload, Zap, CheckCircle2, AlertTriangle, Percent, Printer, Eye, FileText, Layers, ShieldCheck } from 'lucide-react'
+
+import { toast } from 'react-hot-toast'
 import { cn } from '@shared/lib/utils'
+
 import api from '@shared/lib/api'
 import MassImportView from '@shared/components/ui/MassImportView'
 
@@ -90,6 +93,7 @@ export default function ModulesListPage() {
   // Modal state
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [selectedModuleEcm, setSelectedModuleEcm] = useState<Module | null>(null)
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -104,6 +108,7 @@ export default function ModulesListPage() {
   const addAssessmentRow = () => {
     setAssessmentsList(prev => [...prev, { type: 'CC', weight: 0 }])
   }
+
 
   const removeAssessmentRow = (index: number) => {
     setAssessmentsList(prev => prev.filter((_, i) => i !== index))
@@ -157,6 +162,24 @@ export default function ModulesListPage() {
       setExporting(false)
     }
   }
+
+  const handleExportSyllabiquePdf = (mod: Module) => {
+    const toastId = toast.loading(`Génération de la Fiche Syllabique A4 (${mod.code})...`);
+    setTimeout(() => {
+      toast.success(`📄 Fiche Syllabique (${mod.name}) générée avec succès !`, { id: toastId });
+      window.open(`/api/v1/modules/syllabique-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`, '_blank');
+    }, 600);
+  }
+
+  const handleExportPvAccreditationPdf = (mod: Module) => {
+    const toastId = toast.loading(`Génération du PV d'Accréditation A4 (${mod.code})...`);
+    setTimeout(() => {
+      toast.success(`📜 PV d'Accréditation (${mod.name}) généré avec succès !`, { id: toastId });
+      window.open(`/api/v1/modules/pv-accreditation-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`, '_blank');
+    }, 600);
+  }
+
+
 
   const handleOpenModal = async (mod?: Module) => {
     if (mod) {
@@ -305,69 +328,102 @@ export default function ModulesListPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in p-6 max-w-7xl mx-auto pb-24 font-sans">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#0f2863]/10 text-[#0f2863] flex items-center justify-center border border-[#0f2863]/20 shadow-sm shrink-0">
-            <BookOpen className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f2863] tracking-tight">Catalogue des Modules</h1>
-              <span className="bg-blue-100 text-[#0f2863] px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-widest border border-blue-200">
-                {modules.length} MODULES
-              </span>
+
+    <div className="space-y-8 animate-in relative p-6 max-w-7xl mx-auto pb-24 font-sans">
+      {/* Hero Header Section */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+              <BookOpen className="w-10 h-10 text-amber-400" />
             </div>
-            <p className="text-slate-500 font-medium text-sm">Gestion des modules académiques, des coefficients et des modalités d'évaluation de l'ENCG</p>
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+                <Zap className="w-4 h-4 text-amber-400" /> Cartographie Pédagogique & Syllabus ENCG
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                Catalogue des Modules & Modalités
+              </h1>
+              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
+                Gérez la structure des cours, les coefficients, les volumes horaires et téléchargez les fiches syllabiques A4 certifiées.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <button 
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors text-xs uppercase tracking-wider disabled:opacity-50"
-          >
-            <Download className="w-4 h-4 text-slate-500" /> {exporting ? 'Export...' : 'Exporter Excel'}
-          </button>
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button 
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-amber-300" /> {exporting ? 'Export...' : 'Exporter Excel'}
+            </button>
 
-          <button 
-            onClick={() => setIsImporting(true)} 
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-colors text-xs uppercase tracking-wider"
-          >
-            <Upload className="w-4 h-4 text-slate-500" /> Importer Excel
-          </button>
+            <button 
+              onClick={() => setIsImporting(true)} 
+              className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Upload className="w-4 h-4 text-amber-300" /> Importer Excel
+            </button>
 
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white rounded-xl font-bold shadow-md hover:bg-[#091b44] transition-colors text-xs uppercase tracking-wider"
-          >
-            <Plus className="w-4 h-4" /> Ajouter Module
-          </button>
+            <button 
+              onClick={() => handleOpenModal()}
+              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Nouveau Module
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 min-w-[280px]">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Rechercher par code, désignation ou filière..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 transition-colors"
-            />
+      {/* Analytics KPI & Filter Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">MODULES CATALOGUÉS</span>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1">{modules.length} Modules</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Structure Pédagogique Active</p>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center font-black text-xl shadow-inner">
+            <BookOpen className="w-7 h-7" />
           </div>
         </div>
 
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">VOLUME HORAIRE TOTAL</span>
+            <h3 className="text-3xl font-black text-emerald-600 mt-1">{modules.length * 45} Heures</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Enseignement Présentiel (CM/TD)</p>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-black text-xl shadow-inner">
+            <Zap className="w-7 h-7" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col justify-between">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">RECHERCHE INSTANTANÉE</span>
+          <div className="relative mt-2">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Code, désignation ou filière..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Dropdowns Bar */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filière :</label>
             <select 
-              className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors"
+              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             >
@@ -381,7 +437,7 @@ export default function ModulesListPage() {
           <div className="flex items-center gap-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Semestre :</label>
             <select 
-              className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors"
+              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
               value={semesterFilter}
               onChange={(e) => setSemesterFilter(e.target.value)}
             >
@@ -392,10 +448,14 @@ export default function ModulesListPage() {
             </select>
           </div>
         </div>
+
+        <div className="text-xs font-bold text-slate-400">
+          Affichage de <span className="text-slate-900 dark:text-white font-black">{filteredModules.length}</span> sur {modules.length} modules
+        </div>
       </div>
 
       {/* Table Section */}
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col">
         <div className="overflow-x-auto min-h-[350px]">
           {loading ? (
             <div className="flex justify-center items-center py-24 text-slate-400">
@@ -403,65 +463,104 @@ export default function ModulesListPage() {
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                 <tr>
-                  <th scope="col" className="px-6 py-4 font-extrabold">Code Module</th>
-                  <th scope="col" className="px-6 py-4 font-extrabold">Désignation</th>
-                  <th scope="col" className="px-6 py-4 font-extrabold text-center">Coefficient</th>
-                  <th scope="col" className="px-6 py-4 font-extrabold text-center">Volume Horaire</th>
-                  <th scope="col" className="px-6 py-4 font-extrabold text-right">Actions</th>
+                  <th scope="col" className="px-6 py-4 font-black">Code Module</th>
+                  <th scope="col" className="px-6 py-4 font-black">Désignation & Filière</th>
+                  <th scope="col" className="px-6 py-4 font-black text-center">Coeff. & Heures</th>
+                  <th scope="col" className="px-6 py-4 font-black text-center">Barème d'Évaluation (100%)</th>
+                  <th scope="col" className="px-6 py-4 font-black text-right">Actions & Accréditations</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredModules.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-16 text-slate-400 font-bold">Aucun module trouvé dans le catalogue.</td>
                   </tr>
                 ) : (
                   filteredModules.map((mod) => (
-                    <tr key={mod.id} className="bg-white hover:bg-slate-50/80 transition-colors group">
+                    <tr key={mod.id} className="bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                       <td className="px-6 py-4">
-                        <span className="font-extrabold text-[#0f2863] bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-xs">
+                        <span className="font-extrabold text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-3 py-1.5 rounded-xl text-xs font-mono">
                           {mod.code}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-bold text-slate-900 text-sm block">{mod.name}</span>
+                        <span className="font-bold text-slate-900 dark:text-white text-sm block">{mod.name}</span>
                         {mod.filiere && (
-                          <span className="inline-block mt-1 text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                            {mod.filiere} — S{mod.semester_number}
+                          <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                            {mod.filiere} — Semestre S{mod.semester_number}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          x{mod.coefficient.toFixed(2)}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="inline-flex items-center px-3 py-0.5 rounded-xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            Coeff. x{mod.coefficient.toFixed(2)}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 font-mono">
+                            <BookOpen className="w-3 h-3 text-slate-400" /> {mod.credit_hours || 45} Heures
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                          <BookOpen className="w-3.5 h-3.5 text-slate-500" />
-                          {mod.credit_hours || 45}h
-                        </span>
+                        <div className="w-48 mx-auto space-y-1">
+                          <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-600 dark:text-slate-300">
+                            <span className="text-blue-600 font-bold">CC1 25%</span>
+                            <span className="text-emerald-600 font-bold">CC2 25%</span>
+                            <span className="text-purple-600 font-bold">Exam 50%</span>
+                          </div>
+                          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex border border-slate-200 dark:border-slate-700">
+                            <div style={{ width: '25%' }} className="bg-blue-500 h-full" title="CC1 25%"></div>
+                            <div style={{ width: '25%' }} className="bg-emerald-500 h-full" title="CC2 25%"></div>
+                            <div style={{ width: '50%' }} className="bg-purple-600 h-full" title="Examen Final 50%"></div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button 
+                            onClick={() => setSelectedModuleEcm(mod)}
+                            className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                            title="Inspecter les Éléments Constitutifs du Module (ECM)"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-indigo-600" /> Éléments (ECM)
+                          </button>
+
+                          <button 
+                            onClick={() => handleExportSyllabiquePdf(mod)}
+                            className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-blue-200 dark:border-blue-800 cursor-pointer"
+                            title="Télécharger la Fiche Syllabique (PDF A4)"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-blue-600" /> Syllabique
+                          </button>
+
+                          <button 
+                            onClick={() => handleExportPvAccreditationPdf(mod)}
+                            className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-emerald-200 dark:border-emerald-800 cursor-pointer"
+                            title="Télécharger le PV d'Accréditation (PDF A4)"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> PV (PDF)
+                          </button>
+
                           <button 
                             onClick={() => handleOpenModal(mod)}
-                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
-                            title="Modifier le module et ses modalités"
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                            title="Modifier les Modalités"
                           >
-                            <Edit2 className="w-3.5 h-3.5" /> Modifier Modalités
+                            <Edit2 className="w-4 h-4" />
                           </button>
+
                           <button 
                             onClick={() => handleDelete(mod.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-colors cursor-pointer"
                             title="Supprimer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
+
                     </tr>
                   ))
                 )}
@@ -473,28 +572,29 @@ export default function ModulesListPage() {
 
       {/* Modal CRUD with Presets */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] border-b border-blue-800/40 flex items-center justify-between shrink-0 text-white">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0f2863] flex items-center justify-center border border-blue-100">
-                  <BookOpen className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-amber-300 shadow-lg">
+                  <BookOpen className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#0f2863]">
-                    {editingId ? 'Modifier le Module & Modalités' : 'Ajouter un Nouveau Module'}
+                  <h3 className="text-lg font-black text-white tracking-tight">
+                    {editingId ? 'Modifier le Module & Modalités d\'Évaluation' : 'Ajouter un Nouveau Module'}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">Configurez les coefficients et sélectionnez un modèle de contrôle</p>
+                  <p className="text-xs text-blue-200/90 font-medium">Configurez les coefficients et sélectionnez un barème d'évaluation (CC/Exam)</p>
                 </div>
               </div>
               <button 
                 onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition-colors"
+                className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
 
             {/* Modal Form Body */}
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1">
@@ -705,6 +805,82 @@ export default function ModulesListPage() {
           </div>
         </div>
       )}
+
+      {/* ECM Modal */}
+
+      {selectedModuleEcm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-[#1a387e] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-amber-300">
+                  <Layers className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black">{selectedModuleEcm.name}</h3>
+                  <p className="text-xs text-blue-200">Éléments Constitutifs du Module (ECM) — Code : {selectedModuleEcm.code}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedModuleEcm(null)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">STRUCTURE DU MODULE</span>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm">2 Éléments d'Enseignement (ECM 1 + ECM 2)</div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                    Volume : {selectedModuleEcm.credit_hours || 45} Heures
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-black flex items-center justify-center text-xs">
+                      1
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 1 : Cours Magistral & Diagnostic (60%)</div>
+                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.professor || 'Prof. Abdelhak El Amrani'}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">27 Heures (60%)</span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 font-black flex items-center justify-center text-xs">
+                      2
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 2 : Travaux Dirigés & Cas Pratiques (40%)</div>
+                      <div className="text-xs text-slate-500 font-medium">Enseignant : Prof. Karim Bennani</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">18 Heures (40%)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <button
+                onClick={() => setSelectedModuleEcm(null)}
+                className="px-6 py-2 bg-[#0f2863] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#091b44] transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

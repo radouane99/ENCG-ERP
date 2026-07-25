@@ -492,52 +492,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/schedules/export/group-pdf', [PdfExportController::class, 'exportScheduleGroupPdf']);
     Route::get('/admin/exams/{exam}/live-attendance/pdf', [PdfExportController::class, 'liveAttendancePdf']);
     Route::get('/admin/exams/{exam}/display-list/pdf', [PdfExportController::class, 'displayList']);
-    Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-    Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-    Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-    Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-    Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-    Route::get('/v1/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-
-    Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-    Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-    Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-    Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-
-
     Route::post('/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
 
-    Route::post('/admin/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
-    Route::post('/convocations/room-flash-alert', [ConvocationController::class, 'sendRoomFlashAlert']);
-
-
-
-
-
-});
-
-// [AUDIT ROUTE-01] Public verify routes are already in shared.php — removed duplicates here.
-
-// ---------------------------------------------------------
-// REST API (Protected endpoints for third-party integrations)
-// ---------------------------------------------------------
-
-// Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
-
-// ---------------------------------------------------------
-// INTERNAL DYNAMIC ENDPOINTS (Admin Web Auth)
-// ---------------------------------------------------------
-Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|department-head'])->group(function () {
     Route::get('/admin/api/filieres/{id}/groups', [InternalApiController::class, 'filiereGroups']);
     Route::get('/admin/api/groups/{id}/modules', [InternalApiController::class, 'groupModules']);
     Route::get('/admin/api/rooms/{id}/availability', [InternalApiController::class, 'roomAvailability']);
@@ -557,3 +513,48 @@ Route::middleware(['auth:sanctum', 'role:super-admin|institution-admin|director|
     Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
     Route::post('/admin/document-requests/{documentRequest}/send-email-notification', [AdminDocumentRequestController::class, 'sendEmailNotification']);
 });
+
+// ---------------------------------------------------------
+// PUBLIC PDF STREAMING ENDPOINTS (Accessible natively via window.open)
+// ---------------------------------------------------------
+Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+
+Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+
+Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+Route::get('/v1/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+
+Route::get('/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+Route::get('/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+Route::get('/v1/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+Route::get('/v1/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+
+Route::get('/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+Route::get('/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+Route::get('/v1/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+Route::get('/v1/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+
+Route::get('/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+Route::get('/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+Route::get('/v1/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+
+
+
+

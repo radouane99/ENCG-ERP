@@ -13,7 +13,7 @@ class GroupService
      */
     public function getFilteredGroups(array $filters): Collection
     {
-        $query = Group::with(['filiere', 'academicYear']);
+        $query = Group::with(['filiere', 'academicYear'])->withCount('students');
 
         if (!empty($filters['filiere_id'])) {
             $query->where('filiere_id', $filters['filiere_id']);
@@ -38,12 +38,13 @@ class GroupService
             'filiere_id'      => $g->filiere_id,
             'filiere_name'    => $g->filiere?->name ?? '—',
             'semester_number' => $g->semester_number,
-            'capacity'        => $g->capacity,
-            'current_count'   => $g->current_count ?? 0,
+            'capacity'        => $g->capacity ?? 30,
+            'current_count'   => $g->students_count > 0 ? $g->students_count : ($g->current_count ?? 0),
             'academic_year'   => $g->academicYear?->label ?? '—',
             'academic_year_id'=> $g->academic_year_id,
         ])->toArray();
     }
+
 
     /**
      * Create a new group
