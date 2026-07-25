@@ -203,6 +203,10 @@ const AdminExamScanPage = lazy(() => import('@features/exams/pages/AdminExamScan
 const AdminPrintProfessorsConvocationPage = lazy(() => import('@features/exams/pages/AdminPrintProfessorsConvocationPage'))
 const AdminProfessorAvailabilityPage = lazy(() => import('@features/exams/pages/AdminProfessorAvailabilityPage'))
 const AdminScheduleChangeRequestsPage = lazy(() => import('@features/exams/pages/AdminScheduleChangeRequestsPage'))
+const AdminAlertsPage = lazy(() => import('@features/admin/pages/AdminAlertsPage'))
+const AdminMinistryReportPage = lazy(() => import('@features/admin/pages/AdminMinistryReportPage'))
+const AdminPFEWorkflowPage = lazy(() => import('@features/admin/pages/AdminPFEWorkflowPage'))
+const AdminAcademicCalendarPage = lazy(() => import('@features/admin/pages/AdminAcademicCalendarPage'))
 const AdminFinanceDashboard = lazy(() => import('@features/admin/pages/AdminFinanceDashboard'))
 
 const AdminBlockchainDiplomas = lazy(() => import('@features/admin/pages/AdminBlockchainDiplomas'))
@@ -468,6 +472,10 @@ export default function RootRouter() {
             <Route path="/admin/requests" element={<AdminRequestsPage />} />
             <Route path="/admin/messages" element={<AdminMessagesPage />} />
             <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+            <Route path="/admin/alerts" element={<AdminAlertsPage />} />
+            <Route path="/admin/ministry-report" element={<AdminMinistryReportPage />} />
+            <Route path="/admin/pfe-workflow" element={<AdminPFEWorkflowPage />} />
+            <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />

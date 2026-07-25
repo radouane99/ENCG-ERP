@@ -44,6 +44,8 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'القيادة والقرار',
     items: [
       { label: 'Pilotage Académique', labelAr: 'القيادة الأكاديمية', href: '/admin/pilotage', icon: Target, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Tableau des Alertes', labelAr: 'جدول التنبيهات Centralisé', href: '/admin/alerts', icon: AlertTriangle, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Rapport Ministère MESRSFC', labelAr: 'تقرير الوزارة الرسمية', href: '/admin/ministry-report', icon: ScrollText, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Analytique IA', labelAr: 'التحليلات الذكية', href: '/admin/predictive-analytics', icon: BrainCircuit, roles: ['super-admin', 'institution-admin'] },
       { label: 'Finance & Tableau', labelAr: 'المالية والمؤشرات', href: '/admin/finance-dashboard', icon: Landmark, roles: ['super-admin', 'institution-admin'] },
       { label: 'Statistiques Globales', labelAr: 'الإحصائيات العامة', href: '/admin/analytics', icon: BarChart3, roles: ['super-admin', 'institution-admin', 'director'] },
@@ -106,6 +108,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'استعمالات الزمن والحرم',
     items: [
       { label: 'Emplois du Temps', labelAr: 'استعمالات الزمن', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Calendrier Académique', labelAr: 'التقويم الأكاديمي', href: '/admin/academic-calendar', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
       { label: 'Salles & Amphithéâtres', labelAr: 'القاعات والمدرجات', href: '/infrastructure/classrooms', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Smart Campus & IoT', labelAr: 'الحرم الذكي', href: '/admin/smart-campus', icon: Landmark, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Réservations de Salles', labelAr: 'حجز القاعات', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
@@ -116,6 +119,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'STAGES, PFE & VIE ÉTUDIANTE',
     groupTitleAr: 'التداريب والأنشطة',
     items: [
+      { label: 'Cahier de Charges PFE Digital', labelAr: 'دفتر التحملات PFE الرقمي', href: '/admin/pfe-workflow', icon: Kanban, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Gestion des Stages & PFE', labelAr: 'إدارة التداريب ومشاريع التخرج', href: '/academic/internships', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Juries PFE & Soutenances', labelAr: 'لجان مناقشة التخرج', href: '/admin/jury-pfe', icon: ProfIcon, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Clubs & Associations', labelAr: 'الأندية والجمعيات', href: '/admin/clubs', icon: Building2, roles: ['super-admin', 'institution-admin', 'director'] },

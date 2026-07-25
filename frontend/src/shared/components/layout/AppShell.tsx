@@ -6,7 +6,7 @@ import { GlobalSearchModal } from './GlobalSearchModal'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import CommandPalette from './CommandPalette'
-import GlobalAIChatbot from '../ai/GlobalAIChatbot'
+import ChatbotWidget from '../ui/ChatbotWidget'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
 import InstallPrompt from '../pwa/InstallPrompt'
 
@@ -70,7 +70,6 @@ export default function AppShell() {
           </div>
         </main>
 
-
         {/* Mobile Navigation Bar */}
         <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
       </div>
@@ -88,8 +87,8 @@ export default function AppShell() {
         }}
       />
       
-      {/* Global AI Assistant Widget — Gemini-powered, role-aware */}
-      <GlobalAIChatbot />
+      {/* Global AI Assistant Floating Widget — Gemini-powered with real DB context */}
+      <ChatbotWidget />
 
       {/* PWA Install Prompt */}
       <InstallPrompt />

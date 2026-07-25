@@ -583,7 +583,210 @@ Route::get('/v1/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiqu
 Route::get('/v1/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
 
 
+// ──────────────────────────────────────────────────────────────────────────────
+// AI Chatbot (Gemini) — Student & Admin Assistant
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/ai/chat', [\App\Http\Controllers\Api\Admin\StudentChatbotController::class, 'chat']);
+Route::post('/admin/ai/chat', [\App\Http\Controllers\Api\Admin\StudentChatbotController::class, 'chat']);
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Alertes Centralisées
+// ──────────────────────────────────────────────────────────────────────────────
+Route::get('/admin/alerts', [\App\Http\Controllers\Api\Admin\AdminAlertsController::class, 'getAlerts']);
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Rapport Ministère MESRSFC
+// ──────────────────────────────────────────────────────────────────────────────
+Route::get('/admin/ministry-report', [\App\Http\Controllers\Api\Admin\AdminMinistryReportController::class, 'getReport']);
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Calendrier Académique
+// ──────────────────────────────────────────────────────────────────────────────
+Route::get('/admin/academic-calendar/events', function () {
+    try {
+        $events = [];
 
+        // Exams
+        if (\Illuminate\Support\Facades\Schema::hasTable('exams')) {
+            $exams = \Illuminate\Support\Facades\DB::table('exams')
+                ->join('modules', 'exams.module_id', '=', 'modules.id')
+                ->select('exams.id', 'modules.name as title', 'exams.date as start', 'exams.start_time', 'exams.end_time')
+                ->get();
+            foreach ($exams as $e) {
+                $events[] = [
+                    'id' => 'exam-' . $e->id,
+                    'title' => '📝 ' . $e->title,
+                    'start' => $e->start,
+                    'type' => 'exam',
+                    'color' => '#ef4444',
+                ];
+            }
+        }
+
+        // Holidays
+        if (\Illuminate\Support\Facades\Schema::hasTable('academic_holidays')) {
+            $holidays = \Illuminate\Support\Facades\DB::table('academic_holidays')
+                ->select('id', 'name as title', 'start_date as start', 'end_date as end')
+                ->get();
+            foreach ($holidays as $h) {
+                $events[] = [
+                    'id' => 'holiday-' . $h->id,
+                    'title' => '🏖️ ' . $h->title,
+                    'start' => $h->start,
+                    'end' => $h->end,
+                    'type' => 'holiday',
+                    'color' => '#10b981',
+                ];
+            }
+        }
+
+        // PFE Soutenances
+        if (\Illuminate\Support\Facades\Schema::hasTable('final_projects')) {
+            $soutenances = \Illuminate\Support\Facades\DB::table('final_projects')
+                ->whereNotNull('soutenance_date')
+                ->select('id', 'title', 'soutenance_date as start')
+                ->get();
+            foreach ($soutenances as $s) {
+                $events[] = [
+                    'id' => 'pfe-' . $s->id,
+                    'title' => '🎓 Soutenance PFE — ' . $s->title,
+                    'start' => $s->start,
+                    'type' => 'soutenance',
+                    'color' => '#8b5cf6',
+                ];
+            }
+        }
+
+        return response()->json(['success' => true, 'events' => $events]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => true, 'events' => [], 'error' => $e->getMessage()]);
+    }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// PFE Workflow
+// ──────────────────────────────────────────────────────────────────────────────
+Route::get('/admin/pfe/workflow', function () {
+    try {
+        $table = \Illuminate\Support\Facades\Schema::hasTable('final_projects') ? 'final_projects' : null;
+        if (!$table) return response()->json(['success' => true, 'stages' => [], 'stats' => []]);
+
+        $allPfe = \Illuminate\Support\Facades\DB::table($table)
+            ->leftJoin('students', $table . '.student_id', '=', 'students.id')
+            ->leftJoin('users as su', 'students.user_id', '=', 'su.id')
+            ->leftJoin('users as prof', $table . '.supervisor_id', '=', 'prof.id')
+            ->select(
+                $table . '.id',
+                $table . '.title',
+                $table . '.status',
+                $table . '.created_at',
+                $table . '.soutenance_date',
+                'su.name as student_name',
+                'prof.name as supervisor_name'
+            )
+            ->orderBy($table . '.created_at', 'desc')
+            ->get();
+
+        $stages = [
+            'soumis' => $allPfe->whereIn('status', ['submitted', 'pending', 'soumis'])->values(),
+            'en_revue' => $allPfe->whereIn('status', ['under_review', 'en_revue', 'reviewing'])->values(),
+            'valide' => $allPfe->whereIn('status', ['validated', 'approved', 'valide'])->values(),
+            'encadreur_affecte' => $allPfe->where('supervisor_name', '!=', null)->whereIn('status', ['assigned', 'in_progress', 'encadre'])->values(),
+            'soutenance' => $allPfe->whereNotNull('soutenance_date')->whereIn('status', ['completed', 'soutenu'])->values(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'stages' => $stages,
+            'stats' => [
+                'total' => $allPfe->count(),
+                'soumis' => $stages['soumis']->count(),
+                'en_revue' => $stages['en_revue']->count(),
+                'valides' => $stages['valide']->count(),
+                'en_cours' => $stages['encadreur_affecte']->count(),
+                'soutenus' => $stages['soutenance']->count(),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'error' => $e->getMessage(), 'stages' => [], 'stats' => []]);
+    }
+});
+
+Route::patch('/admin/pfe/{id}/status', function (\Illuminate\Http\Request $request, $id) {
+    try {
+        $table = \Illuminate\Support\Facades\Schema::hasTable('final_projects') ? 'final_projects' : 'internships';
+        \Illuminate\Support\Facades\DB::table($table)->where('id', $id)->update([
+            'status' => $request->input('status'),
+            'supervisor_id' => $request->input('supervisor_id'),
+            'updated_at' => now(),
+        ]);
+        return response()->json(['success' => true, 'message' => 'Statut PFE mis à jour.']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    }
+});
+
+// Student Progress Report (full DB pull for one student)
+Route::get('/admin/students/{id}/progress-report', function ($id) {
+    try {
+        $student = \Illuminate\Support\Facades\DB::table('students')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
+            ->where('students.id', $id)
+            ->select(
+                'students.id', 'students.cne', 'students.apogee_code',
+                'users.name', 'users.email',
+                'filieres.name as filiere'
+            )->first();
+
+        if (!$student) return response()->json(['success' => false, 'message' => 'Étudiant introuvable'], 404);
+
+        $grades = \Illuminate\Support\Facades\DB::table('grades')
+            ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
+            ->join('modules', 'assessments.module_id', '=', 'modules.id')
+            ->where('grades.student_id', $id)
+            ->select('modules.name as module', 'modules.code', 'grades.grade', 'assessments.type')
+            ->get();
+
+        $absences = \Illuminate\Support\Facades\DB::table('absences')
+            ->where('student_id', $id)
+            ->select('date', 'is_justified', 'reason')
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $internships = \Illuminate\Support\Facades\DB::table('internships')
+            ->where('student_id', $id)
+            ->select('company_name', 'status', 'start_date', 'end_date', 'type')
+            ->get();
+
+        $clubMemberships = \Illuminate\Support\Facades\Schema::hasTable('club_members')
+            ? \Illuminate\Support\Facades\DB::table('club_members')
+                ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+                ->where('club_members.student_id', $id)
+                ->select('clubs.name as club')
+                ->get()
+            : collect([]);
+
+        $avgGrade = $grades->avg('grade');
+        $totalAbsences = $absences->count();
+        $justifiedAbsences = $absences->where('is_justified', true)->count();
+
+        return response()->json([
+            'success' => true,
+            'student' => $student,
+            'summary' => [
+                'average_grade' => round($avgGrade ?? 0, 2),
+                'total_absences' => $totalAbsences,
+                'justified_absences' => $justifiedAbsences,
+                'total_modules' => $grades->count(),
+                'passed_modules' => $grades->where('grade', '>=', 10)->count(),
+            ],
+            'grades' => $grades,
+            'absences' => $absences,
+            'internships' => $internships,
+            'clubs' => $clubMemberships,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    }
+});

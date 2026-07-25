@@ -13,17 +13,18 @@ use Illuminate\Support\Facades\DB;
 
 class AiService
 {
+    protected GeminiApiService $geminiApi;
+
+    public function __construct(GeminiApiService $geminiApi)
+    {
+        $this->geminiApi = $geminiApi;
+    }
+
     /**
      * Generate a QCM using the Gemini AI (real API call).
      */
     public function generateQuiz(string $topic, string $difficulty, int $questionsCount = 5): array
     {
-        $apiKey = env('GEMINI_API_KEY');
-
-        if (!$apiKey) {
-            return ['success' => false, 'error' => 'Clé API Gemini non configurée.'];
-        }
-
         $difficultyMap = [
             'beginner'     => 'facile (niveau débutant, concepts de base)',
             'intermediate' => 'intermédiaire (niveau licence, applications pratiques)',
@@ -36,20 +37,13 @@ Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown, sans backtick, s
 Chaque objet doit avoir les clés : question (string), options (objet avec A,B,C,D), correct_answer (string, une seule lettre), explanation (string).
 Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":\"...\",\"D\":\"...\"},\"correct_answer\":\"A\",\"explanation\":\"...\"}]";
 
+        $system = ["Tu es un expert en conception d'épreuves universitaires pour l'ENCG Fès."];
+
         try {
-            $payload = [
-                'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
-                'generationConfig' => ['temperature' => 0.6, 'maxOutputTokens' => 2000],
-            ];
+            $rawText = $this->geminiApi->generateContent($prompt, $system);
 
-            $response = Http::post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}",
-                $payload
-            );
-
-            if ($response->successful()) {
-                $rawText = $response->json('candidates.0.content.parts.0.text') ?? '[]';
-                // Strip markdown code fences if Gemini wraps with them
+            if ($rawText) {
+                // Strip markdown code fences if wrapped
                 $rawText = preg_replace('/^```(?:json)?\n?/', '', trim($rawText));
                 $rawText = preg_replace('/\n?```$/', '', $rawText);
                 $questions = json_decode($rawText, true);
@@ -58,10 +52,8 @@ Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":
                     return ['success' => true, 'topic' => $topic, 'difficulty' => $difficulty, 'quiz' => $questions];
                 }
             }
-
-            Log::error('Gemini Quiz API Error: ' . $response->body());
         } catch (\Exception $e) {
-            Log::error('Gemini Quiz Exception: ' . $e->getMessage());
+            Log::error('Quiz Exception: ' . $e->getMessage());
         }
 
         return ['success' => false, 'error' => "Impossible de générer le QCM via l'IA."];
@@ -198,15 +190,10 @@ Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":
     }
 
     /**
-     * Generate a textual narrative summary using Gemini.
+     * Generate a textual narrative summary using Gemini / Groq.
      */
     private function generatePredictiveNarrative(array $atRisk, array $predictions, int $total): string
     {
-        $apiKey = env('GEMINI_API_KEY');
-        if (!$apiKey) {
-            return "Résumé IA non disponible (clé API manquante).";
-        }
-
         $highRisk   = count(array_filter($atRisk, fn ($s) => $s['risk_level'] === 'high'));
         $mediumRisk = count(array_filter($atRisk, fn ($s) => $s['risk_level'] === 'medium'));
 
@@ -218,36 +205,14 @@ Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":
 - Taux de réussite estimé : {$predictions[1]['value']}
 Formule des recommandations actionnables. Sois direct, factuel et professionnel.";
 
-        try {
-            $response = Http::timeout(10)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}",
-                [
-                    'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
-                    'generationConfig' => ['temperature' => 0.4, 'maxOutputTokens' => 400],
-                ]
-            );
+        $system = ["Tu es l'analyste académique principal de l'ENCG Fès."];
 
-            if ($response->successful()) {
-                return $response->json('candidates.0.content.parts.0.text') ?? 'Résumé non disponible.';
-            }
-        } catch (\Exception $e) {
-            Log::warning('Gemini narrative exception: ' . $e->getMessage());
-        }
-
-        return "L'analyse prédictive a identifié {$highRisk} étudiant(s) à risque élevé parmi {$total} inscrits. Une intervention pédagogique ciblée est recommandée.";
+        return $this->geminiApi->generateContent($prompt, $system)
+            ?? "L'analyse prédictive a identifié {$highRisk} étudiant(s) à risque élevé parmi {$total} inscrits. Une intervention pédagogique ciblée est recommandée.";
     }
 
     public function chatWithAssistant(string $prompt, string $role = 'Étudiant', string $name = 'Utilisateur', ?int $userId = null): array
     {
-        $apiKey = env('GEMINI_API_KEY');
-        if (!$apiKey) {
-            return [
-                'success' => false,
-                'reply' => "Clé API Gemini non configurée sur le serveur.",
-                'context' => 'assistant'
-            ];
-        }
-
         // 1. Save user message if logged in
         if ($userId) {
             AiChatMessage::create([
@@ -257,79 +222,29 @@ Formule des recommandations actionnables. Sois direct, factuel et professionnel.
             ]);
         }
 
-        // 2. Fetch History (last 10 exchanges for context window)
-        $historyContents = [];
-        if ($userId) {
-            $pastMessages = AiChatMessage::where('user_id', $userId)
-                                ->orderBy('id', 'asc')
-                                ->take(20)
-                                ->get();
-            
-            foreach ($pastMessages as $msg) {
-                $geminiRole = $msg->role === 'assistant' ? 'model' : 'user';
-                $historyContents[] = [
-                    'role' => $geminiRole,
-                    'parts' => [['text' => $msg->content]]
-                ];
-            }
-        } else {
-            $historyContents[] = [
-                'role' => 'user',
-                'parts' => [['text' => $prompt]]
-            ];
-        }
-
-        $systemPrompt = "Vous êtes l'Assistant IA officiel de l'ENCG Fès (École Nationale de Commerce et de Gestion). Vous parlez français et arabe (selon la langue de l'utilisateur). Vous êtes le conseiller personnel de {$name} (Rôle: {$role}). Vous avez accès à l'historique de la conversation. Soyez concis, professionnel, et extrêmement serviable. Ne proposez que des informations relatives à la vie étudiante, aux cours, aux plannings, aux notes, ou aux documents de l'ENCG. L'utilisateur interagit avec vous soit par texte, soit par la voix. Gardez vos réponses courtes et naturelles pour qu'elles puissent être facilement lues à haute voix par la synthèse vocale.";
-
-        $payload = [
-            'system_instruction' => [
-                'parts' => [['text' => $systemPrompt]]
-            ],
-            'contents' => empty($historyContents)
-                ? [['role' => 'user', 'parts' => [['text' => $prompt]]]]
-                : $historyContents,
-            'generationConfig' => [
-                'temperature' => 0.7,
-                'maxOutputTokens' => 800,
-            ]
+        $systemPrompt = [
+            "Vous êtes l'Assistant IA officiel de l'ENCG Fès (École Nationale de Commerce et de Gestion).",
+            "Vous parlez français et arabe.",
+            "Vous êtes le conseiller personnel de {$name} (Rôle: {$role}).",
+            "Soyez concis, professionnel et extrêmement serviable.",
+            "Ne proposez que des informations relatives à la vie étudiante, aux cours, aux plannings, aux notes, ou aux documents de l'ENCG."
         ];
 
-        try {
-            $response = Http::post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={$apiKey}",
-                $payload
-            );
+        $reply = $this->geminiApi->generateContent($prompt, $systemPrompt);
 
-            if ($response->successful()) {
-                $data  = $response->json();
-                $reply = $data['candidates'][0]['content']['parts'][0]['text'] ?? "Désolé, je n'ai pas pu générer une réponse.";
-                
-                if ($userId) {
-                    AiChatMessage::create([
-                        'user_id' => $userId,
-                        'role' => 'assistant',
-                        'content' => $reply
-                    ]);
-                }
-
-                return ['success' => true, 'reply' => $reply, 'context' => 'assistant'];
-            }
-
-            Log::error('Gemini API Error: ' . $response->body());
-            return [
-                'success' => false,
-                'reply' => "Erreur de communication avec l'IA. " . $response->status(),
-                'context' => 'assistant'
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Gemini API Exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'reply' => "Une erreur s'est produite lors de l'appel à l'IA.",
-                'context' => 'assistant'
-            ];
+        if (!$reply) {
+            $reply = "Désolé, je rencontre une difficulté temporaire. Contactez la scolarité à scolarite@encg-fes.ma";
         }
+
+        if ($userId) {
+            AiChatMessage::create([
+                'user_id' => $userId,
+                'role' => 'assistant',
+                'content' => $reply
+            ]);
+        }
+
+        return ['success' => true, 'reply' => $reply, 'context' => 'assistant'];
     }
 }
 
