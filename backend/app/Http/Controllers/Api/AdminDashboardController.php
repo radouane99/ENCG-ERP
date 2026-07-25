@@ -203,7 +203,7 @@ class AdminDashboardController extends Controller
             $payments[] = [
                 'id' => $index + 1,
                 'name' => $std->name,
-                'type' => 'Frais de Scolarité / Master',
+                'type' => 'Formation Continue / Master Exécutif',
                 'amount' => number_format(12500, 2) . ' MAD',
                 'date' => \Carbon\Carbon::parse($std->created_at)->format('d/m/Y'),
                 'status' => $index % 2 === 0 ? 'PAID' : ($index === 1 ? 'LATE' : 'PENDING')
