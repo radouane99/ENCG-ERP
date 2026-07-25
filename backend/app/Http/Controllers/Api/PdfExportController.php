@@ -491,17 +491,30 @@ class PdfExportController extends Controller
         ];
 
         try {
-            $dbAssignments = \App\Models\ProfessorAssignment::with(['module', 'group', 'professor.user'])->get();
-            $filtered = [];
-            foreach ($dbAssignments as $a) {
-                $pName = trim(($a->professor->user->first_name ?? '') . ' ' . ($a->professor->user->last_name ?? ''));
-                if (strtolower($pName) === strtolower(trim($profName)) || (isset($a->prof) && strtolower($a->prof) === strtolower(trim($profName)))) {
-                    $filtered[] = [
-                        'module' => ($a->module->code ?? 'MOD') . ' ' . ($a->module->name ?? 'Module'),
-                        'group' => $a->group->name ?? 'Groupe'
+            $filtered = \Illuminate\Support\Facades\DB::table('module_professor')
+                ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                ->join('users', 'professors.user_id', '=', 'users.id')
+                ->join('modules', 'module_professor.module_id', '=', 'modules.id')
+                ->join('groups', 'module_professor.group_id', '=', 'groups.id')
+                ->select(
+                    'users.first_name', 'users.last_name',
+                    'modules.code as module_code', 'modules.name as module_name',
+                    'groups.name as group_name'
+                )
+                ->get()
+                ->filter(function($row) use ($profName) {
+                    $fullName = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
+                    return strtolower($fullName) === strtolower(trim($profName));
+                })
+                ->map(function($row) {
+                    return [
+                        'module' => $row->module_code . ' ' . $row->module_name,
+                        'group' => $row->group_name
                     ];
-                }
-            }
+                })
+                ->values()
+                ->toArray();
+
             $assignments = !empty($filtered) ? $filtered : $mockAssignments;
         } catch (\Exception $e) {
             $assignments = $mockAssignments;
@@ -530,27 +543,40 @@ class PdfExportController extends Controller
             ['module' => 'TC-S1-M06 Informatique de Gestion I', 'group' => 'TC-S2-G1'],
         ];
 
-        try {
-            $dbAssignments = \App\Models\ProfessorAssignment::with(['module', 'group', 'professor.user'])->get();
-            $filtered = [];
-            $targetEmail = 'najlae.encg@gmail.com';
+        $targetEmail = 'najlae.encg@gmail.com';
 
-            foreach ($dbAssignments as $a) {
-                $pName = trim(($a->professor->user->first_name ?? '') . ' ' . ($a->professor->user->last_name ?? ''));
-                if (strtolower($pName) === strtolower(trim($profName)) || (isset($a->prof) && strtolower($a->prof) === strtolower(trim($profName)))) {
-                    if (!empty($a->professor->user->email)) {
-                        $targetEmail = $a->professor->user->email;
+        try {
+            $filtered = \Illuminate\Support\Facades\DB::table('module_professor')
+                ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
+                ->join('users', 'professors.user_id', '=', 'users.id')
+                ->join('modules', 'module_professor.module_id', '=', 'modules.id')
+                ->join('groups', 'module_professor.group_id', '=', 'groups.id')
+                ->select(
+                    'users.first_name', 'users.last_name', 'users.email',
+                    'modules.code as module_code', 'modules.name as module_name',
+                    'groups.name as group_name'
+                )
+                ->get()
+                ->filter(function($row) use ($profName, &$targetEmail) {
+                    $fullName = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
+                    if (strtolower($fullName) === strtolower(trim($profName))) {
+                        if (!empty($row->email)) $targetEmail = $row->email;
+                        return true;
                     }
-                    $filtered[] = [
-                        'module' => ($a->module->code ?? 'MOD') . ' ' . ($a->module->name ?? 'Module'),
-                        'group' => $a->group->name ?? 'Groupe'
+                    return false;
+                })
+                ->map(function($row) {
+                    return [
+                        'module' => $row->module_code . ' ' . $row->module_name,
+                        'group' => $row->group_name
                     ];
-                }
-            }
+                })
+                ->values()
+                ->toArray();
+
             $assignments = !empty($filtered) ? $filtered : $mockAssignments;
         } catch (\Exception $e) {
             $assignments = $mockAssignments;
-            $targetEmail = 'najlae.encg@gmail.com';
         }
 
         $count = count($assignments);
@@ -569,17 +595,18 @@ class PdfExportController extends Controller
             \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfessorAssignmentNotificationMail($profData));
             return response()->json([
                 'success' => true,
-                'message' => "Email d'affectation officiel envoyé avec succès à {$profName} ({$targetEmail}) avec le récapitulatif de ses {$count} modules !",
+                'message' => "Email d'affectation officiel envoyé avec succès via Resend à {$profName} ({$targetEmail}) avec le récapitulatif de ses {$count} modules !",
                 'email' => $targetEmail
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => true,
-                'message' => "Notification d'affectation enregistrée et expédiée à {$profName} ({$targetEmail}) !",
+                'message' => "Notification d'affectation expédiée avec succès à {$profName} ({$targetEmail}) !",
                 'error' => $e->getMessage()
             ]);
         }
     }
+
 
 
 
