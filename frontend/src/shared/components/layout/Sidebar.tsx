@@ -141,6 +141,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Clubs Étudiants', labelAr: 'أنديتي الطلابية', href: '/student/clubs', icon: Users, roles: ['student'] },
       { label: 'Mobilité & Échanges', labelAr: 'برامج الحركية', href: '/student/mobility', icon: PlaneTakeoff, roles: ['student'] },
       { label: 'Analyse & Carte Mentale (IA)', labelAr: 'تحليل وتلخيص الدروس', href: '/student/course-analysis', icon: Sparkles, roles: ['student', 'super-admin', 'institution-admin'] },
+      { label: 'Lettre de Recommandation', labelAr: 'طلب رسالة التوصية', href: '/student/recommendations', icon: FileText, roles: ['student', 'super-admin', 'institution-admin'] },
       { label: 'Bibliothèque Numérique', labelAr: 'المكتبة الرقمية', href: '/student/library', icon: BookOpen, roles: ['student'] },
     ]
   },
@@ -149,6 +150,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الأستاذ',
     items: [
       { label: 'Cahier de Texte', labelAr: 'دفتر النصوص', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
+      { label: 'Demandes de Recommandation (IA)', labelAr: 'رسائل التوصية الذكية', href: '/professor/recommendations', icon: ShieldCheck, roles: ['professor', 'super-admin', 'institution-admin'] },
       { label: 'Encadrement & Jurys PFE', labelAr: 'تأطير التداريب ومناقشات التخرج', href: '/professor/internships', icon: Trophy, roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Absences', labelAr: 'تسجيل الغيابات', href: '/professor/absences', icon: Users2, roles: ['professor', 'vacataire'] },
       { label: 'Générateur QCM (IA)', labelAr: 'مولد الاختبارات الذكي', href: '/professor/qcm-generator', icon: Zap, roles: ['professor'] },

@@ -796,3 +796,20 @@ Route::get('/admin/students/{id}/progress-report', function ($id) {
 // ──────────────────────────────────────────────────────────────────────────────
 Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
 Route::post('/student/ai/analyze-course', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'analyzeCourse']);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Nouvelles Fonctionnalités IA Avancées (PFE Matching, Anomalies, Recommandations)
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/admin/ai/match-pfe-supervisor', [\App\Http\Controllers\Api\AdminAiController::class, 'matchPfeSupervisor']);
+Route::get('/admin/ai/grade-anomalies', [\App\Http\Controllers\Api\AdminAiController::class, 'detectGradeAnomalies']);
+Route::post('/admin/students/{id}/recommendation-letter', [\App\Http\Controllers\Api\AdminAiController::class, 'generateRecommendationLetter']);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Lettres de Recommandation (Workflow Étudiant -> Professeur -> Signature & Email)
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/student/recommendations/request', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'submitRequest']);
+Route::get('/student/recommendations', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'getStudentRequests']);
+Route::get('/professor/recommendations', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'getProfessorRequests']);
+Route::post('/professor/recommendations/{id}/approve', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'approveRequest']);
+
+

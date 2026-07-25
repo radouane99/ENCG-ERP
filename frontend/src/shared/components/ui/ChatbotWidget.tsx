@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2 } from 'lucide-react'
+import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { toast } from 'sonner'
 
 interface Message {
   id: number
@@ -23,16 +24,63 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState<Message[]>([{
     id: 0,
     role: 'assistant',
-    content: '👋 Bonjour ! Je suis l\'**Assistant IA ENCG Fès**, alimenté par **Google Gemini**.\n\nJe peux vous aider sur toutes vos questions administratives et académiques. Comment puis-je vous aider ?'
+    content: '👋 Bonjour ! Je suis l\'**Assistant IA ENCG Fès**, alimenté par **Google Gemini**.\n\nJe peux vous aider sur toutes vos questions administratives et académiques. Vous pouvez aussi me parler au micro 🎙️ !'
   }])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const [counter, setCounter] = useState(1)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
+
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      toast.error('La reconnaissance vocale n\'est pas supportée par votre navigateur.')
+      return
+    }
+
+    if (isListening) {
+      setIsListening(false)
+      return
+    }
+
+    try {
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'fr-FR'
+      recognition.continuous = false
+      recognition.interimResults = false
+
+      recognition.onstart = () => {
+        setIsListening(true)
+        toast.info('🎙️ Écoute vocale active... Parlez maintenant !')
+      }
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        setInput(transcript)
+        setIsListening(false)
+        toast.success(`Dictée : "${transcript}"`)
+      }
+
+      recognition.onerror = () => {
+        setIsListening(false)
+        toast.error('Erreur lors de la reconnaissance vocale.')
+      }
+
+      recognition.onend = () => {
+        setIsListening(false)
+      }
+
+      recognition.start()
+    } catch {
+      setIsListening(false)
+      toast.error('Erreur d\'activation du micro.')
+    }
+  }
 
   const sendMessage = async (text?: string) => {
     const msg = (text ?? input).trim()
@@ -41,7 +89,7 @@ export default function ChatbotWidget() {
     setMessages(prev => [...prev, { id: counter, role: 'user', content: msg }])
     setCounter(n => n + 1)
     setInput('')
-    setIsTyping(true)
+    setIsTyping(false)
 
     try {
       const res = await api.post('/ai/chat', { message: msg, context: 'student_assistant' })
@@ -95,7 +143,7 @@ export default function ChatbotWidget() {
             <div className="flex-1">
               <h3 className="font-black text-white text-sm">Assistant IA ENCG Fès</h3>
               <p className="text-blue-200 text-[10px] font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Gemini AI — Données réelles en temps réel
+                <Sparkles className="w-3 h-3 text-amber-400" /> Gemini AI & Micro Vocale
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -158,14 +206,27 @@ export default function ChatbotWidget() {
             ))}
           </div>
 
-          {/* Input */}
+          {/* Input Bar with Mic Button */}
           <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 shrink-0">
+            <button
+              onClick={toggleVoiceInput}
+              title="Dictée Vocale IA"
+              className={cn(
+                'w-9 h-9 rounded-2xl flex items-center justify-center cursor-pointer transition-all shrink-0 border',
+                isListening
+                  ? 'bg-rose-500 text-white animate-pulse border-rose-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 border-slate-200 dark:border-slate-700'
+              )}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder="Posez votre question..."
+              placeholder={isListening ? 'Écoute en cours...' : 'Posez votre question ou dictez...'}
               disabled={isTyping}
               className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
             />
@@ -182,3 +243,4 @@ export default function ChatbotWidget() {
     </>
   )
 }
+
