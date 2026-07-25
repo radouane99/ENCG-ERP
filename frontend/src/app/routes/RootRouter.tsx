@@ -430,7 +430,8 @@ export default function RootRouter() {
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
             <Route path="/admin/activity-logs" element={<ActivityLogsPage />} />
             <Route path="/admin/textbooks" element={<TextbooksPage />} />
-            <Route path="/admin/evaluations" element={<EvaluationsPage />} />
+            <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
+
             <Route path="/admin/clubs" element={<AdminClubsPage />} />
             <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
             <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
@@ -467,7 +468,6 @@ export default function RootRouter() {
             <Route path="/admin/requests" element={<AdminRequestsPage />} />
             <Route path="/admin/messages" element={<AdminMessagesPage />} />
             <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
-            <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />

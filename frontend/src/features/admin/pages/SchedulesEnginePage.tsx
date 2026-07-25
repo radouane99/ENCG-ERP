@@ -153,11 +153,11 @@ export default function SchedulesEnginePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Filière d'Enseignement</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Filière d'Enseignement</label>
             <select
               value={selectedFiliere}
               onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-[#0f2863] focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black text-[#0f2863] dark:text-white outline-none appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230f2863%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[right_1.2rem_center] bg-no-repeat pr-10 shadow-sm transition-all hover:border-indigo-400 focus:border-[#0f2863] focus:ring-4 focus:ring-indigo-500/15 cursor-pointer"
             >
               <option value="">Sélectionner une Filière</option>
               {filieres.map((f: any) => (
@@ -167,11 +167,11 @@ export default function SchedulesEnginePage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Semestre d'Études</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Semestre d'Études</label>
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-[#0f2863] focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black text-[#0f2863] dark:text-white outline-none appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230f2863%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[right_1.2rem_center] bg-no-repeat pr-10 shadow-sm transition-all hover:border-indigo-400 focus:border-[#0f2863] focus:ring-4 focus:ring-indigo-500/15 cursor-pointer"
             >
               <option value="1">Semestre 1 (S1 - Tronc Commun)</option>
               <option value="2">Semestre 2 (S2 - Tronc Commun)</option>

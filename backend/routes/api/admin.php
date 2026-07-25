@@ -430,6 +430,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
     });
 
+    // Course Evaluations Quality Management
+    Route::prefix('course-evaluations')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminCourseEvaluationController::class, 'getStats']);
+        Route::post('/toggle-campaign', [\App\Http\Controllers\Api\Admin\AdminCourseEvaluationController::class, 'toggleCampaign']);
+    });
+
     // Schedule Change Requests
     Route::prefix('schedule-change-requests')->group(function () {
         Route::get('/', [ScheduleChangeRequestController::class, 'index']);
