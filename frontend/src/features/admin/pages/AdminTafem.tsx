@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Target, Users, LayoutGrid, CheckCircle2, AlertCircle, Download, FileText, Wand2, Loader2, UploadCloud, RefreshCw, Trophy, Sparkles, Zap, Printer, ShieldAlert, QrCode, Search, MapPin, X, Check, Eye } from 'lucide-react';
+import { Target, Users, LayoutGrid, CheckCircle2, AlertCircle, Download, FileText, Wand2, Loader2, UploadCloud, RefreshCw, Trophy, Sparkles, Zap, Printer, ShieldAlert, QrCode, Search, MapPin, X, Check, Eye, Building2, Globe } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api';
@@ -178,6 +178,92 @@ export default function AdminTafem() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button 
+              onClick={async () => {
+                try {
+                  toast.loading("Génération de la Liste de Passage Sécurité Porte ENCG Fès...");
+                  const res = await api.get('/admin/tafem/security-daily-list?date=Mardi 28 Juillet 2026');
+                  const list = res.data?.appointments ?? [];
+                  
+                  const printWin = window.open('', '_blank');
+                  if (printWin) {
+                    printWin.document.write(`
+                      <html>
+                        <head>
+                          <title>Liste de Passage Sécurité Porte — ENCG Fès</title>
+                          <style>
+                            body { font-family: Arial, sans-serif; padding: 30px; color: #111; }
+                            h2 { text-align: center; color: #0f2863; margin-bottom: 5px; }
+                            h4 { text-align: center; color: #555; margin-top: 0; font-size: 13px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                            th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+                            th { bg-color: #0f2863; color: white; background: #0f2863; }
+                            .badge { background: #d1fae5; color: #065f46; font-weight: bold; padding: 4px 8px; border-radius: 6px; }
+                          </style>
+                        </head>
+                        <body>
+                          <h2>ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</h2>
+                          <h4>CONTRÔLE D'ACCÈS PORTE PRINCIPALE — LISTE DU MARDI 28 JUILLET 2026</h4>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>#</th>
+                                <th>Candidat (Nom & Prénom)</th>
+                                <th>Code MASSAR / CNE</th>
+                                <th>CIN</th>
+                                <th>Créneau Horaire</th>
+                                <th>Guichet Affecté</th>
+                                <th>Accès Porte</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${list.map((item: any, idx: number) => `
+                                <tr>
+                                  <td>${idx + 1}</td>
+                                  <td><strong>${item.name}</strong></td>
+                                  <td>${item.cne}</td>
+                                  <td>${item.cin}</td>
+                                  <td><strong>${item.time_slot}</strong></td>
+                                  <td>${item.desk}</td>
+                                  <td><span class="badge">AUTORISÉ</span></td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                          <script>window.print();</script>
+                        </body>
+                      </html>
+                    `);
+                    printWin.document.close();
+                    toast.dismiss();
+                    toast.success("📋 Liste de Passage Sécurité générée avec succès !");
+                  }
+                } catch {
+                  toast.error("Erreur lors de la génération de la liste sécurité.");
+                }
+              }}
+              className="flex items-center gap-2 px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-white" /> Liste Sécurité Porte
+            </button>
+
+            <button 
+              onClick={async () => {
+                try {
+                  toast.loading("Analyse des désistements & Appel automatique Liste d'Attente...");
+                  const res = await api.post('/admin/tafem/promote-waiting-list');
+                  toast.dismiss();
+                  toast.success(`📢 ${res.data?.message}`);
+                  fetchTafemData();
+                } catch {
+                  toast.error("Erreur lors de l'appel automatique de la liste d'attente.");
+                }
+              }}
+              className="flex items-center gap-2 px-5 py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-2xl font-black shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Zap className="w-4 h-4 text-slate-900" /> Appel Liste d'Attente
+            </button>
+
             <button 
               onClick={() => setShowQrScanner(true)}
               className="flex items-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
@@ -359,6 +445,10 @@ export default function AdminTafem() {
 
       </div>
 
+      {/* ── Section Nationale Ministère & Vérification des Dossiers Physiques à l'Établissement ── */}
+      <MinistryTafemPhysicalDossierWorkspace />
+
+
       {/* QR Control Scanner Modal */}
       {showQrScanner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
@@ -424,3 +514,273 @@ export default function AdminTafem() {
     </div>
   );
 }
+
+function MinistryTafemPhysicalDossierWorkspace() {
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'validated' | 'pending' | 'absent'>('all');
+  const [loading, setLoading] = useState(true);
+  const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
+  const [docs, setDocs] = useState({
+    bac_original: false,
+    releve_notes: false,
+    cin_copy: false,
+    photos: false,
+  });
+  const [validating, setValidating] = useState(false);
+
+  const fetchCandidates = async () => {
+    try {
+      setLoading(true);
+      const [resList, resStats] = await Promise.all([
+        api.get('/admin/tafem/ministry-list'),
+        api.get('/admin/tafem/enrollment-stats')
+      ]);
+      setCandidates(resList.data?.candidates ?? []);
+      setStats(resStats.data?.summary ?? null);
+    } catch {
+      toast.error("Erreur lors de la récupération des données d'inscription.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCandidates();
+  }, []);
+
+  const filteredCandidates = candidates.filter(c => {
+    if (activeTab === 'validated') return c.physical_dossier_status === 'DOSSIER_CONFORME';
+    if (activeTab === 'pending') return c.physical_dossier_status !== 'DOSSIER_CONFORME' && c.apogee_code === 'En attente dossier physique';
+    if (activeTab === 'absent') return c.physical_dossier_status !== 'DOSSIER_CONFORME';
+    return true;
+  });
+
+  const handleSelectCandidate = (cand: any) => {
+    setSelectedCandidate(cand);
+    setDocs({
+      bac_original: cand.physical_documents?.bac_original ?? false,
+      releve_notes: cand.physical_documents?.releve_notes ?? false,
+      cin_copy: cand.physical_documents?.cin_copy ?? false,
+      photos: cand.physical_documents?.photos ?? false,
+    });
+  };
+
+  const handleValidatePhysicalDossier = async () => {
+    if (!selectedCandidate) return;
+
+    if (!docs.bac_original || !docs.releve_notes || !docs.cin_copy || !docs.photos) {
+      toast.error("Dossier incomplet ! Tous les 4 documents originaux doivent être vérifiés physiquement au guichet.");
+      return;
+    }
+
+    setValidating(true);
+    try {
+      const res = await api.post('/admin/tafem/verify-physical-dossier', {
+        student_id: selectedCandidate.id,
+        bac_original: docs.bac_original,
+        releve_notes: docs.releve_notes,
+        cin_copy: docs.cin_copy,
+        photos: docs.photos,
+      });
+
+      toast.success(`🎉 ${res.data?.message} Code APOGEE : ${res.data?.data?.apogee_code}`);
+      fetchCandidates();
+      setSelectedCandidate(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Erreur de validation du dossier.");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-xl border border-slate-200/80 dark:border-slate-800 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-black">
+            <Building2 className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-3 py-0.5 rounded-full text-[10px] font-black uppercase mb-1 border border-indigo-200 dark:border-indigo-800">
+              <Globe className="w-3.5 h-3.5" /> Liste Officielle Ministère MESRSFC
+            </div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">
+              Vérification des Dossiers Physiques à l'Établissement ENCG Fès
+            </h2>
+            <p className="text-xs font-bold text-slate-400">
+              Réception des admis TAFEM au guichet scolarité, contrôle du Bac original et attribution du Code APOGEE.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={fetchCandidates}
+          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+        >
+          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} /> Actualiser Liste
+        </button>
+      </div>
+
+      {/* ── Stat KPI Cards Breakdown ── */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800">
+          <span className="text-[10px] font-black uppercase text-indigo-500 block">Total Admis Ministère</span>
+          <span className="text-2xl font-black text-indigo-900 dark:text-indigo-200 font-mono">{stats?.total_admis_ministere ?? candidates.length}</span>
+          <span className="text-[10px] text-slate-500 font-bold block mt-1">Liste Principale & Attente</span>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+          <span className="text-[10px] font-black uppercase text-emerald-600 block">🟢 Dossiers Validés (Inscrits)</span>
+          <span className="text-2xl font-black text-emerald-800 dark:text-emerald-300 font-mono">{stats?.inscrits_definitifs ?? candidates.filter(c => c.physical_dossier_status === 'DOSSIER_CONFORME').length}</span>
+          <span className="text-[10px] text-emerald-600 font-bold block mt-1">APOGEE Attribué (Taux : {stats?.conversion_rate_percentage ?? '60%'})</span>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+          <span className="text-[10px] font-black uppercase text-amber-600 block">🟡 Pré-inscrits (Sans Dossier)</span>
+          <span className="text-2xl font-black text-amber-800 dark:text-amber-300 font-mono">{stats?.preinscrits_sans_dossier ?? candidates.filter(c => c.physical_dossier_status !== 'DOSSIER_CONFORME').length}</span>
+          <span className="text-[10px] text-amber-600 font-bold block mt-1">En attente dépôt au guichet</span>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+          <span className="text-[10px] font-black uppercase text-rose-600 block">🔴 Non Pré-inscrits (Absents)</span>
+          <span className="text-2xl font-black text-rose-800 dark:text-rose-300 font-mono">{stats?.non_preinscrits ?? 0}</span>
+          <span className="text-[10px] text-rose-600 font-bold block mt-1">Pas encore inscrits en ligne</span>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 flex-wrap">
+        {[
+          { key: 'all', label: `Tous (${candidates.length})` },
+          { key: 'validated', label: `🟢 Dossiers Validés (${candidates.filter(c => c.physical_dossier_status === 'DOSSIER_CONFORME').length})` },
+          { key: 'pending', label: `🟡 En Attente Dépôt Dossier (${candidates.filter(c => c.physical_dossier_status !== 'DOSSIER_CONFORME').length})` },
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key as any)}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border",
+              activeTab === t.key
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left: Candidates List */}
+        <div className="lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between text-xs font-black uppercase text-slate-400">
+            <span>Candidats Transmis par le Ministère ({candidates.length})</span>
+            <span>Statut Dossier Physique</span>
+          </div>
+
+          <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+            {loading ? (
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+            ) : filteredCandidates.map(c => (
+              <div
+                key={c.id}
+                onClick={() => handleSelectCandidate(c)}
+                className={cn(
+                  "p-4 rounded-2xl border flex items-center justify-between gap-4 cursor-pointer transition-all",
+                  selectedCandidate?.id === c.id
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/20"
+                    : c.physical_dossier_status === 'DOSSIER_CONFORME'
+                      ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40"
+                      : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-indigo-300"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-mono font-black text-xs text-slate-700 dark:text-slate-200 shrink-0">
+                    #{c.rank}
+                  </span>
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900 dark:text-white">{c.name}</h4>
+                    <span className="text-xs font-bold text-slate-500">CNE : {c.cne} | Score TAFEM : {c.tafem_score}</span>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase block mb-1",
+                    c.physical_dossier_status === 'DOSSIER_CONFORME'
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200"
+                  )}>
+                    {c.physical_dossier_status === 'DOSSIER_CONFORME' ? '✅ INSCRIT DÉFINITIF' : '⏳ En attente dépôt'}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">APOGEE : {c.apogee_code}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Verification Desk Checklist */}
+        <div className="space-y-4">
+          {!selectedCandidate ? (
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-[2rem] border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center text-slate-400 space-y-3">
+              <FileText className="w-10 h-10 mx-auto text-indigo-400/40" />
+              <h3 className="font-black text-sm text-slate-600 dark:text-slate-300">Sélectionnez un candidat</h3>
+              <p className="text-xs">Cliquez sur un candidat dans la liste pour vérifier la conformité de ses pièces physiques au guichet.</p>
+            </div>
+          ) : (
+            <div className="bg-slate-50 dark:bg-slate-800/80 rounded-[2rem] border border-slate-200 dark:border-slate-700 p-6 space-y-5">
+              <div>
+                <span className="text-[10px] font-black uppercase text-indigo-500 block">Guichet Scolarité ENCG Fès</span>
+                <h3 className="font-black text-lg text-slate-900 dark:text-white">{selectedCandidate.name}</h3>
+                <span className="text-xs font-bold text-slate-500 font-mono">CNE : {selectedCandidate.cne}</span>
+              </div>
+
+              {/* Checklist */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-black text-xs uppercase tracking-wider text-slate-400">Checklist Documents Physiques</h4>
+
+                {[
+                  { key: 'bac_original', label: '🎓 Baccalauréat Original (Obligatoire)' },
+                  { key: 'releve_notes', label: '📄 Relevés de Notes Originaux' },
+                  { key: 'cin_copy', label: '🪪 Copie CIN Certifiée Conforme' },
+                  { key: 'photos', label: '📸 4 Photos d\'Identité + Acte de Naissance' },
+                ].map(item => (
+                  <label
+                    key={item.key}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-colors text-xs font-bold",
+                      (docs as any)[item.key]
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-200"
+                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(docs as any)[item.key]}
+                      onChange={e => setDocs({ ...docs, [item.key]: e.target.checked })}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={handleValidatePhysicalDossier}
+                disabled={validating || !docs.bac_original || !docs.releve_notes || !docs.cin_copy || !docs.photos}
+                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-700 hover:opacity-90 text-white font-black rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
+              >
+                {validating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Valider l'Inscription Définitive & Générer APOGEE
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

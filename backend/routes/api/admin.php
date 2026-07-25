@@ -812,4 +812,32 @@ Route::get('/student/recommendations', [\App\Http\Controllers\Api\Recommendation
 Route::get('/professor/recommendations', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'getProfessorRequests']);
 Route::post('/professor/recommendations/{id}/approve', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'approveRequest']);
 
+// ──────────────────────────────────────────────────────────────────────────────
+// APOGEE Inscriptions Engine & Moteur Paie Vacataires RH/DAF
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/academic/candidates/validate', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'validateCandidate']);
+Route::get('/hr/vacataires/payroll', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'calculateVacationPayroll']);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
+// ──────────────────────────────────────────────────────────────────────────────
+Route::get('/admin/tafem/ministry-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getMinistryTafemList']);
+Route::post('/admin/tafem/verify-physical-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'verifyPhysicalDossier']);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Préinscription en Ligne + Étiquette Enveloppe QR Code + Scan Instantané Scolarité
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionController::class, 'submitOnlinePreinscription']);
+Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
+Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
+Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
+Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
+Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
+
+
+
+
+
+
+
 

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe
+  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
@@ -138,6 +138,24 @@ export default function InscriptionPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [cndpConsent, setCndpConsent] = useState(false);
   const [showCndpModal, setShowCndpModal] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [trackCne, setTrackCne] = useState('');
+  const [trackCin, setTrackCin] = useState('');
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingResult, setTrackingResult] = useState<any | null>(null);
+
+  const handleTrackDossier = async () => {
+    if (!trackCne.trim() && !trackCin.trim()) return;
+    setTrackingLoading(true);
+    try {
+      const res = await api.get('/public/track-dossier', { params: { cne: trackCne.trim(), cin: trackCin.trim() } });
+      setTrackingResult(res.data?.candidate ?? null);
+    } catch (err: any) {
+      setTrackingResult({ error: err.response?.data?.message || 'Dossier non trouvé.' });
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     full_name: '', email: '', password: '', password_confirmation: '',
@@ -218,19 +236,117 @@ export default function InscriptionPage() {
 
   /* ── SUCCESS ── */
   if (done) {
+    const envelopeQrToken = 'ENV-2026-' + (formData.cne ? formData.cne.substring(0, 6) : (Math.floor(Math.random() * 900000) + 100000));
+    
     return (
-      <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen flex flex-col items-center justify-center text-center p-8 transition-colors", "bg-slate-50 dark:bg-[#030711]", t.font)}>
-        <div className="relative w-24 h-24 mb-8">
-          <span className="absolute inset-0 rounded-full bg-[#E60028]/20 animate-ping" />
-          <span className="absolute inset-2 rounded-full bg-[#E60028]/30 animate-pulse" />
-          <span className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#E60028] to-red-700 shadow-2xl shadow-[#E60028]/40">
-            <CheckCircle2 className="w-12 h-12 text-white" />
-          </span>
+      <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen flex flex-col items-center justify-center p-6 transition-colors", "bg-slate-50 dark:bg-[#030711]", t.font)}>
+        <div className="max-w-2xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-2xl space-y-6 text-center">
+          
+          <div className="relative w-20 h-20 mx-auto">
+            <span className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+            <span className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 shadow-xl">
+              <CheckCircle2 className="w-10 h-10 text-white" />
+            </span>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Pré-Inscription Validée !</h2>
+            <p className="text-xs text-slate-500 font-bold mt-1">
+              Imprimez le reçu et l'étiquette QR Code à coller sur votre enveloppe physique de candidature.
+            </p>
+          </div>
+
+          {/* Printable Envelope QR Code Label Card */}
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-indigo-300 dark:border-indigo-700 p-6 rounded-3xl space-y-4 text-left font-mono">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block">ÉTIQUETTE À COLLER SUR L'ENVELOPPE</span>
+                <span className="text-sm font-black text-slate-900 dark:text-white">{formData.full_name || 'CANDIDAT ADMIS TAFEM'}</span>
+              </div>
+              <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-black">
+                ENCG FÈS 2026
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <div>CNE : <span className="font-black text-indigo-600">{formData.cne || 'K13009281'}</span></div>
+              <div>CIN : <span className="font-black text-slate-900 dark:text-white">{formData.cin || 'CD72910'}</span></div>
+              <div>Filière : <span className="font-black text-slate-900 dark:text-white">{formData.filiere || 'Commerce & Gestion'}</span></div>
+              <div>Statut : <span className="font-black text-amber-600">EN ATTENTE DOSSIER PHYSIQUE</span></div>
+            </div>
+
+            {/* Smart Rendez-vous Dépôt Box */}
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-2xl space-y-1">
+              <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-300 block">📅 RENDEZ-VOUS DÉPÔT DOSSIER (LISSAGE DES FLUX)</span>
+              <div className="flex justify-between items-center text-xs font-black text-slate-900 dark:text-white">
+                <span>Mardi 28 Juillet 2026 (10:00 - 11:00)</span>
+                <span className="text-indigo-600 font-mono">Guichet N° 2</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border flex items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-slate-400 block">QR Code Enveloppe Identifiant</span>
+                <span className="text-base font-black font-mono text-indigo-600">{envelopeQrToken}</span>
+              </div>
+              <div className="w-14 h-14 bg-slate-900 text-white rounded-xl flex items-center justify-center font-mono font-black text-[10px]">
+                [QR CODE]
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => {
+                const printWin = window.open('', '_blank')
+                if (printWin) {
+                  printWin.document.write(`
+                    <html>
+                      <head>
+                        <title>Étiquette Enveloppe Dossier Physique — ENCG Fès</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; padding: 40px; }
+                          .label-card { border: 3px dashed #0f2863; padding: 30px; border-radius: 16px; width: 450px; margin: auto; text-align: center; }
+                          .title { font-size: 16px; font-weight: bold; color: #0f2863; margin-bottom: 10px; }
+                          .info { font-size: 13px; text-align: left; margin: 15px 0; }
+                          .qr-mock { font-size: 20px; font-weight: bold; margin-top: 20px; padding: 15px; border: 2px solid #333; display: inline-block; }
+                        </style>
+                      </head>
+                      <body>
+                        <div class="label-card">
+                          <div class="title">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
+                          <div style="font-size:12px; font-weight:bold;">ÉTIQUETTE DOSSIER PHYSIQUE (À COLLER SUR L'ENVELOPPE)</div>
+                          <div class="info">
+                            <p><strong>Candidat :</strong> ${formData.full_name}</p>
+                            <p><strong>CNE :</strong> ${formData.cne}</p>
+                            <p><strong>CIN :</strong> ${formData.cin}</p>
+                            <p><strong>Contient :</strong> Bac Original, Relevés, CIN, 4 Photos</p>
+                          </div>
+                          <div class="qr-mock">
+                            [QR CODE SCANNER]<br/>
+                            <span style="font-size:12px;">${envelopeQrToken}</span>
+                          </div>
+                        </div>
+                        <script>window.print();</script>
+                      </body>
+                    </html>
+                  `)
+                  printWin.document.close()
+                }
+              }}
+              className="flex-1 py-3.5 bg-gradient-to-r from-[#0f2863] to-indigo-700 hover:opacity-90 text-white font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+            >
+              🖨️ Imprimer Reçu & Étiquette QR Code
+            </button>
+
+            <button
+              onClick={() => navigate('/login?registered=true')}
+              className="px-6 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold rounded-2xl text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Se Connecter
+            </button>
+          </div>
         </div>
-        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-3">{t.successTitle}</h2>
-        <p className="text-slate-600 dark:text-slate-400 max-w-sm mb-2 leading-relaxed text-sm">
-          {t.successDesc}
-        </p>
       </div>
     );
   }
@@ -288,6 +404,13 @@ export default function InscriptionPage() {
               </button>
             </div>
 
+            <button
+              onClick={() => setShowTrackingModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg font-black text-xs hover:bg-indigo-100 transition-colors cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5" /> {lang === 'ar' ? 'تتبع ملفي' : 'Suivre mon Dossier'}
+            </button>
+
             <Link to="/login" className="hidden sm:flex text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors items-center gap-1.5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 hover:border-slate-300 dark:hover:border-white/25 shadow-sm">
               {t.alreadyRegistered} <ArrowRight className={cn("w-3.5 h-3.5", isRTL && "rotate-180")} />
             </Link>
@@ -308,6 +431,100 @@ export default function InscriptionPage() {
             <p className="text-slate-600 dark:text-slate-500 text-sm leading-relaxed">
               {t.subtitle}
             </p>
+          </div>
+
+          {/* ── Ultra-Organized Bilingual Instructions & Physical Documents Guide ── */}
+          <div className="w-full max-w-3xl mb-8 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-[#091124] border-2 border-indigo-200/80 dark:border-indigo-800/80 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl space-y-6">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-indigo-600/30 shrink-0">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    Composition du Dossier Physique / مكونات الملف الفيزيائي
+                  </h3>
+                  <p className="text-xs text-slate-500 font-bold">
+                    Documents obligatoires à mettre dans l'enveloppe A4 avec le QR Code
+                  </p>
+                </div>
+              </div>
+
+              <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 self-start sm:self-auto">
+                Guichet ENCG Fès 2026
+              </span>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 text-xs">
+              
+              {/* Card 1: Moroccan Students */}
+              <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-700">
+                  <h4 className="font-black text-indigo-700 dark:text-indigo-300 text-xs flex items-center gap-1.5">
+                    🇲🇦 Étudiants Marocains / الطلبة المغاربة
+                  </h4>
+                  <span className="text-[10px] font-bold text-slate-400">National</span>
+                </div>
+
+                <ul className="space-y-2 text-slate-700 dark:text-slate-200 font-medium">
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-black">1.</span>
+                    <span>🎓 <strong>Baccalauréat Original</strong> + 2 copies certifiées / <strong>شهادة البكالوريا الأصلية</strong> + نسختان مصادق عليهما</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-black">2.</span>
+                    <span>📄 <strong>Relevés de Notes Originaux</strong> du Bac / <strong>كشوف النقط الأصلية</strong> للبكالوريا</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-black">3.</span>
+                    <span>🪪 <strong>2 Copies certifiées de la CIN</strong> / نسختان مصادق عليهما من بطاقة التعريف الوطنية</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-black">4.</span>
+                    <span>📸 <strong>4 Photos d'identité récentes</strong> + Acte de naissance / 4 صور شمسية + عقد الازدياد</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-black">5.</span>
+                    <span>✉️ <strong>2 Enveloppes timbrées</strong> avec l'adresse du candidat / ظرفان بريديان يحملان العنوان</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 2: Foreign Students */}
+              <div className="bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl p-5 border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b pb-2 border-amber-200/60 dark:border-amber-900/40">
+                  <h4 className="font-black text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5">
+                    🌍 Étudiants Étrangers / الطلبة الأجانب
+                  </h4>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">International</span>
+                </div>
+
+                <ul className="space-y-2 text-slate-800 dark:text-slate-200 font-medium">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-black">1.</span>
+                    <span>🛂 <strong>Copie du Passeport ou Carte de Séjour</strong> au Maroc / نسخة من جواز السفر أو بطاقة الإقامة</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-black">2.</span>
+                    <span>📜 <strong>Attestation d'Équivalence du Baccalauréat</strong> (MESRSFC) / قرار المعادلة لشهادة البكالوريا صادر عن الوزارة</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-black">3.</span>
+                    <span>🎓 <strong>Baccalauréat Original certifié</strong> (+ 2 copies) / شهادة البكالوريا الأصلية المصادق عليها</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-black">4.</span>
+                    <span>📄 <strong>Relevés de Notes Originaux</strong> du Bac / كشوف النقط الأصلية للبكالوريا</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-black">5.</span>
+                    <span>📸 <strong>4 Photos d'identité</strong> + Acte de naissance / 4 صور شمسية + عقد الازدياد مترجم</span>
+                  </li>
+                </ul>
+              </div>
+
+            </div>
           </div>
 
           {/* ── Step Indicator ── */}
@@ -556,6 +773,84 @@ export default function InscriptionPage() {
           </div>
         </main>
       </div>
+
+      {/* ── Modal Suivi du Dossier en Temps Réel ── */}
+      {showTrackingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center font-bold text-amber-300">
+                  <Search className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black">Suivi du Dossier en Temps Réel</h3>
+                  <p className="text-xs text-blue-200">تتبع حالة ملفك الأكاديمي فـ الوقت الحقيقي</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTrackingModal(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 cursor-pointer">
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 block">Saisissez votre Code MASSAR / CNE ou CIN</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ex: K13009281 ou CIN CD72910..."
+                    value={trackCne}
+                    onChange={e => setTrackCne(e.target.value)}
+                    className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    onClick={handleTrackDossier}
+                    disabled={trackingLoading}
+                    className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                  >
+                    {trackingLoading ? 'Recherche...' : 'Suivre'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tracking Result Timeline */}
+              {trackingResult && (
+                trackingResult.error ? (
+                  <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs font-bold text-rose-700 dark:text-rose-300 text-center">
+                    ❌ {trackingResult.error}
+                  </div>
+                ) : (
+                  <div className="space-y-4 pt-2">
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-800">
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">{trackingResult.name}</h4>
+                      <span className="text-xs text-slate-500 font-bold font-mono">CNE : {trackingResult.cne} | Filière : {trackingResult.filiere}</span>
+                    </div>
+
+                    <div className="space-y-3 pl-2">
+                      {trackingResult.timeline?.map((step: any) => (
+                        <div key={step.step} className="flex items-start gap-3 text-xs">
+                          <div className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5",
+                            step.completed ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500 dark:bg-slate-800"
+                          )}>
+                            {step.completed ? '✓' : step.step}
+                          </div>
+                          <div className="flex-1 border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <h5 className="font-black text-slate-900 dark:text-white">{step.title}</h5>
+                            <span className="text-[10px] text-slate-500 block">{step.title_ar}</span>
+                            <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-bold">{step.date}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <CndpPrivacyModal isOpen={showCndpModal} onClose={() => setShowCndpModal(false)} lang={lang} />
 
