@@ -107,7 +107,7 @@ export default function StudentGuichetPage() {
       </div>
 
       <div class="qr-section">
-        <div class="qr-placeholder">QR CODE<br/>SHA-256</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://encg-fes.ma/verify?doc=' + req.id + '&type=' + req.type)}" alt="QR Code" style="width:70px; height:70px; border-radius:8px; border:2px solid #0f2863; background:#fff; padding:3px;" />
         <div>
           <strong>Document Officiel Vérifiable par QR Code :</strong><br/>
           Ce document est archivé dans le Coffre-fort Numérique de l'étudiant et téléchargeable à tout moment.
