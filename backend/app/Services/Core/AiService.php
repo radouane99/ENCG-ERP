@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\Grade;
 use App\Models\AttendanceSession;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AiService
 {
@@ -28,35 +29,51 @@ class AiService
         $difficultyMap = [
             'beginner'     => 'facile (niveau débutant, concepts de base)',
             'intermediate' => 'intermédiaire (niveau licence, applications pratiques)',
-            'advanced'     => 'avancé (niveau master, cas complexes et analyse critique)',
+            'advanced'     => 'avancé (niveau Master ENCG, cas complexes)',
         ];
-        $levelLabel = $difficultyMap[$difficulty] ?? $difficulty;
 
-        $prompt = "Génère exactement {$questionsCount} questions de QCM de niveau {$levelLabel} sur le sujet : \"{$topic}\".
-Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown, sans backtick, sans explication supplémentaire).
-Chaque objet doit avoir les clés : question (string), options (objet avec A,B,C,D), correct_answer (string, une seule lettre), explanation (string).
-Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":\"...\",\"D\":\"...\"},\"correct_answer\":\"A\",\"explanation\":\"...\"}]";
+        $levelDesc = $difficultyMap[$difficulty] ?? $difficultyMap['intermediate'];
 
-        $system = ["Tu es un expert en conception d'épreuves universitaires pour l'ENCG Fès."];
+        $prompt = "Génère exactement {$questionsCount} questions QCM à choix unique sur le sujet : '{$topic}'.
+Niveau de difficulté : {$levelDesc}.
 
-        try {
-            $rawText = $this->geminiApi->generateContent($prompt, $system);
+Format obligatoire pour CHAQUE question (en JSON STRICT, sans texte d'introduction ni de conclusion) :
+[
+  {
+    \"id\": 1,
+    \"question\": \"Intitulé de la question\",
+    \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],
+    \"correct_answer\": 0,
+    \"explanation\": \"Explication détaillée de la bonne réponse\"
+  }
+]";
 
-            if ($rawText) {
-                // Strip markdown code fences if wrapped
-                $rawText = preg_replace('/^```(?:json)?\n?/', '', trim($rawText));
-                $rawText = preg_replace('/\n?```$/', '', $rawText);
-                $questions = json_decode($rawText, true);
+        $systemPrompt = [
+            "Vous êtes un professeur expert à l'ENCG (École Nationale de Commerce et de Gestion).",
+            "Vous devez générer un QCM académique rigoureux et précis.",
+            "Répondez UNIQUEMENT avec un tableau JSON valide. Aucun markdown triple-backticks autour du JSON."
+        ];
 
-                if (json_last_error() === JSON_ERROR_NONE && is_array($questions)) {
-                    return ['success' => true, 'topic' => $topic, 'difficulty' => $difficulty, 'quiz' => $questions];
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Quiz Exception: ' . $e->getMessage());
+        $rawResponse = $this->geminiApi->generateContent($prompt, $systemPrompt);
+
+        if (!$rawResponse) {
+            return ['error' => 'Échec de la génération par l\'IA. Veuillez réessayer.'];
         }
 
-        return ['success' => false, 'error' => "Impossible de générer le QCM via l'IA."];
+        // Clean potential JSON markdown wrapping
+        $cleanJson = trim($rawResponse);
+        $cleanJson = preg_replace('/^```json\s*/i', '', $cleanJson);
+        $cleanJson = preg_replace('/^```\s*/i', '', $cleanJson);
+        $cleanJson = preg_replace('/```$/i', '', $cleanJson);
+
+        $quiz = json_decode($cleanJson, true);
+
+        if (!is_array($quiz)) {
+            Log::warning("Gemini QCM returned invalid JSON: {$rawResponse}");
+            return ['error' => 'Format de réponse IA invalide.'];
+        }
+
+        return ['quiz' => $quiz];
     }
 
     /**
@@ -64,22 +81,19 @@ Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":
      */
     public function transcribeAudio(UploadedFile $file): array
     {
-        $groqApiKey = env('GROQ_API_KEY');
-        if (!$groqApiKey) {
-            return ['success' => false, 'text' => 'Clé API GROQ manquante.'];
+        $apiKey = config('services.groq.api_key') ?? env('GROQ_API_KEY');
+
+        if (!$apiKey) {
+            return ['success' => false, 'text' => 'Clé API Groq non configurée.'];
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$groqApiKey}"
-            ])->attach(
-                'file',
-                file_get_contents($file->getRealPath()),
-                $file->getClientOriginalName()
-            )->post('https://api.groq.com/openai/v1/audio/transcriptions', [
-                'model' => 'whisper-large-v3',
-                'language' => 'fr',
-            ]);
+            $response = Http::withToken($apiKey)
+                ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName())
+                ->post('https://api.groq.com/openai/v1/audio/transcriptions', [
+                    'model' => 'whisper-large-v3',
+                    'language' => 'fr',
+                ]);
 
             if ($response->successful()) {
                 return ['success' => true, 'text' => $response->json('text')];
@@ -98,93 +112,6 @@ Exemple : [{\"question\":\"...\",\"options\":{\"A\":\"...\",\"B\":\"...\",\"C\":
      */
     public function getPredictiveAnalytics(): array
     {
-        // ── 1. Real DB Statistics ──────────────────────────────────────────────
-
-        $totalStudents = Student::count();
-
-        // Average grade per student (across all grades)
-        $studentGrades = DB::table('grades')
-            ->select('student_id', DB::raw('AVG(value) as avg_grade'), DB::raw('COUNT(*) as grade_count'))
-            ->whereNotNull('value')
-            ->groupBy('student_id')
-            ->get()
-            ->keyBy('student_id');
-
-        // Absence count per student
-        $studentAbsences = DB::table('attendance_records')
-            ->select('student_id', DB::raw('SUM(CASE WHEN is_present = 0 THEN 1 ELSE 0 END) as absences'))
-            ->groupBy('student_id')
-            ->get()
-            ->keyBy('student_id');
-
-        // ── 2. Compute dropout risk score per student ──────────────────────────
-        $atRiskStudents = Student::with(['user'])->get()->map(function ($student) use ($studentGrades, $studentAbsences) {
-            $gradeData  = $studentGrades->get($student->id);
-            $absData    = $studentAbsences->get($student->id);
-
-            $avgGrade   = $gradeData  ? (float) $gradeData->avg_grade  : null;
-            $absences   = $absData    ? (int)   $absData->absences      : 0;
-
-            // Score 0-100: higher = more at risk
-            $gradeScore    = $avgGrade !== null ? max(0, (10 - $avgGrade) * 6)  : 30; // poor grade → risk
-            $absenceScore  = min(40, $absences * 4);                                    // each absence adds risk
-            $riskScore     = min(100, (int) round($gradeScore + $absenceScore));
-
-            return [
-                'id'         => $student->id,
-                'name'       => $student->user?->name ?? 'Étudiant',
-                'avg_grade'  => $avgGrade !== null ? round($avgGrade, 2) : 'N/A',
-                'absences'   => $absences,
-                'risk_score' => $riskScore,
-                'risk_level' => $riskScore >= 70 ? 'high' : ($riskScore >= 40 ? 'medium' : 'low'),
-            ];
-        })
-        ->filter(fn ($s) => $s['risk_score'] >= 40)
-        ->sortByDesc('risk_score')
-        ->take(10)
-        ->values();
-
-        // ── 3. Global KPIs ─────────────────────────────────────────────────────
-        $overallAvg = DB::table('grades')->whereNotNull('value')->avg('value');
-        $highRisk   = $atRiskStudents->filter(fn ($s) => $s['risk_level'] === 'high')->count();
-
-        // Enrollment trend (current vs previous academic year)
-        $currentYear  = DB::table('academic_years')->where('is_current', true)->first();
-        $currentCount = $currentYear
-            ? DB::table('student_registrations')->where('academic_year_id', $currentYear->id)->count()
-            : $totalStudents;
-        $prevCount = $totalStudents > 0 ? max(1, $currentCount - rand(5, 30)) : 1;
-        $enrollTrend = $prevCount > 0 ? round((($currentCount - $prevCount) / $prevCount) * 100, 1) : 0;
-
-        $predictions = [
-            [
-                'label'   => 'Prévision Inscriptions',
-                'value'   => ($enrollTrend >= 0 ? '+' : '') . $enrollTrend . '%',
-                'subtext' => "Tendance par rapport à l'année précédente ({$currentCount} étudiants)",
-                'color'   => $enrollTrend >= 0 ? 'bg-emerald-400/10 border-emerald-400/20' : 'bg-rose-400/10 border-rose-400/20',
-            ],
-            [
-                'label'   => 'Taux de Réussite Estimé',
-                'value'   => $overallAvg !== null ? round((float)$overallAvg * 8, 1) . '%' : 'N/A',
-                'subtext' => $overallAvg !== null ? 'Basé sur la moyenne générale de ' . round((float)$overallAvg, 2) . '/20' : 'Pas assez de données',
-                'color'   => 'bg-blue-400/10 border-blue-400/20',
-            ],
-            [
-                'label'   => 'Étudiants à Risque',
-                'value'   => (string) $highRisk,
-                'subtext' => 'Nécessitent une intervention immédiate',
-                'color'   => $highRisk > 0 ? 'bg-rose-400/10 border-rose-400/20' : 'bg-emerald-400/10 border-emerald-400/20',
-            ],
-        ];
-
-        // ── 4. Gemini AI Narrative Summary ────────────────────────────────────
-        $aiSummary = $this->generatePredictiveNarrative($atRiskStudents->toArray(), $predictions, $totalStudents);
-
-        return [
-            'dropoutRisks' => $atRiskStudents,
-            'predictions'  => $predictions,
-            'ai_summary'   => $aiSummary,
-            'total_students' => $totalStudents,
             'generated_at'   => now()->toISOString(),
         ];
     }
