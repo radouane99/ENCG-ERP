@@ -565,6 +565,12 @@ Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'e
 Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
 Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
 
+Route::get('/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+Route::get('/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+Route::get('/v1/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+Route::get('/v1/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+
+
 
 
 

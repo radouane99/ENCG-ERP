@@ -752,6 +752,47 @@ class PdfExportController extends Controller
         return $pdf->stream("Attestation_Inscription_{$safeName}.pdf");
     }
 
+    public function exportEtiquettesTableTafemPdf(Request $request)
+    {
+        $amphi = $request->query('amphi', 'Amphi Al Khwarizmi');
+
+        $dbStudents = \App\Models\Student::with('user')->limit(8)->get();
+        $labels = [];
+
+        if ($dbStudents->isNotEmpty()) {
+            foreach ($dbStudents as $idx => $st) {
+                $labels[] = [
+                    'table_number' => ($idx + 1),
+                    'name' => ($st->user?->first_name ?? 'Candidat') . ' ' . ($st->user?->last_name ?? 'TAFEM'),
+                    'cne' => $st->cne ?? ('N' . (13800000 + $st->id)),
+                    'cin' => $st->cin ?? ('CD' . (700000 + $st->id)),
+                    'amphi' => $amphi
+                ];
+            }
+        } else {
+            for ($i = 1; $i <= 8; $i++) {
+                $labels[] = [
+                    'table_number' => $i,
+                    'name' => "Candidat TAFEM #{$i}",
+                    'cne' => "N1380000{$i}",
+                    'cin' => "CD72910{$i}",
+                    'amphi' => $amphi
+                ];
+            }
+        }
+
+        $pdf = $this->getPdfInstance('pdf.etiquettes_table_tafem', [
+            'amphi' => $amphi,
+            'labels' => $labels,
+            'verifyUrl' => url('/verify/document/TAFEM-LABELS-' . md5($amphi))
+        ]);
+
+        $safeAmphi = \Illuminate\Support\Str::slug($amphi);
+        return $pdf->stream("Etiquettes_Table_TAFEM_{$safeAmphi}.pdf");
+    }
+
+
+
 
 
 

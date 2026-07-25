@@ -216,30 +216,41 @@ export default function AdminStudentCardsPage() {
         }
       `}</style>
 
-      <div className="space-y-6 p-6 max-w-7xl mx-auto no-print">
+      <div className="space-y-8 p-6 max-w-7xl mx-auto no-print font-sans pb-24">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <IdCard className="w-7 h-7 text-primary" />
-            Gestion des Cartes Étudiants
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Génération en masse, impression de planches PVC, et gestion du cycle de vie des cartes.
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => refetch()}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" /> Actualiser
-          </Button>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+              <IdCard className="w-10 h-10 text-amber-400" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+                <ShieldAlert className="w-4 h-4 text-amber-400" /> Cartes Électroniques PVC & QR Code Certifiés ENCG
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                Gestion des Cartes Étudiants
+              </h1>
+              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
+                Génération en masse des cartes RFID/PVC, impression des planches A4 professionnelles et suivi du cycle de vie des badges étudiants.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button 
+              onClick={() => refetch()} 
+              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4 text-amber-300" /> Actualiser
+            </button>
+          </div>
         </div>
       </div>
+
 
       {/* Quick stats summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
