@@ -127,6 +127,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الطالب',
     items: [
       { label: 'Mon Emploi du Temps', labelAr: 'جداول أوقاتي', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
+      { label: 'Mes Stages & PFE', labelAr: 'تداريبي ومشاريع التخرج', href: '/student/internships', icon: Trophy, roles: ['student'] },
       { label: 'Mes Notes & Résultats', labelAr: 'نقاطي ونتائجي', href: '/student/grades', icon: BarChart3, roles: ['student'] },
       { label: 'Carte Numérique (Pass)', labelAr: 'بطاقتي الرقمية', href: '/student/card', icon: IdCard, roles: ['student'] },
       { label: 'Mes Convocations PDF', labelAr: 'استدعاءاتي', href: '/student/convocations', icon: Mail, roles: ['student'] },

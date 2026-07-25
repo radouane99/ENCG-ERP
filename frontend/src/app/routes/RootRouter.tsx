@@ -179,6 +179,7 @@ const AdminAbsencesPage = lazy(() => import('@features/absences/ui/pages/AdminAb
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
 const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
 const AdminInternshipsPage = lazy(() => import('@features/internships/ui/pages/AdminInternshipsPage'))
+const StudentInternshipsPage = lazy(() => import('@features/internships/ui/pages/StudentInternshipsPage'))
 const AdminConvocationsUIPage = lazy(() => import('@features/exams/ui/pages/AdminConvocationsPage'))
 const AdminRequestsPage = lazy(() => import('@features/admin/pages/AdminRequestsPage'))
 const AdminMessagesPage = lazy(() => import('@features/admin/pages/AdminMessagesPage'))
@@ -365,6 +366,7 @@ export default function RootRouter() {
           <Route path="/academic/holidays" element={<HolidayManager />} />
           <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
           <Route path="/academic/internships" element={<AdminInternshipsPage />} />
+          <Route path="/student/internships" element={<StudentInternshipsPage />} />
 
           <Route path="/academic/predictive-analytics" element={<PredictiveDashboard />} />
           <Route path="/academic/documents" element={<DocumentCenter />} />
