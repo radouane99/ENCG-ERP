@@ -144,6 +144,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الأستاذ',
     items: [
       { label: 'Cahier de Texte', labelAr: 'دفتر النصوص', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
+      { label: 'Encadrement & Jurys PFE', labelAr: 'تأطير التداريب ومناقشات التخرج', href: '/professor/internships', icon: Trophy, roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Absences', labelAr: 'تسجيل الغيابات', href: '/professor/absences', icon: Users2, roles: ['professor', 'vacataire'] },
       { label: 'Générateur QCM (IA)', labelAr: 'مولد الاختبارات الذكي', href: '/professor/qcm-generator', icon: Zap, roles: ['professor'] },
       { label: 'Analytique Classe', labelAr: 'تحليلات الفصل', href: '/professor/analytics', icon: BarChart3, roles: ['professor'] },

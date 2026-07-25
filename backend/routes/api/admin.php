@@ -175,6 +175,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/{id}/validate', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'validateInternship']);
         Route::post('/soutenances', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'scheduleSoutenance']);
     });
+    Route::get('/soutenances', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'getSoutenancesList']);
 
     // Complaints
     Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);

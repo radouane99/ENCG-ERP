@@ -13,7 +13,7 @@ class StudentLifeService
      */
     public function getAllClubs(): Collection
     {
-        return Club::with(['president', 'members'])
+        return Club::with(['members'])
             ->latest()
             ->get();
     }
