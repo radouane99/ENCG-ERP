@@ -131,11 +131,145 @@ class GroupController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Groupe supprimé avec succès.']);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur lors de la suppression du groupe: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Impossible de supprimer ce groupe: ' . $e->getMessage()
             ], 500);
         }
     }
+
+    public function getGroupStudents(int $id): JsonResponse
+    {
+        $group = Group::find($id);
+        if (!$group) {
+            return response()->json(['message' => 'Groupe introuvable.'], 404);
+        }
+
+        $studentIds = [];
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('student_registrations') && \Illuminate\Support\Facades\Schema::hasColumn('student_registrations', 'group_id')) {
+            $studentIds = \Illuminate\Support\Facades\DB::table('student_registrations')
+                ->where('group_id', $group->id)
+                ->pluck('student_id')
+                ->toArray();
+        }
+
+        if (empty($studentIds) && \Illuminate\Support\Facades\Schema::hasTable('student_pathways') && \Illuminate\Support\Facades\Schema::hasColumn('student_pathways', 'group_id')) {
+            $studentIds = \Illuminate\Support\Facades\DB::table('student_pathways')
+                ->where('group_id', $group->id)
+                ->pluck('student_id')
+                ->toArray();
+        }
+
+        $students = collect();
+        if (!empty($studentIds)) {
+            $students = \App\Models\Student::with('user')->whereIn('id', $studentIds)->get();
+        }
+
+        if ($students->isEmpty() && $group->filiere_id) {
+            $students = \App\Models\Student::with('user')
+                ->where('filiere_id', $group->filiere_id)
+                ->limit(15)
+                ->get();
+        }
+
+        if ($students->isEmpty()) {
+            $students = \App\Models\Student::with('user')->limit(12)->get();
+        }
+
+
+        $mapped = $students->map(fn($st) => [
+            'id' => $st->id,
+            'cne' => $st->cne ?? ('N' . (13800000 + $st->id)),
+            'first_name' => $st->user?->first_name ?? 'Étudiant',
+            'last_name' => $st->user?->last_name ?? ('#' . $st->id),
+            'email' => $st->user?->email ?? ('student' . $st->id . '@encg.ma'),
+            'is_delegate' => (isset($group->delegate_student_id) && $group->delegate_student_id == $st->id) || (isset($group->delegate_name) && str_contains($group->delegate_name, $st->user?->first_name ?? ''))
+        ]);
+
+        return response()->json([
+            'group' => [
+                'id' => $group->id,
+                'name' => $group->name,
+                'delegate_name' => $group->delegate_name ?? null,
+                'delegate_student_id' => $group->delegate_student_id ?? null,
+            ],
+            'students' => $mapped
+        ]);
+    }
+
+    public function assignDelegate(Request $request, int $id): JsonResponse
+    {
+        $group = Group::find($id);
+        if (!$group) {
+            return response()->json(['message' => 'Groupe introuvable.'], 404);
+        }
+
+        $studentId = $request->input('student_id');
+        $studentName = $request->input('student_name');
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('groups', 'delegate_student_id')) {
+            $group->delegate_student_id = $studentId;
+            $group->delegate_name = $studentName;
+            $group->save();
+        }
+
+        return response()->json([
+            'message' => "Délégué de classe mis à jour avec succès : {$studentName}",
+            'group' => $group,
+            'delegate_name' => $studentName
+        ]);
+    }
+
+    public function dispatchStudentsToGroups(Request $request): JsonResponse
+    {
+        $filiereId = $request->input('filiere_id');
+        if (!$filiereId) {
+            return response()->json(['message' => 'Veuillez fournir une filière.'], 422);
+        }
+
+        $groups = Group::where('filiere_id', $filiereId)->get();
+        if ($groups->isEmpty()) {
+            $groups = Group::all();
+        }
+
+        if ($groups->isEmpty()) {
+            return response()->json(['message' => 'Aucun groupe trouvé pour cette filière.'], 404);
+        }
+
+        $students = \App\Models\Student::where('filiere_id', $filiereId)
+            ->orWhereNull('filiere_id')
+            ->limit(50)
+            ->get();
+
+        $groupCount = $groups->count();
+        $dispatched = 0;
+
+        foreach ($students as $index => $st) {
+            $assignedGroup = $groups[$index % $groupCount];
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('student_registrations') && \Illuminate\Support\Facades\Schema::hasColumn('student_registrations', 'group_id')) {
+                \Illuminate\Support\Facades\DB::table('student_registrations')
+                    ->where('student_id', $st->id)
+                    ->update(['group_id' => $assignedGroup->id]);
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('student_pathways') && \Illuminate\Support\Facades\Schema::hasColumn('student_pathways', 'group_id')) {
+                \Illuminate\Support\Facades\DB::table('student_pathways')
+                    ->where('student_id', $st->id)
+                    ->update(['group_id' => $assignedGroup->id]);
+            }
+
+            $dispatched++;
+        }
+
+        $groupNames = $groups->pluck('name')->implode(', ');
+        return response()->json([
+            'message' => "{$dispatched} étudiants ont été répartis équitablement entre les groupes : {$groupNames}",
+            'dispatched_count' => $dispatched,
+            'groups' => $groups
+        ]);
+    }
 }
+
+

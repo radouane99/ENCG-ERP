@@ -731,6 +731,28 @@ class PdfExportController extends Controller
         return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
     }
 
+    public function exportAttestationInscriptionPdf(Request $request)
+    {
+        $name = $request->query('name', 'Sara Alami');
+        $cne = $request->query('cne', 'N13809281');
+        $cin = $request->query('cin', 'CD729102');
+        $filiere = $request->query('filiere', 'Gestion Financière et Comptable (GFC)');
+        $group = $request->query('group', 'TC-S1-G1');
+
+        $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
+            'studentName' => $name,
+            'cne' => $cne,
+            'cin' => $cin,
+            'filiereName' => $filiere,
+            'groupName' => $group,
+            'verifyUrl' => url('/verify/document/ATTESTATION-' . md5($cne))
+        ]);
+
+        $safeName = \Illuminate\Support\Str::slug($name);
+        return $pdf->stream("Attestation_Inscription_{$safeName}.pdf");
+    }
+
+
 
 
 

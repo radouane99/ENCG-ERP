@@ -150,7 +150,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('student-cards', [StudentCardController::class, 'index']);
     Route::patch('student-cards/{id}/status', [StudentCardController::class, 'updateStatus']);
     Route::post('student-cards/bulk', [StudentCardController::class, 'bulkStore']);
+    Route::get('/groups/{id}/students', [GroupController::class, 'getGroupStudents']);
+    Route::post('/groups/{id}/assign-delegate', [GroupController::class, 'assignDelegate']);
+    Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
     Route::apiResource('groups', GroupController::class);
+
+
     Route::get('semesters', function () {
         return response()->json(['data' => \App\Models\Semester::all()]);
     });
@@ -554,6 +559,12 @@ Route::get('/groups/emargement-pdf', [PdfExportController::class, 'exportEmargem
 Route::get('/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
 Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
 Route::get('/v1/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+
+Route::get('/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+
 
 
 

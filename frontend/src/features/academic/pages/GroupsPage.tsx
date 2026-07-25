@@ -37,6 +37,41 @@ export default function GroupsPage() {
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [years, setYears] = useState<AcademicYear[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedGroupForDelegate, setSelectedGroupForDelegate] = useState<Group | null>(null);
+  const [groupStudents, setGroupStudents] = useState<any[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [delegatesMap, setDelegatesMap] = useState<Record<number, string>>({});
+
+
+  const openDelegateModal = async (g: Group) => {
+    setSelectedGroupForDelegate(g);
+    setLoadingStudents(true);
+    try {
+      const res = await api.get(`/groups/${g.id}/students`);
+      setGroupStudents(res.data.students || []);
+    } catch (err) {
+      toast.error('Erreur lors du chargement des étudiants du groupe.');
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  const handleAssignDelegate = async (student: any) => {
+    if (!selectedGroupForDelegate) return;
+    try {
+      const fullName = `${student.first_name} ${student.last_name}`;
+      await api.post(`/groups/${selectedGroupForDelegate.id}/assign-delegate`, {
+        student_id: student.id,
+        student_name: fullName
+      });
+      setDelegatesMap(prev => ({ ...prev, [selectedGroupForDelegate.id]: fullName }));
+      toast.success(`👑 ${fullName} a été nommé Délégué Officiel du Groupe ${selectedGroupForDelegate.name} !`);
+      setSelectedGroupForDelegate(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erreur lors de la nomination.');
+    }
+  };
+
   const [search, setSearch] = useState('')
   const [semesterFilter, setSemesterFilter] = useState('')
   const [filiereFilter, setFiliereFilter] = useState('')
@@ -373,11 +408,27 @@ export default function GroupsPage() {
 
 
                         <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                            <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-                            Non assigné
-                          </span>
+                          {delegatesMap[g.id] || (g as any).delegate_name ? (
+                            <button
+                              onClick={() => openDelegateModal(g)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+                              title="Cliquer pour changer le Délégué de Classe"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              👑 {delegatesMap[g.id] || (g as any).delegate_name}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => openDelegateModal(g)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
+                              title="Cliquer pour nommer un Délégué parmi les étudiants de cette classe"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                              Nommer Délégué
+                            </button>
+                          )}
                         </td>
+
 
                         <td className="px-6 py-4 text-center">
                           <div className="w-40 mx-auto space-y-1">
@@ -496,6 +547,82 @@ export default function GroupsPage() {
           </div>
         </div>
       )}
+
+      {/* Delegate Selection Modal */}
+      {selectedGroupForDelegate && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
+                  <UserCheck className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black">Nommer le Délégué de Classe</h3>
+                  <p className="text-xs text-blue-200">Étudiants inscrits dans le groupe {selectedGroupForDelegate.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedGroupForDelegate(null)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 max-h-[400px] overflow-y-auto space-y-3">
+              {loadingStudents ? (
+                <div className="flex justify-center items-center py-12 text-slate-400">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
+                </div>
+              ) : groupStudents.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 font-bold">Aucun étudiant inscrit dans ce groupe.</div>
+              ) : (
+                groupStudents.map((st) => {
+                  const fullName = `${st.first_name} ${st.last_name}`;
+                  const isCurrent = delegatesMap[selectedGroupForDelegate.id] === fullName || (selectedGroupForDelegate as any).delegate_name === fullName;
+
+                  return (
+                    <div key={st.id} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/60 text-[#0f2863] dark:text-blue-200 font-black flex items-center justify-center text-xs border border-blue-200 dark:border-blue-800">
+                          {st.first_name.charAt(0)}{st.last_name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-extrabold text-slate-900 dark:text-white text-sm">
+                            {fullName}
+                          </div>
+                          <div className="text-xs font-mono text-slate-500">CNE : {st.cne}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleAssignDelegate(st)}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs",
+                          isCurrent
+                            ? "bg-emerald-600 text-white shadow-md"
+                            : "bg-[#0f2863] hover:bg-[#1a387e] text-white"
+                        )}
+                      >
+                        {isCurrent ? '👑 Délégué Actuel' : 'Nommer Délégué'}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <button
+                onClick={() => setSelectedGroupForDelegate(null)}
+                className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
