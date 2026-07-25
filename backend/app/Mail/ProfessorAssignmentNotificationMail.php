@@ -7,17 +7,21 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class ProfessorAssignmentNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public array $profData;
+    public ?string $pdfContent;
 
-    public function __construct(array $profData)
+    public function __construct(array $profData, ?string $pdfContent = null)
     {
         $this->profData = $profData;
+        $this->pdfContent = $pdfContent;
     }
 
     public function envelope(): Envelope
@@ -27,7 +31,7 @@ class ProfessorAssignmentNotificationMail extends Mailable
                 config('mail.from.address', 'no-reply@benadadarentcar.com'),
                 config('mail.from.name', 'ENCG Portail')
             ),
-            subject: '🏛️ ENCG Fès — Notification Officielle d\'Affectation Pédagogique 2026/2027',
+            subject: '🏛️ ENCG Fès — Ordre de Service & Notification Officielle d\'Affectation Pédagogique 2026/2027',
         );
     }
 
@@ -47,6 +51,14 @@ class ProfessorAssignmentNotificationMail extends Mailable
 
     public function attachments(): array
     {
+        if ($this->pdfContent) {
+            $profName = $this->profData['profName'] ?? 'Enseignant';
+            $safeName = Str::slug($profName);
+            return [
+                Attachment::fromData(fn () => $this->pdfContent, "Ordre_De_Service_A4_{$safeName}.pdf")
+                    ->withMime('application/pdf')
+            ];
+        }
         return [];
     }
 }

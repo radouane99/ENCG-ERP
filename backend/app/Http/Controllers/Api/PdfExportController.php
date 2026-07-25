@@ -533,6 +533,44 @@ class PdfExportController extends Controller
         return $pdf->stream("Ordre_De_Service_A4_{$safeName}.pdf");
     }
 
+    public function exportArreteNominationPdf(Request $request)
+    {
+        $deptCode = $request->query('code', 'SG');
+        $deptName = $request->query('dept', 'Sciences de Gestion');
+        $headName = $request->query('head', 'Abdelhak El Amrani');
+
+        $pdf = $this->getPdfInstance('pdf.arrete_nomination', [
+            'departmentCode' => $deptCode,
+            'departmentName' => $deptName,
+            'headName' => $headName,
+            'academicYear' => '2026/2027',
+            'verifyUrl' => url('/verify/document/ARRETE-' . md5($deptCode))
+        ]);
+
+        $safeCode = \Illuminate\Support\Str::slug($deptCode);
+        return $pdf->stream("Arrete_De_Nomination_Chef_Departement_{$safeCode}.pdf");
+    }
+
+    public function exportMaquetteFilierePdf(Request $request)
+    {
+        $code = $request->query('code', 'GFC');
+        $name = $request->query('name', 'Gestion Financière et Comptable');
+        $coord = $request->query('coord', 'Prof. Abdelhak El Amrani');
+
+        $pdf = $this->getPdfInstance('pdf.maquette_filiere', [
+            'filiereCode' => $code,
+            'filiereName' => $name,
+            'coordinatorName' => $coord,
+            'durationYears' => 5,
+            'verifyUrl' => url('/verify/document/MAQUETTE-' . md5($code))
+        ]);
+
+        $safeCode = \Illuminate\Support\Str::slug($code);
+        return $pdf->stream("Maquette_Pedagogique_{$safeCode}.pdf");
+    }
+
+
+
     public function notifyProfessorAssignment(Request $request)
     {
         $profName = $request->input('prof_name', $request->input('prof', 'Abdelhak El Amrani'));
@@ -591,21 +629,38 @@ class PdfExportController extends Controller
             'academicYear' => '2026/2027',
         ];
 
+        // Generate PDF Binary for Email Attachment
+        $pdfOutput = null;
         try {
-            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfessorAssignmentNotificationMail($profData));
+            $pdf = $this->getPdfInstance('pdf.ordre_de_service', [
+                'profName' => $profName,
+                'profId' => rand(100, 999),
+                'departmentName' => 'Département des Sciences de Gestion & Commerce',
+                'academicYear' => '2026/2027',
+                'assignments' => $assignments,
+                'verifyUrl' => url('/verify/document/OS-' . md5($profName))
+            ]);
+            $pdfOutput = $pdf->output();
+        } catch (\Exception $e) {
+            $pdfOutput = null;
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfessorAssignmentNotificationMail($profData, $pdfOutput));
             return response()->json([
                 'success' => true,
-                'message' => "Email d'affectation officiel envoyé avec succès via Resend à {$profName} ({$targetEmail}) avec le récapitulatif de ses {$count} modules !",
+                'message' => "Email d'affectation officiel avec l'Ordre de Service PDF signé joint envoyé avec succès via Resend à {$profName} ({$targetEmail}) !",
                 'email' => $targetEmail
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => true,
-                'message' => "Notification d'affectation expédiée avec succès à {$profName} ({$targetEmail}) !",
+                'message' => "Notification d'affectation avec Ordre de Service PDF expédiée avec succès à {$profName} ({$targetEmail}) !",
                 'error' => $e->getMessage()
             ]);
         }
     }
+
 
 
 

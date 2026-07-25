@@ -493,8 +493,22 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/exams/{exam}/live-attendance/pdf', [PdfExportController::class, 'liveAttendancePdf']);
     Route::get('/admin/exams/{exam}/display-list/pdf', [PdfExportController::class, 'displayList']);
     Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+
     Route::post('/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
+
+    Route::post('/admin/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
     Route::post('/convocations/room-flash-alert', [ConvocationController::class, 'sendRoomFlashAlert']);
+
+
 
 
 

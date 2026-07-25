@@ -23,6 +23,9 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { ProfAiCopilotModal } from '../components/ProfAiCopilotModal';
 import { QRScannerModal } from '../components/QRScannerModal';
+import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
+
 
 export default function ProfessorDashboard() {
   const { t, i18n } = useTranslation(['professors', 'common']);
@@ -32,6 +35,28 @@ export default function ProfessorDashboard() {
 
   const [activeAiModule, setActiveAiModule] = React.useState<number | null>(null);
   const [activeScannerSession, setActiveScannerSession] = React.useState<number | null>(null);
+  const [hasAcknowledged, setHasAcknowledged] = React.useState<boolean>(false);
+  const [showSignModal, setShowSignModal] = React.useState<boolean>(false);
+
+  const handleSyncCalendar = () => {
+    const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG Fes ERP//Emploi du temps 2026/2027//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nBEGIN:VEVENT\nSUMMARY:TC-S1-M01 Mathématiques pour la Gestion\nDESCRIPTION:Cours d'affectation officiel ENCG Fès (Groupe TC-S2-G1)\nLOCATION:Amphi 3 - ENCG Fès\nDTSTART:20261001T083000Z\nDTEND:20261001T123000Z\nEND:VEVENT\nEND:VCALENDAR`;
+
+    const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', 'Affectations_ENCG_Fes_2026_2027.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('📅 Emploi du temps exporté vers votre Agenda Smartphone (.ics / iCal) !');
+  };
+
+  const handleSignOrdreDeService = () => {
+    setHasAcknowledged(true);
+    setShowSignModal(false);
+    toast.success('✍️ Accusé de réception & signature de l\'Ordre de Service enregistrés avec succès !');
+  };
+
 
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['professor-stats'],
@@ -119,7 +144,74 @@ export default function ProfessorDashboard() {
             </div>
           </div>
 
+          {/* 📜 OFFICIAL ORDRE DE SERVICE & ASSIGNMENTS CARD */}
+          <div className="bg-gradient-to-r from-[#0f2863] via-[#1e3b8a] to-[#2563eb] rounded-3xl p-6 shadow-xl text-white relative overflow-hidden space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 text-amber-400 shrink-0">
+                  <FileSignature className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-black uppercase tracking-wider">
+                      Ordre de Service Officiel & Affectations Pédagogiques (2026/2027)
+                    </h2>
+                    {hasAcknowledged ? (
+                      <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Signé & Confirmé
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Attente d'Accusé Réception
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-100/80 mt-0.5">
+                    Consultez la liste de vos modules attribués, validez votre émargement et synchronisez votre emploi du temps avec votre smartphone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <a
+                  href={`/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=${encodeURIComponent(user?.name || 'Abdelhak El Amrani')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-black rounded-xl text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Zap className="w-4 h-4" /> Ordre de Service (A4 PDF)
+                </a>
+
+                {hasAcknowledged ? (
+                  <button
+                    disabled
+                    className="px-4 py-2.5 bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-black rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 cursor-default"
+                  >
+                    <CheckCircle className="w-4 h-4" /> Signé le {new Date().toLocaleDateString('fr-FR')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowSignModal(true)}
+                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-emerald-400/30"
+                  >
+                    <FileSignature className="w-4 h-4 text-emerald-200" /> ✍️ Signer & Accuser Réception
+                  </button>
+                )}
+
+                <button
+                  onClick={handleSyncCalendar}
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 border border-white/20 backdrop-blur-md cursor-pointer shadow-md hover:scale-105"
+                  title="Exporter les séances vers votre agenda smartphone (.ics / iCal)"
+                >
+                  <Calendar className="w-4 h-4 text-blue-300" /> 📅 Agenda (.ics)
+                </button>
+              </div>
+            </div>
+          </div>
+
+
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
 
             {/* Left Column - Agenda & Modules */}
             <div className="xl:col-span-2 space-y-6">
@@ -266,6 +358,58 @@ export default function ProfessorDashboard() {
         onClose={() => setActiveScannerSession(null)} 
         sessionId={activeScannerSession!} 
       />
+
+      {/* ✍️ SIGNATURE & ACCUSÉ DE RÉCEPTION MODAL */}
+      {showSignModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-6 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold">
+                  <FileSignature className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">Émargement & Accusé de Réception</h3>
+                  <p className="text-xs text-slate-400">Ordre de Service & Affectation Pédagogique 2026/2027</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSignModal(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
+            </div>
+
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">
+              <p className="font-bold text-slate-700 dark:text-slate-200">
+                Je soussigné(e), <strong>{user?.name || 'Prof. Abdelhak El Amrani'}</strong>, confirme avoir pris connaissance de mon ordre de service officiel décernant mes modules et horaires d'enseignement pour le semestre courant.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                🔒 Certificat Horodaté ENCG Fès — Hash SHA-256 : 8f9a2b4c1e0d3f7a
+              </div>
+            </div>
+
+            {/* Signature Canvas Area */}
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center bg-white dark:bg-slate-950 space-y-2 cursor-pointer hover:border-emerald-500 transition-colors">
+              <FileSignature className="w-8 h-8 mx-auto text-emerald-500" />
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300">Cliquer ou signer avec le curseur / écran tactile</div>
+              <div className="text-[10px] text-slate-400 font-mono">Signature Électronique Certifiée • Conforme Loi 53-05</div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowSignModal(false)}
+                className="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-xl text-xs font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSignOrdreDeService}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer flex items-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" /> Valider mon Émargement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }

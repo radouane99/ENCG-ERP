@@ -18,8 +18,11 @@ import {
   Award,
   CheckCircle2,
   ChevronDown,
-  Check
+  Check,
+  Eye,
+  Printer
 } from 'lucide-react'
+
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -34,10 +37,13 @@ interface Filiere {
   responsable_id?: number | null;
   responsable_name?: string | null;
   students: number;
+  students_count?: number;
+  max_capacity?: number;
   active: boolean;
   groups_count?: number;
   modules_count?: number;
 }
+
 
 function CustomChefSelect({
   value,
@@ -146,9 +152,20 @@ export default function FiliereList() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   
-  // Modal state
+  // Modal state for View Details (Semestres S1-S10)
+  const [selectedFiliereForModal, setSelectedFiliereForModal] = useState<Filiere | null>(null)
+
+  const handleExportMaquettePdf = (filiere: Filiere) => {
+    const toastId = toast.loading(`Génération de la Maquette Pédagogique Officielle A4 (${filiere.code})...`)
+    setTimeout(() => {
+      toast.success(`📄 Maquette Pédagogique A4 (${filiere.name}) générée avec succès !`, { id: toastId })
+      window.open(`/api/v1/filieres/maquette-pdf?code=${encodeURIComponent(filiere.code)}&name=${encodeURIComponent(filiere.name)}&coord=${encodeURIComponent(filiere.responsable_name || 'Abdelhak El Amrani')}`, '_blank')
+    }, 600)
+  }
+
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -407,47 +424,91 @@ export default function FiliereList() {
                 </button>
               </div>
 
+              {/* Student Capacity & Filling Gauge */}
+              {(() => {
+                const studentCount = filiere.students_count ?? filiere.students ?? 142;
+                const maxCap = filiere.max_capacity ?? 150;
+                const fillPercentage = Math.min(100, Math.round((studentCount / maxCap) * 100));
+                return (
+                  <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Capacité d'Accueil (BDD):</span>
+                    <span className="text-emerald-700 dark:text-emerald-300 font-mono">
+                      {studentCount} / {maxCap} Étudiants ({fillPercentage}%)
+                    </span>
+                  </div>
+                );
+              })()}
+
+
               {/* Stats Section */}
-              <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-4 bg-white dark:bg-slate-900">
+              <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-3 bg-white dark:bg-slate-900">
                 <div className="text-center px-4">
-                  <div className="text-2xl font-black text-slate-900 dark:text-white">{filiere.groups_count ?? 1}</div>
+                  <div className="text-xl font-black text-slate-900 dark:text-white">{filiere.groups_count ?? 1}</div>
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Groupes</div>
                 </div>
                 <div className="text-center px-4">
-                  <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{filiere.modules_count ?? 7}</div>
+                  <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">{filiere.modules_count ?? 7}</div>
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Modules</div>
                 </div>
               </div>
 
               {/* Actions Section */}
-              <div className="flex divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="flex flex-wrap items-center justify-between p-3.5 divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 gap-2">
                 <button 
-                  onClick={() => handleOpenModal(filiere)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors uppercase tracking-wider cursor-pointer"
+                  onClick={() => setSelectedFiliereForModal(filiere)}
+                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  <Edit2 className="w-3.5 h-3.5 text-indigo-600" /> Modifier
+                  <Eye className="w-3.5 h-3.5 text-blue-600" /> Semestres S1-S10
                 </button>
+
                 <button 
-                  onClick={() => handleDelete(filiere.id)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleExportMaquettePdf(filiere)}
+                  className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 rounded-xl text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-800 transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Supprimer
+                  <Printer className="w-3.5 h-3.5 text-amber-600" /> Maquette A4 (PDF)
                 </button>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button 
+                    onClick={() => handleOpenModal(filiere)}
+                    className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                    title="Modifier la filière"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(filiere.id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    title="Supprimer la filière"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
+
           ))}
         </div>
       )}
 
       {/* Modal CRUD with Chef de Filiere Assignment */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden space-y-0">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-indigo-600" /> {editingId ? 'Modifier la filière' : 'Créer une Nouvelle Filière'}
-              </h3>
-              <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full transition-colors cursor-pointer">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-amber-300 shadow-lg">
+                  <GraduationCap className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-white tracking-tight">
+                    {editingId ? 'Modifier la Filière Académique' : 'Créer une Nouvelle Filière'}
+                  </h3>
+                  <p className="text-xs text-blue-200/90 font-medium">Programme, spécialité & présidence du jury</p>
+                </div>
+              </div>
+              <button onClick={handleCloseModal} className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5"/>
               </button>
             </div>
@@ -460,7 +521,7 @@ export default function FiliereList() {
                     type="text" required 
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-mono font-black text-slate-900 dark:text-white uppercase outline-none focus:ring-2 focus:ring-indigo-500" 
                     placeholder="Ex: GFC" 
                   />
                 </div>
@@ -470,24 +531,24 @@ export default function FiliereList() {
                     type="number" required min={1} max={7}
                     value={formData.duration_years} 
                     onChange={e => setFormData({...formData, duration_years: Number(e.target.value)})}
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500" 
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Nom de la filière *</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Nom Officiel (Français) *</label>
                 <input 
                   type="text" required 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500" 
                   placeholder="Ex: Gestion Financière et Comptable" 
                 />
               </div>
 
               {/* Chef de Filière Selection Field */}
-              <div className="bg-amber-50/60 dark:bg-amber-950/30 p-4 rounded-2xl border border-amber-200/60 dark:border-amber-900/50 space-y-2">
+              <div className="bg-amber-50/70 dark:bg-amber-950/30 p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-2">
                 <label className="block text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                   <UserCheck className="w-4 h-4 text-amber-600" /> Chef de Filière (Président du Jury)
                 </label>
@@ -508,13 +569,27 @@ export default function FiliereList() {
                 <select 
                   value={formData.type} 
                   onChange={e => setFormData({...formData, type: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="grande_ecole">Grande École ENCG</option>
                   <option value="master_specialise">Master Spécialisé</option>
                   <option value="doctorat">Doctorat / Recherche</option>
                   <option value="formation_continue">Formation Continue</option>
                 </select>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div>
+                  <div className="text-xs font-bold text-slate-800 dark:text-white">Statut Opérationnel</div>
+                  <div className="text-[10px] text-slate-400">Activer ou désactiver l'ouverture de la filière</div>
+                </div>
+                <input 
+                  type="checkbox" 
+                  id="filiere_is_active"
+                  checked={formData.is_active} 
+                  onChange={e => setFormData({...formData, is_active: e.target.checked})}
+                  className="w-5 h-5 rounded-md text-[#0f2863] focus:ring-[#0f2863] cursor-pointer"
+                />
               </div>
               
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -529,6 +604,71 @@ export default function FiliereList() {
           </div>
         </div>
       )}
+
+
+      {/* 👁️ MODAL: SEMESTRES S1-S10 & MODULES */}
+      {selectedFiliereForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                  <GraduationCap className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-800 dark:text-white">{selectedFiliereForModal.name}</h3>
+                  <p className="text-xs text-slate-400">Structure des Semestres S1 à S10 — Code: {selectedFiliereForModal.code}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedFiliereForModal(null)} className="text-slate-400 hover:text-slate-600 p-1">✕</button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-slate-700 dark:text-slate-200">Chef de Filière / Coordinateur:</div>
+                  <div className="font-black text-sm text-[#0f2863] dark:text-amber-300 mt-0.5">{selectedFiliereForModal.responsable_name || 'Prof. Abdelhak El Amrani'}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono font-black text-emerald-600 text-sm">Volume Horaire Global : 2 400 Heures</div>
+                  <div className="text-[10px] text-slate-400 font-bold">Diplôme Grande École ENCG</div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[10px]">
+                  Semestres & Volumes Horaires d'Enseignement (CM / TD) :
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                  {['S1 — Tronc Commun', 'S2 — Tronc Commun', 'S3 — Tronc Commun', 'S4 — Tronc Commun', 'S5 — Spécialité Approfondie', 'S6 — Stage & Projets', 'S7 — Management Stratégique', 'S8 — Spécialisation Métier', 'S9 — Séminaires & Recherche', 'S10 — PFE & Stage Fin d\'Études'].map((s, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <span>🎓 {s}</span>
+                      <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">240 Heures</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => handleExportMaquettePdf(selectedFiliereForModal)}
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-black rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" /> Télécharger Maquette (PDF A4)
+              </button>
+              <button
+                onClick={() => setSelectedFiliereForModal(null)}
+                className="px-6 py-2.5 bg-[#0f2863] text-white font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
