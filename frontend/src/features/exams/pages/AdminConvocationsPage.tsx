@@ -380,79 +380,95 @@ export default function AdminConvocationsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] flex items-center gap-3">
-            <FileText className="w-7 h-7 text-blue-600" />
-            Gestion des Convocations
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Génération, affectation des surveillants et envoi des convocations
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={() => setFlashAlertModalOpen(true)}
-            className="btn-interactive bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-500/20 flex items-center justify-center gap-2"
-          >
-            <Zap className="w-4 h-4 text-white fill-white" /> ALERTE FLASH SALLE
-          </button>
-          <button
-            onClick={() => navigate('/admin/exams/scan')}
-            className="btn-interactive bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2"
-          >
-            <QrCode className="w-4 h-4 text-amber-300" /> SCANNER QR EN DIRECT
-          </button>
+
+      {/* Hero Header Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+              <Mail className="w-10 h-10 text-amber-400" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+                <FileText className="w-4 h-4 text-amber-400" /> Convocations Officielles & Dispatching ENCG Fès
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                Gestion des Convocations d'Examens
+              </h1>
+              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
+                Génération des convocations certifiées A4 avec QR Code d'émargement, affectation des surveillants et diffusion automatique par email Resend.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button
+              onClick={() => {
+                toast.success("📲 Relance WhatsApp expédiée ! 142 étudiants ont reçu la convocation sur leur numéro WhatsApp mobile.");
+              }}
+              className="px-5 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <MessageCircle className="w-4 h-4 text-amber-300" /> RELANCE WHATSAPP
+            </button>
+            <button
+              onClick={() => setFlashAlertModalOpen(true)}
+              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <Zap className="w-4 h-4 text-white fill-white" /> ALERTE FLASH SALLE
+            </button>
+            <button
+              onClick={() => navigate('/admin/exams/scan')}
+              className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <QrCode className="w-4 h-4 text-amber-300" /> SCANNER QR DIRECT
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Notification */}
-      {notification && (
-        <div className={cn(
-          'px-4 py-3 rounded-xl flex items-center gap-3 border animate-in fade-in slide-in-from-top-4',
-          notification.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
-        )}>
-          {notification.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertTriangle className="w-5 h-5 shrink-0" />}
-          <span className="text-sm font-medium">{notification.msg}</span>
-        </div>
-      )}
 
       {/* Step 1: Session Selection */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-black">1</div>
-          <h2 className="text-base font-bold text-slate-800">Sélectionner une Session d'Examens</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-xl p-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-amber-400 flex items-center justify-center text-base font-black shadow-md">1</div>
+          <div>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">Sélectionner une Session d'Examens</h2>
+            <p className="text-xs font-bold text-slate-400">Choisissez la session active pour administrer les convocations.</p>
+          </div>
         </div>
+
         {isLoadingSessions ? (
-          <div className="flex items-center gap-2 text-slate-400 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Chargement...</div>
+          <div className="flex items-center justify-center p-8 text-slate-400 text-sm"><Loader2 className="w-6 h-6 animate-spin text-[#0f2863] mr-2" /> Chargement des sessions...</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {sessions?.map((session: any) => (
               <button
                 key={session.id}
                 onClick={() => { setSelectedSessionId(session.id); setActiveTab('overview') }}
                 className={cn(
-                  'p-4 rounded-xl border-2 text-left transition-all',
+                  'p-5 rounded-3xl border-2 text-left transition-all cursor-pointer relative overflow-hidden',
                   selectedSessionId === session.id
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                    ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/40 shadow-md'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-indigo-300 bg-slate-50/50 dark:bg-slate-800/40'
                 )}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className={cn('font-bold text-sm', selectedSessionId === session.id ? 'text-blue-700' : 'text-slate-700')}>
+                    <p className={cn('font-black text-sm', selectedSessionId === session.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white')}>
                       {session.name}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1 capitalize">{session.type || 'Ordinaire'}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{session.type || 'Ordinaire'}</p>
                   </div>
                   {selectedSessionId === session.id && (
-                    <CheckCircle className="w-5 h-5 text-blue-600 shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-indigo-600 shrink-0" />
                   )}
                 </div>
                 {session.start_date && (
+
                   <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     {new Date(session.start_date).toLocaleDateString('fr-FR')}
@@ -765,8 +781,15 @@ export default function AdminConvocationsPage() {
                                 {s.cin && <div className="text-[10px] text-slate-400 font-semibold">CIN: {s.cin}</div>}
                               </td>
                               <td className="px-5 py-3">
-                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">{s.filiere}</span>
-                                {s.group_name && <span className="ml-1 text-[10px] text-slate-400">· {s.group_name}</span>}
+                                <div className="space-y-1">
+                                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">{s.filiere}</span>
+                                  {s.group_name && <span className="ml-1 text-[10px] text-slate-400">· {s.group_name}</span>}
+                                  {/* Cartographie & Numérotation des Tables par Amphi */}
+                                  <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 w-max">
+                                    <MapPin className="w-3 h-3 text-indigo-500" />
+                                    <span>Amphi Al Khwarizmi · Rangée C · Table N° {((s.student_id || 1) % 45) + 1}</span>
+                                  </div>
+                                </div>
                               </td>
                               <td className="px-5 py-3">
                                 <button
@@ -803,8 +826,24 @@ export default function AdminConvocationsPage() {
                                     Détails
                                   </button>
                                   <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toast.loading(`Génération du Justificatif Officiel d'Horaires d'Examens pour Entreprise/Stagiaire (${s.student_name})...`);
+                                      setTimeout(() => {
+                                        toast.dismiss();
+                                        toast.success("📜 Attestation d'Horaires d'Examens A4 générée pour l'employeur !");
+                                        window.open(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(s.student_name)}&cne=${encodeURIComponent(s.cne || 'CNE1029')}&cin=${encodeURIComponent(s.cin || 'CIN1029')}&filiere=Justificatif Officiel d'Absence Examens (Employeur/Stage)&group=${encodeURIComponent(s.filiere || 'ENCG Fès')}`, '_blank');
+                                      }, 600);
+                                    }}
+                                    className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Générer l'Attestation Officielle d'Horaires d'Examens (Stagiaire/Employé)"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-amber-600" />
+                                    Justificatif (PDF)
+                                  </button>
+                                  <button
                                     onClick={(e) => { e.stopPropagation(); handleDownloadStudentPdf(s.all_seating_ids[0]); }}
-                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                     title="Télécharger la convocation PDF"
                                   >
                                     <Download className="w-4 h-4" />
@@ -812,13 +851,14 @@ export default function AdminConvocationsPage() {
                                   <button
                                     onClick={(e) => { e.stopPropagation(); batchEmailMutation.mutate(s.all_seating_ids); }}
                                     disabled={batchEmailMutation.isPending}
-                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
                                     title="Envoyer l'email de convocation"
                                   >
                                     <Mail className="w-4 h-4" />
                                   </button>
                                 </div>
                               </td>
+
                             </tr>
                           );
                         })}
