@@ -207,6 +207,7 @@ const AdminAlertsPage = lazy(() => import('@features/admin/pages/AdminAlertsPage
 const AdminMinistryReportPage = lazy(() => import('@features/admin/pages/AdminMinistryReportPage'))
 const AdminPFEWorkflowPage = lazy(() => import('@features/admin/pages/AdminPFEWorkflowPage'))
 const AdminAcademicCalendarPage = lazy(() => import('@features/admin/pages/AdminAcademicCalendarPage'))
+const StudentCourseAnalysisPage = lazy(() => import('@features/students/pages/StudentCourseAnalysisPage'))
 const AdminFinanceDashboard = lazy(() => import('@features/admin/pages/AdminFinanceDashboard'))
 
 const AdminBlockchainDiplomas = lazy(() => import('@features/admin/pages/AdminBlockchainDiplomas'))
@@ -304,6 +305,7 @@ export default function RootRouter() {
           <Route path="/students/new" element={<StudentCreatePage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/profile/card" element={<DigitalCardPage />} />
+          <Route path="/student/course-analysis" element={<StudentCourseAnalysisPage />} />
           <Route path="/admin/student-cards" element={<AdminStudentCardsPage />} />
 
           {/* HR */}

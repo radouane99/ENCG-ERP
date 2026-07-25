@@ -790,3 +790,9 @@ Route::get('/admin/students/{id}/progress-report', function ($id) {
         return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
     }
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Correction Automatique de Compte-Rendus (Professeurs) & Analyse de Cours (Étudiants)
+// ──────────────────────────────────────────────────────────────────────────────
+Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
+Route::post('/student/ai/analyze-course', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'analyzeCourse']);

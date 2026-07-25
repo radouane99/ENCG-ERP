@@ -61,4 +61,22 @@ class ProfessorAiController extends Controller
             'data' => $result
         ]);
     }
+
+    /**
+     * AI Automated Student Report / Homework Grading.
+     */
+    public function gradeReport(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'report_content' => 'required|string|min:10',
+            'rubric' => 'nullable|string'
+        ]);
+
+        $result = $this->profAiService->gradeReport(
+            $validated['report_content'],
+            $validated['rubric'] ?? 'Barème standard ENCG Fès'
+        );
+
+        return response()->json($result);
+    }
 }

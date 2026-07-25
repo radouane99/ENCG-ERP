@@ -140,6 +140,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Portfolio & Compétences', labelAr: 'ملفي المفهومي والمهارات', href: '/student/portfolio', icon: Crown, roles: ['student'] },
       { label: 'Clubs Étudiants', labelAr: 'أنديتي الطلابية', href: '/student/clubs', icon: Users, roles: ['student'] },
       { label: 'Mobilité & Échanges', labelAr: 'برامج الحركية', href: '/student/mobility', icon: PlaneTakeoff, roles: ['student'] },
+      { label: 'Analyse & Carte Mentale (IA)', labelAr: 'تحليل وتلخيص الدروس', href: '/student/course-analysis', icon: Sparkles, roles: ['student', 'super-admin', 'institution-admin'] },
       { label: 'Bibliothèque Numérique', labelAr: 'المكتبة الرقمية', href: '/student/library', icon: BookOpen, roles: ['student'] },
     ]
   },
