@@ -492,7 +492,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/schedules/export/group-pdf', [PdfExportController::class, 'exportScheduleGroupPdf']);
     Route::get('/admin/exams/{exam}/live-attendance/pdf', [PdfExportController::class, 'liveAttendancePdf']);
     Route::get('/admin/exams/{exam}/display-list/pdf', [PdfExportController::class, 'displayList']);
+    Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::post('/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
     Route::post('/convocations/room-flash-alert', [ConvocationController::class, 'sendRoomFlashAlert']);
+
+
 
 });
 
