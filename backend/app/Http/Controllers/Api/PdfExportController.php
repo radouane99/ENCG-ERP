@@ -713,8 +713,9 @@ class PdfExportController extends Controller
                 }
                 $count = count($realStudents);
             }
-        $delegateName = 'Non assigné';
+        }
 
+        $delegateName = 'Non assigné';
 
         $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
             'groupName' => $code,
@@ -732,6 +733,7 @@ class PdfExportController extends Controller
     }
 
     public function exportAttestationInscriptionPdf(Request $request)
+
     {
         $name = $request->query('name', 'Sara Alami');
         $cne = $request->query('cne', 'N13809281');

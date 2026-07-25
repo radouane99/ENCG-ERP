@@ -157,52 +157,56 @@ export default function AdminMobility() {
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
-              <PlaneTakeoff className="w-10 h-10 text-amber-400" />
-            </div>
-            <div>
-              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-purple-400/30">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Coopération & Bourses Internationales ENCG Fès
+        <div className="relative z-10 space-y-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+                <PlaneTakeoff className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                Affectation Mobilité Internationale
-              </h1>
-              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
-                Algorithme mathématique Gale-Shapley au mérite (GPA S1-S6) et diffusion automatique des décisions d'admission par email Resend.
-              </p>
+              <div>
+                <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-purple-400/30">
+                  <Sparkles className="w-4 h-4 text-amber-400" /> Coopération & Bourses Internationales ENCG Fès
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                  Affectation Mobilité Internationale
+                </h1>
+                <p className="text-blue-100/90 text-xs md:text-sm max-w-3xl font-medium mt-1">
+                  Algorithme mathématique Gale-Shapley au mérite (GPA S1-S6) et diffusion automatique des décisions d'admission par email Resend.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
+          {/* Action Bar - Never Overflow */}
+          <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-white/10">
             <button 
               onClick={() => setShowQuotasModal(true)}
-              className="flex items-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
-              <Settings2 className="w-4 h-4 text-amber-300" /> Configurer Quotas
+              <Settings2 className="w-4 h-4 text-amber-300" /> Quotas Partenaires
             </button>
 
             <button 
               disabled={isAlgorithmRunning}
               onClick={handleRunAlgorithm}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-black hover:scale-102 transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 text-xs uppercase tracking-wider"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-2xl font-black hover:scale-102 transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 text-xs uppercase tracking-wider"
             >
               {isAlgorithmRunning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Medal className="w-4 h-4" />}
-              Lancer Algorithme Gale-Shapley
+              Algorithme Gale-Shapley
             </button>
 
             <button 
               disabled={isBulkNotifying}
               onClick={handleBulkNotifyAll}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 text-xs uppercase tracking-wider"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 text-xs uppercase tracking-wider"
             >
               {isBulkNotifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 text-amber-300" />}
-              Notifier Toute La Promo (Resend)
+              Notifier Promotion (Resend)
             </button>
           </div>
         </div>
       </div>
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
