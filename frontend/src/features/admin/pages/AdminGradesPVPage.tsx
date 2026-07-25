@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'
 
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2 } from 'lucide-react'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator } from 'lucide-react'
+
 
 
 
@@ -254,6 +255,8 @@ export default function AdminGradesPVPage() {
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [modules, setModules] = useState<any[]>([])
+
+
 
 
 
@@ -994,48 +997,52 @@ export default function AdminGradesPVPage() {
 
 
   const renderSelectorBar = () => (
-    <div className="relative z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6">
+    <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-blue-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <FileText className="w-6 h-6" />
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <Calculator className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <Sparkles className="w-4 h-4 text-amber-400" /> Jury Officiel & Délibérations ENCG Fès
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
               {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              {isRtl ? 'اختر نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Semestriel ou Annuel Global) et la filière.'}
+            </h1>
+            <p className="text-blue-100/90 text-xs md:text-sm max-w-2xl font-medium mt-1">
+              {isRtl ? 'اختر نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Semestriel ou Annuel Global), la filière et lancez le calcul de compensation du Jury.'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
             type="button"
             onClick={() => setPvType('semestriel')}
             className={cn(
-              "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
+              "px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
               pvType === 'semestriel' 
-                ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/20" 
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white text-[#0f2863] shadow-lg" 
+                : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
             )}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-4 h-4 text-amber-400" />
             PV Semestriel (7 Modules)
           </button>
           <button
             type="button"
             onClick={() => setPvType('annuel')}
             className={cn(
-              "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
+              "px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
               pvType === 'annuel' 
-                ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/20" 
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white text-[#0f2863] shadow-lg" 
+                : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
             )}
           >
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
             PV Annuel Global (14 Modules)
           </button>
 
@@ -1043,13 +1050,25 @@ export default function AdminGradesPVPage() {
             type="button"
             onClick={handleRunDeliberation}
             disabled={isCalculating}
-            className="px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-500/25 border border-amber-400/30"
+            className="px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg uppercase tracking-wider"
           >
             {isCalculating ? <Spinner className="w-4 h-4 text-white" /> : <Zap className="w-4 h-4 text-amber-200" />}
-            ⚡ Calculer Délibération
+            Calculer Délibération
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowSignatureModal(true)}
+            className="px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg uppercase tracking-wider border border-purple-400/30"
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-300" />
+            {signatureDataUrl ? '✓ PV Signé' : 'Signer le PV (Tactile)'}
+          </button>
+
         </div>
       </div>
+
+
 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
@@ -3608,7 +3627,69 @@ export default function AdminGradesPVPage() {
           </div>
         </div>
       )}
+
+      {/* Signature Tactile Modal */}
+      {showSignatureModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
+                  <ShieldCheck className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black">Signature Tactile du PV Officiel</h3>
+                  <p className="text-xs text-blue-200">Validation et horodatage certifié par l'Enseignant</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSignatureModal(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-500 font-bold">
+                Veuillez apposer votre signature manuscrite ci-dessous à l'aide de votre souris ou écran tactile.
+              </p>
+
+              <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
+                <SignatureCanvasPad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
+              </div>
+
+              {signatureDataUrl && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Signature Numérique Capturée et Horodatée en Temps Réel !</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+              <button
+                onClick={() => setShowSignatureModal(false)}
+                className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (!signatureDataUrl) {
+                    toast.error("Veuillez d'abord dessiner votre signature tactile.");
+                    return;
+                  }
+                  toast.success("✒️ Signature tactile apposée et scellée sur le Procès-Verbal Officiel !");
+                  setShowSignatureModal(false);
+                }}
+                className="px-6 py-2.5 bg-[#0f2863] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer"
+              >
+                Valider & Sceller PV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
 
