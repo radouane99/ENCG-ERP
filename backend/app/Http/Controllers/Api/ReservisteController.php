@@ -32,7 +32,7 @@ class ReservisteController extends Controller
                 DB::raw("COALESCE(users.first_name, users.name, 'Étudiant') as first_name"),
                 DB::raw("COALESCE(users.last_name, '') as last_name"),
                 'students.student_number',
-                'students.cne_cme',
+                'students.cne',
                 DB::raw("COALESCE(users.email, students.email) as email"),
                 'modules.id as module_id',
                 'modules.code as module_code',
@@ -55,7 +55,7 @@ class ReservisteController extends Controller
                   ->orWhere('users.first_name', 'like', "%{$search}%")
                   ->orWhere('users.last_name', 'like', "%{$search}%")
                   ->orWhere('students.student_number', 'like', "%{$search}%")
-                  ->orWhere('students.cne_cme', 'like', "%{$search}%");
+                  ->orWhere('students.cne', 'like', "%{$search}%");
             });
         }
 
@@ -105,7 +105,7 @@ class ReservisteController extends Controller
                 'last_name' => $first->last_name,
                 'full_name' => mb_strtoupper($first->last_name) . ' ' . $first->first_name,
                 'student_number' => $first->student_number,
-                'cne' => $first->cne_cme ?? $first->student_number,
+                'cne' => $first->cne ?? $first->student_number,
                 'email' => $first->email,
                 'filiere_code' => $first->filiere_code ?? 'ENCG',
                 'filiere_name' => $first->filiere_name ?? 'ENCG',
@@ -192,7 +192,7 @@ class ReservisteController extends Controller
         $studentData = [
             'first_name' => $student->first_name,
             'last_name' => mb_strtoupper($student->last_name),
-            'cne' => $student->cne_cme ?? $student->student_number,
+            'cne' => $student->cne ?? $student->student_number,
             'email' => $student->email,
         ];
 
@@ -318,7 +318,7 @@ class ReservisteController extends Controller
             'student' => [
                 'id' => $student->id,
                 'full_name' => mb_strtoupper($student->last_name) . ' ' . $student->first_name,
-                'cne' => $student->cne_cme ?? $student->student_number,
+                'cne' => $student->cne ?? $student->student_number,
                 'filiere_code' => $filiere->code ?? 'ENCG',
                 'filiere_name' => $filiere->name ?? 'ENCG',
             ],

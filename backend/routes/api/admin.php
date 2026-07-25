@@ -419,6 +419,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     });
 
     // Blockchain Certification
+    Route::prefix('admin/blockchain')->group(function () {
+        Route::get('/certificates', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'getLedger']);
+        Route::post('/certify-promo', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'certifyPromo']);
+        Route::post('/verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+    });
     Route::prefix('blockchain')->group(function () {
         Route::get('/certificates', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'getLedger']);
         Route::post('/certify-promo', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'certifyPromo']);
