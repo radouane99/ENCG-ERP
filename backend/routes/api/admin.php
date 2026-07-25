@@ -497,11 +497,23 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
     Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
     Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+
+    Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+
 
     Route::post('/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
 
