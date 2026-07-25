@@ -997,11 +997,13 @@ export default function AdminGradesPVPage() {
 
 
   const renderSelectorBar = () => (
-    <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+    <div className="space-y-6">
+      {/* Top Deep Navy Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
+        {/* Row 1: Title & Subtitle */}
+        <div className="relative z-10 flex items-center gap-6">
           <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
             <Calculator className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
           </div>
@@ -1009,21 +1011,22 @@ export default function AdminGradesPVPage() {
             <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
               <Sparkles className="w-4 h-4 text-amber-400" /> Jury Officiel & Délibérations ENCG Fès
             </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
               {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
             </h1>
-            <p className="text-blue-100/90 text-xs md:text-sm max-w-2xl font-medium mt-1">
+            <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1">
               {isRtl ? 'اختر نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Semestriel ou Annuel Global), la filière et lancez le calcul de compensation du Jury.'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
+        {/* Row 2: Action Bar */}
+        <div className="relative z-10 flex items-center gap-3 flex-wrap pt-4 border-t border-white/10">
           <button
             type="button"
             onClick={() => setPvType('semestriel')}
             className={cn(
-              "px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+              "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
               pvType === 'semestriel' 
                 ? "bg-white text-[#0f2863] shadow-lg" 
                 : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
@@ -1032,11 +1035,12 @@ export default function AdminGradesPVPage() {
             <Layers className="w-4 h-4 text-amber-400" />
             PV Semestriel (7 Modules)
           </button>
+
           <button
             type="button"
             onClick={() => setPvType('annuel')}
             className={cn(
-              "px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+              "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
               pvType === 'annuel' 
                 ? "bg-white text-[#0f2863] shadow-lg" 
                 : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
@@ -1050,7 +1054,7 @@ export default function AdminGradesPVPage() {
             type="button"
             onClick={handleRunDeliberation}
             disabled={isCalculating}
-            className="px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg uppercase tracking-wider"
+            className="px-6 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg uppercase tracking-wider"
           >
             {isCalculating ? <Spinner className="w-4 h-4 text-white" /> : <Zap className="w-4 h-4 text-amber-200" />}
             Calculer Délibération
@@ -1059,19 +1063,16 @@ export default function AdminGradesPVPage() {
           <button
             type="button"
             onClick={() => setShowSignatureModal(true)}
-            className="px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg uppercase tracking-wider border border-purple-400/30"
+            className="px-6 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg uppercase tracking-wider border border-purple-400/30"
           >
             <ShieldCheck className="w-4 h-4 text-amber-300" />
             {signatureDataUrl ? '✓ PV Signé' : 'Signer le PV (Tactile)'}
           </button>
-
         </div>
       </div>
 
-
-
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+      {/* Filter Control Bar (Elevated Card) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 rounded-[2rem] shadow-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <CustomSelect
           label={isRtl ? 'الشعبة' : 'Filière'}
           icon={GraduationCap}
@@ -1137,6 +1138,7 @@ export default function AdminGradesPVPage() {
       </div>
     </div>
   )
+
 
 
   if ((!moduleId || pvType === 'semestriel' || pvType === 'annuel') && (selectedFiliere || selectedSemester)) {
