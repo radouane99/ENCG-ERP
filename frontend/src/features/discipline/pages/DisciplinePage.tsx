@@ -70,7 +70,9 @@ export default function DisciplinePage(): React.ReactElement {
 
   // Printable Convocation / PV Modal
   const [showPrintModal, setShowPrintModal] = useState(false)
+  const [showBatchPrint, setShowBatchPrint] = useState(false)
   const [printDocumentType, setPrintDocumentType] = useState<'convocation' | 'pv_decision'>('convocation')
+
 
   // Fetch Real & Mock Discipline Cases from API
   const { data: disciplineCases, isLoading, refetch } = useQuery({
@@ -277,6 +279,15 @@ export default function DisciplinePage(): React.ReactElement {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                onClick={() => {
+                  setShowBatchPrint(true)
+                  setTimeout(() => window.print(), 300)
+                }}
+                className="bg-amber-400 hover:bg-amber-500 text-[#4a1212] font-black rounded-xl text-xs px-4 border border-amber-300 shadow-lg hover:scale-105 transition-all"
+              >
+                📦 Exporter Lot Convocations & Bordereau (A4)
+              </Button>
               <button
                 type="button"
                 onClick={() => refetch()}
@@ -285,6 +296,7 @@ export default function DisciplinePage(): React.ReactElement {
                 <RefreshCw className="w-4 h-4" /> Actualiser
               </button>
             </div>
+
           </div>
 
           {/* Quick Metrics */}
@@ -797,6 +809,161 @@ export default function DisciplinePage(): React.ReactElement {
           </div>
         </div>
       )}
+
+      {/* 📦 DEDICATED OFFICIAL BATCH CONVOCATIONS & BORDEREAU DE REMISE PRINTABLE DOCUMENT */}
+      {showBatchPrint && (
+        <div id="batch-convocations-printable-doc" className="hidden print:block text-black bg-white text-[9pt] leading-relaxed">
+          
+          {/* PAGE 1: BORDEREAU DE REMISE & ÉMARGEMENT DU SECRÉTARIAT GÉNÉRAL */}
+          <div className="min-h-screen">
+            <div className="border-b-2 border-[#4a1212] pb-3 mb-4 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
+                <div>
+                  <div className="text-[10pt] font-black uppercase text-[#4a1212]">Royaume du Maroc</div>
+                  <div className="text-[8.5pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
+                  <div className="text-[9.5pt] font-black text-[#4a1212]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+                  <div className="text-[8pt] font-bold text-slate-500 uppercase">Secrétariat Général — Service des Examens</div>
+                </div>
+              </div>
+              <div className="text-right space-y-1">
+                <div className="px-3 py-1 bg-[#4a1212] text-white font-black text-[8.5pt] rounded uppercase inline-block">
+                  BORDEREAU DE REMISE OFFICIEL
+                </div>
+                <div className="text-[8pt] font-mono text-slate-700">Réf: SG-CD-2026/LOT</div>
+                <div className="text-[7.5pt] text-slate-400">Date: {new Date().toLocaleDateString('fr-FR')}</div>
+              </div>
+            </div>
+
+            <div className="text-center bg-slate-50 border border-slate-300 p-3 rounded-xl mb-4">
+              <h1 className="text-[11pt] font-black text-[#4a1212] uppercase">
+                BORDEREAU D'ÉMARGEMENT & RÉCEPTION DES CONVOCATIONS DISCIPLINAIRES
+              </h1>
+              <p className="text-[8pt] text-slate-600 font-bold">
+                Registre de remise en main propre ou transmission par voie postale recommandé pour les candidats convoqués
+              </p>
+            </div>
+
+            <table className="w-full text-[8pt] border-collapse border border-slate-300 mb-6">
+              <thead>
+                <tr className="bg-slate-100 font-black text-[#4a1212]">
+                  <th className="border border-slate-300 p-2 text-center">N° Dossier</th>
+                  <th className="border border-slate-300 p-2 text-left">Étudiant Poursuivi</th>
+                  <th className="border border-slate-300 p-2 text-left">Filière / CNE</th>
+                  <th className="border border-slate-300 p-2 text-left">Motif / Incident</th>
+                  <th className="border border-slate-300 p-2 text-center">Date & Lieu Audience</th>
+                  <th className="border border-slate-300 p-2 text-center">Décharge / Signature Réception</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dataList.map((item: any, idx: number) => (
+                  <tr key={idx} className="border-b border-slate-200">
+                    <td className="border border-slate-300 p-2 text-center font-mono font-bold">CD-2026/{item.id}</td>
+                    <td className="border border-slate-300 p-2 font-bold">{item.student?.last_name?.toUpperCase()} {item.student?.first_name}</td>
+                    <td className="border border-slate-300 p-2 text-xs">
+                      <div>{item.student?.filiere}</div>
+                      <div className="font-mono text-slate-500 text-[7.5pt]">{item.student?.cne}</div>
+                    </td>
+                    <td className="border border-slate-300 p-2 font-semibold text-rose-800">{item.type}</td>
+                    <td className="border border-slate-300 p-2 text-center font-bold">{item.hearing_date || '2026-07-28 à 10h00'}<br/><span className="text-[7.5pt] font-normal text-slate-500">{item.hearing_room || 'Salle des Actes'}</span></td>
+                    <td className="border border-slate-300 p-2 text-center text-slate-400 italic h-12">
+                      _____________________
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="pt-8 flex justify-between items-center text-[8.5pt]">
+              <div className="text-center font-bold">
+                Le Secrétaire Général de l'ENCG Fès
+                <div className="h-10" />
+                __________________________
+              </div>
+              <div className="text-center font-bold">
+                Le Responsable du Service Postal / Remise
+                <div className="h-10" />
+                __________________________
+              </div>
+            </div>
+          </div>
+
+          {/* PAGE 2+: INDIVIDUAL A4 CONVOCATIONS FOR EACH STUDENT */}
+          {dataList.map((item: any, idx: number) => (
+            <div key={idx} className="min-h-screen pt-8 break-before-page border-t-2 border-slate-200">
+              <div className="border-b-2 border-[#4a1212] pb-3 mb-4 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
+                  <div>
+                    <div className="text-[10pt] font-black uppercase text-[#4a1212]">Royaume du Maroc</div>
+                    <div className="text-[8.5pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
+                    <div className="text-[9.5pt] font-black text-[#4a1212]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+                    <div className="text-[8pt] font-bold text-slate-500 uppercase">Instance du Conseil de Discipline</div>
+                  </div>
+                </div>
+                <div className="text-right space-y-1">
+                  <div className="px-3 py-1 bg-[#4a1212] text-white font-black text-[8.5pt] rounded uppercase inline-block">
+                    CONVOCATION OFFICIELLE
+                  </div>
+                  <div className="text-[8.5pt] font-mono text-slate-700">Réf: CD-2026/{item.id}</div>
+                  <div className="text-[7.5pt] text-slate-400">Fès, le : {new Date().toLocaleDateString('fr-FR')}</div>
+                </div>
+              </div>
+
+              <div className="space-y-4 text-[9.5pt] leading-relaxed">
+                <div className="text-right font-bold">
+                  À l'attention de l'Étudiant(e) : <span className="text-[#4a1212] font-black">{item.student?.last_name?.toUpperCase()} {item.student?.first_name}</span><br />
+                  CNE / Massar : <span className="font-mono">{item.student?.cne}</span> | Filière : {item.student?.filiere}<br />
+                  Adresse email : {item.student?.email}
+                </div>
+
+                <div className="text-center font-black text-[12pt] uppercase text-[#4a1212] border-y border-slate-300 py-2">
+                  CONVOCATION DEVANT LE CONSEIL DE DISCIPLINE
+                </div>
+
+                <p>
+                  Monsieur / Madame <strong className="uppercase">{item.student?.last_name} {item.student?.first_name}</strong>,
+                </p>
+
+                <p>
+                  Vous êtes officiellement convoqué(e) à comparaître devant les membres du <strong>Conseil de Discipline de l'École Nationale de Commerce et de Gestion de Fès</strong> suite au rapport d'incident transmis lors de l'épreuve de <strong>{item.module_name || 'Examen Final'}</strong>.
+                </p>
+
+                <div className="p-4 bg-slate-50 border-2 border-[#4a1212] rounded-xl space-y-2 font-bold">
+                  <div className="text-rose-900">🚨 Motif de la convocation : {item.type}</div>
+                  <div className="text-slate-800 font-normal italic text-[8.5pt]">"{item.description}"</div>
+                  {item.confiscated_items && <div className="text-amber-900 text-[8.5pt]">📦 Éléments confisqués : {item.confiscated_items}</div>}
+                </div>
+
+                <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl space-y-1 font-bold text-amber-950">
+                  <div>📅 Date & Heure d'audience : {item.hearing_date || '2026-07-28 à 10h00'}</div>
+                  <div>📍 Lieu de réunion : {item.hearing_room || 'Salle des Actes — ENCG Fès'}</div>
+                </div>
+
+                <p className="text-[8.5pt] text-slate-600">
+                  Vous avez le droit de vous faire assister par un représentant étudiant ou d'apporter tout élément d'explication ou pièce justificative écrite pour votre défense.
+                </p>
+
+                <div className="pt-8 flex justify-between items-center text-[8.5pt]">
+                  <div className="text-center">
+                    <QRCodeSVG value={`https://encg.usmba.ac.ma/verify-discipline?id=${item.id}`} size={64} />
+                    <div className="text-[7pt] font-mono text-slate-500 mt-1">Authenticité Certifiée SHA-256</div>
+                  </div>
+                  <div className="text-center font-bold">
+                    Pour le Conseil de Discipline,<br />
+                    Le Président de Séances
+                    <div className="h-10" />
+                    __________________________
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      )}
+
     </>
   )
 }
+

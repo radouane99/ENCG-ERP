@@ -392,6 +392,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Exam Analytics & Cartography Route
     Route::get('/exam-analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
+    Route::post('/exams/{id}/pv/lock', [\App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
+
 
 
     // Retakes

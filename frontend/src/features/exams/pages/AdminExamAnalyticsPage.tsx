@@ -98,13 +98,14 @@ export default function AdminExamAnalyticsPage() {
 
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => toast.success('📊 Rapport Analytics exporté au format CSV & PDF !')}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4"
+              onClick={() => window.print()}
+              className="bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-black rounded-xl text-xs px-4 shadow-lg hover:scale-105 transition-all"
             >
-              <Download className="w-4 h-4 mr-1.5" /> Export Analytics PDF
+              📜 Générer Bilan Consolidé A4 (Présidence USMBA)
             </Button>
           </div>
         </div>
+
 
         {/* Global KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 border-t border-white/10">
@@ -251,6 +252,151 @@ export default function AdminExamAnalyticsPage() {
         </div>
       </div>
 
+      {/* 📜 DEDICATED PRINTABLE A4 BILAN CONSOLIDÉ DOCUMENT FOR USMBA PRESIDENT & DEAN */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 8mm 12mm 10mm 12mm;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .print\\:hidden, header, nav, sidebar, button {
+            display: none !important;
+          }
+          #executive-bilan-printable-doc {
+            display: block !important;
+          }
+        }
+      `}</style>
+
+      <div id="executive-bilan-printable-doc" className="hidden print:block text-black bg-white text-[9.5pt] leading-snug">
+        {/* Header */}
+        <div className="border-b-2 border-[#0f2863] pb-3 mb-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
+            <div>
+              <div className="text-[10pt] font-black uppercase text-[#0f2863]">Royaume du Maroc</div>
+              <div className="text-[8.5pt] font-bold text-slate-800">Université Sidi Mohamed Ben Abdellah — Fès</div>
+              <div className="text-[9.5pt] font-black text-[#0f2863]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+              <div className="text-[8pt] font-bold text-slate-500 uppercase">Direction & Présidence — Année Académique 2025/2026</div>
+            </div>
+          </div>
+          <div className="text-right space-y-1">
+            <div className="px-3 py-1 bg-[#0f2863] text-white font-black text-[8.5pt] rounded uppercase inline-block">
+              RAPPORT EXÉCUTIF A4
+            </div>
+            <div className="text-[8pt] font-mono text-slate-700">Réf: USMBA-ENCG-2026/BILAN</div>
+            <div className="text-[7.5pt] text-slate-400">Édité le : {new Date().toLocaleDateString('fr-FR')}</div>
+          </div>
+        </div>
+
+        {/* Document Title */}
+        <div className="text-center bg-slate-50 border border-slate-300 p-3 rounded-xl mb-4">
+          <h1 className="text-[12pt] font-black text-[#0f2863] uppercase">
+            BILAN SYNTHÉTIQUE ET ANALYTIQUE DE LA SESSION D'EXAMENS
+          </h1>
+          <p className="text-[8.5pt] font-bold text-slate-600">
+            Rapport Synthétique Exécutif présenté à la Présidence de l'Université USMBA & au Doyenné de l'ENCG Fès
+          </p>
+        </div>
+
+        {/* Global KPIs */}
+        <div className="grid grid-cols-4 gap-2 mb-4 text-center">
+          <div className="p-2 border border-slate-300 rounded-lg bg-slate-50">
+            <div className="text-[7.5pt] uppercase font-bold text-slate-500">Épreuves Organisées</div>
+            <div className="text-[11pt] font-black text-[#0f2863]">{stats.total_exams} Épreuves</div>
+          </div>
+          <div className="p-2 border border-slate-300 rounded-lg bg-slate-50">
+            <div className="text-[7.5pt] uppercase font-bold text-slate-500">Taux Moyen d'Assiduité</div>
+            <div className="text-[11pt] font-black text-emerald-700">{stats.average_presence_rate}%</div>
+          </div>
+          <div className="p-2 border border-slate-300 rounded-lg bg-slate-50">
+            <div className="text-[7.5pt] uppercase font-bold text-slate-500">Absences Injustifiées</div>
+            <div className="text-[11pt] font-black text-amber-700">{stats.total_absences} candidats</div>
+          </div>
+          <div className="p-2 border border-slate-300 rounded-lg bg-slate-50">
+            <div className="text-[7.5pt] uppercase font-bold text-slate-500">Dossiers Disciplinaires</div>
+            <div className="text-[11pt] font-black text-rose-700">{stats.total_incidents} cas arrêtés</div>
+          </div>
+        </div>
+
+        {/* Table 1: Filières */}
+        <div className="space-y-1 mb-4">
+          <h2 className="text-[9pt] font-black uppercase text-[#0f2863] border-b border-slate-300 pb-1">
+            1. Taux d'Assiduité et de Présence par Filières
+          </h2>
+          <table className="w-full text-[8.5pt] border-collapse border border-slate-300">
+            <thead>
+              <tr className="bg-slate-100 font-black text-[#0f2863]">
+                <th className="border border-slate-300 p-1.5 text-left">Filière / Spécialité</th>
+                <th className="border border-slate-300 p-1.5 text-center">Taux Présence</th>
+                <th className="border border-slate-300 p-1.5 text-center">Taux Absence</th>
+                <th className="border border-slate-300 p-1.5 text-center">Incidents Signalés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filiereData.map((f: any, idx: number) => (
+                <tr key={idx} className="border-b border-slate-200">
+                  <td className="border border-slate-300 p-1.5 font-bold">{f.name}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono font-bold text-emerald-800">{f.presence}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono text-slate-600">{f.absence}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono font-black text-rose-700">{f.fraudes} cas</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Table 2: Fraud Heatmap */}
+        <div className="space-y-1 mb-6">
+          <h2 className="text-[9pt] font-black uppercase text-[#0f2863] border-b border-slate-300 pb-1">
+            2. Cartographie des Incidents par Amphi & Salle d'Épreuve
+          </h2>
+          <table className="w-full text-[8.5pt] border-collapse border border-slate-300">
+            <thead>
+              <tr className="bg-slate-100 font-black text-[#0f2863]">
+                <th className="border border-slate-300 p-1.5 text-left">Espace d'Épreuve</th>
+                <th className="border border-slate-300 p-1.5 text-center">Convocation Total</th>
+                <th className="border border-slate-300 p-1.5 text-center">Absences</th>
+                <th className="border border-slate-300 p-1.5 text-center">Cas de Fraude Constatés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roomData.map((r: any, idx: number) => (
+                <tr key={idx} className="border-b border-slate-200">
+                  <td className="border border-slate-300 p-1.5 font-bold">{r.room}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{r.convoked}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono text-slate-600">{r.absents}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono font-black text-rose-700">{r.fraudes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Signatures */}
+        <div className="pt-8 flex justify-between items-center text-[9pt] border-t border-slate-300">
+          <div className="text-center font-bold">
+            Pour la Direction de l'ENCG Fès,<br />
+            Le Doyen de l'Établissement
+            <div className="h-12" />
+            __________________________
+          </div>
+          <div className="text-center font-bold">
+            Pour la Présidence de l'Université,<br />
+            Le Président de l'USMBA
+            <div className="h-12" />
+            __________________________
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
+
