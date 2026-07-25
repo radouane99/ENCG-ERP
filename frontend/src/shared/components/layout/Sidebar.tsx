@@ -169,8 +169,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'ADMINISTRATION SYSTÈME',
     groupTitleAr: 'إدارة النظام',
     items: [
-      { label: 'Attestations & Relevés', labelAr: 'الشهادات وكشوف النقاط', href: '/documents/attestations', icon: FileText, roles: ['super-admin', 'institution-admin'] },
-      { label: 'Guichet Électronique Admin', labelAr: 'الشباك الإلكتروني للإدارة', href: '/admin/guichet', icon: FileSignature, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Guichet Électronique & Attestations', labelAr: 'الشباك الإلكتروني والوثائق', href: '/admin/guichet', icon: FileSignature, roles: ['super-admin', 'institution-admin'] },
       { label: 'Diplômes Blockchain', labelAr: 'دبلومات البلوكشين', href: '/admin/blockchain-diplomas', icon: ShieldCheck, roles: ['super-admin', 'institution-admin'] },
       { label: 'Évaluations & Enquêtes', labelAr: 'التقييمات والاستطلاعات', href: '/admin/evaluations', icon: CheckSquare, roles: ['super-admin', 'institution-admin'] },
       { label: 'Workflow Builder', labelAr: 'منشئ مسارات العمل', href: '/admin/workflow-builder', icon: Kanban, roles: ['super-admin', 'institution-admin'] },
