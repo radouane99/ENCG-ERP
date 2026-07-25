@@ -33,7 +33,7 @@ class ReservisteController extends Controller
                 DB::raw("COALESCE(users.last_name, '') as last_name"),
                 'students.student_number',
                 'students.cne',
-                DB::raw("COALESCE(users.email, students.email) as email"),
+                DB::raw("COALESCE(users.email, '') as email"),
                 'modules.id as module_id',
                 'modules.code as module_code',
                 'modules.name as module_name',
