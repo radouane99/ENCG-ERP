@@ -95,7 +95,11 @@ class AcademicYearController extends Controller
             foreach ($years as $y) {
                 $studentCount = 0;
                 if (\Illuminate\Support\Facades\Schema::hasTable('student_pathways')) {
-                    $studentCount = \DB::table('student_pathways')->where('academic_year_id', $y->id)->count();
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('student_pathways', 'academic_year_id')) {
+                        $studentCount = \DB::table('student_pathways')->where('academic_year_id', $y->id)->count();
+                    } else {
+                        $studentCount = \DB::table('student_pathways')->count();
+                    }
                 }
                 if ($studentCount === 0 && $totalStudentsInDb > 0) {
                     $studentCount = (int) round($totalStudentsInDb * 0.8);
@@ -103,7 +107,11 @@ class AcademicYearController extends Controller
 
                 $gradesPassed = 0;
                 if (\Illuminate\Support\Facades\Schema::hasTable('grades')) {
-                    $gradesPassed = \DB::table('grades')->where('academic_year_id', $y->id)->where('value', '>=', 10)->count();
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('grades', 'academic_year_id')) {
+                        $gradesPassed = \DB::table('grades')->where('academic_year_id', $y->id)->count();
+                    } else {
+                        $gradesPassed = \DB::table('grades')->count();
+                    }
                 }
 
                 $admittedCount = $studentCount > 0 ? (int) round($studentCount * 0.88) : 0;
