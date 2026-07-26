@@ -11,12 +11,16 @@ const QUOTES = [
   { fr: "Diplômes Certifiés Blockchain & Réseau Alumnis ENCG Fès", ar: "دبلومات موثقة برقميات الأمان وشبكة خريجين واعدة" },
 ]
 
+import { useRef } from 'react'
+
 export default function AuthLayout() {
   const { theme, setTheme } = useTheme()
   const { i18n } = useTranslation('auth')
   const currentTheme = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme
   const isAr = i18n.language === 'ar'
   const [quoteIndex, setQuoteIndex] = useState(0)
+  const [langOpen, setLangOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -25,12 +29,25 @@ export default function AuthLayout() {
     return () => clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setLangOpen(false)
+      }
+    }
+    if (langOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [langOpen])
+
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang)
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+    setLangOpen(false)
   }
-
-  const [langOpen, setLangOpen] = useState(false)
 
   const LANGUAGES = [
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -42,10 +59,6 @@ export default function AuthLayout() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden bg-background text-foreground select-none font-sans">
-      {/* Click outside backdrop for dropdown */}
-      {langOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
-      )}
       {/* Decorative Floating Ambient Blobs */}
       <div className="absolute -top-40 -right-40 w-[650px] h-[650px] rounded-full bg-primary/10 dark:bg-primary/15 blur-[120px] pointer-events-none animate-pulse-slow" />
       <div className="absolute -bottom-40 -left-40 w-[550px] h-[550px] rounded-full bg-indigo-500/10 dark:bg-blue-600/15 blur-[120px] pointer-events-none animate-pulse-slow" style={{ animationDelay: '2s' }} />
@@ -175,10 +188,10 @@ export default function AuthLayout() {
 
           <div className="flex items-center gap-2">
             {/* Custom Sleek Language Dropdown */}
-            <div className="relative z-50">
+            <div ref={dropdownRef} className="relative z-50">
               <button
                 type="button"
-                onClick={() => setLangOpen(!langOpen)}
+                onClick={() => setLangOpen((prev) => !prev)}
                 className="flex items-center gap-2 bg-card hover:bg-muted border border-border/80 rounded-xl px-3 py-2 text-xs font-bold text-foreground shadow-sm transition-all cursor-pointer hover:border-primary/30"
               >
                 <span className="text-base leading-none">{currentLang.flag}</span>
@@ -188,17 +201,20 @@ export default function AuthLayout() {
 
               {/* Floating Menu */}
               {langOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-card/95 backdrop-blur-2xl border border-border shadow-2xl rounded-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                <div className="absolute right-0 mt-2 w-40 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
                   {LANGUAGES.map((lang) => (
                     <button
                       key={lang.code}
                       type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        changeLanguage(lang.code)
+                      }}
                       onClick={() => {
                         changeLanguage(lang.code)
-                        setLangOpen(false)
                       }}
                       className={cn(
-                        "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                        "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer pointer-events-auto",
                         i18n.language === lang.code 
                           ? "bg-primary/10 text-primary border border-primary/20" 
                           : "hover:bg-muted text-foreground"
