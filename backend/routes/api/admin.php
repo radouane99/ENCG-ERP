@@ -838,6 +838,9 @@ Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\Admiss
 Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
 Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
 
+Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+
 
 
 

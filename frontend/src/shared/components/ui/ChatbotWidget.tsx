@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff } from 'lucide-react'
+import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff, Copy, Check, Volume2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -11,12 +11,11 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  'Attestation de scolarité',
-  'Mes notes d\'examens',
-  'Convocation examen',
-  'Soumettre un stage PFE',
-  'Justifier une absence',
-  'Contacter la scolarité',
+  '📋 Attestation de scolarité',
+  '📊 Mes notes d\'examens',
+  '📅 Plannings & Convocations',
+  '💼 Stage PFE & Inscription',
+  '🏥 Justifier une absence',
 ]
 
 export default function ChatbotWidget() {
@@ -24,17 +23,20 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState<Message[]>([{
     id: 0,
     role: 'assistant',
-    content: '👋 Bonjour ! Je suis l\'**Assistant IA ENCG Fès**, alimenté par **Google Gemini**.\n\nJe peux vous aider sur toutes vos questions administratives et académiques. Vous pouvez aussi me parler au micro 🎙️ !'
+    content: '👋 **Bonjour !** Je suis l\'**Assistant Copilot IA de l\'ENCG Fès**, propulsé par **Gemini 1.5 Flash**.\n\nPosez-moi vos questions sur la scolarité, les plannings, les notes ou dictez directement votre demande au micro 🎙️ !'
   }])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
   const [counter, setCounter] = useState(1)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isTyping])
+    if (isOpen) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, isTyping, isOpen])
 
   const toggleVoiceInput = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -63,7 +65,7 @@ export default function ChatbotWidget() {
         const transcript = event.results[0][0].transcript
         setInput(transcript)
         setIsListening(false)
-        toast.success(`Dictée : "${transcript}"`)
+        toast.success(`Dictée reçue : "${transcript}"`)
       }
 
       recognition.onerror = () => {
@@ -89,23 +91,30 @@ export default function ChatbotWidget() {
     setMessages(prev => [...prev, { id: counter, role: 'user', content: msg }])
     setCounter(n => n + 1)
     setInput('')
-    setIsTyping(false)
+    setIsTyping(true)
 
     try {
       const res = await api.post('/ai/chat', { message: msg, context: 'student_assistant' })
-      const reply = res.data?.reply ?? 'Je rencontre une difficulté. Veuillez contacter scolarite@encg-fes.ma'
+      const reply = res.data?.reply ?? res.data?.message ?? 'Je suis à votre disposition. Pour toute assistance immédiate, contactez la scolarité à **scolarite@encg-fes.ma**.'
       setMessages(prev => [...prev, { id: counter + 1, role: 'assistant', content: reply }])
       setCounter(n => n + 2)
     } catch {
       setMessages(prev => [...prev, {
         id: counter + 1,
         role: 'assistant',
-        content: '🔌 Service temporairement indisponible. Contactez la scolarité : **scolarite@encg-fes.ma**'
+        content: '🔌 Service temporairement indisponible. Vous pouvez contacter la scolarité de l\'ENCG Fès : **scolarite@encg-fes.ma**'
       }])
       setCounter(n => n + 2)
     } finally {
       setIsTyping(false)
     }
+  }
+
+  const copyMessage = (id: number, text: string) => {
+    navigator.clipboard.writeText(text.replace(/<[^>]*>?/gm, ''))
+    setCopiedId(id)
+    toast.success('Texte copié !')
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   const renderContent = (content: string) =>
@@ -115,76 +124,109 @@ export default function ChatbotWidget() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Glowing Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110',
-          isOpen ? 'bg-rose-600 hover:bg-rose-700' : 'bg-gradient-to-br from-[#0f2863] to-indigo-700'
+          'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer',
+          isOpen
+            ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/50'
+            : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-[0_0_30px_rgba(99,102,241,0.6)] animate-bounce-subtle'
         )}
+        aria-label="Assistant IA ENCG"
       >
-        {isOpen ? <X className="w-6 h-6 text-white" /> : <MessageSquare className="w-6 h-6 text-white" />}
-        {!isOpen && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
+        {isOpen ? (
+          <X className="w-6 h-6 text-white" />
+        ) : (
+          <div className="relative flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-white animate-pulse" />
+            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white animate-ping" />
+            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white" />
+          </div>
         )}
       </button>
 
-      {/* Chat Window */}
+      {/* Chat Floating Window */}
       {isOpen && (
         <div
-          className="fixed bottom-24 right-6 z-50 w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
-          style={{ height: '560px' }}
+          className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-indigo-500/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+          style={{ height: '580px' }}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#0f2863] to-indigo-700 p-4 flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-              <Bot className="w-5 h-5 text-amber-400" />
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 p-4 flex items-center justify-between border-b border-indigo-800/40 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0 shadow-inner">
+                <Bot className="w-5 h-5 text-emerald-400 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-black text-white text-sm tracking-tight flex items-center gap-1.5">
+                  Copilot IA ENCG Fès
+                  <span className="px-1.5 py-0.5 text-[9px] font-black rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase">
+                    Live
+                  </span>
+                </h3>
+                <p className="text-indigo-200/80 text-[10px] font-bold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> Gemini 1.5 Flash • Micro Vocale
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-black text-white text-sm">Assistant IA ENCG Fès</h3>
-              <p className="text-blue-200 text-[10px] font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Gemini AI & Micro Vocale
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-300">En ligne</span>
-            </div>
+
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-300 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {/* Messages Body */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/40">
             {messages.map(msg => (
-              <div key={msg.id} className={cn('flex gap-2 items-end', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+              <div key={msg.id} className={cn('flex gap-2 items-end group', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
                 <div className={cn(
-                  'w-7 h-7 rounded-2xl flex items-center justify-center shrink-0',
-                  msg.role === 'assistant' ? 'bg-[#0f2863]' : 'bg-indigo-100 dark:bg-indigo-900'
+                  'w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 shadow-sm',
+                  msg.role === 'assistant'
+                    ? 'bg-gradient-to-br from-indigo-900 to-slate-900 text-emerald-400 border border-indigo-700/50'
+                    : 'bg-indigo-600 text-white'
                 )}>
                   {msg.role === 'assistant'
-                    ? <Bot className="w-4 h-4 text-amber-400" />
-                    : <User className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-300" />
+                    ? <Bot className="w-4 h-4 text-emerald-400" />
+                    : <User className="w-4 h-4" />
                   }
                 </div>
-                <div
-                  className={cn(
-                    'max-w-[78%] px-3.5 py-2.5 rounded-2xl text-xs font-medium leading-relaxed',
-                    msg.role === 'assistant'
-                      ? 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-sm'
-                      : 'bg-gradient-to-br from-[#0f2863] to-indigo-700 text-white rounded-tr-sm'
+                
+                <div className="relative max-w-[80%]">
+                  <div
+                    className={cn(
+                      'px-4 py-3 rounded-2xl text-xs font-semibold leading-relaxed shadow-xs',
+                      msg.role === 'assistant'
+                        ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200/80 dark:border-slate-800'
+                        : 'bg-indigo-600 text-white rounded-tr-xs'
+                    )}
+                    dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }}
+                  />
+
+                  {msg.role === 'assistant' && (
+                    <button
+                      onClick={() => copyMessage(msg.id, msg.content)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 left-1 text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedId === msg.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedId === msg.id ? 'Copié' : 'Copier'}</span>
+                    </button>
                   )}
-                  dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }}
-                />
+                </div>
               </div>
             ))}
 
             {isTyping && (
               <div className="flex gap-2 items-end">
-                <div className="w-7 h-7 rounded-2xl bg-[#0f2863] flex items-center justify-center shrink-0">
-                  <Bot className="w-4 h-4 text-amber-400" />
+                <div className="w-8 h-8 rounded-2xl bg-indigo-950 border border-indigo-700/50 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1">
+                <div className="bg-white dark:bg-slate-900 px-4 py-3 rounded-2xl rounded-tl-xs border border-slate-200 dark:border-slate-800 flex items-center gap-1.5">
                   {[0, 150, 300].map(d => (
-                    <span key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                    <span key={d} className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: `${d}ms` }} />
                   ))}
                 </div>
               </div>
@@ -192,33 +234,33 @@ export default function ChatbotWidget() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Quick Suggestions */}
-          <div className="px-3 pb-2 flex gap-1.5 flex-wrap shrink-0">
-            {QUICK_QUESTIONS.slice(0, 3).map(q => (
+          {/* Quick Option Pills */}
+          <div className="px-3 py-2 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+            {QUICK_QUESTIONS.map(q => (
               <button
                 key={q}
-                onClick={() => sendMessage(q)}
+                onClick={() => sendMessage(q.replace(/^[^\s]+\s/, ''))}
                 disabled={isTyping}
-                className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 cursor-pointer transition-colors disabled:opacity-40"
+                className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-700 dark:text-slate-300 hover:text-indigo-600 rounded-full text-[11px] font-bold border border-slate-200 dark:border-slate-700 transition-all shrink-0 cursor-pointer disabled:opacity-40"
               >
                 {q}
               </button>
             ))}
           </div>
 
-          {/* Input Bar with Mic Button */}
-          <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 shrink-0">
+          {/* Input Bar */}
+          <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2 shrink-0">
             <button
               onClick={toggleVoiceInput}
               title="Dictée Vocale IA"
               className={cn(
                 'w-9 h-9 rounded-2xl flex items-center justify-center cursor-pointer transition-all shrink-0 border',
                 isListening
-                  ? 'bg-rose-500 text-white animate-pulse border-rose-600'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 border-slate-200 dark:border-slate-700'
+                  ? 'bg-rose-500 text-white animate-pulse border-rose-600 shadow-md'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 border-slate-200 dark:border-slate-700'
               )}
             >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-indigo-500" />}
             </button>
 
             <input
@@ -226,16 +268,17 @@ export default function ChatbotWidget() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder={isListening ? 'Écoute en cours...' : 'Posez votre question ou dictez...'}
+              placeholder={isListening ? 'Écoute en cours...' : 'Posez une question ou dictez...'}
               disabled={isTyping}
-              className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-slate-100 disabled:opacity-60"
             />
+
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || isTyping}
-              className="w-9 h-9 bg-gradient-to-br from-[#0f2863] to-indigo-700 hover:opacity-90 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all disabled:opacity-40 shrink-0"
+              className="w-9 h-9 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl flex items-center justify-center cursor-pointer transition-all shadow-md active:scale-95 disabled:opacity-40 shrink-0"
             >
-              {isTyping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -243,4 +286,3 @@ export default function ChatbotWidget() {
     </>
   )
 }
-
