@@ -16,7 +16,7 @@ import {
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX
+  BookMarked, GitFork, FilterX, Archive
 } from 'lucide-react'
 
 interface NavItem {
@@ -181,6 +181,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Évaluations & Enquêtes', labelAr: 'التقييمات والاستطلاعات', href: '/admin/evaluations', icon: CheckSquare, roles: ['super-admin', 'institution-admin'] },
       { label: 'Workflow Builder', labelAr: 'منشئ مسارات العمل', href: '/admin/workflow-builder', icon: GitFork, roles: ['super-admin', 'institution-admin'] },
       { label: 'Journal d\'Activités (Audit)', labelAr: 'سجل الأنشطة والمراجعة', href: '/admin/activity-logs', icon: Activity, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Archivage & Bascule d\'Année', labelAr: 'الأرشيف والبسكولة', href: '/admin/archiving', icon: Archive, badge: 'LMD', roles: ['super-admin', 'institution-admin'] },
       { label: 'Réseau Alumni', labelAr: 'شبكة الخريجين', href: '/admin/alumni', icon: Globe, roles: ['super-admin', 'institution-admin'] },
       { label: 'Paramètres Système', labelAr: 'إعدادات النظام', href: '/admin/settings', icon: Settings, roles: ['super-admin', 'institution-admin'] },
     ]

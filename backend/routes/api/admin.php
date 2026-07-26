@@ -115,6 +115,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
     Route::post('/admin/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
 
+    // Academic Years Rollover & Archiving
+    Route::post('/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
+    Route::post('/admin/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
+
     Route::prefix('discipline')->group(function () {
         Route::get('/', [DisciplineController::class, 'index']);
         Route::post('/', [DisciplineController::class, 'store']);
