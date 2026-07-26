@@ -1,87 +1,238 @@
-import { Outlet } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+import { Outlet, Link } from 'react-router-dom'
+import { Sparkles, Globe, Sun, Moon, ArrowRight, ShieldCheck, Award, ChevronDown, Check } from 'lucide-react'
+import { useTheme } from '@shared/components/layout/ThemeProvider'
+import { useTranslation } from 'react-i18next'
+import { cn } from '@shared/lib/utils'
+import { useState, useEffect } from 'react'
+
+const QUOTES = [
+  { fr: "Excellence & Innovation dans le Management & le Commerce", ar: "التميز والابتكار في التدبير والتجارة" },
+  { fr: "Formons les Leaders Financiers et Managers de Demain", ar: "تكوين قادة الغد في التسيير والمالية" },
+  { fr: "Diplômes Certifiés Blockchain & Réseau Alumnis ENCG Fès", ar: "دبلومات موثقة برقميات الأمان وشبكة خريجين واعدة" },
+]
 
 export default function AuthLayout() {
-  return (
-    <div className="min-h-screen flex relative overflow-hidden bg-background">
-      {/* Decorative Floating Blobs for Right/Global Panel */}
-      <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl animate-float pointer-events-none" />
-      <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl animate-float-delayed pointer-events-none" />
+  const { theme, setTheme } = useTheme()
+  const { i18n } = useTranslation('auth')
+  const currentTheme = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme
+  const isAr = i18n.language === 'ar'
+  const [quoteIndex, setQuoteIndex] = useState(0)
 
-      {/* Left panel — branding with ENCG Fes image background */}
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % QUOTES.length)
+    }, 4500)
+    return () => clearInterval(timer)
+  }, [])
+
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang)
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  }
+
+  const [langOpen, setLangOpen] = useState(false)
+
+  const LANGUAGES = [
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'ar', label: 'العربية', flag: '🇲🇦' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+  ]
+
+  const currentLang = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0]
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden bg-background text-foreground select-none font-sans">
+      {/* Click outside backdrop for dropdown */}
+      {langOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
+      )}
+      {/* Decorative Floating Ambient Blobs */}
+      <div className="absolute -top-40 -right-40 w-[650px] h-[650px] rounded-full bg-primary/10 dark:bg-primary/15 blur-[120px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute -bottom-40 -left-40 w-[550px] h-[550px] rounded-full bg-indigo-500/10 dark:bg-blue-600/15 blur-[120px] pointer-events-none animate-pulse-slow" style={{ animationDelay: '2s' }} />
+
+      {/* ── Left Panel — Premium Branding with ENCG Fès Campus ── */}
       <div 
-        className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden border-e border-border bg-cover bg-center"
+        className="hidden lg:flex lg:w-[52%] relative flex-col justify-between p-12 xl:p-16 overflow-hidden border-e border-border/40 bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(10, 18, 38, 0.35), rgba(7, 11, 22, 0.6)), url('/login-bg.png')`,
+          backgroundImage: `linear-gradient(to bottom, rgba(8, 15, 34, 0.65), rgba(4, 9, 20, 0.88)), url('/login-bg.png')`,
         }}
       >
         {/* Animated Glow Blobs inside left panel */}
-        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-primary/20 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent/15 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-[#E60028]/15 rounded-full blur-[100px] pointer-events-none" style={{ animationDelay: '3s' }} />
 
-        {/* Dotted Grid Pattern */}
+        {/* Overlay Grid */}
         <div 
-          className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
           style={{
             backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '24px 24px',
+            backgroundSize: '28px 28px',
           }}
         />
 
-        {/* Logo and Header */}
-        <div className="flex items-center gap-4 relative z-10 animate-fade-in-premium drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
-          <div className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md">
-            <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain" />
+        {/* Logo and Campus Title */}
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-xl shadow-black/20 border border-white/20 hover:scale-105 transition-transform duration-300">
+            <img src="/logo-encg.png" alt="ENCG Fès" className="h-11 object-contain" />
           </div>
           <div>
-            <p className="text-white font-extrabold text-xl tracking-tight">ENCG Fès</p>
-            <p className="text-white/80 text-xs font-semibold">École Nationale de Commerce et de Gestion</p>
+            <div className="flex items-center gap-2">
+              <p className="text-white font-black text-xl tracking-tight">ENCG Fès</p>
+              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
+                USMBA
+              </span>
+            </div>
+            <p className="text-white/75 text-xs font-semibold">
+              {isAr ? 'المدرسة الوطنية للتجارة والتسيير بفاس' : 'École Nationale de Commerce et de Gestion de Fès'}
+            </p>
           </div>
         </div>
 
-        {/* Slogan / Slogans quote */}
-        <div className="relative z-10 max-w-lg space-y-6 animate-slide-up-premium delay-200 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
-          <div className="inline-flex items-center gap-2 bg-black/35 text-white/90 border border-white/10 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" /> Portail Universitaire Intelligent
+        {/* Dynamic Slogan & Rotating Quote Ticker */}
+        <div className="relative z-10 max-w-xl space-y-6 my-auto py-8">
+          <div className="inline-flex items-center gap-2.5 bg-white/10 hover:bg-white/15 text-white/90 border border-white/15 px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md transition-all shadow-lg">
+            <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
+            {isAr ? 'البوابة الجامعية الذكية والآمنة' : 'Portail Universitaire Intelligent & Sécurisé'}
           </div>
-          <blockquote className="space-y-4">
-            <h1 className="text-white text-4xl font-black leading-tight tracking-tight">
-              Plateforme de gestion universitaire
+
+          <div className="space-y-4">
+            <h1 className="text-white text-3xl xl:text-4xl font-black leading-tight tracking-tight">
+              {isAr ? (
+                <>
+                  منصة الإدارة الجامعية <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-amber-200">
+                    الرقمية المتكاملة
+                  </span>
+                </>
+              ) : (
+                <>
+                  Plateforme de Gestion <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-amber-200">
+                    Universitaire Intégrée
+                  </span>
+                </>
+              )}
             </h1>
-            <p className="text-2xl font-medium text-white/80 italic font-sans" dir="rtl">
-              منصة الإدارة الجامعية المتكاملة
+            
+            {/* Rotating Quote Banner */}
+            <div className="p-4 rounded-2xl bg-black/40 border border-white/15 backdrop-blur-md transition-all duration-500 animate-in fade-in duration-500">
+              <div className="flex items-center gap-2 text-amber-300 text-xs font-bold mb-1">
+                <Award className="w-4 h-4" /> {isAr ? 'رؤية التميز الأكاديمي' : 'Vision d\'Excellence ENCG'}
+              </div>
+              <p className="text-white/90 text-sm font-semibold italic">
+                "{isAr ? QUOTES[quoteIndex].ar : QUOTES[quoteIndex].fr}"
+              </p>
+            </div>
+
+            <p className="text-white/80 text-xs leading-relaxed font-medium max-w-lg">
+              {isAr 
+                ? 'منظومة أكاديمية وإدارية متكاملة تضمن التميز والنجاعة للطلبة والأساتذة والأطر الإدارية بالمدرسة الوطنية للتجارة والتسيير بفاس.' 
+                : 'Un écosystème académique et administratif connecté garantissant l\'excellence opérationnelle pour les étudiants, professeurs et administrateurs de l\'ENCG Fès.'}
             </p>
-            <p className="text-white/80 text-sm leading-relaxed font-medium">
-              Un écosystème connecté simplifiant le parcours académique, administratif et financier pour l'excellence de l'enseignement supérieur au Maroc.
-            </p>
-          </blockquote>
+          </div>
+
+          <div className="pt-2 flex items-center gap-3 text-xs font-semibold text-white/70">
+            <span className="flex items-center gap-1.5 bg-black/30 px-3 py-1.5 rounded-xl border border-white/10">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" /> {isAr ? 'مطابقة للقانون 09-08' : 'Conformité CNDP 09-08'}
+            </span>
+            <span className="flex items-center gap-1.5 bg-black/30 px-3 py-1.5 rounded-xl border border-white/10">
+              🔒 {isAr ? 'تشفير آمن SSL 256-bit' : 'SSL 256-bit Encrypted'}
+            </span>
+          </div>
         </div>
 
-        {/* Stats Blocks */}
-        <div className="grid grid-cols-3 gap-5 relative z-10 animate-slide-up-premium delay-400">
+        {/* Live Stats Footers */}
+        <div className="grid grid-cols-3 gap-4 relative z-10">
           {[
-            { label: 'Étudiants', value: '2,400+' },
-            { label: 'Enseignants', value: '180+' },
-            { label: 'Modules', value: '320+' },
+            { label: isAr ? 'طلبة مسجلون' : 'Étudiants Actifs', value: '2,400+', icon: '🎓' },
+            { label: isAr ? 'أساتذة ومؤطرون' : 'Enseignants', value: '180+', icon: '👨‍🏫' },
+            { label: isAr ? 'وحدات أكاديمية' : 'Modules APOGEE', value: '320+', icon: '📚' },
           ].map((stat) => (
             <div 
               key={stat.label} 
-              className="group backdrop-blur-md bg-black/25 border border-white/10 hover:border-white/20 hover:bg-black/35 rounded-2xl p-4 text-center cursor-default transition-all duration-300 hover:scale-[1.03]"
+              className="group backdrop-blur-md bg-black/30 border border-white/10 hover:border-white/25 hover:bg-black/45 rounded-2xl p-4 text-center cursor-default transition-all duration-300 hover:scale-[1.02] shadow-lg"
             >
-              <p className="text-white font-black text-2xl tracking-tight transition-transform duration-300 group-hover:scale-105">{stat.value}</p>
-              <p className="text-white/60 text-xs font-bold uppercase tracking-wider mt-1.5 transition-colors group-hover:text-white/80">{stat.label}</p>
+              <div className="text-lg mb-1 group-hover:scale-110 transition-transform">{stat.icon}</div>
+              <p className="text-white font-black text-2xl tracking-tight font-mono">{stat.value}</p>
+              <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md animate-slide-up-premium relative z-20">
+      {/* ── Right Panel — Main Auth Container ── */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 relative z-10 min-h-screen lg:min-h-0">
+        
+        {/* Top Navbar: Quick Settings */}
+        <div className="flex items-center justify-between w-full max-w-lg mx-auto mb-6 sm:mb-0">
+          <Link 
+            to="/inscription" 
+            className="flex items-center gap-2 text-xs font-black text-primary hover:text-primary/80 transition-all bg-primary/10 hover:bg-primary/15 border border-primary/20 px-3.5 py-2 rounded-xl shadow-sm hover:scale-[1.02]"
+          >
+            <span>{isAr ? 'التسجيل القبلي TAFEM' : 'Préinscription TAFEM'}</span>
+            <ArrowRight className={cn("w-3.5 h-3.5", isAr && "rotate-180")} />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {/* Custom Sleek Language Dropdown */}
+            <div className="relative z-50">
+              <button
+                type="button"
+                onClick={() => setLangOpen(!langOpen)}
+                className="flex items-center gap-2 bg-card hover:bg-muted border border-border/80 rounded-xl px-3 py-2 text-xs font-bold text-foreground shadow-sm transition-all cursor-pointer hover:border-primary/30"
+              >
+                <span className="text-base leading-none">{currentLang.flag}</span>
+                <span>{currentLang.label}</span>
+                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", langOpen && "rotate-180")} />
+              </button>
+
+              {/* Floating Menu */}
+              {langOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-card/95 backdrop-blur-2xl border border-border shadow-2xl rounded-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => {
+                        changeLanguage(lang.code)
+                        setLangOpen(false)
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                        i18n.language === lang.code 
+                          ? "bg-primary/10 text-primary border border-primary/20" 
+                          : "hover:bg-muted text-foreground"
+                      )}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <span className="text-base leading-none">{lang.flag}</span>
+                        <span>{lang.label}</span>
+                      </span>
+                      {i18n.language === lang.code && <Check className="w-3.5 h-3.5 text-primary" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm cursor-pointer"
+              title="Changer de thème"
+            >
+              {currentTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Center Card Container with Animated Slide-up & Zoom-in */}
+        <div className="w-full max-w-md mx-auto my-auto py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          {/* Mobile logo */}
-          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden animate-slide-up-premium delay-100">
-            <div className="bg-white dark:bg-card p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
+          {/* Mobile Header Logo */}
+          <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
+            <div className="bg-white p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
               <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain" />
             </div>
             <div>
@@ -90,13 +241,22 @@ export default function AuthLayout() {
             </div>
           </div>
 
-          {/* Frosted Glass Form Container */}
-          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-border p-8 rounded-3xl shadow-xl shadow-black/[0.02] dark:shadow-black/20">
+          {/* Frosted Glass Form Card */}
+          <div className="bg-card/90 dark:bg-card/80 backdrop-blur-2xl border border-border/80 p-8 sm:p-9 rounded-[2.5rem] shadow-2xl shadow-black/10 relative overflow-hidden transition-all duration-300 hover:shadow-primary/5">
+            {/* Top Accent Gradient Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-[#E60028]" />
             <Outlet />
           </div>
 
         </div>
+
+        {/* Footer info */}
+        <div className="text-center text-[11px] font-semibold text-muted-foreground mt-6">
+          © 2026 ENCG Fès — Université Sidi Mohamed Ben Abdellah · Tous droits réservés
+        </div>
+
       </div>
     </div>
   )
 }
+

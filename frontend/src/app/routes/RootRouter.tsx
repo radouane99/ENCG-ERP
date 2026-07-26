@@ -159,6 +159,7 @@ const ExamLockingPage = lazy(() => import('@features/admin/pages/ExamLockingPage
 const AcademicYearSettingsPage = lazy(() => import('@features/academic/pages/AcademicYearSettingsPage'))
 const StaffProfessorsPage = lazy(() => import('@features/admin/pages/StaffProfessorsPage'))
 const AdminAcademicArchivingPage = lazy(() => import('@features/admin/pages/AdminAcademicArchivingPage'))
+const AdminPwaPushHubPage = lazy(() => import('@features/admin/pages/AdminPwaPushHubPage'))
 const AddUserPage = lazy(() => import('@features/admin/pages/AddUserPage'))
 const EditUserPage = lazy(() => import('@features/admin/pages/EditUserPage'))
 const ViewUserPage = lazy(() => import('@features/admin/pages/ViewUserPage'))
@@ -486,6 +487,8 @@ export default function RootRouter() {
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
             <Route path="/admin/archiving" element={<AdminAcademicArchivingPage />} />
             <Route path="/admin/academic-archiving" element={<AdminAcademicArchivingPage />} />
+            <Route path="/admin/pwa-notifications" element={<AdminPwaPushHubPage />} />
+            <Route path="/admin/push-notifications" element={<AdminPwaPushHubPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
             <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />

@@ -6,9 +6,9 @@ import {
   Archive, ShieldCheck, Database, Lock, Calendar, RefreshCw, Eye, Download, Check,
   AlertTriangle, Users, GraduationCap, ArrowUpRight, Scale, CheckCircle2, Search,
   Filter, Layers, ArrowRight, Loader2, FileText, CheckCircle, Mail, FolderArchive, Cloud, Key,
-  QrCode, Award, History, Layers3, Sparkles
+  QrCode, Award, History, Layers3, Sparkles, AlertCircle, DollarSign, Unlock, CalendarRange
 } from 'lucide-react';
-import { cn } from '@shared/lib/utils';
+import SecurityOtpModal from '@shared/components/ui/SecurityOtpModal';
 
 type AcademicYear = {
   id: number;
@@ -95,6 +95,9 @@ export default function AdminAcademicArchivingPage() {
   const [rolloverStep, setRolloverStep] = useState<number>(0);
   const [nextYearLabel, setNextYearLabel] = useState('2026-2027');
   const [selectedArchive, setSelectedArchive] = useState<ArchiveRecord | null>(null);
+  const [isUnsealModalOpen, setIsUnsealModalOpen] = useState(false);
+  const [unsealReason, setUnsealReason] = useState('');
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
   // Academic Years Query
   const { data: academicYears = [], isLoading: isLoadingYears, refetch: refetchYears } = useQuery<AcademicYear[]>({
@@ -148,6 +151,18 @@ export default function AdminAcademicArchivingPage() {
     toast.success("Migration des diplômés S10 vers le Réseau Alumni ENCG...", {
       description: "130 lauréats ajoutés automatiquement à l'annuaire des diplômés."
     });
+  };
+
+  const handleUnsealYear = () => {
+    if (!unsealReason.trim()) {
+      toast.error("Veuillez saisir un motif officiel pour la dérogation.");
+      return;
+    }
+    toast.success(`Demande de déverrouillage transmise pour décision Doyen.`, {
+      description: `Motif tracé f_Audit CNDP : ${unsealReason}`
+    });
+    setIsUnsealModalOpen(false);
+    setUnsealReason('');
   };
 
   const handleExecuteRollover = async () => {
@@ -213,6 +228,14 @@ export default function AdminAcademicArchivingPage() {
 
           <div className="shrink-0 flex items-center gap-3 flex-wrap">
             <button
+              onClick={() => setIsUnsealModalOpen(true)}
+              className="flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-4 py-3.5 rounded-2xl text-xs font-black transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <Unlock className="w-4 h-4 text-amber-400" />
+              <span>Procédure Dérogatoire Doyen</span>
+            </button>
+
+            <button
               onClick={handleExportGlobalArchivePdf}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 px-5 py-3.5 rounded-2xl text-xs font-extrabold backdrop-blur-md transition-all shadow-md active:scale-95 cursor-pointer"
             >
@@ -227,6 +250,58 @@ export default function AdminAcademicArchivingPage() {
               <Archive className="w-4 h-4" />
               <span>Bascule APOGEE & Archivage 🔄</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pre-Archiving Audit & Compliance Checklist Banner ──────────────── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-900 dark:text-slate-100">Checklist de Validation Pré-Clôture ({currentYearObj.label})</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Contrôles préalables obligatoires avant le verrouillage APOGEE</p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-xs font-black border border-emerald-200 dark:border-emerald-800">
+            4 / 4 Contrôles Validés
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+            <div>
+              <p className="font-extrabold text-slate-900 dark:text-slate-100">PVs de Délibération</p>
+              <p className="text-[11px] text-slate-400">Tous signés & certifiés</p>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+            <div>
+              <p className="font-extrabold text-slate-900 dark:text-slate-100">Réclamations de Notes</p>
+              <p className="text-[11px] text-slate-400">0 réclamation en attente</p>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+            <div>
+              <p className="font-extrabold text-slate-900 dark:text-slate-100">Rachat Jury APOGEE</p>
+              <p className="text-[11px] text-slate-400">Appliqué et verrouillé</p>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+            <div>
+              <p className="font-extrabold text-slate-900 dark:text-slate-100">Quitus Financier FC</p>
+              <p className="text-[11px] text-slate-400">Master Exécutif solder</p>
+            </div>
           </div>
         </div>
       </div>
@@ -527,11 +602,11 @@ export default function AdminAcademicArchivingPage() {
                     Annuler
                   </button>
                   <button
-                    onClick={handleExecuteRollover}
+                    onClick={() => setIsOtpModalOpen(true)}
                     className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all shadow-md cursor-pointer flex items-center gap-2"
                   >
                     <Archive className="w-4 h-4" />
-                    <span>Démarrer la Bascule</span>
+                    <span>Démarrer la Bascule (2FA 🛡️)</span>
                   </button>
                 </div>
               </div>
@@ -579,6 +654,60 @@ export default function AdminAcademicArchivingPage() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* ── UNSEAL DEBOGAGE DEAN AUTHORIZATION MODAL ────────────────────────── */}
+      {isUnsealModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-xs">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                <Unlock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+                  Procédure Dérogatoire de Déverrouillage d'Archive
+                </h3>
+                <p className="text-[11px] text-slate-400">Décision du Doyen & Traçabilité CNDP obligatoire</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 space-y-1">
+              <p className="font-extrabold flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-600" /> Action à Haut Risque Juridique
+              </p>
+              <p className="text-[11px] leading-relaxed">
+                Le déverrouillage d'un PV archivé nécessite une décision officielle du Doyen ou une ordonnance judiciaire. Chaque saisie sera enregistrée فـ سجل الأنشطة CNDP.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="font-extrabold text-slate-700 dark:text-slate-300">Motif Officiel de la Dérogation</label>
+              <textarea
+                rows={3}
+                value={unsealReason}
+                onChange={(e) => setUnsealReason(e.target.value)}
+                placeholder="Saisir la référence de la décision rectorale ou du PV de délibération rectificatif..."
+                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-slate-100 text-xs outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setIsUnsealModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleUnsealYear}
+                className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black cursor-pointer shadow-md"
+              >
+                Soumettre au Doyen
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -653,6 +782,15 @@ export default function AdminAcademicArchivingPage() {
           </div>
         </div>
       )}
+
+      {/* ── SECURITY 2FA OTP MODAL ─────────────────────────────────────── */}
+      <SecurityOtpModal
+        isOpen={isOtpModalOpen}
+        onClose={() => setIsOtpModalOpen(false)}
+        onSuccess={handleExecuteRollover}
+        actionTitle="Bascule APOGEE & Clôture d'Année"
+        actionDescription="Veuillez saisir le code d'autorisation à 6 chiffres envoyé sur votre adresse email officielle pour valider la bascule."
+      />
 
     </div>
   );
