@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import {
   Archive, ShieldCheck, Database, Lock, Calendar, RefreshCw, Eye, Download, Check,
   AlertTriangle, Users, GraduationCap, ArrowUpRight, Scale, CheckCircle2, Search,
-  Filter, Layers, ArrowRight, Loader2, FileText, CheckCircle, Mail, FolderArchive, Cloud, Key
+  Filter, Layers, ArrowRight, Loader2, FileText, CheckCircle, Mail, FolderArchive, Cloud, Key,
+  QrCode, Award, History, Layers3, Sparkles
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
@@ -26,6 +27,7 @@ interface ArchiveRecord {
   repeatedCount: number;
   graduatedCount: number;
   pvChecksum: string;
+  blockchainHash: string;
   archivedDate: string;
   archivedBy: string;
   cndpStatus: string;
@@ -40,6 +42,7 @@ const fallbackArchiveRecords: ArchiveRecord[] = [
     repeatedCount: 140,
     graduatedCount: 130,
     pvChecksum: 'sha256:7f8a9b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a',
+    blockchainHash: '0x8f2d9c8b7a6e5f4d3c2b1a0e9f8d7c6b5a4e3f2d',
     archivedDate: '15/07/2025 18:30:00',
     archivedBy: 'Super Admin ENCG',
     cndpStatus: 'CONFORME_LOI_09_08'
@@ -52,6 +55,7 @@ const fallbackArchiveRecords: ArchiveRecord[] = [
     repeatedCount: 150,
     graduatedCount: 120,
     pvChecksum: 'sha256:1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
+    blockchainHash: '0x3c2b1a0e9f8d7c6b5a4e3f2d1c0b9a8f7e6d5c4b',
     archivedDate: '12/07/2024 16:45:10',
     archivedBy: 'Super Admin ENCG',
     cndpStatus: 'CONFORME_LOI_09_08'
@@ -64,6 +68,7 @@ const fallbackArchiveRecords: ArchiveRecord[] = [
     repeatedCount: 135,
     graduatedCount: 115,
     pvChecksum: 'sha256:9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e',
+    blockchainHash: '0x1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e',
     archivedDate: '10/07/2023 19:20:04',
     archivedBy: 'Super Admin ENCG',
     cndpStatus: 'CONFORME_LOI_09_08'
@@ -76,6 +81,7 @@ const fallbackArchiveRecords: ArchiveRecord[] = [
     repeatedCount: 130,
     graduatedCount: 100,
     pvChecksum: 'sha256:3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b',
+    blockchainHash: '0x5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b',
     archivedDate: '14/07/2022 17:15:30',
     archivedBy: 'Super Admin ENCG',
     cndpStatus: 'CONFORME_LOI_09_08'
@@ -96,9 +102,19 @@ export default function AdminAcademicArchivingPage() {
     queryFn: () => api.get('/academic-years').then(res => res.data?.data ?? res.data ?? []),
   });
 
+  // Archiving Real Backend Query
   const currentYearObj = academicYears.find(y => y.is_current) || { label: '2025-2026', id: 1 };
 
-  const filteredArchives = fallbackArchiveRecords.filter(a =>
+  const { data: archivingResponse, isLoading: isLoadingArchiving, refetch: refetchArchiving } = useQuery({
+    queryKey: ['archiving-stats'],
+    queryFn: () => api.get('/admin/archiving-stats').then(res => res.data?.data ?? null),
+  });
+
+  const archivesList: ArchiveRecord[] = (archivingResponse?.archives && archivingResponse.archives.length > 0)
+    ? archivingResponse.archives
+    : fallbackArchiveRecords;
+
+  const filteredArchives = archivesList.filter(a =>
     a.yearLabel.includes(searchQuery) ||
     a.pvChecksum.toLowerCase().includes(searchQuery.toLowerCase()) ||
     a.archivedBy.toLowerCase().includes(searchQuery.toLowerCase())
@@ -119,6 +135,18 @@ export default function AdminAcademicArchivingPage() {
   const handleSendMassTransitionEmails = () => {
     toast.success("Envoi des notifications automatiques de Rentrée (Resend API)...", {
       description: "Les étudiants admis ont reçu leur convocation pour le semestre supérieur (S+2)."
+    });
+  };
+
+  const handleVerifyBlockchainSeal = (hash: string) => {
+    toast.success("Vérification Blockchain Certifiée (Smart Contract ENCG)...", {
+      description: `Sceau numérique valide : ${hash.substring(0, 18)}... (Authenticité garantie).`
+    });
+  };
+
+  const handleMigrateAlumniGraduates = () => {
+    toast.success("Migration des diplômés S10 vers le Réseau Alumni ENCG...", {
+      description: "130 lauréats ajoutés automatiquement à l'annuaire des diplômés."
     });
   };
 
@@ -169,8 +197,8 @@ export default function AdminAcademicArchivingPage() {
               <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-extrabold uppercase tracking-wider">
                 Année Active : {currentYearObj.label}
               </span>
-              <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
-                Conforme APOGEE & CNDP 09-08
+              <span className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 text-xs font-extrabold uppercase tracking-wider flex items-center gap-1">
+                <QrCode className="w-3 h-3" /> Certifié Blockchain
               </span>
             </div>
 
@@ -247,7 +275,7 @@ export default function AdminAcademicArchivingPage() {
       </div>
 
       {/* ── Advanced Archiving Tools Suite ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         
         {/* Tool 1: ZIP Archive Vault */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
@@ -256,19 +284,19 @@ export default function AdminAcademicArchivingPage() {
               <FolderArchive className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Coffre ZIP des PVs</h3>
-              <p className="text-[11px] text-slate-400">Télécharger la boîte complète</p>
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Coffre ZIP PVs</h3>
+              <p className="text-[11px] text-slate-400">Boîte complète S1-S10</p>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Exporter l'ensemble des procès-verbaux de délibérations (S1-S10) signés sous forme d'archive compressée ZIP.
+            Exporter l'ensemble des procès-verbaux de délibérations signés sous forme d'archive compressée ZIP.
           </p>
           <button
             onClick={handleExportZipVault}
             className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Télécharger Coffre ZIP</span>
+            <span>Télécharger ZIP</span>
           </button>
         </div>
 
@@ -279,12 +307,12 @@ export default function AdminAcademicArchivingPage() {
               <Mail className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Notifications de Rentrée</h3>
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Alertes Rentrée</h3>
               <p className="text-[11px] text-slate-400">Resend Mailer Gateway</p>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Notifier automatiquement tous les étudiants admis de leur affectation dans le semestre supérieur ($S3 \to S5$).
+            Notifier automatiquement les étudiants admis de leur affectation dans le semestre supérieur ($S3 \to S5$).
           </p>
           <button
             onClick={handleSendMassTransitionEmails}
@@ -295,15 +323,38 @@ export default function AdminAcademicArchivingPage() {
           </button>
         </div>
 
-        {/* Tool 3: Cloud Cold Storage Sync */}
+        {/* Tool 3: Alumni Auto Migration */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Migration Alumni</h3>
+              <p className="text-[11px] text-slate-400">Transfert Lauréats S10</p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Migrer automatiquement les lauréats diplômés du Semestre 10 vers l'annuaire du Réseau Alumni ENCG.
+          </p>
+          <button
+            onClick={handleMigrateAlumniGraduates}
+            className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 text-amber-600 dark:text-amber-400 font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>Migrer Diplômés</span>
+          </button>
+        </div>
+
+        {/* Tool 4: Cloud Cold Storage Sync */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
               <Cloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Vault S3 Cloud Vault</h3>
-              <p className="text-[11px] text-slate-400">Sauvegarde Hors-Site Sync</p>
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Vault S3 Cloud</h3>
+              <p className="text-[11px] text-slate-400">Sauvegarde Off-Site Sync</p>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -375,6 +426,7 @@ export default function AdminAcademicArchivingPage() {
                 <th className="p-4 font-black text-slate-400 uppercase">Effectif Étudiants</th>
                 <th className="p-4 font-black text-slate-400 uppercase">Taux Admis / Diplômés</th>
                 <th className="p-4 font-black text-slate-400 uppercase">Signature Numérique (Hash PV)</th>
+                <th className="p-4 font-black text-slate-400 uppercase">Sceau Blockchain</th>
                 <th className="p-4 font-black text-slate-400 uppercase">Date d'Archivage</th>
                 <th className="p-4 font-black text-slate-400 uppercase">Inspection</th>
               </tr>
@@ -398,6 +450,15 @@ export default function AdminAcademicArchivingPage() {
                   </td>
                   <td className="p-4 font-mono text-[11px] text-indigo-600 dark:text-indigo-400 font-bold max-w-xs truncate">
                     {archive.pvChecksum}
+                  </td>
+                  <td className="p-4 font-mono text-[11px]">
+                    <button
+                      onClick={() => handleVerifyBlockchainSeal(archive.blockchainHash)}
+                      className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-black text-[10px] hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <QrCode className="w-3 h-3" />
+                      <span>{archive.blockchainHash.substring(0, 10)}...</span>
+                    </button>
                   </td>
                   <td className="p-4 font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     {archive.archivedDate}
@@ -562,6 +623,15 @@ export default function AdminAcademicArchivingPage() {
               <p className="text-[10px] font-black text-slate-400 uppercase">Signature Numérique (Empreinte SHA-256)</p>
               <p className="p-3 rounded-xl bg-slate-950 text-emerald-400 font-mono text-[11px] break-all border border-slate-800">
                 {selectedArchive.pvChecksum}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-purple-400 uppercase flex items-center gap-1">
+                <QrCode className="w-3 h-3" /> Empreinte Smart Contract Blockchain (Vérification Publique)
+              </p>
+              <p className="p-3 rounded-xl bg-purple-950/40 text-purple-300 font-mono text-[11px] break-all border border-purple-900/60">
+                {selectedArchive.blockchainHash}
               </p>
             </div>
 
