@@ -35,6 +35,12 @@ class ExamIncidentController extends Controller
             if (!Schema::hasColumn('exam_incidents', 'confiscated_items')) {
                 DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS confiscated_items VARCHAR(255) NULL");
             }
+            if (!Schema::hasColumn('exams', 'is_locked')) {
+                DB::statement("ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE");
+            }
+            if (!Schema::hasColumn('exams', 'locked_at')) {
+                DB::statement("ALTER TABLE exams ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP NULL");
+            }
         } catch (\Throwable $e) {}
     }
 
@@ -321,6 +327,7 @@ class ExamIncidentController extends Controller
      */
     public function lockPv(Request $request, int $id): JsonResponse
     {
+        $this->ensureSchema();
         $exam = \App\Models\Exam::find($id);
         $supervisorName = $request->input('supervisor_name', 'Administrateur ENCG');
 

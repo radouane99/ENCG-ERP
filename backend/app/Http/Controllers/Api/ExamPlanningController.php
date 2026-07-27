@@ -140,24 +140,32 @@ class ExamPlanningController extends Controller
     {
         $validated = $request->validate([
             'filiere_id' => 'required|integer',
-            'session_id' => 'required|integer',
+            'session_id' => 'nullable|integer',
+            'exam_session_id' => 'nullable|integer',
             'semester_number' => 'nullable|integer',
-            'modules_per_day' => 'nullable|integer|in:1,2',
+            'modules_per_day' => 'nullable|integer|in:1,2,3',
             'day_slot_mode' => 'nullable|string|in:matin,pm,split',
             'module_ids' => 'nullable|array',
             'module_ids.*' => 'integer',
+            'ordered_module_ids' => 'nullable|array',
+            'ordered_module_ids.*' => 'integer',
             'start_date' => 'nullable|date',
         ]);
+
+        $sessionId = $validated['session_id'] ?? $validated['exam_session_id'] ?? null;
+        if (!$sessionId) {
+            return response()->json(['success' => false, 'message' => "Session d'examen obligatoire."], 422);
+        }
 
         $semesterNumber = $validated['semester_number'] ?? null;
         $modulesPerDay = $validated['modules_per_day'] ?? 1;
         $daySlotMode = $validated['day_slot_mode'] ?? 'matin';
-        $moduleIds = $validated['module_ids'] ?? null;
+        $moduleIds = $validated['module_ids'] ?? $validated['ordered_module_ids'] ?? null;
         $startDate = $validated['start_date'] ?? null;
 
         $result = $this->engine->autoGenerateIntelligentBatch(
             $validated['filiere_id'],
-            $validated['session_id'],
+            $sessionId,
             $semesterNumber,
             $modulesPerDay,
             $daySlotMode,

@@ -9,6 +9,7 @@ import { academicApi } from '@shared/api/academic'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { CustomSelect } from '@shared/components/ui'
 
 export default function AdminExamsPage() {
   const { t, i18n } = useTranslation('exams')
@@ -19,14 +20,23 @@ export default function AdminExamsPage() {
   const [notificationMsg, setNotificationMsg] = useState('')
   const [notificationType, setNotificationType] = useState<'success'|'error'>('success')
 
+  const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
+  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
+  const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+
   const { data: filieres } = useQuery({
     queryKey: ['filieres'],
     queryFn: academicApi.getFilieres
   })
 
   const { data: exams, isLoading: isLoadingExams } = useQuery({
-    queryKey: ['admin-exams'],
-    queryFn: examsApi.getExams
+    queryKey: ['admin-exams', selectedFiliereId, selectedSessionId, selectedSemesterNum],
+    queryFn: () => examsApi.getExams({
+      filiere_id: selectedFiliereId,
+      session_id: selectedSessionId,
+      semester_number: selectedSemesterNum
+    })
   })
 
   const { data: modules } = useQuery({
@@ -59,11 +69,6 @@ export default function AdminExamsPage() {
       toast.error(msg)
     }
   }
-
-  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
-  const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
-  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
-  const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
 
   // Custom planning state
   const [showCustomGenModal, setShowCustomGenModal] = useState(false)
@@ -193,12 +198,46 @@ export default function AdminExamsPage() {
     }
   }
 
+  const filiereOptions = [
+    { value: '', label: 'Toutes les filières' },
+    ...(filieres?.map((f: any) => ({ value: f.id, label: f.name })) || [])
+  ]
+
+  const sessionOptions = [
+    { value: '', label: "-- Session d'Examen --" },
+    ...(examSessions?.map((s: any) => ({ value: s.id, label: `${s.name} (${s.academic_year})` })) || [])
+  ]
+
+  const semesterOptions = [
+    { value: '', label: 'Tous Semestres (S1-S10)' },
+    ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => ({ value: s, label: `Semestre S${s}` }))
+  ]
+
+  const filteredExams = (exams || []).filter((exam: any) => {
+    if (selectedFiliereId && exam.module?.filiere_id && Number(exam.module.filiere_id) !== Number(selectedFiliereId)) {
+      return false;
+    }
+    if (selectedSessionId && exam.exam_session_id && Number(exam.exam_session_id) !== Number(selectedSessionId)) {
+      return false;
+    }
+    if (selectedSemesterNum) {
+      const examSem = exam.module?.semester_number 
+        || (exam.module?.semester ? Number(String(exam.module.semester).replace(/\D/g, '')) : null);
+      if (examSem && Number(examSem) !== Number(selectedSemesterNum)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
       
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="relative bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        </div>
 
         <div className="relative z-10 space-y-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -223,38 +262,35 @@ export default function AdminExamsPage() {
           {/* Controls & Filters Bar */}
           <div className="bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <select
+              <CustomSelect
                 value={selectedFiliereId}
-                onChange={(e) => setSelectedFiliereId(e.target.value ? Number(e.target.value) : '')}
-                className="px-4 py-2.5 bg-white/20 border border-white/30 text-white rounded-2xl text-xs font-bold outline-none cursor-pointer"
-              >
-                <option value="" className="text-slate-900">Toutes les filières</option>
-                {filieres?.map((f: any) => (
-                  <option key={f.id} value={f.id} className="text-slate-900">{f.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedFiliereId(val ? Number(val) : '')}
+                options={filiereOptions}
+                placeholder="Toutes les filières"
+                variant="hero"
+                icon={<Layers className="w-4 h-4" />}
+                className="w-full sm:w-64"
+              />
 
-              <select
+              <CustomSelect
                 value={selectedSessionId}
-                onChange={(e) => setSelectedSessionId(e.target.value ? Number(e.target.value) : '')}
-                className="px-4 py-2.5 bg-white/20 border border-white/30 text-white rounded-2xl text-xs font-bold outline-none cursor-pointer"
-              >
-                <option value="" className="text-slate-900">-- Session d'Examen --</option>
-                {examSessions?.map((s: any) => (
-                  <option key={s.id} value={s.id} className="text-slate-900">{s.name} ({s.academic_year})</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedSessionId(val ? Number(val) : '')}
+                options={sessionOptions}
+                placeholder="-- Session d'Examen --"
+                variant="hero"
+                icon={<Calendar className="w-4 h-4" />}
+                className="w-full sm:w-64"
+              />
 
-              <select
+              <CustomSelect
                 value={selectedSemesterNum}
-                onChange={(e) => setSelectedSemesterNum(e.target.value ? Number(e.target.value) : '')}
-                className="px-4 py-2.5 bg-white/20 border border-white/30 text-white rounded-2xl text-xs font-bold outline-none cursor-pointer"
-              >
-                <option value="" className="text-slate-900">Tous Semestres (S1-S10)</option>
-                {[1,2,3,4,5,6,7,8,9,10].map(s => (
-                  <option key={s} value={s} className="text-slate-900">Semestre S{s}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedSemesterNum(val ? Number(val) : '')}
+                options={semesterOptions}
+                placeholder="Tous Semestres (S1-S10)"
+                variant="hero"
+                icon={<Clock className="w-4 h-4" />}
+                className="w-full sm:w-60"
+              />
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -288,12 +324,12 @@ export default function AdminExamsPage() {
       <div className="space-y-6">
         {isLoadingExams ? (
           <div className="flex justify-center p-16"><Loader2 className="w-10 h-10 animate-spin text-[#0f2863]" /></div>
-        ) : exams?.length === 0 ? (
+        ) : filteredExams?.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 text-slate-500 font-bold">
-            Aucun examen programmé. Utilisez "Auto-Générer" ou "Sur Mesure" pour planifier la session.
+            Aucun examen programmé pour ces filtres. Utilisez "Auto-Générer" ou "Sur Mesure" pour planifier la session.
           </div>
         ) : (
-          exams?.map((exam: any) => {
+          filteredExams?.map((exam: any) => {
             const dateObj = new Date(exam.exam_date || new Date());
             const day = String(dateObj.getDate()).padStart(2, '0');
             const monthNames = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUI", "JUL", "AOU", "SEP", "OCT", "NOV", "DÉC"];
@@ -316,9 +352,9 @@ export default function AdminExamsPage() {
                 month={monthNames[dateObj.getMonth()]}
                 dayName={dayNames[dateObj.getDay()]}
                 type={exam.type || 'EXAMEN'}
-                generated={exam.generated_count || 45}
-                sent={exam.sent_count || 45}
-                pending={exam.pending_count || 0}
+                generated={exam.generated_count ?? 0}
+                sent={exam.sent_count ?? 0}
+                pending={exam.pending_count ?? 0}
                 onNotify={handleNotify}
               />
             )

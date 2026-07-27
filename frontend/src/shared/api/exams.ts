@@ -24,8 +24,8 @@ api.interceptors.request.use(
 
 export const examsApi = {
   // Exams
-  getExams: async () => {
-    const response = await api.get('/exams');
+  getExams: async (params?: { filiere_id?: number | ''; session_id?: number | ''; semester_number?: number | '' }) => {
+    const response = await api.get('/exams', { params });
     return response.data.data;
   },
 

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { CustomSelect } from '@shared/components/ui';
 
 export default function ExamPlanningManager() {
   const queryClient = useQueryClient();
@@ -109,22 +110,26 @@ export default function ExamPlanningManager() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <select 
+          <CustomSelect 
             value={selectedFiliere}
-            onChange={(e) => setSelectedFiliere(e.target.value)}
-            className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">-- Sélectionnez une filière --</option>
-            {filieres.map((f: any) => <option key={f.id} value={f.id}>{f.name}</option>)}
-          </select>
-          <select 
+            onChange={(val) => setSelectedFiliere(val)}
+            options={[
+              { value: '', label: '-- Sélectionnez une filière --' },
+              ...filieres.map((f: any) => ({ value: f.id, label: f.name }))
+            ]}
+            placeholder="-- Filière --"
+            className="w-56"
+          />
+          <CustomSelect 
             value={selectedSession}
-            onChange={(e) => setSelectedSession(e.target.value)}
-            className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">-- Session --</option>
-            {sessions.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+            onChange={(val) => setSelectedSession(val)}
+            options={[
+              { value: '', label: '-- Session --' },
+              ...sessions.map((s: any) => ({ value: s.id, label: s.name }))
+            ]}
+            placeholder="-- Session --"
+            className="w-48"
+          />
           
           <button 
             onClick={() => autoGenerateMutation.mutate()}
@@ -161,7 +166,7 @@ export default function ExamPlanningManager() {
 
       {/* Exam Cards */}
       <div className="space-y-4">
-        {exams.map(exam => (
+        {exams.map((exam: any) => (
           <div key={exam.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row hover:border-primary/20 transition-colors">
 
             {/* Date Block */}

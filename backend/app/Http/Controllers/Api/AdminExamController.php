@@ -12,12 +12,31 @@ use App\Models\Exam;
 
 class AdminExamController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $exams = Exam::with(['module', 'group', 'room', 'surveillances.professor'])->latest()->get()->map(function ($exam) {
+        $query = Exam::with(['module', 'group', 'room', 'surveillances.professor'])->latest();
+
+        if ($request->filled('filiere_id')) {
+            $filiereId = $request->query('filiere_id');
+            $query->whereHas('module', function($q) use ($filiereId) {
+                $q->where('filiere_id', $filiereId);
+            });
+        }
+
+        if ($request->filled('session_id')) {
+            $query->where('exam_session_id', $request->query('session_id'));
+        }
+
+        if ($request->filled('semester_number')) {
+            $semNum = (int) $request->query('semester_number');
+            $query->whereHas('module', function($q) use ($semNum) {
+                $q->where('semester_number', $semNum);
+            });
+        }
+
+        $exams = $query->get()->map(function ($exam) {
             $generatedCount = \DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
-                ->whereNotNull('qr_token')
                 ->count();
             $sentCount = \DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)

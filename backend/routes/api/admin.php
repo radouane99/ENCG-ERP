@@ -339,7 +339,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::prefix('exam-planning')->group(function () {
         Route::get('/', [ExamPlanningController::class, 'index']);
         Route::delete('/reset', [ExamPlanningController::class, 'resetExams']);
+        Route::post('/auto-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/auto-generate-batch', [ExamPlanningController::class, 'autoGenerateBatch']);
+        Route::post('/custom-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/generate-session', [ExamPlanningController::class, 'generateSession']);
         Route::post('/store', [ExamPlanningController::class, 'store']);
         Route::post('/check-conflict', [ExamPlanningController::class, 'checkRoomConflict']);

@@ -38,5 +38,8 @@ export { LoadingScreen }            from './LoadingScreen'
 export { Table }                    from './Table'
 export { StatCard }                 from './StatCard'
 
+export { CustomSelect }             from './CustomSelect'
+export type { CustomSelectProps, SelectOption } from './CustomSelect'
+
 // ── Design tokens ────────────────────────────────────────────────
 export * from '@shared/design-system/tokens'
