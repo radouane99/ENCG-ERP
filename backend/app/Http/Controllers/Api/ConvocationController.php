@@ -175,6 +175,14 @@ class ConvocationController extends Controller
 
     public function updateSeatingStatus(Request $request, int $examId): JsonResponse
     {
+        $exam = \App\Models\Exam::find($examId);
+        if ($exam && $exam->is_locked) {
+            return response()->json([
+                'success' => false,
+                'message' => '🔒 Ce Procès-Verbal d\'Examen est scellé. Toute modification est strictement interdite.'
+            ], 403);
+        }
+
         $validated = $request->validate([
             'seating_id' => 'nullable|integer',
             'student_id' => 'nullable|integer',

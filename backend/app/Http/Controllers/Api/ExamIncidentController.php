@@ -119,6 +119,14 @@ class ExamIncidentController extends Controller
             'confiscated_items' => 'nullable|string'
         ]);
 
+        $exam = \App\Models\Exam::find($validated['exam_id']);
+        if ($exam && $exam->is_locked) {
+            return response()->json([
+                'success' => false,
+                'message' => '🔒 Ce PV d\'examen est scellé. Aucun incident ne peut être ajouté après scellement.'
+            ], 403);
+        }
+
         $incident = ExamIncident::create([
             'exam_id' => $validated['exam_id'],
             'student_id' => $validated['student_id'],

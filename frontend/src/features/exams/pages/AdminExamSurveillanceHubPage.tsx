@@ -194,38 +194,16 @@ export default function AdminExamSurveillanceHubPage() {
     enabled: !!id
   })
 
-  // Populate Candidates from DB Seatings or Students
+  // Lock state initialization from DB
   useEffect(() => {
-    if (detailsData?.seatings && detailsData.seatings.length > 0) {
-      const mapped: Candidate[] = detailsData.seatings.map((s: any, idx: number) => ({
-        id: s.id || idx + 1,
-        seating_id: s.id,
-        student_id: s.student_id,
-        cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
-        name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
-        seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
-        status: s.is_present ? 'present' : (s.status || 'absent'),
-        checkin_time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-      }))
-      setCandidates(mapped)
-    } else if (detailsData?.exam) {
-      api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
-        .then(res => {
-          const rawStudents = res.data?.data || res.data || []
-          if (rawStudents.length > 0) {
-            const mapped: Candidate[] = rawStudents.map((st: any, idx: number) => ({
-              id: st.id,
-              student_id: st.id,
-              cne: st.cne || st.user?.email?.split('@')[0] || `E${2000 + idx}`,
-              name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
-              seat_number: `A-${String(idx + 1).padStart(2, '0')}`,
-              status: 'absent'
-            }))
-            setCandidates(mapped)
-          }
-        }).catch(console.error)
+    if (detailsData?.exam) {
+      if (detailsData.exam.is_locked) {
+        setIsPvLocked(true)
+        const lockedAt = detailsData.exam.locked_at ? new Date(detailsData.exam.locked_at).getTime().toString(36).toUpperCase() : Date.now().toString(36).toUpperCase()
+        setPvLockSeal(`SHA256:ENCG-FES-${id}-${lockedAt}`)
+      }
     }
-  }, [detailsData])
+  }, [detailsData?.exam, id])
 
   // Populate Incidents from DB
   useEffect(() => {
@@ -233,7 +211,7 @@ export default function AdminExamSurveillanceHubPage() {
       const mappedIncidents: IncidentReport[] = dbIncidentsData.map((inc: any) => ({
         id: inc.id,
         student_name: inc.student?.user?.name || inc.student_name || 'Étudiant',
-        cne: inc.student?.cne || 'N/A',
+        cne: inc.cne || inc.student?.cne || 'N/A',
         type: inc.type || 'fraude',
         description: inc.description || inc.details || 'Incident signalé',
         confiscated_items: inc.confiscated_items || '',
@@ -241,19 +219,82 @@ export default function AdminExamSurveillanceHubPage() {
         reported_by: inc.reporter?.name || adminSupervisorName
       }))
       setIncidentsList(mappedIncidents)
-
-      const fraudStudentIds = new Set(dbIncidentsData.map((inc: any) => Number(inc.student_id)))
-      const fraudCnes = new Set(dbIncidentsData.map((inc: any) => inc.student?.cne?.toUpperCase()).filter(Boolean))
-
-      setCandidates(prev => prev.map(c => {
-        const isFraud = (c.student_id && fraudStudentIds.has(Number(c.student_id))) || (c.cne && fraudCnes.has(c.cne.toUpperCase()))
-        if (isFraud) {
-          return { ...c, has_fraud: true }
-        }
-        return c
-      }))
     }
   }, [dbIncidentsData])
+
+  // Populate Candidates from DB Seatings or Students + Merge Incidents
+  useEffect(() => {
+    const fraudStudentIds = new Set<number>()
+    const fraudCnes = new Set<string>()
+    const fraudNames = new Set<string>()
+
+    if (Array.isArray(dbIncidentsData)) {
+      dbIncidentsData.forEach((inc: any) => {
+        if (inc.student_id) fraudStudentIds.add(Number(inc.student_id))
+        const cne = inc.cne || inc.student?.cne
+        if (cne) fraudCnes.add(cne.toUpperCase().trim())
+        const name = inc.student_name || inc.student?.user?.name
+        if (name) fraudNames.add(name.toLowerCase().trim())
+      })
+    }
+    incidentsList.forEach(inc => {
+      if (inc.cne) fraudCnes.add(inc.cne.toUpperCase().trim())
+      if (inc.student_name) fraudNames.add(inc.student_name.toLowerCase().trim())
+    })
+
+    if (detailsData?.seatings && detailsData.seatings.length > 0) {
+      const mapped: Candidate[] = detailsData.seatings.map((s: any, idx: number) => {
+        const studentId = s.student_id ? Number(s.student_id) : undefined
+        const rawCne = (s.cne || s.student?.cne || '').toUpperCase().trim()
+        const rawName = (s.student_name || s.student?.user?.name || '').toLowerCase().trim()
+
+        const isFraud = (studentId && fraudStudentIds.has(studentId))
+          || (rawCne && fraudCnes.has(rawCne))
+          || (rawName && fraudNames.has(rawName))
+
+        return {
+          id: s.id || idx + 1,
+          seating_id: s.id,
+          student_id: s.student_id,
+          cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
+          name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
+          seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
+          status: isFraud ? 'present' : (s.is_present ? 'present' : (s.status || 'absent')),
+          has_fraud: Boolean(isFraud),
+          checkin_time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+        }
+      })
+      setCandidates(mapped)
+    } else if (detailsData?.exam) {
+      api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
+        .then(res => {
+          const rawStudents = res.data?.data || res.data || []
+          if (rawStudents.length > 0) {
+            const mapped: Candidate[] = rawStudents.map((st: any, idx: number) => {
+              const studentId = st.id ? Number(st.id) : undefined
+              const rawCne = (st.cne || st.user?.email?.split('@')[0] || '').toUpperCase().trim()
+              const rawName = (st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`).toLowerCase().trim()
+
+              const isFraud = (studentId && fraudStudentIds.has(studentId))
+                || (rawCne && fraudCnes.has(rawCne))
+                || (rawName && fraudNames.has(rawName))
+
+              return {
+                id: st.id,
+                student_id: st.id,
+                cne: st.cne || st.user?.email?.split('@')[0] || `E${2000 + idx}`,
+                name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
+                seat_number: `A-${String(idx + 1).padStart(2, '0')}`,
+                status: isFraud ? 'present' : 'absent',
+                has_fraud: Boolean(isFraud)
+              }
+            })
+            setCandidates(mapped)
+          }
+        }).catch(console.error)
+    }
+  }, [detailsData, dbIncidentsData, incidentsList.length])
+
 
 
   // Mutation to update attendance in DB
@@ -628,12 +669,32 @@ export default function AdminExamSurveillanceHubPage() {
       {/* WEB APPLICATION DASHBOARD CONTAINER (HIDDEN WHEN PRINTING) */}
       <div className="space-y-6 max-w-7xl mx-auto p-6 pb-24 animate-in fade-in print:hidden">
 
+        {/* Back Navigation Bar */}
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/admin/exams')}
+            className="px-4 py-2.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-black transition-all shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer group"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#0f2863] dark:text-sky-400 group-hover:-translate-x-1 transition-transform" />
+            Retour à la Gestion des Examens
+          </button>
+        </div>
+
         {/* Top Banner Header */}
         <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#254ea8] text-white p-8 rounded-3xl shadow-xl space-y-6">
           <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/exams')}
+                className="w-14 h-14 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-lg shrink-0 transition-all cursor-pointer group"
+                title="Retour à la liste des examens"
+              >
+                <ArrowLeft className="w-7 h-7 text-white group-hover:-translate-x-1 transition-transform" />
+              </button>
               <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-amber-400 font-bold shadow-lg shrink-0">
                 <ShieldCheck className="w-8 h-8" />
               </div>
@@ -719,7 +780,29 @@ export default function AdminExamSurveillanceHubPage() {
             </div>
           </div>
 
-          {/* Admin Takeover & Copies Count Banner */}
+        {/* Locked PV Permanent Alert Banner */}
+        {isPvLocked && (
+          <div className="bg-red-500/10 border-2 border-red-500/40 rounded-3xl p-5 text-red-700 dark:text-red-300 flex items-center justify-between gap-4 shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center text-xl shrink-0 shadow-md animate-pulse">
+                🔒
+              </div>
+              <div>
+                <div className="font-black text-sm uppercase tracking-wider text-red-800 dark:text-red-200">
+                  Procès-Verbal Scellé & Verrouillé Définitivement (Immuable)
+                </div>
+                <div className="text-xs text-red-600 dark:text-red-300/80 mt-0.5">
+                  Ce PV d'examen a été clos et signé. Aucune modification n'est désormais autorisée par la réglementation ENCG. Sceau : <span className="font-mono font-black">{pvLockSeal || `SHA256:ENCG-FES-${id}-LOCKED`}</span>
+                </div>
+              </div>
+            </div>
+            <span className="px-3.5 py-1.5 bg-red-600 text-white text-[11px] font-black rounded-xl uppercase tracking-widest shrink-0 shadow-xs">
+              NON MODIFIABLE
+            </span>
+          </div>
+        )}
+
+        {/* Admin Takeover & Copies Count Banner */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
