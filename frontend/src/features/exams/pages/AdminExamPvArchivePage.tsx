@@ -87,7 +87,7 @@ export default function AdminExamPvArchivePage() {
 
   // Handlers for PDF download/print
   const handlePrintExamPdf = (examId: number) => {
-    toast.info('Ouverture et téléchargement du PV d\'Examen Officiel A4 (PDF)...')
+    toast.info('Génération et ouverture du PV d\'Examen Officiel A4 (PDF)...')
     const apiUrl = api.defaults.baseURL || '/api'
     window.open(`${apiUrl}/exams/${examId}/pv-pdf`, '_blank')
   }
@@ -118,23 +118,22 @@ export default function AdminExamPvArchivePage() {
     <>
       {/* Printable CSS style to strip dark theme and web UI when printing */}
       <style>{`
+        #printable-pv-archive-report {
+          display: none;
+        }
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-pv-archive-report, #printable-pv-archive-report * {
-            visibility: visible;
+          .no-print, header, sidebar, nav, aside, [role="navigation"] {
+            display: none !important;
           }
           #printable-pv-archive-report {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
             background: white !important;
             color: black !important;
-          }
-          .no-print {
-            display: none !important;
+            z-index: 99999 !important;
           }
         }
       `}</style>
@@ -170,17 +169,17 @@ export default function AdminExamPvArchivePage() {
             <Button
               variant="outline"
               onClick={() => refetch()}
-              className="border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs"
+              className="border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-slate-500" /> Actualiser
             </Button>
 
             <Button
               onClick={() => {
-                toast.info('Génération du rapport global d\'archives A4...')
+                toast.info('Génération de l\'aperçu A4 d\'archives...')
                 window.print()
               }}
-              className="bg-gradient-to-r from-[#0f2863] to-[#1a387e] hover:from-[#133075] hover:to-[#204497] text-white rounded-2xl text-xs font-black shadow-md flex items-center gap-2"
+              className="bg-gradient-to-r from-[#0f2863] to-[#1a387e] hover:from-[#133075] hover:to-[#204497] text-white rounded-2xl text-xs font-black shadow-md flex items-center gap-2 cursor-pointer"
             >
               <Printer className="w-4 h-4 text-amber-300" /> Imprimer Rapport d'Archives A4
             </Button>
@@ -481,13 +480,13 @@ export default function AdminExamPvArchivePage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <Button variant="outline" onClick={() => setInspectedExam(null)} className="rounded-xl font-bold text-xs">
+                <Button variant="outline" onClick={() => setInspectedExam(null)} className="rounded-xl font-bold text-xs cursor-pointer">
                   Fermer
                 </Button>
 
                 <Button
                   onClick={() => handlePrintExamPdf(inspectedExam.id)}
-                  className="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl font-black text-xs flex items-center gap-1.5"
+                  className="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl font-black text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Printer className="w-4 h-4 text-amber-300" /> Imprimer PV PDF (A4)
                 </Button>
@@ -497,7 +496,7 @@ export default function AdminExamPvArchivePage() {
                     setInspectedExam(null)
                     navigate(`/admin/exams/${inspectedExam.id}/surveillance`)
                   }}
-                  className="bg-[#0f2863] text-white rounded-xl font-black text-xs flex items-center gap-1.5"
+                  className="bg-[#0f2863] text-white rounded-xl font-black text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Eye className="w-4 h-4" /> Accéder au Hub de Surveillance & PV
                 </Button>
@@ -508,15 +507,15 @@ export default function AdminExamPvArchivePage() {
       </div>
 
       {/* 🖨️ Clean Printable Section for A4 PDF Output */}
-      <div id="printable-pv-archive-report" className="p-8 hidden">
+      <div id="printable-pv-archive-report" className="p-8">
         <div style={{ textAlign: 'center', borderBottom: '2px solid #0f2863', paddingBottom: '15px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f2863', textTransform: 'uppercase', margin: 0 }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f2863', textTransform: 'uppercase', margin: 0 }}>
             ROYAUME DU MAROC — UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH
           </h2>
-          <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: '#334155', margin: '5px 0 0 0' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#334155', margin: '5px 0 0 0' }}>
             ÉCOLE NATIONALE DE COMMERCE ET DE GESTION (ENCG) — FÈS
           </h3>
-          <h4 style={{ fontSize: '13px', fontWeight: 'bold', color: '#64748b', marginTop: '4px' }}>
+          <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginTop: '4px' }}>
             RAPPORT ARCHIVAIRE GLOBAL DES PROCÈS-VERBAUX D'EXAMENS
           </h4>
         </div>
