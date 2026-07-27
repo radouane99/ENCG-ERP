@@ -235,8 +235,39 @@ export default function AdminGradesPVPage() {
   const [signatureDone, setSignatureDone] = useState(false)
   const [signatureDetails, setSignatureDetails] = useState<any>(null)
   const [signatureDataUrl, setSignatureDataUrl] = useState<string>('')
+  const [isSigning, setIsSigning] = useState(false)
 
+  const handleConfirmSignature = async () => {
+    if (!signatureDataUrl) {
+      toast.error("Veuillez d'abord dessiner votre signature tactile.")
+      return
+    }
 
+    const targetModuleId = moduleId || pvData?.module?.id
+    if (!targetModuleId) {
+      toast.error("Veuillez sélectionner un module spécifique à signer.")
+      return
+    }
+
+    setIsSigning(true)
+    try {
+      const res = await api.post(`/modules/${targetModuleId}/sign-pv`, {
+        group_id: groupId || searchParams.get('group_id') || null,
+        session: session || 'normale',
+        signature_data: signatureDataUrl
+      })
+
+      toast.success("✒️ Signature tactile apposée, horodatée et scellée sur le Procès-Verbal Officiel !")
+      setShowSignatureModal(false)
+      await refetchPV()
+      queryClient.invalidateQueries({ queryKey: ['module-pv'] })
+      queryClient.invalidateQueries({ queryKey: ['grades'] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erreur lors de la signature du Procès-Verbal.")
+    } finally {
+      setIsSigning(false)
+    }
+  }
 
   const [rachatReason, setRachatReason] = useState('Repêchage accordé par le Jury de Délibération')
 
@@ -1899,7 +1930,7 @@ export default function AdminGradesPVPage() {
                               const mInfo = s.module_grades?.[m.id]
                               const note = mInfo?.note
                               const dec = mInfo?.decision
-                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (studentIncident?.module_id === m.id || !studentIncident?.module_id))
+                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (mInfo?.is_fraud || !!studentExpandedSanction))
 
                               const noteStyle = 
                                 isFraud ? 'text-rose-700 dark:text-rose-300 font-black bg-rose-100/90 dark:bg-rose-950/80 px-1 py-0.5 rounded border border-rose-400' :
@@ -3710,17 +3741,13 @@ export default function AdminGradesPVPage() {
                 Annuler
               </button>
               <button
-                onClick={() => {
-                  if (!signatureDataUrl) {
-                    toast.error("Veuillez d'abord dessiner votre signature tactile.");
-                    return;
-                  }
-                  toast.success("✒️ Signature tactile apposée et scellée sur le Procès-Verbal Officiel !");
-                  setShowSignatureModal(false);
-                }}
-                className="px-6 py-2.5 bg-[#0f2863] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer"
+                type="button"
+                onClick={handleConfirmSignature}
+                disabled={isSigning}
+                className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
-                Valider & Sceller PV
+                {isSigning ? <Spinner className="text-white" /> : null}
+                {isSigning ? 'Scellé en cours...' : 'Valider & Sceller PV'}
               </button>
             </div>
           </div>

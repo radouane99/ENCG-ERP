@@ -137,7 +137,18 @@ class GradeController extends Controller
             ];
         });
 
-        return response()->json(['data' => $data]);
+        $isSigned = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)->exists();
+        $signatureRecord = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)->with('signer')->latest()->first();
+
+        return response()->json([
+            'data' => $data,
+            'is_locked' => $isSigned,
+            'signature' => $signatureRecord ? [
+                'signed_by' => $signatureRecord->signer?->name ?? 'Enseignant Responsable',
+                'signed_at' => $signatureRecord->signed_at ? $signatureRecord->signed_at->toIso8601String() : null,
+                'digital_seal' => $signatureRecord->digital_seal,
+            ] : null
+        ]);
     }
 
     public function storeBulk(Request $request, $assessmentId): JsonResponse
@@ -244,26 +255,12 @@ class GradeController extends Controller
             'grades.*.absent' => 'boolean',
         ]);
 
-        // [AUDIT SEC-05] Block updates if the PV is already digitally signed
-        $studentId = $validated['grades'][0]['student_id'] ?? null;
-        if ($studentId) {
-            $registration = \App\Models\StudentRegistration::where('student_id', $studentId)
-                ->where('filiere_id', $assessment->module->filiere_id)
-                ->first();
-            $groupId = $registration ? $registration->group_id : null;
-            
-            if ($groupId && !$isRattrapageAssessment) {
-                $isSigned = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)
-                    ->where(function($q) use ($groupId) {
-                        $q->where('group_id', $groupId)->orWhereNull('group_id');
-                    })
-                    ->exists();
-                if ($isSigned) {
-                    return response()->json([
-                        'message' => 'Opération refusée : Le PV de délibération pour ce groupe a été signé électroniquement et verrouillé pour la session ordinaire.'
-                    ], 403);
-                }
-            }
+        // [AUDIT SEC-05] Block updates unconditionally if the PV is already digitally signed
+        $isSigned = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)->exists();
+        if ($isSigned) {
+            return response()->json([
+                'message' => "🔒 OPÉRATION REFUSÉE : Le PV de délibération du module '{$assessment->module->name}' a été signé électroniquement et clôturé. La saisie et la modification des notes sont définitivement verrouillées."
+            ], 403);
         }
 
         $typeLower = strtolower(trim($assessment->type));
@@ -1059,7 +1056,13 @@ class GradeController extends Controller
             }
         }
 
-        // Verify exam locking phases
+        // Block Excel import unconditionally if the PV is already digitally signed
+        $isSigned = \App\Models\ModulePvSignature::where('module_id', $moduleId)->exists();
+        if ($isSigned) {
+            return response()->json([
+                'message' => "🔒 IMPORTATION REFUSÉE : Le PV de délibération du module '{$module->name}' a été signé électroniquement et clôturé. L'importation de notes par fichier Excel est définitivement verrouillée."
+            ], 403);
+        }
         $institution = \App\Models\Institution::first();
         $settings = $institution->settings ?? [];
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';

@@ -43,13 +43,17 @@ export default function AdminGradesEditPage() {
   })
 
   // Fetch students & grades for the selected assessment
-  const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
+  const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['grades', selectedAssessmentId, currentGroupId, viewAllGroups],
     queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`, {
       params: { group_id: viewAllGroups ? 'all' : (currentGroupId && currentGroupId !== 'null' ? currentGroupId : 'all') }
-    }).then(res => res.data.data),
+    }).then(res => res.data),
     enabled: !!selectedAssessmentId,
   })
+
+  const studentsData = Array.isArray(gradesResponse?.data) ? gradesResponse.data : (Array.isArray(gradesResponse) ? gradesResponse : [])
+  const isPvLocked = gradesResponse?.is_locked || false
+  const signatureInfo = gradesResponse?.signature
 
   useEffect(() => {
     if (assessmentsData) {
@@ -295,6 +299,27 @@ export default function AdminGradesEditPage() {
         </div>
       </div>
 
+      {isPvLocked && (
+        <div className="bg-amber-500/10 border-2 border-amber-500/30 text-amber-900 rounded-3xl p-5 flex items-center justify-between shadow-sm animate-in mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-black text-xl shrink-0">
+              🔒
+            </div>
+            <div>
+              <h3 className="font-extrabold text-sm uppercase text-amber-900 tracking-wider">
+                PROCES-VERBAL SCELLÉ & CLÔTURÉ ÉLECTRONIQUEMENT
+              </h3>
+              <p className="text-xs text-amber-800 font-medium mt-0.5">
+                Le procès-verbal de ce module a été signé et scellé par <strong className="font-bold">{signatureInfo?.signed_by || 'l\'Enseignant Responsable'}</strong> ({signatureInfo?.signed_at ? new Date(signatureInfo.signed_at).toLocaleDateString('fr-FR') : 'Clôturé'}). La saisie et les modifications de notes sont définitivement verrouillées.
+              </p>
+            </div>
+          </div>
+          <span className="px-3.5 py-1.5 bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shrink-0 shadow-xs">
+            Verrouillé
+          </span>
+        </div>
+      )}
+
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex-1">
@@ -413,11 +438,12 @@ export default function AdminGradesEditPage() {
               >
                 📥 {isRtl ? 'تحميل كشف Excel' : 'Canevas Excel'}
               </button>
-              <label className="cursor-pointer bg-white text-[#0f2863] hover:bg-white/90 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+              <label className={cn("bg-white text-[#0f2863] hover:bg-white/90 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5", isPvLocked ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer")}>
                 📤 {isRtl ? 'استيراد النقاط' : 'Importer Excel'}
                 <input
                   type="file"
                   accept=".xlsx,.xls"
+                  disabled={isPvLocked}
                   onChange={handleImportExcel}
                   className="hidden"
                 />
@@ -492,11 +518,12 @@ export default function AdminGradesEditPage() {
                               min="0"
                               max="20"
                               value={student.is_fraud ? '0' : (grades[student.student_id]?.value ?? '')}
-                              disabled={student.is_fraud || grades[student.student_id]?.absent}
+                              disabled={isPvLocked || student.is_fraud || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
                               className={cn(
                                 "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
-                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                                (isPvLocked || student.is_fraud) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
                               )}
                             />
                             {student.is_fraud && (
@@ -507,7 +534,7 @@ export default function AdminGradesEditPage() {
                             <input 
                               type="checkbox"
                               checked={student.is_fraud ? false : (grades[student.student_id]?.absent ?? false)}
-                              disabled={student.is_fraud}
+                              disabled={isPvLocked || student.is_fraud}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
                               className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
                             />
@@ -520,11 +547,12 @@ export default function AdminGradesEditPage() {
                               min="0"
                               max="20"
                               value={student.is_fraud ? '0' : (grades2[student.student_id]?.value ?? '')}
-                              disabled={student.is_fraud || grades2[student.student_id]?.absent}
+                              disabled={isPvLocked || student.is_fraud || grades2[student.student_id]?.absent}
                               onChange={(e) => handleInputChange2(student.student_id, 'value', e.target.value)}
                               className={cn(
                                 "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
-                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                                (isPvLocked || student.is_fraud) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
                               )}
                             />
                           </td>
@@ -532,7 +560,7 @@ export default function AdminGradesEditPage() {
                             <input 
                               type="checkbox"
                               checked={student.is_fraud ? false : (grades2[student.student_id]?.absent ?? false)}
-                              disabled={student.is_fraud}
+                              disabled={isPvLocked || student.is_fraud}
                               onChange={(e) => handleInputChange2(student.student_id, 'absent', e.target.checked)}
                               className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
                             />
@@ -544,7 +572,7 @@ export default function AdminGradesEditPage() {
                                 ⚠️ Écart
                               </span>
                             ) : (
-                              <span className="text-emerald-600 bg-emerald-100/80 px-2.5 py-1 rounded-lg text-xs w-fit mx-auto">
+                              <span className="text-emerald-600 bg-emerald-100/80 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 w-fit mx-auto border border-emerald-200">
                                 ✓ Conforme
                               </span>
                             )}
@@ -559,11 +587,12 @@ export default function AdminGradesEditPage() {
                               min="0"
                               max="20"
                               value={student.is_fraud ? '0' : (grades[student.student_id]?.value ?? '')}
-                              disabled={student.is_fraud || grades[student.student_id]?.absent}
+                              disabled={isPvLocked || student.is_fraud || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
                               className={cn(
                                 "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all outline-none disabled:opacity-50",
-                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                                (isPvLocked || student.is_fraud) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
                               )}
                             />
                             {student.is_fraud && (
@@ -574,7 +603,7 @@ export default function AdminGradesEditPage() {
                             <input 
                               type="checkbox"
                               checked={student.is_fraud ? false : (grades[student.student_id]?.absent ?? false)}
-                              disabled={student.is_fraud}
+                              disabled={isPvLocked || student.is_fraud}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
                               className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] disabled:opacity-50"
                             />
@@ -597,11 +626,11 @@ export default function AdminGradesEditPage() {
             </Link>
             <Button 
               type="submit" 
-              className="bg-[var(--color-primary)] hover:bg-[var(--color-primary)/90] text-white font-bold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-3"
-              disabled={saveMutation.isPending}
+              className={cn("bg-[var(--color-primary)] hover:bg-[var(--color-primary)/90] text-white font-bold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-3", isPvLocked && "opacity-50 cursor-not-allowed")}
+              disabled={saveMutation.isPending || isPvLocked}
             >
               {saveMutation.isPending ? <Spinner className="text-white" /> : <Save className="w-5 h-5" />}
-              {isRtl ? 'حفظ النقاط' : 'Enregistrer les Notes'}
+              {isPvLocked ? '🔒 PV Clôturé & Verrouillé' : (isRtl ? 'حفظ النقاط' : 'Enregistrer les Notes')}
             </Button>
           </div>
         </form>

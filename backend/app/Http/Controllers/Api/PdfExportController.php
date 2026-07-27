@@ -994,6 +994,7 @@ class PdfExportController extends Controller
 
         // Get assessments
         $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
+        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
         // Fetch fraud cases strictly for this module or expanded semester/annual sanctions
         $moduleExams = \App\Models\Exam::where('module_id', $moduleId)->pluck('id');
         $directModuleFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
@@ -1130,17 +1131,12 @@ class PdfExportController extends Controller
         });
 
         // Signature record query
-        $signature = null;
-        $sigGroupId = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? intval($groupId) : null;
-        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
-        if ($sigGroupId) {
-            $sigQuery->where('group_id', $sigGroupId);
-        }
-        $sigRecord = $sigQuery->with('signer')->latest()->first();
+        $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
 
+        $signature = null;
         if ($sigRecord) {
             $signature = [
-                'signed_by' => $sigRecord->signer->name ?? $sigRecord->signer->email,
+                'signed_by' => $sigRecord->signer?->name ?? ($sigRecord->signer?->email ?? 'Enseignant Responsable'),
                 'signed_at' => $sigRecord->signed_at ? $sigRecord->signed_at->format('d/m/Y H:i') : date('d/m/Y H:i'),
                 'signature_data' => $sigRecord->signature_data,
                 'ip_address' => $sigRecord->ip_address,
