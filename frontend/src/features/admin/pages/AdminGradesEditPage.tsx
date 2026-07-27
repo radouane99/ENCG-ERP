@@ -112,8 +112,8 @@ export default function AdminGradesEditPage() {
       const initialGrades: Record<number, { value: string; absent: boolean }> = {}
       const initialGrades2: Record<number, { value: string; absent: boolean }> = {}
       studentsData.forEach((student: any) => {
-        const val = student.value !== null ? String(student.value) : ''
-        const abs = student.is_absent || false
+        const val = student.is_fraud ? '0' : (student.value !== null ? String(student.value) : '')
+        const abs = student.is_fraud ? false : (student.is_absent || false)
         initialGrades[student.student_id] = { value: val, absent: abs }
         initialGrades2[student.student_id] = { value: val, absent: abs }
       })
@@ -464,14 +464,21 @@ export default function AdminGradesEditPage() {
                     <tr key={student.student_id} className={cn("hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group", hasConflict && "bg-red-50/70 hover:bg-red-100/70 dark:bg-red-950/20 border-l-4 border-l-red-500")}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0 shadow-sm text-white", student.is_fraud ? "bg-rose-600" : "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)]")}>
                             {student.first_name.substring(0, 1)}{student.last_name.substring(0, 1)}
                           </div>
                           <div>
-                            <div className="font-bold text-[var(--foreground)] text-sm">{student.first_name} {student.last_name}</div>
+                            <div className="font-bold text-[var(--foreground)] text-sm flex items-center gap-2">
+                              {student.first_name} {student.last_name}
+                            </div>
                             <div className="text-[10px] text-[var(--muted-foreground)] font-bold uppercase tracking-wider">
                               {student.apogee || student.student_number}
                             </div>
+                            {student.is_fraud && (
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300/60 mt-1 shadow-xs" title={student.fraud_reason}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" /> 🚨 FRAUDE PV EXAMEN (00/20 BLOQUÉ)
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -484,18 +491,25 @@ export default function AdminGradesEditPage() {
                               step="0.25"
                               min="0"
                               max="20"
-                              value={grades[student.student_id]?.value ?? ''}
-                              disabled={grades[student.student_id]?.absent}
+                              value={student.is_fraud ? '0' : (grades[student.student_id]?.value ?? '')}
+                              disabled={student.is_fraud || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className="w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50"
+                              className={cn(
+                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                              )}
                             />
+                            {student.is_fraud && (
+                              <div className="text-[9px] font-bold text-rose-600 mt-0.5">Note 00/20 (Conseil)</div>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-center">
                             <input 
                               type="checkbox"
-                              checked={grades[student.student_id]?.absent ?? false}
+                              checked={student.is_fraud ? false : (grades[student.student_id]?.absent ?? false)}
+                              disabled={student.is_fraud}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)]"
+                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
                             />
                           </td>
                           {/* Saisie 2 */}
@@ -505,18 +519,22 @@ export default function AdminGradesEditPage() {
                               step="0.25"
                               min="0"
                               max="20"
-                              value={grades2[student.student_id]?.value ?? ''}
-                              disabled={grades2[student.student_id]?.absent}
+                              value={student.is_fraud ? '0' : (grades2[student.student_id]?.value ?? '')}
+                              disabled={student.is_fraud || grades2[student.student_id]?.absent}
                               onChange={(e) => handleInputChange2(student.student_id, 'value', e.target.value)}
-                              className="w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50"
+                              className={cn(
+                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                              )}
                             />
                           </td>
                           <td className="px-6 py-4 text-center">
                             <input 
                               type="checkbox"
-                              checked={grades2[student.student_id]?.absent ?? false}
+                              checked={student.is_fraud ? false : (grades2[student.student_id]?.absent ?? false)}
+                              disabled={student.is_fraud}
                               onChange={(e) => handleInputChange2(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)]"
+                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
                             />
                           </td>
                           {/* Conflict Status */}
@@ -540,18 +558,25 @@ export default function AdminGradesEditPage() {
                               step="0.25"
                               min="0"
                               max="20"
-                              value={grades[student.student_id]?.value ?? ''}
-                              disabled={grades[student.student_id]?.absent}
+                              value={student.is_fraud ? '0' : (grades[student.student_id]?.value ?? '')}
+                              disabled={student.is_fraud || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className="w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all outline-none disabled:opacity-50"
+                              className={cn(
+                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all outline-none disabled:opacity-50",
+                                student.is_fraud && "bg-rose-100! text-rose-900! border-rose-400! font-black! cursor-not-allowed opacity-100!"
+                              )}
                             />
+                            {student.is_fraud && (
+                              <div className="text-[9px] font-bold text-rose-600 mt-0.5">Note 00/20 (Conseil)</div>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-center">
                             <input 
                               type="checkbox"
-                              checked={grades[student.student_id]?.absent ?? false}
+                              checked={student.is_fraud ? false : (grades[student.student_id]?.absent ?? false)}
+                              disabled={student.is_fraud}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] disabled:opacity-50"
                             />
                           </td>
                         </>

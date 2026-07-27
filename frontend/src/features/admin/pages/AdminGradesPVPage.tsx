@@ -296,7 +296,9 @@ export default function AdminGradesPVPage() {
 
 
   // Jury & Dual PV State
-  const [pvType, setPvType] = useState<'semestriel' | 'annuel'>('semestriel')
+  const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(
+    moduleId ? 'module' : 'semestriel'
+  )
   const [juryStatus, setJuryStatus] = useState<any>(null)
   const [loadingJury, setLoadingJury] = useState(false)
   const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([])
@@ -1024,6 +1026,20 @@ export default function AdminGradesPVPage() {
         <div className="relative z-10 flex items-center gap-3 flex-wrap pt-4 border-t border-white/10">
           <button
             type="button"
+            onClick={() => setPvType('module')}
+            className={cn(
+              "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+              pvType === 'module' 
+                ? "bg-white text-[#0f2863] shadow-lg" 
+                : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            )}
+          >
+            <BookOpen className="w-4 h-4 text-amber-400" />
+            PV du Module Spécifique
+          </button>
+
+          <button
+            type="button"
             onClick={() => setPvType('semestriel')}
             className={cn(
               "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
@@ -1105,6 +1121,7 @@ export default function AdminGradesPVPage() {
           value={moduleId || ''}
           onChange={(val) => {
             if (val) {
+              setPvType('module');
               navigate(`/admin/grades/pv?module_id=${val}${selectedGroup ? `&group_id=${selectedGroup}` : ''}`);
             }
           }}
@@ -1141,7 +1158,7 @@ export default function AdminGradesPVPage() {
 
 
 
-  if ((!moduleId || pvType === 'semestriel' || pvType === 'annuel') && (selectedFiliere || selectedSemester)) {
+  if (pvType !== 'module' && (!moduleId || pvType === 'semestriel' || pvType === 'annuel') && (selectedFiliere || selectedSemester)) {
     if (isLoadingSemesterPV) {
       return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">

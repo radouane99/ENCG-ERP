@@ -417,7 +417,10 @@ class PdfExportController extends Controller
 
         $seal = 'SHA256:ENCG-FES-' . $examId . '-' . strtoupper(substr(md5($examId . ($exam->locked_at ?? now())), 0, 16));
 
-        $showNotes = request()->query('with_notes') == '1' || request()->query('type') === 'notes';
+        $mode = request()->query('mode', request()->query('type', 'pv'));
+        if (request()->query('emargement') == '1') {
+            $mode = 'emargement';
+        }
 
         $pdf = $this->getPdfInstance('pdf.pv_examen', [
             'exam_id' => $examId,
@@ -425,7 +428,7 @@ class PdfExportController extends Controller
             'seatings' => $seatings,
             'surveillances' => $surveillances,
             'incidents' => $incidents,
-            'show_notes' => $showNotes,
+            'mode' => $mode,
             'total_students' => $seatings->count(),
             'present_students' => $seatings->where('is_present', true)->count(),
             'absent_students' => $seatings->where('is_present', false)->count(),

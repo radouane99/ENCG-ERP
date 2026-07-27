@@ -86,19 +86,19 @@ export default function AdminExamPvArchivePage() {
   const totalIncidentsCount = examsList.reduce((acc: number, e: any) => acc + (e.incidents_count || (e.has_fraud ? 1 : 0)), 0)
 
   // Handlers for PDF download/print
-  const handlePrintExamPdf = (examId: number) => {
-    toast.info('Génération et ouverture du PV d\'Émargement Officiel A4 (PDF)...')
+  const handlePrintEmargementBlankPdf = (examId: number) => {
+    toast.info('Génération de la Feuille d\'Émargement Papier A4 (pour signature en salle)...')
     const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf${token ? `?token=${token}` : ''}`
+    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?mode=emargement${token ? `&token=${token}` : ''}`
     window.open(pdfUrl, '_blank')
   }
 
-  const handlePrintNotesPdf = (examId: number) => {
-    toast.info('Génération et ouverture du Bordereau de Notes A4 (PDF)...')
+  const handlePrintOfficialPvPdf = (examId: number) => {
+    toast.info('Génération du Procès-Verbal Officiel Clôturé A4 (PDF)...')
     const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?with_notes=1${token ? `&token=${token}` : ''}`
+    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?mode=pv${token ? `&token=${token}` : ''}`
     window.open(pdfUrl, '_blank')
   }
 
@@ -410,20 +410,20 @@ export default function AdminExamPvArchivePage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handlePrintExamPdf(exam.id)}
-                              className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                              title="PV d'Émargement Officiel avec Signature Étudiant (sans colonne note)"
+                              onClick={() => handlePrintEmargementBlankPdf(exam.id)}
+                              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                              title="Feuille d'Émargement Vierge à Imprimer (avec خانة التوقيع باليد للطلاب في القاعة)"
                             >
-                              <Printer className="w-3.5 h-3.5 text-amber-300" /> PV Émargement
+                              <Printer className="w-3.5 h-3.5 text-emerald-200" /> ✍️ Émargement Salle
                             </button>
 
                             <button
                               type="button"
-                              onClick={() => handlePrintNotesPdf(exam.id)}
-                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                              title="Bordereau de Notes avec colonne Note / 20 pour Enseignants"
+                              onClick={() => handlePrintOfficialPvPdf(exam.id)}
+                              className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                              title="Procès-Verbal Officiel Clôturé (مع حالة الحضور الرقمية والختم الإلكتروني)"
                             >
-                              <FileText className="w-3.5 h-3.5" /> Bordereau Notes
+                              <FileText className="w-3.5 h-3.5 text-amber-300" /> 🔒 PV Clôturé (PDF)
                             </button>
 
                             <button

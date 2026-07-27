@@ -86,21 +86,39 @@ class GradeController extends Controller
             }
         });
 
+        $typeLower = strtolower(trim($assessment->type));
+        $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
+
+        // Fetch fraud cases for exams belonging to this module
+        $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
+
+        $allFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $moduleExams)
+            ->pluck('student_id')
+            ->toArray();
+
         // Eager load user and grades for this specific assessment
         $students = $studentsQuery->with(['user', 'grades' => function ($q) use ($assessmentId) {
             $q->where('assessment_id', $assessmentId);
         }])->get();
 
-        $data = $students->map(function ($student) {
+        $data = $students->map(function ($student) use ($allFraudStudentIds, $isExamAssessment) {
             $grade = $student->grades->first();
+            $hasFraudInExam = in_array($student->id, $allFraudStudentIds);
+            // Fraud lock (00/20) applies ONLY to EXAM assessments (not CC1/CC2)
+            $isFraud = $hasFraudInExam && $isExamAssessment;
+
             return [
-                'student_id' => $student->id,
-                'first_name' => $student->first_name,
-                'last_name' => $student->last_name,
+                'student_id'     => $student->id,
+                'first_name'     => $student->first_name,
+                'last_name'      => $student->last_name,
                 'student_number' => $student->student_number,
-                'apogee' => $student->cne_cme ?? $student->student_number,
-                'value' => $grade ? (float) $grade->value : null,
-                'is_absent' => $grade ? (bool) $grade->absent : false,
+                'apogee'         => $student->cne_cme ?? $student->cne ?? $student->student_number,
+                'value'          => $isFraud ? 0.0 : ($grade ? (float) $grade->value : null),
+                'is_absent'      => $isFraud ? false : ($grade ? (bool) $grade->absent : false),
+                'is_fraud'       => $isFraud,
+                'has_exam_fraud' => $hasFraudInExam,
+                'fraud_reason'   => $hasFraudInExam ? '🚨 Cas de Fraude Signalé au PV d\'Examen Final' : null,
             ];
         });
 
@@ -233,9 +251,21 @@ class GradeController extends Controller
             }
         }
 
+        $typeLower = strtolower(trim($assessment->type));
+        $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
+
+        $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
+        $allFraudIds = \Illuminate\Support\Facades\DB::table('exam_incidents')->whereIn('exam_id', $moduleExams)->pluck('student_id')->toArray();
+
         foreach ($validated['grades'] as $gradeData) {
-            $newValue = !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null);
-            $newAbsent = $gradeData['absent'] ?? false;
+            $isStudentFraud = $isExamAssessment && in_array($gradeData['student_id'], $allFraudIds);
+            if ($isStudentFraud) {
+                $newValue = 0.0;
+                $newAbsent = false;
+            } else {
+                $newValue = !empty($gradeData['absent']) ? null : ($gradeData['value'] ?? null);
+                $newAbsent = $gradeData['absent'] ?? false;
+            }
 
             // Audit change
             $oldGrade = Grade::where('student_id', $gradeData['student_id'])
@@ -853,13 +883,23 @@ class GradeController extends Controller
             return strtolower($a->type) !== 'rattrapage';
         })->values();
 
+        // Fetch fraud cases for exams belonging to this module
+        $moduleExams = \App\Models\Exam::where('module_id', $module->id)->pluck('id');
+        $fraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $moduleExams)
+            ->pluck('student_id')
+            ->toArray();
+
         $headings = ['Code Apogée', 'Nom', 'Prénom'];
         foreach ($assessments as $a) {
             $headings[] = "{$a->type} (Poids: {$a->weight}%)";
         }
+        $headings[] = "Observations / Statut PV";
 
         $rows = [];
         foreach ($students as $student) {
+            $isFraud = in_array($student->id, $fraudStudentIds);
+
             $row = [
                 $student->student_number ?? $student->id,
                 $student->last_name,
@@ -867,17 +907,31 @@ class GradeController extends Controller
             ];
 
             foreach ($assessments as $a) {
-                // Fetch existing grade if any
-                $grade = Grade::where('student_id', $student->id)
-                    ->where('assessment_id', $a->id)
-                    ->first();
+                $typeLower = strtolower(trim($a->type));
+                $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
 
-                if ($grade) {
-                    $row[] = $grade->absent ? 'ABI' : ($grade->value !== null ? $grade->value : '');
+                if ($isExamAssessment && $isFraud) {
+                    $row[] = '0 (FRAUDE PV)';
                 } else {
-                    $row[] = '';
+                    // Fetch existing grade if any
+                    $grade = Grade::where('student_id', $student->id)
+                        ->where('assessment_id', $a->id)
+                        ->first();
+
+                    if ($grade) {
+                        $row[] = $grade->absent ? 'ABI' : ($grade->value !== null ? $grade->value : '');
+                    } else {
+                        $row[] = '';
+                    }
                 }
             }
+
+            if ($isFraud) {
+                $row[] = '🚨 CAS DE FRAUDE SIGNALÉ AU PV D\'EXAMEN (Note 00/20 Bloquée)';
+            } else {
+                $row[] = 'R.A.S';
+            }
+
             $rows[] = $row;
         }
 
@@ -1026,6 +1080,23 @@ class GradeController extends Controller
                 } else {
                     $warnings[] = "{$student->last_name} {$student->first_name} : Valeur '{$rawValue}' non reconnue. Ignorée.";
                     continue;
+                }
+                // Fraud lock protection during Excel import
+                $typeLower = strtolower(trim($assessment->type));
+                $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
+
+                if ($isExamAssessment) {
+                    $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
+                    $isStudentFraud = \Illuminate\Support\Facades\DB::table('exam_incidents')
+                        ->whereIn('exam_id', $moduleExams)
+                        ->where('student_id', $student->id)
+                        ->exists();
+
+                    if ($isStudentFraud) {
+                        $value = 0.0;
+                        $absent = false;
+                        $warnings[] = "⚠️ {$student->last_name} {$student->first_name} : Signalé pour FRAUDE au PV d'Examen. La note du fichier Excel a été forcée à 00/20.";
+                    }
                 }
 
                 // Check changes for auditing

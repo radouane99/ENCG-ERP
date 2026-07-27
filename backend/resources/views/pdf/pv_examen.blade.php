@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>PV d'Examen — ENCG Fès</title>
+    <title>{{ $mode === 'emargement' ? "Feuille d'Émargement" : "PV d'Examen Officiel" }} — ENCG Fès</title>
     <style>
         @page {
             size: A4;
@@ -127,7 +127,7 @@
             letter-spacing: 0.3px;
         }
         .data-table td {
-            padding: 4px 6px;
+            padding: 3.5px 5px;
             border: 1px solid #cbd5e1;
             vertical-align: middle;
         }
@@ -140,7 +140,7 @@
         .badge-present {
             color: #047857;
             background-color: #d1fae5;
-            padding: 1px 5px;
+            padding: 1.5px 6px;
             border-radius: 2px;
             font-weight: bold;
             font-size: 8.5px;
@@ -148,7 +148,7 @@
         .badge-absent {
             color: #b91c1c;
             background-color: #fee2e2;
-            padding: 1px 5px;
+            padding: 1.5px 6px;
             border-radius: 2px;
             font-weight: bold;
             font-size: 8.5px;
@@ -234,8 +234,13 @@
 
         <!-- Banner Title -->
         <div class="pv-title-banner">
-            <h1>Procès-Verbal d'Examen & d'Émargement Officiel</h1>
-            <p>{{ strtoupper($exam->examSession->name ?? 'Session d\'Examens Ordinaire') }} — Année Universitaire 2025/2026</p>
+            @if($mode === 'emargement')
+                <h1>Feuille d'Émargement Papier (à Signer par les Étudiants)</h1>
+                <p>DOCUMENT IMPRIMÉ POUR SIGNATURE MANUSCRITE EN SALLE D'EXAMEN</p>
+            @else
+                <h1>Procès-Verbal d'Examen & de Synthèse Officiel</h1>
+                <p>{{ strtoupper($exam->examSession->name ?? 'Session d\'Examens Ordinaire') }} — Année Universitaire 2025/2026</p>
+            @endif
         </div>
 
         <!-- Metadata Summary Box -->
@@ -264,7 +269,9 @@
             <tr>
                 <td class="meta-label">Statut du PV :</td>
                 <td class="meta-val">
-                    @if($exam->is_locked)
+                    @if($mode === 'emargement')
+                        <span style="color: #0f2863; font-weight: bold;">[ÉMARGEMENT EN SALLE]</span>
+                    @elseif($exam->is_locked)
                         <span style="color: #059669; font-weight: bold;">[SCELLÉ & DÉFINITIF]</span>
                     @else
                         <span style="color: #d97706; font-weight: bold;">[EN COURS - OUVERT]</span>
@@ -272,25 +279,29 @@
                 </td>
                 <td class="meta-label">Effectifs / Copies :</td>
                 <td class="meta-val">
-                    <strong>{{ $total_students }}</strong> Attendus | 
-                    <span style="color: #059669;"><strong>{{ $present_students }}</strong> Présents</span> | 
-                    <span style="color: #dc2626;"><strong>{{ $absent_students }}</strong> Absents</span>
+                    @if($mode === 'emargement')
+                        <strong>{{ $total_students }}</strong> Candidats Convoqués (En Salle)
+                    @else
+                        <strong>{{ $total_students }}</strong> Attendus | 
+                        <span style="color: #059669;"><strong>{{ $present_students }}</strong> Présents</span> | 
+                        <span style="color: #dc2626;"><strong>{{ $absent_students }}</strong> Absents</span>
+                    @endif
                 </td>
             </tr>
         </table>
 
-        <!-- Main Candidate Attendance Grid Table -->
+        <!-- Main Data Table -->
         <table class="data-table">
             <thead>
                 <tr>
                     <th style="width: 8%;">N° Place</th>
                     <th style="width: 18%;">CNE / Code</th>
                     <th style="width: 44%; text-align: left;">Nom & Prénom du Candidat</th>
-                    <th style="width: 15%;">Émargement</th>
-                    @if(!empty($show_notes))
-                        <th style="width: 15%;">Note / 20</th>
+                    @if($mode === 'emargement')
+                        <th style="width: 10%;">Cocher</th>
+                        <th style="width: 20%;">Signature Étudiant (Stylo)</th>
                     @else
-                        <th style="width: 15%;">Signature Étudiant</th>
+                        <th style="width: 30%;">Statut Émargement Digital</th>
                     @endif
                 </tr>
             </thead>
@@ -309,18 +320,23 @@
                             {{ $seating->user_name ?? 'Étudiant ENCG' }}
                         @endif
                     </td>
-                    <td class="text-center">
-                        @if($seating->is_present)
-                            <span class="badge-present">PRÉSENT</span>
-                        @else
-                            <span class="badge-absent">ABSENT</span>
-                        @endif
-                    </td>
-                    <td class="text-center" style="background-color: #fafafa;"></td>
+
+                    @if($mode === 'emargement')
+                        <td class="text-center" style="background-color: #ffffff;">[ &nbsp; ]</td>
+                        <td class="text-center" style="background-color: #ffffff; height: 20px;"></td>
+                    @else
+                        <td class="text-center">
+                            @if($seating->is_present)
+                                <span class="badge-present">PRÉSENT</span>
+                            @else
+                                <span class="badge-absent">ABSENT</span>
+                            @endif
+                        </td>
+                    @endif
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center" style="padding: 15px; color: #64748b;">
+                    <td colspan="{{ $mode === 'emargement' ? 5 : 4 }}" class="text-center" style="padding: 15px; color: #64748b;">
                         <em>Aucun candidat n'a été affecté à cet examen.</em>
                     </td>
                 </tr>
@@ -328,31 +344,33 @@
             </tbody>
         </table>
 
-        <!-- Incidents & Frauds Section -->
-        @if(isset($incidents) && count($incidents) > 0)
-            <div class="incidents-box">
-                <h4>Registre Officiel des Incidents & Cas de Fraude Signalés ({{ count($incidents) }})</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 8.5px;">
-                    <tr style="background-color: #ffe4e6; font-weight: bold; color: #991b1b;">
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5;">CNE</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Étudiant</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Type d'Incident</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Objets Confisqués & Observations</td>
-                    </tr>
-                    @foreach($incidents as $inc)
-                    <tr>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? 'N/A' }}</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? 'Étudiant' }}</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5; color: #b91c1c; font-weight: bold;">{{ strtoupper($inc->type ?? 'FRAUDE') }}</td>
-                        <td style="padding: 3px 5px; border: 1px solid #fca5a5;">{{ $inc->confiscated_items ?: ($inc->description ?: 'Tentative de fraude') }}</td>
-                    </tr>
-                    @endforeach
-                </table>
-            </div>
-        @else
-            <div style="font-size: 8px; color: #475569; font-style: italic; margin-bottom: 8px; border: 1px border-dashed #cbd5e1; padding: 4px; border-radius: 3px; background-color: #f8fafc">
-                <strong>Registre des Incidents :</strong> Néant — Aucun cas de fraude ou d'incident n'a été signalé lors de cette épreuve.
-            </div>
+        <!-- Incidents & Frauds Section (Only on final PV) -->
+        @if($mode !== 'emargement')
+            @if(isset($incidents) && count($incidents) > 0)
+                <div class="incidents-box">
+                    <h4>Registre Officiel des Incidents & Cas de Fraude Signalés ({{ count($incidents) }})</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5px;">
+                        <tr style="background-color: #ffe4e6; font-weight: bold; color: #991b1b;">
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5;">CNE</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Étudiant</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Type d'Incident</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5;">Objets Confisqués & Observations</td>
+                        </tr>
+                        @foreach($incidents as $inc)
+                        <tr>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? 'N/A' }}</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? 'Étudiant' }}</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5; color: #b91c1c; font-weight: bold;">{{ strtoupper($inc->type ?? 'FRAUDE') }}</td>
+                            <td style="padding: 3px 5px; border: 1px solid #fca5a5;">{{ $inc->confiscated_items ?: ($inc->description ?: 'Tentative de fraude') }}</td>
+                        </tr>
+                        @endforeach
+                    </table>
+                </div>
+            @else
+                <div style="font-size: 8px; color: #475569; font-style: italic; margin-bottom: 8px; border: 1px border-dashed #cbd5e1; padding: 4px; border-radius: 3px; background-color: #f8fafc">
+                    <strong>Registre des Incidents :</strong> Néant — Aucun cas de fraude ou d'incident n'a été signalé lors de cette épreuve.
+                </div>
+            @endif
         @endif
 
         <!-- Signatures & Verification Seal Table -->
