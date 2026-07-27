@@ -241,8 +241,20 @@ export default function AdminExamSurveillanceHubPage() {
         reported_by: inc.reporter?.name || adminSupervisorName
       }))
       setIncidentsList(mappedIncidents)
+
+      const fraudStudentIds = new Set(dbIncidentsData.map((inc: any) => Number(inc.student_id)))
+      const fraudCnes = new Set(dbIncidentsData.map((inc: any) => inc.student?.cne?.toUpperCase()).filter(Boolean))
+
+      setCandidates(prev => prev.map(c => {
+        const isFraud = (c.student_id && fraudStudentIds.has(Number(c.student_id))) || (c.cne && fraudCnes.has(c.cne.toUpperCase()))
+        if (isFraud) {
+          return { ...c, has_fraud: true }
+        }
+        return c
+      }))
     }
   }, [dbIncidentsData])
+
 
   // Mutation to update attendance in DB
   const updateAttendanceMutation = useMutation({
@@ -418,7 +430,7 @@ export default function AdminExamSurveillanceHubPage() {
       } catch (e) {}
 
       setIncidentsList(prev => [newReport, ...prev])
-      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, fraud_details: fraudDescription } : c))
+      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present', fraud_details: fraudDescription } : c))
 
       setShowFraudModal(false)
       toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès ! Transmission automatique au Conseil de Discipline.`, { id: toastId })
@@ -462,7 +474,7 @@ export default function AdminExamSurveillanceHubPage() {
       } catch (e) {}
 
       setIncidentsList(prev => [newReport, ...prev])
-      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true } : c))
+      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present' } : c))
       setShowFraudModal(false)
       toast.success(`🚨 Incident enregistré au PV & Transmis au Conseil de Discipline !`, { id: toastId })
     }
