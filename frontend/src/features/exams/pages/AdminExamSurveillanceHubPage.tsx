@@ -222,7 +222,7 @@ export default function AdminExamSurveillanceHubPage() {
     }
   }, [dbIncidentsData])
 
-  // Populate Candidates from DB Seatings or Students + Merge Incidents
+  // Populate Candidates from DB Seatings or Students + Preserve Local Attendance State & Incidents
   useEffect(() => {
     const fraudStudentIds = new Set<number>()
     const fraudCnes = new Set<string>()
@@ -243,28 +243,44 @@ export default function AdminExamSurveillanceHubPage() {
     })
 
     if (detailsData?.seatings && detailsData.seatings.length > 0) {
-      const mapped: Candidate[] = detailsData.seatings.map((s: any, idx: number) => {
-        const studentId = s.student_id ? Number(s.student_id) : undefined
-        const rawCne = (s.cne || s.student?.cne || '').toUpperCase().trim()
-        const rawName = (s.student_name || s.student?.user?.name || '').toLowerCase().trim()
+      setCandidates(prevCandidates => {
+        const prevCandidateMap = new Map(prevCandidates.map(c => [c.id, c]))
 
-        const isFraud = (studentId && fraudStudentIds.has(studentId))
-          || (rawCne && fraudCnes.has(rawCne))
-          || (rawName && fraudNames.has(rawName))
+        return detailsData.seatings.map((s: any, idx: number) => {
+          const studentId = s.student_id ? Number(s.student_id) : undefined
+          const rawCne = (s.cne || s.student?.cne || '').toUpperCase().trim()
+          const rawName = (s.student_name || s.student?.user?.name || '').toLowerCase().trim()
 
-        return {
-          id: s.id || idx + 1,
-          seating_id: s.id,
-          student_id: s.student_id,
-          cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
-          name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
-          seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
-          status: isFraud ? 'present' : (s.is_present ? 'present' : (s.status || 'absent')),
-          has_fraud: Boolean(isFraud),
-          checkin_time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-        }
+          const isFraud = (studentId && fraudStudentIds.has(studentId))
+            || (rawCne && fraudCnes.has(rawCne))
+            || (rawName && fraudNames.has(rawName))
+
+          const existingCandidate = prevCandidateMap.get(s.id || idx + 1)
+
+          let resolvedStatus: 'present' | 'absent' | 'late' = 'absent'
+          if (isFraud) {
+            resolvedStatus = 'present'
+          } else if (existingCandidate && existingCandidate.status !== 'absent') {
+            resolvedStatus = existingCandidate.status
+          } else if (s.is_present) {
+            resolvedStatus = 'present'
+          } else if (s.status) {
+            resolvedStatus = s.status
+          }
+
+          return {
+            id: s.id || idx + 1,
+            seating_id: s.id,
+            student_id: s.student_id,
+            cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
+            name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
+            seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
+            status: resolvedStatus,
+            has_fraud: Boolean(isFraud),
+            checkin_time: existingCandidate?.checkin_time || (s.updated_at && s.is_present ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined)
+          }
+        })
       })
-      setCandidates(mapped)
     } else if (detailsData?.exam) {
       api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
         .then(res => {
@@ -357,9 +373,7 @@ export default function AdminExamSurveillanceHubPage() {
     setCandidates(prev => prev.map(c => ({ ...c, status: 'present', checkin_time: c.checkin_time || timeNow })))
     playAudioFeedback('present')
 
-    candidates.forEach(c => {
-      updateAttendanceMutation.mutate({ seating_id: c.seating_id, student_id: c.student_id, status: 'present' })
-    })
+    api.post(`/exam-planning/${id}/batch-update-attendance`, { status: 'present' }).catch(() => {})
 
     toast.success('✅ Tous les candidats de la salle ont été marqués PRÉSENTS !', { id: toastId })
   }
@@ -374,9 +388,7 @@ export default function AdminExamSurveillanceHubPage() {
     setCandidates(prev => prev.map(c => ({ ...c, status: 'absent', checkin_time: undefined })))
     playAudioFeedback('absent')
 
-    candidates.forEach(c => {
-      updateAttendanceMutation.mutate({ seating_id: c.seating_id, student_id: c.student_id, status: 'absent' })
-    })
+    api.post(`/exam-planning/${id}/batch-update-attendance`, { status: 'absent' }).catch(() => {})
 
     toast.success('Réinitialisation terminée : Tous les candidats marqués absents.', { id: toastId })
   }

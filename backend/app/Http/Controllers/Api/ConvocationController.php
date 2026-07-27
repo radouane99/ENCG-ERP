@@ -205,6 +205,29 @@ class ConvocationController extends Controller
         return response()->json(['success' => true, 'message' => 'Statut d\'émargement mis à jour']);
     }
 
+    public function batchUpdateAttendance(Request $request, int $examId): JsonResponse
+    {
+        $exam = \App\Models\Exam::find($examId);
+        if ($exam && $exam->is_locked) {
+            return response()->json([
+                'success' => false,
+                'message' => '🔒 Ce Procès-Verbal d\'Examen est scellé. Toute modification est strictly interdite.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:present,absent,late'
+        ]);
+
+        $statusBool = ($validated['status'] === 'present' || $validated['status'] === 'late');
+
+        \DB::table('exam_seatings')
+            ->where('exam_id', $examId)
+            ->update(['is_present' => $statusBool, 'updated_at' => now()]);
+
+        return response()->json(['success' => true, 'message' => 'Émargement de groupe mis à jour avec succès']);
+    }
+
     public function notifyAbsents(int $examId): JsonResponse
     {
         $result = $this->convocationService->notifyAbsents($examId);

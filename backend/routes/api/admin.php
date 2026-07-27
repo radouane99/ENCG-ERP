@@ -359,6 +359,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::get('/{examId}/live-stats', [ConvocationController::class, 'liveStats']);
         Route::get('/{examId}/details', [ConvocationController::class, 'getDetails']);
         Route::post('/{examId}/update-seating-status', [ConvocationController::class, 'updateSeatingStatus']);
+        Route::post('/{examId}/batch-update-attendance', [ConvocationController::class, 'batchUpdateAttendance']);
 
         // [AUDIT ROUTE-01] Fixed: duplicate notify-absents route removed (was registered twice)
         Route::post('/{examId}/notify-absents', [ConvocationController::class, 'notifyAbsents']);
@@ -412,6 +413,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/exam-analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
     Route::get('/analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'globalAnalytics']);
     Route::post('/exams/{id}/pv/lock', [\App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
+    Route::get('/exams/{examId}/pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
 
 
 

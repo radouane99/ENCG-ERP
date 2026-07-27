@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2, Sliders, ArrowUp, ArrowDown, Sparkles, Clock, ListOrdered, Zap, ShieldCheck, Plus, RefreshCw, Layers } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Calendar, CheckSquare, Edit, Trash2, Mail, Users, FileText, Monitor, Printer, AlertTriangle, Loader2, Sliders, ArrowUp, ArrowDown, Sparkles, Clock, ListOrdered, Zap, ShieldCheck, Plus, RefreshCw, Layers, Archive } from 'lucide-react'
 
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { CustomSelect } from '@shared/components/ui'
 
 export default function AdminExamsPage() {
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation('exams')
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
@@ -307,6 +308,13 @@ export default function AdminExamsPage() {
                 className="px-4 py-2.5 bg-[#e6007e] hover:bg-[#cc0070] text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-amber-300" />} Auto-Générer
+              </button>
+
+              <button
+                onClick={() => navigate('/admin/exams/pv-archive')}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                <Archive className="w-4 h-4" /> Archives PVs (SHA-256)
               </button>
 
               <button

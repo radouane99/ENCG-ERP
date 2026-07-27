@@ -194,6 +194,7 @@ const AdminClubFinancePage = lazy(() => import('@features/admin/pages/AdminClubF
 const ClassroomPage = lazy(() => import('@features/classroom/pages/ClassroomPage'))
 const ClassroomShowPage = lazy(() => import('@features/classroom/pages/ClassroomShowPage'))
 const AdminExamsPage = lazy(() => import('@features/exams/pages/AdminExamsPage'))
+const AdminExamPvArchivePage = lazy(() => import('@features/exams/pages/AdminExamPvArchivePage'))
 const AdminExamDisplayListPage = lazy(() => import('@features/exams/pages/AdminExamDisplayListPage'))
 const AdminExamAttendanceSheetPage = lazy(() => import('@features/exams/pages/AdminExamAttendanceSheetPage'))
 const AdminExamLiveAttendancePage = lazy(() => import('@features/exams/pages/AdminExamLiveAttendancePage'))
@@ -361,6 +362,8 @@ export default function RootRouter() {
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
           <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
           <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+          <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
+          <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
           <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
 
 
