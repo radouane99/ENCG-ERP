@@ -642,7 +642,10 @@ export default function AdminExamSurveillanceHubPage() {
 
   // Trigger Print Only A4 PV Document
   const handlePrintOfficialPV = () => {
-    window.print()
+    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
+    const apiUrl = api.defaults.baseURL || '/api'
+    const pdfUrl = `${apiUrl}/exams/${id}/pv-pdf${token ? `?token=${token}` : ''}`
+    window.open(pdfUrl, '_blank')
   }
 
   return (

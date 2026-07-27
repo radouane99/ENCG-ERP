@@ -38,6 +38,16 @@ class AdminExamController extends Controller
             $generatedCount = \DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
                 ->count();
+
+            $presentsCount = \DB::table('exam_seatings')
+                ->where('exam_id', $exam->id)
+                ->where('is_present', true)
+                ->count();
+
+            $incidentsCount = \DB::table('exam_incidents')
+                ->where('exam_id', $exam->id)
+                ->count();
+
             $sentCount = \DB::table('exam_seatings')
                 ->where('exam_id', $exam->id)
                 ->whereNotNull('sent_at')
@@ -62,6 +72,11 @@ class AdminExamController extends Controller
                 'type' => $exam->session_type ?? 'EXAMEN',
                 'surveillants' => $surveillantsText,
                 'generated_count' => $generatedCount,
+                'presents_count' => $presentsCount,
+                'absents_count' => max(0, $generatedCount - $presentsCount),
+                'incidents_count' => $incidentsCount,
+                'is_locked' => (bool) $exam->is_locked,
+                'locked_at' => $exam->locked_at,
                 'sent_count' => $sentCount,
                 'pending_count' => max(0, $generatedCount - $sentCount),
             ];

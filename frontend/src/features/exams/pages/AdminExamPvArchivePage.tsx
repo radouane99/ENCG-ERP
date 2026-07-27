@@ -87,9 +87,19 @@ export default function AdminExamPvArchivePage() {
 
   // Handlers for PDF download/print
   const handlePrintExamPdf = (examId: number) => {
-    toast.info('Génération et ouverture du PV d\'Examen Officiel A4 (PDF)...')
+    toast.info('Génération et ouverture du PV d\'Émargement Officiel A4 (PDF)...')
+    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    window.open(`${apiUrl}/exams/${examId}/pv-pdf`, '_blank')
+    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf${token ? `?token=${token}` : ''}`
+    window.open(pdfUrl, '_blank')
+  }
+
+  const handlePrintNotesPdf = (examId: number) => {
+    toast.info('Génération et ouverture du Bordereau de Notes A4 (PDF)...')
+    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
+    const apiUrl = api.defaults.baseURL || '/api'
+    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?with_notes=1${token ? `&token=${token}` : ''}`
+    window.open(pdfUrl, '_blank')
   }
 
   // Options for Dropdowns
@@ -377,18 +387,18 @@ export default function AdminExamPvArchivePage() {
                         {/* Presence & Copies Count */}
                         <td className="p-3.5 text-center whitespace-nowrap">
                           <div className="font-black text-slate-800 dark:text-slate-200">
-                            {exam.generated_count || 45} Émargés
+                            {exam.presents_count ?? exam.generated_count ?? 0} Émargés
                           </div>
                           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center gap-1 mt-0.5">
-                            <Package className="w-3 h-3" /> {exam.generated_count || 45} Copies Scellées
+                            <Package className="w-3.5 h-3.5" /> {exam.presents_count ?? exam.generated_count ?? 0} Copies Scellées
                           </div>
                         </td>
 
                         {/* Incidents */}
                         <td className="p-3.5 text-center">
-                          {exam.incidents_count || exam.has_fraud ? (
+                          {exam.incidents_count ? (
                             <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px] inline-flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3 text-rose-600" /> {exam.incidents_count || 1} Incident(s)
+                              <AlertTriangle className="w-3 h-3 text-rose-600" /> {exam.incidents_count} Incident(s)
                             </span>
                           ) : (
                             <span className="text-slate-400 text-[11px]">—</span>
@@ -402,9 +412,18 @@ export default function AdminExamPvArchivePage() {
                               type="button"
                               onClick={() => handlePrintExamPdf(exam.id)}
                               className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                              title="Imprimer / Télécharger le PV d'Examen au format PDF A4 Officiel"
+                              title="PV d'Émargement Officiel avec Signature Étudiant (sans colonne note)"
                             >
-                              <Printer className="w-3.5 h-3.5 text-amber-300" /> Imprimer PV (PDF)
+                              <Printer className="w-3.5 h-3.5 text-amber-300" /> PV Émargement
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handlePrintNotesPdf(exam.id)}
+                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                              title="Bordereau de Notes avec colonne Note / 20 pour Enseignants"
+                            >
+                              <FileText className="w-3.5 h-3.5" /> Bordereau Notes
                             </button>
 
                             <button
@@ -467,8 +486,8 @@ export default function AdminExamPvArchivePage() {
                   <div><b>Horaire :</b> {inspectedExam.start_time || '08:30'}</div>
                   <div><b>Salle / Amphi :</b> {inspectedExam.room?.name || 'Amphi A'}</div>
                   <div><b>Groupe Cible :</b> {inspectedExam.group?.name || 'Tous Groupes'}</div>
-                  <div><b>Statut du PV :</b> <strong className={inspectedExam.is_locked ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>{inspectedExam.is_locked ? '🔒 PV Scellé SHA-256' : '🟡 En Cours'}</strong></div>
-                  <div><b>Copies Enveloppe :</b> <strong>{inspectedExam.generated_count || 45} Copies</strong></div>
+                  <div><b>Émargés / Présents :</b> <strong>{inspectedExam.presents_count ?? 0} / {inspectedExam.generated_count ?? 0} Étudiants</strong></div>
+                  <div><b>Copies Enveloppe :</b> <strong>{inspectedExam.presents_count ?? inspectedExam.generated_count ?? 0} Copies Scellées</strong></div>
                 </div>
 
                 {inspectedExam.is_locked && (

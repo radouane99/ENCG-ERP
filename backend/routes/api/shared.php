@@ -7,6 +7,7 @@ Route::get('/documents/verify/{documentId}', [\App\Http\Controllers\Api\PublicVe
 Route::get('/verify/pv/{moduleId}/{groupId}', [\App\Http\Controllers\Api\PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [\App\Http\Controllers\Api\StudentCardController::class, 'verify']);
 Route::get('/verify/surveillance/{token}/confirm', [\App\Http\Controllers\Api\ConvocationController::class, 'confirmReception']);
+Route::get('/exams/{examId}/pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (\Illuminate\Http\Request $request) {

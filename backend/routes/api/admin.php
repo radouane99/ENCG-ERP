@@ -413,7 +413,6 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/exam-analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
     Route::get('/analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'globalAnalytics']);
     Route::post('/exams/{id}/pv/lock', [\App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
-    Route::get('/exams/{examId}/pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
 
 
 

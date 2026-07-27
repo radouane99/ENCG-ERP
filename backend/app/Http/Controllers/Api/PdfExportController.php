@@ -392,15 +392,48 @@ class PdfExportController extends Controller
 
     public function pvExamen($examId)
     {
-        $exam = \App\Models\Exam::with('module')->findOrFail($examId);
-        $seatings = \App\Models\ExamSeating::with('student.user')->where('exam_id', $examId)->get();
-        
+        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room', 'examSession'])->findOrFail($examId);
+
+        $seatings = \DB::table('exam_seatings')
+            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->where('exam_seatings.exam_id', $examId)
+            ->select('exam_seatings.*', 'users.first_name', 'users.last_name', 'users.name as user_name', 'students.cne')
+            ->orderBy('exam_seatings.seat_number')
+            ->get();
+
+        $surveillances = \DB::table('exam_surveillances')
+            ->leftJoin('users', 'exam_surveillances.professor_id', '=', 'users.id')
+            ->where('exam_id', $examId)
+            ->select('users.first_name', 'users.last_name', 'users.name as prof_name')
+            ->get();
+
+        $incidents = \DB::table('exam_incidents')
+            ->leftJoin('students', 'exam_incidents.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->where('exam_id', $examId)
+            ->select('exam_incidents.*', 'users.first_name', 'users.last_name', 'users.name as student_name', 'students.cne')
+            ->get();
+
+        $seal = 'SHA256:ENCG-FES-' . $examId . '-' . strtoupper(substr(md5($examId . ($exam->locked_at ?? now())), 0, 16));
+
+        $showNotes = request()->query('with_notes') == '1' || request()->query('type') === 'notes';
+
         $pdf = $this->getPdfInstance('pdf.pv_examen', [
             'exam_id' => $examId,
             'exam' => $exam,
-            'seatings' => $seatings
+            'seatings' => $seatings,
+            'surveillances' => $surveillances,
+            'incidents' => $incidents,
+            'show_notes' => $showNotes,
+            'total_students' => $seatings->count(),
+            'present_students' => $seatings->where('is_present', true)->count(),
+            'absent_students' => $seatings->where('is_present', false)->count(),
+            'seal' => $seal,
+            'generated_at' => now()->format('d/m/Y H:i CASABLANCA')
         ]);
-        return $pdf->download("pv_examen_{$examId}.pdf");
+
+        return $pdf->stream("PV_Examen_{$examId}.pdf", ["Attachment" => false]);
     }
 
     public function pvGlobal()
