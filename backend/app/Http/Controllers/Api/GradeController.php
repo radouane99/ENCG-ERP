@@ -89,13 +89,28 @@ class GradeController extends Controller
         $typeLower = strtolower(trim($assessment->type));
         $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
 
-        // Fetch fraud cases for exams belonging to this module
+        // 1. Fetch direct fraud cases for exams belonging to THIS SPECIFIC MODULE ONLY
         $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
 
-        $allFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+        $directModuleFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
             ->whereIn('exam_id', $moduleExams)
             ->pluck('student_id')
             ->toArray();
+
+        // 2. Fetch semester/annual expanded sanctions pronounced by the Conseil de Discipline
+        $currentModule = \App\Models\Module::find($assessment->module_id);
+        $semesterModuleIds = \App\Models\Module::where('filiere_id', $currentModule->filiere_id ?? 1)
+            ->where('semester_number', $currentModule->semester_number ?? 1)
+            ->pluck('id');
+        $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+
+        $expandedSanctionStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $semesterExams)
+            ->whereIn('sanction_scope', ['semestre', 'annee'])
+            ->pluck('student_id')
+            ->toArray();
+
+        $allFraudStudentIds = array_unique(array_merge($directModuleFraudStudentIds, $expandedSanctionStudentIds));
 
         // Eager load user and grades for this specific assessment
         $students = $studentsQuery->with(['user', 'grades' => function ($q) use ($assessmentId) {
@@ -255,7 +270,21 @@ class GradeController extends Controller
         $isExamAssessment = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'rattrapage') || str_contains($typeLower, 'final');
 
         $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
-        $allFraudIds = \Illuminate\Support\Facades\DB::table('exam_incidents')->whereIn('exam_id', $moduleExams)->pluck('student_id')->toArray();
+        $directModuleFraudIds = \Illuminate\Support\Facades\DB::table('exam_incidents')->whereIn('exam_id', $moduleExams)->pluck('student_id')->toArray();
+
+        $currentModule = \App\Models\Module::find($assessment->module_id);
+        $semesterModuleIds = \App\Models\Module::where('filiere_id', $currentModule->filiere_id ?? 1)
+            ->where('semester_number', $currentModule->semester_number ?? 1)
+            ->pluck('id');
+        $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+
+        $expandedSanctionIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $semesterExams)
+            ->whereIn('sanction_scope', ['semestre', 'annee'])
+            ->pluck('student_id')
+            ->toArray();
+
+        $allFraudIds = array_unique(array_merge($directModuleFraudIds, $expandedSanctionIds));
 
         foreach ($validated['grades'] as $gradeData) {
             $isStudentFraud = $isExamAssessment && in_array($gradeData['student_id'], $allFraudIds);
@@ -369,7 +398,32 @@ class GradeController extends Controller
             $assessments = $module->fresh()->assessments;
         }
 
-        $data = $students->map(function ($student) use ($normaleAssessments, $rattrapageAssessment) {
+        // Fetch fraud cases strictly for this module or expanded semester/annual sanctions
+        $moduleExams = \App\Models\Exam::where('module_id', $moduleId)->pluck('id');
+        $directModuleFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->where(function($q) use ($moduleExams, $moduleId) {
+                $q->whereIn('exam_id', $moduleExams)
+                  ->orWhere('exam_id', $moduleId);
+            })
+            ->pluck('student_id')
+            ->toArray();
+
+        $semesterModuleIds = \App\Models\Module::where('filiere_id', $module->filiere_id ?? 1)
+            ->where('semester_number', $module->semester_number ?? 1)
+            ->pluck('id');
+        $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+
+        $expandedSanctionStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $semesterExams)
+            ->whereIn('sanction_scope', ['semestre', 'annee'])
+            ->pluck('student_id')
+            ->toArray();
+
+        $moduleFraudStudentIds = array_unique(array_merge($directModuleFraudStudentIds, $expandedSanctionStudentIds));
+
+        $data = $students->map(function ($student) use ($normaleAssessments, $rattrapageAssessment, $moduleFraudStudentIds) {
+            $isStudentFraudInThisModule = in_array($student->id, $moduleFraudStudentIds);
+
             $studentGrades = \App\Models\Grade::where('student_id', $student->id)
                 ->whereIn('assessment_id', $normaleAssessments->pluck('id'))
                 ->get();
@@ -379,20 +433,32 @@ class GradeController extends Controller
             $weightedSum = 0;
 
             foreach ($normaleAssessments as $a) {
+                $typeLower = strtolower(trim($a->type));
+                $isExamType = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'final') || $a->weight >= 50;
+
                 $grade = $studentGrades->firstWhere('assessment_id', $a->id);
                 $val = $grade ? $grade->value : null;
                 $isAbsent = $grade ? $grade->absent : false;
                 
+                if ($isStudentFraudInThisModule && $isExamType) {
+                    $val = 0.0;
+                    $isAbsent = false;
+                }
+
                 $gradeData = [
-                    'value' => $val,
+                    'value' => ($isStudentFraudInThisModule && $isExamType) ? 0.0 : $val,
                     'is_absent' => $isAbsent,
+                    'is_fraud' => ($isStudentFraudInThisModule && $isExamType),
                     'weight' => $a->weight
                 ];
                 $gradesDetail[$a->type] = $gradeData;
                 $gradesDetail[$a->id] = $gradeData;
 
-                // If absent, value is treated as 0 for calculation
+                // If absent or fraud, value is treated as 0 for calculation
                 $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
+                if ($isStudentFraudInThisModule && $isExamType) {
+                    $calcVal = 0.0;
+                }
                 
                 if ($calcVal !== null) {
                     $weightedSum += $calcVal * ($a->weight / 100);
@@ -484,12 +550,20 @@ class GradeController extends Controller
 
 
 
+            if ($isStudentFraudInThisModule) {
+                $moyenneNormale = 0.0;
+                $decisionNormale = 'FRAUDE';
+                $moyenneFinale = 0.0;
+                $decisionFinale = 'FRAUDE';
+            }
+
             return [
                 'student_id' => $student->id,
                 'first_name' => $student->first_name,
                 'last_name' => $student->last_name,
                 'student_number' => $student->student_number,
                 'apogee' => $student->cne_cme ?? $student->student_number,
+                'is_fraud' => $isStudentFraudInThisModule,
                 'grades_detail' => $gradesDetail,
                 'moyenne_normale' => $moyenneNormale,
                 'decision_normale' => $decisionNormale,
@@ -1087,15 +1161,29 @@ class GradeController extends Controller
 
                 if ($isExamAssessment) {
                     $moduleExams = \App\Models\Exam::where('module_id', $assessment->module_id)->pluck('id');
-                    $isStudentFraud = \Illuminate\Support\Facades\DB::table('exam_incidents')
+                    $isDirectFraud = \Illuminate\Support\Facades\DB::table('exam_incidents')
                         ->whereIn('exam_id', $moduleExams)
                         ->where('student_id', $student->id)
                         ->exists();
 
+                    $currentModule = \App\Models\Module::find($assessment->module_id);
+                    $semesterModuleIds = \App\Models\Module::where('filiere_id', $currentModule->filiere_id ?? 1)
+                        ->where('semester_number', $currentModule->semester_number ?? 1)
+                        ->pluck('id');
+                    $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+
+                    $isExpandedSanction = \Illuminate\Support\Facades\DB::table('exam_incidents')
+                        ->whereIn('exam_id', $semesterExams)
+                        ->where('student_id', $student->id)
+                        ->whereIn('sanction_scope', ['semestre', 'annee'])
+                        ->exists();
+
+                    $isStudentFraud = $isDirectFraud || $isExpandedSanction;
+
                     if ($isStudentFraud) {
                         $value = 0.0;
                         $absent = false;
-                        $warnings[] = "⚠️ {$student->last_name} {$student->first_name} : Signalé pour FRAUDE au PV d'Examen. La note du fichier Excel a été forcée à 00/20.";
+                        $warnings[] = "⚠️ {$student->last_name} {$student->first_name} : Signalé pour FRAUDE (Conseil de Discipline). La note du fichier Excel a été forcée à 00/20.";
                     }
                 }
 

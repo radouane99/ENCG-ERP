@@ -107,4 +107,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
+    // Public PDF streaming for Disciplinary Council
+    Route::get('/incidents/{id}/convocation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'convocationDisciplinePdf']);
+    Route::get('/incidents/{id}/decision-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'decisionDisciplinePdf']);
 });

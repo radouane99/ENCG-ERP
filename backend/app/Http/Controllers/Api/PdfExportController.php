@@ -994,9 +994,32 @@ class PdfExportController extends Controller
 
         // Get assessments
         $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
-        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
+        // Fetch fraud cases strictly for this module or expanded semester/annual sanctions
+        $moduleExams = \App\Models\Exam::where('module_id', $moduleId)->pluck('id');
+        $directModuleFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->where(function($q) use ($moduleExams, $moduleId) {
+                $q->whereIn('exam_id', $moduleExams)
+                  ->orWhere('exam_id', $moduleId);
+            })
+            ->pluck('student_id')
+            ->toArray();
 
-        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment) {
+        $semesterModuleIds = \App\Models\Module::where('filiere_id', $module->filiere_id ?? 1)
+            ->where('semester_number', $module->semester_number ?? 1)
+            ->pluck('id');
+        $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+
+        $expandedSanctionStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
+            ->whereIn('exam_id', $semesterExams)
+            ->whereIn('sanction_scope', ['semestre', 'annee'])
+            ->pluck('student_id')
+            ->toArray();
+
+        $moduleFraudStudentIds = array_unique(array_merge($directModuleFraudStudentIds, $expandedSanctionStudentIds));
+
+        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $moduleFraudStudentIds) {
+            $isStudentFraudInThisModule = in_array($student->id, $moduleFraudStudentIds);
+
             $studentGrades = \App\Models\Grade::where('student_id', $student->id)
                 ->whereIn('assessment_id', $module->assessments->pluck('id'))
                 ->get();
@@ -1006,14 +1029,32 @@ class PdfExportController extends Controller
             $weightedSum = 0;
 
             foreach ($normaleAssessments as $a) {
+                $typeLower = strtolower(trim($a->type));
+                $isExamType = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'final') || $a->weight >= 50;
+
                 $grade = $studentGrades->firstWhere('assessment_id', $a->id);
                 $val = $grade ? $grade->value : null;
                 $isAbsent = $grade ? $grade->absent : false;
-                
-                $gradesDetail[$a->id] = ['value' => $val, 'is_absent' => $isAbsent, 'weight' => $a->weight, 'type' => $a->type];
+
+                if ($isStudentFraudInThisModule && $isExamType) {
+                    $val = 0.0;
+                    $isAbsent = false;
+                }
+
+                $gradesDetail[$a->id] = [
+                    'value' => ($isStudentFraudInThisModule && $isExamType) ? 0.0 : $val,
+                    'is_absent' => $isAbsent,
+                    'is_fraud' => ($isStudentFraudInThisModule && $isExamType),
+                    'weight' => $a->weight,
+                    'type' => $a->type
+                ];
                 $gradesDetail[$a->type] = $gradesDetail[$a->id];
 
                 $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
+                if ($isStudentFraudInThisModule && $isExamType) {
+                    $calcVal = 0.0;
+                }
+
                 if ($calcVal !== null) {
                     $weightedSum += $calcVal * ($a->weight / 100);
                     $totalWeight += $a->weight;
@@ -1064,6 +1105,13 @@ class PdfExportController extends Controller
                     $moyenneFinale = max($moyenneNormale ?? 0, $rCalcVal);
                 }
                 $decisionFinale = $moyenneFinale >= 10 ? 'VAR' : 'NV';
+            }
+
+            if ($isStudentFraudInThisModule) {
+                $moyenneNormale = 0.00;
+                $decisionNormale = 'FRAUDE';
+                $moyenneFinale = 0.00;
+                $decisionFinale = 'FRAUDE';
             }
 
             return [
@@ -1451,6 +1499,52 @@ class PdfExportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
+    }
+
+    /**
+     * Download Official Disciplinary Hearing Convocation PDF (Convocation au Conseil de Discipline).
+     */
+    public function convocationDisciplinePdf($incidentId)
+    {
+        $incident = \App\Models\ExamIncident::with(['exam.module.filiere', 'exam.session', 'student.user'])->findOrFail($incidentId);
+        $student = $incident->student;
+        $user = $student?->user;
+        $exam = $incident->exam;
+        $module = $exam?->module;
+
+        $pdf = $this->getPdfInstance('pdf.convocation_discipline', [
+            'incident' => $incident,
+            'student'  => $student,
+            'user'     => $user,
+            'exam'     => $exam,
+            'module'   => $module,
+            'sealHash' => strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$student->id}-ENCG")),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("Convocation_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
+    }
+
+    /**
+     * Download Official Disciplinary Decision Sheet PDF (Décision Officielle du Conseil de Discipline).
+     */
+    public function decisionDisciplinePdf($incidentId)
+    {
+        $incident = \App\Models\ExamIncident::with(['exam.module.filiere', 'exam.session', 'student.user'])->findOrFail($incidentId);
+        $student = $incident->student;
+        $user = $student?->user;
+        $exam = $incident->exam;
+        $module = $exam?->module;
+
+        $pdf = $this->getPdfInstance('pdf.decision_discipline', [
+            'incident' => $incident,
+            'student'  => $student,
+            'user'     => $user,
+            'exam'     => $exam,
+            'module'   => $module,
+            'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$student->id}-" . ($incident->sanction_scope ?? 'module'))),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("Decision_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
     }
 }
 

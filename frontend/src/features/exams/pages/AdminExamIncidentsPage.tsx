@@ -89,9 +89,25 @@ export default function AdminExamIncidentsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <button className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-md transition-colors" title="Voir les détails">
-                          <FileText className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => window.open(`/api/incidents/${incident.id}/convocation-pdf`, '_blank')}
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-blue-200" 
+                            title="Télécharger la Convocation au Conseil de Discipline"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> Convocation (PDF)
+                          </button>
+
+                          <button 
+                            type="button"
+                            onClick={() => window.open(`/api/incidents/${incident.id}/decision-pdf`, '_blank')}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-rose-200" 
+                            title="Télécharger la Décision Officielle du Conseil de Discipline"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> Décision (PDF)
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

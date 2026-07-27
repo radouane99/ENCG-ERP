@@ -232,9 +232,12 @@
                             $info = $rowGrades[$a->id] ?? $rowGrades[$a->type] ?? null;
                             $val = $info ? $info['value'] : null;
                             $abs = $info ? $info['is_absent'] : false;
+                            $isFraudCell = $info ? ($info['is_fraud'] ?? false) : false;
                         @endphp
                         <td>
-                            @if($abs)
+                            @if($isFraudCell)
+                                <span style="color: #b91c1c; font-weight: bold;">0.00 (FRAUDE)</span>
+                            @elseif($abs)
                                 <span style="color: #dc2626; font-weight: bold;">ABI</span>
                             @elseif($val !== null)
                                 {{ number_format((float)$val, 2, '.', '') }}
@@ -245,12 +248,18 @@
                     @endforeach
 
                     <td class="moyenne-col">
-                        {{ $student['moyenne_normale'] !== null ? number_format((float)$student['moyenne_normale'], 2, '.', '') : '-' }}
+                        @if(!empty($student['is_fraud']) || $student['decision_normale'] === 'FRAUDE')
+                            <span style="color: #b91c1c; font-weight: bold;">0.00</span>
+                        @else
+                            {{ $student['moyenne_normale'] !== null ? number_format((float)$student['moyenne_normale'], 2, '.', '') : '-' }}
+                        @endif
                     </td>
 
                     <td>
                         @php $dec = $student['decision_normale']; @endphp
-                        @if($dec === 'V')
+                        @if(!empty($student['is_fraud']) || $dec === 'FRAUDE')
+                            <span class="badge badge-nv" style="background-color: #b91c1c; color: #fff; font-weight: bold;">FRAUDE</span>
+                        @elseif($dec === 'V')
                             <span class="badge badge-v">V</span>
                         @elseif($dec === 'R')
                             <span class="badge badge-r">R</span>

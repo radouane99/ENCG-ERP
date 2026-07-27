@@ -1856,19 +1856,23 @@ export default function AdminGradesPVPage() {
 
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
                       {filteredStudents.map((s: any, sIdx: number) => {
-                        const studentIncident = (allExamIncidents || []).find((inc: any) => {
+                        const studentExpandedSanction = (allExamIncidents || []).find((inc: any) => {
+                          const incScope = inc.sanction_scope;
+                          if (incScope !== 'semestre' && incScope !== 'annee') return false;
 
-                          const incStudentId = inc.student_id || inc.student?.id
-                          const incCne = inc.cne || inc.student?.cne
-                          const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase()
-                          const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase()
+                          const incStudentId = inc.student_id || inc.student?.id;
+                          const incCne = inc.cne || inc.student?.cne;
+                          const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase();
+                          const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase();
+
                           return (
                             (incStudentId && String(incStudentId) === String(s.student_id)) ||
                             (incCne && String(incCne) === String(s.cne)) ||
                             (incName && incName.length > 2 && fullName.includes(incName))
-                          )
-                        })
-                        const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || (studentIncident && (studentIncident.type === 'fraude' || String(studentIncident.type).includes('Fraude')))
+                          );
+                        });
+
+                        const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || !!studentExpandedSanction;
 
                         const statusColorBorder = 
                           hasStudentFraud ? 'border-l-4 border-l-rose-600' :
@@ -2819,23 +2823,37 @@ export default function AdminGradesPVPage() {
                   const isRattrapage = student.decision_normale === 'R'
                   const rowGrades = student.grades_detail || {}
 
-                  const studentIncident = (allExamIncidents || []).find((inc: any) => {
-                    const incStudentId = inc.student_id || inc.student?.id
-                    const incCne = inc.cne || inc.student?.cne || inc.apogee
-                    const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || inc.student?.name || '').toLowerCase()
-                    const fullName = `${student.last_name || ''} ${student.first_name || ''}`.toLowerCase()
-                    return (
-                      (incStudentId && String(incStudentId) === String(student.student_id)) ||
-                      (incCne && String(incCne) === String(student.cne || student.apogee)) ||
-                      (incName && incName.length > 2 && fullName.includes(incName))
-                    )
-                  })
+                  const currentModuleId = pvData?.module?.id || moduleId;
 
-                  const hasFraud = student.is_fraud || student.decision_normale === 'FRAUDE' || (studentIncident && (studentIncident.type === 'fraude' || String(studentIncident.type).includes('Fraude')))
+                  const studentIncident = (allExamIncidents || []).find((inc: any) => {
+                    const incModuleId = inc.exam?.module_id || inc.module_id || (inc.exam?.module?.id);
+                    const incScope = inc.sanction_scope;
+
+                    const incStudentId = inc.student_id || inc.student?.id;
+                    const incCne = inc.cne || inc.student?.cne || inc.apogee || inc.student_number;
+                    const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || inc.student?.name || '').toLowerCase();
+                    const fullName = `${student.last_name || ''} ${student.first_name || ''}`.toLowerCase();
+
+                    const matchesStudent = (
+                      (incStudentId && (String(incStudentId) === String(student.student_id) || String(incStudentId) === String(student.id))) ||
+                      (incCne && (String(incCne) === String(student.cne || student.apogee || student.student_number))) ||
+                      (incName && incName.length > 2 && fullName.includes(incName))
+                    );
+
+                    if (!matchesStudent) return false;
+
+                    // Match ONLY if incident belongs to THIS specific module OR has a semester/annual expanded sanction
+                    const isThisModule = incModuleId && String(incModuleId) === String(currentModuleId);
+                    const isExpandedSanction = incScope === 'semestre' || incScope === 'annee';
+
+                    return isThisModule || isExpandedSanction;
+                  });
+
+                  const hasFraud = Boolean(student.is_fraud) || (studentIncident && (studentIncident.type === 'fraude' || String(studentIncident.type).includes('Fraude')));
 
                   return (
                     <tr
-                      key={student.student_id}
+                      key={student.student_id || student.id}
                       className={cn(
                         "hover:bg-slate-50 transition-colors text-center font-medium",
                         hasFraud && "bg-rose-50/50 border-l-4 border-l-rose-600",
@@ -2843,7 +2861,7 @@ export default function AdminGradesPVPage() {
                         session === 'totale' && student.decision_normale === 'NV' && !hasFraud && "bg-red-50/20 opacity-60"
                       )}
                     >
-                      <td className="border border-slate-300 p-3 text-left font-bold text-slate-500">{student.apogee}</td>
+                      <td className="border border-slate-300 p-3 text-left font-bold text-slate-500">{student.apogee || student.student_number}</td>
                       <td className="border border-slate-300 p-3 text-left font-bold text-slate-800 uppercase">
                         {student.last_name} {student.first_name}
                         {hasFraud && (
@@ -2855,7 +2873,8 @@ export default function AdminGradesPVPage() {
 
                       {/* CC/Exam Grades */}
                       {displayAssessments.map((a: any) => {
-                        const isExamAssessment = a.type?.toLowerCase().includes('exam') || a.name?.toLowerCase().includes('exam')
+                        const typeLower = (a.type || a.name || '').toLowerCase();
+                        const isExamAssessment = typeLower.includes('exam') || typeLower.includes('examen') || typeLower.includes('final') || typeLower.includes('rattrapage');
                         const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {}
                         return (
                           <td key={a.id} className={cn("border border-slate-300 p-3 font-semibold", hasFraud && isExamAssessment && "bg-rose-100 text-rose-700 font-black")}>
@@ -2864,7 +2883,7 @@ export default function AdminGradesPVPage() {
                             ) : gradeInfo.is_absent ? (
                               <span className="text-red-500 font-bold uppercase">ABI</span>
                             ) : (
-                              gradeInfo.value !== null ? parseFloat(gradeInfo.value).toFixed(2) : '-'
+                              gradeInfo.value !== null && gradeInfo.value !== undefined ? parseFloat(gradeInfo.value).toFixed(2) : '-'
                             )}
                           </td>
                         )
