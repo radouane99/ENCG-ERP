@@ -131,6 +131,47 @@ class GeminiAiDriver implements AiServiceInterface
         return json_decode($matches[0] ?? '{}', true) ?? [];
     }
 
+    /**
+     * Multimodal Gemini 1.5 Flash Vision API call (Text + Base64 Images)
+     */
+    public function generateMultimodal(string $prompt, array $imagesBase64 = []): string
+    {
+        $parts = [['text' => $prompt]];
+
+        foreach ($imagesBase64 as $img) {
+            $mime = 'image/jpeg';
+            $base64Data = $img;
+
+            if (str_contains($img, ';base64,')) {
+                [$header, $base64Data] = explode(';base64,', $img);
+                $mime = str_replace('data:', '', $header);
+            }
+
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => $mime,
+                    'data'      => $base64Data,
+                ]
+            ];
+        }
+
+        $response = $this->client()->post("/{$this->model}:generateContent?key={$this->apiKey}", [
+            'system_instruction' => ['parts' => [['text' => self::SYSTEM_PROMPT]]],
+            'contents'           => [['role' => 'user', 'parts' => $parts]],
+            'generationConfig'   => [
+                'temperature'     => 0.2,
+                'maxOutputTokens' => 1024,
+            ],
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Gemini Multimodal API error', ['status' => $response->status(), 'body' => $response->body()]);
+            throw new RuntimeException('Gemini Multimodal request failed: ' . $response->status());
+        }
+
+        return $response->json('candidates.0.content.parts.0.text', '');
+    }
+
     public function getDriverName(): string
     {
         return 'gemini';

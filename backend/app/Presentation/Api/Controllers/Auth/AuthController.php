@@ -171,6 +171,23 @@ class AuthController extends Controller
             'bac_year' => 'required|numeric',
             'high_school_city' => 'required|string|max:255',
             'filiere' => 'required|string|max:255',
+            // Handicap / Accessibilité (MESRSFC / RAMED)
+            'has_disability' => 'nullable|boolean',
+            'disability_type' => 'nullable|string|max:100',
+            'disability_details' => 'nullable|string|max:500',
+
+            // Parents & Contact d'urgence
+            'father_phone' => 'nullable|string|max:50',
+            'mother_phone' => 'nullable|string|max:50',
+            'parent_phone' => 'nullable|string|max:50',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:50',
+
+            // Fiche Médicale / Santé
+            'allergy_type' => 'nullable|string|max:255',
+            'has_medical_followup' => 'nullable|boolean',
+            'medication_used' => 'nullable|string|max:255',
+            'treating_doctor_info' => 'nullable|string|max:255',
         ]);
 
         try {

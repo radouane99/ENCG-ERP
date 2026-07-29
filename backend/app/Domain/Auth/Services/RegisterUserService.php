@@ -69,6 +69,21 @@ class RegisterUserService
                     'bac_year' => $data['bac_year'],
                     'bac_series' => $data['bac_series'],
                     'status' => 'submitted',
+                    // Handicap / Accessibilité (MESRSFC / RAMED)
+                    'has_disability' => $data['has_disability'] ?? false,
+                    'disability_type' => $data['disability_type'] ?? null,
+                    'disability_details' => $data['disability_details'] ?? null,
+                    // Parents & Contact d'urgence
+                    'father_phone' => $data['father_phone'] ?? null,
+                    'mother_phone' => $data['mother_phone'] ?? null,
+                    'parent_phone' => $data['parent_phone'] ?? $data['father_phone'] ?? null,
+                    'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                    'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                    // Fiche Médicale / Santé
+                    'allergy_type' => $data['allergy_type'] ?? null,
+                    'has_medical_followup' => $data['has_medical_followup'] ?? false,
+                    'medication_used' => $data['medication_used'] ?? null,
+                    'treating_doctor_info' => $data['treating_doctor_info'] ?? null,
                 ]);
             }
 

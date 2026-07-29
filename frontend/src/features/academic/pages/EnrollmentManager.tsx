@@ -550,6 +550,24 @@ export default function EnrollmentManager() {
                             >
                               🏷️ Carte CR80
                             </button>
+
+                            {/* 📜 Engagement (تعهد) */}
+                            <button
+                              onClick={() => window.open(`/api/admin/students/engagement-pdf?student_id=${s.id}`, '_blank')}
+                              className="px-3 py-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 cursor-pointer shadow-xs"
+                              title="Imprimer l'Engagement officiel ENCG Fès (تعهد)"
+                            >
+                              📜 Engagement
+                            </button>
+
+                            {/* 🏥 Fiche Médicale */}
+                            <button
+                              onClick={() => window.open(`/api/admin/students/fiche-medicale-pdf?student_id=${s.id}`, '_blank')}
+                              className="px-3 py-2 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs"
+                              title="Imprimer la Fiche de Renseignements Médicaux"
+                            >
+                              🏥 Fiche Médicale
+                            </button>
                           </div>
                         </td>
                       </tr>

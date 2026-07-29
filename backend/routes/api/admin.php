@@ -262,7 +262,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);
     // ── Carte Étudiant CR80 ISO ID-1 — Evolis Primacy 2 (Recommendation #1)
     Route::get('students/{student}/carte-etudiant-cr80-pdf', [PdfExportController::class, 'downloadCarteEtudiantCR80Pdf']);
-    // ── Inscription Workflow (Recommendations #2, #5, #7)
+    // ── 📜 Engagement (تعهد) + 🏥 Fiche Médicale — Documents Dossier Physique
+    Route::get('students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+    Route::get('students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    // ── Inscription Workflow & AI Gemini Vision Audit (Recommendations #1, #2, #4, #5, #7)
+    Route::post('students/{student}/ai-audit', [StudentController::class, 'auditWithGeminiAi']);
+    Route::post('students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
     Route::patch('students/{student}/inscription-status', [StudentController::class, 'updateInscriptionStatus']);
     Route::get('students/{student}/dossier-audit-log', [StudentController::class, 'getDossierAuditLog']);
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);

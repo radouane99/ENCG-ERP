@@ -207,19 +207,32 @@ export default function InscriptionPage() {
     password: '',
     password_confirmation: '',
     
-    // Step 2: Parents
+    // Step 2: Parents & Urgence
     father_last_name_fr: '',
     father_first_name_fr: '',
     father_last_name_ar: '',
     father_first_name_ar: '',
     father_cin: '',
+    father_phone: '',
     father_job: 'Militaires et forces de sécurité',
     mother_last_name_fr: '',
     mother_first_name_fr: '',
     mother_last_name_ar: '',
     mother_first_name_ar: '',
     mother_cin: '',
+    mother_phone: '',
     mother_job: 'Sans emploi',
+    parent_phone: '',
+
+    // Personne à joindre en cas d'urgence
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+
+    // Fiche Médicale / Santé
+    allergy_type: '',
+    has_medical_followup: false as boolean,
+    medication_used: '',
+    treating_doctor_info: '',
     
     // Step 3: Académique
     bac_name: 'Bac Sciences Mathématiques B - Option Français',
@@ -239,6 +252,11 @@ export default function InscriptionPage() {
     photo_url: '',
     photo_zoom: 100,
     photo_output_size: '413 x 531 px',
+
+    // Step 1 extra: Handicap
+    has_disability: false as boolean,
+    disability_type: '' as string,
+    disability_details: '' as string,
   });
 
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -755,6 +773,114 @@ export default function InscriptionPage() {
                       </div>
                     </SectionCard>
 
+                    {/* Section 5: Situation en matière de Handicap */}
+                    <SectionCard title="5. Situation de Handicap (اختياري — إن وجد)" icon={Shield}>
+                      <div className="space-y-4">
+                        {/* Toggle Has Disability */}
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                          <div>
+                            <p className="text-xs font-black text-blue-900 dark:text-blue-200">♿ Avez-vous une situation de handicap ?</p>
+                            <p className="text-[10px] text-blue-700 dark:text-blue-400 font-medium">Ces informations permettent à l'ENCG de vous offrir un accompagnement adapté (RAMED / MESRSFC).</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={formData.has_disability}
+                              onChange={(e) => setFormData({ ...formData, has_disability: e.target.checked, disability_type: '', disability_details: '' })}
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+
+                        {/* Conditional fields if has_disability === true */}
+                        {formData.has_disability && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <Field
+                              icon={User}
+                              label="Type de handicap"
+                              as="select"
+                              name="disability_type"
+                              value={formData.disability_type}
+                              onChange={handleChange}
+                            >
+                              <option value="">-- Sélectionner --</option>
+                              <option value="moteur">♿ Moteur / Physique</option>
+                              <option value="visuel">👁️ Visuel (malvoyant/non-voyant)</option>
+                              <option value="auditif">🦻 Auditif (malentendant/sourd)</option>
+                              <option value="mental">🧠 Mental / Intellectuel</option>
+                              <option value="psychique">💬 Psychique / Autisme</option>
+                              <option value="chronique">🏥 Maladie Chronique</option>
+                              <option value="autre">Autre (préciser)</option>
+                            </Field>
+
+                            <div className="space-y-1 sm:col-span-1">
+                              <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Précisions / Besoins spécifiques</label>
+                              <textarea
+                                name="disability_details"
+                                value={formData.disability_details}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, disability_details: e.target.value })}
+                                placeholder="Ex: Utilise un fauteuil roulant, besoin d'une salle accessible..."
+                                rows={3}
+                                className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl text-[10px] text-amber-800 dark:text-amber-300 font-medium">
+                              🔒 <strong>Confidentialité :</strong> Ces données sont strictly confidentielles, traitées conformément à la loi 09-08 (CNDP) et utilisées uniquement dans le but d'adapter votre accompagnement pédagogique et administratif.
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </SectionCard>
+
+                    {/* Section 6: Santé & Fiche Médicale */}
+                    <SectionCard title="6. Renseignements Médicaux & Santé (Fiche Médicale)" icon={Shield}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field
+                          icon={User}
+                          label="Type d'allergie (إن وجد)"
+                          type="text"
+                          name="allergy_type"
+                          value={formData.allergy_type}
+                          onChange={handleChange}
+                          placeholder="Ex: Pénicilline, Asthme, Aucune..."
+                        />
+
+                        <Field
+                          icon={User}
+                          label="Cas nécessitant un suivi médical"
+                          as="select"
+                          name="has_medical_followup"
+                          value={formData.has_medical_followup ? 'oui' : 'non'}
+                          onChange={(e) => setFormData({ ...formData, has_medical_followup: e.target.value === 'oui' })}
+                        >
+                          <option value="non">Non (لا)</option>
+                          <option value="oui">Oui (نعم)</option>
+                        </Field>
+
+                        <Field
+                          icon={User}
+                          label="Médicament régulier / Traitement"
+                          type="text"
+                          name="medication_used"
+                          value={formData.medication_used}
+                          onChange={handleChange}
+                          placeholder="Ex: Ventoline, Insuline, Aucun..."
+                        />
+
+                        <Field
+                          icon={User}
+                          label="Médecin traitant (Nom & Téléphone)"
+                          type="text"
+                          name="treating_doctor_info"
+                          value={formData.treating_doctor_info}
+                          onChange={handleChange}
+                          placeholder="Ex: Dr. Bennani - 0535600000"
+                        />
+                      </div>
+                    </SectionCard>
+
                     <div className="flex items-start gap-3 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 mt-2">
                       <input
                         type="checkbox"
@@ -821,6 +947,7 @@ export default function InscriptionPage() {
                         </div>
 
                         <Field icon={Hash} label="CNIE du père" required type="text" name="father_cin" value={formData.father_cin} onChange={handleChange} placeholder="E579196" />
+                        <Field icon={Phone} label="Téléphone du père" required type="tel" name="father_phone" value={formData.father_phone} onChange={handleChange} placeholder="0661234567" />
 
                         <Field icon={Building2} label="Profession du père" required as="select" name="father_job" value={formData.father_job} onChange={handleChange}>
                           <option value="Militaires et forces de sécurité">Militaires et forces de sécurité</option>
@@ -858,6 +985,7 @@ export default function InscriptionPage() {
                         </div>
 
                         <Field icon={Hash} label="CNIE de la mère" required type="text" name="mother_cin" value={formData.mother_cin} onChange={handleChange} placeholder="C567108" />
+                        <Field icon={Phone} label="Téléphone de la mère" type="tel" name="mother_phone" value={formData.mother_phone} onChange={handleChange} placeholder="0667890123" />
 
                         <Field icon={Building2} label="Profession de la mère" required as="select" name="mother_job" value={formData.mother_job} onChange={handleChange}>
                           <option value="Sans emploi (Mère au foyer)">Sans emploi (Mère au foyer)</option>
@@ -867,6 +995,15 @@ export default function InscriptionPage() {
                           <option value="Employées du secteur privé">Employées du secteur privé</option>
                           <option value="Retraitée">Retraitée</option>
                         </Field>
+                      </div>
+                    </SectionCard>
+
+                    {/* Section Tuteur & Contact Urgence */}
+                    <SectionCard title="Contact d'Urgence & Tuteur (شخص الاتصال في حالة الطوارئ)" icon={Phone}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={Phone} label="Téléphone principal des parents" required type="tel" name="parent_phone" value={formData.parent_phone} onChange={handleChange} placeholder="0657310300" />
+                        <Field icon={User} label="Nom & Prénom tierce personne d'urgence" type="text" name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="El Attahri Ismaïl (Oncle / Tuteur)" />
+                        <Field icon={Phone} label="Téléphone personne d'urgence" type="tel" name="emergency_contact_phone" value={formData.emergency_contact_phone} onChange={handleChange} placeholder="0657310300" />
                       </div>
                     </SectionCard>
                   </div>

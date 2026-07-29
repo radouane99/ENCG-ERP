@@ -1760,4 +1760,137 @@ class PdfExportController extends Controller
             ]
         );
     }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     *  📜 ENGAGEMENT (تعهد) — Formulaire d'engagement officiel ENCG Fès
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function engagementPdf(Request $request)
+    {
+        $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])
+            ->findOrFail($request->query('student_id'));
+
+        $user = $student->user;
+        $pathway = $student->pathways->sortByDesc('id')->first();
+        $filiere = $pathway?->filiere;
+        $academicYear = $pathway?->academicYear;
+
+        // Determine semester from current level
+        $level = $pathway?->level ?? 1;
+        $semester = 'S' . (($level - 1) * 2 + 1);
+        $semesterLabels = [
+            1 => '1ère année', 2 => '2ème année', 3 => '3ème année',
+            4 => '4ème année', 5 => '5ème année',
+        ];
+        $semesterLabel = $semesterLabels[$level] ?? ($level . 'ème année');
+
+        // 🖋️ Empreinte Numérique Horodatée & Security Hash
+        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
+        $rawSecString = ($student->cne ?? 'N/A') . '|' . ($user->cin ?? 'N/A') . '|' . $timestamp . '|ENCG_FES_SEC_KEY_2026';
+        $digitalHash = 'ENCG-SEC-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
+        $verifyUrl = url('/verify/document/' . $digitalHash);
+
+        // Generate Base64 QR Code
+        try {
+            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+        }
+
+        $data = [
+            'studentName'         => strtoupper(($user->last_name ?? '') . ' ' . ($user->first_name ?? '')),
+            'birthDate'           => $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d / m / Y') : '....../....../...........',
+            'birthCity'           => $student->birth_city ?? '.................................',
+            'cin'                 => $user->cin ?? '.................................',
+            'cne'                 => $student->cne ?? '.................................',
+            'semester'            => $semester,
+            'semesterLabel'       => $semesterLabel,
+            'filiere'             => $filiere?->name ?? 'Deux années préparatoires',
+            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
+            'currentDate'         => now()->format('d / m / Y'),
+            'digitalHash'         => $digitalHash,
+            'generationTimestamp' => $timestamp,
+            'verifyUrl'           => $verifyUrl,
+            'qrBase64'            => $qrBase64,
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.engagement', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $name = trim(($user->last_name ?? 'Etudiant') . '_' . ($user->first_name ?? ''));
+        return $pdf->download("Engagement_{$name}.pdf");
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════════
+     *  🏥 FICHE DE RENSEIGNEMENTS MÉDICAUX — Fiche santé officielle ENCG Fès
+     * ═══════════════════════════════════════════════════════════════════════
+     */
+    public function ficheMedicalePdf(Request $request)
+    {
+        $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])
+            ->findOrFail($request->query('student_id'));
+
+        $user = $student->user;
+        $pathway = $student->pathways->sortByDesc('id')->first();
+        $academicYear = $pathway?->academicYear;
+
+        // Fallback to Application data if fields are on application
+        $application = \App\Models\Application::where('cne', $student->cne)
+            ->orWhere('cin', $user?->cin)
+            ->orWhere('email', $user?->email)
+            ->first();
+
+        // 🖋️ Empreinte Numérique Horodatée & Security Hash
+        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
+        $rawSecString = ($student->cne ?? 'N/A') . '|MED|' . $timestamp . '|ENCG_FES_MED_2026';
+        $digitalHash = 'ENCG-MED-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
+        $verifyUrl = url('/verify/document/' . $digitalHash);
+
+        try {
+            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+        }
+
+        // Try to get photo base64
+        $photoBase64 = '';
+        if ($student->photo_path && file_exists(storage_path('app/public/' . $student->photo_path))) {
+            $photoBase64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $student->photo_path)));
+        }
+
+        $fatherName = trim(($student->father_name_fr ?? '') ?: (($application->father_name ?? '')));
+        $motherName = trim(($student->mother_name_fr ?? '') ?: (($application->mother_name ?? '')));
+
+        $data = [
+            'lastName'            => strtoupper($user->last_name ?? $student->last_name ?? ''),
+            'firstName'           => strtoupper($user->first_name ?? $student->first_name ?? ''),
+            'address'             => $student->address_fr ?? $student->address ?? $application->address ?? '',
+            'phone'               => $user->phone ?? $student->phone ?? $application->phone ?? '',
+            'fatherName'          => $fatherName ?: '................................................',
+            'motherName'          => $motherName ?: '................................................',
+            'parentPhone'         => $student->parent_phone ?? $student->father_phone ?? $application->parent_phone ?? $application->father_phone ?? '................................................',
+            'emergencyName'       => $student->emergency_contact_name ?? $application->emergency_contact_name ?? '................................................',
+            'emergencyPhone'      => $student->emergency_contact_phone ?? $application->emergency_contact_phone ?? '................................................',
+            'allergyType'         => $student->allergy_type ?? $application->allergy_type ?? ($student->has_disability ? $student->disability_details : 'Aucune'),
+            'hasFollowUp'         => (bool)($student->has_medical_followup ?? $application->has_medical_followup ?? false),
+            'medication'          => $student->medication_used ?? $application->medication_used ?? 'Aucun',
+            'doctorInfo'          => $student->treating_doctor_info ?? $application->treating_doctor_info ?? '................................................',
+            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
+            'photoBase64'         => $photoBase64,
+            'digitalHash'         => $digitalHash,
+            'generationTimestamp' => $timestamp,
+            'verifyUrl'           => $verifyUrl,
+            'qrBase64'            => $qrBase64,
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.fiche_medicale', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $name = trim(($user->last_name ?? 'Etudiant') . '_' . ($user->first_name ?? ''));
+        return $pdf->download("Fiche_Medicale_{$name}.pdf");
+    }
 }

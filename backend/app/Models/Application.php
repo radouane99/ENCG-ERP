@@ -20,6 +20,7 @@ class Application extends Model
         'entrance_exam_score' => 'float',
         'selection_score' => 'float',
         'reviewed_at' => 'datetime',
+        'has_disability' => 'boolean',
     ];
     }
 

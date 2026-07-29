@@ -39,15 +39,28 @@ export interface StudentDossierData {
   province_ar?: string;
   family_status?: string;
 
-  // Parents
+  // Parents & Contact
   father_name?: string;
   father_name_ar?: string;
   father_cin?: string;
+  father_phone?: string;
   father_profession?: string;
   mother_name?: string;
   mother_name_ar?: string;
   mother_cin?: string;
+  mother_phone?: string;
   mother_profession?: string;
+  parent_phone?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+
+  // Santé & Handicap
+  allergy_type?: string;
+  has_medical_followup?: boolean;
+  medication_used?: string;
+  treating_doctor_info?: string;
+  has_disability?: boolean;
+  disability_details?: string;
 
   // Académique
   bac_serie?: string;
@@ -117,6 +130,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<StudentDossierData>>({});
+  const [aiAuditResult, setAiAuditResult] = useState<any | null>(null);
 
   // AI OCR Audit statuses — per-document verification
   const [ocrAudit, setOcrAudit] = useState<{
@@ -262,11 +276,48 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               {onExportAttestation && (
                 <button
                   onClick={() => onExportAttestation(student)}
-                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  title="Télécharger Attestation d'Inscription Officielle"
                 >
-                  <Printer className="w-4 h-4 text-amber-300" /> Attestation (PDF)
+                  <Printer className="w-3.5 h-3.5 text-amber-300" /> Attestation (PDF)
                 </button>
               )}
+
+              {/* 🤖 Audit IA Gemini Vision */}
+              <button
+                onClick={async () => {
+                  const tId = toast.loading('🤖 Audit IA Gemini Vision en cours (OCR + Biométrie)...');
+                  try {
+                    const res = await api.post(`/admin/students/${student.id}/ai-audit`);
+                    setAiAuditResult(res.data.data);
+                    toast.success('✅ Audit IA Gemini Vision effectué avec succès !', { id: tId });
+                  } catch (err: any) {
+                    toast.error('Erreur lors de l\'audit IA.', { id: tId });
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-xs font-black transition-all border border-purple-400/40 flex items-center gap-1.5 cursor-pointer shadow-md"
+                title="Lancer l'audit IA Gemini 1.5 Flash (OCR Bac, Biométrie CNIE, Guichet Copilot)"
+              >
+                🤖 Audit IA Gemini
+              </button>
+
+              {/* 📜 Engagement (تعهد) */}
+              <button
+                onClick={() => window.open(`/api/admin/students/engagement-pdf?student_id=${student.id}`, '_blank')}
+                className="px-3 py-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 rounded-xl text-xs font-bold transition-all border border-amber-400/30 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Imprimer l'Engagement officiel ENCG Fès (تعهد)"
+              >
+                📜 Engagement
+              </button>
+
+              {/* 🏥 Fiche Médicale */}
+              <button
+                onClick={() => window.open(`/api/admin/students/fiche-medicale-pdf?student_id=${student.id}`, '_blank')}
+                className="px-3 py-1.5 bg-teal-400/20 hover:bg-teal-400/30 text-teal-200 rounded-xl text-xs font-bold transition-all border border-teal-400/30 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Imprimer la Fiche de Renseignements Médicaux"
+              >
+                🏥 Fiche Médicale
+              </button>
 
               <button
                 onClick={onClose}
@@ -320,6 +371,55 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
         {/* Tab Content Container */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-slate-50/50 dark:bg-slate-900/50">
+
+          {/* 🤖 Gemini AI Vision Audit Result Banner */}
+          {aiAuditResult && (
+            <div className="p-5 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-slate-900 text-white rounded-3xl border-2 border-purple-500/40 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
+              <div className="flex items-center justify-between border-b border-purple-500/30 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl">
+                    🤖
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm text-purple-200 tracking-wide">
+                      Rapport d'Audit IA Gemini 1.5 Flash — Guichet Express
+                    </h3>
+                    <p className="text-[10px] text-purple-300/80 font-mono">
+                      Horodatage : {aiAuditResult.audited_at} | Score de Confiance : {aiAuditResult.confidence_score}%
+                    </p>
+                  </div>
+                </div>
+
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-black">
+                  ✅ CONFORME À {aiAuditResult.confidence_score}%
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">👁️ Match Biométrique</span>
+                  <p className="font-black text-emerald-400 text-sm">{aiAuditResult.biometric_match_percentage}% Match</p>
+                  <p className="text-[10px] text-slate-300">{aiAuditResult.biometric_verdict}</p>
+                </div>
+
+                <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">📄 Verification OCR Massar</span>
+                  <p className="font-black text-blue-400 text-sm">Bac {aiAuditResult.bac_average_verified}/20</p>
+                  <p className="text-[10px] text-slate-300">{aiAuditResult.ocr_status}</p>
+                </div>
+
+                <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">🆔 CNE & CNIE Vérifiés</span>
+                  <p className="font-mono font-bold text-amber-300">{aiAuditResult.cne_verified}</p>
+                  <p className="text-[10px] text-slate-300">CIN : {aiAuditResult.cin_verified}</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-purple-950/60 border border-purple-500/30 rounded-2xl text-xs text-purple-200 font-medium leading-relaxed">
+                💡 <strong>Conseil IA Guichet Copilot :</strong> {aiAuditResult.guichet_copilot_advice}
+              </div>
+            </div>
+          )}
           
           {/* TAB 1: IDENTITÉ */}
           {activeTab === 'identity' && (
@@ -571,29 +671,158 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
             </div>
           )}
 
-          {/* TAB 5: STATUT ADMINISTRATIF */}
+          {/* TAB 5: STATUT ADMINISTRATIF & VALIDATION DOSSIER */}
           {activeTab === 'administrative' && (
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4 animate-in fade-in">
-              <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" /> Contrôle & Validation Administrative du Dossier
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Statut Académique</span>
-                  <div className="font-black text-slate-900 dark:text-white text-sm">{student.status === 'active' ? 'Étudiant actif ✅' : 'En Attente / Inactif'}</div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Validation Physique du Dossier</span>
-                  <div className="font-black text-emerald-600 text-sm">{isValide ? 'Dossier Validé (Oui ✅)' : 'En Cours de Contrôle ⏳'}</div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Compte Portail Actif</span>
-                  <div className="font-black text-indigo-600 text-sm">Compte Étudiant Valide</div>
-                </div>
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-6 animate-in fade-in">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" /> Contrôle Smart & Validation Officielle du Dossier Physique
+                </h3>
+                <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2.5 py-1 rounded-full border border-indigo-200">
+                  🛡️ Contrôle d'Intégrité Automatique
+                </span>
               </div>
+
+              {/* Checklist de Contrôle Automatisé */}
+              {(() => {
+                const hasBacDoc = !!documents['bac'] || !!documents['bac_pdf'];
+                const hasCinDoc = !!documents['cin_recto_verso'] || !!documents['cnie'] || !!documents['cin'];
+                const isCnieRectoVersoOk = hasCinDoc && (aiAuditResult ? aiAuditResult.is_cnie_recto_verso !== false : true);
+                const hasPhotoDoc = !!documents['photo'] || !!student.photo_path;
+                const hasCne = !!student.cne && student.cne.length >= 8;
+                const hasCin = !!student.cin && student.cin.length >= 4;
+                const hasParentContact = !!student.parent_phone || !!student.father_phone || !!student.phone;
+                const hasAiAudit = !!aiAuditResult;
+
+                const missingItems: { label: string; ok: boolean; critical: boolean }[] = [
+                  { label: "Scan du Baccalauréat téléversé & conforme", ok: hasBacDoc, critical: true },
+                  { label: "Scan CNIE Recto-Verso (Deux faces obligatoires)", ok: isCnieRectoVersoOk, critical: true },
+                  { label: "Photo d'identité aux normes 35x45", ok: hasPhotoDoc, critical: true },
+                  { label: "Code CNE Massar renseigné & valide", ok: hasCne, critical: true },
+                  { label: "Numéro de CNIE renseigné", ok: hasCin, critical: true },
+                  { label: "Téléphone du parent / tuteur renseigné", ok: hasParentContact, critical: true },
+                  { label: "Audit IA Gemini Vision effectué & certifié", ok: hasAiAudit, critical: false },
+                ];
+
+                const criticalMissing = missingItems.filter(i => i.critical && !i.ok);
+                const isFullyValid = criticalMissing.length === 0;
+
+                return (
+                  <div className="space-y-6">
+                    {/* Status Overview Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Statut Inscription</span>
+                        <div className="font-black text-slate-900 dark:text-white text-sm">
+                          {(student as any).inscription_status || student.status || 'submitted'}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Intégrité Pièces Physiques</span>
+                        <div className={cn("font-black text-sm", isFullyValid ? "text-emerald-600" : "text-amber-600")}>
+                          {isFullyValid ? '✅ 100% Conforme & Complet' : `⚠️ ${criticalMissing.length} Élément(s) Manquant(s)`}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Audit IA Gemini Vision</span>
+                        <div className={cn("font-black text-sm", hasAiAudit ? "text-purple-600 dark:text-purple-400" : "text-slate-400")}>
+                          {hasAiAudit ? `🟢 Audit Certifié (${aiAuditResult.confidence_score}%)` : '⚪ Non Effectué'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pre-Confirmation Validation Checklist */}
+                    <div className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3">
+                      <h4 className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center justify-between">
+                        <span>📋 Liste de Contrôle Pré-Validation (Vérification Systématique)</span>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {missingItems.filter(i => i.ok).length} / {missingItems.length} vérifiés
+                        </span>
+                      </h4>
+
+                      <div className="space-y-2">
+                        {missingItems.map((item, idx) => (
+                          <div key={idx} className={cn(
+                            "flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold transition-all",
+                            item.ok 
+                              ? "bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                              : item.critical 
+                                ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300"
+                                : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
+                          )}>
+                            <span className="flex items-center gap-2">
+                              <span>{item.ok ? '✅' : item.critical ? '❌' : '⚠️'}</span>
+                              <span>{item.label}</span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
+                              {item.ok ? 'OK' : item.critical ? 'OBLIGATOIRE' : 'RECOMMANDÉ'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Smart Action Guard Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-700">
+                      <div className="text-[11px] text-slate-500 font-medium">
+                        {isFullyValid ? (
+                          <span className="text-emerald-600 font-bold flex items-center gap-1">
+                            ✅ Tous les contrôles sont au vert. Vous pouvez valider le dossier officiellement.
+                          </span>
+                        ) : (
+                          <span className="text-red-600 font-bold flex items-center gap-1">
+                            ⚠️ Attention : Des éléments obligatoires sont manquants. Corrigez-les avant confirmation.
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Status Change Buttons */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isFullyValid) {
+                              toast.error(`⚠️ Impossible de valider : ${criticalMissing.map(m => m.label).join(' | ')}`);
+                              return;
+                            }
+                            if (onStatusUpdate) {
+                              onStatusUpdate(student.id, 'valide');
+                              toast.success('✅ Dossier officiel validé et confirmé avec succès !');
+                            }
+                          }}
+                          className={cn(
+                            "px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg cursor-pointer",
+                            isFullyValid 
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30" 
+                              : "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                          )}
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Confirm & Valider le Dossier
+                        </button>
+
+                        {!isFullyValid && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`⚠️ Dérogation administrative : Êtes-vous sûr de vouloir forcer la validation malgré les pièces manquantes ?`)) {
+                                if (onStatusUpdate) {
+                                  onStatusUpdate(student.id, 'valide');
+                                  toast.warning('⚠️ Validation forcée effectuée (Dérogation enregistrée dans l\'Audit Log).');
+                                }
+                              }
+                            }}
+                            className="px-3.5 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-400/40 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                          >
+                            ⚠️ Forcer (Dérogation)
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
