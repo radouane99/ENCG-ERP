@@ -577,15 +577,10 @@ class GradeController extends Controller
         }
 
         $signature = null;
-        $sigGroupId = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? intval($groupId) : null;
-        $sigQuery = \App\Models\ModulePvSignature::where('module_id', $moduleId);
-        if ($sigGroupId) {
-            $sigQuery->where('group_id', $sigGroupId);
-        }
-        $sigQuery->where(function($q) use ($requestedSession) {
-            $q->where('session', $requestedSession);
-        });
-        $sigRecord = $sigQuery->with('signer')->latest()->first();
+        $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+            ->with('signer')
+            ->latest()
+            ->first();
 
         if ($sigRecord) {
             $signature = [

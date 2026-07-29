@@ -2280,18 +2280,18 @@ export default function AdminGradesPVPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2.5 max-w-4xl">
           <Button
             variant="outline"
             onClick={() => refetchPV()}
-            className="rounded-xl flex items-center gap-2 text-xs font-bold"
+            className="rounded-xl flex items-center gap-1.5 text-xs font-bold px-3 py-2"
           >
             <RefreshCw className="w-4 h-4" /> Actualiser
           </Button>
           <Button
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
-            className="bg-[#0f2863] text-white rounded-xl flex items-center gap-2 text-xs font-bold hover:bg-[#1a387e] shadow-md"
+            className="bg-[#0f2863] text-white rounded-xl flex items-center gap-1.5 text-xs font-bold hover:bg-[#1a387e] shadow-md px-3.5 py-2"
           >
             {isExportingPdf ? <Spinner className="text-white" /> : <Download className="w-4 h-4" />}
             Télécharger PDF Officiel
@@ -2299,7 +2299,7 @@ export default function AdminGradesPVPage() {
           <Button
             variant="outline"
             onClick={handlePrint}
-            className="rounded-xl flex items-center gap-2 text-xs font-bold border-slate-300"
+            className="rounded-xl flex items-center gap-1.5 text-xs font-bold border-slate-300 px-3 py-2"
           >
             <Printer className="w-4 h-4" /> Aperçu Web
           </Button>
@@ -2307,23 +2307,28 @@ export default function AdminGradesPVPage() {
             onClick={handleDownloadZipBundle}
             disabled={isExportingZip}
             variant="outline"
-            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-xs font-bold shadow-sm"
+            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-sm px-3 py-2"
           >
-            {isExportingZip ? <Spinner className="text-indigo-600" /> : '📦 Pack PV Complet (ZIP)'}
+            {isExportingZip ? <Spinner className="text-indigo-600" /> : '📦 Pack PV (ZIP)'}
           </Button>
 
           <Button
             onClick={() => setShowBulkEmailModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl flex items-center gap-2 text-xs font-bold shadow-md"
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-md px-3.5 py-2"
           >
             🚀 Diffusion Email
           </Button>
 
           {pvData.signature && (
-            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 animate-pulse" />
-              Signé ({pvData.signature.signed_by || 'Enseignant'}) — {session === 'normale' ? 'PV Ordinaire' : session === 'rattrapage' ? 'PV Rattrapage' : 'PV Vue Totale'}
-            </span>
+            <div className="flex flex-col text-right leading-tight bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-xl text-[10px] font-extrabold shadow-sm shrink-0">
+              <span className="flex items-center gap-1 text-emerald-700">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 animate-pulse shrink-0" />
+                Signé : {pvData.signature.signed_by || 'Enseignant'}
+              </span>
+              <span className="text-[9px] text-emerald-600/80 font-mono">
+                {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Vue Totale'}
+              </span>
+            </div>
           )}
 
           <Button
@@ -2331,11 +2336,10 @@ export default function AdminGradesPVPage() {
               setActiveJurySigningId(null)
               setShowSignatureModal(true)
             }}
-            className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all"
+            className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all px-4 py-2 shrink-0"
           >
-            ✍️ {pvData.signature ? `Re-signer le PV (${session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})` : `Signer le PV (${session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})`}
+            ✍️ {pvData.signature ? 'Re-signer le PV' : 'Signer le PV'}
           </Button>
-
         </div>
       </div>
 
@@ -3039,11 +3043,13 @@ export default function AdminGradesPVPage() {
         <div className="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs font-bold text-slate-800 gap-8">
           <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
             <p className="uppercase text-[11px] text-[#0f2863]">Signature de l'Enseignant Responsable du Module</p>
-            {pvData.signature ? (
+            {pvData?.signature || signatureDataUrl ? (
               <div className="flex flex-col items-center my-2">
-                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
-                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by}</p>
-                <p className="text-[7px] text-slate-400 font-mono">IP: {pvData.signature.ip_address} | {new Date(pvData.signature.signed_at).toLocaleString('fr-FR')}</p>
+                <img src={pvData?.signature?.signature_data || signatureDataUrl} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
+                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData?.signature?.signed_by || 'Enseignant Responsable'}</p>
+                <p className="text-[7px] text-slate-400 font-mono">
+                  {pvData?.signature ? `IP: ${pvData.signature.ip_address} | ${new Date(pvData.signature.signed_at).toLocaleString('fr-FR')}` : 'Horodaté et certifié en temps réel'}
+                </p>
               </div>
             ) : (
               <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-56 py-4">
