@@ -397,15 +397,17 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">👁️ Match Biométrique</span>
-                  <p className="font-black text-emerald-400 text-sm">{aiAuditResult.biometric_match_percentage}% Match</p>
-                  <p className="text-[10px] text-slate-300">{aiAuditResult.biometric_verdict}</p>
+                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">📊 Relevé de Notes (Audit IA)</span>
+                  <p className={cn("font-black text-sm", aiAuditResult.is_grade_matching ? "text-emerald-400" : "text-rose-400")}>
+                    {aiAuditResult.bac_average_declared} (Déclaré) vs {aiAuditResult.bac_average_ocr_detected} (Relevé)
+                  </p>
+                  <p className="text-[10px] text-slate-300">{aiAuditResult.grade_verdict}</p>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">📄 Verification OCR Massar</span>
-                  <p className="font-black text-blue-400 text-sm">Bac {aiAuditResult.bac_average_verified}/20</p>
-                  <p className="text-[10px] text-slate-300">{aiAuditResult.ocr_status}</p>
+                  <span className="text-[10px] text-purple-300 uppercase font-black block mb-1">👁️ Match Biométrique & CNIE</span>
+                  <p className="font-black text-emerald-400 text-sm">{aiAuditResult.biometric_match_percentage}% Match Visage</p>
+                  <p className="text-[10px] text-slate-300">{aiAuditResult.cnie_layout_verdict}</p>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
@@ -688,6 +690,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                 const hasBacDoc = !!documents['bac'] || !!documents['bac_pdf'];
                 const hasCinDoc = !!documents['cin_recto_verso'] || !!documents['cnie'] || !!documents['cin'];
                 const isCnieRectoVersoOk = hasCinDoc && (aiAuditResult ? aiAuditResult.is_cnie_recto_verso !== false : true);
+                const hasReleveNotes = !!documents['releve_notes'] || !!documents['releve_notes_pdf'];
+                const isGradeMatchOk = hasReleveNotes && (aiAuditResult ? aiAuditResult.is_grade_matching !== false : true);
                 const hasPhotoDoc = !!documents['photo'] || !!student.photo_path;
                 const hasCne = !!student.cne && student.cne.length >= 8;
                 const hasCin = !!student.cin && student.cin.length >= 4;
@@ -696,6 +700,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                 const missingItems: { label: string; ok: boolean; critical: boolean }[] = [
                   { label: "Scan du Baccalauréat téléversé & conforme", ok: hasBacDoc, critical: true },
+                  { label: "Scan du Relevé de Notes Officiel (Vérification Moyenne)", ok: hasReleveNotes, critical: true },
+                  { label: "Conformité Moyenne Bac : Déclarée vs Relevé (Audit IA)", ok: isGradeMatchOk, critical: true },
                   { label: "Scan CNIE Recto-Verso (Deux faces obligatoires)", ok: isCnieRectoVersoOk, critical: true },
                   { label: "Photo d'identité aux normes 35x45", ok: hasPhotoDoc, critical: true },
                   { label: "Code CNE Massar renseigné & valide", ok: hasCne, critical: true },
