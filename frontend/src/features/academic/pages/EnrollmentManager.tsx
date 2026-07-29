@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download } from 'lucide-react';
+import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download, Upload } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
@@ -84,7 +84,7 @@ export default function EnrollmentManager() {
   };
 
 
-  const handleUpdateStatus = async (studentId: string, newStatus: string) => {
+  const handleUpdateStatus = async (studentId: string | number, newStatus: string) => {
     try {
       await api.patch(`/admin/students/${studentId}/status`, { status: newStatus });
       toast.success(`Statut mis à jour : ${newStatus === 'active' ? 'Validé ✅' : 'Suspendu / Rejeté ❌'}`);
@@ -131,7 +131,7 @@ export default function EnrollmentManager() {
     }
   };
 
-  const handleExportAttestationPdf = (s: Student) => {
+  const handleExportAttestationPdf = (s: any) => {
     toast.loading(`Génération de l'Attestation d'Inscription A4 (${s.first_name} ${s.last_name})...`);
     setTimeout(() => {
       toast.dismiss();
@@ -161,6 +161,25 @@ export default function EnrollmentManager() {
     }
   };
 
+  const handleDownloadTafemTemplate = async () => {
+    toast.loading('Génération du modèle CSV officiel Ministère TAFEM...');
+    try {
+      const res = await api.get('/admissions/download-tafem-template-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modele_import_admis_ministere_tafem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success('📄 Modèle CSV Ministère TAFEM téléchargé avec succès !');
+    } catch (err) {
+      toast.dismiss();
+      toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
+    }
+  };
+
   const pending = students.filter(s => s.status === 'pending' || s.status === 'en_attente').length;
   const validated = students.filter(s => s.status === 'active' || s.status === 'valide').length;
   const rejected = students.filter(s => s.status === 'suspended' || s.status === 'inactive' || s.status === 'rejete').length;
@@ -178,86 +197,85 @@ export default function EnrollmentManager() {
   });
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-24 p-6 animate-in font-sans">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-24 px-3 sm:px-6 py-4 sm:py-6 font-sans">
       {/* Hero Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
-              <UserPlus className="w-10 h-10 text-amber-400" />
+        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+          <div className="flex items-start sm:items-center gap-4 sm:gap-6">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+              <UserPlus className="w-7 h-7 sm:w-10 sm:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Zap className="w-4 h-4 text-amber-400" /> Validation & Dispatching des Candidats ENCG
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-3 py-0.5 sm:px-4 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> Validation & Dispatching ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
                 Inscriptions & Réinscriptions
               </h1>
-              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
+              <p className="text-blue-100/90 text-xs sm:text-sm max-w-2xl font-medium mt-1 leading-relaxed">
                 Validez les dossiers de candidature, effectuez le dispatching automatique dans les groupes S1 et générez les attestations d'inscription officielles.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full xl:w-auto shrink-0">
             <button 
               onClick={() => setIsScannerOpen(true)} 
-              className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black border border-emerald-400 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black border border-emerald-400 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
-              <Camera className="w-4 h-4 text-emerald-100" /> 📷 Mode Guichet Express
+              <Camera className="w-4 h-4 text-emerald-100" /> Mode Guichet
             </button>
 
             <button 
               onClick={handleExportZipBundle} 
               disabled={isExportingZip}
-              className="flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-2xl font-black border border-amber-400 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl sm:rounded-2xl font-black border border-amber-400 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
             >
-              <Archive className="w-4 h-4 text-slate-950" /> 📦 Exporter Bundle ZIP
+              <Archive className="w-4 h-4 text-slate-950" /> Bundle ZIP
             </button>
 
             <button 
               onClick={fetchData} 
-              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl sm:rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-amber-300" /> Actualiser
             </button>
 
-            {/* 🎓 USMBA Academic Accounts CSV */}
             <button
               onClick={handleExportUsmbaCSV}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-2xl font-black border border-violet-500/50 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-xl sm:rounded-2xl font-black border border-violet-500/50 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
-              <Download className="w-4 h-4 text-violet-200" /> 🎓 Export USMBA CSV
+              <Download className="w-4 h-4 text-violet-200" /> Export USMBA
             </button>
           </div>
         </div>
       </div>
 
       {/* Grid: Dispatching Console + KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Dispatching Console */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md relative overflow-hidden flex flex-col justify-between col-span-1 md:col-span-1">
-          <div className="relative z-10 space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 shadow-sm relative overflow-hidden flex flex-col justify-between col-span-1 sm:col-span-2 lg:col-span-1">
+          <div className="relative z-10 space-y-2.5">
             <div className="inline-flex items-center gap-1.5 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-ping" /> Console de Dispatching
+              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-ping" /> Dispatching S1
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
                 Dispatching Équilibré <Scale className="w-4 h-4 text-amber-500" />
               </h3>
-              <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
-                Répartit équitablement les nouveaux étudiants approuvés dans les groupes du Semestre 1.
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                Répartit équitablement les étudiants approuvés dans les groupes du Semestre 1.
               </p>
             </div>
           </div>
 
-          <div className="relative z-10 mt-4 space-y-3">
+          <div className="relative z-10 mt-4 space-y-2.5">
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 block">Filière Cible</label>
               <select
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                 value={selectedFiliere}
                 onChange={e => setSelectedFiliere(e.target.value)}
               >
@@ -271,7 +289,7 @@ export default function EnrollmentManager() {
             <button 
               disabled={isDispatching}
               onClick={handleAutoDispatching}
-              className="w-full bg-gradient-to-r from-[#0f2863] to-[#1a387e] hover:from-[#1a387e] hover:to-[#0f2863] text-white py-3 rounded-xl font-black text-xs uppercase tracking-wider shadow-md hover:scale-102 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-[#0f2863] to-[#1a387e] hover:from-[#1a387e] hover:to-[#0f2863] text-white py-2.5 sm:py-3 rounded-xl font-black text-xs uppercase tracking-wider shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Scale className="w-4 h-4 text-amber-400" /> 1-Clic Dispatching
             </button>
@@ -279,36 +297,36 @@ export default function EnrollmentManager() {
         </div>
 
         {/* KPI 1: En Attente */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col items-center justify-center text-center gap-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center gap-2">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center shadow-inner">
             <Clock className="w-6 h-6" />
           </div>
-          <div className="text-4xl font-black text-amber-600">{pending}</div>
+          <div className="text-3xl sm:text-4xl font-black text-amber-600">{pending}</div>
           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">EN ATTENTE DE VALIDATION</div>
         </div>
 
         {/* KPI 2: Inscrits Validés */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col items-center justify-center text-center gap-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center gap-2">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center shadow-inner">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <div className="text-4xl font-black text-emerald-600">{validated}</div>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">INSCRIPTION VALIDÉES</div>
+          <div className="text-3xl sm:text-4xl font-black text-emerald-600">{validated}</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">INSCRIPTIONS VALIDÉES</div>
         </div>
 
         {/* KPI 3: Rejetés */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col items-center justify-center text-center gap-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center gap-2">
           <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center shadow-inner">
             <XCircle className="w-6 h-6" />
           </div>
-          <div className="text-4xl font-black text-rose-600">{rejected}</div>
+          <div className="text-3xl sm:text-4xl font-black text-rose-600">{rejected}</div>
           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">REJETÉS / SUSPENDUS</div>
         </div>
       </div>
 
       {/* Analytics Dashboard */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" /> Tableau de Bord Analytique — Campagne d'Inscription 2026-2027
@@ -317,8 +335,8 @@ export default function EnrollmentManager() {
               Suivi en temps réel du traitement des dossiers de candidature ENCG Fès
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-black text-slate-900 dark:text-white">{students.length}</div>
+          <div className="text-left sm:text-right shrink-0">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{students.length}</div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Candidats Total</div>
           </div>
         </div>
@@ -369,30 +387,30 @@ export default function EnrollmentManager() {
         </div>
 
         {/* Quick actions row */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions Rapides :</span>
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Actions Rapides :</span>
           <button
             onClick={handleExportUsmbaCSV}
-            className="px-3 py-1.5 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-violet-100 transition-all flex items-center gap-1"
+            className="px-3 py-1.5 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-violet-100 transition-all flex items-center gap-1.5"
           >
-            <Download className="w-3 h-3" /> Export USMBA CSV
+            <Download className="w-3.5 h-3.5" /> Export USMBA CSV
           </button>
           <button
             onClick={handleExportZipBundle}
-            className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-amber-100 transition-all flex items-center gap-1"
+            className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-amber-100 transition-all flex items-center gap-1.5"
           >
-            <Archive className="w-3 h-3" /> Bundle ZIP Attestations
+            <Archive className="w-3.5 h-3.5" /> Bundle ZIP Attestations
           </button>
           <button
-            onClick={() => window.open('/api/admissions/download-tafem-template-csv', '_blank')}
-            className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-1"
+            onClick={handleDownloadTafemTemplate}
+            className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-1.5"
             title="Télécharger le modèle CSV officiel Ministère TAFEM"
           >
-            <Download className="w-3 h-3" /> Modèle CSV TAFEM
+            <Download className="w-3.5 h-3.5" /> Modèle CSV TAFEM
           </button>
 
-          <label className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1 shadow-sm">
-            <Upload className="w-3 h-3" /> Import Liste Ministère (CSV)
+          <label className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 shadow-sm">
+            <Upload className="w-3.5 h-3.5" /> Import Liste Ministère (CSV)
             <input
               type="file"
               accept=".csv"
@@ -551,36 +569,36 @@ export default function EnrollmentManager() {
                         </td>
 
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
                             <button
                               onClick={() => setSelectedStudentModal(s)}
-                              className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:-translate-y-0.5"
+                              className="px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
                               title="Ouvrir le dossier numérique complet avec scans"
                             >
-                              <FolderOpen className="w-4 h-4 text-amber-400" /> Ouvrir le dossier
+                              <FolderOpen className="w-3.5 h-3.5 text-amber-400" /> Dossier
                             </button>
 
                             <button
                               onClick={() => handleExportAttestationPdf(s)}
-                              className="px-3 py-2 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-xs"
+                              className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-xs"
                               title="Télécharger l'Attestation d'Inscription Officielle A4"
                             >
-                              <Printer className="w-3.5 h-3.5 text-blue-600" /> Attestation (PDF)
+                              <Printer className="w-3 h-3 text-blue-600" /> Attestation
                             </button>
 
                             {/* 🏷️ Carte CR80 Evolis */}
                             <button
                               onClick={() => window.open(`/api/admin/students/${s.id}/carte-etudiant-cr80-pdf`, '_blank')}
-                              className="px-3 py-2 bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 text-violet-700 dark:text-violet-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-violet-200 dark:border-violet-800 cursor-pointer shadow-xs"
+                              className="px-2.5 py-1.5 bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 text-violet-700 dark:text-violet-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-violet-200 dark:border-violet-800 cursor-pointer shadow-xs"
                               title="Générer Carte Étudiant CR80 — Evolis Primacy 2"
                             >
-                              🏷️ Carte CR80
+                              🏷️ CR80
                             </button>
 
                             {/* 📜 Engagement (تعهد) */}
                             <button
                               onClick={() => window.open(`/api/admin/students/engagement-pdf?student_id=${s.id}`, '_blank')}
-                              className="px-3 py-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 cursor-pointer shadow-xs"
+                              className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-amber-200 dark:border-amber-800 cursor-pointer shadow-xs"
                               title="Imprimer l'Engagement officiel ENCG Fès (تعهد)"
                             >
                               📜 Engagement
@@ -589,7 +607,7 @@ export default function EnrollmentManager() {
                             {/* 🏥 Fiche Médicale */}
                             <button
                               onClick={() => window.open(`/api/admin/students/fiche-medicale-pdf?student_id=${s.id}`, '_blank')}
-                              className="px-3 py-2 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs"
+                              className="px-2.5 py-1.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs"
                               title="Imprimer la Fiche de Renseignements Médicaux"
                             >
                               🏥 Fiche Médicale

@@ -37,11 +37,28 @@ class TafemMinistryImportController extends Controller
             return response()->json(['message' => 'Fichier CSV vide ou format invalide.'], 422);
         }
 
-        // Clean header columns
-        $header = array_map(fn($h) => strtolower(trim(str_replace("\EF\BB\BF", '', $h))), $header);
+        // Clean header columns and remove UTF-8 BOM
+        $header = array_map(function ($h) {
+            $cleaned = preg_replace('/[\x{FEFF}\x{FFFE}]/u', '', $h);
+            $cleaned = str_replace(["\xEF\xBB\xBF", '\EF\BB\BF', 'EFBBBF'], '', $cleaned);
+            return strtolower(trim($cleaned));
+        }, $header);
 
+        // Ensure a valid AdmissionCampaign exists
         $campaign = AdmissionCampaign::where('status', 'open')->first()
             ?? AdmissionCampaign::first();
+
+        if (!$campaign) {
+            $institutionId = \App\Models\Institution::first()?->id ?? 1;
+            $campaign = AdmissionCampaign::create([
+                'institution_id' => $institutionId,
+                'title' => "Campagne d'Admission TAFEM " . date('Y'),
+                'academic_year' => date('Y') . '-' . (date('Y') + 1),
+                'status' => 'open',
+                'open_date' => now()->startOfYear(),
+                'close_date' => now()->endOfYear(),
+            ]);
+        }
 
         $importedCount = 0;
         $updatedCount = 0;
@@ -73,6 +90,7 @@ class TafemMinistryImportController extends Controller
 
                 if ($app) {
                     $app->update([
+                        'admission_campaign_id' => $campaign->id,
                         'cin' => $cin ?: $app->cin,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
@@ -83,7 +101,7 @@ class TafemMinistryImportController extends Controller
                     $updatedCount++;
                 } else {
                     Application::create([
-                        'admission_campaign_id' => $campaign?->id ?? 1,
+                        'admission_campaign_id' => $campaign->id,
                         'reference_number' => 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5($cne), 0, 6)),
                         'cne' => $cne,
                         'cin' => $cin,
@@ -139,8 +157,8 @@ class TafemMinistryImportController extends Controller
 
         return response()->stream(function () {
             $file = fopen('php://output', 'w');
-            // Write UTF-8 BOM for Excel
-            fputs($file, "\EF\BB\BF");
+            // Write UTF-8 BOM for Excel compatibility
+            fputs($file, "\xEF\xBB\xBF");
 
             // Header row
             fputcsv($file, ['cne', 'cin', 'last_name', 'first_name', 'bac_average', 'tafem_score', 'list_type', 'filiere_code']);
