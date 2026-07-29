@@ -72,11 +72,21 @@ class RegisterUserService
                 ]);
             }
 
-            // Record login
-            $user->update([
-                'last_login_at' => now(),
-                'last_login_ip' => $ipAddress
-            ]);
+            // 4. Send Confirmation Notification Email to Candidate Personal Email (e.g. Gmail)
+            try {
+                $studentName = strtoupper(($data['last_name_fr'] ?? $data['last_name'] ?? '') . ' ' . ($data['first_name_fr'] ?? $data['first_name'] ?? ''));
+                \Illuminate\Support\Facades\Mail::to($data['email'])->send(new \App\Mail\StudentRegistrationSuccessMail(
+                    studentName: trim($studentName) ?: 'CANDIDAT ADMIS',
+                    cne: $data['cne'] ?? 'N/A',
+                    cin: $data['cin'] ?? 'N/A',
+                    filiere: $data['filiere'] ?? 'DEUX ANNÉES PRÉPARATOIRES',
+                    pdfPath: null,
+                    academicYear: '2026-2027'
+                ));
+            } catch (\Exception $e) {
+                // Log email error gracefully without rolling back transaction
+                \Illuminate\Support\Facades\Log::warning("Erreur lors de l'envoi de l'email de confirmation à {$data['email']}: " . $e->getMessage());
+            }
 
             return $user;
         });

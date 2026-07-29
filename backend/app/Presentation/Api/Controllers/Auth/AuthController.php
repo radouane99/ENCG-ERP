@@ -312,4 +312,37 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Erreur lors de la connexion via Google.'], 500);
         }
     }
+
+    /**
+     * GET /api/v1/auth/check-cne-availability
+     * Real-time Anti-Fraud CNE / CNIE Duplicate Detection.
+     */
+    public function checkCneAvailability(Request $request): JsonResponse
+    {
+        $cne = trim((string) $request->query('cne', ''));
+        $cin = trim((string) $request->query('cin', ''));
+
+        $cneExists = false;
+        $cinExists = false;
+
+        if ($cne !== '') {
+            $cneExists = \Illuminate\Support\Facades\DB::table('students')->where('cne', $cne)->exists()
+                || \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne)->exists();
+        }
+
+        if ($cin !== '') {
+            $cinExists = \Illuminate\Support\Facades\DB::table('students')->where('cin', $cin)->exists()
+                || \Illuminate\Support\Facades\DB::table('applications')->where('cin', $cin)->exists();
+        }
+
+        return response()->json([
+            'cne_available' => !$cneExists,
+            'cin_available' => !$cinExists,
+            'cne'           => $cne,
+            'cin'           => $cin,
+            'message'       => ($cneExists || $cinExists) 
+                ? '⚠️ Attention : Ce CNE ou CNIE est déjà enregistré dans le registre ENCG Fès.' 
+                : '✅ CNE et CNIE valides et disponibles.'
+        ]);
+    }
 }

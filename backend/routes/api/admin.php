@@ -248,7 +248,18 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('modules/{module}/pv/export-zip-bundle', [GradeController::class, 'exportPvZipBundle']);
     Route::get('modules/{module}/ai-audit', [GradeController::class, 'auditGradeDistribution']);
 
+    // Student Scanned Document Vault Routes
+    Route::get('students/{student}/documents', [StudentController::class, 'getDocuments']);
+    Route::post('students/{student}/documents', [StudentController::class, 'uploadDocument']);
+    Route::get('admin/students/{student}/documents', [StudentController::class, 'getDocuments']);
+    Route::post('admin/students/{student}/documents', [StudentController::class, 'uploadDocument']);
+
     // Student Transcript PDF & Mission Orders & Convocations
+    Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
+    Route::get('students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
+    Route::get('students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
+    Route::get('students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    Route::get('students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
     Route::get('professors/{professor}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadProfessorConvocationPdf']);

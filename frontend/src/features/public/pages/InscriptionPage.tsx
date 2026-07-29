@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check
+  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
@@ -12,13 +12,15 @@ import { useAuthStore } from '@stores/authStore';
 import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal';
 
 /* ── Types ── */
-type StepId = 1 | 2 | 3;
+type StepId = 1 | 2 | 3 | 4 | 5;
 type Lang = 'fr' | 'ar' | 'en';
 
 const STEPS = [
-  { id: 1 as StepId, label: 'Identité',       sub: 'Compte & infos personnelles', icon: User          },
-  { id: 2 as StepId, label: 'Parents',        sub: 'Naissance & tuteurs légaux',   icon: Users         },
-  { id: 3 as StepId, label: 'Bac & Filière',  sub: 'Cursus académique & choix',    icon: GraduationCap },
+  { id: 1 as StepId, label: 'Personnel',    sub: 'Infos personnelles & résidence', icon: User          },
+  { id: 2 as StepId, label: 'Parents',      sub: 'Coordonnées des tuteurs légaux',   icon: Users         },
+  { id: 3 as StepId, label: 'Académique',   sub: 'Baccalauréat & Orientation',    icon: GraduationCap },
+  { id: 4 as StepId, label: 'Documents',    sub: 'Scans Bac, CNIE & Photo 35x45', icon: FileText        },
+  { id: 5 as StepId, label: 'Confirmation', sub: 'Récapitulatif & Déclaration',    icon: CheckCircle2  },
 ];
 
 const FILIERES = [
@@ -181,12 +183,87 @@ export default function InscriptionPage() {
   };
 
   const [formData, setFormData] = useState({
-    full_name: '', email: '', password: '', password_confirmation: '',
-    cne: '', cin: '', phone: '', birth_date: '', birth_city: '',
-    father_name: '', father_cin: '', father_job: '',
-    mother_name: '', mother_cin: '', mother_job: '',
-    bac_type: '', bac_series: '', bac_average: '', bac_year: '', high_school_city: '', filiere: ''
+    cne: '',
+    cin: '',
+    last_name_fr: '',
+    first_name_fr: '',
+    last_name_ar: '',
+    first_name_ar: '',
+    birth_city_fr: '',
+    birth_city_ar: '',
+    birth_date: '',
+    gender: 'female',
+    family_status: 'Célibataire',
+    nationality: 'Marocain(e)',
+    country: 'Maroc',
+    region: 'Fès-Meknès',
+    province: 'Fès',
+    address_fr: '',
+    address_ar: '',
+    email: '',
+    phone: '',
+    password: '',
+    password_confirmation: '',
+    
+    // Step 2: Parents
+    father_last_name_fr: '',
+    father_first_name_fr: '',
+    father_last_name_ar: '',
+    father_first_name_ar: '',
+    father_cin: '',
+    father_job: 'Militaires et forces de sécurité',
+    mother_last_name_fr: '',
+    mother_first_name_fr: '',
+    mother_last_name_ar: '',
+    mother_first_name_ar: '',
+    mother_cin: '',
+    mother_job: 'Sans emploi',
+    
+    // Step 3: Académique
+    bac_name: 'Bac Sciences Mathématiques B - Option Français',
+    bac_mention: 'Très Bien',
+    bac_average: '16.63',
+    bac_year: '2026',
+    high_school: 'Groupe scolaire LA RÉSIDENCE',
+    academy: 'ACADEMIE Fès-Meknès — أكاديمية فاس - مكناس',
+    delegation: 'FES',
+    cycle: 'Cycle des deux années préparatoires',
+    filiere: 'Deux années préparatoires',
+
+    // Step 4: Documents
+    bac_pdf_name: 'N140091375_BAC_MAAZOUZI.pdf',
+    cnie_pdf_name: 'N140091375_CIN_MAAZOUZI.pdf',
+    releve_notes_pdf_name: 'N140091375_RELEVE_NOTES.pdf',
+    photo_url: '',
+    photo_zoom: 100,
+    photo_output_size: '413 x 531 px',
   });
+
+  const [cneCheckStatus, setCneCheckStatus] = useState<{ cneAvailable: boolean; cinAvailable: boolean; message: string | null }>({
+    cneAvailable: true,
+    cinAvailable: true,
+    message: null,
+  });
+
+  useEffect(() => {
+    if (!formData.cne && !formData.cin) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get('/v1/auth/check-cne-availability', {
+          params: { cne: formData.cne, cin: formData.cin }
+        });
+        setCneCheckStatus({
+          cneAvailable: res.data.cne_available,
+          cinAvailable: res.data.cin_available,
+          message: res.data.message,
+        });
+      } catch (err) {
+        // Handle gracefully
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [formData.cne, formData.cin]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -200,7 +277,7 @@ export default function InscriptionPage() {
   const isRTL = lang === 'ar';
   const currentTheme = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
 
-  const goNext = () => setStep(s => Math.min(s + 1, 3) as StepId);
+  const goNext = () => setStep(s => Math.min(s + 1, 5) as StepId);
   const goPrev = () => setStep(s => Math.max(s - 1, 1) as StepId);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -214,7 +291,7 @@ export default function InscriptionPage() {
       }
     }
 
-    if (step < 3) { goNext(); return; }
+    if (step < 5) { goNext(); return; }
     
     if (formData.password !== formData.password_confirmation) {
       setErrorMsg('Les mots de passe ne correspondent pas.');
@@ -228,14 +305,14 @@ export default function InscriptionPage() {
     setSubmitting(true);
     setErrorMsg(null);
 
-    const names = formData.full_name.trim().split(' ');
-    const first_name = names[0] || '';
-    const last_name = names.slice(1).join(' ') || '';
+    const first_name = formData.first_name_fr || '';
+    const last_name = formData.last_name_fr || '';
 
     const payload = {
       ...formData,
       first_name,
       last_name,
+      full_name: `${first_name} ${last_name}`.trim(),
     };
 
     try {
@@ -374,7 +451,7 @@ export default function InscriptionPage() {
     );
   }
 
-  const pct = ((step - 1) / 2) * 100;
+  const pct = ((step - 1) / 4) * 100;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen transition-colors duration-500 selection:bg-[#E60028]/40 text-slate-900 dark:text-white bg-slate-50 dark:bg-[#030711]", t.font)}>
@@ -480,114 +557,20 @@ export default function InscriptionPage() {
           <div className="text-center mb-8 max-w-xl">
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
               {lang === 'ar' ? (
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] via-red-400 to-[#E60028]">{t.title}</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] via-red-400 to-[#E60028]">Inscription Étudiante</span>
               ) : (
-                <>Dossier de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] via-red-400 to-[#E60028]">Candidature</span></>
+                <>Inscription <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] via-red-400 to-[#E60028]">Étudiante</span></>
               )}
             </h1>
             <p className="text-slate-600 dark:text-slate-500 text-sm leading-relaxed">
-              {t.subtitle}
+              Complétez le formulaire en 5 étapes pour soumettre votre dossier officiel à l'ENCG Fès.
             </p>
           </div>
 
-          {/* ── Ultra-Organized Bilingual Instructions & Physical Documents Guide ── */}
-          <div className="w-full max-w-3xl mb-8 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-[#091124] border-2 border-indigo-200/80 dark:border-indigo-800/80 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl space-y-6">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-indigo-600/30 shrink-0">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
-                    Composition du Dossier Physique / مكونات الملف الفيزيائي
-                  </h3>
-                  <p className="text-xs text-slate-500 font-bold">
-                    Documents obligatoires à mettre dans l'enveloppe A4 avec le QR Code
-                  </p>
-                </div>
-              </div>
-
-              <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 self-start sm:self-auto">
-                Guichet ENCG Fès 2026
-              </span>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 text-xs">
-              
-              {/* Card 1: Moroccan Students */}
-              <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-700">
-                  <h4 className="font-black text-indigo-700 dark:text-indigo-300 text-xs flex items-center gap-1.5">
-                    🇲🇦 Étudiants Marocains / الطلبة المغاربة
-                  </h4>
-                  <span className="text-[10px] font-bold text-slate-400">National</span>
-                </div>
-
-                <ul className="space-y-2 text-slate-700 dark:text-slate-200 font-medium">
-                  <li className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-black">1.</span>
-                    <span>🎓 <strong>Baccalauréat Original</strong> + 2 copies certifiées / <strong>شهادة البكالوريا الأصلية</strong> + نسختان مصادق عليهما</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-black">2.</span>
-                    <span>📄 <strong>Relevés de Notes Originaux</strong> du Bac / <strong>كشوف النقط الأصلية</strong> للبكالوريا</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-black">3.</span>
-                    <span>🪪 <strong>2 Copies certifiées de la CIN</strong> / نسختان مصادق عليهما من بطاقة التعريف الوطنية</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-black">4.</span>
-                    <span>📸 <strong>4 Photos d'identité récentes</strong> + Acte de naissance / 4 صور شمسية + عقد الازدياد</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-black">5.</span>
-                    <span>✉️ <strong>2 Enveloppes timbrées</strong> avec l'adresse du candidat / ظرفان بريديان يحملان العنوان</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Card 2: Foreign Students */}
-              <div className="bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl p-5 border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b pb-2 border-amber-200/60 dark:border-amber-900/40">
-                  <h4 className="font-black text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5">
-                    🌍 Étudiants Étrangers / الطلبة الأجانب
-                  </h4>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">International</span>
-                </div>
-
-                <ul className="space-y-2 text-slate-800 dark:text-slate-200 font-medium">
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-600 font-black">1.</span>
-                    <span>🛂 <strong>Copie du Passeport ou Carte de Séjour</strong> au Maroc / نسخة من جواز السفر أو بطاقة الإقامة</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-600 font-black">2.</span>
-                    <span>📜 <strong>Attestation d'Équivalence du Baccalauréat</strong> (MESRSFC) / قرار المعادلة لشهادة البكالوريا صادر عن الوزارة</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-600 font-black">3.</span>
-                    <span>🎓 <strong>Baccalauréat Original certifié</strong> (+ 2 copies) / شهادة البكالوريا الأصلية المصادق عليها</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-600 font-black">4.</span>
-                    <span>📄 <strong>Relevés de Notes Originaux</strong> du Bac / كشوف النقط الأصلية للبكالوريا</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-600 font-black">5.</span>
-                    <span>📸 <strong>4 Photos d'identité</strong> + Acte de naissance / 4 صور شمسية + عقد الازدياد مترجم</span>
-                  </li>
-                </ul>
-              </div>
-
-            </div>
-          </div>
-
           {/* ── Step Indicator ── */}
-          <div className="w-full max-w-2xl mb-8">
+          <div className="w-full max-w-3xl mb-8">
             <div className="relative flex items-start justify-between">
-              <div className={cn("absolute top-5 h-[2px] bg-slate-200 dark:bg-white/8 rounded-full", isRTL ? "right-[calc(16.67%)] left-[calc(16.67%)]" : "left-[calc(16.67%)] right-[calc(16.67%)]")}>
+              <div className={cn("absolute top-5 h-[2px] bg-slate-200 dark:bg-white/8 rounded-full", isRTL ? "right-[calc(10%)] left-[calc(10%)]" : "left-[calc(10%)] right-[calc(10%)]")}>
                 <div className={cn("h-full bg-gradient-to-r from-[#E60028] to-red-500 rounded-full transition-all duration-700 ease-out", isRTL ? "float-right" : "")} style={{ width: `${pct}%` }} />
               </div>
 
@@ -595,13 +578,15 @@ export default function InscriptionPage() {
                 const done_  = step > id;
                 const active = step === id;
                 return (
-                  <div key={id} className="flex flex-col items-center gap-2 w-1/3 z-10">
+                  <div key={id} className="flex flex-col items-center gap-2 w-1/5 z-10">
                     <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2 text-sm font-bold',
+                      'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2 text-sm font-bold cursor-pointer',
                       done_  ? 'bg-[#E60028] border-[#E60028] text-white scale-110 shadow-lg shadow-[#E60028]/40'
                              : active ? 'bg-white dark:bg-[#030711] border-[#E60028] text-[#E60028] scale-110 shadow-lg shadow-[#E60028]/20'
                                       : 'bg-white dark:bg-[#030711] border-slate-200 dark:border-white/15 text-slate-400 dark:text-slate-600'
-                    )}>
+                    )}
+                    onClick={() => { if (id < step) setStep(id); }}
+                    >
                       {done_ ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
                     </div>
                     <span className={cn('text-xs font-bold tracking-wide transition-colors text-center', active || done_ ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-600')}>
@@ -632,28 +617,137 @@ export default function InscriptionPage() {
                 {/* ═══════════ STEP 1 ═══════════ */}
                 {step === 1 && (
                   <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-9 h-9 rounded-xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
-                        <User className="w-4 h-4 text-[#E60028]" />
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
+                          <User className="w-5 h-5 text-[#E60028]" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-slate-900 dark:text-white text-base">Informations Personnelles & Identité</h3>
+                          <p className="text-xs text-slate-500">Remplissez les informations d'identité, de naissance et de résidence</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 dark:text-white">{t.step1}</h3>
-                        <p className="text-xs text-slate-500">{t.step1Sub}</p>
-                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#E60028] bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-full border border-red-200 dark:border-red-900">
+                        Étape 1 sur 3
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field icon={User}  label="Nom Complet" required type="text" name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Ahmed El Fassi" className="sm:col-span-2" />
-                      
-                      <Field icon={Hash}  label={t.cneLabel} required type="text" name="cne" value={formData.cne} onChange={handleChange} placeholder="N123456789" />
-                      <Field icon={Hash}  label="CIN / Passeport" required type="text" name="cin" value={formData.cin} onChange={handleChange} placeholder="AB123456" />
-                      
-                      <Field icon={Phone} label="Téléphone" required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+212 6XX XXX XXX" />
-                      <Field icon={Mail}  label="Email" required type="email" name="email" value={formData.email} onChange={handleChange} placeholder="candidat@email.com" />
-                      
-                      <Field icon={Lock}  label="Mot de passe" required type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Min. 8 caractères" />
-                      <Field icon={Lock}  label="Confirmer" required type="password" name="password_confirmation" value={formData.password_confirmation} onChange={handleChange} placeholder="Répéter le mot de passe" />
-                    </div>
+                    {/* Section 1: Identifiants Principaux */}
+                    <SectionCard title="1. Identifiants de Candidature & Compte (Anti-Fraude Check)" icon={Hash}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={Hash} label="CNE (Code Massar)" required type="text" name="cne" value={formData.cne} onChange={handleChange} placeholder="N140091375" />
+                        <Field icon={Hash} label="CNIE (Carte d'Identité)" required type="text" name="cin" value={formData.cin} onChange={handleChange} placeholder="CD994937" />
+                        <Field icon={Mail} label="Adresse E-mail" required type="email" name="email" value={formData.email} onChange={handleChange} placeholder="aminamasefri@gmail.com" />
+                        <Field icon={Phone} label="Téléphone Portable" required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="0657272322" />
+                      </div>
+
+                      {cneCheckStatus.message && (!cneCheckStatus.cneAvailable || !cneCheckStatus.cinAvailable) && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2 mt-3 animate-in fade-in">
+                          <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>{cneCheckStatus.message}</span>
+                        </div>
+                      )}
+                    </SectionCard>
+
+                    {/* Section 2: Nom & Prénom en FR & AR */}
+                    <SectionCard title="2. Identité en Français & en Arabe" icon={User}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={User} label="Nom en Français" required type="text" name="last_name_fr" value={formData.last_name_fr} onChange={handleChange} placeholder="Maazouzi Sefrioui" />
+                        <Field icon={User} label="Prénom en Français" required type="text" name="first_name_fr" value={formData.first_name_fr} onChange={handleChange} placeholder="AMINA" />
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Nom en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="last_name_ar" value={formData.last_name_ar} onChange={handleChange} placeholder="معزوزي صفريوي" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Prénom en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="first_name_ar" value={formData.first_name_ar} onChange={handleChange} placeholder="أمينة" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+                      </div>
+                    </SectionCard>
+
+                    {/* Section 3: Naissance & État Civil */}
+                    <SectionCard title="3. Naissance & État Civil" icon={Calendar}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={Calendar} label="Date de naissance" required type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} />
+                        
+                        <Field icon={User} label="Sexe" required as="select" name="gender" value={formData.gender} onChange={handleChange}>
+                          <option value="female">Féminin (أنثى)</option>
+                          <option value="male">Masculin (ذكر)</option>
+                        </Field>
+
+                        <Field icon={MapPin} label="Lieu de naissance (FR)" required type="text" name="birth_city_fr" value={formData.birth_city_fr} onChange={handleChange} placeholder="FES" />
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Lieu de naissance (AR)</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="birth_city_ar" value={formData.birth_city_ar} onChange={handleChange} placeholder="فاس" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <Field icon={User} label="Situation Familiale" required as="select" name="family_status" value={formData.family_status} onChange={handleChange}>
+                          <option value="Célibataire">Célibataire (عازب/ة)</option>
+                          <option value="Marié(e)">Marié(e) (متزوج/ة)</option>
+                        </Field>
+
+                        <Field icon={Globe} label="Nationalité" required as="select" name="nationality" value={formData.nationality} onChange={handleChange}>
+                          <option value="Marocain(e)">Marocain(e) (مغربية)</option>
+                          <option value="Étranger">Étranger (أجنبي/ة)</option>
+                        </Field>
+                      </div>
+                    </SectionCard>
+
+                    {/* Section 4: Localisation & Adresse de Résidence */}
+                    <SectionCard title="4. Localisation & Domicile" icon={MapPin}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={Globe} label="Pays" required as="select" name="country" value={formData.country} onChange={handleChange}>
+                          <option value="Maroc">Maroc (المغرب)</option>
+                          <option value="Autre">Autre Pays</option>
+                        </Field>
+
+                        <Field icon={MapPin} label="Région" required as="select" name="region" value={formData.region} onChange={handleChange}>
+                          <option value="Fès-Meknès">Fès-Meknès</option>
+                          <option value="Rabat-Salé-Kénitra">Rabat-Salé-Kénitra</option>
+                          <option value="Casablanca-Settat">Casablanca-Settat</option>
+                          <option value="Tangier-Tetouan-Al Hoceima">Tanger-Tétouan-Al Hoceïma</option>
+                          <option value="Oriental">L'Oriental</option>
+                          <option value="Marrakesh-Safi">Marrakech-Safi</option>
+                          <option value="Souss-Massa">Souss-Massa</option>
+                        </Field>
+
+                        <Field icon={MapPin} label="Province / Préfecture" required as="select" name="province" value={formData.province} onChange={handleChange}>
+                          <option value="Fès">Fès</option>
+                          <option value="Meknès">Meknès</option>
+                          <option value="Sefrou">Sefrou</option>
+                          <option value="Taza">Taza</option>
+                          <option value="Autre">Autre Province</option>
+                        </Field>
+
+                        <div className="sm:col-span-2 space-y-1">
+                          <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Adresse de Résidence (FR) *</label>
+                          <input type="text" name="address_fr" value={formData.address_fr} onChange={handleChange} placeholder="22AV MLY RACHID RCE JAWHARA APPT8 BOURAMANA VN FES" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <div className="sm:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Adresse de Résidence en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="address_ar" value={formData.address_ar} onChange={handleChange} placeholder="22 شارع مولاي رشيد إقامة جوهرة شقة 8 بورمانة فاس" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <Field icon={Lock} label="Mot de passe" required type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Min. 8 caractères" />
+                        <Field icon={Lock} label="Confirmer mot de passe" required type="password" name="password_confirmation" value={formData.password_confirmation} onChange={handleChange} placeholder="Répéter le mot de passe" />
+                      </div>
+                    </SectionCard>
 
                     <div className="flex items-start gap-3 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 mt-2">
                       <input
@@ -682,92 +776,400 @@ export default function InscriptionPage() {
 
                 {/* ═══════════ STEP 2 ═══════════ */}
                 {step === 2 && (
-                  <div className="space-y-5 animate-[fadeIn_0.3s_ease]">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-9 h-9 rounded-xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
-                        <Users className="w-4 h-4 text-[#E60028]" />
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-[#E60028]" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-slate-900 dark:text-white text-base">Informations des Parents & Tuteurs Légaux</h3>
+                          <p className="text-xs text-slate-500">Renseignez l'état civil, les pièces d'identité et professions du père et de la mère</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 dark:text-white">{t.step2}</h3>
-                        <p className="text-xs text-slate-500">{t.step2Sub}</p>
-                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#E60028] bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-full border border-red-200 dark:border-red-900">
+                        Étape 2 sur 3
+                      </span>
                     </div>
 
-                    <SectionCard title="Informations de naissance" icon={Calendar}>
+                    {/* Section Père */}
+                    <SectionCard title="Informations du Père (معلومات الأب)" icon={User}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={Calendar} label="Date de naissance" required type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} />
-                        <Field icon={MapPin}   label="Lieu de naissance" required type="text" name="birth_city" value={formData.birth_city} onChange={handleChange} placeholder="Fès" />
+                        <Field icon={User} label="Nom du père" required type="text" name="father_last_name_fr" value={formData.father_last_name_fr} onChange={handleChange} placeholder="Maazouzi Sefrioui" />
+                        <Field icon={User} label="Prénom du père" required type="text" name="father_first_name_fr" value={formData.father_first_name_fr} onChange={handleChange} placeholder="Mohammed" />
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Nom du père en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="father_last_name_ar" value={formData.father_last_name_ar} onChange={handleChange} placeholder="معزوزي صفريوي" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Prénom du père en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="father_first_name_ar" value={formData.father_first_name_ar} onChange={handleChange} placeholder="محمد" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <Field icon={Hash} label="CNIE du père" required type="text" name="father_cin" value={formData.father_cin} onChange={handleChange} placeholder="E579196" />
+
+                        <Field icon={Building2} label="Profession du père" required as="select" name="father_job" value={formData.father_job} onChange={handleChange}>
+                          <option value="Militaires et forces de sécurité">Militaires et forces de sécurité</option>
+                          <option value="Cadres supérieurs / Professions intellectuelles">Cadres supérieurs / Professions intellectuelles</option>
+                          <option value="Fonctionnaires et enseignants">Fonctionnaires et enseignants</option>
+                          <option value="Artisans et ouvriers qualifiés">Artisans et ouvriers qualifiés</option>
+                          <option value="Commerçants et indépendants">Commerçants et indépendants</option>
+                          <option value="Employés du secteur privé">Employés du secteur privé</option>
+                          <option value="Retraité">Retraité</option>
+                          <option value="Sans emploi">Sans emploi</option>
+                        </Field>
                       </div>
                     </SectionCard>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <SectionCard title="👨 Père" icon={User}>
-                        <Field icon={User}        label="Nom & Prénom" type="text" name="father_name" value={formData.father_name} onChange={handleChange} placeholder="Nom complet" />
-                        <Field icon={Hash}        label="CIN"          type="text" name="father_cin" value={formData.father_cin} onChange={handleChange} placeholder="AB000000" />
-                        <Field icon={Building2}   label="Profession"   type="text" name="father_job" value={formData.father_job} onChange={handleChange} placeholder="Ingénieur..." />
-                      </SectionCard>
-                      <SectionCard title="👩 Mère" icon={User}>
-                        <Field icon={User}        label="Nom & Prénom" type="text" name="mother_name" value={formData.mother_name} onChange={handleChange} placeholder="Nom complet" />
-                        <Field icon={Hash}        label="CIN"          type="text" name="mother_cin" value={formData.mother_cin} onChange={handleChange} placeholder="AB000000" />
-                        <Field icon={Building2}   label="Profession"   type="text" name="mother_job" value={formData.mother_job} onChange={handleChange} placeholder="Enseignante..." />
-                      </SectionCard>
-                    </div>
+                    {/* Section Mère */}
+                    <SectionCard title="Informations de la Mère (معلومات الأم)" icon={User}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field icon={User} label="Nom de la mère" required type="text" name="mother_last_name_fr" value={formData.mother_last_name_fr} onChange={handleChange} placeholder="Satouri" />
+                        <Field icon={User} label="Prénom de la mère" required type="text" name="mother_first_name_fr" value={formData.mother_first_name_fr} onChange={handleChange} placeholder="Boutaina" />
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Nom de la mère en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="mother_last_name_ar" value={formData.mother_last_name_ar} onChange={handleChange} placeholder="الساطوري" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Prénom de la mère en Arabe *</label>
+                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200">⌨️ العربية</span>
+                          </div>
+                          <input type="text" dir="rtl" name="mother_first_name_ar" value={formData.mother_first_name_ar} onChange={handleChange} placeholder="بثينة" className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white font-serif outline-none focus:ring-2 focus:ring-[#E60028]/15" />
+                        </div>
+
+                        <Field icon={Hash} label="CNIE de la mère" required type="text" name="mother_cin" value={formData.mother_cin} onChange={handleChange} placeholder="C567108" />
+
+                        <Field icon={Building2} label="Profession de la mère" required as="select" name="mother_job" value={formData.mother_job} onChange={handleChange}>
+                          <option value="Sans emploi (Mère au foyer)">Sans emploi (Mère au foyer)</option>
+                          <option value="Cadres supérieurs / Professions intellectuelles">Cadres supérieurs / Professions intellectuelles</option>
+                          <option value="Fonctionnaires et enseignants">Fonctionnaires et enseignants</option>
+                          <option value="Commerçantes et indépendantes">Commerçantes et indépendantes</option>
+                          <option value="Employées du secteur privé">Employées du secteur privé</option>
+                          <option value="Retraitée">Retraitée</option>
+                        </Field>
+                      </div>
+                    </SectionCard>
                   </div>
                 )}
 
                 {/* ═══════════ STEP 3 ═══════════ */}
                 {step === 3 && (
-                  <div className="space-y-5 animate-[fadeIn_0.3s_ease]">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-9 h-9 rounded-xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
-                        <GraduationCap className="w-4 h-4 text-[#E60028]" />
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#E60028]/10 dark:bg-[#E60028]/15 border border-[#E60028]/20 flex items-center justify-center">
+                          <GraduationCap className="w-5 h-5 text-[#E60028]" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-slate-900 dark:text-white text-base">Informations Académiques & Orientations</h3>
+                          <p className="text-xs text-slate-500">Cursus du baccalauréat, moyenne, lycée et filière demandée</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 dark:text-white">{t.step3}</h3>
-                        <p className="text-xs text-slate-500">{t.step3Sub}</p>
-                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#E60028] bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-full border border-red-200 dark:border-red-900">
+                        Étape 3 sur 5
+                      </span>
                     </div>
 
-                    <SectionCard title="Baccalauréat" icon={BookOpen}>
+                    <SectionCard title="Informations du Baccalauréat & Établissement" icon={BookOpen}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={Building2} label="Type d'établissement" required as="select" name="bac_type" value={formData.bac_type} onChange={handleChange}>
-                          <option value="">Sélectionner…</option>
-                          <option value="public">Public</option>
-                          <option value="prive">Privé</option>
-                          <option value="etranger">Mission Étrangère</option>
+                        <Field icon={BookOpen} label="Série du Baccalauréat" required as="select" name="bac_name" value={formData.bac_name} onChange={handleChange}>
+                          <option value="Bac Sciences Mathématiques B - Option Français">Bac Sciences Mathématiques B - Option Français</option>
+                          <option value="Bac Sciences Mathématiques A - Option Français">Bac Sciences Mathématiques A - Option Français</option>
+                          <option value="Bac Physique-Chimie (PC)">Bac Physique-Chimie (PC)</option>
+                          <option value="Bac Sciences de la Vie et de la Terre (SVT)">Bac Sciences de la Vie et de la Terre (SVT)</option>
+                          <option value="Bac Sciences Économiques">Bac Sciences Économiques</option>
+                          <option value="Bac Techniques de Gestion et Comptabilité (TGC)">Bac Techniques de Gestion et Comptabilité (TGC)</option>
                         </Field>
-                        <Field icon={BookOpen} label="Série / Spécialité" required as="select" name="bac_series" value={formData.bac_series} onChange={handleChange}>
-                          <option value="">Sélectionner…</option>
-                          <option value="sm">Sciences Maths A/B</option>
-                          <option value="pc">Physique-Chimie (PC)</option>
-                          <option value="svt">Sciences de la Vie (SVT)</option>
-                          <option value="eco">Sciences Économiques</option>
-                          <option value="gestion">Techniques de Gestion</option>
-                          <option value="autre">Autre</option>
+
+                        <Field icon={Star} label="Mention au Bac" required as="select" name="bac_mention" value={formData.bac_mention} onChange={handleChange}>
+                          <option value="Très Bien">Très Bien (≥ 16.00)</option>
+                          <option value="Bien">Bien (14.00 - 15.99)</option>
+                          <option value="Assez Bien">Assez Bien (12.00 - 13.99)</option>
+                          <option value="Passable">Passable (10.00 - 11.99)</option>
                         </Field>
-                        <Field icon={Star}     label="Moyenne Bac"  required type="number" step="0.01" min="0" max="20" name="bac_average" value={formData.bac_average} onChange={handleChange} placeholder="15.50" />
-                        <Field icon={Calendar} label="Année"        required type="number" name="bac_year" value={formData.bac_year} onChange={handleChange} placeholder="2025" />
-                        <Field icon={MapPin}   label="Ville lycée"  required type="text" name="high_school_city" value={formData.high_school_city} onChange={handleChange} placeholder="Fès" className="sm:col-span-2" />
+
+                        <Field icon={Star} label="Moyenne générale du Bac" required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} placeholder="16.63" />
+
+                        <Field icon={Calendar} label="Année d'obtention du Bac" required as="select" name="bac_year" value={formData.bac_year} onChange={handleChange}>
+                          <option value="2026">2026</option>
+                          <option value="2025">2025</option>
+                          <option value="2024">2024</option>
+                        </Field>
+
+                        <Field icon={Building2} label="Lycée / Établissement" required type="text" name="high_school" value={formData.high_school} onChange={handleChange} placeholder="Groupe scolaire LA RÉSIDENCE" className="sm:col-span-2" />
+
+                        <Field icon={Building2} label="Académie Régionale" required as="select" name="academy" value={formData.academy} onChange={handleChange}>
+                          <option value="ACADEMIE Fès-Meknès — أكاديمية فاس - مكناس">ACADEMIE Fès-Meknès — أكاديمية فاس - مكناس</option>
+                          <option value="ACADEMIE Rabat-Salé-Kénitra">ACADEMIE Rabat-Salé-Kénitra</option>
+                          <option value="ACADEMIE Casablanca-Settat">ACADEMIE Casablanca-Settat</option>
+                          <option value="ACADEMIE Tanger-Tétouan-Al Hoceïma">ACADEMIE Tanger-Tétouan-Al Hoceïma</option>
+                        </Field>
+
+                        <Field icon={MapPin} label="Délégation" required as="select" name="delegation" value={formData.delegation} onChange={handleChange}>
+                          <option value="FES">FÈS</option>
+                          <option value="MEKNES">MEKNÈS</option>
+                          <option value="SEFROU">SEFROU</option>
+                        </Field>
+
+                        <Field icon={GraduationCap} label="Cycle" required as="select" name="cycle" value={formData.cycle} onChange={handleChange}>
+                          <option value="Cycle des deux années préparatoires">Cycle des deux années préparatoires (TC)</option>
+                          <option value="Cycle Spécialisé (Master / Licence)">Cycle Spécialisé (Master / Licence)</option>
+                        </Field>
+
+                        <Field icon={BookOpen} label="Filière Affectée" required as="select" name="filiere" value={formData.filiere} onChange={handleChange}>
+                          <option value="Deux années préparatoires">Deux années préparatoires</option>
+                          <option value="Marketing et Action Commerciale">Marketing et Action Commerciale</option>
+                          <option value="Finance et Comptabilité">Finance et Comptabilité</option>
+                          <option value="Audit et Contrôle de Gestion">Audit et Contrôle de Gestion</option>
+                          <option value="Management des Ressources Humaines">Management des Ressources Humaines</option>
+                        </Field>
                       </div>
                     </SectionCard>
+                  </div>
+                )}
 
-                    {/* Filière picker */}
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#E60028] mb-3 flex items-center gap-2">
-                        <GraduationCap className="w-3 h-3" /> Filière demandée à l'ENCG Fès <span className="text-[#E60028]">*</span>
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {FILIERES.map(f => (
-                          <label key={f}
-                            className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-white/[0.02] p-3.5
-                              hover:border-[#E60028]/40 hover:bg-[#E60028]/5 cursor-pointer transition-all
-                              has-[:checked]:border-[#E60028]/60 has-[:checked]:bg-[#E60028]/10"
-                          >
-                            <input type="radio" name="filiere" value={f} onChange={handleRadioChange} checked={formData.filiere === f} className="sr-only peer" />
-                            <span className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-[#E60028] dark:peer-checked:border-[#E60028] peer-checked:bg-[#E60028] transition-all flex-shrink-0" />
-                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 leading-snug">{f}</span>
-                          </label>
-                        ))}
+                {/* ═══════════ STEP 4: DOCUMENTS ═══════════ */}
+                {step === 4 && (
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-slate-900 dark:text-white text-base">Téléchargement des Pièces Justificatives</h3>
+                          <p className="text-xs text-slate-500">Importez les versions numérisées PDF de votre Bac, CIN et photo d'identité 35x45</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-900">
+                        Étape 4 sur 5
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Document 1: Bac PDF */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            🎓 Bac (Pdf, Max 10Mo)
+                          </h4>
+                          <span className="text-[10px] text-slate-400">PDF scanné recto-verso</span>
+                        </div>
+                        <p className="text-xs text-slate-500">Le document doit être scanné recto-verso et regroupé dans un seul fichier PDF.</p>
+                        
+                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                          <div className="flex items-center gap-2 font-mono text-slate-700 dark:text-slate-300 truncate max-w-[300px]">
+                            <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{formData.bac_pdf_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => toast.info('Aperçu du PDF du Bac')} className="px-3 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1 cursor-pointer">
+                              👁️ Voir
+                            </button>
+                            <label className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 cursor-pointer">
+                              ✏️ Modifier
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  setFormData({ ...formData, bac_pdf_name: e.target.files[0].name });
+                                  toast.success('Document Bac mis à jour !');
+                                }
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Document 2: CNIE PDF */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            🪪 CNIE (Pdf, Max 10Mo)
+                          </h4>
+                          <span className="text-[10px] text-slate-400">PDF scanné recto-verso</span>
+                        </div>
+                        <p className="text-xs text-slate-500">Le document doit être scanné recto-verso et regroupé dans un seul fichier PDF.</p>
+                        
+                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                          <div className="flex items-center gap-2 font-mono text-slate-700 dark:text-slate-300 truncate max-w-[300px]">
+                            <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{formData.cnie_pdf_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => toast.info('Aperçu de la CNIE')} className="px-3 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1 cursor-pointer">
+                              👁️ Voir
+                            </button>
+                            <label className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 cursor-pointer">
+                              ✏️ Modifier
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  setFormData({ ...formData, cnie_pdf_name: e.target.files[0].name });
+                                  toast.success('Document CNIE mis à jour !');
+                                }
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Document 3: Relevé de Notes du Baccalauréat PDF */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            📊 Relevé de Notes du Baccalauréat (Pdf, Max 10Mo)
+                          </h4>
+                          <span className="text-[10px] text-slate-400">Pour vérification de la moyenne du Bac par IA</span>
+                        </div>
+                        <p className="text-xs text-slate-500">Scannez le relevé de notes officiel indiquant la moyenne générale du Baccalauréat.</p>
+                        
+                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                          <div className="flex items-center gap-2 font-mono text-slate-700 dark:text-slate-300 truncate max-w-[300px]">
+                            <FileText className="w-4 h-4 text-purple-600 shrink-0" />
+                            <span>{formData.releve_notes_pdf_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => toast.info('Aperçu du Relevé de Notes')} className="px-3 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1 cursor-pointer">
+                              👁️ Voir
+                            </button>
+                            <label className="px-3 py-1 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg text-xs font-bold hover:bg-purple-100 flex items-center gap-1 cursor-pointer">
+                              ✏️ Modifier
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  setFormData({ ...formData, releve_notes_pdf_name: e.target.files[0].name });
+                                  toast.success('Relevé de notes mis à jour !');
+                                }
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Document 3: Photo d'identité (35 x 45 mm) */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                          📸 Photo d'identité
+                        </h4>
+                        <p className="text-xs text-slate-500">Format obligatoire : 35 × 45 mm (ratio 7:9), photo récente en couleur sur fond clair.</p>
+                        
+                        <div className="flex items-center gap-4">
+                          <div className="w-20 h-24 rounded-2xl bg-slate-100 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-md flex items-center justify-center">
+                            {formData.photo_url ? (
+                              <img src={formData.photo_url} alt="Photo profil" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs font-bold text-slate-400 text-center p-2">Photo 35×45mm</span>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button type="button" onClick={() => toast.info('Aperçu plein écran de la photo')} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                👁️ Voir
+                              </button>
+                              
+                              <button type="button" onClick={() => setShowPhotoModal(true)} className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                ✂️ Ajuster (Crop & Zoom)
+                              </button>
+
+                              <label className="px-3.5 py-1.5 bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs">
+                                🖼️ Remplacer
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                  if (e.target.files?.[0]) {
+                                    const url = URL.createObjectURL(e.target.files[0]);
+                                    setFormData({ ...formData, photo_url: url });
+                                    setShowPhotoModal(true);
+                                  }
+                                }} />
+                              </label>
+                            </div>
+                            <p className="text-[10px] text-emerald-600 font-bold">Photo existante — utilisez « Ajuster » pour appliquer le format 35 × 45 mm.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ═══════════ STEP 5: CONFIRMATION FINALE ═══════════ */}
+                {step === 5 && (
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="text-center space-y-2 py-4">
+                      <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-xl">
+                        <CheckCircle2 className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white">Confirmation finale</h3>
+                      <p className="text-xs text-slate-500">Merci de vérifier soigneusement vos informations avant de valider l'inscription.</p>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      {/* Card 1: Personnelles */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                        <h4 className="font-black text-blue-600 dark:text-blue-400 text-sm flex items-center gap-2 border-b pb-2">
+                          <User className="w-4 h-4" /> Informations personnelles
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2 text-slate-700 dark:text-slate-300">
+                          <div><strong>Nom (Fr) :</strong> {formData.last_name_fr || 'Maazouzi Sefrioui'}</div>
+                          <div><strong>Prénom (Fr) :</strong> {formData.first_name_fr || 'AMINA'}</div>
+                          <div><strong>Nom (Ar) :</strong> <span className="font-serif font-bold">{formData.last_name_ar || 'معزوزي صفريوي'}</span></div>
+                          <div><strong>Prénom (Ar) :</strong> <span className="font-serif font-bold">{formData.first_name_ar || 'أمينة'}</span></div>
+                          <div><strong>Email :</strong> {formData.email || 'aminamasefri@gmail.com'}</div>
+                          <div><strong>Téléphone :</strong> {formData.phone || '0657272322'}</div>
+                          <div><strong>Lieu de naissance (Fr) :</strong> {formData.birth_city_fr || 'FES'}</div>
+                          <div><strong>Lieu de naissance (Ar) :</strong> <span className="font-serif font-bold">{formData.birth_city_ar || 'فاس'}</span></div>
+                          <div><strong>Sexe :</strong> {formData.gender === 'female' ? 'Féminin' : 'Masculin'}</div>
+                          <div><strong>CNE / CNIE :</strong> {formData.cne || 'N140091375'} / {formData.cin || 'CD994937'}</div>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Parents */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                        <h4 className="font-black text-blue-600 dark:text-blue-400 text-sm flex items-center gap-2 border-b pb-2">
+                          <Users className="w-4 h-4" /> Informations des parents
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2 text-slate-700 dark:text-slate-300">
+                          <div><strong>Nom du père (Fr) :</strong> {formData.father_last_name_fr || 'Maazouzi Sefrioui'}</div>
+                          <div><strong>Prénom du père (Fr) :</strong> {formData.father_first_name_fr || 'Mohammed'}</div>
+                          <div><strong>Nom du père (Ar) :</strong> <span className="font-serif font-bold">{formData.father_last_name_ar || 'معزوزي صفريوي'}</span></div>
+                          <div><strong>Prénom du père (Ar) :</strong> <span className="font-serif font-bold">{formData.father_first_name_ar || 'محمد'}</span></div>
+                          <div><strong>CNIE du père :</strong> {formData.father_cin || 'E579196'}</div>
+                          <div><strong>Profession du père :</strong> {formData.father_job}</div>
+                          <div><strong>Nom de la mère (Fr) :</strong> {formData.mother_last_name_fr || 'Satouri'}</div>
+                          <div><strong>Prénom de la mère (Fr) :</strong> {formData.mother_first_name_fr || 'Boutaina'}</div>
+                          <div><strong>Nom de la mère (Ar) :</strong> <span className="font-serif font-bold">{formData.mother_last_name_ar || 'الساطوري'}</span></div>
+                          <div><strong>Prénom de la mère (Ar) :</strong> <span className="font-serif font-bold">{formData.mother_first_name_ar || 'بثينة'}</span></div>
+                          <div><strong>CNIE de la mère :</strong> {formData.mother_cin || 'C567108'}</div>
+                          <div><strong>Profession de la mère :</strong> {formData.mother_job}</div>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Académiques */}
+                      <div className="bg-white dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                        <h4 className="font-black text-blue-600 dark:text-blue-400 text-sm flex items-center gap-2 border-b pb-2">
+                          <GraduationCap className="w-4 h-4" /> Informations académiques
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2 text-slate-700 dark:text-slate-300">
+                          <div className="col-span-2"><strong>Bac :</strong> {formData.bac_name}</div>
+                          <div><strong>Mention :</strong> {formData.bac_mention}</div>
+                          <div><strong>Moyenne générale :</strong> {formData.bac_average}</div>
+                          <div><strong>Année :</strong> {formData.bac_year}</div>
+                          <div><strong>Établissement :</strong> {formData.high_school}</div>
+                          <div className="col-span-2"><strong>Académie :</strong> {formData.academy}</div>
+                          <div><strong>Délégation :</strong> {formData.delegation}</div>
+                          <div><strong>Cycle :</strong> {formData.cycle}</div>
+                          <div className="col-span-2"><strong>Filière :</strong> {formData.filiere}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -779,7 +1181,7 @@ export default function InscriptionPage() {
                     type="button"
                     onClick={goPrev}
                     className={cn(
-                      'flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm border transition-all',
+                      'flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm border transition-all cursor-pointer',
                       step === 1
                         ? 'opacity-0 pointer-events-none'
                         : 'border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
@@ -789,7 +1191,7 @@ export default function InscriptionPage() {
                   </button>
 
                   <div className="flex items-center gap-1.5">
-                    {([1, 2, 3] as StepId[]).map(i => (
+                    {([1, 2, 3, 4, 5] as StepId[]).map(i => (
                       <span key={i} className={cn(
                         'rounded-full transition-all duration-300',
                         step === i ? 'w-6 h-1.5 bg-[#E60028]' : step > i ? 'w-1.5 h-1.5 bg-[#E60028]/40' : 'w-1.5 h-1.5 bg-slate-200 dark:bg-white/15'
@@ -800,10 +1202,9 @@ export default function InscriptionPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex items-center gap-2 bg-[#E60028] hover:bg-red-600
+                    className="flex items-center gap-2 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] hover:opacity-95
                       text-white px-5 sm:px-7 py-2.5 rounded-xl font-bold text-sm tracking-wide
-                      transition-all shadow-lg shadow-[#E60028]/30 hover:shadow-[#E60028]/50
-                      hover:scale-[1.03] active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none"
+                      transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
                   >
                     {submitting ? (
                       <>
@@ -813,8 +1214,8 @@ export default function InscriptionPage() {
                         </svg>
                         {t.btnSending}
                       </>
-                    ) : step === 3 ? (
-                      <><Rocket className="w-4 h-4" /> {t.btnSubmit}</>
+                    ) : step === 5 ? (
+                      <><Rocket className="w-4 h-4 text-amber-400" /> Valider & Soumettre L'Inscription</>
                     ) : (
                       <>{t.btnNext} <ArrowRight className={cn("w-4 h-4", isRTL && "rotate-180")} /></>
                     )}
@@ -824,11 +1225,103 @@ export default function InscriptionPage() {
             </div>
 
             <p className="text-center text-xs text-slate-500 mt-6">
-              © 2026 ENCG Fès — USMBA · Tous droits réservés ·{' '}
+              © 2026 ENCG Fès — USMBA · Service Informatique ·{' '}
               <Link to="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">Retour à l'accueil</Link>
             </p>
           </div>
         </main>
+
+        {/* ── PHOTO CROPPER / ADJUSTER MODAL ── */}
+        {showPhotoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in zoom-in-95">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+              <div className="p-4 bg-[#0f2863] text-white flex items-center justify-between">
+                <h4 className="text-sm font-black flex items-center gap-2">
+                  <Scissors className="w-4 h-4 text-amber-400" /> Ajuster la photo d'identité
+                </h4>
+                <button onClick={() => setShowPhotoModal(false)} className="p-1 hover:bg-white/10 rounded-full text-white cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <p className="text-xs text-slate-500">Placez le visage dans le cadre, puis choisissez le zoom et la résolution.</p>
+                
+                {/* Photo Cropper Frame Grid */}
+                <div className="relative w-64 h-80 mx-auto bg-slate-950 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center border-2 border-indigo-500">
+                  <img
+                    src={formData.photo_url || '/placeholder-student.png'}
+                    alt="Target Photo"
+                    className="w-full h-full object-cover transition-transform"
+                    style={{ transform: `scale(${1 + (formData.photo_zoom || 0) / 100})` }}
+                  />
+                  
+                  {/* Framing Grid Overlay */}
+                  <div className="absolute inset-0 border-2 border-white/40 pointer-events-none grid grid-cols-3 grid-rows-3">
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-b border-white/20" />
+                    <div className="border-r border-white/20" />
+                    <div className="border-r border-white/20" />
+                    <div />
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-slate-700 dark:text-slate-300">Zoom du cadrage</span>
+                      <span className="text-indigo-600 font-mono">{formData.photo_zoom}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={formData.photo_zoom}
+                      onChange={(e) => setFormData({ ...formData, photo_zoom: Number(e.target.value) })}
+                      className="w-full accent-[#0f2863] cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Dimensions de sortie :</span>
+                    <span className="font-mono font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-1 rounded border border-indigo-200 dark:border-indigo-800">
+                      {formData.photo_output_size}
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 text-center font-mono">
+                    Format physique : 35 × 45 mm — ratio 7:9 verrouillé
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoModal(false)}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPhotoModal(false);
+                    toast.success('Photo cadrée au format 35x45mm !');
+                  }}
+                  className="px-6 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer shadow-md"
+                >
+                  Valider la photo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Modal Suivi du Dossier en Temps Réel ── */}

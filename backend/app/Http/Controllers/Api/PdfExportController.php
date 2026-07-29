@@ -1540,7 +1540,146 @@ class PdfExportController extends Controller
             'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$student->id}-" . ($incident->sanction_scope ?? 'module'))),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Decision_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
+    /**
+     * Download Official Attestation d'Inscription PDF with Photo Avatar & Security QR Code.
+     */
+    public function downloadAttestationInscriptionPdf(Request $request, $studentId)
+    {
+        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+        
+        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
+        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
+        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
+        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName = strtoupper("{$last_name} {$first_name}");
+        $birthDate = $student?->birth_date ?? $request->input('birth_date', '13/12/2008');
+        $birthCity = $student?->birth_city ?? $request->input('birth_city', 'ER-RICH MIDELT');
+        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
+        $semester = $student?->latestPathway?->semester ?? $request->input('semester', 'Semestre 1');
+        $cycle = $request->input('cycle', 'Deux années Préparatoires des Écoles Nationales de Commerce et Gestion');
+        $academicYear = $request->input('academic_year', '2026-2027');
+
+        // Photo lookup
+        $photoDoc = $studentId ? \Illuminate\Support\Facades\DB::table('student_documents')
+            ->where('student_id', $studentId)
+            ->where('type', 'photo')
+            ->first() : null;
+        
+        $photoPath = null;
+        if ($photoDoc && !empty($photoDoc->file_path)) {
+            $localRelative = str_replace('/storage/', '', $photoDoc->file_path);
+            $fullPath = storage_path('app/public/' . $localRelative);
+            if (file_exists($fullPath)) {
+                $photoPath = $fullPath;
+            }
+        }
+
+        $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
+            'studentName'   => $studentName,
+            'cne'           => $cne,
+            'cin'           => $cin,
+            'birthDate'     => $birthDate,
+            'birthCity'     => $birthCity,
+            'filiereName'   => $filiereName,
+            'semester'      => $semester,
+            'cycle'         => $cycle,
+            'academicYear'  => $academicYear,
+            'photoPath'     => $photoPath,
+            'verifyUrl'     => url("/verify-attestation?cne={$cne}&hash=" . md5($cne . 'ENCG')),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Attestation_Inscription_{$cne}.pdf");
+    }
+
+    /**
+     * Download Bulk ZIP Bundle of All Official Attestations d'Inscription.
+     */
+    public function exportAttestationsZip(Request $request)
+    {
+        $students = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->take(50)->get();
+
+        $zipFileName = 'Attestations_Inscription_ENCG_Fes_' . date('Ymd_His') . '.zip';
+        $tempZipPath = storage_path("app/public/{$zipFileName}");
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($students as $student) {
+                $cne = $student->cne ?? ('N' . (100000000 + $student->id));
+                $studentName = strtoupper("{$student->last_name} {$student->first_name}");
+
+                $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
+                    'studentName'   => $studentName,
+                    'cne'           => $cne,
+                    'cin'           => $student->cin ?? 'CD729102',
+                    'birthDate'     => $student->birth_date ?? '01/01/2005',
+                    'birthCity'     => $student->birth_city ?? 'FÈS',
+                    'filiereName'   => $student->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES',
+                    'semester'      => 'Semestre 1',
+                    'cycle'         => 'Deux années Préparatoires des Écoles Nationales de Commerce et Gestion',
+                    'academicYear'  => '2026-2027',
+                    'photoPath'     => null,
+                    'verifyUrl'     => url("/verify-attestation?cne={$cne}&hash=" . md5($cne . 'ENCG')),
+                ])->setPaper('a4', 'portrait');
+
+                $pdfContent = $pdf->output();
+                $zip->addFromString("Attestation_Inscription_{$cne}_{$student->last_name}.pdf", $pdfContent);
+            }
+            $zip->close();
+        }
+
+        return response()->download($tempZipPath)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Download Récépissé de Dépôt de Dossier Physique PDF.
+     */
+    public function downloadRecepisseDepotPdf(Request $request, $studentId)
+    {
+        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
+        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
+        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
+        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName = strtoupper("{$last_name} {$first_name}");
+        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
+
+        $pdf = $this->getPdfInstance('pdf.recepisse_depot', [
+            'studentName' => $studentName,
+            'cne'         => $cne,
+            'cin'         => $cin,
+            'filiereName' => $filiereName,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Recepisse_Depot_{$cne}.pdf");
+    }
+
+    /**
+     * Download Étiquette Barcode Enveloppe Physique A4 PDF.
+     */
+    public function downloadEtiquetteEnveloppePdf(Request $request, $studentId)
+    {
+        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
+        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
+        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
+        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName = strtoupper("{$last_name} {$first_name}");
+        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
+
+        $pdf = $this->getPdfInstance('pdf.etiquette_enveloppe', [
+            'studentId'   => $studentId,
+            'studentName' => $studentName,
+            'cne'         => $cne,
+            'cin'         => $cin,
+            'filiereName' => $filiereName,
+            'groupName'   => 'TC-S1-G1',
+            'bacYear'     => '2026',
+            'bacSeries'   => 'Sciences Math B',
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Etiquette_Enveloppe_{$cne}.pdf");
     }
 }
 

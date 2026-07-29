@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw } from 'lucide-react';
+import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import StudentDigitalDossierModal from '../components/StudentDigitalDossierModal';
 
 interface Student {
   id: string;
@@ -35,6 +36,11 @@ export default function EnrollmentManager() {
   const [loading, setLoading] = useState(true);
   const [selectedStudentModal, setSelectedStudentModal] = useState<Student | null>(null);
   const [isDispatching, setIsDispatching] = useState(false);
+
+  // Guichet Express & Bulk ZIP State
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedInput, setScannedInput] = useState('');
+  const [isExportingZip, setIsExportingZip] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -89,12 +95,48 @@ export default function EnrollmentManager() {
     }
   };
 
+  const handleScanLookup = (token: string) => {
+    const clean = token.replace(/^ENV-2026-/, '').trim().toLowerCase();
+    const matched = students.find(s => 
+      s.cne?.toLowerCase() === clean || 
+      s.cin?.toLowerCase() === clean || 
+      s.id?.toString() === clean ||
+      `${s.first_name} ${s.last_name}`.toLowerCase().includes(clean)
+    );
+
+    if (matched) {
+      toast.success(`⚡ Scan Réussi ! Dossier trouvé : ${matched.first_name} ${matched.last_name} (${matched.cne})`);
+      setSelectedStudentModal(matched);
+      setIsScannerOpen(false);
+      setScannedInput('');
+    } else {
+      toast.error(`❌ Aucun étudiant trouvé avec le jeton/CNE : "${token}"`);
+    }
+  };
+
+  const handleExportZipBundle = async () => {
+    try {
+      setIsExportingZip(true);
+      toast.loading("Génération du bundle ZIP de toutes les attestations d'inscription...");
+      window.open('/api/admin/students/export-attestations-zip', '_blank');
+      setTimeout(() => {
+        toast.dismiss();
+        toast.success("📦 Bundle ZIP des attestations téléchargé avec succès !");
+        setIsExportingZip(false);
+      }, 1200);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Erreur lors de l'exportation du bundle ZIP.");
+      setIsExportingZip(false);
+    }
+  };
+
   const handleExportAttestationPdf = (s: Student) => {
     toast.loading(`Génération de l'Attestation d'Inscription A4 (${s.first_name} ${s.last_name})...`);
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Attestation d'Inscription (${s.first_name} ${s.last_name}) générée !`);
-      window.open(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(s.first_name + ' ' + s.last_name)}&cne=${encodeURIComponent(s.cne)}&cin=${encodeURIComponent(s.cin)}&filiere=${encodeURIComponent(s.filiere_name || 'Tronc Commun Grande École')}&group=${encodeURIComponent(s.group_name || 'TC-S1-G1')}`, '_blank');
+      window.open(`/api/admin/students/${s.id}/attestation-pdf`, '_blank');
     }, 600);
   };
 
@@ -139,6 +181,21 @@ export default function EnrollmentManager() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button 
+              onClick={() => setIsScannerOpen(true)} 
+              className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black border border-emerald-400 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Camera className="w-4 h-4 text-emerald-100" /> 📷 Mode Guichet Express
+            </button>
+
+            <button 
+              onClick={handleExportZipBundle} 
+              disabled={isExportingZip}
+              className="flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-2xl font-black border border-amber-400 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
+            >
+              <Archive className="w-4 h-4 text-slate-950" /> 📦 Exporter Bundle ZIP
+            </button>
+
             <button 
               onClick={fetchData} 
               className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
@@ -327,15 +384,15 @@ export default function EnrollmentManager() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setSelectedStudentModal(s)}
-                              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-                              title="Inspecter le dossier complet"
+                              className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:-translate-y-0.5"
+                              title="Ouvrir le dossier numérique complet avec scans"
                             >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" /> Inspecter
+                              <FolderOpen className="w-4 h-4 text-amber-400" /> Ouvrir le dossier
                             </button>
 
                             <button
                               onClick={() => handleExportAttestationPdf(s)}
-                              className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-xs"
+                              className="px-3 py-2 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-xs"
                               title="Télécharger l'Attestation d'Inscription Officielle A4"
                             >
                               <Printer className="w-3.5 h-3.5 text-blue-600" /> Attestation (PDF)
@@ -352,79 +409,91 @@ export default function EnrollmentManager() {
         </div>
       </div>
 
-      {/* Candidate Dossier Inspection Modal */}
+      {/* Candidate Digital Dossier Modal */}
       {selectedStudentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+        <StudentDigitalDossierModal
+          student={selectedStudentModal}
+          onClose={() => setSelectedStudentModal(null)}
+          onStatusUpdate={handleUpdateStatus}
+          onExportAttestation={handleExportAttestationPdf}
+        />
+      )}
+
+      {/* Mode Guichet Express Scanner Modal */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
-                  <UserPlus className="w-5 h-5 text-amber-400" />
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                  <Camera className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">Dossier de Candidature</h3>
-                  <p className="text-xs text-blue-200">{selectedStudentModal.first_name} {selectedStudentModal.last_name} — CNE : {selectedStudentModal.cne}</p>
+                  <h3 className="font-black text-slate-900 dark:text-white text-base">Mode Guichet Express — Scan Enveloppe</h3>
+                  <p className="text-xs text-slate-500">Scannez le QR Code ou saisissez le CNE/Jeton du ظرف الفيزيائي</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedStudentModal(null)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">IDENTITÉ DE L'ÉTUDIANT</span>
-                  <div className="font-bold text-slate-900 dark:text-white mt-1">{selectedStudentModal.first_name} {selectedStudentModal.last_name}</div>
-                  <div className="text-slate-500 font-mono">CIN : {selectedStudentModal.cin || 'CD729102'}</div>
-                  <div className="text-slate-500 font-mono">CNE : {selectedStudentModal.cne || 'N13809281'}</div>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PARCOURS D'ORIENTATION</span>
-                  <div className="font-bold text-slate-900 dark:text-white mt-1">{selectedStudentModal.filiere_name || 'Tronc Commun ENCG'}</div>
-                  <div className="text-indigo-600 font-bold">Groupe Affecté : {selectedStudentModal.group_name || 'TC-S1-G1'}</div>
-                  <div className="text-slate-500">Baccalauréat : Sciences Économiques</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-[#0f2863] dark:text-blue-200">Statut Actuel du Dossier :</span>
-                  <span className="ml-2 font-black uppercase text-amber-600">{selectedStudentModal.status}</span>
-                </div>
-                <button
-                  onClick={() => handleExportAttestationPdf(selectedStudentModal)}
-                  className="px-3 py-1.5 bg-[#0f2863] text-white rounded-xl font-bold flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Télécharger Attestation A4
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <button
-                onClick={() => handleUpdateStatus(selectedStudentModal.id, 'suspended')}
-                className="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-rose-100 transition-colors"
+              <button 
+                onClick={() => setIsScannerOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
               >
-                ❌ Rejeter / Suspendre
+                <X className="w-4 h-4" />
               </button>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSelectedStudentModal(null)}
-                  className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider"
+            {/* Viewfinder Target Mock Box */}
+            <div className="relative aspect-video rounded-2xl bg-slate-950 border-2 border-dashed border-emerald-500/50 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/40 via-transparent to-transparent pointer-events-none"></div>
+              
+              {/* Laser Scan Animation Line */}
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-400 shadow-[0_0_15px_#10b981] animate-bounce"></div>
+
+              <QrCode className="w-16 h-16 text-emerald-400 animate-pulse mb-3" />
+              <div className="text-xs font-black text-emerald-300 uppercase tracking-widest">
+                Viseur Optique Prêt • Placez le Code-barres / QR du الظرف
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">Exemple: ENV-2026-N140091375 ou CNE M145092428</div>
+            </div>
+
+            {/* Quick Search Form for Scanner Input */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (scannedInput) handleScanLookup(scannedInput);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Saisie Manuelle ou Douchette USB</label>
+                <div className="relative mt-1">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={scannedInput}
+                    onChange={(e) => setScannedInput(e.target.value)}
+                    placeholder="Scannez ou saisissez : CNE, CIN ou ENV-2026-..."
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm font-mono font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button 
+                    type="submit"
+                    className="absolute right-2 top-2 bottom-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-lg transition-all cursor-pointer"
+                  >
+                    Ouvrir Dossier
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-between items-center text-xs text-slate-500">
+                <span>Statut du lecteur : <strong className="text-emerald-500">● En écoute (USB/Caméra)</strong></span>
+                <button 
+                  type="button" 
+                  onClick={() => setIsScannerOpen(false)}
+                  className="font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   Fermer
                 </button>
-                <button
-                  onClick={() => handleUpdateStatus(selectedStudentModal.id, 'active')}
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
-                >
-                  ✅ Valider l'Inscription
-                </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
