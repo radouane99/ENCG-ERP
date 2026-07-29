@@ -44,15 +44,51 @@ class TafemMinistryImportController extends Controller
             return strtolower(trim($cleaned));
         }, $header);
 
-        // Ensure a valid AdmissionCampaign exists
+        // Resolve or create Tronc Commun (Années Préparatoires ENCG)
+        $tcFiliere = Filiere::where('code', 'TC-S1')
+            ->orWhere('code', 'TC')
+            ->orWhere('name', 'like', '%Tronc Commun%')
+            ->orWhere('name', 'like', '%Préparatoires%')
+            ->first();
+
+        if (!$tcFiliere) {
+            $deptId = \App\Models\Department::first()?->id ?? 1;
+            $institutionId = \App\Models\Institution::first()?->id ?? 1;
+            $tcFiliere = Filiere::create([
+                'institution_id' => $institutionId,
+                'department_id' => $deptId,
+                'code' => 'TC-S1',
+                'name' => 'Tronc Commun ENCG (Années Préparatoires S1-S4)',
+                'cycle' => 'Grande École',
+                'duration_years' => 2,
+                'is_active' => true,
+            ]);
+        }
+
+        // Ensure a valid AdmissionCampaign exists for Tronc Commun
         $campaign = AdmissionCampaign::where('status', 'open')->first()
             ?? AdmissionCampaign::first();
 
         if (!$campaign) {
             $institutionId = \App\Models\Institution::first()?->id ?? 1;
+            $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
+                ?? \App\Models\AcademicYear::first();
+
+            if (!$academicYear) {
+                $academicYear = \App\Models\AcademicYear::create([
+                    'institution_id' => $institutionId,
+                    'year' => date('Y') . '-' . (date('Y') + 1),
+                    'start_date' => '2026-09-01',
+                    'end_date' => '2027-06-30',
+                    'is_current' => true,
+                ]);
+            }
+
             $campaign = AdmissionCampaign::create([
                 'institution_id' => $institutionId,
-                'title' => "Campagne d'Admission TAFEM " . date('Y'),
+                'filiere_id' => $tcFiliere->id,
+                'academic_year_id' => $academicYear->id,
+                'title' => "Concours TAFEM " . date('Y') . " — Tronc Commun ENCG Fès",
                 'academic_year' => date('Y') . '-' . (date('Y') + 1),
                 'status' => 'open',
                 'open_date' => now()->startOfYear(),
