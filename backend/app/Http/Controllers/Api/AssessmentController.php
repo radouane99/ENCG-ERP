@@ -77,14 +77,16 @@ class AssessmentController extends Controller
             'assessments.*.weight' => 'required|numeric|min:0|max:100',
         ]);
 
-        $sumWeights = 0;
+        $ordinarySum = 0;
         foreach ($validated['assessments'] as $aData) {
-            $sumWeights += floatval($aData['weight']);
+            if (strtolower($aData['type']) !== 'rattrapage') {
+                $ordinarySum += floatval($aData['weight']);
+            }
         }
 
-        if (count($validated['assessments']) > 0 && abs($sumWeights - 100) > 0.01) {
+        if (count($validated['assessments']) > 0 && abs($ordinarySum - 100) > 0.01) {
             return response()->json([
-                'message' => 'La somme des poids doit être égale à 100% (Actuellement: ' . $sumWeights . '%)'
+                'message' => 'La somme des poids de la session ordinaire (CC + Examen) doit être égale à 100% (Actuellement: ' . $ordinarySum . '%)'
             ], 422);
         }
 
