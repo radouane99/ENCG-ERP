@@ -140,6 +140,27 @@ export default function EnrollmentManager() {
     }, 600);
   };
 
+  const handleExportUsmbaCSV = async () => {
+    toast.loading('Génération du fichier CSV — Comptes Académiques USMBA (UMPasse)...');
+    try {
+      const res = await api.get('/admin/students/export-usmba-accounts-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `USMBA_Comptes_Academiques_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success('🎓 Export CSV USMBA — Comptes académiques générés avec succès !');
+    } catch (err) {
+      toast.dismiss();
+      toast.error('Erreur lors de la génération du CSV USMBA.');
+      // Fallback: open in new tab
+      window.open('/api/admin/students/export-usmba-accounts-csv', '_blank');
+    }
+  };
+
   const pending = students.filter(s => s.status === 'pending' || s.status === 'en_attente').length;
   const validated = students.filter(s => s.status === 'active' || s.status === 'valide').length;
   const rejected = students.filter(s => s.status === 'suspended' || s.status === 'inactive' || s.status === 'rejete').length;
@@ -201,6 +222,14 @@ export default function EnrollmentManager() {
               className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-amber-300" /> Actualiser
+            </button>
+
+            {/* 🎓 USMBA Academic Accounts CSV */}
+            <button
+              onClick={handleExportUsmbaCSV}
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-2xl font-black border border-violet-500/50 shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-violet-200" /> 🎓 Export USMBA CSV
             </button>
           </div>
         </div>
@@ -277,7 +306,91 @@ export default function EnrollmentManager() {
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Analytics Dashboard */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" /> Tableau de Bord Analytique — Campagne d'Inscription 2026-2027
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Suivi en temps réel du traitement des dossiers de candidature ENCG Fès
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-black text-slate-900 dark:text-white">{students.length}</div>
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Candidats Total</div>
+          </div>
+        </div>
+
+        {/* Progress bars */}
+        <div className="space-y-3">
+          {/* Validés */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">✅ Inscriptions Validées</span>
+              <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400">{validated} / {students.length} ({students.length > 0 ? Math.round((validated / students.length) * 100) : 0}%)</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+              <div
+                className="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
+                style={{ width: students.length > 0 ? `${(validated / students.length) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
+
+          {/* En attente */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">⏳ En Attente de Validation</span>
+              <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{pending} / {students.length} ({students.length > 0 ? Math.round((pending / students.length) * 100) : 0}%)</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+              <div
+                className="h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 transition-all duration-700"
+                style={{ width: students.length > 0 ? `${(pending / students.length) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
+
+          {/* Rejetés */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-wider">❌ Rejetés / Suspendus</span>
+              <span className="text-[11px] font-black text-rose-700 dark:text-rose-400">{rejected} / {students.length} ({students.length > 0 ? Math.round((rejected / students.length) * 100) : 0}%)</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+              <div
+                className="h-2.5 rounded-full bg-gradient-to-r from-rose-500 to-red-600 transition-all duration-700"
+                style={{ width: students.length > 0 ? `${(rejected / students.length) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick actions row */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions Rapides :</span>
+          <button
+            onClick={handleExportUsmbaCSV}
+            className="px-3 py-1.5 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-violet-100 transition-all flex items-center gap-1"
+          >
+            <Download className="w-3 h-3" /> Export USMBA CSV
+          </button>
+          <button
+            onClick={handleExportZipBundle}
+            className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-amber-100 transition-all flex items-center gap-1"
+          >
+            <Archive className="w-3 h-3" /> Bundle ZIP Attestations
+          </button>
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-emerald-100 transition-all flex items-center gap-1"
+          >
+            <Camera className="w-3 h-3" /> Mode Guichet Express
+          </button>
+        </div>
+      </div>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="relative flex-1 min-w-[280px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -297,9 +410,17 @@ export default function EnrollmentManager() {
             className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
           >
             <option value="">Tous les Statuts</option>
-            <option value="active">Validés</option>
-            <option value="pending">En Attente</option>
-            <option value="suspended">Rejetés / Suspendus</option>
+            <option value="active">✅ Validés (active)</option>
+            <option value="pending">⏳ En Attente (pending)</option>
+            <option value="suspended">❌ Rejetés / Suspendus</option>
+            <optgroup label="─── Statuts d'Inscription ───">
+              <option value="submitted">📥 Dossier Soumis</option>
+              <option value="dossier_incomplet">⚠️ Dossier Incomplet</option>
+              <option value="dossier_complet">📋 Dossier Complet</option>
+              <option value="valide">✅ Validé (Commission)</option>
+              <option value="inscrit">🎓 Inscrit (Officiel)</option>
+              <option value="reinscrit">🔁 Réinscrit</option>
+            </optgroup>
           </select>
 
           <div className="text-xs font-bold text-slate-400">
@@ -363,17 +484,40 @@ export default function EnrollmentManager() {
                         </td>
 
                         <td className="px-6 py-4 text-center">
-                          <span className={cn(
-                            "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
-                            isValide ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                            isPending ? "bg-amber-50 text-amber-700 border-amber-200" :
-                            "bg-rose-50 text-rose-700 border-rose-200"
-                          )}>
-                            {isValide ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
-                             isPending ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
-                             <XCircle className="w-3.5 h-3.5 text-rose-600" />}
-                            {isValide ? 'Validé' : isPending ? 'En Attente' : 'Rejeté / Suspendu'}
-                          </span>
+                          {/* Inscription status badge (6 statuts) */}
+                          {(() => {
+                            const inscStatus = (s as any).inscription_status;
+                            const badgeMap: Record<string, {cls: string; label: string}> = {
+                              submitted:           {cls: 'bg-blue-50 text-blue-700 border-blue-200',     label: '📥 Soumis'},
+                              dossier_incomplet:   {cls: 'bg-amber-50 text-amber-700 border-amber-200',  label: '⚠️ Incomplet'},
+                              dossier_complet:     {cls: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: '📋 Complet'},
+                              valide:              {cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: '✅ Validé'},
+                              inscrit:             {cls: 'bg-emerald-100 text-emerald-800 border-emerald-300', label: '🎓 Inscrit'},
+                              reinscrit:           {cls: 'bg-teal-50 text-teal-700 border-teal-200',     label: '🔁 Réinscrit'},
+                            };
+                            const badge = inscStatus ? badgeMap[inscStatus] : null;
+                            if (badge) {
+                              return (
+                                <span className={cn('px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wide border inline-block', badge.cls)}>
+                                  {badge.label}
+                                </span>
+                              );
+                            }
+                            // Fallback: old status
+                            return (
+                              <span className={cn(
+                                'px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1',
+                                isValide ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                isPending ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                'bg-rose-50 text-rose-700 border-rose-200'
+                              )}>
+                                {isValide ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
+                                 isPending ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
+                                 <XCircle className="w-3.5 h-3.5 text-rose-600" />}
+                                {isValide ? 'Validé' : isPending ? 'En Attente' : 'Rejeté'}
+                              </span>
+                            );
+                          })()}
                         </td>
 
                         <td className="px-6 py-4 text-center font-mono font-bold text-xs text-slate-700 dark:text-slate-300">
@@ -396,6 +540,15 @@ export default function EnrollmentManager() {
                               title="Télécharger l'Attestation d'Inscription Officielle A4"
                             >
                               <Printer className="w-3.5 h-3.5 text-blue-600" /> Attestation (PDF)
+                            </button>
+
+                            {/* 🏷️ Carte CR80 Evolis */}
+                            <button
+                              onClick={() => window.open(`/api/admin/students/${s.id}/carte-etudiant-cr80-pdf`, '_blank')}
+                              className="px-3 py-2 bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 text-violet-700 dark:text-violet-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-violet-200 dark:border-violet-800 cursor-pointer shadow-xs"
+                              title="Générer Carte Étudiant CR80 — Evolis Primacy 2"
+                            >
+                              🏷️ Carte CR80
                             </button>
                           </div>
                         </td>

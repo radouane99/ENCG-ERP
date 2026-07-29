@@ -23,11 +23,20 @@ class Student extends Model
         'photo_path', 'email', 'phone', 'address', 'city', 'region', 'postal_code',
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         'status', 'scholarship_type', 'has_disability', 'disability_details',
+        // Inscription workflow (Recommendation #2)
+        'inscription_status', 'inscription_submitted_at', 'inscription_validated_at',
+        'inscription_notes', 'academic_year',
+        // RGPD Consent — Loi 09-08 Maroc (Recommendation #6)
+        'rgpd_consent_at', 'reglement_interieur_consent_at',
     ];
 
     protected $casts = [
-        'birth_date'  => 'date',
-        'has_disability' => 'boolean',
+        'birth_date'                      => 'date',
+        'has_disability'                  => 'boolean',
+        'inscription_submitted_at'        => 'datetime',
+        'inscription_validated_at'        => 'datetime',
+        'rgpd_consent_at'                 => 'datetime',
+        'reglement_interieur_consent_at'  => 'datetime',
     ];
 
     protected $hidden = [
@@ -142,4 +151,44 @@ class Student extends Model
               ->orWhere('email', 'ilike', "%{$search}%");
         });
     }
+
+    // ── Inscription Workflow Scopes (Recommendation #2) ───────────────
+    public function scopeByInscriptionStatus($query, string $inscriptionStatus)
+    {
+        return $query->where('inscription_status', $inscriptionStatus);
+    }
+
+    public function scopeInscriptionEnCours($query)
+    {
+        return $query->whereIn('inscription_status', ['submitted', 'dossier_incomplet', 'dossier_complet']);
+    }
+
+    public function scopeInscrits($query)
+    {
+        return $query->whereIn('inscription_status', ['inscrit', 'reinscrit']);
+    }
+
+    // ── Audit Log Relationship (Recommendation #5) ────────────────────
+    public function dossierAuditLogs(): HasMany
+    {
+        return $this->hasMany(StudentDossierAuditLog::class)->latest();
+    }
+
+    // ── Auto Student Number Generator (Recommendation #7) ─────────────
+    public static function generateStudentNumber(string $filiereCode, int $year): string
+    {
+        $prefix = "ENCG-FES-{$year}-" . strtoupper($filiereCode);
+        $lastStudent = self::where('student_number', 'like', "{$prefix}-%")
+            ->orderByDesc('student_number')
+            ->first();
+
+        $seq = 1;
+        if ($lastStudent) {
+            $parts = explode('-', $lastStudent->student_number);
+            $seq = ((int) end($parts)) + 1;
+        }
+
+        return $prefix . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
+    }
 }
+

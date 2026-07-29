@@ -27,6 +27,7 @@ export default function AdminGradesEditPage() {
 
   const [showModalityModal, setShowModalityModal] = useState(false)
   const [modalityAssessments, setModalityAssessments] = useState<{ id: number | null; type: string; weight: number }[]>([])
+  const [rattrapageCap, setRattrapageCap] = useState<number>(12)
 
   // Query audit logs
   const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
@@ -80,9 +81,17 @@ export default function AdminGradesEditPage() {
   }
 
   const handleSaveModality = async () => {
-    const sum = modalityAssessments.reduce((acc, curr) => acc + curr.weight, 0)
-    if (modalityAssessments.length > 0 && Math.abs(sum - 100) > 0.01) {
-      toast.error(isRtl ? 'يجب أن يكون مجموع الأوزان 100%' : 'La somme des poids doit être égale à 100%')
+    // ── Exclude Rattrapage from ordinary session 100% sum check ───────────────
+    // Rattrapage is a resit session (remplaces L'Examen / Cap 12/20) and is NOT part of ordinary session 100% sum.
+    const ordinaryAssessments = modalityAssessments.filter(a => a.type !== 'Rattrapage')
+    const sum = ordinaryAssessments.reduce((acc, curr) => acc + curr.weight, 0)
+
+    if (ordinaryAssessments.length > 0 && Math.abs(sum - 100) > 0.01) {
+      toast.error(
+        isRtl
+          ? 'يجب أن يكون مجموع أوزان الدورة العادية (CC + Examen) يساوي 100%'
+          : 'La somme des poids de la session ordinaire (CC + Examen) doit être égale à 100%'
+      )
       return
     }
 
@@ -693,6 +702,35 @@ export default function AdminGradesEditPage() {
                   Aucune évaluation configurée. Cliquez sur ajouter pour commencer.
                 </div>
               )}
+            </div>
+
+            {/* ⚙️ Option Personnalisable — Plafond de Note en Rattrapage (Cap) */}
+            <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h4 className="text-xs font-black text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                    ⚙️ Plafond de Note en Session de Rattrapage (Plafonnement)
+                  </h4>
+                  <p className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
+                    Choisissez la note maximale attribuable après la délibération de rattrapage (Règle établissement).
+                  </p>
+                </div>
+
+                <select
+                  value={rattrapageCap}
+                  onChange={(e) => setRattrapageCap(Number(e.target.value))}
+                  className="px-3 py-1.5 text-xs font-black rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 outline-none cursor-pointer shadow-xs"
+                >
+                  <option value={10}>Plafond à 10.00 / 20 (Pass/Fail)</option>
+                  <option value={12}>Plafond à 12.00 / 20 (Standard LMD ENCG)</option>
+                  <option value={14}>Plafond à 14.00 / 20 (Niveau Bien)</option>
+                  <option value={20}>Sans Plafond (Note réelle jusqu'à 20/20)</option>
+                </select>
+              </div>
+
+              <div className="text-[10px] text-amber-600 dark:text-amber-400 italic">
+                * Note : Les évaluations de type <strong>Rattrapage</strong> ne sont pas additionnées au 100% de la session ordinaire.
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-t border-[var(--border)] pt-4 gap-4">

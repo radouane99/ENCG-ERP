@@ -3,13 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors
+  ChevronLeft, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
 import api from '@shared/lib/api';
 import { useAuthStore } from '@stores/authStore';
 import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal';
+import AiScolarBotWidget from '@shared/components/AiScolarBotWidget';
+import { toast } from 'sonner';
 
 /* ── Types ── */
 type StepId = 1 | 2 | 3 | 4 | 5;
@@ -239,6 +241,8 @@ export default function InscriptionPage() {
     photo_output_size: '413 x 531 px',
   });
 
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+
   const [cneCheckStatus, setCneCheckStatus] = useState<{ cneAvailable: boolean; cinAvailable: boolean; message: string | null }>({
     cneAvailable: true,
     cinAvailable: true,
@@ -361,7 +365,9 @@ export default function InscriptionPage() {
             <div className="flex items-center justify-between border-b pb-3">
               <div>
                 <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block">ÉTIQUETTE À COLLER SUR L'ENVELOPPE</span>
-                <span className="text-sm font-black text-slate-900 dark:text-white">{formData.full_name || 'CANDIDAT ADMIS TAFEM'}</span>
+                <span className="text-sm font-black text-slate-900 dark:text-white">
+                  {formData.last_name_fr ? `${formData.last_name_fr} ${formData.first_name_fr}` : 'CANDIDAT ADMIS TAFEM'}
+                </span>
               </div>
               <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-black">
                 ENCG FÈS 2026
@@ -417,7 +423,7 @@ export default function InscriptionPage() {
                           <div class="title">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                           <div style="font-size:12px; font-weight:bold;">ÉTIQUETTE DOSSIER PHYSIQUE (À COLLER SUR L'ENVELOPPE)</div>
                           <div class="info">
-                            <p><strong>Candidat :</strong> ${formData.full_name}</p>
+                            <p><strong>Candidat :</strong> ${formData.last_name_fr} ${formData.first_name_fr}</p>
                             <p><strong>CNE :</strong> ${formData.cne}</p>
                             <p><strong>CIN :</strong> ${formData.cin}</p>
                             <p><strong>Contient :</strong> Bac Original, Relevés, CIN, 4 Photos</p>
@@ -1403,6 +1409,9 @@ export default function InscriptionPage() {
       )}
 
       <CndpPrivacyModal isOpen={showCndpModal} onClose={() => setShowCndpModal(false)} lang={lang} />
+
+      {/* AI ScolarBot Widget (AI Module #4) */}
+      <AiScolarBotWidget />
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

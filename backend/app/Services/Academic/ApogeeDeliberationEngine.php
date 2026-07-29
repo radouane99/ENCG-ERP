@@ -43,12 +43,10 @@ class ApogeeDeliberationEngine
 
     /**
      * Calculate Final Module Grade for Resit Session (Rattrapage).
-     * Rule: Final Grade = MIN(10, MAX(CC, Resit_Exam_Grade))
-     * Note: Apogee typically replaces the Exam grade with the Resit grade, but here the explicit rule provided is MIN(10, MAX(CC, Resit)).
-     * Wait, the user said: Final Module Grade = MIN(10, MAX(CC_GRADE, RESIT_EXAM_GRADE)).
-     * I will implement it EXACTLY as the user requested.
+     * Configurable Cap Rule: Final Grade = MIN(maxCap, MAX(CC, Resit_Exam_Grade))
+     * Admin configurable cap (e.g. 10.0, 12.0, or 20.0 for uncapped).
      */
-    public function calculateResitGrade(?float $ccGrade, ?float $resitExamGrade, bool $isResitAbsent): array
+    public function calculateResitGrade(?float $ccGrade, ?float $resitExamGrade, bool $isResitAbsent, ?float $maxCap = null): array
     {
         if ($isResitAbsent) {
             return [
@@ -58,11 +56,17 @@ class ApogeeDeliberationEngine
             ];
         }
 
+        if ($maxCap === null) {
+            $institution = \App\Models\Institution::first();
+            $maxCap = (float)($institution?->settings['rattrapage_max_grade'] ?? 12.0);
+        }
+
         $cc = $ccGrade ?? 0.0;
         $resit = $resitExamGrade ?? 0.0;
 
         $maxVal = max($cc, $resit);
-        $finalGrade = min(10.0, $maxVal);
+        // Configurable Rattrapage Cap (Admin choice: 10, 12, or 20)
+        $finalGrade = min($maxCap, $maxVal);
 
         return [
             'grade' => round($finalGrade, 2),

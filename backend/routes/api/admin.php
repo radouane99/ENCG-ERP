@@ -260,7 +260,13 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
     Route::get('students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
     Route::get('students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);
+    // ── Carte Étudiant CR80 ISO ID-1 — Evolis Primacy 2 (Recommendation #1)
+    Route::get('students/{student}/carte-etudiant-cr80-pdf', [PdfExportController::class, 'downloadCarteEtudiantCR80Pdf']);
+    // ── Inscription Workflow (Recommendations #2, #5, #7)
+    Route::patch('students/{student}/inscription-status', [StudentController::class, 'updateInscriptionStatus']);
+    Route::get('students/{student}/dossier-audit-log', [StudentController::class, 'getDossierAuditLog']);
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+
     Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
     Route::get('professors/{professor}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadProfessorConvocationPdf']);
     Route::post('convocations/send-students', [\App\Http\Controllers\Api\ConvocationController::class, 'sendStudentConvocationsIntelligent']);
@@ -860,6 +866,15 @@ Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\Admi
 
 Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
 Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+
+// ── Public Inscription Status Tracking — No Auth Required (Recommendation #3)
+Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
+
+// ── AI ScolarBot Chatbot & Photo Quality Checker (AI Modules #1, #2, #4)
+Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);
+Route::post('/public/scolarbot/chat', [\App\Http\Controllers\Api\AiScolarBotController::class, 'chat']);
+Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
+
 
 
 

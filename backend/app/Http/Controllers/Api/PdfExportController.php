@@ -1681,5 +1681,83 @@ class PdfExportController extends Controller
 
         return $pdf->download("Etiquette_Enveloppe_{$cne}.pdf");
     }
-}
 
+    /**
+     * Download Carte Étudiant CR80 (Evolis Primacy 2) — ISO ID-1 Format.
+     *
+     * Paper: CR80 / ISO ID-1 (85.60 × 53.98 mm), paysage, marges nulles
+     * DPI: 300×600 | Ruban: YMCKO | Duplex: short-edge
+     * NE PAS utiliser le format A4. Sélectionner "Taille réelle" ou 100%.
+     */
+    public function downloadCarteEtudiantCR80Pdf(Request $request, $studentId)
+    {
+        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne           = $student?->cne           ?? $request->input('cne', 'M145092428');
+        $first_name    = $student?->first_name    ?? $request->input('first_name', 'SIHAM');
+        $last_name     = $student?->last_name     ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName   = strtoupper("{$last_name} {$first_name}");
+        $studentNumber = $student?->student_number ?? $request->input('student_number', 'ENCG-FES-2027-TC-00001');
+        $filiereName   = $student?->latestPathway?->filiere?->name ?? 'Tronc Commun';
+        $academicYear  = $student?->academic_year  ?? date('Y') . '-' . (date('Y') + 1);
+
+        // Photo lookup
+        $photoPath = null;
+        if ($studentId) {
+            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
+                ->where('student_id', $studentId)
+                ->where('type', 'photo')
+                ->first();
+
+            if ($photoDoc && !empty($photoDoc->file_path)) {
+                $localRelative = str_replace('/storage/', '', $photoDoc->file_path);
+                $fullPath = storage_path('app/public/' . $localRelative);
+                if (file_exists($fullPath)) {
+                    $photoPath = $fullPath;
+                }
+            }
+        }
+
+        // ── CR80 ISO ID-1 dimensions in PDF points (1mm = 2.8346 pt) ─────────
+        // 85.60mm × 53.98mm → 242.64pt × 153.01pt — landscape
+        $pdf = $this->getPdfInstance('pdf.carte_etudiant_cr80', [
+            'studentName'   => $studentName,
+            'cne'           => $cne,
+            'studentNumber' => $studentNumber,
+            'filiereName'   => $filiereName,
+            'academicYear'  => $academicYear,
+            'photoPath'     => $photoPath,
+        ])
+        ->setPaper([0, 0, 153.01, 242.64], 'landscape') // CR80 exact points
+        ->setOption('dpi', 600)
+        ->setOption('margin-top', 0)
+        ->setOption('margin-right', 0)
+        ->setOption('margin-bottom', 0)
+        ->setOption('margin-left', 0)
+        ->setOption('page-width', '85.60mm')
+        ->setOption('page-height', '53.98mm')
+        ->setOption('disable-smart-shrinking', true);
+
+        // Audit log when card is generated
+        if ($studentId) {
+            \App\Domain\Student\Models\StudentDossierAuditLog::log(
+                studentId: $studentId,
+                action: \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_CARD_GENERATED,
+                comment: "Carte étudiant CR80 générée — Format Evolis Primacy 2"
+            );
+        }
+
+        return response()->streamDownload(
+            fn() => print($pdf->output()),
+            "Carte_Etudiant_CR80_{$cne}.pdf",
+            [
+                'Content-Type'        => 'application/pdf',
+                'X-Card-Format'       => 'CR80-ISO-ID1',
+                'X-Print-DPI'         => '300x600',
+                'X-Print-Profile'     => 'Evolis-Primacy2-YMCKO-AllBlack',
+                'X-Duplex'            => 'short-edge',
+                'X-Print-Scale'       => '100%',
+            ]
+        );
+    }
+}
