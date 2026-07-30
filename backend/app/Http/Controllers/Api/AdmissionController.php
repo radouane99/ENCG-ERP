@@ -478,59 +478,77 @@ class AdmissionController extends Controller
      */
     public function trackCandidateDossier(Request $request): JsonResponse
     {
-        $cne = strtoupper(trim($request->query('cne', '')));
-        $cin = strtoupper(trim($request->query('cin', '')));
+        try {
+            $cne = strtoupper(trim($request->query('cne', '')));
+            $cin = strtoupper(trim($request->query('cin', '')));
 
-        if (!$cne && !$cin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Veuillez fournir votre Code MASSAR / CNE ou CIN pour le suivi.'
-            ], 422);
-        }
+            if (empty($cne) && empty($cin)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Veuillez fournir votre Code MASSAR / CNE ou CIN pour le suivi.'
+                ], 422);
+            }
 
-        // 1. Check in Applications table (TAFEM / Pre-inscriptions)
-        $application = \App\Models\Application::where(function($q) use ($cne, $cin) {
-            if ($cne) $q->where('cne', $cne);
-            if ($cin) $q->orWhere('cin', $cin);
-        })->first();
+            // 1. Check in Applications table (TAFEM / Pre-inscriptions)
+            $appQuery = DB::table('applications');
+            if (!empty($cne) && !empty($cin)) {
+                $appQuery->where(function($q) use ($cne, $cin) {
+                    $q->where('cne', '=', $cne)
+                      ->orWhere('cin', '=', $cin);
+                });
+            } elseif (!empty($cne)) {
+                $appQuery->where('cne', '=', $cne);
+            } else {
+                $appQuery->where('cin', '=', $cin);
+            }
 
-        if ($application) {
-            $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
-            $isAccepted = in_array($application->status, ['accepted', 'admis', 'valide', 'admis_tafem']) || str_contains($rawStatus, 'principale');
-            $isWaitlisted = str_contains($rawStatus, 'attente') || in_array($application->status, ['liste_attente_1', 'liste_attente_2']);
+            $application = $appQuery->first();
 
-            return response()->json([
-                'success' => true,
-                'found' => true,
-                'type' => 'application',
-                'candidate' => [
-                    'name' => trim("{$application->first_name} {$application->last_name}"),
-                    'first_name' => $application->first_name,
-                    'last_name' => $application->last_name,
-                    'cne' => $application->cne,
-                    'cin' => $application->cin ?? '—',
-                    'filiere' => $application->reference_number ?? 'Deux années préparatoires',
-                    'bac_type' => $application->bac_type ?? 'Sciences Économiques',
-                    'bac_average' => $application->bac_average,
-                    'selection_score' => $application->selection_score ?? $application->tafem_score,
-                    'status' => $application->status,
-                    'is_accepted' => $isAccepted,
-                    'is_waitlisted' => $isWaitlisted,
-                    'status_label' => $isAccepted ? 'Admis sur Liste Principale' : ($isWaitlisted ? 'Retenu sur Liste d\'Attente' : 'Dossier en Examen'),
-                    'can_proceed_to_registration' => $isAccepted || $isWaitlisted
-                ]
-            ]);
-        }
+            if ($application) {
+                $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
+                $isAccepted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale']) || str_contains($rawStatus, 'principale');
+                $isWaitlisted = str_contains($rawStatus, 'attente') || in_array(strtolower($application->status ?? ''), ['liste_attente_1', 'liste_attente_2', 'liste_attente', 'attente']);
 
-        // 2. Check in Students table
-        $candidate = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
-            ->where(function($q) use ($cne, $cin) {
-                if ($cne) $q->where('students.cne', $cne);
-                if ($cin) $q->orWhere('students.cin', $cin);
-            })
-            ->select(
+                return response()->json([
+                    'success' => true,
+                    'found' => true,
+                    'type' => 'application',
+                    'candidate' => [
+                        'name' => trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')),
+                        'first_name' => $application->first_name ?? '',
+                        'last_name' => $application->last_name ?? '',
+                        'cne' => $application->cne ?? '',
+                        'cin' => $application->cin ?? '—',
+                        'filiere' => $application->reference_number ?? 'Deux années préparatoires',
+                        'bac_type' => $application->bac_type ?? 'Sciences Économiques',
+                        'bac_average' => $application->bac_average ?? null,
+                        'selection_score' => $application->selection_score ?? $application->tafem_score ?? null,
+                        'status' => $application->status ?? 'accepted',
+                        'is_accepted' => $isAccepted,
+                        'is_waitlisted' => $isWaitlisted,
+                        'status_label' => $isAccepted ? 'Admis sur Liste Principale' : ($isWaitlisted ? 'Retenu sur Liste d\'Attente' : 'Dossier en Examen'),
+                        'can_proceed_to_registration' => $isAccepted || $isWaitlisted
+                    ]
+                ]);
+            }
+
+            // 2. Check in Students table
+            $stdQuery = DB::table('students')
+                ->join('users', 'students.user_id', '=', 'users.id')
+                ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id');
+
+            if (!empty($cne) && !empty($cin)) {
+                $stdQuery->where(function($q) use ($cne, $cin) {
+                    $q->where('students.cne', '=', $cne)
+                      ->orWhere('students.cin', '=', $cin);
+                });
+            } elseif (!empty($cne)) {
+                $stdQuery->where('students.cne', '=', $cne);
+            } else {
+                $stdQuery->where('students.cin', '=', $cin);
+            }
+
+            $candidate = $stdQuery->select(
                 'students.id as student_id',
                 'users.name',
                 'students.cne',
@@ -538,33 +556,38 @@ class AdmissionController extends Controller
                 'students.apogee_code',
                 'students.status',
                 'filieres.name as filiere_name'
-            )
-            ->first();
+            )->first();
 
-        if (!$candidate) {
+            if (!$candidate) {
+                return response()->json([
+                    'success' => false,
+                    'found' => false,
+                    'message' => 'Aucun dossier trouvé pour le Code MASSAR / CIN fourni.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'found' => true,
+                'type' => 'student',
+                'candidate' => [
+                    'name' => $candidate->name,
+                    'cne' => $candidate->cne,
+                    'cin' => $candidate->cin,
+                    'filiere' => $candidate->filiere_name ?? 'Deux années préparatoires',
+                    'apogee_code' => $candidate->apogee_code ?? 'Non attribué',
+                    'status' => $candidate->status,
+                    'is_accepted' => true,
+                    'status_label' => 'Inscrit / Étudiant Actif ENCG',
+                    'can_proceed_to_registration' => true
+                ]
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'found' => false,
-                'message' => 'Aucun dossier trouvé pour le Code MASSAR / CIN fourni.'
-            ], 404);
+                'message' => 'Erreur de recherche : ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'found' => true,
-            'type' => 'student',
-            'candidate' => [
-                'name' => $candidate->name,
-                'cne' => $candidate->cne,
-                'cin' => $candidate->cin,
-                'filiere' => $candidate->filiere_name ?? 'Deux années préparatoires',
-                'apogee_code' => $candidate->apogee_code ?? 'Non attribué',
-                'status' => $candidate->status,
-                'is_accepted' => true,
-                'status_label' => 'Inscrit / Étudiant Actif ENCG',
-                'can_proceed_to_registration' => true
-            ]
-        ]);
     }
 
     /**

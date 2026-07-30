@@ -867,32 +867,21 @@ Route::get('/hr/vacataires/payroll', [\App\Http\Controllers\Api\ApogeeEngineCont
 Route::get('/admin/tafem/ministry-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getMinistryTafemList']);
 Route::post('/admin/tafem/verify-physical-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'verifyPhysicalDossier']);
 
+    Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
+    Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
+    Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
+    Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
+
+    Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+    Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+    Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
-// Préinscription en Ligne + Étiquette Enveloppe QR Code + Scan Instantané Scolarité
+// Public Unauthenticated Endpoints (No Auth Required)
 // ──────────────────────────────────────────────────────────────────────────────
 Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionController::class, 'submitOnlinePreinscription']);
-Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
-Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
-Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
 Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
-Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
-
-Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-
-// ── Public Inscription Status Tracking — No Auth Required (Recommendation #3)
 Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
-
-// ── AI ScolarBot Chatbot & Photo Quality Checker (AI Modules #1, #2, #4)
 Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);
 Route::post('/public/scolarbot/chat', [\App\Http\Controllers\Api\AiScolarBotController::class, 'chat']);
-Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
-
-
-
-
-
-
-
-
-
