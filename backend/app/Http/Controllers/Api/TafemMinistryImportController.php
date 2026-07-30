@@ -24,25 +24,40 @@ class TafemMinistryImportController extends Controller
         ]);
 
         $file = $request->file('file');
-        $handle = fopen($file->getRealPath(), 'r');
+        $rawContent = file_get_contents($file->getRealPath());
 
-        if (!$handle) {
-            return response()->json(['message' => 'Impossible de lire le fichier CSV.'], 422);
+        if (empty($rawContent)) {
+            return response()->json(['message' => 'Fichier CSV vide ou il n\'y a pas de contenu.'], 422);
         }
 
-        // Read header
-        $header = fgetcsv($handle, 1000, ',');
-        if (!$header) {
-            fclose($handle);
-            return response()->json(['message' => 'Fichier CSV vide ou format invalide.'], 422);
+        // Clean UTF-8 BOM and normalize newlines
+        $cleanedContent = preg_replace('/[\x{FEFF}\x{FFFE}]/u', '', $rawContent);
+        $cleanedContent = str_replace(["\xEF\xBB\xBF", "\r\n", "\r"], ["", "\n", "\n"], $cleanedContent);
+
+        $lines = array_values(array_filter(explode("\n", trim($cleanedContent)), fn($l) => trim($l) !== ''));
+        if (empty($lines)) {
+            return response()->json(['message' => 'Fichier CSV vide.'], 422);
         }
 
-        // Clean header columns and remove UTF-8 BOM
+        // Auto-detect CSV delimiter (comma, semicolon, tab)
+        $firstLine = $lines[0];
+        $delimiter = ',';
+        $semicolons = substr_count($firstLine, ';');
+        $commas = substr_count($firstLine, ',');
+        $tabs = substr_count($firstLine, "\t");
+        if ($semicolons > $commas && $semicolons > $tabs) {
+            $delimiter = ';';
+        } elseif ($tabs > $commas && $tabs > $semicolons) {
+            $delimiter = "\t";
+        }
+
+        $headerLine = array_shift($lines);
+        $rawHeader = str_getcsv($headerLine, $delimiter);
         $header = array_map(function ($h) {
-            $cleaned = preg_replace('/[\x{FEFF}\x{FFFE}]/u', '', $h);
-            $cleaned = str_replace(["\xEF\xBB\xBF", '\EF\BB\BF', 'EFBBBF'], '', $cleaned);
-            return strtolower(trim($cleaned));
-        }, $header);
+            return strtolower(trim(preg_replace('/[\s"\'`]/', '', $h)));
+        }, $rawHeader);
+
+        $institutionId = \App\Models\Institution::first()?->id ?? 1;
 
         // Resolve or create Tronc Commun (Années Préparatoires ENCG)
         $tcFiliere = Filiere::where('code', 'TC-S1')
@@ -53,7 +68,6 @@ class TafemMinistryImportController extends Controller
 
         if (!$tcFiliere) {
             $deptId = \App\Models\Department::first()?->id ?? 1;
-            $institutionId = \App\Models\Institution::first()?->id ?? 1;
             $tcFiliere = Filiere::create([
                 'institution_id' => $institutionId,
                 'department_id' => $deptId,
@@ -70,7 +84,6 @@ class TafemMinistryImportController extends Controller
             ?? AdmissionCampaign::first();
 
         if (!$campaign) {
-            $institutionId = \App\Models\Institution::first()?->id ?? 1;
             $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
                 ?? \App\Models\AcademicYear::first();
 
@@ -103,16 +116,23 @@ class TafemMinistryImportController extends Controller
 
         DB::beginTransaction();
         try {
-            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            foreach ($lines as $lineStr) {
                 $rowNum++;
-                if (count($row) < 3) continue;
+                $lineStr = trim($lineStr);
+                if (empty($lineStr)) continue;
 
-                $data = array_combine($header, array_pad($row, count($header), ''));
+                $row = str_getcsv($lineStr, $delimiter);
+                if (empty($row) || count($row) < 2) continue;
+
+                $data = [];
+                foreach ($header as $idx => $key) {
+                    $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
+                }
 
                 $cne = strtoupper(trim($data['cne'] ?? $data['code_massar'] ?? ''));
                 $cin = strtoupper(trim($data['cin'] ?? $data['cnie'] ?? ''));
-                $firstName = trim($data['first_name'] ?? $data['prenom'] ?? '');
-                $lastName = trim($data['last_name'] ?? $data['nom'] ?? '');
+                $firstName = mb_convert_encoding(trim($data['first_name'] ?? $data['prenom'] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+                $lastName = mb_convert_encoding(trim($data['last_name'] ?? $data['nom'] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
                 $bacAverage = (float)($data['bac_average'] ?? $data['moyenne_bac'] ?? 16.0);
                 $tafemScore = (float)($data['tafem_score'] ?? $data['note_tafem'] ?? 150.0);
                 $listType = strtolower(trim($data['list_type'] ?? $data['liste'] ?? 'liste_principale'));
@@ -124,6 +144,8 @@ class TafemMinistryImportController extends Controller
 
                 $app = Application::where('cne', $cne)->first();
 
+                $appStatus = str_contains($listType, 'attente') ? 'liste_attente' : 'admis_tafem';
+
                 if ($app) {
                     $app->update([
                         'admission_campaign_id' => $campaign->id,
@@ -133,7 +155,7 @@ class TafemMinistryImportController extends Controller
                         'bac_average' => $bacAverage,
                         'selection_score' => $tafemScore,
                         'list_type' => $listType ?: 'liste_principale',
-                        'status' => 'admis_tafem',
+                        'status' => $appStatus,
                     ]);
                     $updatedCount++;
                 } else {
@@ -152,7 +174,7 @@ class TafemMinistryImportController extends Controller
                         'bac_series' => 'Sciences Mathématiques',
                         'selection_score' => $tafemScore,
                         'list_type' => $listType ?: 'liste_principale',
-                        'status' => 'admis_tafem',
+                        'status' => $appStatus,
                     ]);
                     $importedCount++;
                 }
@@ -183,14 +205,13 @@ class TafemMinistryImportController extends Controller
                         'cne' => $cne,
                         'filiere_id' => $tcFiliere->id,
                         'status' => 'pending',
-                        'inscription_status' => 'admis_tafem',
+                        'inscription_status' => $appStatus,
                         'bac_average' => $bacAverage,
                     ]
                 );
             }
 
             DB::commit();
-            fclose($handle);
 
             return response()->json([
                 'success' => true,
@@ -205,7 +226,6 @@ class TafemMinistryImportController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            if ($handle) fclose($handle);
             Log::error("Erreur Importation TAFEM Ministère : " . $e->getMessage());
 
             return response()->json([

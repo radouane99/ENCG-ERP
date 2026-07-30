@@ -369,25 +369,27 @@ export default function CandidatureList() {
                         <td className="px-6 py-4 text-center">
                           {(() => {
                             const listType = (c.list_type || '').toLowerCase();
-                            const isListePrincipale = listType.includes('principale') || isAccepted;
                             const isAttente1 = listType.includes('attente_1') || listType.includes('attente 1');
                             const isAttente2 = listType.includes('attente_2') || listType.includes('attente 2');
+                            const isAttenteGeneric = listType.includes('attente') || c.status === 'liste_attente';
+                            const isListePrincipale = listType.includes('principale') || (c.status === 'admis_tafem' && !isAttenteGeneric);
 
                             return (
                               <span className={cn(
                                 "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
                                 isListePrincipale ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                isAttente1 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                isAttente1 || isAttenteGeneric ? "bg-amber-50 text-amber-700 border-amber-200" :
                                 isAttente2 ? "bg-purple-50 text-purple-700 border-purple-200" :
                                 isPending ? "bg-blue-50 text-blue-700 border-blue-200" :
                                 "bg-rose-50 text-rose-700 border-rose-200"
                               )}>
                                 {isListePrincipale ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
-                                 isAttente1 || isAttente2 ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
+                                 isAttente1 || isAttente2 || isAttenteGeneric ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
                                  <XCircle className="w-3.5 h-3.5 text-rose-600" />}
                                 {isListePrincipale ? 'Liste Principale' :
                                  isAttente1 ? "Liste d'Attente 1" :
                                  isAttente2 ? "Liste d'Attente 2" :
+                                 isAttenteGeneric ? "Liste d'Attente" :
                                  isPending ? 'En Examen' : 'Rejeté'}
                               </span>
                             );
