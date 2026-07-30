@@ -1051,18 +1051,14 @@ export default function CandidatureList() {
                 if (res.data?.data?.id) {
                   createdCandidate = res.data.data;
                 }
-              } catch (err) {}
+                toast.success(`✅ Candidat ${newCandidate.first_name} ${newCandidate.last_name} (CNE: ${newCandidate.cne}) enregistré dans la base de données !`, { id: tId });
+                fetchCandidatures();
+              } catch (err: any) {
+                toast.error(err.response?.data?.message || 'Erreur lors de l\'enregistrement du candidat.', { id: tId });
+              }
 
-              setCandidatures((prev) => [createdCandidate, ...prev]);
-              setStats((prev) => ({
-                ...prev,
-                total: prev.total + 1,
-                accepted: newCandidate.status === 'accepted' ? prev.accepted + 1 : prev.accepted,
-                pending: newCandidate.status === 'pending' ? prev.pending + 1 : prev.pending
-              }));
-
-              toast.success(`✅ Candidat ${newCandidate.first_name} ${newCandidate.last_name} (CNE: ${newCandidate.cne}) ajouté avec succès !`, { id: tId });
               setIsAddCandidateModalOpen(false);
+
               setNewCandidate({
                 first_name: '',
                 last_name: '',

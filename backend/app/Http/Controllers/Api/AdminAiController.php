@@ -175,7 +175,11 @@ class AdminAiController extends Controller
         try {
             $student = \Illuminate\Support\Facades\DB::table('students')
                 ->join('users', 'students.user_id', '=', 'users.id')
-                ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
+                ->leftJoin('student_pathways', function($join) {
+                    $join->on('students.id', '=', 'student_pathways.student_id')
+                         ->where('student_pathways.is_current', '=', true);
+                })
+                ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
                 ->where('students.id', $studentId)
                 ->select('users.name', 'users.email', 'students.cne', 'filieres.name as filiere')
                 ->first();

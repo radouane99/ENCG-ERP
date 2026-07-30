@@ -157,13 +157,26 @@ class ApogeeEngineController extends Controller
         $cneCode = 'K' . str_pad((string) (rand(10000000, 99999999)), 8, '0', STR_PAD_LEFT);
 
         DB::table('students')->where('id', $studentId)->update([
-            'apogee_code' => $apogeeCode,
+            'student_number' => $apogeeCode,
             'cne' => $cneCode,
-            'filiere_id' => $validated['filiere_id'],
-            'group_id' => $validated['group_id'] ?? null,
             'status' => 'active',
             'updated_at' => now(),
         ]);
+
+        $academicYearId = DB::table('academic_years')->where('is_current', true)->value('id') ?? 1;
+        DB::table('student_pathways')->updateOrInsert(
+            [
+                'student_id' => $studentId,
+                'is_current' => true
+            ],
+            [
+                'filiere_id' => $validated['filiere_id'],
+                'group_id' => $validated['group_id'] ?? null,
+                'academic_year_id' => $academicYearId,
+                'current_semester' => 1,
+                'updated_at' => now()
+            ]
+        );
 
         // Create student registration record
         if (DB::getSchemaBuilder()->hasTable('student_registrations')) {

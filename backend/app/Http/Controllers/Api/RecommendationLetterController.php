@@ -118,7 +118,11 @@ class RecommendationLetterController extends Controller
         $requests = DB::table('recommendation_requests')
             ->join('students', 'recommendation_requests.student_id', '=', 'students.id')
             ->join('users as st_user', 'students.user_id', '=', 'st_user.id')
-            ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
+            ->leftJoin('student_pathways', function($join) {
+                $join->on('students.id', '=', 'student_pathways.student_id')
+                     ->where('student_pathways.is_current', '=', true);
+            })
+            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
             ->where(function($q) use ($profId) {
                 $q->where('recommendation_requests.professor_id', $profId)
                   ->orWhereNull('recommendation_requests.professor_id');

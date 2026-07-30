@@ -27,7 +27,11 @@ class DashboardAnalyticsService
 
             // 2. Répartition par Filière
             $studentsByFiliere = DB::table('students')
-                ->join('filieres', 'students.filiere_id', '=', 'filieres.id')
+                ->join('student_pathways', function($join) {
+                    $join->on('students.id', '=', 'student_pathways.student_id')
+                         ->where('student_pathways.is_current', '=', true);
+                })
+                ->join('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
                 ->select('filieres.code as name', DB::raw('count(students.id) as value'))
                 ->whereNull('students.deleted_at')
                 ->groupBy('filieres.id', 'filieres.code')

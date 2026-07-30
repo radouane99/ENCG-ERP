@@ -331,11 +331,22 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::prefix('admissions')->group(function () {
         Route::get('/campaigns', [AdmissionCampaignController::class, 'index']);
         Route::get('/tafem-stats', [AdmissionCampaignController::class, 'tafemStats']);
+        Route::get('/applications', [AdmissionController::class, 'index']);
         Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
         Route::post('/applications', [AdmissionController::class, 'store']);
         Route::post('/campaigns/{campaign}/calculate-seuil', [AdmissionCampaignController::class, 'calculateSeuil']);
         Route::post('/campaigns/{campaign}/auto-repartition', [AdmissionCampaignController::class, 'autoRepartition']);
         Route::get('/campaigns/{campaign}/export-pdf/{type}', [AdmissionCampaignController::class, 'exportPdf']);
+        Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
+        Route::put('/applications/{application}', [AdmissionController::class, 'update']);
+        Route::delete('/applications/{application}', [AdmissionController::class, 'destroy']);
+    });
+
+    Route::prefix('admin/admissions')->group(function () {
+        Route::get('/campaigns', [AdmissionCampaignController::class, 'index']);
+        Route::get('/applications', [AdmissionController::class, 'index']);
+        Route::get('/campaigns/{campaign}/applications', [AdmissionController::class, 'index']);
+        Route::post('/applications', [AdmissionController::class, 'store']);
         Route::patch('/applications/{application}/status', [AdmissionController::class, 'updateStatus']);
         Route::put('/applications/{application}', [AdmissionController::class, 'update']);
         Route::delete('/applications/{application}', [AdmissionController::class, 'destroy']);
@@ -774,10 +785,14 @@ Route::get('/admin/students/{id}/progress-report', function ($id) {
     try {
         $student = \Illuminate\Support\Facades\DB::table('students')
             ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
+            ->leftJoin('student_pathways', function($join) {
+                $join->on('students.id', '=', 'student_pathways.student_id')
+                     ->where('student_pathways.is_current', '=', true);
+            })
+            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
             ->where('students.id', $id)
             ->select(
-                'students.id', 'students.cne', 'students.apogee_code',
+                'students.id', 'students.cne', 'students.student_number as apogee_code',
                 'users.name', 'users.email',
                 'filieres.name as filiere'
             )->first();
@@ -867,21 +882,23 @@ Route::get('/hr/vacataires/payroll', [\App\Http\Controllers\Api\ApogeeEngineCont
 Route::get('/admin/tafem/ministry-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getMinistryTafemList']);
 Route::post('/admin/tafem/verify-physical-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'verifyPhysicalDossier']);
 
-    Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
-    Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
-    Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
-    Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
+Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
+Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
+Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
+Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
 
-    Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-    Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-    Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
-});
+Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
+Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Public Unauthenticated Endpoints (No Auth Required)
 // ──────────────────────────────────────────────────────────────────────────────
 Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionController::class, 'submitOnlinePreinscription']);
 Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
+Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
+Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
 Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
 Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);
 Route::post('/public/scolarbot/chat', [\App\Http\Controllers\Api\AiScolarBotController::class, 'chat']);
+

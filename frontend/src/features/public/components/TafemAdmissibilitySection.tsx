@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Award, CheckCircle2, Clock, XCircle, ArrowRight, Sparkles, GraduationCap, ShieldCheck, UserCheck } from 'lucide-react';
+import { Search, Award, CheckCircle2, Clock, XCircle, ArrowRight, Sparkles, GraduationCap, ShieldCheck, UserCheck, FileText, Mail, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { cn } from '@shared/lib/utils';
@@ -14,6 +14,7 @@ export default function TafemAdmissibilitySection({ isRtl = false }: TafemAdmiss
   const [searchCne, setSearchCne] = useState('');
   const [searchCin, setSearchCin] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -47,6 +48,30 @@ export default function TafemAdmissibilitySection({ isRtl = false }: TafemAdmiss
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendEmail = async () => {
+    if (!result?.cne) return;
+    setSendingEmail(true);
+    const tId = toast.loading(isRtl ? 'جاري إرسال الاستدعاء عبر البريد الإلكتروني...' : 'Envoi de la convocation et du récépissé par email...');
+    try {
+      const res = await api.post('/public/send-convocation-email', {
+        cne: result.cne,
+        cin: result.cin,
+        email: result.email
+      });
+      toast.success(res.data?.message || (isRtl ? 'تم إرسال الاستدعاء بنجاح !' : 'Convocation envoyée avec succès par email !'), { id: tId });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || (isRtl ? 'حدث خطأ أثناء الإرسال.' : 'Erreur d\'envoi de l\'email.'), { id: tId });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!result?.cne) return;
+    const pdfUrl = `${api.defaults.baseURL || '/api'}/public/recepisse-tafem-pdf?cne=${encodeURIComponent(result.cne)}&cin=${encodeURIComponent(result.cin || '')}`;
+    window.open(pdfUrl, '_blank');
   };
 
   return (
@@ -166,6 +191,26 @@ export default function TafemAdmissibilitySection({ isRtl = false }: TafemAdmiss
                       <span className="text-slate-400 block text-[10px] uppercase font-bold">Statut de la Candidature</span>
                       <span className="text-sm font-extrabold text-emerald-400">🟢 Liste Principale (Admissibilité Confirmée)</span>
                     </div>
+                  </div>
+
+                  {/* PDF Download & Email Convocation Action Toolbar */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <button
+                      onClick={handleDownloadPdf}
+                      className="py-3.5 px-4 bg-emerald-900/60 hover:bg-emerald-800/80 text-emerald-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-emerald-400/40 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                    >
+                      <Download className="w-4 h-4 text-emerald-400" />
+                      <span>Télécharger mon Reçu (PDF)</span>
+                    </button>
+
+                    <button
+                      onClick={handleSendEmail}
+                      disabled={sendingEmail}
+                      className="py-3.5 px-4 bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-indigo-400/40 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                    >
+                      <Mail className="w-4 h-4 text-indigo-400" />
+                      <span>Envoyer Convocation par Email</span>
+                    </button>
                   </div>
 
                   {/* Call to Action Button to proceed to /inscription */}

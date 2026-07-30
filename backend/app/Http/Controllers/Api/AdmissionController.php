@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Services\Academic\AdmissionService;
 
 class AdmissionController extends Controller
@@ -44,20 +45,67 @@ class AdmissionController extends Controller
     {
         try {
             $data = $request->all();
-            $application = \App\Models\Application::create([
-                'admission_campaign_id' => 1,
+            $cneClean = strtoupper(trim($data['cne'] ?? ''));
+            $cinClean = strtoupper(trim($data['cin'] ?? ''));
+            $refNumber = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid()) . microtime()), 0, 6));
+
+            $campaignId = 1;
+            $campaign = \App\Models\AdmissionCampaign::first();
+            if ($campaign) {
+                $campaignId = $campaign->id;
+            }
+
+            $appData = [
+                'admission_campaign_id' => $campaignId,
+                'reference_number' => $refNumber,
                 'first_name' => $data['first_name'] ?? '',
                 'last_name' => $data['last_name'] ?? '',
-                'cne' => $data['cne'] ?? '',
-                'cin' => $data['cin'] ?? null,
-                'email' => $data['email'] ?? null,
+                'cne' => $cneClean,
+                'cin' => $cinClean,
+                'email' => $data['email'] ?? ($cneClean ? strtolower($cneClean) . '@candidat.tafem.ma' : null),
                 'phone' => $data['phone'] ?? null,
                 'bac_type' => $data['bac_type'] ?? 'Sciences Économiques',
-                'bac_average' => $data['bac_average'] ?? null,
-                'selection_score' => $data['selection_score'] ?? null,
-                'reference_number' => $data['reference_number'] ?? 'Deux années préparatoires',
+                'bac_average' => !empty($data['bac_average']) ? (float)$data['bac_average'] : null,
+                'selection_score' => !empty($data['selection_score']) ? (float)$data['selection_score'] : null,
                 'status' => $data['status'] ?? 'accepted',
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'list_type')) {
+                $appData['list_type'] = $data['status'] ?? 'liste_principale';
+            }
+
+            $application = \App\Models\Application::create($appData);
+
+            // Populate User & Student so it syncs everywhere
+            if (!empty($cneClean)) {
+                $institutionId = \App\Models\Institution::first()?->id ?? 1;
+                $user = \App\Models\User::firstOrCreate(
+                    ['email' => strtolower($cneClean) . '@candidat.tafem.ma'],
+                    [
+                        'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                        'first_name' => $data['first_name'] ?? '',
+                        'last_name' => $data['last_name'] ?? '',
+                        'cin' => $cinClean,
+                        'cne' => $cneClean,
+                        'password' => \Illuminate\Support\Facades\Hash::make('encg2026'),
+                        'institution_id' => $institutionId,
+                        'is_active' => true,
+                    ]
+                );
+
+                \App\Models\Student::updateOrCreate(
+                    ['cne' => $cneClean],
+                    [
+                        'institution_id' => $institutionId,
+                        'user_id' => $user->id,
+                        'student_number' => $cneClean,
+                        'gender' => 'M',
+                        'birth_date' => '2006-01-01',
+                        'nationality' => 'Marocaine',
+                        'status' => 'pending',
+                    ]
+                );
+            }
 
             return response()->json([
                 'success' => true,
@@ -71,6 +119,7 @@ class AdmissionController extends Controller
             ], 400);
         }
     }
+
 
     /**
      * Update the status of a specific application.
@@ -95,6 +144,8 @@ class AdmissionController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
     /**
      * Update full details of a specific application.
      */
@@ -146,7 +197,7 @@ class AdmissionController extends Controller
                 ->select(
                     'students.id as student_id',
                     'students.cne',
-                    'students.apogee_code',
+                    'students.student_number as apogee_code',
                     'students.status',
                     'users.name',
                     'users.email'
@@ -216,10 +267,27 @@ class AdmissionController extends Controller
         $apogeeCode = '26' . str_pad((string) $studentId, 6, '0', STR_PAD_LEFT);
 
         DB::table('students')->where('id', $studentId)->update([
-            'apogee_code' => $apogeeCode,
+            'student_number' => $apogeeCode,
             'status' => 'active',
             'updated_at' => now(),
         ]);
+
+        $filiereId = $validated['filiere_id'] ?? null;
+        if ($filiereId) {
+            $academicYearId = DB::table('academic_years')->where('is_current', true)->value('id') ?? 1;
+            DB::table('student_pathways')->updateOrInsert(
+                [
+                    'student_id' => $studentId,
+                    'is_current' => true
+                ],
+                [
+                    'filiere_id' => $filiereId,
+                    'academic_year_id' => $academicYearId,
+                    'current_semester' => 1,
+                    'updated_at' => now()
+                ]
+            );
+        }
 
         $studentName = DB::table('students')
             ->join('users', 'students.user_id', '=', 'users.id')
@@ -341,10 +409,14 @@ class AdmissionController extends Controller
 
         $candidate = DB::table('students')
             ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
+            ->leftJoin('student_pathways', function($join) {
+                $join->on('students.id', '=', 'student_pathways.student_id')
+                     ->where('student_pathways.is_current', '=', true);
+            })
+            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
             ->where(function($q) use ($cleanToken) {
                 $q->where('students.cne', $cleanToken)
-                  ->orWhere('students.cin', $cleanToken)
+                  ->orWhere('users.cin', $cleanToken)
                   ->orWhere('students.id', (int) preg_replace('/[^0-9]/', '', $cleanToken));
             })
             ->select(
@@ -352,8 +424,8 @@ class AdmissionController extends Controller
                 'users.name',
                 'users.email',
                 'students.cne',
-                'students.cin',
-                'students.apogee_code',
+                'users.cin',
+                'students.student_number as apogee_code',
                 'students.status',
                 'filieres.name as filiere_name'
             )
@@ -397,7 +469,7 @@ class AdmissionController extends Controller
                     'users.name',
                     'users.email',
                     'students.cne',
-                    'students.apogee_code',
+                    'students.student_number as apogee_code',
                     'students.status'
                 )
                 ->get();
@@ -445,7 +517,7 @@ class AdmissionController extends Controller
                 'students.id as student_id',
                 'users.name',
                 'students.cne',
-                'students.cin',
+                'users.cin as cin',
                 'students.status'
             )
             ->get()
@@ -489,18 +561,22 @@ class AdmissionController extends Controller
                 ], 422);
             }
 
+            $searchTerms = array_values(array_filter([$cne, $cin], fn($v) => !empty($v)));
+
             // 1. Check in Applications table (TAFEM / Pre-inscriptions)
             $appQuery = DB::table('applications');
-            if (!empty($cne) && !empty($cin)) {
-                $appQuery->where(function($q) use ($cne, $cin) {
-                    $q->where('cne', '=', $cne)
-                      ->orWhere('cin', '=', $cin);
-                });
-            } elseif (!empty($cne)) {
-                $appQuery->where('cne', '=', $cne);
-            } else {
-                $appQuery->where('cin', '=', $cin);
-            }
+            $appQuery->where(function($q) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    $q->orWhereRaw('UPPER(TRIM(cne)) = ?', [$term])
+                      ->orWhereRaw('UPPER(TRIM(cin)) = ?', [$term]);
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'massar_code')) {
+                        $q->orWhereRaw('UPPER(TRIM(massar_code)) = ?', [$term]);
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'reference_number')) {
+                        $q->orWhereRaw('UPPER(TRIM(reference_number)) = ?', [$term]);
+                    }
+                }
+            });
 
             $application = $appQuery->first();
 
@@ -535,25 +611,26 @@ class AdmissionController extends Controller
             // 2. Check in Students table
             $stdQuery = DB::table('students')
                 ->join('users', 'students.user_id', '=', 'users.id')
-                ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id');
+                ->leftJoin('student_pathways', function($join) {
+                    $join->on('students.id', '=', 'student_pathways.student_id')
+                         ->where('student_pathways.is_current', '=', true);
+                })
+                ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id');
 
-            if (!empty($cne) && !empty($cin)) {
-                $stdQuery->where(function($q) use ($cne, $cin) {
-                    $q->where('students.cne', '=', $cne)
-                      ->orWhere('students.cin', '=', $cin);
-                });
-            } elseif (!empty($cne)) {
-                $stdQuery->where('students.cne', '=', $cne);
-            } else {
-                $stdQuery->where('students.cin', '=', $cin);
-            }
+            $stdQuery->where(function($q) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    $q->orWhereRaw('UPPER(TRIM(students.cne)) = ?', [$term])
+                      ->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$term])
+                      ->orWhereRaw('UPPER(TRIM(students.student_number)) = ?', [$term]);
+                }
+            });
 
             $candidate = $stdQuery->select(
                 'students.id as student_id',
                 'users.name',
                 'students.cne',
-                'students.cin',
-                'students.apogee_code',
+                'users.cin as cin',
+                'students.student_number as apogee_code',
                 'students.status',
                 'filieres.name as filiere_name'
             )->first();
@@ -582,6 +659,7 @@ class AdmissionController extends Controller
                     'can_proceed_to_registration' => true
                 ]
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -599,7 +677,7 @@ class AdmissionController extends Controller
             // Find candidates on waiting list
             $waitingCandidates = DB::table('students')
                 ->join('users', 'students.user_id', '=', 'users.id')
-                ->whereNull('students.apogee_code')
+                ->whereNull('students.student_number')
                 ->where('students.status', '!=', 'active')
                 ->select('students.id as student_id', 'users.name', 'students.cne')
                 ->limit(5)
@@ -629,4 +707,58 @@ class AdmissionController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Send Candidate Convocation & Reçu email notification.
+     */
+    public function sendCandidateConvocationEmail(Request $request): JsonResponse
+    {
+        try {
+            $cne = strtoupper(trim($request->input('cne', '')));
+            $cin = strtoupper(trim($request->input('cin', '')));
+            $recipientEmail = trim($request->input('email', ''));
+
+            $candidate = null;
+            if (!empty($cne) || !empty($cin)) {
+                $candidate = DB::table('applications')
+                    ->where(function($q) use ($cne, $cin) {
+                        if (!empty($cne)) $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
+                        if (!empty($cin)) $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
+                    })->first();
+            }
+
+            $name = trim(($candidate->first_name ?? 'Candidat') . ' ' . ($candidate->last_name ?? ''));
+            $cneCode = $candidate->cne ?? ($cne ?: 'N142088916');
+            $cinCode = $candidate->cin ?? ($cin ?: 'C3967857');
+            $filiereName = $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)';
+            $targetEmail = $recipientEmail ?: ($candidate->email ?? null);
+
+            if (!$targetEmail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Adresse email manquante. Veuillez fournir une adresse email valide.'
+                ], 422);
+            }
+
+            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(
+                new \App\Mail\StudentRegistrationSuccessMail(
+                    $name,
+                    $cneCode,
+                    $cinCode,
+                    $filiereName
+                )
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => '🎉 Email de convocation et récépissé envoyé avec succès à ' . $targetEmail . ' !'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur d\'envoi de l\'email : ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
+

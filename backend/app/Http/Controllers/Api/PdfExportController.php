@@ -39,6 +39,71 @@ class PdfExportController extends Controller
         ])->loadView($view, $data);
     }
 
+    public function exportRecepisseTafemPdf(Request $request)
+
+    {
+        $cne = strtoupper(trim($request->query('cne', '')));
+        $cin = strtoupper(trim($request->query('cin', '')));
+
+        $candidate = null;
+        if (!empty($cne) || !empty($cin)) {
+            $candidate = \Illuminate\Support\Facades\DB::table('applications')
+                ->where(function($q) use ($cne, $cin) {
+                    if (!empty($cne)) {
+                        $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
+                    }
+                    if (!empty($cin)) {
+                        $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
+                    }
+                })->first();
+
+            if (!$candidate) {
+                $std = \Illuminate\Support\Facades\DB::table('students')
+                    ->join('users', 'students.user_id', '=', 'users.id')
+                    ->leftJoin('student_pathways', function($j) {
+                        $j->on('students.id', '=', 'student_pathways.student_id')->where('student_pathways.is_current', true);
+                    })
+                    ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
+                    ->where(function($q) use ($cne, $cin) {
+                        if (!empty($cne)) {
+                            $q->whereRaw('UPPER(TRIM(students.cne)) = ?', [$cne]);
+                        }
+                        if (!empty($cin)) {
+                            $q->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$cin]);
+                        }
+                    })->select(
+                        'users.name', 'students.cne', 'users.cin',
+                        'filieres.name as filiere_name', 'students.status'
+                    )->first();
+
+                if ($std) {
+                    $candidate = (object)[
+                        'first_name' => $std->name,
+                        'last_name' => '',
+                        'cne' => $std->cne,
+                        'cin' => $std->cin,
+                        'reference_number' => $std->filiere_name ?? 'Deux années préparatoires',
+                        'status' => 'accepted',
+                        'selection_score' => 150.00
+                    ];
+                }
+            }
+        }
+
+        $data = [
+            'name' => trim(($candidate->first_name ?? 'CANDIDAT') . ' ' . ($candidate->last_name ?? '')),
+            'cne' => $candidate->cne ?? ($cne ?: 'N142088916'),
+            'cin' => $candidate->cin ?? ($cin ?: 'C3967857'),
+            'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
+            'score' => number_format($candidate->selection_score ?? 150.00, 2) . ' pts',
+            'statusLabel' => 'Admis sur Liste Principale',
+            'verifyUrl' => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne))
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
+        return $pdf->stream("Recepisse_TAFEM_" . ($data['cne']) . ".pdf", ["Attachment" => false]);
+    }
+
     public function printSession(Request $request)
     {
         $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Étudiants (Session)']);
