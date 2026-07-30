@@ -90,15 +90,20 @@ class PdfExportController extends Controller
             }
         }
 
+        if (!$candidate) {
+            abort(404, 'Aucun candidat trouvé dans la base de données pour les identifiants fournis.');
+        }
+
         $data = [
-            'name' => trim(($candidate->first_name ?? 'CANDIDAT') . ' ' . ($candidate->last_name ?? '')),
-            'cne' => $candidate->cne ?? ($cne ?: 'N142088916'),
-            'cin' => $candidate->cin ?? ($cin ?: 'C3967857'),
+            'name' => trim(($candidate->first_name ?? '') . ' ' . ($candidate->last_name ?? '')),
+            'cne' => $candidate->cne ?? $cne,
+            'cin' => $candidate->cin ?? $cin,
             'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-            'score' => number_format($candidate->selection_score ?? 150.00, 2) . ' pts',
+            'score' => number_format($candidate->selection_score ?? $candidate->entrance_exam_score ?? 150.00, 2) . ' pts',
             'statusLabel' => 'Admis sur Liste Principale',
             'verifyUrl' => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne))
         ];
+
 
         $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
         return $pdf->stream("Recepisse_TAFEM_" . ($data['cne']) . ".pdf", ["Attachment" => false]);
