@@ -205,7 +205,11 @@ export default function CandidatureList() {
                     const res = await api.post('/admissions/import-ministry-tafem-csv', formData, {
                       headers: { 'Content-Type': 'multipart/form-data' }
                     });
-                    toast.success(`✅ ${res.data.message} (${res.data.summary.total_processed} candidats traités)`, { id: tId });
+                    if (res.data.success) {
+                      toast.success(`✅ ${res.data.message} (${res.data.summary.total_processed} candidats traités)`, { id: tId });
+                    } else {
+                      toast.error(`⚠️ ${res.data.message}`, { id: tId });
+                    }
                     fetchCandidatures();
                   } catch (err: any) {
                     toast.error(err.response?.data?.message || 'Erreur lors de l\'importation.', { id: tId });
@@ -369,28 +373,50 @@ export default function CandidatureList() {
                         <td className="px-6 py-4 text-center">
                           {(() => {
                             const listType = (c.list_type || '').toLowerCase();
-                            const isAttente1 = listType.includes('attente_1') || listType.includes('attente 1');
-                            const isAttente2 = listType.includes('attente_2') || listType.includes('attente 2');
+                            const isAttente1 = listType.includes('attente_1') || listType.includes('attente 1') || listType.includes('liste_attente_1');
+                            const isAttente2 = listType.includes('attente_2') || listType.includes('attente 2') || listType.includes('liste_attente_2');
+                            const isAttente3 = listType.includes('attente_3') || listType.includes('attente 3') || listType.includes('liste_attente_3');
+                            const isListePrincipale = listType.includes('principale') || (c.status === 'admis_tafem' && !isAttente1 && !isAttente2 && !isAttente3 && !listType.includes('attente'));
                             const isAttenteGeneric = listType.includes('attente') || c.status === 'liste_attente';
-                            const isListePrincipale = listType.includes('principale') || (c.status === 'admis_tafem' && !isAttenteGeneric);
+                            const isPending = c.status === 'pending' || c.status === 'under_review';
+
+                            let badgeStyle = "bg-rose-50 text-rose-700 border-rose-200";
+                            let icon = <XCircle className="w-3.5 h-3.5 text-rose-600" />;
+                            let label = "Rejeté";
+
+                            if (isListePrincipale) {
+                              badgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 shadow-2xs";
+                              icon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />;
+                              label = "🟢 Liste Principale";
+                            } else if (isAttente1) {
+                              badgeStyle = "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 shadow-2xs";
+                              icon = <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />;
+                              label = "🟠 Liste d'Attente 1";
+                            } else if (isAttente2) {
+                              badgeStyle = "bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 shadow-2xs";
+                              icon = <Clock className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />;
+                              label = "🟣 Liste d'Attente 2";
+                            } else if (isAttente3) {
+                              badgeStyle = "bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 shadow-2xs";
+                              icon = <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
+                              label = "🔵 Liste d'Attente 3";
+                            } else if (isAttenteGeneric) {
+                              badgeStyle = "bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800 shadow-2xs";
+                              icon = <Clock className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />;
+                              label = "🟧 Liste d'Attente";
+                            } else if (isPending) {
+                              badgeStyle = "bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800";
+                              icon = <Clock className="w-3.5 h-3.5 text-sky-600" />;
+                              label = "En Examen";
+                            }
 
                             return (
                               <span className={cn(
-                                "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
-                                isListePrincipale ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                isAttente1 || isAttenteGeneric ? "bg-amber-50 text-amber-700 border-amber-200" :
-                                isAttente2 ? "bg-purple-50 text-purple-700 border-purple-200" :
-                                isPending ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                "bg-rose-50 text-rose-700 border-rose-200"
+                                "px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wide border inline-flex items-center gap-1.5 shadow-2xs transition-all",
+                                badgeStyle
                               )}>
-                                {isListePrincipale ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
-                                 isAttente1 || isAttente2 || isAttenteGeneric ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
-                                 <XCircle className="w-3.5 h-3.5 text-rose-600" />}
-                                {isListePrincipale ? 'Liste Principale' :
-                                 isAttente1 ? "Liste d'Attente 1" :
-                                 isAttente2 ? "Liste d'Attente 2" :
-                                 isAttenteGeneric ? "Liste d'Attente" :
-                                 isPending ? 'En Examen' : 'Rejeté'}
+                                {icon}
+                                {label}
                               </span>
                             );
                           })()}

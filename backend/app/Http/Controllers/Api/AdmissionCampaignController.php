@@ -45,7 +45,15 @@ class AdmissionCampaignController extends Controller
             $query->where('status', $request->status);
         }
 
-        $applications = $query->orderBy('id', 'desc')->get();
+        $applications = $query->orderBy('id', 'desc')->get()->map(function ($app) {
+            if (empty($app->list_type)) {
+                $student = \App\Models\Student::where('cne', $app->cne)->first();
+                if ($student && !empty($student->list_type)) {
+                    $app->list_type = $student->list_type;
+                }
+            }
+            return $app;
+        });
 
         $stats = [
             'total' => $applications->count(),

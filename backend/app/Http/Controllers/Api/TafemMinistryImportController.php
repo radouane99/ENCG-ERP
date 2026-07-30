@@ -19,7 +19,7 @@ class TafemMinistryImportController extends Controller
     public function importMinistryList(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|max:10240',
             'admission_campaign_id' => 'nullable|exists:admission_campaigns,id',
         ]);
 
@@ -30,14 +30,49 @@ class TafemMinistryImportController extends Controller
             return response()->json(['message' => 'Fichier CSV vide ou il n\'y a pas de contenu.'], 422);
         }
 
-        // Clean UTF-8 BOM and normalize newlines
-        $cleanedContent = preg_replace('/[\x{FEFF}\x{FFFE}]/u', '', $rawContent);
-        $cleanedContent = str_replace(["\xEF\xBB\xBF", "\r\n", "\r"], ["", "\n", "\n"], $cleanedContent);
+        // Strip UTF-8 BOM bytes if present
+        if (substr($rawContent, 0, 3) === "\xEF\xBB\xBF") {
+            $rawContent = substr($rawContent, 3);
+        }
 
-        $lines = array_values(array_filter(explode("\n", trim($cleanedContent)), fn($l) => trim($l) !== ''));
+        // Convert entire file content to UTF-8 safely to prevent preg_replace /u null returns on Windows-1252
+        $utf8Content = mb_convert_encoding($rawContent, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+        $utf8Content = str_replace(["\xEF\xBB\xBF", "\r\n", "\r"], ["", "\n", "\n"], $utf8Content);
+
+        $lines = array_values(array_filter(explode("\n", trim($utf8Content)), fn($l) => trim($l) !== ''));
         if (empty($lines)) {
             return response()->json(['message' => 'Fichier CSV vide.'], 422);
         }
+
+        // Robust CSV line parser helper to handle Excel outer quote wrapping and weird quotation escapes
+        $parseCsvLine = function (string $line, string $delim): array {
+            $line = trim($line);
+            if (empty($line)) return [];
+
+            // Case 1: Whole row wrapped in double quotes by Excel/WPS
+            if (strlen($line) >= 2 && substr($line, 0, 1) === '"' && substr($line, -1) === '"') {
+                $unwrapped = substr($line, 1, -1);
+                $unwrapped = str_replace('""', '"', $unwrapped);
+                $res = str_getcsv($unwrapped, $delim);
+                if (count($res) >= 2) {
+                    return array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'"), $res);
+                }
+            }
+
+            // Case 2: Standard str_getcsv
+            $res = str_getcsv($line, $delim);
+            if (count($res) >= 2) {
+                return array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'"), $res);
+            }
+
+            // Case 3: Manual explode fallback if quotation marks trapped the line in a single element
+            $exploded = explode($delim, $line);
+            if (count($exploded) >= 2) {
+                return array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'"), $exploded);
+            }
+
+            return $res;
+        };
 
         // Auto-detect CSV delimiter (comma, semicolon, tab)
         $firstLine = $lines[0];
@@ -52,9 +87,10 @@ class TafemMinistryImportController extends Controller
         }
 
         $headerLine = array_shift($lines);
-        $rawHeader = str_getcsv($headerLine, $delimiter);
+        $rawHeader = $parseCsvLine($headerLine, $delimiter);
         $header = array_map(function ($h) {
-            return strtolower(trim(preg_replace('/[\s"\'`]/', '', $h)));
+            $h = str_replace(["\xEF\xBB\xBF", "\r", "\n"], '', $h);
+            return strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', $h)));
         }, $rawHeader);
 
         $institutionId = \App\Models\Institution::first()?->id ?? 1;
@@ -114,6 +150,19 @@ class TafemMinistryImportController extends Controller
         $errors = [];
         $rowNum = 1;
 
+        if (empty($lines)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Fichier CSV ne contient aucun candidat (seulement la têtes de colonnes ou 0 أسطر).",
+                'summary' => [
+                    'imported_candidates' => 0,
+                    'updated_candidates'  => 0,
+                    'total_processed'     => 0,
+                    'errors'              => ["Le fichier ne contient aucune ligne de données après l'en-tête."],
+                ]
+            ]);
+        }
+
         DB::beginTransaction();
         try {
             foreach ($lines as $lineStr) {
@@ -121,21 +170,45 @@ class TafemMinistryImportController extends Controller
                 $lineStr = trim($lineStr);
                 if (empty($lineStr)) continue;
 
-                $row = str_getcsv($lineStr, $delimiter);
-                if (empty($row) || count($row) < 2) continue;
+                $row = $parseCsvLine($lineStr, $delimiter);
+                if (empty($row) || count($row) < 2) {
+                    $errors[] = "Ligne {$rowNum} ignorée : colonnes insuffisantes (délimiteur '{$delimiter}', " . count($row) . " colonnes). Contenu: " . substr($lineStr, 0, 40);
+                    continue;
+                }
 
                 $data = [];
                 foreach ($header as $idx => $key) {
                     $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
                 }
 
-                $cne = strtoupper(trim($data['cne'] ?? $data['code_massar'] ?? ''));
-                $cin = strtoupper(trim($data['cin'] ?? $data['cnie'] ?? ''));
-                $firstName = mb_convert_encoding(trim($data['first_name'] ?? $data['prenom'] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
-                $lastName = mb_convert_encoding(trim($data['last_name'] ?? $data['nom'] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
-                $bacAverage = (float)($data['bac_average'] ?? $data['moyenne_bac'] ?? 16.0);
-                $tafemScore = (float)($data['tafem_score'] ?? $data['note_tafem'] ?? 150.0);
-                $listType = strtolower(trim($data['list_type'] ?? $data['liste'] ?? 'liste_principale'));
+                $cne = strtoupper(trim(!empty($data['cne']) ? $data['cne'] : (!empty($data['code_massar']) ? $data['code_massar'] : ($row[0] ?? ''))));
+                $cin = strtoupper(trim(!empty($data['cin']) ? $data['cin'] : (!empty($data['cnie']) ? $data['cnie'] : ($row[1] ?? ''))));
+                $lastName = mb_convert_encoding(trim(!empty($data['last_name']) ? $data['last_name'] : (!empty($data['nom']) ? $data['nom'] : ($row[2] ?? ''))), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+                $firstName = mb_convert_encoding(trim(!empty($data['first_name']) ? $data['first_name'] : (!empty($data['prenom']) ? $data['prenom'] : ($row[3] ?? ''))), 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+                $bacAverage = (float)(!empty($data['bac_average']) ? $data['bac_average'] : (!empty($data['moyenne_bac']) ? $data['moyenne_bac'] : ($row[4] ?? 16.0)));
+                $tafemScore = (float)(!empty($data['tafem_score']) ? $data['tafem_score'] : (!empty($data['note_tafem']) ? $data['note_tafem'] : ($row[5] ?? 150.0)));
+                $listType = strtolower(trim(!empty($data['list_type']) ? $data['list_type'] : (!empty($data['liste']) ? $data['liste'] : ($row[6] ?? 'liste_principale'))));
+
+                // Normalize out-of-range numeric values (e.g. typos like 11100 -> 111.00 for numeric(5,2))
+                if ($tafemScore > 999.99) {
+                    if ($tafemScore >= 10000) {
+                        $tafemScore = round($tafemScore / 100, 2);
+                    } elseif ($tafemScore >= 1000) {
+                        $tafemScore = round($tafemScore / 10, 2);
+                    }
+                    if ($tafemScore > 999.99) {
+                        $tafemScore = 999.99;
+                    }
+                }
+
+                if ($bacAverage > 20.0) {
+                    if ($bacAverage >= 100) {
+                        $bacAverage = round($bacAverage / 10, 2);
+                    }
+                    if ($bacAverage > 20.0) {
+                        $bacAverage = 20.0;
+                    }
+                }
 
                 if (empty($cne) || empty($firstName) || empty($lastName)) {
                     $errors[] = "Ligne {$rowNum} ignorée : CNE, Nom ou Prénom manquant.";
@@ -143,84 +216,109 @@ class TafemMinistryImportController extends Controller
                 }
 
                 $app = Application::where('cne', $cne)->first();
-
                 $appStatus = str_contains($listType, 'attente') ? 'liste_attente' : 'admis_tafem';
 
+                $hasAppListType = \Illuminate\Support\Facades\Schema::hasColumn('applications', 'list_type');
+                $hasStudentListType = \Illuminate\Support\Facades\Schema::hasColumn('students', 'list_type');
+
+                $appData = [
+                    'admission_campaign_id' => $campaign->id,
+                    'cin' => $cin ?: ($app ? $app->cin : null),
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'bac_average' => $bacAverage,
+                    'selection_score' => $tafemScore,
+                    'status' => $appStatus,
+                ];
+
+                if ($hasAppListType) {
+                    $appData['list_type'] = $listType ?: 'liste_principale';
+                }
+
                 if ($app) {
-                    $app->update([
-                        'admission_campaign_id' => $campaign->id,
-                        'cin' => $cin ?: $app->cin,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'bac_average' => $bacAverage,
-                        'selection_score' => $tafemScore,
-                        'list_type' => $listType ?: 'liste_principale',
-                        'status' => $appStatus,
-                    ]);
+                    $app->update($appData);
                     $updatedCount++;
                 } else {
-                    $app = Application::create([
-                        'admission_campaign_id' => $campaign->id,
-                        'reference_number' => 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5($cne), 0, 6)),
-                        'cne' => $cne,
-                        'cin' => $cin,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'email' => strtolower($cne) . '@candidat.tafem.ma',
-                        'phone' => '0600000000',
-                        'birth_date' => '2006-01-01',
-                        'bac_average' => $bacAverage,
-                        'bac_year' => date('Y'),
-                        'bac_series' => 'Sciences Mathématiques',
-                        'selection_score' => $tafemScore,
-                        'list_type' => $listType ?: 'liste_principale',
-                        'status' => $appStatus,
-                    ]);
+                    $appData['reference_number'] = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5($cne), 0, 6));
+                    $appData['cne'] = $cne;
+                    $appData['email'] = strtolower($cne) . '@candidat.tafem.ma';
+                    $appData['phone'] = '0600000000';
+                    $appData['birth_date'] = '2006-01-01';
+                    $appData['bac_year'] = (int)date('Y');
+                    $appData['bac_series'] = 'Sciences Mathématiques';
+                    $app = Application::create($appData);
                     $importedCount++;
                 }
 
                 // Also populate User & Student records so they appear in EnrollmentManager & Student Record List
+                $userData = [
+                    'name' => $firstName . ' ' . $lastName,
+                    'password' => \Illuminate\Support\Facades\Hash::make('encg2026'),
+                    'institution_id' => $institutionId,
+                    'is_active' => true,
+                ];
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'first_name')) {
+                    $userData['first_name'] = $firstName;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_name')) {
+                    $userData['last_name'] = $lastName;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'cin')) {
+                    $userData['cin'] = $cin;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'cne')) {
+                    $userData['cne'] = $cne;
+                }
+
                 $user = \App\Models\User::firstOrCreate(
                     ['email' => strtolower($cne) . '@candidat.tafem.ma'],
-                    [
-                        'name' => $firstName . ' ' . $lastName,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'cin' => $cin,
-                        'cne' => $cne,
-                        'password' => \Illuminate\Support\Facades\Hash::make('encg2026'),
-                        'role' => 'student',
-                    ]
+                    $userData
                 );
+
+                $studentData = [
+                    'institution_id' => $institutionId,
+                    'user_id' => $user->id,
+                    'student_number' => $cne,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'cin' => $cin,
+                    'cne' => $cne,
+                    'gender' => !empty($data['gender']) ? $data['gender'] : 'M',
+                    'birth_date' => '2006-01-01',
+                    'nationality' => 'Marocaine',
+                    'filiere_id' => $tcFiliere->id,
+                    'status' => 'pending',
+                    'inscription_status' => $appStatus,
+                    'bac_average' => $bacAverage,
+                ];
+
+                if ($hasStudentListType) {
+                    $studentData['list_type'] = $listType ?: 'liste_principale';
+                }
 
                 \App\Models\Student::updateOrCreate(
                     ['cne' => $cne],
-                    [
-                        'institution_id' => $institutionId,
-                        'user_id' => $user->id,
-                        'student_number' => $cne,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'cin' => $cin,
-                        'cne' => $cne,
-                        'filiere_id' => $tcFiliere->id,
-                        'status' => 'pending',
-                        'inscription_status' => $appStatus,
-                        'bac_average' => $bacAverage,
-                    ]
+                    $studentData
                 );
             }
 
             DB::commit();
 
+            $totalProcessed = $importedCount + $updatedCount;
+            $msg = $totalProcessed > 0
+                ? "Importation Ministère TAFEM réussie !"
+                : "Avertissement : Aucun candidat n'a été importé. " . implode(' | ', array_slice($errors, 0, 3));
+
             return response()->json([
-                'success' => true,
-                'message' => "Importation Ministère TAFEM réussie !",
+                'success' => $totalProcessed > 0,
+                'message' => $msg,
                 'summary' => [
                     'imported_candidates' => $importedCount,
                     'updated_candidates'  => $updatedCount,
-                    'total_processed'     => $importedCount + $updatedCount,
+                    'total_processed'     => $totalProcessed,
                     'errors'              => $errors,
+                    'debug_lines_read'    => count($lines),
                 ]
             ]);
 
