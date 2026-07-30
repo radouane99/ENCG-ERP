@@ -401,38 +401,6 @@ export default function EnrollmentManager() {
           >
             <Archive className="w-3.5 h-3.5" /> Bundle ZIP Attestations
           </button>
-          <button
-            onClick={handleDownloadTafemTemplate}
-            className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-1.5"
-            title="Télécharger le modèle CSV officiel Ministère TAFEM"
-          >
-            <Download className="w-3.5 h-3.5" /> Modèle CSV TAFEM
-          </button>
-
-          <label className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 shadow-sm">
-            <Upload className="w-3.5 h-3.5" /> Import Liste Ministère (CSV)
-            <input
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const tId = toast.loading('📥 Importation de la liste du Ministère TAFEM en cours...');
-                const formData = new FormData();
-                formData.append('file', file);
-                try {
-                  const res = await api.post('/admissions/import-ministry-tafem-csv', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                  });
-                  toast.success(`✅ ${res.data.message} (${res.data.summary.total_processed} candidats traités)`, { id: tId });
-                  fetchData();
-                } catch (err: any) {
-                  toast.error(err.response?.data?.message || 'Erreur lors de l\'importation.', { id: tId });
-                }
-              }}
-            />
-          </label>
         </div>
       </div>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-4">

@@ -257,6 +257,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // ── 📥 Importation Liste Officielle Admis Ministère TAFEM / MESRSFC
     Route::post('admissions/import-ministry-tafem-csv', [\App\Http\Controllers\Api\TafemMinistryImportController::class, 'importMinistryList']);
     Route::get('admissions/download-tafem-template-csv', [\App\Http\Controllers\Api\TafemMinistryImportController::class, 'downloadTemplate']);
+    Route::get('admin/admissions/campaigns', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'index']);
+    Route::get('admin/admissions/campaigns/{id}/applications', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'getApplications']);
 
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);

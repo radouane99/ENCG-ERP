@@ -88,11 +88,11 @@ class TafemMinistryImportController extends Controller
                 'institution_id' => $institutionId,
                 'filiere_id' => $tcFiliere->id,
                 'academic_year_id' => $academicYear->id,
-                'title' => "Concours TAFEM " . date('Y') . " — Tronc Commun ENCG Fès",
-                'academic_year' => date('Y') . '-' . (date('Y') + 1),
+                'name' => "Concours TAFEM " . date('Y') . " — Tronc Commun ENCG Fès",
                 'status' => 'open',
                 'open_date' => now()->startOfYear(),
                 'close_date' => now()->endOfYear(),
+                'target_capacity' => 500,
             ]);
         }
 
@@ -132,11 +132,12 @@ class TafemMinistryImportController extends Controller
                         'last_name' => $lastName,
                         'bac_average' => $bacAverage,
                         'selection_score' => $tafemScore,
+                        'list_type' => $listType ?: 'liste_principale',
                         'status' => 'admis_tafem',
                     ]);
                     $updatedCount++;
                 } else {
-                    Application::create([
+                    $app = Application::create([
                         'admission_campaign_id' => $campaign->id,
                         'reference_number' => 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5($cne), 0, 6)),
                         'cne' => $cne,
@@ -150,10 +151,42 @@ class TafemMinistryImportController extends Controller
                         'bac_year' => date('Y'),
                         'bac_series' => 'Sciences Mathématiques',
                         'selection_score' => $tafemScore,
+                        'list_type' => $listType ?: 'liste_principale',
                         'status' => 'admis_tafem',
                     ]);
                     $importedCount++;
                 }
+
+                // Also populate User & Student records so they appear in EnrollmentManager & Student Record List
+                $user = \App\Models\User::firstOrCreate(
+                    ['email' => strtolower($cne) . '@candidat.tafem.ma'],
+                    [
+                        'name' => $firstName . ' ' . $lastName,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'cin' => $cin,
+                        'cne' => $cne,
+                        'password' => \Illuminate\Support\Facades\Hash::make('encg2026'),
+                        'role' => 'student',
+                    ]
+                );
+
+                \App\Models\Student::updateOrCreate(
+                    ['cne' => $cne],
+                    [
+                        'institution_id' => $institutionId,
+                        'user_id' => $user->id,
+                        'student_number' => $cne,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'cin' => $cin,
+                        'cne' => $cne,
+                        'filiere_id' => $tcFiliere->id,
+                        'status' => 'pending',
+                        'inscription_status' => 'admis_tafem',
+                        'bac_average' => $bacAverage,
+                    ]
+                );
             }
 
             DB::commit();

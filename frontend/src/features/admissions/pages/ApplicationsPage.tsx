@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Edit2, Trash2, X, FileText, CheckCircle, Clock, AlertCircle, TrendingUp } from 'lucide-react'
+import { Search, Edit2, Trash2, X, FileText, CheckCircle, Clock, AlertCircle, TrendingUp, Download, Upload } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -96,6 +96,25 @@ export default function ApplicationsPage() {
 
   useEffect(() => { fetchData() }, [search, statusFilter])
 
+  const handleDownloadTafemTemplate = async () => {
+    toast.loading('Génération du modèle CSV officiel Ministère TAFEM...');
+    try {
+      const res = await api.get('/admissions/download-tafem-template-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modele_import_admis_ministere_tafem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success('📄 Modèle CSV Ministère TAFEM téléchargé avec succès !');
+    } catch (err) {
+      toast.dismiss();
+      toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
+    }
+  };
+
   const openReview = (app: Application) => {
     setEditingApp(app)
     setForm({
@@ -144,6 +163,41 @@ export default function ApplicationsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('applications.title')}</h1>
           <p className="text-muted-foreground mt-1 text-sm">{t('applications.subtitle')}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleDownloadTafemTemplate}
+            className="px-3.5 py-2 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-1.5 shadow-sm"
+            title="Télécharger le modèle CSV officiel Ministère TAFEM"
+          >
+            <Download className="w-4 h-4" /> Modèle CSV TAFEM
+          </button>
+
+          <label className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 shadow-md">
+            <Upload className="w-4 h-4" /> Import Liste Ministère (CSV)
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const tId = toast.loading('📥 Importation de la liste du Ministère TAFEM en cours...');
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                  const res = await api.post('/admissions/import-ministry-tafem-csv', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                  });
+                  toast.success(`✅ ${res.data.message} (${res.data.summary.total_processed} candidats traités)`, { id: tId });
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(err.response?.data?.message || 'Erreur lors de l\'importation.', { id: tId });
+                }
+              }}
+            />
+          </label>
         </div>
       </div>
 

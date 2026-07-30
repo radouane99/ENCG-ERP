@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Users, Plus, X, FileText, Check, Award, Calendar, Sparkles, Printer, Zap, RefreshCw } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Check, Award, Calendar, Sparkles, Printer, Zap, RefreshCw } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -49,20 +49,20 @@ export default function CandidatureList() {
       }
 
       const res = await api.get(`/admin/admissions/campaigns/${campaignId}/applications`)
-      const list = res.data.data && res.data.data.length > 0 ? res.data.data : DEFAULT_CANDIDATES
+      const list = res.data.data && Array.isArray(res.data.data) ? res.data.data : []
       setCandidatures(list)
 
       const calculatedStats = {
         total: list.length,
-        pending: list.filter((c: any) => c.status === 'pending' || c.status === 'under_review').length,
-        accepted: list.filter((c: any) => c.status === 'accepted').length,
-        rejected: list.filter((c: any) => c.status === 'rejected').length
+        pending: list.filter((c: any) => c.status === 'pending' || c.status === 'under_review' || c.status === 'en_attente').length,
+        accepted: list.filter((c: any) => c.status === 'accepted' || c.status === 'admis' || c.status === 'admis_tafem' || c.status === 'valide').length,
+        rejected: list.filter((c: any) => c.status === 'rejected' || c.status === 'rejete' || c.status === 'suspended').length
       }
-      setStats(res.data.stats?.total ? res.data.stats : calculatedStats)
+      setStats(res.data.stats?.total !== undefined ? res.data.stats : calculatedStats)
     } catch (err) {
       console.error('Failed to fetch candidatures:', err)
-      setCandidatures(DEFAULT_CANDIDATES)
-      setStats({ total: 5, pending: 2, accepted: 2, rejected: 1 })
+      setCandidatures([])
+      setStats({ total: 0, pending: 0, accepted: 0, rejected: 0 })
     } finally {
       setLoading(false)
     }
@@ -72,6 +72,25 @@ export default function CandidatureList() {
   useEffect(() => {
     fetchCandidatures()
   }, [])
+
+  const handleDownloadTafemTemplate = async () => {
+    toast.loading('Génération du modèle CSV officiel Ministère TAFEM...');
+    try {
+      const res = await api.get('/admissions/download-tafem-template-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modele_import_admis_ministere_tafem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success('📄 Modèle CSV Ministère TAFEM téléchargé avec succès !');
+    } catch (err) {
+      toast.dismiss();
+      toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
+    }
+  };
 
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
@@ -162,6 +181,38 @@ export default function CandidatureList() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <button
+              onClick={handleDownloadTafemTemplate}
+              className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 rounded-2xl font-bold border border-blue-400/40 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              title="Télécharger le modèle CSV officiel Ministère TAFEM"
+            >
+              <Download className="w-4 h-4 text-blue-300" /> Modèle CSV TAFEM
+            </button>
+
+            <label className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:scale-102 cursor-pointer border border-indigo-400/30">
+              <Upload className="w-4 h-4 text-indigo-200" /> Import Liste Ministère (CSV)
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const tId = toast.loading('📥 Importation de la liste du Ministère TAFEM en cours...');
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const res = await api.post('/admissions/import-ministry-tafem-csv', formData, {
+                      headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    toast.success(`✅ ${res.data.message} (${res.data.summary.total_processed} candidats traités)`, { id: tId });
+                    fetchCandidatures();
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.message || 'Erreur lors de l\'importation.', { id: tId });
+                  }
+                }}
+              />
+            </label>
             <button 
               onClick={exportCSV} 
               className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
@@ -284,8 +335,8 @@ export default function CandidatureList() {
                   </tr>
                 ) : (
                   filteredCandidatures.map((c) => {
-                    const isAccepted = c.status === 'accepted';
-                    const isPending = c.status === 'pending' || c.status === 'under_review';
+                    const isAccepted = c.status === 'accepted' || c.status === 'admis' || c.status === 'admis_tafem' || c.status === 'valide';
+                    const isPending = c.status === 'pending' || c.status === 'under_review' || c.status === 'en_attente';
 
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
@@ -306,22 +357,41 @@ export default function CandidatureList() {
                           <span className="text-[10px] text-slate-400 font-mono">Bac : {c.bac_type || 'Sciences Éco'}</span>
                         </td>
 
-                        <td className="px-6 py-4 text-center font-mono font-black text-sm text-indigo-600 dark:text-indigo-400">
-                          {c.selection_score || '16.75'} / 20
+                        <td className="px-6 py-4 text-center font-mono">
+                          <div className="font-black text-xs text-indigo-600 dark:text-indigo-400">
+                            TAFEM : {c.selection_score ?? c.tafem_score ?? '—'} pts
+                          </div>
+                          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                            Bac : {c.bac_average ? `${c.bac_average}/20` : '—'}
+                          </div>
                         </td>
 
                         <td className="px-6 py-4 text-center">
-                          <span className={cn(
-                            "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
-                            isAccepted ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                            isPending ? "bg-amber-50 text-amber-700 border-amber-200" :
-                            "bg-rose-50 text-rose-700 border-rose-200"
-                          )}>
-                            {isAccepted ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
-                             isPending ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
-                             <XCircle className="w-3.5 h-3.5 text-rose-600" />}
-                            {isAccepted ? 'Admis' : isPending ? 'En examen' : 'Rejeté'}
-                          </span>
+                          {(() => {
+                            const listType = (c.list_type || '').toLowerCase();
+                            const isListePrincipale = listType.includes('principale') || isAccepted;
+                            const isAttente1 = listType.includes('attente_1') || listType.includes('attente 1');
+                            const isAttente2 = listType.includes('attente_2') || listType.includes('attente 2');
+
+                            return (
+                              <span className={cn(
+                                "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
+                                isListePrincipale ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                isAttente1 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                isAttente2 ? "bg-purple-50 text-purple-700 border-purple-200" :
+                                isPending ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                "bg-rose-50 text-rose-700 border-rose-200"
+                              )}>
+                                {isListePrincipale ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
+                                 isAttente1 || isAttente2 ? <Clock className="w-3.5 h-3.5 text-amber-600" /> :
+                                 <XCircle className="w-3.5 h-3.5 text-rose-600" />}
+                                {isListePrincipale ? 'Liste Principale' :
+                                 isAttente1 ? "Liste d'Attente 1" :
+                                 isAttente2 ? "Liste d'Attente 2" :
+                                 isPending ? 'En Examen' : 'Rejeté'}
+                              </span>
+                            );
+                          })()}
                         </td>
 
                         <td className="px-6 py-4 text-right">

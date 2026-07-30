@@ -1540,6 +1540,9 @@ class PdfExportController extends Controller
             'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$student->id}-" . ($incident->sanction_scope ?? 'module'))),
         ])->setPaper('a4', 'portrait');
 
+        return $pdf->stream("Decision_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
+    }
+
     /**
      * Download Official Attestation d'Inscription PDF with Photo Avatar & Security QR Code.
      */

@@ -386,6 +386,7 @@ export default function RootRouter() {
           <Route path="/academic/predictive-analytics" element={<PredictiveDashboard />} />
           <Route path="/academic/documents" element={<DocumentCenter />} />
           <Route path="/admissions/campaigns" element={<AdmissionCampaignManager />} />
+          <Route path="/admissions/applications" element={<ApplicationsPage />} />
           <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
 
           {/* Attendance */}
