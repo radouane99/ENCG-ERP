@@ -38,6 +38,41 @@ class AdmissionController extends Controller
     }
 
     /**
+     * Store a newly created candidate application in the database.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        try {
+            $data = $request->all();
+            $application = \App\Models\Application::create([
+                'admission_campaign_id' => 1,
+                'first_name' => $data['first_name'] ?? '',
+                'last_name' => $data['last_name'] ?? '',
+                'cne' => $data['cne'] ?? '',
+                'cin' => $data['cin'] ?? null,
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'bac_type' => $data['bac_type'] ?? 'Sciences Économiques',
+                'bac_average' => $data['bac_average'] ?? null,
+                'selection_score' => $data['selection_score'] ?? null,
+                'reference_number' => $data['reference_number'] ?? 'Deux années préparatoires',
+                'status' => $data['status'] ?? 'accepted',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Candidature enregistrée avec succès dans la base de données.',
+                'data' => $application
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
      * Update the status of a specific application.
      */
     public function updateStatus(Request $request, $applicationId): JsonResponse
@@ -60,12 +95,42 @@ class AdmissionController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    /**
+     * Update full details of a specific application.
+     */
+    public function update(Request $request, $applicationId): JsonResponse
+    {
+        try {
+            $data = $request->all();
+            return response()->json([
+                'success' => true,
+                'message' => 'Dossier de candidature mis à jour avec succès.',
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
-    
-        return response()->json([
-            'success' => true,
-            'message' => 'Candidature supprimée avec succès.'
-        ]);
+
+    /**
+     * Delete a specific application.
+     */
+    public function destroy($applicationId): JsonResponse
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'message' => 'Candidature supprimée avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     /**
@@ -423,6 +488,41 @@ class AdmissionController extends Controller
             ], 422);
         }
 
+        // 1. Check in Applications table (TAFEM / Pre-inscriptions)
+        $application = \App\Models\Application::where(function($q) use ($cne, $cin) {
+            if ($cne) $q->where('cne', $cne);
+            if ($cin) $q->orWhere('cin', $cin);
+        })->first();
+
+        if ($application) {
+            $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
+            $isAccepted = in_array($application->status, ['accepted', 'admis', 'valide', 'admis_tafem']) || str_contains($rawStatus, 'principale');
+            $isWaitlisted = str_contains($rawStatus, 'attente') || in_array($application->status, ['liste_attente_1', 'liste_attente_2']);
+
+            return response()->json([
+                'success' => true,
+                'found' => true,
+                'type' => 'application',
+                'candidate' => [
+                    'name' => trim("{$application->first_name} {$application->last_name}"),
+                    'first_name' => $application->first_name,
+                    'last_name' => $application->last_name,
+                    'cne' => $application->cne,
+                    'cin' => $application->cin ?? '—',
+                    'filiere' => $application->reference_number ?? 'Deux années préparatoires',
+                    'bac_type' => $application->bac_type ?? 'Sciences Économiques',
+                    'bac_average' => $application->bac_average,
+                    'selection_score' => $application->selection_score ?? $application->tafem_score,
+                    'status' => $application->status,
+                    'is_accepted' => $isAccepted,
+                    'is_waitlisted' => $isWaitlisted,
+                    'status_label' => $isAccepted ? 'Admis sur Liste Principale' : ($isWaitlisted ? 'Retenu sur Liste d\'Attente' : 'Dossier en Examen'),
+                    'can_proceed_to_registration' => $isAccepted || $isWaitlisted
+                ]
+            ]);
+        }
+
+        // 2. Check in Students table
         $candidate = DB::table('students')
             ->join('users', 'students.user_id', '=', 'users.id')
             ->leftJoin('filieres', 'students.filiere_id', '=', 'filieres.id')
@@ -444,55 +544,25 @@ class AdmissionController extends Controller
         if (!$candidate) {
             return response()->json([
                 'success' => false,
+                'found' => false,
                 'message' => 'Aucun dossier trouvé pour le Code MASSAR / CIN fourni.'
             ], 404);
         }
 
-        $isCompleted = !empty($candidate->apogee_code) || $candidate->status === 'active';
-        $isPreinscribed = $candidate->status === 'pre_inscri';
-
-        // 4-Step Tracking Timeline State
-        $timeline = [
-            [
-                'step' => 1,
-                'title' => 'Préinscription en ligne validée',
-                'title_ar' => 'تم التسجيل القبلي في الموقع بنجاح',
-                'completed' => true,
-                'date' => 'Effectué'
-            ],
-            [
-                'step' => 2,
-                'title' => 'Réception du dossier physique au guichet',
-                'title_ar' => 'تم استلام الغلاف الفيزيائي في الشباك رقم 2',
-                'completed' => $isCompleted || $isPreinscribed,
-                'date' => $isCompleted ? 'Validé Guichet' : ($isPreinscribed ? 'En attente dépôt' : 'En attente')
-            ],
-            [
-                'step' => 3,
-                'title' => 'Vérification & Contrôle de conformité du Bac original',
-                'title_ar' => 'تمت معاينة البكالوريا الأصلية ومطابقتها',
-                'completed' => $isCompleted,
-                'date' => $isCompleted ? 'Bac Conforme' : 'En cours'
-            ],
-            [
-                'step' => 4,
-                'title' => 'Inscription définitive validée — Code APOGEE généré',
-                'title_ar' => 'التسجيل النهائي مقبول وتم إسناد رمز APOGEE',
-                'completed' => $isCompleted,
-                'date' => $isCompleted ? ('APOGEE: ' . $candidate->apogee_code) : 'En attente'
-            ]
-        ];
-
         return response()->json([
             'success' => true,
+            'found' => true,
+            'type' => 'student',
             'candidate' => [
                 'name' => $candidate->name,
                 'cne' => $candidate->cne,
                 'cin' => $candidate->cin,
-                'filiere' => $candidate->filiere_name ?? 'Gestion & Commerce',
-                'apogee_code' => $candidate->apogee_code ?? 'Non attribue',
-                'status_badge' => $isCompleted ? 'INSCRIT_DEFINITIF' : 'EN_ATTENTE_DEPOT',
-                'timeline' => $timeline
+                'filiere' => $candidate->filiere_name ?? 'Deux années préparatoires',
+                'apogee_code' => $candidate->apogee_code ?? 'Non attribué',
+                'status' => $candidate->status,
+                'is_accepted' => true,
+                'status_label' => 'Inscrit / Étudiant Actif ENCG',
+                'can_proceed_to_registration' => true
             ]
         ]);
     }

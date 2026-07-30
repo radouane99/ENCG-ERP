@@ -80,7 +80,7 @@ export default function FaqSection({ lang = 'fr', isRTL = false }: FaqSectionPro
       <div className="rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-white p-8 shadow-xl shadow-slate-100 backdrop-blur-xl dark:border-white/10 dark:from-[#0A1220] dark:via-[#08101B] dark:to-[#0A1220] md:p-10">
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E60028]/20 bg-[#E60028]/10 px-3 py-1 text-sm font-semibold text-[#E60028]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0f2863]/20 bg-[#0f2863]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#0f2863] dark:text-amber-400">
               <CircleHelp className="h-4 w-4" />
               {copy.eyebrow}
             </div>
@@ -91,7 +91,7 @@ export default function FaqSection({ lang = 'fr', isRTL = false }: FaqSectionPro
               {copy.subtitle}
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#E60028]/30 hover:text-[#E60028] dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+          <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#0f2863]/30 hover:text-[#0f2863] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-amber-400">
             {copy.cta}
             <ArrowRight className={isRTL ? 'h-4 w-4 rotate-180' : 'h-4 w-4'} />
           </button>
@@ -106,10 +106,10 @@ export default function FaqSection({ lang = 'fr', isRTL = false }: FaqSectionPro
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
+                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left cursor-pointer"
                 >
                   <span className="text-base font-semibold text-slate-900 dark:text-white">{item.question}</span>
-                  <ChevronDown className={isOpen ? 'h-5 w-5 shrink-0 text-[#E60028] transition-transform rotate-180' : 'h-5 w-5 shrink-0 text-slate-500 transition-transform'} />
+                  <ChevronDown className={isOpen ? 'h-5 w-5 shrink-0 text-[#0f2863] dark:text-amber-400 transition-transform rotate-180' : 'h-5 w-5 shrink-0 text-slate-500 transition-transform'} />
                 </button>
                 {isOpen ? (
                   <div className="px-5 pb-5 text-sm leading-7 text-slate-600 dark:text-slate-300">

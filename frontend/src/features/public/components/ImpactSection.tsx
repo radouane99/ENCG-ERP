@@ -115,7 +115,7 @@ export default function ImpactSection({ lang = 'fr', isRTL = false }: ImpactSect
         <div className="grid gap-6 md:grid-cols-2">
           {section.cards.map(({ icon: Icon, title, description }) => (
             <div key={title} className="group rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#09131F] p-8 shadow-lg shadow-slate-200/30 dark:shadow-black/20 transition-all hover:-translate-y-1">
-              <div className="inline-flex items-center justify-center rounded-3xl bg-[#E60028]/10 text-[#E60028] w-14 h-14 mb-6">
+              <div className="inline-flex items-center justify-center rounded-3xl bg-[#0f2863]/10 text-[#0f2863] dark:bg-amber-400/15 dark:text-amber-400 w-14 h-14 mb-6">
                 <Icon className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>

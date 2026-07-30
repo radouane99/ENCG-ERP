@@ -6,7 +6,7 @@ const phases = [
     subtitle: 'Fondations produit',
     description: 'Authentification, rôles, gestion des profils et base de permissions.',
     points: ['Connexion sécurisée', 'Adresses e-mail vérifiées', 'Tableau de bord par rôle'],
-    accent: 'from-[#E60028] to-[#A80A0B]',
+    accent: 'from-[#0f2863] via-[#162e74] to-[#1e3a8a]',
   },
   {
     title: 'Phase 2',
@@ -37,7 +37,7 @@ export default function MvpRoadmapSection() {
       <div className="rounded-[2rem] border border-slate-200/80 bg-white/80 p-8 shadow-xl shadow-slate-100 backdrop-blur-xl dark:border-white/10 dark:bg-[#0A1220]/80 dark:shadow-none md:p-10">
         <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E60028]/20 bg-[#E60028]/10 px-3 py-1 text-sm font-semibold text-[#E60028]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0f2863]/20 bg-[#0f2863]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#0f2863] dark:text-amber-400">
               <Sparkles className="h-4 w-4" />
               Roadmap MVP
             </div>
@@ -67,7 +67,7 @@ export default function MvpRoadmapSection() {
                 {phase.title}
               </div>
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {index === 0 ? <ShieldCheck className="h-4 w-4 text-[#E60028]" /> : null}
+                {index === 0 ? <ShieldCheck className="h-4 w-4 text-[#0f2863] dark:text-amber-400" /> : null}
                 {index === 1 ? <BookOpen className="h-4 w-4 text-sky-600" /> : null}
                 {index === 2 ? <Sparkles className="h-4 w-4 text-emerald-600" /> : null}
                 {index === 3 ? <BadgeCheck className="h-4 w-4 text-violet-600" /> : null}
@@ -77,7 +77,7 @@ export default function MvpRoadmapSection() {
               <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                 {phase.points.map((point) => (
                   <li key={point} className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#E60028]" />
+                    <span className="h-2 w-2 rounded-full bg-amber-500" />
                     {point}
                   </li>
                 ))}

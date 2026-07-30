@@ -123,7 +123,7 @@ export default function BenefitsSection({ lang = 'fr', isRTL = false }: Benefits
       <div className="rounded-[2rem] border border-slate-200/80 bg-white/90 p-8 shadow-xl shadow-slate-100 backdrop-blur-xl dark:border-white/10 dark:bg-[#0A1220]/90 dark:shadow-none md:p-10">
         <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E60028]/20 bg-[#E60028]/10 px-3 py-1 text-sm font-semibold text-[#E60028]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0f2863]/20 bg-[#0f2863]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#0f2863] dark:text-amber-400">
               <Clock3 className="h-4 w-4" />
               {copy.eyebrow}
             </div>
@@ -134,7 +134,7 @@ export default function BenefitsSection({ lang = 'fr', isRTL = false }: Benefits
               {copy.subtitle}
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#E60028] to-[#A80A0B] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#E60028]/20 hover:shadow-[#E60028]/40 transition-all">
+          <button className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all cursor-pointer">
             {copy.action}
             <ArrowRight className={isRTL ? 'h-4 w-4 rotate-180' : 'h-4 w-4'} />
           </button>
@@ -145,7 +145,7 @@ export default function BenefitsSection({ lang = 'fr', isRTL = false }: Benefits
             const Icon = card.icon
             return (
               <article key={card.title} className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5">
-                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-[#E60028]/10 text-[#E60028] dark:bg-[#E60028]/15">
+                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-[#0f2863]/10 text-[#0f2863] dark:bg-amber-400/15 dark:text-amber-400">
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{card.title}</h3>
@@ -153,7 +153,7 @@ export default function BenefitsSection({ lang = 'fr', isRTL = false }: Benefits
                 <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
                   {card.points.map((point) => (
                     <li key={point} className="flex items-start gap-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-[#E60028]" />
+                      <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
                       <span>{point}</span>
                     </li>
                   ))}

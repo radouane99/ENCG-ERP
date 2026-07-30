@@ -99,7 +99,7 @@ export default function ConversionSection({ lang = 'fr', isRTL = false }: Conver
             <div className={cn('flex flex-col sm:flex-row gap-4', isRTL ? 'sm:justify-end' : '')}>
               <Link
                 to="/inscription"
-                className="inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-to-r from-[#E60028] to-[#FF5E67] px-8 py-4 text-sm font-bold text-white shadow-2xl shadow-[#E60028]/30 hover:scale-[1.02] transition-transform"
+                className="inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] px-8 py-4 text-sm font-bold text-white shadow-2xl shadow-[#0f2863]/30 hover:scale-[1.02] transition-transform border border-blue-400/30"
               >
                 {t.ctaPrimary}
                 <ArrowRight className={cn('w-4 h-4', isRTL && 'rotate-180')} />
@@ -117,7 +117,7 @@ export default function ConversionSection({ lang = 'fr', isRTL = false }: Conver
           <div className="grid gap-5 sm:grid-cols-2">
             {t.cards.map(({ title, description, icon: Icon }) => (
               <div key={title} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/10 backdrop-blur-xl">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#E60028]/10 text-[#E60028] mb-5">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0f2863]/30 text-amber-400 border border-blue-400/20 mb-5">
                   <Icon className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">{title}</h3>

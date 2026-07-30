@@ -4,7 +4,7 @@ import api from '@shared/lib/api';
 import { 
   ShieldCheck, Sparkles, GraduationCap, ArrowRight, LogIn, BrainCircuit,
   Megaphone, UserCheck, Activity, QrCode, Database, BookOpen, Layers, BarChart3,
-  Sun, Moon, X, MapPin, Phone, Mail, Send, CheckCircle2
+  Sun, Moon, X, MapPin, Phone, Mail, Send, CheckCircle2, Award
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -16,6 +16,7 @@ import TestimonialsSection from '@features/public/components/TestimonialsSection
 import ImpactSection from '@features/public/components/ImpactSection';
 import ConversionSection from '@features/public/components/ConversionSection';
 import FaqSection from '@features/public/components/FaqSection';
+import TafemAdmissibilitySection from '@features/public/components/TafemAdmissibilitySection';
 
 const dict = {
   fr: {
@@ -173,14 +174,14 @@ export default function LandingPage() {
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       className={cn(
-        'min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#E60028] selection:text-white',
+        'min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#0f2863] selection:text-white',
         'bg-slate-50 dark:bg-[#02060D] text-slate-900 dark:text-slate-200',
         t.font
       )}
     >
       {/* ── Fixed Background ── */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[70vw] h-[70vw] rounded-full bg-[#E60028]/10 blur-[150px] opacity-60 dark:opacity-40" />
+        <div className="absolute top-0 right-0 w-[70vw] h-[70vw] rounded-full bg-[#0f2863]/15 blur-[150px] opacity-60 dark:opacity-40" />
         <div className="absolute bottom-0 left-0 w-[60vw] h-[60vw] rounded-full bg-blue-400/15 dark:bg-[#1F3A5F]/20 blur-[150px] opacity-70" />
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20vw] font-black text-slate-900/[0.02] dark:text-white/[0.015] whitespace-nowrap pointer-events-none select-none">
@@ -198,8 +199,8 @@ export default function LandingPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="w-16 h-16 bg-red-100 dark:bg-[#E60028]/20 rounded-2xl flex items-center justify-center mb-6">
-              <Megaphone className="w-8 h-8 text-[#E60028] animate-bounce" />
+            <div className="w-16 h-16 bg-blue-100 dark:bg-[#0f2863]/40 rounded-2xl flex items-center justify-center mb-6">
+              <Megaphone className="w-8 h-8 text-[#0f2863] dark:text-amber-400 animate-bounce" />
             </div>
             <div className="inline-flex items-center gap-2 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-full px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-4">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -209,7 +210,7 @@ export default function LandingPage() {
             <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">{t.popupDesc}</p>
             <button
               onClick={() => { setShowPopup(false); navigate('/inscription'); }}
-              className="w-full bg-gradient-to-r from-[#E60028] to-[#A80A0B] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#E60028]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#0f2863]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
             >
               {t.popupBtn} <ArrowRight className={cn('w-5 h-5', isRTL && 'rotate-180')} />
             </button>
@@ -239,13 +240,17 @@ export default function LandingPage() {
             </div>
 
             {/* Links */}
-            <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-              <a href="#vision" className="text-slate-600 dark:text-slate-300 hover:text-[#E60028] dark:hover:text-white transition-colors">{t.navVision}</a>
-              <a href="#ecosystem" className="text-slate-600 dark:text-slate-300 hover:text-[#E60028] dark:hover:text-white transition-colors">{t.navEco}</a>
-              <a href="#ia" className="text-[#E60028] font-bold flex items-center gap-1 hover:text-red-700 dark:hover:text-red-400 transition-colors">
+            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+              <a href="#resultats-tafem" className="text-amber-500 font-black flex items-center gap-1 hover:text-amber-600 transition-colors">
+                <Award className="w-4 h-4 text-amber-500" />
+                <span>{isRTL ? 'نتائج القبول' : 'Résultats TAFEM'}</span>
+              </a>
+              <a href="#vision" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navVision}</a>
+              <a href="#ecosystem" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navEco}</a>
+              <a href="#ia" className="text-[#0f2863] dark:text-blue-400 font-bold flex items-center gap-1 hover:text-[#162e74] transition-colors">
                 <BrainCircuit className="w-4 h-4" />{t.navAi}
               </a>
-              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#E60028] dark:hover:text-white transition-colors">Contact</a>
+              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">Contact</a>
             </div>
 
             {/* Actions */}
@@ -284,7 +289,7 @@ export default function LandingPage() {
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="bg-gradient-to-r from-[#E60028] to-[#A80A0B] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-[#E60028]/20 hover:shadow-[#E60028]/40 transition-all hover:scale-105 flex items-center gap-2"
+                  className="bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all hover:scale-105 flex items-center gap-2 border border-blue-400/30"
                 >
                   <LogIn className={cn('w-4 h-4', isRTL && 'rotate-180')} />
                   {t.navLogin}
@@ -309,7 +314,7 @@ export default function LandingPage() {
             </div>
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-slate-900 dark:text-white mb-6 leading-[1.1]">
               {t.heroTitle1} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] to-[#FF4D6A]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">
                 {t.heroTitle2}
               </span>
             </h1>
@@ -319,34 +324,34 @@ export default function LandingPage() {
             <div className={cn('flex flex-col sm:flex-row items-center gap-4', isRTL ? 'justify-center lg:justify-end' : 'justify-center lg:justify-start')}>
               <button
                 onClick={() => navigate('/login')}
-                className="w-full sm:w-auto bg-slate-900 dark:bg-white text-white dark:text-[#02060D] px-8 py-4 rounded-2xl font-bold shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 {t.btnExplore}
                 <ArrowRight className={cn('w-5 h-5 transition-transform', isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1')} />
               </button>
               <button
                 onClick={() => navigate('/inscription')}
-                className="w-full sm:w-auto bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 shadow-sm"
+                className="w-full sm:w-auto bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                <GraduationCap className="w-5 h-5" />{t.btnRegister}
+                <GraduationCap className="w-5 h-5 text-amber-500" />{t.btnRegister}
               </button>
             </div>
           </div>
 
           {/* Dashboard Mockup Visual */}
           <div className="flex-1 relative w-full aspect-square max-w-[480px]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-[#E60028]/10 rounded-full blur-[60px] animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-[#0f2863]/15 rounded-full blur-[60px] animate-pulse" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[300px] bg-white dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 transform -rotate-6 hover:rotate-0 transition-transform duration-700 shadow-slate-200/80 dark:shadow-none">
               <div className="flex justify-between items-center mb-5">
                 <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500" /><div className="w-3 h-3 rounded-full bg-yellow-500" /><div className="w-3 h-3 rounded-full bg-green-500" />
+                  <div className="w-3 h-3 rounded-full bg-blue-600" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
                 <span className="text-xs text-slate-400 font-mono font-bold">ENCG.OS v3.0</span>
               </div>
               <div className="space-y-4">
                 {[
                   { Icon: UserCheck, color: 'bg-blue-100 dark:bg-[#1F3A5F]', iconColor: 'text-blue-700 dark:text-blue-300', bar: 'w-3/4 bg-emerald-400' },
-                  { Icon: BarChart3, color: 'bg-red-100 dark:bg-[#E60028]/20', iconColor: 'text-[#E60028]', bar: 'w-1/2 bg-slate-300 dark:bg-white/20' },
+                  { Icon: BarChart3, color: 'bg-indigo-100 dark:bg-indigo-950', iconColor: 'text-indigo-600 dark:text-indigo-400', bar: 'w-1/2 bg-slate-300 dark:bg-white/20' },
                   { Icon: Activity, color: 'bg-emerald-100 dark:bg-emerald-500/20', iconColor: 'text-emerald-600 dark:text-emerald-400', bar: 'w-5/6 bg-emerald-400' },
                 ].map(({ Icon, color, iconColor, bar }, i) => (
                   <div key={i} className="h-12 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 flex items-center px-4 gap-4">
@@ -361,13 +366,13 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Floating badges */}
-            <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-red-200 dark:border-[#E60028]/30 p-4 rounded-2xl shadow-xl transform rotate-12 animate-bounce [animation-duration:4s]">
+            <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-amber-400/40 p-4 rounded-2xl shadow-xl transform rotate-12 animate-bounce [animation-duration:4s]">
               <div className="flex items-center gap-3 mb-2">
-                <Sparkles className="w-5 h-5 text-[#E60028]" />
+                <Sparkles className="w-5 h-5 text-amber-500" />
                 <span className="text-sm font-bold text-slate-900 dark:text-white">IA Active</span>
               </div>
               <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full w-3/4 bg-gradient-to-r from-[#E60028] to-[#FF4D6A]" />
+                <div className="h-full w-3/4 bg-gradient-to-r from-[#0f2863] to-amber-500" />
               </div>
             </div>
             <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-12 animate-bounce [animation-duration:5s]">
@@ -381,11 +386,14 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* ── TAFEM Admissibility & Results Lookup Widget ── */}
+      <TafemAdmissibilitySection isRtl={isRTL} />
+
       {/* ── Ecosystem / 3 Universes ── */}
       <div id="ecosystem" className="relative z-10 max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
-            {t.ecoTitle1} <span className="text-[#E60028]">{t.ecoTitle2}</span>
+            {t.ecoTitle1} <span className="text-[#0f2863] dark:text-amber-400">{t.ecoTitle2}</span>
           </h2>
           <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-lg">{t.ecoDesc}</p>
         </div>
@@ -406,19 +414,19 @@ export default function LandingPage() {
             </div>
           </div>
           {/* Professor */}
-          <div className="md:col-span-1 bg-white dark:bg-gradient-to-br dark:from-[#E60028]/10 dark:to-[#0A1220] rounded-3xl p-10 border border-slate-200 dark:border-white/10 hover:border-[#E60028]/50 transition-all group relative overflow-hidden shadow-lg shadow-slate-100 dark:shadow-none hover:shadow-xl hover:-translate-y-1">
+          <div className="md:col-span-1 bg-white dark:bg-gradient-to-br dark:from-amber-500/10 dark:to-[#0A1220] rounded-3xl p-10 border border-slate-200 dark:border-white/10 hover:border-amber-400/50 transition-all group relative overflow-hidden shadow-lg shadow-slate-100 dark:shadow-none hover:shadow-xl hover:-translate-y-1">
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <BookOpen className="w-48 h-48 text-[#E60028]" strokeWidth={0.5} />
+              <BookOpen className="w-48 h-48 text-amber-500" strokeWidth={0.5} />
             </div>
-            <div className="w-14 h-14 bg-red-100 dark:bg-[#E60028]/20 rounded-2xl flex items-center justify-center border border-red-200 dark:border-[#E60028]/30 mb-6">
-              <BookOpen className="w-7 h-7 text-[#E60028]" />
+            <div className="w-14 h-14 bg-amber-100 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center border border-amber-200 dark:border-amber-500/30 mb-6">
+              <BookOpen className="w-7 h-7 text-amber-600 dark:text-amber-400" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{t.profTitle}</h3>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">{t.profDesc}</p>
             <ul className="space-y-3">
               {[t.profTag1, t.profTag2].map(tag => (
                 <li key={tag} className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                  <div className="w-2 h-2 rounded-full bg-[#E60028]" />{tag}
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />{tag}
                 </li>
               ))}
             </ul>
@@ -473,16 +481,16 @@ export default function LandingPage() {
       <div id="ia" className="relative z-10 bg-white dark:bg-[#0A1220] py-32 border-y border-slate-200 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-red-50 dark:bg-[#E60028]/10 border border-red-200 dark:border-[#E60028]/20 rounded-full px-4 py-1.5 mb-8">
-              <BrainCircuit className="w-4 h-4 text-[#E60028] animate-pulse" />
-              <span className="text-xs font-bold text-[#E60028] tracking-wider">{t.aiBadge}</span>
+            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#0f2863]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-8">
+              <BrainCircuit className="w-4 h-4 text-[#0f2863] dark:text-amber-400 animate-pulse" />
+              <span className="text-xs font-bold text-[#0f2863] dark:text-amber-400 tracking-wider">{t.aiBadge}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
-              {t.aiTitle1} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E60028] to-[#FF4D6A]">{t.aiTitle2}</span><br />
+              {t.aiTitle1} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">{t.aiTitle2}</span><br />
               <span className="text-slate-400 font-light">{t.aiTitle3}.</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-10 leading-relaxed font-light">{t.aiDesc}</p>
-            <button className="bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm">
+            <button className="bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-lg shadow-[#0f2863]/20 cursor-pointer">
               {t.aiBtn} <ArrowRight className={cn('w-5 h-5', isRTL && 'rotate-180')} />
             </button>
           </div>
@@ -490,10 +498,10 @@ export default function LandingPage() {
           <div className="bg-slate-900 border border-slate-700 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden">
             <div className="flex items-center px-4 py-3 border-b border-slate-800 bg-black/20">
               <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" /><div className="w-3 h-3 rounded-full bg-yellow-500/80" /><div className="w-3 h-3 rounded-full bg-green-500/80" />
+                <div className="w-3 h-3 rounded-full bg-blue-600" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-500" />
               </div>
               <div className="mx-auto text-xs font-mono text-slate-400 flex items-center gap-2">
-                <BrainCircuit className="w-3 h-3" /> ENCG_AI_Terminal
+                <BrainCircuit className="w-3 h-3 text-amber-400" /> ENCG_AI_Terminal
               </div>
             </div>
             <div className="p-6 h-[350px] flex flex-col gap-6">
@@ -504,7 +512,7 @@ export default function LandingPage() {
               </div>
               <div className={cn('flex', isRTL ? 'justify-end' : 'justify-start')}>
                 <div className={cn('max-w-[90%] bg-white/5 text-slate-300 px-5 py-4 text-sm border border-white/10 shadow-md relative backdrop-blur-md', isRTL ? 'rounded-2xl rounded-tl-sm' : 'rounded-2xl rounded-bl-sm')}>
-                  <div className={cn('absolute top-4 w-2 h-8 bg-[#E60028] rounded-full blur-[2px]', isRTL ? '-right-1' : '-left-1')} />
+                  <div className={cn('absolute top-4 w-2 h-8 bg-amber-400 rounded-full blur-[2px]', isRTL ? '-right-1' : '-left-1')} />
                   {t.aiChatBot}
                 </div>
               </div>
@@ -524,9 +532,9 @@ export default function LandingPage() {
       <div id="contact" className="relative z-10 py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full px-4 py-1.5 mb-6">
-              <Mail className="w-4 h-4 text-[#E60028]" />
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tracking-wider uppercase">Contact</span>
+            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#0f2863]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-6">
+              <Mail className="w-4 h-4 text-[#0f2863] dark:text-amber-400" />
+              <span className="text-xs font-bold text-[#0f2863] dark:text-amber-400 tracking-wider uppercase">Contact</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t.contactTitle}</h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto">{t.contactSubtitle}</p>
@@ -539,8 +547,8 @@ export default function LandingPage() {
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm mb-8">{t.contactDesc}</p>
                 <div className="space-y-5">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-[#E60028]/10 flex items-center justify-center border border-red-200 dark:border-[#E60028]/20 shrink-0">
-                      <MapPin className="w-5 h-5 text-[#E60028]" />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-[#0f2863]/30 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
+                      <MapPin className="w-5 h-5 text-[#0f2863] dark:text-amber-400" />
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Adresse</div>
@@ -577,7 +585,7 @@ export default function LandingPage() {
                     <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-white">{t.formSuccess}</h3>
-                  <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#E60028] transition-colors underline underline-offset-2">
+                  <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#0f2863] transition-colors underline underline-offset-2">
                     Envoyer un autre message
                   </button>
                 </div>
@@ -590,7 +598,7 @@ export default function LandingPage() {
                         type="text" required value={formState.name}
                         onChange={e => setFormState(s => ({ ...s, name: e.target.value }))}
                         placeholder="Mohammed Alaoui"
-                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#E60028]/30 focus:border-[#E60028] transition-all"
+                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                       />
                     </div>
                     <div>
@@ -599,7 +607,7 @@ export default function LandingPage() {
                         type="email" required value={formState.email}
                         onChange={e => setFormState(s => ({ ...s, email: e.target.value }))}
                         placeholder="email@encgf-usmba.ac.ma"
-                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#E60028]/30 focus:border-[#E60028] transition-all"
+                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                       />
                     </div>
                   </div>
@@ -608,7 +616,7 @@ export default function LandingPage() {
                     <select
                       value={formState.subject}
                       onChange={e => setFormState(s => ({ ...s, subject: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E60028]/30 focus:border-[#E60028] transition-all"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                     >
                       <option value="">— Sélectionner un sujet —</option>
                       <option value="admission">Admission & Inscription</option>
@@ -623,13 +631,13 @@ export default function LandingPage() {
                       rows={5} required value={formState.message}
                       onChange={e => setFormState(s => ({ ...s, message: e.target.value }))}
                       placeholder={t.formMsg}
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#E60028]/30 focus:border-[#E60028] transition-all resize-none"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all resize-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={formSending}
-                    className="w-full bg-gradient-to-r from-[#E60028] to-[#A80A0B] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#E60028]/20 hover:shadow-[#E60028]/40 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {formSending ? (
                       <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi en cours...</>
@@ -645,7 +653,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 bg-[#1F3A5F] dark:bg-[#030712] border-t border-[#1F3A5F] dark:border-white/5 text-slate-300">
+      <footer className="relative z-10 bg-[#0f2863] dark:bg-[#030712] border-t border-[#162e74] dark:border-white/5 text-slate-300">
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-6">
           {/* Top grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
@@ -659,16 +667,16 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="font-black text-xl text-white font-sans">ENCG Fès</div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-widest">Smart ERP Platform</div>
+                  <div className="text-[10px] text-amber-400 uppercase tracking-widest font-mono">Smart ERP Platform 3.0</div>
                 </div>
               </div>
-              <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
+              <p className="text-sm text-slate-300 leading-relaxed max-w-sm">
                 {t.footerTagline} L'École Nationale de Commerce et de Gestion de Fès — USMBA.
               </p>
               {/* Social Links */}
               <div className="flex gap-3">
                 {['𝕏', 'in', 'f'].map((s) => (
-                  <div key={s} className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white cursor-pointer transition-colors">
+                  <div key={s} className="w-9 h-9 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-xs font-bold text-slate-200 hover:bg-white/20 hover:text-white cursor-pointer transition-colors">
                     {s}
                   </div>
                 ))}
@@ -679,11 +687,11 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-bold mb-5 text-sm uppercase tracking-wider">{t.footerLinks}</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="https://encgf-usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">Site Officiel ENCG</a></li>
-                <li><a href="https://usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">Université USMBA</a></li>
-                <li><Link to="/login" className="text-slate-400 hover:text-white transition-colors">Portail Étudiant</Link></li>
-                <li><Link to="/login" className="text-slate-400 hover:text-white transition-colors">Espace Professeur</Link></li>
-                <li><Link to="/login" className="text-slate-400 hover:text-white transition-colors">Administration</Link></li>
+                <li><a href="https://encgf-usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">Site Officiel ENCG</a></li>
+                <li><a href="https://usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">Université USMBA</a></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Portail Étudiant</Link></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Espace Professeur</Link></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Administration</Link></li>
               </ul>
             </div>
 
@@ -692,16 +700,16 @@ export default function LandingPage() {
               <h4 className="text-white font-bold mb-5 text-sm uppercase tracking-wider">{t.footerContact}</h4>
               <ul className="space-y-4 text-sm">
                 <li className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-[#E60028] mt-0.5 shrink-0" />
-                  <span className="text-slate-400 leading-relaxed">B.P. 81A, Route d'Imouzzer, Fès 30050</span>
+                  <MapPin className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                  <span className="text-slate-300 leading-relaxed">B.P. 81A, Route d'Imouzzer, Fès 30050</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-[#E60028] shrink-0" />
-                  <span className="text-slate-400">+212 535 60 06 43</span>
+                  <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-slate-300">+212 535 60 06 43</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-[#E60028] shrink-0" />
-                  <span className="text-slate-400">contact@encgf-usmba.ac.ma</span>
+                  <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-slate-300">contact@encgf-usmba.ac.ma</span>
                 </li>
               </ul>
             </div>
@@ -711,19 +719,22 @@ export default function LandingPage() {
           <div className="h-px bg-white/10 mb-6" />
 
           {/* Bottom Row */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <div className="flex items-center gap-4">
               <p>{t.rights}</p>
             </div>
             <p className="flex items-center gap-1">
-              {t.madeBy} <Sparkles className="w-3 h-3 text-[#E60028]" />
+              {t.madeBy} <Sparkles className="w-3 h-3 text-amber-400" />
             </p>
           </div>
         </div>
 
-        {/* Red accent bottom line */}
-        <div className="h-1 bg-gradient-to-r from-[#E60028] via-[#FF4D6A] to-[#A80A0B]" />
+        {/* Navy & Gold accent bottom line */}
+        <div className="h-1 bg-gradient-to-r from-[#0f2863] via-amber-400 to-[#162e74]" />
       </footer>
+    </div>
+  );
+}
     </div>
   );
 }
