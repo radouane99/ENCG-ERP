@@ -57,9 +57,9 @@ class AdmissionCampaignController extends Controller
 
         $stats = [
             'total' => $applications->count(),
-            'pending' => $applications->whereIn('status', ['pending', 'under_review', 'en_attente'])->count(),
-            'accepted' => $applications->whereIn('status', ['accepted', 'admis', 'admis_tafem', 'valide'])->count(),
-            'rejected' => $applications->whereIn('status', ['rejected', 'rejete', 'suspended'])->count(),
+            'pending' => $applications->filter(fn($a) => str_contains(strtolower(($a->status ?? '') . ' ' . ($a->list_type ?? '')), 'attente'))->count(),
+            'accepted' => $applications->filter(fn($a) => str_contains(strtolower(($a->status ?? '') . ' ' . ($a->list_type ?? '')), 'principale') || in_array($a->status, ['accepted', 'admis', 'admis_tafem', 'valide']))->count(),
+            'rejected' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'rejete', 'suspended']))->count(),
         ];
 
         return response()->json([

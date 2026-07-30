@@ -216,7 +216,7 @@ class TafemMinistryImportController extends Controller
                 }
 
                 $app = Application::where('cne', $cne)->first();
-                $appStatus = str_contains($listType, 'attente') ? 'liste_attente' : 'admis_tafem';
+                $appStatus = !empty($listType) ? $listType : (str_contains($listType, 'attente') ? 'liste_attente_1' : 'admis_tafem');
 
                 $hasAppListType = \Illuminate\Support\Facades\Schema::hasColumn('applications', 'list_type');
                 $hasStudentListType = \Illuminate\Support\Facades\Schema::hasColumn('students', 'list_type');

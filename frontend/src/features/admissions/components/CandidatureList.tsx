@@ -159,38 +159,46 @@ export default function CandidatureList() {
   return (
     <div className="space-y-8 animate-in pb-24 p-6 max-w-7xl mx-auto font-sans">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0c1e4e] via-[#162e74] to-[#061230] p-6 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-500/20 backdrop-blur-xl">
+        {/* Ambient Glows */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-blue-600/10 to-transparent rounded-full blur-3xl -translate-y-1/3 translate-x-1/4 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-amber-500/10 via-amber-400/5 to-transparent rounded-full blur-2xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
-              <Sparkles className="w-10 h-10 text-amber-400" />
-            </div>
-            <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Zap className="w-4 h-4 text-amber-400" /> Concours TAFSEM & Passerelles ENCG Fès
+        <div className="relative z-10 space-y-6">
+          {/* Top Title Bar */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="flex items-start gap-5">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-amber-400/20 to-blue-500/20 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-amber-400 animate-pulse" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                Candidatures & Admissions
-              </h1>
-              <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
-                Gestion des campagnes de pré-sélection TAFSEM, calcul automatique des scores d'admissibilité et convocations d'examen A4 certifiées.
-              </p>
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-2 bg-blue-400/15 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/30 backdrop-blur-md">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" /> Concours TAFSEM & Passerelles ENCG Fès
+                </div>
+                <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                  Candidatures & Admissions
+                </h1>
+                <p className="text-blue-100/80 text-xs md:text-sm max-w-2xl font-medium leading-relaxed">
+                  Gestion des campagnes de pré-sélection TAFSEM, calcul automatique des scores d'admissibilité et convocations d'examen A4 certifiées.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
+          {/* Action Toolbar Grid (100% Responsive) */}
+          <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <button
               onClick={handleDownloadTafemTemplate}
-              className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 rounded-2xl font-bold border border-blue-400/40 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center justify-center gap-2.5 px-4 py-3.5 bg-white/10 hover:bg-white/20 text-blue-100 hover:text-white rounded-2xl font-bold border border-white/15 transition-all text-xs uppercase tracking-wider cursor-pointer backdrop-blur-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
               title="Télécharger le modèle CSV officiel Ministère TAFEM"
             >
-              <Download className="w-4 h-4 text-blue-300" /> Modèle CSV TAFEM
+              <Download className="w-4 h-4 text-blue-300 shrink-0" />
+              <span>Modèle CSV TAFEM</span>
             </button>
 
-            <label className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:scale-102 cursor-pointer border border-indigo-400/30">
-              <Upload className="w-4 h-4 text-indigo-200" /> Import Liste Ministère (CSV)
+            <label className="flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-indigo-400/40">
+              <Upload className="w-4 h-4 text-indigo-200 shrink-0" />
+              <span className="truncate">Import Liste Ministère</span>
               <input
                 type="file"
                 accept=".csv"
@@ -217,17 +225,21 @@ export default function CandidatureList() {
                 }}
               />
             </label>
+
             <button 
               onClick={exportCSV} 
-              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center justify-center gap-2.5 px-4 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/15 transition-all text-xs uppercase tracking-wider cursor-pointer backdrop-blur-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
             >
-              <Download className="w-4 h-4 text-amber-300" /> Exporter CSV
+              <Download className="w-4 h-4 text-amber-300 shrink-0" />
+              <span>Exporter CSV</span>
             </button>
+
             <button 
               onClick={() => setIsCampaignModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:scale-102 cursor-pointer"
+              className="flex items-center justify-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-amber-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Nouvelle Campagne
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>Nouvelle Campagne</span>
             </button>
           </div>
         </div>
@@ -372,12 +384,23 @@ export default function CandidatureList() {
 
                         <td className="px-6 py-4 text-center">
                           {(() => {
-                            const listType = (c.list_type || '').toLowerCase();
-                            const isAttente1 = listType.includes('attente_1') || listType.includes('attente 1') || listType.includes('liste_attente_1');
-                            const isAttente2 = listType.includes('attente_2') || listType.includes('attente 2') || listType.includes('liste_attente_2');
-                            const isAttente3 = listType.includes('attente_3') || listType.includes('attente 3') || listType.includes('liste_attente_3');
-                            const isListePrincipale = listType.includes('principale') || (c.status === 'admis_tafem' && !isAttente1 && !isAttente2 && !isAttente3 && !listType.includes('attente'));
-                            const isAttenteGeneric = listType.includes('attente') || c.status === 'liste_attente';
+                            const rawStr = ((c.list_type || '') + ' ' + (c.status || '')).toLowerCase();
+                            const score = Number(c.selection_score ?? c.tafem_score ?? 0);
+
+                            let isAttente1 = rawStr.includes('attente_1') || rawStr.includes('attente 1') || rawStr.includes('liste_attente_1');
+                            let isAttente2 = rawStr.includes('attente_2') || rawStr.includes('attente 2') || rawStr.includes('liste_attente_2');
+                            let isAttente3 = rawStr.includes('attente_3') || rawStr.includes('attente 3') || rawStr.includes('liste_attente_3');
+                            const isListePrincipale = rawStr.includes('principale') || (c.status === 'admis_tafem' && !isAttente1 && !isAttente2 && !isAttente3 && !rawStr.includes('attente'));
+                            const isAttenteGeneric = rawStr.includes('attente');
+
+                            if (!isListePrincipale && !isAttente1 && !isAttente2 && !isAttente3 && isAttenteGeneric) {
+                              if (score >= 155) {
+                                isAttente1 = true;
+                              } else {
+                                isAttente2 = true;
+                              }
+                            }
+
                             const isPending = c.status === 'pending' || c.status === 'under_review';
 
                             let badgeStyle = "bg-rose-50 text-rose-700 border-rose-200";
