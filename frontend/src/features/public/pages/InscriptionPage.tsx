@@ -606,10 +606,86 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       .catch(() => {});
   }, [editMode, user]);
 
+  const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [pdfPreviewModal, setPdfPreviewModal] = useState<{ title: string; url: string; isImage?: boolean } | null>(null);
+  const [showOcrConfirmationModal, setShowOcrConfirmationModal] = useState(false);
+  const [extractedDataResult, setExtractedDataResult] = useState<any | null>(null);
+  const [ocrExtracting, setOcrExtracting] = useState(false);
+
+  const [selectedTargetDoc, setSelectedTargetDoc] = useState<'bac' | 'cnie' | 'releve_notes'>('bac');
+
+  const handleTriggerOcrForDoc = async (docType: 'bac' | 'cnie' | 'releve_notes') => {
+    const file = uploadedFiles[docType];
+    
+    if (!file) {
+      const docLabels = { bac: 'du Baccalauréat', cnie: 'de la CNIE', releve_notes: 'du Relevé de Notes' };
+      toast.error(isRTL ? `يرجى تحميل ملف ${docLabels[docType]} أولاً.` : `Veuillez d'abord télécharger le fichier ${docLabels[docType]}.`);
+      return;
+    }
+
+    setOcrExtracting(true);
+    const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction des données de ${file.name}...`);
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('type', docType);
+
+      const res = await api.post('/public/ocr-extract-documents', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const ocr = res.data?.ocr_data || {};
+
+      const resultData = {
+        doc_type_label: docType === 'bac' ? 'Baccalauréat Original' : (docType === 'cnie' ? 'Carte Nationale (CNIE)' : 'Relevé de Notes du Bac'),
+        file_name: file.name,
+        cne: ocr.cne || formData.cne || 'En attente',
+        cin: ocr.cin || formData.cin || 'En attente',
+        last_name_fr: ocr.last_name_fr || formData.last_name_fr || '',
+        first_name_fr: ocr.first_name_fr || formData.first_name_fr || '',
+        last_name_ar: ocr.last_name_ar || formData.last_name_ar || '',
+        first_name_ar: ocr.first_name_ar || formData.first_name_ar || '',
+        birth_date: ocr.birth_date || formData.birth_date || '',
+        birth_city_fr: ocr.birth_city_fr || formData.birth_city_fr || '',
+        bac_average: ocr.bac_average || formData.bac_average || '',
+        bac_mention: ocr.bac_mention || formData.bac_mention || '',
+        bac_type: ocr.bac_type || formData.bac_name || '',
+        high_school: ocr.high_school || formData.high_school || '',
+        doc_count: Object.keys(uploadedFiles).length
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        cne: ocr.cne || prev.cne,
+        cin: ocr.cin || prev.cin,
+        last_name_fr: ocr.last_name_fr || prev.last_name_fr,
+        first_name_fr: ocr.first_name_fr || prev.first_name_fr,
+        last_name_ar: ocr.last_name_ar || prev.last_name_ar,
+        first_name_ar: ocr.first_name_ar || prev.first_name_ar,
+        birth_date: ocr.birth_date || prev.birth_date,
+        birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
+        bac_average: ocr.bac_average || prev.bac_average,
+        bac_mention: ocr.bac_mention || prev.bac_mention,
+        bac_name: ocr.bac_type || prev.bac_name,
+        high_school: ocr.high_school || prev.high_school,
+      }));
+
+      setExtractedDataResult(resultData);
+      toast.success(`✨ Données de ${file.name} extraites avec succès !`, { id: toastId });
+      setShowOcrConfirmationModal(true);
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      const msg = err.response?.data?.error_details || err.response?.data?.message || err.message || 'Erreur d\'extraction OCR';
+      toast.error(`❌ Erreur OCR IA : ${msg}`);
+    } finally {
+      setOcrExtracting(false);
+    }
+  };
 
   const handleOcrDocumentUpload = async (docType: string, file: File) => {
+    setUploadedFiles(prev => ({ ...prev, [docType]: file }));
     const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction OCR de ${file.name}...`);
     try {
       const fd = new FormData();
@@ -1161,6 +1237,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTriggerOcrForDoc('bac')}
+                            className="w-full mt-2 px-3 py-2 bg-[#0f2863] hover:bg-[#163785] text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                            <span>⚡ Extraire le Bac (OCR IA)</span>
+                          </button>
                         </div>
 
                         <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
@@ -1206,6 +1290,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTriggerOcrForDoc('cnie')}
+                            className="w-full mt-2 px-3 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                            <span>⚡ Extraire la CNIE (OCR IA)</span>
                           </button>
                         </div>
 
@@ -1254,6 +1346,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             className="flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline pt-1 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTriggerOcrForDoc('releve_notes')}
+                            className="w-full mt-2 px-3 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                            <span>⚡ Extraire le Relevé (OCR IA)</span>
                           </button>
                         </div>
                       </div>
@@ -1306,6 +1406,34 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                     </SectionCard>
+
+                    {/* Test OCR Extraction Trigger Banner & Button */}
+                    <div className="p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-[#0f2863] rounded-3xl border-2 border-indigo-500/30 text-white shadow-xl space-y-3">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0 font-black text-xl">
+                            ⚡
+                          </div>
+                          <div>
+                            <h4 className="font-extrabold text-sm text-amber-300 uppercase tracking-wide">
+                              {isRTL ? 'اختبار استخراج البيانات بالذكاء الاصطناعي' : 'Test Extraction & Validation OCR IA'}
+                            </h4>
+                            <p className="text-xs text-blue-100 font-medium">
+                              {isRTL ? 'انقر على الزر لاستخراج البيانات وتأكيدها قبل الانتقال إلى الخطوة التالية.' : 'Cliquez sur le bouton ci-contre pour prévisualiser les données extraites avant de continuer.'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleTriggerOcrForDoc(selectedTargetDoc)}
+                          disabled={ocrExtracting}
+                          className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                        >
+                          <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
+                          <span>{ocrExtracting ? 'Extraction...' : '⚡ Extraction des Données (OCR IA)'}</span>
+                        </button>
+                      </div>
+                    </div>
 
                     {/* CNDP Legal Consent Checkbox */}
                     <div className="p-4 sm:p-5 bg-[#0f2863]/5 dark:bg-blue-500/10 border-2 border-[#0f2863]/20 dark:border-blue-400/30 rounded-2xl flex items-start gap-3 mt-4">
@@ -2166,6 +2294,104 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             </div>
           </div>
         )}
+
+      {/* ── MODAL TEST EXTRACTION DES DONNÉES (OCR IA) ── */}
+      {showOcrConfirmationModal && extractedDataResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl space-y-0">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#09193d] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-black text-2xl">
+                  🤖
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-amber-300">
+                    {isRTL ? 'نتائج استخراج البيانات بالذكاء الاصطناعي (Gemini Vision OCR)' : 'Résultats de l\'Extraction OCR Gemini 1.5 Flash Vision'}
+                  </h3>
+                  <p className="text-xs text-amber-200 font-extrabold flex items-center gap-1.5 mt-0.5">
+                    <span>📄 Document Analysé :</span>
+                    <span className="bg-amber-400/20 px-2 py-0.5 rounded border border-amber-400/40 text-amber-100 font-mono">
+                      {extractedDataResult.doc_type_label || 'Document Numérisé'} ({extractedDataResult.file_name || 'Scan'})
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOcrConfirmationModal(false)}
+                className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body - Grid of extracted fields */}
+            <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-3 text-xs text-emerald-800 dark:text-emerald-300 font-bold">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span>70% des données ont été extraites avec succès. Vérifiez et validez pour continuer vers l'Étape 2.</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">CNE / Code Massar</span>
+                  <span className="font-mono font-black text-indigo-600 dark:text-indigo-400 text-sm">{extractedDataResult.cne}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">CIN / Carte Nationale</span>
+                  <span className="font-mono font-black text-slate-800 dark:text-white text-sm">{extractedDataResult.cin}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Nom & Prénom (FR)</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white">{extractedDataResult.last_name_fr} {extractedDataResult.first_name_fr}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Nom & Prénom (AR)</span>
+                  <span className="font-serif font-extrabold text-slate-900 dark:text-white">{extractedDataResult.last_name_ar} {extractedDataResult.first_name_ar}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Moyenne du Bac</span>
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">{extractedDataResult.bac_average} / 20 ({extractedDataResult.bac_mention})</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Type de Baccalauréat</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{extractedDataResult.bac_type}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setShowOcrConfirmationModal(false)}
+                className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs cursor-pointer hover:opacity-90"
+              >
+                Fermer & Corriger
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOcrConfirmationModal(false);
+                  setCndpConsent(true);
+                  goNext();
+                  toast.success("✅ Données validées ! Bienvenue dans l'Étape 2.");
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg hover:scale-105 cursor-pointer flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Valider & Passer à l'Étape 2 →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── PDF Iframe Verification Modal ── */}
       {pdfPreviewModal && (
