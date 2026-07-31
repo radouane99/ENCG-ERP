@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete
+  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
@@ -18,11 +18,13 @@ type StepId = 1 | 2 | 3 | 4 | 5;
 type Lang = 'fr' | 'ar' | 'en';
 
 const STEPS = [
-  { id: 1 as StepId, labelFr: 'Personnel & Identité', labelAr: 'الهوية والحساب', subFr: 'Infos personnelles & Résidence', subAr: 'المعلومات الشخصية وعنوان السكن', icon: User },
+  { id: 1 as StepId, labelFr: 'Identité & Compte', labelAr: 'الهوية والحساب', subFr: 'Infos personnelles & Résidence', subAr: 'المعلومات الشخصية وعنوان السكن', icon: User },
   { id: 2 as StepId, labelFr: 'Parents & Urgence', labelAr: 'الوالدين والاتصال', subFr: 'Tuteurs légaux & Urgence', subAr: 'معلومات الوالدين وهاتف الطوارئ', icon: Users },
   { id: 3 as StepId, labelFr: 'Parcours Académique', labelAr: 'المسار والتخصص', subFr: 'Baccalauréat & Filière ENCG', subAr: 'شهادة البكالوريا وشعبة ENCG', icon: GraduationCap },
   { id: 4 as StepId, labelFr: 'Documents & Photos', labelAr: 'الوثائق والصورة', subFr: 'Bac, CNIE & Photo 35x45mm', subAr: 'البكالوريا، البطاقة والصورة الشخصية', icon: FileText },
+  { id: 5 as StepId, labelFr: 'Récapitulatif', labelAr: 'ملخص الترشيح', subFr: 'Vérification & Confirmation', subAr: 'مراجعة وتأكيد البيانات', icon: CheckCircle2 },
 ];
+
 
 
 const FILIERES = [
@@ -595,6 +597,51 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
+  const handleOcrDocumentUpload = async (docType: string, file: File) => {
+    const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction OCR de ${file.name}...`);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('type', docType);
+
+      const res = await api.post('/public/ocr-extract-documents', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const ocr = res.data.ocr_data;
+      if (ocr) {
+        setFormData(prev => ({
+          ...prev,
+          first_name_fr: ocr.first_name_fr || prev.first_name_fr,
+          last_name_fr: ocr.last_name_fr || prev.last_name_fr,
+          first_name_ar: ocr.first_name_ar || prev.first_name_ar,
+          last_name_ar: ocr.last_name_ar || prev.last_name_ar,
+          cin: ocr.cin || prev.cin,
+          cne: ocr.cne || prev.cne,
+          birth_date: ocr.birth_date || prev.birth_date,
+          birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
+          birth_city_ar: ocr.birth_city_ar || prev.birth_city_ar,
+          father_last_name_fr: ocr.father_last_name_fr || prev.father_last_name_fr,
+          father_first_name_fr: ocr.father_first_name_fr || prev.father_first_name_fr,
+          mother_last_name_fr: ocr.mother_last_name_fr || prev.mother_last_name_fr,
+          mother_first_name_fr: ocr.mother_first_name_fr || prev.mother_first_name_fr,
+          address_fr: ocr.address_fr || prev.address_fr,
+          province: ocr.province || prev.province,
+          academy: ocr.academy || prev.academy,
+          bac_average: ocr.bac_average || prev.bac_average,
+          bac_mention: ocr.bac_mention || prev.bac_mention,
+          bac_name: ocr.bac_type || prev.bac_name,
+          high_school: ocr.high_school || prev.high_school,
+        }));
+
+        toast.success(`✨ Gemini Vision AI : 70% des champs extraits et pré-remplis automatiquement !`, { id: toastId });
+      }
+    } catch (err) {
+      toast.dismiss(toastId);
+    }
+  };
+
+
   const [cneCheckStatus, setCneCheckStatus] = useState<{ cneAvailable: boolean; cinAvailable: boolean; message: string | null }>({
     cneAvailable: true,
     cinAvailable: true,
@@ -647,7 +694,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
   const isRtl = isRTL;
   const currentTheme = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
 
-  const goNext = () => setStep(s => Math.min(s + 1, 3) as StepId);
+  const goNext = () => setStep(s => Math.min(s + 1, 5) as StepId);
   const goPrev = () => setStep(s => Math.max(s - 1, 1) as StepId);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -661,7 +708,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       }
     }
 
-    if (step < 3) { goNext(); return; }
+    if (step < 5) { goNext(); return; }
+
     
     if (!editMode && formData.password !== formData.password_confirmation) {
       setErrorMsg('Les mots de passe ne correspondent pas.');
@@ -840,7 +888,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     );
   }
 
-  const pct = ((step - 1) / 2) * 100;
+  const pct = ((step - 1) / 4) * 100;
+
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen transition-colors duration-500 selection:bg-[#0f2863]/40 text-slate-900 dark:text-white bg-slate-50 dark:bg-[#030711]", t.font)}>
@@ -971,7 +1020,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                 const stepLabel = isRTL ? labelAr : labelFr;
                 const stepSub = isRTL ? subAr : subFr;
                 return (
-                  <div key={id} className="flex flex-col items-center gap-2.5 w-1/3 z-10">
+                  <div key={id} className="flex flex-col items-center gap-2.5 w-1/5 z-10">
+
                     <div className={cn(
                       'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 text-base font-black cursor-pointer shadow-sm',
                       done_  ? 'bg-gradient-to-r from-[#0f2863] to-[#162e74] border-[#0f2863] text-white scale-110 shadow-lg shadow-[#0f2863]/30'
@@ -1565,6 +1615,209 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                   </div>
                 )}
 
+                {/* ═══════════ STEP 4: DOCUMENTS & PHOTOS ═══════════ */}
+                {step === 4 && (
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-500/15 border border-[#0f2863]/20 dark:border-blue-400/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-[#0f2863] dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <h3 className={cn("font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight", isRTL && "font-serif text-xl sm:text-2xl")}>
+                            {isRTL ? 'الوثائق المرفوقة والصورة الشخصية' : 'Pièces Justificatives Numérisées & Photo'}
+                          </h3>
+                          <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400", isRTL && "font-serif text-base")}>
+                            {isRTL ? 'قم بترفيق نسخة من البكالوريا والبطاقة الوطنية والصورة الشخصية الرسمية' : "Téléversez vos originaux scannés (PDF/Image) pour la vérification Scolarité"}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
+                        {isRTL ? 'الخطوة 4 من 5' : 'Étape 4 sur 5'}
+                      </span>
+                    </div>
+
+                    <SectionCard title={isRTL ? '1. شهادة البكالوريا والبطاقة الوطنية (PDF)' : '1. Scans du Baccalauréat & CNIE (Format PDF max 10Mo)'} icon={FileText} isRtl={isRTL}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original (PDF)</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setFormData(prev => ({ ...prev, bac_pdf_name: file.name }));
+                                handleOcrDocumentUpload('bac', file);
+                              }
+                            }}
+                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                          />
+                          {formData.bac_pdf_name && (
+                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.bac_pdf_name}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso (PDF)</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setFormData(prev => ({ ...prev, cnie_pdf_name: file.name }));
+                                handleOcrDocumentUpload('cnie', file);
+                              }
+                            }}
+                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                          />
+                          {formData.cnie_pdf_name && (
+                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.cnie_pdf_name}
+                            </p>
+                          )}
+                        </div>
+
+                      </div>
+                    </SectionCard>
+
+                    <SectionCard title={isRTL ? '2. الصورة الشخصية الرسمية (35 × 45 مم)' : '2. Photo d\'Identité Officielle pour Carte Étudiant (35 × 45 mm)'} icon={ImageIcon} isRtl={isRTL}>
+                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="w-24 h-32 bg-slate-900 border-2 border-indigo-500/50 rounded-xl overflow-hidden shrink-0 flex items-center justify-center shadow-md">
+                          {formData.photo_url ? (
+                            <img src={formData.photo_url} alt="Photo" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-10 h-10 text-slate-600" />
+                          )}
+                        </div>
+                        <div className="space-y-3 text-center sm:text-left flex-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                            Format obligatoire pour la carte étudiant biométrique Evolis CR80. Fond clair, visage bien dégagé.
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const url = URL.createObjectURL(file);
+                                  setFormData(prev => ({ ...prev, photo_url: url }));
+                                  setShowPhotoModal(true);
+                                }
+                              }}
+                              className="text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer"
+                            />
+                            {formData.photo_url && (
+                              <button
+                                type="button"
+                                onClick={() => setShowPhotoModal(true)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-extrabold cursor-pointer hover:bg-indigo-700 transition-colors"
+                              >
+                                ✂️ Ajuster le cadrage (35x45mm)
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </SectionCard>
+                  </div>
+                )}
+
+                {/* ═══════════ STEP 5: RÉCAPITULATIF & CONFIRMATION ═══════════ */}
+                {step === 5 && (
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                          <h3 className={cn("font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight", isRTL && "font-serif text-xl sm:text-2xl")}>
+                            {isRTL ? 'ملخص الترشيح والتأكيد النهائي' : 'Récapitulatif & Confirmation Finale du Dossier'}
+                          </h3>
+                          <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400", isRTL && "font-serif text-base")}>
+                            {isRTL ? 'راجع جميع بياناتك بعناية قبل الضغط على زر الإرسال النهائي' : 'Vérifiez l\'ensemble des informations renseignées avant la soumission définitive'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-4 py-1.5 rounded-full border-2 border-emerald-200 dark:border-emerald-800 shadow-xs">
+                        {isRTL ? 'الخطوة 5 من 5' : 'Étape 5 sur 5'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Summary Card 1: Identité */}
+                      <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-3">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                            <User className="w-4 h-4" /> <span>Identité & Compte</span>
+                          </h4>
+                          <button type="button" onClick={() => setStep(1)} className="text-[11px] font-bold text-blue-600 hover:underline">Modifier</button>
+                        </div>
+                        <div className="space-y-2 text-xs font-bold divide-y divide-slate-200/60 dark:divide-slate-800">
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Nom & Prénom FR :</span><span>{formData.last_name_fr} {formData.first_name_fr}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Nom & Prénom AR :</span><span className="font-serif">{formData.last_name_ar} {formData.first_name_ar}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">CNE (Massar) :</span><span className="font-mono text-indigo-600">{formData.cne || 'Non renseigné'}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">CNIE :</span><span className="font-mono">{formData.cin || 'Non renseigné'}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Email :</span><span>{formData.email}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Téléphone :</span><span>{formData.phone}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Date & Lieu de Naissance :</span><span>{formData.birth_date} à {formData.birth_city_fr}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Summary Card 2: Parents */}
+                      <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-3">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <Users className="w-4 h-4" /> <span>Parents & Tuteurs</span>
+                          </h4>
+                          <button type="button" onClick={() => setStep(2)} className="text-[11px] font-bold text-blue-600 hover:underline">Modifier</button>
+                        </div>
+                        <div className="space-y-2 text-xs font-bold divide-y divide-slate-200/60 dark:divide-slate-800">
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Père :</span><span>{formData.father_last_name_fr} {formData.father_first_name_fr}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">CNIE Père :</span><span className="font-mono">{formData.father_cin}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Profession Père :</span><span>{formData.father_job}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Mère :</span><span>{formData.mother_last_name_fr} {formData.mother_first_name_fr}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">CNIE Mère :</span><span className="font-mono">{formData.mother_cin}</span></div>
+                          <div className="pt-1 flex justify-between"><span className="text-slate-500">Tél. Parent / Urgence :</span><span className="font-mono">{formData.parent_phone}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Summary Card 3: Académique */}
+                      <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-3 md:col-span-2">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                            <GraduationCap className="w-4 h-4" /> <span>Parcours Académique & Filière Sélectionnée</span>
+                          </h4>
+                          <button type="button" onClick={() => setStep(3)} className="text-[11px] font-bold text-blue-600 hover:underline">Modifier</button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-bold">
+                          <div><span className="text-slate-500 block text-[10px] uppercase">Baccalauréat</span><span>{formData.bac_name}</span></div>
+                          <div><span className="text-slate-500 block text-[10px] uppercase">Moyenne Générale</span><span className="text-emerald-600 font-extrabold text-sm">{formData.bac_average ? `${formData.bac_average} / 20` : 'Non renseignée'} ({formData.bac_mention})</span></div>
+                          <div><span className="text-slate-500 block text-[10px] uppercase">Filière Affectée</span><span className="text-indigo-600 font-black">{formData.filiere}</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <p className="text-xs text-emerald-900 dark:text-emerald-200 font-bold leading-relaxed">
+                        En cliquant sur le bouton ci-dessous, vous certifiez sur l'honneur l'exactitude des renseignements fournis. Votre dossier sera immédiatement transmis au service scolarité de l'ENCG Fès.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* ── Navigation ── */}
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-white/[0.06]">
                   <button
@@ -1583,7 +1836,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {([1, 2, 3] as StepId[]).map(i => (
+                    {([1, 2, 3, 4, 5] as StepId[]).map(i => (
                       <span key={i} className={cn(
                         'rounded-full transition-all duration-300',
                         step === i ? 'w-8 h-2.5 bg-[#0f2863] dark:bg-blue-400 shadow-xs' : step > i ? 'w-2.5 h-2.5 bg-[#0f2863]/40 dark:bg-blue-400/40' : 'w-2.5 h-2.5 bg-slate-300 dark:bg-white/20'
@@ -1607,13 +1860,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </svg>
                         {t.btnSending}
                       </>
-                    ) : step === 3 ? (
-                      <><Rocket className="w-5 h-5 text-amber-400" /> {t.btnSubmit}</>
+                    ) : step === 5 ? (
+                      <><Rocket className="w-5 h-5 text-amber-400" /> {editMode ? 'Valider la Modification' : t.btnSubmit}</>
                     ) : (
                       <>{t.btnNext} <ArrowRight className={cn("w-5 h-5", isRTL && "rotate-180")} /></>
                     )}
                   </button>
                 </div>
+
               </form>
             </div>
 

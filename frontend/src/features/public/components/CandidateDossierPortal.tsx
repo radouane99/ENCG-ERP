@@ -32,7 +32,7 @@ export default function CandidateDossierPortal() {
     setLoading(true);
     try {
       const res = await api.get('/public/track-dossier', {
-        params: { cne: userCne, cin: userCin }
+        params: { cne: userCne, cin: userCin, email: user?.email }
       });
       const cand = res.data?.candidate || null;
       setCandidateData(cand);

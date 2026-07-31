@@ -68,9 +68,11 @@ return new class extends Migration
 
         // 3. Ensure all parent and medical fields exist on students table
         Schema::table('students', function (Blueprint $table) {
+            if (!Schema::hasColumn('students', 'cin')) $table->string('cin')->nullable();
             if (!Schema::hasColumn('students', 'first_name_ar')) $table->string('first_name_ar')->nullable();
             if (!Schema::hasColumn('students', 'last_name_ar')) $table->string('last_name_ar')->nullable();
             if (!Schema::hasColumn('students', 'gender')) $table->string('gender')->nullable();
+
 
             if (!Schema::hasColumn('students', 'birth_date')) $table->string('birth_date')->nullable();
             if (!Schema::hasColumn('students', 'birth_city')) $table->string('birth_city')->nullable();

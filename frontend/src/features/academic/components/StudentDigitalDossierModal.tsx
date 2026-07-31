@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, User, Mail, Phone, MapPin, Calendar, Award, BookOpen, ShieldCheck, 
-  FileText, Upload, Download, Eye, CheckCircle2, Clock, XCircle, AlertCircle, 
+  FileText, Upload, Download, Eye, CheckCircle2, Clock, XCircle, AlertCircle, AlertTriangle, 
   Edit3, Printer, Sparkles, Image as ImageIcon, FileCheck, Check, RefreshCw
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
@@ -342,6 +342,19 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                 🏥 Fiche Médicale
               </button>
 
+              {/* 🖨️ Unified Bundle (Attestation + Engagement + Fiche Médicale) */}
+              <button
+                onClick={() => {
+                  toast.success('🖨️ Impression 1-Clic du Bundle Unifié (Attestation + Engagement + Fiche Médicale)...');
+                  window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`, '_blank');
+                }}
+                className="px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-xs font-black transition-all border border-emerald-400/40 flex items-center gap-1.5 cursor-pointer shadow-lg hover:scale-105"
+                title="Valider la scolarité et imprimer le bundle complet en 1-Clic (45s max guichet)"
+              >
+                <Printer className="w-4 h-4 text-amber-300" /> 🖨️ Valider & Imprimer le Bundle
+              </button>
+
+
               <button
                 onClick={onClose}
                 className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
@@ -350,6 +363,29 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               </button>
             </div>
           </div>
+
+          {/* Prominent Red Medical Alert Banner */}
+          {(student.allergy_type || student.has_medical_followup || student.has_disability) && (
+            <div className="bg-rose-600 text-white px-6 py-3 flex items-center justify-between shadow-lg animate-pulse shrink-0 border-b border-rose-700">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-300 shrink-0" />
+                <div>
+                  <h4 className="font-black text-xs uppercase tracking-wider text-amber-300">
+                    ⚠️ ALERTE MÉDICALE PRIORITAIRE GUICHET / SCOLARITÉ
+                  </h4>
+                  <p className="text-xs font-bold text-white">
+                    {student.allergy_type && `Allergie déclarée : ${student.allergy_type}`}
+                    {student.has_disability && ` | Situation de santé / handicap : ${student.disability_details || 'Déclarée'}`}
+                    {student.medication_used && ` | Traitement : ${student.medication_used}`}
+                  </p>
+                </div>
+              </div>
+              <span className="bg-white text-rose-700 font-black text-[10px] uppercase px-3 py-1 rounded-full shadow-xs shrink-0">
+                URGENCE SANTÉ GUICHET
+              </span>
+            </div>
+          )}
+
 
           {/* Navigation Tabs Bar */}
           <div className="flex items-center gap-2 mt-6 pt-4 border-t border-white/10 overflow-x-auto no-scrollbar">

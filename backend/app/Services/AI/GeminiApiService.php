@@ -224,4 +224,62 @@ class GeminiApiService
         $prompt = "Données de l'étudiant :\n" . $studentData;
         return $this->generateContent($prompt, $system) ?? "Rapport non disponible.";
     }
+
+    /**
+     * Real-time OCR Document Data Extraction using Google Gemini 1.5 Flash Vision API.
+     */
+    public function extractDocumentOcr(string $filePath, string $mimeType): ?array
+    {
+        if (empty($this->geminiApiKey)) {
+            Log::warning('GEMINI_API_KEY is not set in .env file.');
+            return null;
+        }
+
+        if (!file_exists($filePath)) {
+            return null;
+        }
+
+        $fileBytes = base64_encode(file_get_contents($filePath));
+        $url = "{$this->geminiBaseUrl}/{$this->geminiModel}:generateContent?key={$this->geminiApiKey}";
+
+        $systemPrompt = "Vous êtes un expert OCR de l'administration universitaire marocaine (ENCG Fès). Analysez le document officiel joint (Carte Nationale d'Identité CNIE, Baccalauréat, Relevé de Notes) et extrayez strictement un objet JSON sans aucun bloc de code markdown. Clés JSON requises : last_name_fr, first_name_fr, last_name_ar, first_name_ar, cin, cne, birth_date, birth_city_fr, birth_city_ar, father_last_name_fr, father_first_name_fr, mother_last_name_fr, mother_first_name_fr, address_fr, bac_type, bac_average, bac_mention, high_school, province, academy.";
+
+        $payload = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $systemPrompt],
+                        [
+                            'inline_data' => [
+                                'mime_type' => $mimeType,
+                                'data' => $fileBytes,
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'generationConfig' => [
+                'temperature' => 0.1,
+            ]
+        ];
+
+        try {
+            $response = Http::timeout(25)->post($url, $payload);
+            if ($response->successful()) {
+                $rawText = trim($response->json('candidates.0.content.parts.0.text') ?? '');
+                $rawText = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawText);
+                $rawText = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawText);
+                $decoded = json_decode($rawText, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+            Log::warning('Gemini Vision OCR Non-200 Response: ' . $response->body());
+        } catch (\Exception $e) {
+            Log::error('Gemini Vision OCR Exception: ' . $e->getMessage());
+        }
+
+        return null;
+    }
 }
+

@@ -898,7 +898,9 @@ Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionContro
 Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
 Route::post('/public/update-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'updateCandidateDossier']);
 Route::post('/public/upload-candidate-document', [\App\Http\Controllers\Api\AdmissionController::class, 'uploadCandidateDocument']);
+Route::post('/public/ocr-extract-documents', [\App\Http\Controllers\Api\AdmissionController::class, 'extractDocumentDataOcr']);
 Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
+
 Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
 Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
 Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);

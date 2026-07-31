@@ -553,11 +553,19 @@ class AdmissionController extends Controller
         try {
             $cne = strtoupper(trim($request->query('cne', '')));
             $cin = strtoupper(trim($request->query('cin', '')));
+            $email = strtolower(trim($request->query('email', '')));
 
-            if (empty($cne) && empty($cin)) {
+            $user = $request->user();
+            if ($user) {
+                if (empty($cne) && !empty($user->cne)) $cne = strtoupper(trim($user->cne));
+                if (empty($cin) && !empty($user->cin)) $cin = strtoupper(trim($user->cin));
+                if (empty($email) && !empty($user->email)) $email = strtolower(trim($user->email));
+            }
+
+            if (empty($cne) && empty($cin) && empty($email)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Veuillez fournir votre Code MASSAR / CNE ou CIN pour le suivi.'
+                    'message' => 'Veuillez fournir votre Code MASSAR / CNE, CIN ou Email pour le suivi.'
                 ], 422);
             }
 
@@ -565,20 +573,21 @@ class AdmissionController extends Controller
 
             // 1. Check in Applications table (TAFEM / Pre-inscriptions)
             $appQuery = DB::table('applications');
-            $appQuery->where(function($q) use ($searchTerms) {
+            $appQuery->where(function($q) use ($searchTerms, $email) {
                 foreach ($searchTerms as $term) {
                     $q->orWhereRaw('UPPER(TRIM(cne)) = ?', [$term])
                       ->orWhereRaw('UPPER(TRIM(cin)) = ?', [$term]);
                     if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'massar_code')) {
                         $q->orWhereRaw('UPPER(TRIM(massar_code)) = ?', [$term]);
                     }
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'reference_number')) {
-                        $q->orWhereRaw('UPPER(TRIM(reference_number)) = ?', [$term]);
-                    }
+                }
+                if ($email) {
+                    $q->orWhereRaw('LOWER(TRIM(email)) = ?', [$email]);
                 }
             });
 
             $application = $appQuery->first();
+
 
             if ($application) {
                 $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
@@ -834,12 +843,13 @@ class AdmissionController extends Controller
             // Filter fields to only columns that actually exist on applications table
             $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
             $appPayload = array_intersect_key($filtered, array_flip($appColumns));
+            $hasAppCin = \Illuminate\Support\Facades\Schema::hasColumn('applications', 'cin');
 
             if (!empty($appPayload)) {
                 DB::table('applications')
-                    ->where(function($q) use ($cne, $cin) {
+                    ->where(function($q) use ($cne, $cin, $hasAppCin) {
                         if ($cne) $q->orWhere('cne', $cne);
-                        if ($cin) $q->orWhere('cin', $cin);
+                        if ($cin && $hasAppCin) $q->orWhere('cin', $cin);
                     })
                     ->update($appPayload);
             }
@@ -847,16 +857,18 @@ class AdmissionController extends Controller
             // Filter fields to only columns that actually exist on students table
             $stdColumns = \Illuminate\Support\Facades\Schema::getColumnListing('students');
             $stdPayload = array_intersect_key($filtered, array_flip($stdColumns));
+            $hasStdCin = \Illuminate\Support\Facades\Schema::hasColumn('students', 'cin');
 
             if (!empty($stdPayload)) {
                 DB::table('students')
-                    ->where(function($q) use ($cne, $cin) {
+                    ->where(function($q) use ($cne, $cin, $hasStdCin) {
                         if ($cne) $q->orWhere('cne', $cne);
-                        if ($cin) $q->orWhere('cin', $cin);
+                        if ($cin && $hasStdCin) $q->orWhere('cin', $cin);
                     })
                     ->update($stdPayload);
             }
         }
+
 
 
         return response()->json([
@@ -916,6 +928,43 @@ class AdmissionController extends Controller
             'file_path' => $url,
         ]);
     }
+
+    /**
+     * 🤖 Public OCR Document Data Extraction (Gemini 1.5 Flash Vision AI).
+     */
+    public function extractDocumentDataOcr(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'type' => 'nullable|string',
+        ]);
+
+        $file = $request->file('file');
+        $realPath = $file->getRealPath();
+        $mimeType = $file->getClientMimeType();
+
+        /** @var \App\Services\AI\GeminiApiService $geminiService */
+        $geminiService = app(\App\Services\AI\GeminiApiService::class);
+        $realTimeOcr = $geminiService->extractDocumentOcr($realPath, $mimeType);
+
+        if (!empty($realTimeOcr)) {
+            return response()->json([
+                'success' => true,
+                'is_realtime' => true,
+                'message' => '✅ Extraction OCR Gemini 1.5 Flash Vision AI en temps réel réussie !',
+                'ocr_data' => $realTimeOcr,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'is_realtime' => true,
+            'message' => '❌ Échec d\'extraction Gemini Vision AI : Veuillez vérifier la lisibilité du document.',
+        ], 422);
+    }
+
+
 }
+
 
 
