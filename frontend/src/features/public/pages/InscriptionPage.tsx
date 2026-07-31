@@ -1115,18 +1115,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const isImg = file.type.startsWith('image/');
-                                const reader = new FileReader();
-                                reader.onload = (evt) => {
-                                  const dataUrl = evt.target?.result as string;
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    bac_pdf_name: file.name,
-                                    bac_file_url: dataUrl,
-                                    bac_is_image: isImg
-                                  }));
-                                };
-                                reader.readAsDataURL(file);
+                                const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                const objectUrl = URL.createObjectURL(file);
+                                setFormData(prev => ({
+                                  ...prev,
+                                  bac_pdf_name: file.name,
+                                  bac_file_url: objectUrl,
+                                  bac_is_image: isImg
+                                }));
                                 handleOcrDocumentUpload('bac', file);
                               }
                             }}
@@ -1140,17 +1136,17 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           <button
                             type="button"
                             onClick={() => {
-                              const url = (formData as any).bac_file_url || '';
-                              const isImg = (formData as any).bac_is_image || false;
+                              const url = (formData as any).bac_file_url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(formData.cne || 'N142088916')}`;
+                              const isImg = (formData as any).bac_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.bac_pdf_name || '');
                               setPdfPreviewModal({
-                                title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Aperçu Direct (Frontend)'}`,
+                                title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Aperçu Document'}`,
                                 url,
                                 isImage: isImg
                               });
                             }}
                             className="flex items-center gap-1.5 text-xs font-bold text-[#0f2863] dark:text-blue-400 hover:underline pt-1 cursor-pointer"
                           >
-                            <Eye className="w-3.5 h-3.5" /> 👁️ Voir l'Aperçu Document (Frontend)
+                            <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
                           </button>
                         </div>
 
@@ -1165,18 +1161,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const isImg = file.type.startsWith('image/');
-                                const reader = new FileReader();
-                                reader.onload = (evt) => {
-                                  const dataUrl = evt.target?.result as string;
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    cnie_pdf_name: file.name,
-                                    cnie_file_url: dataUrl,
-                                    cnie_is_image: isImg
-                                  }));
-                                };
-                                reader.readAsDataURL(file);
+                                const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                const objectUrl = URL.createObjectURL(file);
+                                setFormData(prev => ({
+                                  ...prev,
+                                  cnie_pdf_name: file.name,
+                                  cnie_file_url: objectUrl,
+                                  cnie_is_image: isImg
+                                }));
                                 handleOcrDocumentUpload('cnie', file);
                               }
                             }}
@@ -1190,17 +1182,17 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           <button
                             type="button"
                             onClick={() => {
-                              const url = (formData as any).cnie_file_url || '';
-                              const isImg = (formData as any).cnie_is_image || false;
+                              const url = (formData as any).cnie_file_url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(formData.cne || 'N142088916')}`;
+                              const isImg = (formData as any).cnie_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.cnie_pdf_name || '');
                               setPdfPreviewModal({
-                                title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Aperçu Direct (Frontend)'}`,
+                                title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Aperçu Document'}`,
                                 url,
                                 isImage: isImg
                               });
                             }}
                             className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 cursor-pointer"
                           >
-                            <Eye className="w-3.5 h-3.5" /> 👁️ Voir l'Aperçu Document (Frontend)
+                            <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
                           </button>
                         </div>
                       </div>
@@ -1253,6 +1245,45 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                     </SectionCard>
+
+                    {/* CNDP Legal Consent Checkbox */}
+                    <div className="p-4 sm:p-5 bg-[#0f2863]/5 dark:bg-blue-500/10 border-2 border-[#0f2863]/20 dark:border-blue-400/30 rounded-2xl flex items-start gap-3 mt-4">
+                      <input
+                        type="checkbox"
+                        id="cndp-consent-checkbox-step1"
+                        checked={cndpConsent}
+                        onChange={(e) => {
+                          setCndpConsent(e.target.checked);
+                          if (e.target.checked) setErrorMsg(null);
+                        }}
+                        className="w-5 h-5 mt-0.5 rounded-lg text-[#0f2863] focus:ring-[#0f2863] cursor-pointer shrink-0"
+                      />
+                      <label htmlFor="cndp-consent-checkbox-step1" className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 cursor-pointer leading-relaxed">
+                        {isRTL ? (
+                          <>
+                            أوافق على معالجة البيانات الشخصية وفقاً للقانون 09-08 (CNDP).{' '}
+                            <button
+                              type="button"
+                              onClick={() => setShowCndpModal(true)}
+                              className="text-[#0f2863] dark:text-blue-400 underline font-black hover:opacity-80"
+                            >
+                              قراءة الشروط والأحكام
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            J'accepte le traitement de mes données personnelles conformément à la loi 09-08 (CNDP).{' '}
+                            <button
+                              type="button"
+                              onClick={() => setShowCndpModal(true)}
+                              className="text-[#0f2863] dark:text-blue-400 underline font-black hover:opacity-80"
+                            >
+                              Lire les mentions CNDP
+                            </button>
+                          </>
+                        )}
+                      </label>
+                    </div>
                   </div>
                 )}
 
@@ -2073,78 +2104,19 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
               </button>
             </div>
 
-            <div className="w-full h-[70vh] bg-slate-100 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center relative p-4">
-              {pdfPreviewModal.url?.startsWith('data:') || pdfPreviewModal.url?.startsWith('blob:') ? (
-                pdfPreviewModal.isImage ? (
-                  <img
-                    src={pdfPreviewModal.url}
-                    alt={pdfPreviewModal.title}
-                    className="max-w-full max-h-full object-contain p-2 rounded-xl shadow-lg"
-                  />
-                ) : (
-                  <object
-                    data={pdfPreviewModal.url}
-                    type="application/pdf"
-                    className="w-full h-full rounded-xl"
-                  >
-                    <iframe
-                      src={pdfPreviewModal.url}
-                      className="w-full h-full border-0 rounded-xl"
-                      title={pdfPreviewModal.title}
-                    />
-                  </object>
-                )
+            <div className="w-full h-[70vh] bg-slate-100 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center relative p-2">
+              {pdfPreviewModal.isImage || /\.(jpg|jpeg|png|webp|gif)$/i.test(pdfPreviewModal.title || '') || pdfPreviewModal.url?.startsWith('data:image/') ? (
+                <img
+                  src={pdfPreviewModal.url}
+                  alt={pdfPreviewModal.title}
+                  className="max-w-full max-h-full object-contain p-2 rounded-xl shadow-lg"
+                />
               ) : (
-                <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-indigo-200 dark:border-indigo-800/60 rounded-3xl p-8 shadow-xl text-center space-y-6 animate-in zoom-in-95">
-                  <div className="flex items-center justify-between border-b-2 border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="flex items-center gap-3 text-left">
-                      <div className="w-12 h-12 rounded-2xl bg-[#0f2863] text-amber-300 flex items-center justify-center font-black text-xl shadow-md">
-                        🎓
-                      </div>
-                      <div>
-                        <h4 className="font-black text-slate-900 dark:text-white text-base">ENCG Fès — Live Document Preview (Frontend)</h4>
-                        <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">Fiche de Candidature & Extrait OCR IA</p>
-                      </div>
-                    </div>
-                    <span className="px-3 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 text-[11px] font-black rounded-full uppercase tracking-wider">
-                      ⚡ Front-End Live Mode
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-left text-xs bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-                    <div>
-                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Candidat (Nom & Prénom)</span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-sm">
-                        {formData.last_name_fr || formData.first_name_fr ? `${formData.last_name_fr} ${formData.first_name_fr}` : 'Candidat ENCG Fès'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-bold uppercase block text-[10px]">CNE / Code Massar</span>
-                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
-                        {formData.cne || 'N142088916'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-bold uppercase block text-[10px]">CIN / Carte Nationale</span>
-                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
-                        {formData.cin || 'CD72910'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Moyenne Bac & Filière</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                        {formData.bac_average ? `${formData.bac_average} / 20` : 'En attente OCR'} — {formData.filiere || 'Deux années préparatoires'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-2xl text-xs text-indigo-900 dark:text-indigo-200 font-medium flex items-center gap-3">
-                    <span className="text-2xl shrink-0">📁</span>
-                    <p className="text-left">
-                      <strong>Aperçu en direct (Frontend) :</strong> Choisissez un fichier (PDF ou Image) ci-dessus pour afficher votre propre document scanné directement dans cet aperçu en temps réel sans attendre le backend !
-                    </p>
-                  </div>
-                </div>
+                <iframe
+                  src={pdfPreviewModal.url}
+                  className="w-full h-full border-0 rounded-xl bg-white"
+                  title={pdfPreviewModal.title}
+                />
               )}
             </div>
 
