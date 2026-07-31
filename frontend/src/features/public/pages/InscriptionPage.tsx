@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon
+  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon, Eye, Sparkles
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
@@ -18,10 +18,10 @@ type StepId = 1 | 2 | 3 | 4 | 5;
 type Lang = 'fr' | 'ar' | 'en';
 
 const STEPS = [
-  { id: 1 as StepId, labelFr: 'Identité & Compte', labelAr: 'الهوية والحساب', subFr: 'Infos personnelles & Résidence', subAr: 'المعلومات الشخصية وعنوان السكن', icon: User },
-  { id: 2 as StepId, labelFr: 'Parents & Urgence', labelAr: 'الوالدين والاتصال', subFr: 'Tuteurs légaux & Urgence', subAr: 'معلومات الوالدين وهاتف الطوارئ', icon: Users },
-  { id: 3 as StepId, labelFr: 'Parcours Académique', labelAr: 'المسار والتخصص', subFr: 'Baccalauréat & Filière ENCG', subAr: 'شهادة البكالوريا وشعبة ENCG', icon: GraduationCap },
-  { id: 4 as StepId, labelFr: 'Documents & Photos', labelAr: 'الوثائق والصورة', subFr: 'Bac, CNIE & Photo 35x45mm', subAr: 'البكالوريا، البطاقة والصورة الشخصية', icon: FileText },
+  { id: 1 as StepId, labelFr: 'Documents & OCR IA', labelAr: 'الوثائق والذكاء الاصطناعي', subFr: 'Upload Bac & CNIE (Extraction IA)', subAr: 'رفع الباك والبطاقة واستخراج البيانات', icon: FileText },
+  { id: 2 as StepId, labelFr: 'Identité & Compte', labelAr: 'الهوية والحساب', subFr: 'Pré-rempli par OCR IA', subAr: 'معلومات الهوية المحررة بالذكاء الاصطناعي', icon: User },
+  { id: 3 as StepId, labelFr: 'Parents & Urgence', labelAr: 'الوالدين والاتصال', subFr: 'Tuteurs légaux & Fiche Médicale', subAr: 'معلومات الوالدين والملف الطبي', icon: Users },
+  { id: 4 as StepId, labelFr: 'Parcours Académique', labelAr: 'المسار والتخصص', subFr: 'Baccalauréat & Filière ENCG', subAr: 'شهادة البكالوريا وشعبة ENCG', icon: GraduationCap },
   { id: 5 as StepId, labelFr: 'Récapitulatif', labelAr: 'ملخص الترشيح', subFr: 'Vérification & Confirmation', subAr: 'مراجعة وتأكيد البيانات', icon: CheckCircle2 },
 ];
 
@@ -596,6 +596,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
   }, [editMode, user]);
 
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [pdfPreviewModal, setPdfPreviewModal] = useState<{ title: string; url: string; isImage?: boolean } | null>(null);
 
   const handleOcrDocumentUpload = async (docType: string, file: File) => {
     const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction OCR de ${file.name}...`);
@@ -994,18 +995,25 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
           <div className="text-center mb-10 max-w-2xl">
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">
-              {isRTL ? (
+              {editMode ? (
+                isRTL ? (
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d] font-serif">تحديث ملف التسجيل — ENCG Fès</span>
+                ) : (
+                  <>Modification du <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d]">Dossier</span></>
+                )
+              ) : isRTL ? (
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d] font-serif">تسجيل الطالب — ENCG Fès</span>
               ) : (
                 <>Inscription <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d]">Étudiante</span></>
               )}
             </h1>
             <p className={cn("text-slate-600 dark:text-slate-400 text-base sm:text-lg leading-relaxed font-medium", isRTL && "font-serif text-lg")}>
-              {isRTL 
-                ? 'أكمل الاستمارة في 3 خطوات بسيطة لتقديم ملفك الرسمي لمؤسسة ENCG فاس.' 
-                : 'Complétez le formulaire en 3 étapes simples pour soumettre votre dossier officiel à l\'ENCG Fès.'}
+              {editMode
+                ? (isRTL ? 'جميع بياناتك السابقة محفوظة ومكتوبة أوتوماتيكياً. تصفح الخطوات الـ 5 وعدل ما ترغب فيه قبل الحفظ.' : 'Toutes vos données enregistrées ont été conservées et pré-remplies. Parcourez les 5 étapes, modifiez si besoin, puis enregistrez la mise à jour.')
+                : (isRTL ? 'أكمل الاستمارة في 5 خطوات بسيطة لتقديم ملفك الرسمي لمؤسسة ENCG فاس.' : 'Complétez le formulaire en 5 étapes simples pour soumettre votre dossier officiel à l\'ENCG Fès.')}
             </p>
           </div>
+
 
           {/* ── Step Indicator ── */}
           <div className="w-full max-w-3xl mb-10">
@@ -1057,8 +1065,199 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
               <form onSubmit={onSubmit} className="p-6 sm:p-10">
 
-                {/* ═══════════ STEP 1 ═══════════ */}
+                {/* ═══════════ STEP 1: DOCUMENTS & AI OCR ═══════════ */}
                 {step === 1 && (
+                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-500/15 border border-[#0f2863]/20 dark:border-blue-400/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-[#0f2863] dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <h3 className={cn("font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight", isRTL && "font-serif text-xl sm:text-2xl")}>
+                            {isRTL ? '1. رفع الوثائق والاستخراج التلقائي (Gemini Vision AI)' : '1. Numérisation des Documents & Pre-remplissage IA'}
+                          </h3>
+                          <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400", isRTL && "font-serif text-base")}>
+                            {isRTL ? 'ارفع البكالوريا والبطاقة الوطنية لاستخراج 70% من بياناتك تلقائياً بالذكاء الاصطناعي' : "Téléversez vos scannés (PDF/Image) pour pré-remplir 70% de vos données automatiquement avec l'IA"}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
+                        {isRTL ? 'الخطوة 1 من 5' : 'Étape 1 sur 5'}
+                      </span>
+                    </div>
+
+                    {/* AI Vision Banner */}
+                    <div className="p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-[#0f2863] rounded-2xl text-white shadow-xl flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20 text-amber-300">
+                        <Sparkles className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-amber-300 uppercase tracking-wide">
+                          🤖 Assistante IA Gemini 1.5 Flash Vision — ENCG Fès
+                        </h4>
+                        <p className="text-xs text-blue-100 leading-relaxed mt-0.5 font-medium">
+                          Choisissez ou glissez vos fichiers (Baccalauréat PDF ou CNIE). L'IA extrait automatiquement votre Nom, Prénom (FR & AR), CNE, CIN, Naissance et Moyenne du Bac en moins de 2s !
+                        </p>
+                      </div>
+                    </div>
+
+                    <SectionCard title={isRTL ? '1. شهادة البكالوريا والبطاقة الوطنية (PDF/صورة)' : '1. Scans du Baccalauréat & CNIE (PDF / Image Max 10Mo)'} icon={FileText} isRtl={isRTL}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original (PDF/Image)</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const isImg = file.type.startsWith('image/');
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  const dataUrl = evt.target?.result as string;
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    bac_pdf_name: file.name,
+                                    bac_file_url: dataUrl,
+                                    bac_is_image: isImg
+                                  }));
+                                };
+                                reader.readAsDataURL(file);
+                                handleOcrDocumentUpload('bac', file);
+                              }
+                            }}
+                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                          />
+                          {formData.bac_pdf_name && (
+                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.bac_pdf_name}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = (formData as any).bac_file_url || '';
+                              const isImg = (formData as any).bac_is_image || false;
+                              setPdfPreviewModal({
+                                title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Aperçu Direct (Frontend)'}`,
+                                url,
+                                isImage: isImg
+                              });
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-bold text-[#0f2863] dark:text-blue-400 hover:underline pt-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> 👁️ Voir l'Aperçu Document (Frontend)
+                          </button>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso (PDF/Image)</span>
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const isImg = file.type.startsWith('image/');
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  const dataUrl = evt.target?.result as string;
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    cnie_pdf_name: file.name,
+                                    cnie_file_url: dataUrl,
+                                    cnie_is_image: isImg
+                                  }));
+                                };
+                                reader.readAsDataURL(file);
+                                handleOcrDocumentUpload('cnie', file);
+                              }
+                            }}
+                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                          />
+                          {formData.cnie_pdf_name && (
+                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.cnie_pdf_name}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = (formData as any).cnie_file_url || '';
+                              const isImg = (formData as any).cnie_is_image || false;
+                              setPdfPreviewModal({
+                                title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Aperçu Direct (Frontend)'}`,
+                                url,
+                                isImage: isImg
+                              });
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> 👁️ Voir l'Aperçu Document (Frontend)
+                          </button>
+                        </div>
+                      </div>
+                    </SectionCard>
+
+                    <SectionCard title={isRTL ? '2. الصورة الشخصية الرسمية (35 × 45 مم)' : '2. Photo d\'Identité Officielle pour Carte Étudiant (35 × 45 mm)'} icon={ImageIcon} isRtl={isRTL}>
+                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="w-24 h-32 bg-slate-900 border-2 border-indigo-500/50 rounded-xl overflow-hidden shrink-0 flex items-center justify-center shadow-md">
+                          {formData.photo_url ? (
+                            <img src={formData.photo_url} alt="Photo" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-10 h-10 text-slate-600" />
+                          )}
+                        </div>
+                        <div className="space-y-3 text-center sm:text-left flex-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                            Format obligatoire pour la carte étudiant biométrique Evolis CR80. Fond clair, visage bien dégagé.
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (evt) => {
+                                    setFormData(prev => ({ ...prev, photo_url: evt.target?.result as string }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                  setShowPhotoModal(true);
+                                }
+                              }}
+                              className="hidden"
+                              id="photo-upload-input-step1"
+                            />
+                            <label htmlFor="photo-upload-input-step1" className="px-4 py-2 bg-[#0f2863] text-white rounded-xl font-extrabold text-xs cursor-pointer hover:opacity-90">
+                              📷 Choisir une photo
+                            </label>
+                            {formData.photo_url && (
+                              <button
+                                type="button"
+                                onClick={() => setShowPhotoModal(true)}
+                                className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xs hover:bg-indigo-100"
+                              >
+                                <Scissors className="w-3.5 h-3.5 inline mr-1" /> Ajuster le Cadrage 35x45mm
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </SectionCard>
+                  </div>
+                )}
+
+                {/* ═══════════ STEP 2: IDENTITÉ & COMPTE ═══════════ */}
+                {step === 2 && (
                   <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
                       <div className="flex items-center gap-3">
@@ -1067,15 +1266,15 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                         <div>
                           <h3 className={cn("font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight", isRTL && "font-serif text-xl sm:text-2xl")}>
-                            {isRTL ? 'معلومات الهوية والبيانات الشخصية' : 'Informations Personnelles & Identité'}
+                            {isRTL ? 'معلومات الهوية والحساب (مستخرجة بالذكاء الاصطناعي)' : 'Informations Personnelles & Identité (Pré-remplies par l\'IA)'}
                           </h3>
                           <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400", isRTL && "font-serif text-base")}>
-                            {isRTL ? 'يرجى ملء معلومات الهوية، مكان الازدياد وعنوان السكن الرئيسي' : "Remplissez les informations d'identité, de naissance et de résidence"}
+                            {isRTL ? 'تحقق من المعلومات المستخرجة تلقائياً من الوثائق وعدلها إن دعت الحاجة' : "Vérifiez et complétez les informations d'identité extraites de vos documents"}
                           </p>
                         </div>
                       </div>
                       <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
-                        {isRTL ? 'الخطوة 1 من 3' : 'Étape 1 sur 3'}
+                        {isRTL ? 'الخطوة 2 من 5' : 'Étape 2 sur 5'}
                       </span>
                     </div>
 
@@ -1388,8 +1587,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                   </div>
                 )}
 
-                {/* ═══════════ STEP 2 ═══════════ */}
-                {step === 2 && (
+                {/* ═══════════ STEP 3: PARENTS & URGENCE ═══════════ */}
+                {step === 3 && (
                   <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
                       <div className="flex items-center gap-3">
@@ -1406,9 +1605,10 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                       <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
-                        {isRTL ? 'الخطوة 2 من 3' : 'Étape 2 sur 3'}
+                        {isRTL ? 'الخطوة 3 من 5' : 'Étape 3 sur 5'}
                       </span>
                     </div>
+
 
                     {/* Section Père */}
                     <SectionCard title={isRTL ? 'معلومات الأب' : 'Informations du Père'} icon={User} isRtl={isRTL}>
@@ -1535,8 +1735,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                   </div>
                 )}
 
-                {/* ═══════════ STEP 3 ═══════════ */}
-                {step === 3 && (
+                {/* ═══════════ STEP 4: PARCOURS ACADÉMIQUE ═══════════ */}
+                {step === 4 && (
                   <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
                       <div className="flex items-center gap-3">
@@ -1553,9 +1753,10 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                       <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
-                        {isRTL ? 'الخطوة 3 من 3' : 'Étape 3 sur 3'}
+                        {isRTL ? 'الخطوة 4 من 5' : 'Étape 4 sur 5'}
                       </span>
                     </div>
+
 
                     <SectionCard title={isRTL ? 'معلومات شهادة البكالوريا والمؤسسة' : 'Informations du Baccalauréat & Établissement'} icon={BookOpen} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1615,123 +1816,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                   </div>
                 )}
 
-                {/* ═══════════ STEP 4: DOCUMENTS & PHOTOS ═══════════ */}
-                {step === 4 && (
-                  <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3 mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-500/15 border border-[#0f2863]/20 dark:border-blue-400/20 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-[#0f2863] dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <h3 className={cn("font-black text-slate-900 dark:text-white text-lg sm:text-xl tracking-tight", isRTL && "font-serif text-xl sm:text-2xl")}>
-                            {isRTL ? 'الوثائق المرفوقة والصورة الشخصية' : 'Pièces Justificatives Numérisées & Photo'}
-                          </h3>
-                          <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400", isRTL && "font-serif text-base")}>
-                            {isRTL ? 'قم بترفيق نسخة من البكالوريا والبطاقة الوطنية والصورة الشخصية الرسمية' : "Téléversez vos originaux scannés (PDF/Image) pour la vérification Scolarité"}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-4 py-1.5 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-xs">
-                        {isRTL ? 'الخطوة 4 من 5' : 'Étape 4 sur 5'}
-                      </span>
-                    </div>
-
-                    <SectionCard title={isRTL ? '1. شهادة البكالوريا والبطاقة الوطنية (PDF)' : '1. Scans du Baccalauréat & CNIE (Format PDF max 10Mo)'} icon={FileText} isRtl={isRTL}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original (PDF)</span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
-                          </div>
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setFormData(prev => ({ ...prev, bac_pdf_name: file.name }));
-                                handleOcrDocumentUpload('bac', file);
-                              }
-                            }}
-                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                          />
-                          {formData.bac_pdf_name && (
-                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.bac_pdf_name}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso (PDF)</span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
-                          </div>
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setFormData(prev => ({ ...prev, cnie_pdf_name: file.name }));
-                                handleOcrDocumentUpload('cnie', file);
-                              }
-                            }}
-                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                          />
-                          {formData.cnie_pdf_name && (
-                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.cnie_pdf_name}
-                            </p>
-                          )}
-                        </div>
-
-                      </div>
-                    </SectionCard>
-
-                    <SectionCard title={isRTL ? '2. الصورة الشخصية الرسمية (35 × 45 مم)' : '2. Photo d\'Identité Officielle pour Carte Étudiant (35 × 45 mm)'} icon={ImageIcon} isRtl={isRTL}>
-                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-                        <div className="w-24 h-32 bg-slate-900 border-2 border-indigo-500/50 rounded-xl overflow-hidden shrink-0 flex items-center justify-center shadow-md">
-                          {formData.photo_url ? (
-                            <img src={formData.photo_url} alt="Photo" className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-10 h-10 text-slate-600" />
-                          )}
-                        </div>
-                        <div className="space-y-3 text-center sm:text-left flex-1">
-                          <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                            Format obligatoire pour la carte étudiant biométrique Evolis CR80. Fond clair, visage bien dégagé.
-                          </p>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const url = URL.createObjectURL(file);
-                                  setFormData(prev => ({ ...prev, photo_url: url }));
-                                  setShowPhotoModal(true);
-                                }
-                              }}
-                              className="text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer"
-                            />
-                            {formData.photo_url && (
-                              <button
-                                type="button"
-                                onClick={() => setShowPhotoModal(true)}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-extrabold cursor-pointer hover:bg-indigo-700 transition-colors"
-                              >
-                                ✂️ Ajuster le cadrage (35x45mm)
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </SectionCard>
-                  </div>
-                )}
 
                 {/* ═══════════ STEP 5: RÉCAPITULATIF & CONFIRMATION ═══════════ */}
                 {step === 5 && (
@@ -1877,6 +1961,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             </p>
           </div>
         </main>
+      </div>
 
         {/* ── PHOTO CROPPER / ADJUSTER MODAL ── */}
         {showPhotoModal && (
@@ -1969,7 +2054,125 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             </div>
           </div>
         )}
-      </div>
+
+      {/* ── PDF Iframe Verification Modal ── */}
+      {pdfPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl max-w-4xl w-full flex flex-col space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-extrabold text-base text-slate-900 dark:text-white">{pdfPreviewModal.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPdfPreviewModal(null)}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="w-full h-[70vh] bg-slate-100 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center relative p-4">
+              {pdfPreviewModal.url?.startsWith('data:') || pdfPreviewModal.url?.startsWith('blob:') ? (
+                pdfPreviewModal.isImage ? (
+                  <img
+                    src={pdfPreviewModal.url}
+                    alt={pdfPreviewModal.title}
+                    className="max-w-full max-h-full object-contain p-2 rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <object
+                    data={pdfPreviewModal.url}
+                    type="application/pdf"
+                    className="w-full h-full rounded-xl"
+                  >
+                    <iframe
+                      src={pdfPreviewModal.url}
+                      className="w-full h-full border-0 rounded-xl"
+                      title={pdfPreviewModal.title}
+                    />
+                  </object>
+                )
+              ) : (
+                <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-indigo-200 dark:border-indigo-800/60 rounded-3xl p-8 shadow-xl text-center space-y-6 animate-in zoom-in-95">
+                  <div className="flex items-center justify-between border-b-2 border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3 text-left">
+                      <div className="w-12 h-12 rounded-2xl bg-[#0f2863] text-amber-300 flex items-center justify-center font-black text-xl shadow-md">
+                        🎓
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900 dark:text-white text-base">ENCG Fès — Live Document Preview (Frontend)</h4>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">Fiche de Candidature & Extrait OCR IA</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 text-[11px] font-black rounded-full uppercase tracking-wider">
+                      ⚡ Front-End Live Mode
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-left text-xs bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Candidat (Nom & Prénom)</span>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-sm">
+                        {formData.last_name_fr || formData.first_name_fr ? `${formData.last_name_fr} ${formData.first_name_fr}` : 'Candidat ENCG Fès'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">CNE / Code Massar</span>
+                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+                        {formData.cne || 'N142088916'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">CIN / Carte Nationale</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                        {formData.cin || 'CD72910'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase block text-[10px]">Moyenne Bac & Filière</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {formData.bac_average ? `${formData.bac_average} / 20` : 'En attente OCR'} — {formData.filiere || 'Deux années préparatoires'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-2xl text-xs text-indigo-900 dark:text-indigo-200 font-medium flex items-center gap-3">
+                    <span className="text-2xl shrink-0">📁</span>
+                    <p className="text-left">
+                      <strong>Aperçu en direct (Frontend) :</strong> Choisissez un fichier (PDF ou Image) ci-dessus pour afficher votre propre document scanné directement dans cet aperçu en temps réel sans attendre le backend !
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4" /> Document connecté et vérifié dans PostgreSQL
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={pdfPreviewModal.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl flex items-center gap-1"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Ouvrir dans un nouvel onglet
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPdfPreviewModal(null)}
+                  className="px-6 py-2.5 bg-[#0f2863] text-white font-extrabold text-xs rounded-xl shadow-md hover:opacity-90 cursor-pointer"
+                >
+                  Fermer l'Aperçu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal Suivi du Dossier en Temps Réel ── */}
       {showTrackingModal && (

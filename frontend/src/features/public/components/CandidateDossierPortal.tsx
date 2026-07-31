@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, CheckCircle2, FileText, Download, Mail, Edit3, 
-  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon
+  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { cn } from '@shared/lib/utils';
@@ -147,6 +147,29 @@ export default function CandidateDossierPortal() {
       toast.error("⚠️ Erreur lors du téléversement du fichier.", { id: toastId });
     }
   };
+
+  const handleDeleteFile = async (docType: string) => {
+    const toastId = toast.loading(`Suppression du document ${docType}...`);
+    try {
+      await api.delete('/public/delete-candidate-document', {
+        data: {
+          cne: candidateData?.cne || userCne,
+          cin: candidateData?.cin || userCin,
+          type: docType,
+        }
+      });
+      setDocFiles(prev => {
+        const updated = { ...prev };
+        delete updated[docType];
+        return updated;
+      });
+      toast.success(`🗑️ Document ${docType} supprimé avec succès de PostgreSQL !`, { id: toastId });
+      fetchCandidateDossier();
+    } catch (err) {
+      toast.error("Erreur lors de la suppression.", { id: toastId });
+    }
+  };
+
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -411,6 +434,17 @@ export default function CandidateDossierPortal() {
                     <span>{uploadingDoc === 'bac' ? 'Téléversement...' : 'Changer le Bac (PDF)'}</span>
                     <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('bac', e)} />
                   </label>
+
+                  {docFiles.bac && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile('bac')}
+                      className="p-2.5 bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 rounded-xl transition-all cursor-pointer"
+                      title="Supprimer ce document de PostgreSQL"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -443,8 +477,20 @@ export default function CandidateDossierPortal() {
                     <span>{uploadingDoc === 'cnie' ? 'Téléversement...' : 'Changer la CNIE (PDF)'}</span>
                     <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('cnie', e)} />
                   </label>
+
+                  {docFiles.cnie && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile('cnie')}
+                      className="p-2.5 bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 rounded-xl transition-all cursor-pointer"
+                      title="Supprimer ce document de PostgreSQL"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
+
 
               {/* Photo d'identité */}
               <div className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 bg-slate-50/50 dark:bg-slate-800/40 md:col-span-2">

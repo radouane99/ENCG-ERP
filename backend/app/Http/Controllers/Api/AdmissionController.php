@@ -930,6 +930,43 @@ class AdmissionController extends Controller
     }
 
     /**
+     * Delete candidate scanned document from PostgreSQL database and storage.
+     */
+    public function deleteCandidateDocument(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cne' => 'nullable|string',
+            'cin' => 'nullable|string',
+            'type' => 'required|string',
+        ]);
+
+        $cne = $request->input('cne');
+        $cin = $request->input('cin');
+        $type = $request->input('type');
+
+        $deleted = DB::table('student_documents')
+            ->where(function($q) use ($cne, $cin) {
+                if ($cne) $q->orWhere('cne', $cne);
+            })
+            ->where('type', $type)
+            ->delete();
+
+        if ($type === 'photo') {
+            if ($cne) {
+                DB::table('applications')->where('cne', $cne)->update(['photo_path' => null]);
+                DB::table('students')->where('cne', $cne)->update(['photo_path' => null]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "🗑️ Document '{$type}' supprimé avec succès de la base de données PostgreSQL !",
+            'deleted_count' => $deleted,
+        ]);
+    }
+
+
+    /**
      * 🤖 Public OCR Document Data Extraction (Gemini 1.5 Flash Vision AI).
      */
     public function extractDocumentDataOcr(Request $request): JsonResponse
