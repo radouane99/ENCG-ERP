@@ -673,7 +673,11 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       }));
 
       setExtractedDataResult(resultData);
-      toast.success(`✨ Données de ${file.name} extraites avec succès !`, { id: toastId });
+      if (res.data?.ai_debug_error) {
+        toast.info(`⚠️ Note API IA : ${res.data.ai_debug_error}`, { duration: 8000 });
+      } else {
+        toast.success(`✨ Données de ${file.name} extraites avec succès !`, { id: toastId });
+      }
       setShowOcrConfirmationModal(true);
     } catch (err: any) {
       toast.dismiss(toastId);

@@ -503,23 +503,19 @@ class GeminiApiService
             $bacType = 'Sciences Physiques';
         }
 
-        if (!empty($cne) || !empty($cin) || !empty($lastNameFr)) {
-            return [
-                'first_name_fr' => $firstNameFr ?: '',
-                'last_name_fr' => $lastNameFr ?: '',
-                'first_name_ar' => '',
-                'last_name_ar' => '',
-                'cne' => $cne,
-                'cin' => $cin,
-                'birth_date' => '',
-                'birth_city_fr' => '',
-                'bac_average' => $bacAvg,
-                'bac_mention' => '',
-                'bac_type' => $bacType ?: '',
-                'high_school' => '',
-            ];
-        }
-
-        return null;
+        return [
+            'first_name_fr' => $firstNameFr ?: '',
+            'last_name_fr' => $lastNameFr ?: '',
+            'first_name_ar' => '',
+            'last_name_ar' => '',
+            'cne' => $cne ?: '',
+            'cin' => $cin ?: '',
+            'birth_date' => '',
+            'birth_city_fr' => '',
+            'bac_average' => $bacAvg ?: '',
+            'bac_mention' => '',
+            'bac_type' => $bacType ?: '',
+            'high_school' => '',
+        ];
     }
 }
