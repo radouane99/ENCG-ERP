@@ -585,28 +585,72 @@ class AdmissionController extends Controller
                 $isAccepted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale']) || str_contains($rawStatus, 'principale');
                 $isWaitlisted = str_contains($rawStatus, 'attente') || in_array(strtolower($application->status ?? ''), ['liste_attente_1', 'liste_attente_2', 'liste_attente', 'attente']);
 
+                // Fetch documents from student_documents table if present
+                $docs = DB::table('student_documents')
+                    ->where('cne', $application->cne)
+                    ->orWhere('application_id', $application->id)
+                    ->get()
+                    ->keyBy('type');
+
                 return response()->json([
                     'success' => true,
                     'found' => true,
                     'type' => 'application',
                     'candidate' => [
+                        'id' => $application->id,
                         'name' => trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')),
                         'first_name' => $application->first_name ?? '',
                         'last_name' => $application->last_name ?? '',
+                        'first_name_ar' => $application->first_name_ar ?? null,
+                        'last_name_ar' => $application->last_name_ar ?? null,
                         'cne' => $application->cne ?? '',
-                        'cin' => $application->cin ?? '—',
-                        'filiere' => $application->reference_number ?? 'Deux années préparatoires',
-                        'bac_type' => $application->bac_type ?? 'Sciences Économiques',
-                        'bac_average' => $application->bac_average ?? null,
+                        'cin' => $application->cin ?? '',
+                        'email' => $application->email ?? '',
+                        'phone' => $application->phone ?? '',
+                        'gender' => $application->gender ?? 'male',
+                        'birth_date' => $application->birth_date ?? null,
+                        'birth_city' => $application->birth_city ?? null,
+                        'birth_city_ar' => $application->birth_city_ar ?? null,
+                        'birth_country' => $application->birth_country ?? 'Maroc',
+                        'nationality' => $application->nationality ?? 'Marocaine',
+                        'address' => $application->address ?? null,
+                        'city' => $application->city ?? 'Fès',
+                        'region' => $application->region ?? 'Fès-Meknès',
+                        'family_status' => $application->family_status ?? 'Célibataire',
+                        'father_name' => $application->father_name ?? null,
+                        'father_name_ar' => $application->father_name_ar ?? null,
+                        'father_cin' => $application->father_cin ?? null,
+                        'father_profession' => $application->father_profession ?? null,
+                        'father_phone' => $application->father_phone ?? null,
+                        'mother_name' => $application->mother_name ?? null,
+                        'mother_name_ar' => $application->mother_name_ar ?? null,
+                        'mother_cin' => $application->mother_cin ?? null,
+                        'mother_profession' => $application->mother_profession ?? null,
+                        'mother_phone' => $application->mother_phone ?? null,
+                        'parent_phone' => $application->parent_phone ?? null,
+                        'emergency_contact_name' => $application->emergency_contact_name ?? null,
+                        'emergency_contact_phone' => $application->emergency_contact_phone ?? null,
+                        'allergy_type' => $application->allergy_type ?? null,
+                        'has_medical_followup' => (bool)($application->has_medical_followup ?? false),
+                        'medication_used' => $application->medication_used ?? null,
+                        'treating_doctor_info' => $application->treating_doctor_info ?? null,
+                        'has_disability' => (bool)($application->has_disability ?? false),
+                        'disability_details' => $application->disability_details ?? null,
+                        'photo_path' => $application->photo_path ?? null,
+                        'filiere' => $application->reference_number ?? 'Deux années préparatoires (TC)',
+                        'bac_type' => $application->bac_type ?? 'Sciences Mathématiques',
+                        'bac_average' => $application->bac_average ?? $application->score_tafem ?? null,
                         'selection_score' => $application->selection_score ?? $application->tafem_score ?? null,
                         'status' => $application->status ?? 'accepted',
                         'is_accepted' => $isAccepted,
                         'is_waitlisted' => $isWaitlisted,
                         'status_label' => $isAccepted ? 'Admis sur Liste Principale' : ($isWaitlisted ? 'Retenu sur Liste d\'Attente' : 'Dossier en Examen'),
-                        'can_proceed_to_registration' => $isAccepted || $isWaitlisted
+                        'can_proceed_to_registration' => $isAccepted || $isWaitlisted,
+                        'documents' => $docs,
                     ]
                 ]);
             }
+
 
             // 2. Check in Students table
             $stdQuery = DB::table('students')
@@ -760,5 +804,118 @@ class AdmissionController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update candidate dossier details in both applications and students tables.
+     */
+    public function updateCandidateDossier(Request $request): JsonResponse
+    {
+        $cne = trim($request->input('cne', ''));
+        $cin = trim($request->input('cin', ''));
+
+        if (empty($cne) && empty($cin)) {
+            return response()->json(['success' => false, 'message' => 'CNE ou CIN requis.'], 422);
+        }
+
+        $fields = $request->only([
+            'first_name', 'last_name', 'first_name_ar', 'last_name_ar',
+            'birth_date', 'birth_city', 'birth_city_ar', 'birth_country', 'nationality',
+            'email', 'phone', 'address', 'city', 'region', 'family_status',
+            'father_name', 'father_name_ar', 'father_cin', 'father_profession', 'father_phone',
+            'mother_name', 'mother_name_ar', 'mother_cin', 'mother_profession', 'mother_phone',
+            'parent_phone', 'emergency_contact_name', 'emergency_contact_phone',
+            'allergy_type', 'has_medical_followup', 'medication_used', 'treating_doctor_info',
+            'has_disability', 'disability_details', 'photo_path'
+        ]);
+
+        $filtered = array_filter($fields, fn($v) => $v !== null);
+
+        if (!empty($filtered)) {
+            // Filter fields to only columns that actually exist on applications table
+            $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
+            $appPayload = array_intersect_key($filtered, array_flip($appColumns));
+
+            if (!empty($appPayload)) {
+                DB::table('applications')
+                    ->where(function($q) use ($cne, $cin) {
+                        if ($cne) $q->orWhere('cne', $cne);
+                        if ($cin) $q->orWhere('cin', $cin);
+                    })
+                    ->update($appPayload);
+            }
+
+            // Filter fields to only columns that actually exist on students table
+            $stdColumns = \Illuminate\Support\Facades\Schema::getColumnListing('students');
+            $stdPayload = array_intersect_key($filtered, array_flip($stdColumns));
+
+            if (!empty($stdPayload)) {
+                DB::table('students')
+                    ->where(function($q) use ($cne, $cin) {
+                        if ($cne) $q->orWhere('cne', $cne);
+                        if ($cin) $q->orWhere('cin', $cin);
+                    })
+                    ->update($stdPayload);
+            }
+        }
+
+
+        return response()->json([
+            'success' => true,
+            'message' => '✅ Dossier mis à jour avec succès dans la base de données !'
+        ]);
+    }
+
+    /**
+     * Upload candidate scanned document (Bac, CNIE, Photo, Relevé de Notes).
+     */
+    public function uploadCandidateDocument(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'type' => 'required|string',
+            'cne' => 'nullable|string',
+            'cin' => 'nullable|string',
+        ]);
+
+        $cne = $request->input('cne');
+        $cin = $request->input('cin');
+        $type = $request->input('type');
+        $file = $request->file('file');
+
+        $path = $file->store('candidate_documents', 'public');
+        $url = '/storage/' . $path;
+
+        // Upsert into student_documents table
+        DB::table('student_documents')->updateOrInsert(
+            [
+                'cne' => $cne,
+                'type' => $type,
+            ],
+            [
+                'file_path' => $url,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'status' => 'pending',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        // If type is photo, also update photo_path on application and student
+        if ($type === 'photo') {
+            if ($cne) {
+                DB::table('applications')->where('cne', $cne)->update(['photo_path' => $url]);
+                DB::table('students')->where('cne', $cne)->update(['photo_path' => $url]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "✅ Document '{$type}' téléversé et enregistré avec succès !",
+            'file_path' => $url,
+        ]);
+    }
 }
+
 

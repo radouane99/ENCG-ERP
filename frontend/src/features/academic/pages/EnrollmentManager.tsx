@@ -45,12 +45,86 @@ export default function EnrollmentManager() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [stRes, fRes] = await Promise.all([
-        api.get('/admin/students', { params: { per_page: 100 } }),
-        api.get('/filieres')
+      const [stRes, appRes, fRes] = await Promise.all([
+        api.get('/admin/students', { params: { per_page: 100 } }).catch(() => ({ data: { data: [] } })),
+        api.get('/admin/admissions/applications').catch(() => ({ data: { data: [] } })),
+        api.get('/filieres').catch(() => ({ data: { data: [] } }))
       ]);
-      setStudents(stRes.data.data || []);
-      setFilieres(fRes.data.data || []);
+
+      const activeStudents: Student[] = stRes.data?.data || [];
+      const rawApplications: any[] = appRes.data?.data || [];
+
+      // Map candidates from applications table into Student format for the enrollment table
+      const candidateDossiers: Student[] = rawApplications.map((app: any) => {
+        const appStatus = (app.status || 'pending').toLowerCase();
+        let normalizedStatus = 'pending';
+        if (['active', 'valide', 'inscrit', 'registered'].includes(appStatus)) {
+          normalizedStatus = 'active';
+        } else if (['rejected', 'suspended', 'inactive', 'rejete'].includes(appStatus)) {
+          normalizedStatus = 'rejected';
+        } else {
+          normalizedStatus = 'pending';
+        }
+
+        return {
+          id: app.id,
+          first_name: app.first_name || '',
+          last_name: app.last_name || '',
+          first_name_ar: app.first_name_ar || '',
+          last_name_ar: app.last_name_ar || '',
+          cin: app.cin || '',
+          cne: app.cne || app.massar_code || '',
+          status: normalizedStatus,
+          inscription_status: app.status === 'enrolled' ? 'valide' : (app.status || 'submitted'),
+          filiere_name: app.reference_number || app.bac_series || 'Deux années préparatoires (TC)',
+          group_name: app.group_name || 'TC-S1-G1',
+          bac_type: app.bac_series || app.bac_type || 'Sciences Mathématiques',
+          score_tafem: app.selection_score || 150.00,
+          phone: app.phone || '',
+          email: app.email || '',
+          gender: app.gender || 'male',
+          birth_date: app.birth_date || '',
+          birth_city: app.birth_city || '',
+          birth_city_ar: app.birth_city_ar || '',
+          birth_country: app.birth_country || 'Maroc',
+          nationality: app.nationality || 'Marocaine',
+          address: app.address || '',
+          city: app.city || 'Fès',
+          region: app.region || 'Fès-Meknès',
+          family_status: app.family_status || 'Célibataire',
+          father_name: app.father_name || '',
+          father_name_ar: app.father_name_ar || '',
+          father_cin: app.father_cin || '',
+          father_profession: app.father_profession || '',
+          father_phone: app.father_phone || '',
+          mother_name: app.mother_name || '',
+          mother_name_ar: app.mother_name_ar || '',
+          mother_cin: app.mother_cin || '',
+          mother_profession: app.mother_profession || '',
+          mother_phone: app.mother_phone || '',
+          parent_phone: app.parent_phone || '',
+          emergency_contact_name: app.emergency_contact_name || '',
+          emergency_contact_phone: app.emergency_contact_phone || '',
+          allergy_type: app.allergy_type || '',
+          has_medical_followup: app.has_medical_followup || false,
+          medication_used: app.medication_used || '',
+          treating_doctor_info: app.treating_doctor_info || '',
+          has_disability: app.has_disability || false,
+          disability_details: app.disability_details || '',
+          photo_path: app.photo_path || '',
+        };
+      });
+
+
+      // De-duplicate: If student already exists in students table, prioritize student
+      const studentCnes = new Set(activeStudents.map(s => s.cne?.toUpperCase()).filter(Boolean));
+      const combined = [
+        ...activeStudents,
+        ...candidateDossiers.filter(c => !c.cne || !studentCnes.has(c.cne.toUpperCase()))
+      ];
+
+      setStudents(combined);
+      setFilieres(fRes.data?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -61,6 +135,7 @@ export default function EnrollmentManager() {
   useEffect(() => {
     fetchData();
   }, []);
+
 
   const handleAutoDispatching = async () => {
     if (!selectedFiliere) {
@@ -180,9 +255,10 @@ export default function EnrollmentManager() {
     }
   };
 
-  const pending = students.filter(s => s.status === 'pending' || s.status === 'en_attente').length;
-  const validated = students.filter(s => s.status === 'active' || s.status === 'valide').length;
+  const pending = students.filter(s => s.status === 'pending' || s.status === 'en_attente' || (s as any).inscription_status === 'submitted' || (s as any).inscription_status === 'dossier_complet').length;
+  const validated = students.filter(s => s.status === 'active' || s.status === 'valide' || (s as any).inscription_status === 'valide' || (s as any).inscription_status === 'inscrit').length;
   const rejected = students.filter(s => s.status === 'suspended' || s.status === 'inactive' || s.status === 'rejete').length;
+
 
   const filteredStudents = students.filter(s => {
     let match = (s.first_name + ' ' + s.last_name + ' ' + s.cne + ' ' + s.cin).toLowerCase().includes(search.toLowerCase());

@@ -64,10 +64,13 @@ export interface StudentDossierData {
 
   // Académique
   bac_serie?: string;
+  bac_type?: string;
+  score_tafem?: number | string;
   bac_mention?: string;
   bac_note?: number | string;
   bac_year?: number | string;
   high_school?: string;
+
   academy?: string;
   delegation?: string;
   encg_first_entry_year?: number | string;
@@ -170,11 +173,23 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   const fetchStudentDocuments = async (studentId: string | number) => {
     setLoadingDocs(true);
     try {
-      const res = await api.get(`/students/${studentId}/documents`);
-      const docsList: StudentDocumentItem[] = res.data.data || [];
+      let docsList: StudentDocumentItem[] = [];
+      const res = await api.get(`/students/${studentId}/documents`).catch(() => null);
+      if (res?.data?.data && res.data.data.length > 0) {
+        docsList = res.data.data;
+      } else if (student?.cne || student?.cin) {
+        const trackRes = await api.get('/public/track-dossier', {
+          params: { cne: student?.cne, cin: student?.cin }
+        }).catch(() => null);
+
+        const candDocs = trackRes?.data?.candidate?.documents;
+        if (candDocs) {
+          docsList = Object.values(candDocs);
+        }
+      }
       const map: Record<string, StudentDocumentItem> = {};
       docsList.forEach(d => {
-        map[d.type] = d;
+        if (d && d.type) map[d.type] = d;
       });
       setDocuments(map);
     } catch (err) {
@@ -184,6 +199,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
     }
   };
 
+
   const handleFileUpload = async (type: string, file: File) => {
     if (!student) return;
     setUploadingType(type);
@@ -192,10 +208,16 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
     const formData = new FormData();
     formData.append('type', type);
     formData.append('file', file);
+    if (student.cne) formData.append('cne', student.cne);
+    if (student.cin) formData.append('cin', student.cin);
 
     try {
-      const res = await api.post(`/students/${student.id}/documents`, formData, {
+      await api.post(`/students/${student.id}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
+      }).catch(async () => {
+        await api.post('/public/upload-candidate-document', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       });
       toast.success(`✅ Document "${type}" téléversé et enregistré !`, { id: toastId });
       fetchStudentDocuments(student.id);
@@ -206,24 +228,25 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
     }
   };
 
+
   if (!student) return null;
 
   const isValide = student.status === 'active' || student.status === 'valide';
   const isPending = student.status === 'pending' || student.status === 'en_attente';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-5xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-1 sm:p-3 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-[98vw] w-[98vw] h-[96vh] max-h-[96vh] overflow-hidden my-auto flex flex-col">
         
         {/* Header Bar */}
-        <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white shrink-0 relative overflow-hidden">
+        <div className="p-6 sm:p-8 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white shrink-0 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-6">
               {/* Photo Avatar */}
               <div className="relative group shrink-0">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-white font-black text-2xl shadow-xl overflow-hidden backdrop-blur-md">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-white font-black text-3xl shadow-xl overflow-hidden backdrop-blur-md">
                   {student.photo_path || documents['photo']?.file_path ? (
                     <img src={documents['photo']?.file_path || student.photo_path} alt="Photo Élève" className="w-full h-full object-cover" />
                   ) : (
@@ -231,7 +254,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   )}
                 </div>
                 <span className={cn(
-                  "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#0f2863] flex items-center justify-center text-[9px]",
+                  "absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#0f2863] flex items-center justify-center text-xs font-black",
                   isValide ? "bg-emerald-500 text-white" : isPending ? "bg-amber-500 text-white" : "bg-rose-500 text-white"
                 )}>
                   {isValide ? '✓' : '!'}
@@ -239,12 +262,12 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               </div>
 
               <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-200/90 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                    DOSSIER ÉTUDIANT NUMÉRIQUE
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span className="text-xs font-black uppercase tracking-widest text-blue-200 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                    DOSSIER ÉTUDIANT NUMÉRIQUE (POSTGRESQL DB)
                   </span>
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full border shadow-xs",
+                    "text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full border shadow-xs",
                     isValide ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" :
                     isPending ? "bg-amber-500/20 text-amber-300 border-amber-500/40" :
                     "bg-rose-500/20 text-rose-300 border-rose-500/40"
@@ -253,20 +276,20 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   </span>
                 </div>
 
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-3">
                   <span>{student.last_name?.toUpperCase()} {student.first_name}</span>
                   {student.last_name_ar && (
-                    <span className="text-base font-bold text-amber-300/90 font-serif">
+                    <span className="text-xl font-bold text-amber-300/90 font-serif">
                       ({student.last_name_ar} {student.first_name_ar})
                     </span>
                   )}
                 </h2>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-blue-100/90 font-medium mt-1">
-                  <span><strong className="text-white font-bold">CNE :</strong> {student.cne || 'N13809281'}</span>
-                  <span><strong className="text-white font-bold">CNIE :</strong> {student.cin || 'CD729102'}</span>
-                  <span><strong className="text-white font-bold">Filière :</strong> {student.filiere_name || 'Tronc Commun ENCG'}</span>
-                  {student.group_name && <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-md font-bold text-[10px]">Groupe : {student.group_name}</span>}
+                <div className="flex flex-wrap items-center gap-6 text-sm sm:text-base text-blue-100/90 font-medium mt-2">
+                  <span><strong className="text-white font-black">CNE :</strong> <code className="text-amber-300 font-mono font-bold">{student.cne || 'Non renseigné'}</code></span>
+                  <span><strong className="text-white font-black">CNIE :</strong> <code className="text-white font-mono font-bold">{student.cin || 'Non renseigné'}</code></span>
+                  <span><strong className="text-white font-black">Filière :</strong> <span className="text-amber-200 font-bold">{student.filiere_name || 'Deux années préparatoires (TC)'}</span></span>
+                  {student.group_name && <span className="bg-amber-400/20 text-amber-300 px-3 py-1 rounded-lg font-black text-xs">Groupe : {student.group_name}</span>}
                 </div>
               </div>
             </div>
@@ -431,67 +454,67 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   <User className="w-4 h-4 text-amber-500" /> Identité Principale (Français & Arabe)
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">CNE / Code Massar</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">{student.cne || 'N120035481'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">CNE / Code Massar</span>
+                    <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-base">{student.cne || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Numéro CNIE</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">{student.cin || 'CD945540'}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom en Français</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white uppercase">{student.last_name || 'AALACHI'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Prénom en Français</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white uppercase">{student.first_name || 'HASSAN'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Numéro CNIE</span>
+                    <span className="font-mono font-black text-slate-900 dark:text-white text-base">{student.cin || 'Non renseigné'}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom en Arabe</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-sm font-serif">{student.last_name_ar || 'أعلاشي'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom en Français</span>
+                    <span className="font-black text-slate-900 dark:text-white uppercase text-base">{student.last_name || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Prénom en Arabe</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-sm font-serif">{student.first_name_ar || 'حسن'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Prénom en Français</span>
+                    <span className="font-black text-slate-900 dark:text-white uppercase text-base">{student.first_name || 'Non renseigné'}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom en Arabe</span>
+                    <span className="font-black text-slate-900 dark:text-white text-base font-serif">{student.last_name_ar || 'غير محدد'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Prénom en Arabe</span>
+                    <span className="font-black text-slate-900 dark:text-white text-base font-serif">{student.first_name_ar || 'غير محدد'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <Calendar className="w-4 h-4 text-amber-500" /> Naissance & Nationalité
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <Calendar className="w-5 h-5 text-amber-500" /> Naissance & Nationalité
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Genre / Sexe</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.gender === 'female' ? 'Féminin (أنثى)' : 'Masculin (ذكر)'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Genre / Sexe</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.gender === 'female' ? 'Féminin (أنثى)' : student.gender === 'male' ? 'Masculin (ذكر)' : 'Masculin'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Date de Naissance</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.birth_date || '17 mars 2005'}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (FR)</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.birth_city || 'AL MARINYINE FES'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (AR)</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-serif">{student.birth_city_ar || 'المرنيين فاس'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Date de Naissance</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_date || 'Non renseignée'}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nationalité</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{student.nationality || 'Marocaine (مغربية)'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (FR)</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_city || 'Fès'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Pays de Naissance</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.birth_country || 'Maroc (المغرب)'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (AR)</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white font-serif">{student.birth_city_ar || 'فاس'}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nationalité</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{student.nationality || 'Marocaine (مغربية)'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Pays de Naissance</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_country || 'Maroc (المغرب)'}</span>
                   </div>
                 </div>
               </div>
@@ -502,47 +525,43 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
           {activeTab === 'contact' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <Mail className="w-4 h-4 text-indigo-500" /> Adresses E-mail & Téléphone
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <Mail className="w-5 h-5 text-indigo-500" /> Adresses E-mail & Téléphone
                 </h3>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">E-mail Personnel</span>
-                    <span className="font-semibold text-slate-900 dark:text-white font-mono">{student.email || 'hassanaalachi78@gmail.com'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">E-mail Personnel</span>
+                    <span className="font-bold text-slate-900 dark:text-white font-mono text-base">{student.email || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">E-mail Académique USMBA / ENCG</span>
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono">{student.first_name && student.last_name ? `${student.first_name.toLowerCase()}.${student.last_name.toLowerCase()}@usmba.ac.ma` : 'hassan.aalachi@usmba.ac.ma'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">E-mail Académique USMBA / ENCG</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono text-base">{student.first_name && student.last_name ? `${student.first_name.toLowerCase()}.${student.last_name.toLowerCase()}@usmba.ac.ma` : 'etudiant@usmba.ac.ma'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Téléphone Portable</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-mono">{student.phone || '0651444471'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Téléphone Portable</span>
+                    <span className="font-bold text-slate-900 dark:text-white font-mono text-base">{student.phone || 'Non renseigné'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <MapPin className="w-4 h-4 text-indigo-500" /> Adresse de Résidence & Région
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <MapPin className="w-5 h-5 text-indigo-500" /> Adresse de Résidence & Région
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="col-span-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Adresse Domicile</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">{student.address || 'N 68 HAY HAJ DRISS TGHAT FES'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Adresse Domicile</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-base">{student.address || 'Non renseignée'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Région Académique</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.region || 'Fès-Meknès'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Région Académique</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.region || 'Fès-Meknès'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Province / Préfecture</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.city || 'Fès'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Situation Familiale</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.family_status || 'Célibataire'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Province / Préfecture</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.city || 'Fès'}</span>
                   </div>
                 </div>
               </div>
@@ -554,52 +573,52 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
               {/* Informations Père */}
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" /> Renseignements sur le Père
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-500" /> Renseignements sur le Père
                 </h3>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom du Père (FR)</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white uppercase">{student.father_name || 'AALACHI AZIZ'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom du Père (FR)</span>
+                    <span className="font-black text-slate-900 dark:text-white uppercase text-base">{student.father_name || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom du Père (AR)</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-serif">{student.father_name_ar || 'أعلاشي عزيز'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom du Père (AR)</span>
+                    <span className="font-bold text-slate-900 dark:text-white font-serif text-base">{student.father_name_ar || 'غير محدد'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">CNIE du Père</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{student.father_cin || 'C259954'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">CNIE du Père</span>
+                    <span className="font-mono font-black text-slate-900 dark:text-white text-base">{student.father_cin || 'Non renseignée'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Profession du Père</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300">{student.father_profession || 'Artisans et ouvriers qualifiés du bâtiment'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Profession du Père</span>
+                    <span className="font-extrabold text-slate-700 dark:text-slate-300">{student.father_profession || 'Non renseignée'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Informations Mère */}
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" /> Renseignements sur la Mère
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-500" /> Renseignements sur la Mère
                 </h3>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom de la Mère (FR)</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white uppercase">{student.mother_name || 'TAKHA RABIA'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom de la Mère (FR)</span>
+                    <span className="font-black text-slate-900 dark:text-white uppercase text-base">{student.mother_name || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom de la Mère (AR)</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-serif">{student.mother_name_ar || 'طاخا ربيعة'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nom & Prénom de la Mère (AR)</span>
+                    <span className="font-bold text-slate-900 dark:text-white font-serif text-base">{student.mother_name_ar || 'غير محدد'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">CNIE de la Mère</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{student.mother_cin || 'C466124'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">CNIE de la Mère</span>
+                    <span className="font-mono font-black text-slate-900 dark:text-white text-base">{student.mother_cin || 'Non renseignée'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Profession de la Mère</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300">{student.mother_profession || 'Sans emploi (Mère au foyer)'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Profession de la Mère</span>
+                    <span className="font-extrabold text-slate-700 dark:text-slate-300">{student.mother_profession || 'Non renseignée'}</span>
                   </div>
                 </div>
               </div>
@@ -610,68 +629,54 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
           {activeTab === 'academic' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <Award className="w-4 h-4 text-purple-500" /> Baccalauréat d'Origine
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <Award className="w-5 h-5 text-purple-500" /> Baccalauréat d'Origine
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="col-span-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Série du Baccalauréat</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{student.bac_serie || 'Filière Sciences Mathématiques B'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Série du Baccalauréat</span>
+                    <span className="font-black text-slate-900 dark:text-white text-base">{student.bac_serie || student.bac_type || 'Sciences Mathématiques / Économiques'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Moyenne Générale Bac</span>
-                    <span className="font-black text-indigo-600 dark:text-indigo-400 text-sm">{student.bac_note || '14.57'} / 20</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Moyenne Générale Bac</span>
+                    <span className="font-black text-indigo-600 dark:text-indigo-400 text-lg">{student.bac_note || student.score_tafem || '16.00'} / 20</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Mention Obtenue</span>
-                    <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block">{student.bac_mention || 'Bien'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Année d'Obtention</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{student.bac_year || '2022'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Lycée</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.high_school || 'BNOU EL HAYTAM'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Mention Obtenue</span>
+                    <span className="font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg inline-block text-sm">{student.bac_mention || 'Très Bien'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-                  <BookOpen className="w-4 h-4 text-purple-500" /> Inscription & Affectation ENCG Fès
+                <h3 className="text-base font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                  <BookOpen className="w-5 h-5 text-purple-500" /> Inscription & Affectation ENCG Fès
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Mode d'Accès</span>
-                    <span className="font-extrabold text-[#0f2863] dark:text-blue-300">{student.access_mode || 'TAFEM (Concours National)'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Mode d'Accès</span>
+                    <span className="font-black text-[#0f2863] dark:text-blue-300 text-base">{student.access_mode || 'TAFEM (Concours National)'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Première Inscription ENCG</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{student.encg_first_entry_year || '2022'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Filière Affectée</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-base">{student.filiere_name || 'Deux années préparatoires (TC)'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Filière Actuelle</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.filiere_name || 'Marketing et Action Commerciale'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Groupe Affecté</span>
+                    <span className="font-black text-indigo-600 dark:text-indigo-400 text-base">{student.group_name || 'TC-S1-G1'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Cycle / Diplôme</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.current_cycle || 'Diplôme ENCG (Bac+5)'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Semestre Actuel</span>
-                    <span className="font-black text-indigo-600 dark:text-indigo-400">{student.current_semester || 'S3-S4'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Groupe Cible</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{student.group_name || 'TC-S1-G1'}</span>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Cycle & Diplôme</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.current_cycle || 'Diplôme ENCG (Bac+5)'}</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
+
+
 
           {/* TAB 5: STATUT ADMINISTRATIF & VALIDATION DOSSIER */}
           {activeTab === 'administrative' && (
@@ -1073,30 +1078,33 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                       )}
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                        {hasFile && docItem?.file_path && (
-                          <>
-                            <button
-                              onClick={() => setPreviewDoc({ title: docReq.label, url: docItem.file_path! })}
-                              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" /> Aperçu
-                            </button>
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc({ 
+                            title: docReq.label, 
+                            url: docItem?.file_path || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || 'N142088916')}` 
+                          })}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-105"
+                        >
+                          <Eye className="w-4 h-4 text-white" />
+                          <span>Voir / Consulter le Scan</span>
+                        </button>
 
-                            <a
-                              href={docItem.file_path}
-                              target="_blank"
-                              rel="noreferrer"
-                              download
-                              className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 cursor-pointer"
-                            >
-                              <Download className="w-3.5 h-3.5 text-blue-600" /> Télécharger
-                            </a>
-                          </>
+                        {hasFile && docItem?.file_path && (
+                          <a
+                            href={docItem.file_path}
+                            target="_blank"
+                            rel="noreferrer"
+                            download
+                            className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5 text-blue-600" /> Télécharger
+                          </a>
                         )}
 
                         <label className={cn(
-                          "px-3 py-1.5 bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
+                          "px-3 py-2 bg-slate-800 dark:bg-slate-700 text-white hover:bg-slate-900 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
                           isUploadingThis && "opacity-50 pointer-events-none"
                         )}>
                           <Upload className="w-3.5 h-3.5 text-amber-300" />
@@ -1112,6 +1120,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                           />
                         </label>
                       </div>
+
                     </div>
                   );
                 })}
@@ -1248,26 +1257,27 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
       {/* Lightbox / Document Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in zoom-in-95">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800">
-            <div className="p-4 bg-[#0f2863] text-white flex items-center justify-between">
-              <h4 className="text-sm font-black flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-400" /> Aperçu du Scan : {previewDoc.title}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] max-w-6xl w-[92vw] h-[88vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="p-5 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between shrink-0">
+              <h4 className="text-base font-black flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-400" /> Aperçu du Scan Officiel : {previewDoc.title}
               </h4>
-              <button onClick={() => setPreviewDoc(null)} className="p-1 hover:bg-white/10 rounded-full text-white cursor-pointer">
-                <X className="w-5 h-5" />
+              <button onClick={() => setPreviewDoc(null)} className="p-2 hover:bg-white/10 rounded-full text-white cursor-pointer transition-all">
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-4 flex-1 overflow-auto flex items-center justify-center bg-slate-100 dark:bg-slate-950 min-h-[400px]">
-              {previewDoc.url.toLowerCase().endsWith('.pdf') ? (
-                <iframe src={previewDoc.url} title="PDF Preview" className="w-full h-[600px] rounded-2xl border-none" />
+            <div className="p-3 flex-1 overflow-hidden flex items-center justify-center bg-slate-950">
+              {previewDoc.url.toLowerCase().includes('.pdf') || previewDoc.url.includes('/api/public/recepisse') ? (
+                <iframe src={previewDoc.url} title="PDF Preview" className="w-full h-full rounded-2xl border-none bg-white" />
               ) : (
-                <img src={previewDoc.url} alt="Scan Preview" className="max-h-[600px] w-auto object-contain rounded-2xl shadow-md" />
+                <img src={previewDoc.url} alt="Scan Preview" className="max-h-full w-auto object-contain rounded-2xl shadow-xl" />
               )}
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

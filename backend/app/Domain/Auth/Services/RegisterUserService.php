@@ -21,14 +21,44 @@ class RegisterUserService
     public function registerUser(array $data, ?string $ipAddress = null): User
     {
         return DB::transaction(function () use ($data, $ipAddress) {
-            // 1. Create User
-            $user = User::create([
-                'name' => $data['first_name'] . ' ' . $data['last_name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
-                'phone' => $data['phone'],
-                'is_active' => true,
-            ]);
+            // 1. Create or Update User
+            $cneClean = strtoupper(trim($data['cne'] ?? ''));
+            $cinClean = strtoupper(trim($data['cin'] ?? ''));
+            $emailClean = strtolower(trim($data['email'] ?? ''));
+
+            $user = null;
+            if ($emailClean !== '') {
+                $user = User::where('email', $emailClean)->first();
+            }
+
+            if (!$user && ($cneClean !== '' || $cinClean !== '')) {
+                $existingApp = Application::where(function($q) use ($cneClean, $cinClean) {
+                    if ($cneClean) $q->where('cne', $cneClean);
+                    if ($cinClean) $q->orWhere('cin', $cinClean);
+                })->first();
+
+                if ($existingApp && !empty($existingApp->email)) {
+                    $user = User::where('email', strtolower($existingApp->email))->first();
+                }
+            }
+
+            if ($user) {
+                $user->update([
+                    'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                    'email' => $emailClean ?: $user->email,
+                    'password' => !empty($data['password']) ? Hash::make($data['password']) : $user->password,
+                    'phone' => $data['phone'] ?? $user->phone,
+                    'is_active' => true,
+                ]);
+            } else {
+                $user = User::create([
+                    'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                    'email' => $emailClean ?: ('candidat_' . strtolower($cneClean ?: uniqid()) . '@encg-fes.ma'),
+                    'password' => Hash::make($data['password'] ?? 'encg2026'),
+                    'phone' => $data['phone'] ?? null,
+                    'is_active' => true,
+                ]);
+            }
 
             // 2. Find an active Admission Campaign or create a default one
             $campaign = AdmissionCampaign::where('status', 'open')->first();
@@ -36,7 +66,7 @@ class RegisterUserService
             if (!$campaign) {
                 $institution = Institution::first();
                 $academicYear = AcademicYear::where('is_current', true)->first();
-                $filiereModel = Filiere::where('name', 'like', '%' . $data['filiere'] . '%')->first() 
+                $filiereModel = Filiere::where('name', 'like', '%' . ($data['filiere'] ?? '') . '%')->first() 
                                 ?? Filiere::first();
 
                 if ($institution && $academicYear && $filiereModel) {
@@ -53,39 +83,50 @@ class RegisterUserService
                 }
             }
 
-            if ($campaign) {
-                // 3. Create Application
-                Application::create([
-                    'admission_campaign_id' => $campaign->id,
-                    'reference_number' => 'ENCG-APP-' . date('Y') . '-' . strtoupper(uniqid()),
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
-                    'email' => $data['email'],
-                    'phone' => $data['phone'],
-                    'cin' => $data['cin'],
-                    'cne' => $data['cne'],
-                    'birth_date' => $data['birth_date'],
-                    'bac_average' => $data['bac_average'],
-                    'bac_year' => $data['bac_year'],
-                    'bac_series' => $data['bac_series'],
-                    'status' => 'submitted',
-                    // Handicap / Accessibilité (MESRSFC / RAMED)
-                    'has_disability' => $data['has_disability'] ?? false,
-                    'disability_type' => $data['disability_type'] ?? null,
-                    'disability_details' => $data['disability_details'] ?? null,
-                    // Parents & Contact d'urgence
-                    'father_phone' => $data['father_phone'] ?? null,
-                    'mother_phone' => $data['mother_phone'] ?? null,
-                    'parent_phone' => $data['parent_phone'] ?? $data['father_phone'] ?? null,
-                    'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
-                    'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
-                    // Fiche Médicale / Santé
-                    'allergy_type' => $data['allergy_type'] ?? null,
-                    'has_medical_followup' => $data['has_medical_followup'] ?? false,
-                    'medication_used' => $data['medication_used'] ?? null,
-                    'treating_doctor_info' => $data['treating_doctor_info'] ?? null,
-                ]);
+            // 3. Create or Update Application Record (Confirm Enrollment Intention)
+            $app = Application::where(function($q) use ($cneClean, $cinClean) {
+                if ($cneClean) $q->where('cne', $cneClean);
+                if ($cinClean) $q->orWhere('cin', $cinClean);
+            })->first();
+
+            $appFields = [
+                'admission_campaign_id' => $campaign ? $campaign->id : 1,
+                'first_name' => $data['first_name'] ?? '',
+                'last_name' => $data['last_name'] ?? '',
+                'email' => $emailClean ?: ($user->email ?? ''),
+                'phone' => $data['phone'] ?? null,
+                'cin' => $cinClean,
+                'cne' => $cneClean,
+                'birth_date' => (!empty($data['birth_date']) && strtotime($data['birth_date']) !== false) ? date('Y-m-d', strtotime($data['birth_date'])) : null,
+                'bac_average' => (!empty($data['bac_average']) && is_numeric($data['bac_average'])) ? (float)$data['bac_average'] : null,
+                'bac_year' => $data['bac_year'] ?? date('Y'),
+                'bac_series' => $data['bac_series'] ?? $data['bac_name'] ?? null,
+                'status' => 'enrolled',
+                // Handicap / Accessibilité
+                'has_disability' => $data['has_disability'] ?? false,
+                'disability_type' => $data['disability_type'] ?? null,
+                'disability_details' => $data['disability_details'] ?? null,
+                // Parents & Contact d'urgence
+                'father_phone' => $data['father_phone'] ?? null,
+                'mother_phone' => $data['mother_phone'] ?? null,
+                'parent_phone' => $data['parent_phone'] ?? $data['father_phone'] ?? null,
+                'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                // Fiche Médicale / Santé
+                'allergy_type' => $data['allergy_type'] ?? null,
+                'has_medical_followup' => $data['has_medical_followup'] ?? false,
+                'medication_used' => $data['medication_used'] ?? null,
+                'treating_doctor_info' => $data['treating_doctor_info'] ?? null,
+            ];
+
+
+            if ($app) {
+                $app->update($appFields);
+            } else {
+                $appFields['reference_number'] = 'ENCG-APP-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid())), 0, 6));
+                Application::create($appFields);
             }
+
 
             // 4. Send Confirmation Notification Email to Candidate Personal Email (e.g. Gmail)
             try {

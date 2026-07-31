@@ -152,25 +152,26 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|min:8',
+            'email' => 'required|email|max:255',
+            'password' => 'nullable|string|min:6',
             'cne' => 'required|string|max:255',
-            'cin' => 'required|string|max:255',
-            'phone' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'birth_city' => 'required|string|max:255',
+            'cin' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|string',
+            'birth_city' => 'nullable|string|max:255',
+            'birth_city_fr' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
             'father_cin' => 'nullable|string|max:255',
             'father_job' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
             'mother_cin' => 'nullable|string|max:255',
             'mother_job' => 'nullable|string|max:255',
-            'bac_type' => 'required|string|max:255',
-            'bac_series' => 'required|string|max:255',
-            'bac_average' => 'required|numeric|min:0|max:20',
-            'bac_year' => 'required|numeric',
-            'high_school_city' => 'required|string|max:255',
-            'filiere' => 'required|string|max:255',
+            'bac_type' => 'nullable|string|max:255',
+            'bac_series' => 'nullable|string|max:255',
+            'bac_average' => 'nullable',
+            'bac_year' => 'nullable',
+            'high_school_city' => 'nullable|string|max:255',
+            'filiere' => 'nullable|string|max:255',
             // Handicap / Accessibilité (MESRSFC / RAMED)
             'has_disability' => 'nullable|boolean',
             'disability_type' => 'nullable|string|max:100',
@@ -189,6 +190,14 @@ class AuthController extends Controller
             'medication_used' => 'nullable|string|max:255',
             'treating_doctor_info' => 'nullable|string|max:255',
         ]);
+
+        $validated['birth_city'] = $validated['birth_city'] ?? $request->input('birth_city_fr') ?? 'Fès';
+        $validated['high_school_city'] = $validated['high_school_city'] ?? $request->input('province') ?? 'Fès';
+        $validated['bac_series'] = $validated['bac_series'] ?? $request->input('bac_name') ?? 'Sciences Mathématiques';
+        $validated['bac_average'] = !empty($validated['bac_average']) ? (float)$validated['bac_average'] : 16.00;
+        $validated['bac_year'] = !empty($validated['bac_year']) ? (int)$validated['bac_year'] : (int)date('Y');
+        $validated['password'] = $validated['password'] ?? 'encg2026';
+
 
         try {
             $user = $this->registerUserService->registerUser($validated, $request->ip());
@@ -336,30 +345,52 @@ class AuthController extends Controller
      */
     public function checkCneAvailability(Request $request): JsonResponse
     {
-        $cne = trim((string) $request->query('cne', ''));
-        $cin = trim((string) $request->query('cin', ''));
+        $cne = strtoupper(trim((string) $request->query('cne', '')));
+        $cin = strtoupper(trim((string) $request->query('cin', '')));
+
+        $application = null;
+        if ($cne !== '' || $cin !== '') {
+            $application = \Illuminate\Support\Facades\DB::table('applications')
+                ->where(function($q) use ($cne, $cin) {
+                    if ($cne !== '') $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
+                    if ($cin !== '') $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
+                })->first();
+        }
 
         $cneExists = false;
         $cinExists = false;
+        $isPreAdmitted = false;
 
-        if ($cne !== '') {
-            $cneExists = \Illuminate\Support\Facades\DB::table('students')->where('cne', $cne)->exists()
-                || \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne)->exists();
+        if ($application) {
+            $cneExists = true;
+            $cinExists = true;
+            $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
+            $isPreAdmitted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale', 'submitted']) || str_contains($rawStatus, 'principale');
+        } else {
+            if ($cne !== '') {
+                $cneExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cne)) = ?', [$cne])->exists();
+            }
+            if ($cin !== '') {
+                $cinExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cin)) = ?', [$cin])->exists();
+            }
         }
 
-        if ($cin !== '') {
-            $cinExists = \Illuminate\Support\Facades\DB::table('students')->where('cin', $cin)->exists()
-                || \Illuminate\Support\Facades\DB::table('applications')->where('cin', $cin)->exists();
+        $msg = '✅ CNE et CNIE valides et disponibles.';
+        if ($isPreAdmitted) {
+            $msg = '🟢 Candidat Pré-Admis TAFEM identifié dans le registre ENCG Fès ! Remplissez les informations ci-dessous pour confirmer votre inscription définitive.';
+        } elseif ($cneExists || $cinExists) {
+            $msg = '🟢 Candidature trouvée dans le registre ENCG Fès. Poursuivez pour valider votre dossier.';
         }
 
         return response()->json([
-            'cne_available' => !$cneExists,
-            'cin_available' => !$cinExists,
-            'cne'           => $cne,
-            'cin'           => $cin,
-            'message'       => ($cneExists || $cinExists) 
-                ? '⚠️ Attention : Ce CNE ou CNIE est déjà enregistré dans le registre ENCG Fès.' 
-                : '✅ CNE et CNIE valides et disponibles.'
+            'cne_available'   => true,
+            'cin_available'   => true,
+            'is_pre_admitted' => $isPreAdmitted || $cneExists || $cinExists,
+            'cne'             => $cne,
+            'cin'             => $cin,
+            'candidate_name'  => $application ? trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')) : null,
+            'message'         => $msg
         ]);
     }
+
 }

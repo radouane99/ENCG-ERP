@@ -6,33 +6,36 @@ const AdminDashboard = lazy(() => import('./AdminDashboard'));
 const StudentDashboard = lazy(() => import('./StudentDashboard'));
 const ProfessorDashboard = lazy(() => import('./ProfessorDashboard'));
 const ExecutiveDashboard = lazy(() => import('./ExecutiveDashboard'));
+const CandidateDossierPortal = lazy(() => import('@features/public/components/CandidateDossierPortal'));
 
 const DashboardRouter: React.FC = () => {
   const { user } = useAuthStore();
 
   if (!user) return <LoadingScreen />;
 
-  const hasRole = (name: string) =>
-    user.roles?.some((r: any) => (typeof r === 'string' ? r === name : r.name === name));
+  const roles = (user.roles ?? []).map((r: any) => (typeof r === 'string' ? r : r.name || '').toLowerCase());
 
-  const isStudent = hasRole('student');
-  const isProfessor = hasRole('professor') || hasRole('vacataire');
-  const isAdmin = hasRole('admin');
-  const isDirector = hasRole('director');
+  const isAdmin = roles.some(r => ['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'scolarite'].includes(r));
+  const isDirector = roles.some(r => ['director', 'directeur'].includes(r));
+  const isProfessor = roles.some(r => ['professor', 'professeur', 'vacataire'].includes(r));
+  const isEnrolledStudent = roles.some(r => ['student', 'etudiant'].includes(r));
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      {isStudent ? (
-        <StudentDashboard />
-      ) : isProfessor ? (
-        <ProfessorDashboard />
+      {isAdmin ? (
+        <AdminDashboard />
       ) : isDirector ? (
         <ExecutiveDashboard />
+      ) : isProfessor ? (
+        <ProfessorDashboard />
+      ) : isEnrolledStudent ? (
+        <StudentDashboard />
       ) : (
-        <AdminDashboard />
+        <CandidateDossierPortal />
       )}
     </Suspense>
   );
 };
+
 
 export default DashboardRouter;

@@ -13,6 +13,7 @@ const VerifyDocument = lazy(() => import('@features/documents/pages/VerifyDocume
 const VerifyPv = lazy(() => import('@features/documents/pages/VerifyPv'))
 const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
 const InscriptionPage = lazy(() => import('@features/public/pages/InscriptionPage'))
+const ModifierDossierPage = lazy(() => import('@features/public/pages/ModifierDossierPage'))
 const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage')) // Fallback for now if it doesn't exist
 
 const StudentRouter = lazy(() => import('./StudentRouter'))
@@ -289,6 +290,7 @@ export default function RootRouter() {
         </Route>
 
         <Route path="/inscription" element={<RequireGuest><InscriptionPage /></RequireGuest>} />
+        <Route path="/mon-dossier/modifier" element={<ModifierDossierPage />} />
 
         {/* Public Utility Routes */}
         <Route path="/verify/document/:id" element={<VerifyDocument />} />

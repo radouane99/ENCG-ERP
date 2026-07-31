@@ -21,7 +21,9 @@ const STEPS = [
   { id: 1 as StepId, labelFr: 'Personnel & Identité', labelAr: 'الهوية والحساب', subFr: 'Infos personnelles & Résidence', subAr: 'المعلومات الشخصية وعنوان السكن', icon: User },
   { id: 2 as StepId, labelFr: 'Parents & Urgence', labelAr: 'الوالدين والاتصال', subFr: 'Tuteurs légaux & Urgence', subAr: 'معلومات الوالدين وهاتف الطوارئ', icon: Users },
   { id: 3 as StepId, labelFr: 'Parcours Académique', labelAr: 'المسار والتخصص', subFr: 'Baccalauréat & Filière ENCG', subAr: 'شهادة البكالوريا وشعبة ENCG', icon: GraduationCap },
+  { id: 4 as StepId, labelFr: 'Documents & Photos', labelAr: 'الوثائق والصورة', subFr: 'Bac, CNIE & Photo 35x45mm', subAr: 'البكالوريا، البطاقة والصورة الشخصية', icon: FileText },
 ];
+
 
 const FILIERES = [
   'Marketing & Commerce International',
@@ -407,7 +409,7 @@ function VirtualArabicKeyboardModal({
 }
 
 /* ── Main Page ── */
-export default function InscriptionPage() {
+export default function InscriptionPage({ editMode = false }: { editMode?: boolean }) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   
@@ -536,6 +538,61 @@ export default function InscriptionPage() {
     disability_details: '' as string,
   });
 
+  const { user } = useAuthStore();
+
+  // In editMode: load existing data from DB and pre-fill form
+  useEffect(() => {
+    if (!editMode) return;
+    const cne = (user as any)?.cne || '';
+    const cin = (user as any)?.cin || '';
+    if (!cne && !cin) return;
+    api.get('/public/track-dossier', { params: { cne, cin } })
+      .then(res => {
+        const cand = res.data?.candidate;
+        if (!cand) return;
+        setFormData(prev => ({
+          ...prev,
+          cne: cand.cne || cne,
+          cin: cand.cin || cin,
+          email: cand.email || '',
+          phone: cand.phone || '',
+          last_name_fr: cand.last_name || '',
+          first_name_fr: cand.first_name || '',
+          last_name_ar: cand.last_name_ar || '',
+          first_name_ar: cand.first_name_ar || '',
+          birth_date: cand.birth_date || '',
+          birth_city_fr: cand.birth_city || '',
+          birth_city_ar: cand.birth_city_ar || '',
+          gender: cand.gender || 'female',
+          family_status: cand.family_status || 'Célibataire',
+          nationality: cand.nationality || 'Marocain(e)',
+          address_fr: cand.address || '',
+          region: cand.region || 'Fès-Meknès',
+          province: cand.city || 'Fès',
+          father_last_name_fr: cand.father_name || '',
+          father_cin: cand.father_cin || '',
+          father_phone: cand.father_phone || '',
+          father_job: cand.father_profession || '',
+          mother_last_name_fr: cand.mother_name || '',
+          mother_cin: cand.mother_cin || '',
+          mother_phone: cand.mother_phone || '',
+          parent_phone: cand.parent_phone || '',
+          emergency_contact_name: cand.emergency_contact_name || '',
+          emergency_contact_phone: cand.emergency_contact_phone || '',
+          allergy_type: cand.allergy_type || '',
+          medication_used: cand.medication_used || '',
+          treating_doctor_info: cand.treating_doctor_info || '',
+          has_medical_followup: cand.has_medical_followup || false,
+          has_disability: cand.has_disability || false,
+          disability_details: cand.disability_details || '',
+          filiere: cand.filiere || 'Deux années préparatoires',
+          bac_average: cand.bac_average ? String(cand.bac_average) : '',
+          bac_name: cand.bac_type || 'Bac Sciences Mathématiques B - Option Français',
+        }));
+      })
+      .catch(() => {});
+  }, [editMode, user]);
+
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const [cneCheckStatus, setCneCheckStatus] = useState<{ cneAvailable: boolean; cinAvailable: boolean; message: string | null }>({
@@ -597,7 +654,7 @@ export default function InscriptionPage() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (step === 1) {
+    if (step === 1 && !editMode) {
       if (!cndpConsent) {
         setErrorMsg(lang === 'ar' ? 'يجب عليك الموافقة على معالجة البيانات الشخصية (القانون 09-08).' : 'Vous devez accepter le traitement de vos données personnelles conformément à la loi 09-08 (CNDP).');
         return;
@@ -606,7 +663,7 @@ export default function InscriptionPage() {
 
     if (step < 3) { goNext(); return; }
     
-    if (formData.password !== formData.password_confirmation) {
+    if (!editMode && formData.password !== formData.password_confirmation) {
       setErrorMsg('Les mots de passe ne correspondent pas.');
       return;
     }
@@ -625,22 +682,39 @@ export default function InscriptionPage() {
       ...formData,
       first_name,
       last_name,
+      first_name_ar: formData.first_name_ar,
+      last_name_ar: formData.last_name_ar,
+      birth_city: formData.birth_city_fr,
+      birth_city_ar: formData.birth_city_ar,
+      address: formData.address_fr,
+      father_name: `${formData.father_last_name_fr} ${formData.father_first_name_fr}`.trim(),
+      mother_name: `${formData.mother_last_name_fr} ${formData.mother_first_name_fr}`.trim(),
+      father_profession: formData.father_job,
+      mother_profession: formData.mother_job,
       full_name: `${first_name} ${last_name}`.trim(),
     };
 
     try {
-      const res = await api.post('/v1/auth/register', payload);
-      if (res.data.data?.token) {
-        // Store token in auth store (Zustand) — never in localStorage directly
-        useAuthStore.setState({
-          token: res.data.data.token,
-          user: res.data.data.user ?? null,
-          isAuthenticated: !!res.data.data.user,
-        });
+      if (editMode) {
+        // EDIT MODE: update existing dossier
+        await api.post('/public/update-candidate-dossier', payload);
+        setSubmitting(false);
+        toast.success('✅ Votre dossier a été mis à jour avec succès dans PostgreSQL !');
+        setTimeout(() => navigate('/dashboard'), 1500);
+      } else {
+        // NEW INSCRIPTION
+        const res = await api.post('/v1/auth/register', payload);
+        if (res.data.data?.token) {
+          useAuthStore.setState({
+            token: res.data.data.token,
+            user: res.data.data.user ?? null,
+            isAuthenticated: !!res.data.data.user,
+          });
+        }
+        setSubmitting(false);
+        setDone(true);
+        setTimeout(() => navigate('/login?registered=true'), 3000);
       }
-      setSubmitting(false);
-      setDone(true);
-      setTimeout(() => navigate('/login?registered=true'), 3000);
     } catch (err: any) {
       setSubmitting(false);
       setErrorMsg(err.response?.data?.message || 'Erreur lors de la soumission.');
@@ -964,12 +1038,18 @@ export default function InscriptionPage() {
                         <Field icon={Phone} label={isRTL ? 'الهاتف المحمول *' : 'Téléphone Portable *'} required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder={isRTL ? "مثال: 0612345678" : "Ex: 0612345678"} isRtl={isRTL} />
                       </div>
 
-                      {cneCheckStatus.message && (!cneCheckStatus.cneAvailable || !cneCheckStatus.cinAvailable) && (
-                        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2 mt-3 animate-in fade-in">
-                          <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+                      {cneCheckStatus.message && (
+                        <div className={cn(
+                          "p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2.5 mt-3 animate-in fade-in transition-all shadow-xs border",
+                          cneCheckStatus.message.includes('🟢')
+                            ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200"
+                            : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
+                        )}>
+                          <Shield className={cn("w-4 h-4 shrink-0", cneCheckStatus.message.includes('🟢') ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600")} />
                           <span>{cneCheckStatus.message}</span>
                         </div>
                       )}
+
                     </SectionCard>
 
                     {/* Section 2: Nom & Prénom en FR & AR */}
