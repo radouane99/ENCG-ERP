@@ -8,18 +8,18 @@
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px; border-bottom: 2px solid #0f2863; padding-bottom: 10px;">
             <tr>
                 <td width="70%">
-                    <div style="font-size: 13px; font-weight: bold; color: #0f2863;">جامعة سيدي محمد بن عبد الله بفاس</div>
-                    <div style="font-size: 11px; font-weight: bold; color: #0f2863;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
-                    <div style="font-size: 13px; font-weight: bold; color: #990000; margin-top: 3px;">المدرسة الوطنية للتجارة والتسيير بفاس</div>
-                    <div style="font-size: 11px; font-weight: bold; color: #990000;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
+                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
+                    <div style="font-size: 12px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
+                    <div style="font-size: 12px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 3px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                 </td>
                 <td width="30%" style="text-align: right;">
                     @if(!empty($qrBase64))
-                        <img src="{{ $qrBase64 }}" style="width: 90px; height: 90px; border: 1px solid #cbd5e1; padding: 3px; background: #fff;" alt="QR Code Verification" />
+                        <img src="{{ $qrBase64 }}" style="width: 85px; height: 85px; border: 1px solid #cbd5e1; padding: 3px; background: #fff;" alt="QR Code Verification" />
                     @endif
                 </td>
             </tr>
         </table>
+
 
         <!-- Document Title -->
         <div style="text-align: center; margin: 15px 0;">

@@ -76,7 +76,16 @@ Le système est divisé en plusieurs grands pôles interactifs :
 - **Système de Procès-Verbal d'Incident & Fraude (PDF)** : Déclaration rapide des fraudes et incidents avec édition du PV officiel disciplinaire.
 - **Exportation ZIP par Filière** : Génération en 1 clic d'une archive `.zip` regroupant toutes les convocations PDF d'une promotion.
 
+### 3.7. Module d'Admission, Suivi de Candidature TAFEM/TAFSEM & Pré-Inscriptions
+*Objectif : Dématérialiser 100% de la procédure d'admission et d'inscription.*
+- **Importation & Parsing du Ministère TAFEM/TAFSEM** : Parser CSV/Excel hautement tolérant aux encodages (UTF-8, Windows-1252) créant simultanément les candidatures (`applications`), comptes (`users`) et fiches (`students`).
+- **Suivi de Candidature en Temps Réel (`/public/track-dossier`)** : Recherche souple avec insensibilité à la casse `UPPER(TRIM(...))` permettant aux candidats de vérifier leur admissibilité par Code MASSAR ou CNIE.
+- **Récépissé de Pré-Inscription & Convocation PDF (QR Code)** : Édition du document officiel (`recepisse_tafem.blade.php`) avec rendez-vous au guichet (01 Sept. 2026 @ 09h), checklist des pièces physiques et QR Code SVG pour le contrôle sécurité à la porte.
+- **Service d'Envoi d'Emailing Automatique (Resend Transport)** : Notification automatique via Mailable `StudentRegistrationSuccessMail` avec template HTML responsive.
+- **Dossier Numérique d'Inscription Définitive (`/inscription`)** : Parcours en 3 étapes (Identité, Tuteurs légaux/urgence, Santé/Handicap et choix de spécialité).
+
 ---
+
 
 ## 4. Les Portails "Self-Service" (Espaces Utilisateurs)
 

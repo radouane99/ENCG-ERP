@@ -155,9 +155,17 @@ C'est le module le plus critique et complexe du système, basé sur le modèle `
   - **Gestion des Dérogations du Conseil d'Établissement** : Numérisation des réinscriptions exceptionnelles avec numéros de référence officiels.
   - **Notifications Email Resend (`ReservisteRetakeNotificationMail`)** : Expédition automatique en 1-clic de convocations emails HTML responsive récapitulant les modules en dette.
 
+- **Module d'Admission, Suivi de Candidature TAFEM/TAFSEM & Pré-Inscriptions (`/admissions/candidatures` & `/public/track-dossier`)** :
+  - **Importation & Parsing de la Liste du Ministère TAFEM** : Importation automatisée des listes officielles CSV/Excel (`TafemMinistryImportController`) avec normalisation d'encodage et création simultanée des candidatures (`applications`), des comptes utilisateurs (`users`) et fiches étudiants (`students`).
+  - **Système de Suivi du Dossier en Temps Réel (`trackCandidateDossier`)** : Recherche souple (`UPPER(TRIM(...))`) de l'admissibilité (Liste Principale ou Liste d'Attente) sur les tables `applications` et `students` via la jointure `student_pathways`.
+  - **Génération du Récépissé Officiel de Pré-Inscription & Convocation (PDF avec QR Code)** : Génération dynamique via Dompdf (`recepisse_tafem.blade.php`) incluant les logos officiels, le rendez-vous au guichet (01 Sept. 2026 @ 09h), la checklist des pièces physiques et un **QR Code de vérification** pour le contrôle d'accès sécurité.
+  - **Notification Automatique par Email (Resend Transport)** : Envoi automatique de la convocation via le Mailable `StudentRegistrationSuccessMail` et l'infrastructure Resend (`no-reply@benadadarentcar.com`).
+  - **Parcours d'Inscription Définitive en 3 Étapes (`/inscription`)** : Dématérialisation complète du dossier numérique (Identité, Tuteurs légaux, Contact d'urgence, Fiche santé/handicap et choix de filière).
+
 ---
 
 ## 4. Architecture de l'API RESTful (Backend Laravel)
+
 
 Le système communique de manière découplée via une API JSON sécurisée par **Laravel Sanctum**. 
 
