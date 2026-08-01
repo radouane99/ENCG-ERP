@@ -337,145 +337,112 @@ class GeminiApiService
             default => 'Analyze this Moroccan Baccalaureate Certificate. Extract strictly raw valid JSON with keys: first_name_fr, last_name_fr, first_name_ar, last_name_ar, cne, cin, bac_type, bac_mention, academy, prefecture.'
         };
 
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $promptText . ' Output ONLY valid raw JSON.'],
-                        [
-                            'inline_data' => [
-                                'mime_type' => $mimeType,
-                                'data' => $fileBytes,
-                            ]
-                        ]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'temperature' => 0.1,
-                'responseMimeType' => 'application/json',
-            ]
-        ];
 
         // ==========================================
-        // TIER 1: PRIMARY ENGINE — Groq Llama 3.2 Vision (~0.8s)
+        // TIER 1: GROQ VISION ENGINE (qwen/qwen3.6-27b)
         // ==========================================
-        $groqKey = trim((string)(env('GROQ_API_KEY') ?: config('services.groq.key')));
-        if (empty($groqKey) || str_contains($groqKey, 'fNPZH')) {
-            $groqKey = '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';
-        }
-        $groqKey = trim(str_replace(['"', "'", "\r", "\n", " "], '', $groqKey));
+        $groqKey = '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';
 
-        if (!empty($groqKey)) {
-            $jpegScan = $this->extractImageFromPdf($filePath);
-            $imagePayloadBytes = $jpegScan ? base64_encode($jpegScan) : $fileBytes;
-            $imageMime = $jpegScan ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg'));
+        $jpegScan = $this->extractImageFromPdf($filePath);
+        $imagePayloadBytes = $jpegScan ? base64_encode($jpegScan) : $fileBytes;
+        $imageMime = $jpegScan ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg'));
 
-            Log::info("Triggering Primary Engine: Groq Vision (Llama 3.2) for {$docType}...");
-            $groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
-            $groqVisionModels = ['llama-3.2-11b-vision-instruct', 'llama-3.2-90b-vision-instruct'];
-
-            foreach ($groqVisionModels as $vModel) {
-                $groqVisionPayload = [
-                    'model' => $vModel,
-                    'messages' => [
-                        [
-                            'role' => 'user',
-                            'content' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => $promptText . ' Output ONLY valid raw JSON.'
-                                ],
-                                [
-                                    'type' => 'image_url',
-                                    'image_url' => [
-                                        'url' => "data:{$imageMime};base64,{$imagePayloadBytes}"
-                                    ]
+        try {
+            Log::info("Triggering Primary Engine: Groq Vision (qwen/qwen3.6-27b) for {$docType}...");
+            $gRes = Http::timeout(25)->withHeaders([
+                'Authorization' => 'Bearer ' . $groqKey,
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'qwen/qwen3.6-27b',
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => $promptText . ' Output ONLY valid raw JSON. Do not add markdown backticks.'
+                            ],
+                            [
+                                'type' => 'image_url',
+                                'image_url' => [
+                                    'url' => "data:{$imageMime};base64,{$imagePayloadBytes}"
                                 ]
                             ]
                         ]
-                    ],
-                    'temperature' => 0.1,
-                    'response_format' => ['type' => 'json_object']
-                ];
+                    ]
+                ],
+                'temperature' => 0.1,
+                'response_format' => ['type' => 'json_object']
+            ]);
 
-                try {
-                    $gRes = Http::timeout(25)->withToken($groqKey)->post($groqUrl, $groqVisionPayload);
-                    if ($gRes->successful()) {
-                        $rawJson = trim($gRes->json('choices.0.message.content') ?? '');
-                        $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
-                        $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
-                        $decodedG = json_decode($rawJson, true);
-                        if (is_array($decodedG) && count(array_filter($decodedG, fn($v) => !empty($v))) > 0) {
-                            Log::info("Groq Vision {$vModel} Primary OCR Success!", $decodedG);
-                            return $decodedG;
-                        }
-                    } else {
-                        $err = "Groq API [{$vModel}] HTTP " . $gRes->status() . ": " . substr($gRes->body(), 0, 250);
-                        $this->lastError = $err;
-                        Log::warning($err);
-                    }
-                } catch (\Throwable $ex) {
-                    $this->lastError = "Groq Exception: " . $ex->getMessage();
-                    Log::error($this->lastError);
+            if ($gRes->successful()) {
+                $rawJson = trim($gRes->json('choices.0.message.content') ?? '');
+                $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
+                $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
+                $decodedG = json_decode($rawJson, true);
+                if (is_array($decodedG) && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                    Log::info('Groq Vision (qwen/qwen3.6-27b) OCR Success!', $decodedG);
+                    return $decodedG;
+                }
+            } else {
+                Log::warning("Groq Vision HTTP " . $gRes->status() . ": " . substr($gRes->body(), 0, 200));
+            }
+        } catch (\Throwable $ex) {
+            Log::error("Groq Vision Exception: " . $ex->getMessage());
+        }
+
+        // ==========================================
+        // TIER 2: GROQ TEXT ENGINE (llama-3.3-70b-versatile)
+        // ==========================================
+        $raw = @file_get_contents($filePath) ?: '';
+        $extractedText = '';
+
+        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $mText)) {
+            $extractedText .= implode(' ', $mText[1]) . "\n";
+        }
+        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
+            foreach ($streams[1] as $st) {
+                $dec = @gzuncompress($st) ?: @gzinflate($st);
+                if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
+                    $extractedText .= implode(' ', $m2[1]) . "\n";
                 }
             }
         }
 
-        // (Gemini Vision Tier disabled per user request: ONLY Groq Vision is active)
+        $docContent = "Nom du fichier : " . ($originalName ?: basename($filePath)) . "\nContenu du document :\n" . $extractedText;
 
-        // ==========================================
-        // TIER 3: REGEX PATTERN PARSER (Last Resort)
-        // ==========================================
-        Log::info('Fallback Engine Triggered: Regex Pattern Parsing...');
+        try {
+            $gResText = Http::timeout(15)->withHeaders([
+                'Authorization' => 'Bearer ' . $groqKey,
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'Vous êtes un assistant OCR certifié de l\'administration de l\'ENCG Fès. ' . $promptText
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $docContent
+                    ]
+                ],
+                'temperature' => 0.1,
+                'response_format' => ['type' => 'json_object']
+            ]);
 
-            // Fallback: Groq Text Model Llama-3.3-70b
-            $raw = @file_get_contents($filePath) ?: '';
-            $extractedText = '';
-
-            if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $mText)) {
-                $extractedText .= implode(' ', $mText[1]) . "\n";
-            }
-            if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-                foreach ($streams[1] as $st) {
-                    $dec = @gzuncompress($st) ?: @gzinflate($st);
-                    if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
-                        $extractedText .= implode(' ', $m2[1]) . "\n";
-                    }
+            if ($gResText->successful()) {
+                $rawJson = trim($gResText->json('choices.0.message.content') ?? '');
+                $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
+                $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
+                $decodedG = json_decode($rawJson, true);
+                if (is_array($decodedG) && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                    Log::info('Groq Llama-3.3-70b Text OCR Success!', $decodedG);
+                    return $decodedG;
                 }
             }
-
-            if (!empty(trim($extractedText))) {
-                $groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
-                $groqTextPayload = [
-                    'model' => 'llama-3.3-70b-versatile',
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Vous êtes un assistant OCR de l\'administration de l\'ENCG Fès. Analysez le texte du document officiel marocain ci-dessous et retournez STRICTEMENT un objet JSON valide avec les clés : last_name_fr, first_name_fr, last_name_ar, first_name_ar, cin, cne, birth_date, birth_city_fr, bac_average, bac_mention, bac_type, high_school.'
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => "Nom du fichier : " . basename($filePath) . "\n\nTexte extrait du document :\n" . $extractedText
-                        ]
-                    ],
-                    'temperature' => 0.1,
-                    'response_format' => ['type' => 'json_object']
-                ];
-
-                try {
-                    $gRes = Http::timeout(15)->withToken($this->groqApiKey)->post($groqUrl, $groqTextPayload);
-                    if ($gRes->successful()) {
-                        $rawJson = trim($gRes->json('choices.0.message.content') ?? '');
-                        $decodedG = json_decode($rawJson, true);
-                        if (is_array($decodedG) && (!empty($decodedG['first_name_fr']) || !empty($decodedG['cne']) || !empty($decodedG['cin']))) {
-                            Log::info('Groq Llama-3.3 Text OCR Success!', $decodedG);
-                            return $decodedG;
-                        }
-                    }
-                } catch (\Exception $ex) {
-                    Log::warning('Groq Text OCR Exception: ' . $ex->getMessage());
-            }
+        } catch (\Throwable $ex) {
+            Log::error("Groq Text Exception: " . $ex->getMessage());
         }
 
         // 3. Document Stream Parser (Extract CNE, CIN & attributes directly from file without static sample arrays)

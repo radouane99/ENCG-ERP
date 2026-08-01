@@ -368,10 +368,16 @@ class AuthController extends Controller
             $isPreAdmitted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale', 'submitted']) || str_contains($rawStatus, 'principale');
         } else {
             if ($cne !== '') {
-                $cneExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cne)) = ?', [$cne])->exists();
+                if (\Illuminate\Support\Facades\Schema::hasColumn('students', 'cne')) {
+                    $cneExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cne)) = ?', [$cne])->exists();
+                }
             }
             if ($cin !== '') {
-                $cinExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cin)) = ?', [$cin])->exists();
+                if (\Illuminate\Support\Facades\Schema::hasColumn('students', 'cin')) {
+                    $cinExists = \Illuminate\Support\Facades\DB::table('students')->whereRaw('UPPER(TRIM(cin)) = ?', [$cin])->exists();
+                } else if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'cin')) {
+                    $cinExists = \Illuminate\Support\Facades\DB::table('users')->whereRaw('UPPER(TRIM(cin)) = ?', [$cin])->exists();
+                }
             }
         }
 
