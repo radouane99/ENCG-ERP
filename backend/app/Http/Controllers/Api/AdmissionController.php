@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\Academic\AdmissionService;
 
 class AdmissionController extends Controller
@@ -971,37 +972,58 @@ class AdmissionController extends Controller
      */
     public function extractDocumentDataOcr(Request $request): JsonResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'type' => 'nullable|string',
-        ]);
+        try {
+            if (!$request->hasFile('file')) {
+                return response()->json(['success' => false, 'message' => 'Aucun fichier fourni.'], 400);
+            }
 
-        $file = $request->file('file');
-        $realPath = $file->getRealPath();
-        $mimeType = $file->getClientMimeType();
+            $file = $request->file('file');
+            $realPath = $file->getRealPath();
+            $mimeType = $file->getClientMimeType() ?: 'application/pdf';
+            $originalName = $file->getClientOriginalName();
 
-        $originalName = $file->getClientOriginalName();
+            $docType = $request->input('doc_type', $request->input('type', 'bac'));
 
-        /** @var \App\Services\AI\GeminiApiService $geminiService */
-        $geminiService = app(\App\Services\AI\GeminiApiService::class);
-        $realTimeOcr = $geminiService->extractDocumentOcr($realPath, $mimeType, $originalName);
+            /** @var \App\Services\AI\GeminiApiService $geminiService */
+            $geminiService = app(\App\Services\AI\GeminiApiService::class);
+            $realTimeOcr = $geminiService->extractDocumentOcr($realPath, $mimeType, $originalName, $docType);
 
-        if (empty($realTimeOcr)) {
+            Log::info('OCR_RAW_RESPONSE', [
+                'data' => $realTimeOcr,
+                'error' => $geminiService->getLastError(),
+                'filename' => $originalName
+            ]);
+
+            if (empty($realTimeOcr)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'IA OCR Warning: Impossible d\'extraire les données.',
+                    'error_details' => $geminiService->getLastError() ?: 'Fichier non lisible.',
+                    'ocr_data' => null
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_realtime' => true,
+                'message' => 'Extraction réussie !',
+                'ocr_data' => $realTimeOcr,
+                'ai_debug_error' => $geminiService->getLastError()
+            ], 200);
+
+        } catch (\Throwable $e) {
+            Log::error('OCR_CONTROLLER_CRASH: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => '❌ L\'IA Vision OCR n\'a pas pu extraire les données de ce document.',
-                'error_details' => $geminiService->getLastError() ?: 'Les API Gemini / Groq ont renvoyé une erreur ou n\'ont pas pu lire ce document.',
-                'ocr_data' => null,
-            ], 422);
+                'message' => 'Erreur lors du traitement OCR: ' . $e->getMessage(),
+                'ocr_data' => null
+            ], 200);
         }
-
-        return response()->json([
-            'success' => true,
-            'is_realtime' => true,
-            'message' => '✅ Extraction OCR par l\'IA réussie avec succès !',
-            'ocr_data' => $realTimeOcr,
-            'ai_debug_error' => $geminiService->getLastError(),
-        ]);
     }
 
     /**

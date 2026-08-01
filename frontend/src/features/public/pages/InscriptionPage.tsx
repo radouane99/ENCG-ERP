@@ -625,12 +625,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     }
 
     setOcrExtracting(true);
-    const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction des données de ${file.name}...`);
+    const toastId = toast.loading(`🤖 Groq Llama 3.2 Vision AI: Extraction des données de ${file.name}...`);
 
     try {
+      const targetType = docType === 'cnie' ? 'cin' : (docType === 'releve_notes' ? 'releve' : 'bac');
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('type', docType);
+      fd.append('type', targetType);
+      fd.append('doc_type', targetType);
 
       const res = await api.post('/public/ocr-extract-documents', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -638,13 +640,18 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
       const ocr = res.data?.ocr_data || {};
 
+      const extractedFirstName = ocr.first_name_fr || ocr.first_name || '';
+      const extractedLastName = ocr.last_name_fr || ocr.last_name || '';
+      const extractedCin = ocr.cin || ocr.cnie || '';
+      const extractedCne = ocr.cne || ocr.code_massar || '';
+
       const resultData = {
         doc_type_label: docType === 'bac' ? 'Baccalauréat Original' : (docType === 'cnie' ? 'Carte Nationale (CNIE)' : 'Relevé de Notes du Bac'),
         file_name: file.name,
-        cne: ocr.cne || formData.cne || 'En attente',
-        cin: ocr.cin || formData.cin || 'En attente',
-        last_name_fr: ocr.last_name_fr || formData.last_name_fr || '',
-        first_name_fr: ocr.first_name_fr || formData.first_name_fr || '',
+        cne: extractedCne || formData.cne || 'En attente',
+        cin: extractedCin || formData.cin || 'En attente',
+        last_name_fr: extractedLastName || formData.last_name_fr || '',
+        first_name_fr: extractedFirstName || formData.first_name_fr || '',
         last_name_ar: ocr.last_name_ar || formData.last_name_ar || '',
         first_name_ar: ocr.first_name_ar || formData.first_name_ar || '',
         birth_date: ocr.birth_date || formData.birth_date || '',
@@ -658,18 +665,29 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
       setFormData(prev => ({
         ...prev,
-        cne: ocr.cne || prev.cne,
-        cin: ocr.cin || prev.cin,
-        last_name_fr: ocr.last_name_fr || prev.last_name_fr,
-        first_name_fr: ocr.first_name_fr || prev.first_name_fr,
+        // Identity Attributes
+        cne: extractedCne || prev.cne,
+        cin: extractedCin || prev.cin,
+        last_name_fr: extractedLastName || prev.last_name_fr,
+        first_name_fr: extractedFirstName || prev.first_name_fr,
         last_name_ar: ocr.last_name_ar || prev.last_name_ar,
         first_name_ar: ocr.first_name_ar || prev.first_name_ar,
         birth_date: ocr.birth_date || prev.birth_date,
         birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
+        birth_city_ar: ocr.birth_city_ar || prev.birth_city_ar,
+
+        // Parents & Tuteurs Attributes
+        father_last_name_fr: ocr.father_name_fr || ocr.father_first_name_fr || prev.father_last_name_fr,
+        mother_last_name_fr: ocr.mother_name_fr || ocr.mother_first_name_fr || prev.mother_last_name_fr,
+        address_fr: ocr.address_fr || ocr.address || prev.address_fr,
+
+        // Parcours Académique Attributes
         bac_average: ocr.bac_average || prev.bac_average,
         bac_mention: ocr.bac_mention || prev.bac_mention,
         bac_name: ocr.bac_type || prev.bac_name,
         high_school: ocr.high_school || prev.high_school,
+        academy: ocr.academy || prev.academy,
+        province: ocr.prefecture || ocr.province || prev.province,
       }));
 
       setExtractedDataResult(resultData);
@@ -2311,7 +2329,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                 </div>
                 <div>
                   <h3 className="font-extrabold text-base text-amber-300">
-                    {isRTL ? 'نتائج استخراج البيانات بالذكاء الاصطناعي (Gemini Vision OCR)' : 'Résultats de l\'Extraction OCR Gemini 1.5 Flash Vision'}
+                    {isRTL ? 'نتائج استخراج البيانات بالذكاء الاصطناعي (Groq Llama 3.2 Vision)' : 'Résultats de l\'Extraction OCR Groq Llama 3.2 Vision'}
                   </h3>
                   <p className="text-xs text-amber-200 font-extrabold flex items-center gap-1.5 mt-0.5">
                     <span>📄 Document Analysé :</span>

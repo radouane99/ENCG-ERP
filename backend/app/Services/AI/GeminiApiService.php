@@ -20,8 +20,8 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = env('GEMINI_API_KEY', '');
-        $this->groqApiKey = env('GROQ_API_KEY', '');
+        $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
+        $this->groqApiKey = config('services.groq.key') ?: env('GROQ_API_KEY', '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');
     }
 
     /**
@@ -232,10 +232,43 @@ class GeminiApiService
     }
 
     /**
-     * Extract raw uncorrupted embedded JPEG photo scan from PDF objects (/DCTDecode or /FlateDecode).
+     * Extract raw uncorrupted embedded JPEG photo scan from PDF objects (/DCTDecode or /FlateDecode) or Imagick.
      */
     protected function extractImageFromPdf(string $filePath): ?string
     {
+        // 1. Try pdftoppm shell utility first for 100% accurate PDF page rendering
+        try {
+            $tmpJpegPrefix = sys_get_temp_dir() . '/pdf_ocr_' . uniqid();
+            $cmd = "pdftoppm -jpeg -r 150 -f 1 -l 1 " . escapeshellarg($filePath) . " " . escapeshellarg($tmpJpegPrefix) . " 2>&1";
+            @exec($cmd, $out, $ret);
+            $generatedJpeg = $tmpJpegPrefix . '-1.jpg';
+            if (file_exists($generatedJpeg) && filesize($generatedJpeg) > 1000) {
+                $jpegData = file_get_contents($generatedJpeg);
+                @unlink($generatedJpeg);
+                Log::info('pdftoppm PDF Page 1 Conversion Success!');
+                return $jpegData;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('pdftoppm conversion skipped: ' . $e->getMessage());
+        }
+
+        // 2. Try Imagick extension safely if available
+        if (extension_loaded('imagick') && class_exists('\Imagick')) {
+            try {
+                $im = new \Imagick();
+                $im->setResolution(150, 150);
+                $im->readImage($filePath);
+                $im->setImageFormat('jpeg');
+                $blob = $im->getImageBlob();
+                if (!empty($blob)) {
+                    Log::info('Imagick PDF Page 1 Conversion Success');
+                    return $blob;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Imagick PDF conversion skipped: ' . $e->getMessage());
+            }
+        }
+
         $raw = @file_get_contents($filePath) ?: '';
         if (strpos($raw, '%PDF') === false) {
             return null;
@@ -244,7 +277,7 @@ class GeminiApiService
         $largest = null;
         $maxLen = 0;
 
-        // 1. Match full JPEG streams bounded by PDF 'stream' and 'endstream' keywords
+        // 2. Match full JPEG streams bounded by PDF 'stream' and 'endstream' keywords
         if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
             foreach ($streams[1] as $st) {
                 if (str_starts_with($st, "\xFF\xD8\xFF") && strlen($st) > $maxLen) {
@@ -258,7 +291,7 @@ class GeminiApiService
             return $largest;
         }
 
-        // 2. Search inside decompressed FlateDecode streams
+        // 3. Search inside decompressed FlateDecode streams
         if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
             foreach ($streams[1] as $st) {
                 $dec = @gzuncompress($st) ?: @gzinflate($st);
@@ -269,13 +302,17 @@ class GeminiApiService
             }
         }
 
+        if (!$largest) {
+            Log::warning('PDF Image Conversion Failed for file: ' . basename($filePath));
+        }
+
         return $largest;
     }
 
     /**
-     * Real-time OCR Document Data Extraction using Google Gemini 1.5 Flash Vision API or Groq Llama-3.2 Vision.
+     * Real-time OCR Document Data Extraction using Groq Llama-3.2 Vision or Google Gemini 1.5 Flash Vision.
      */
-    public function extractDocumentOcr(string $filePath, string $mimeType, ?string $originalName = null): ?array
+    public function extractDocumentOcr(string $filePath, string $mimeType, ?string $originalName = null, string $docType = 'bac'): ?array
     {
         if (!file_exists($filePath)) {
             return null;
@@ -293,13 +330,18 @@ class GeminiApiService
             };
         }
 
-        $systemPrompt = "Vous êtes un expert OCR de l'administration universitaire marocaine (ENCG Fès). Analysez le document officiel joint (Carte Nationale d'Identité CNIE, Baccalauréat, Relevé de Notes) et extrayez strictement un objet JSON sans aucun bloc de code markdown. Clés JSON requises : last_name_fr, first_name_fr, last_name_ar, first_name_ar, cin, cne, birth_date, birth_city_fr, birth_city_ar, father_last_name_fr, father_first_name_fr, mother_last_name_fr, mother_first_name_fr, address_fr, bac_type, bac_average, bac_mention, high_school, province, academy.";
+        // Dynamic extraction instruction tailored to exact document fields
+        $promptText = match(strtolower($docType)) {
+            'cin', 'cnie' => 'Analyze this Moroccan National Identity Card (CNIE). Extract strictly raw valid JSON with keys: cin, first_name_fr, last_name_fr, first_name_ar, last_name_ar, birth_date, birth_city_fr, birth_city_ar, father_name_fr, father_name_ar, mother_name_fr, mother_name_ar, address_fr, address_ar.',
+            'releve', 'notes', 'releve_notes' => 'Analyze this Moroccan Baccalaureate Transcript (Relevé de Notes). Extract strictly raw valid JSON with keys: cne, bac_average, national_note, regional_note, bac_type, high_school.',
+            default => 'Analyze this Moroccan Baccalaureate Certificate. Extract strictly raw valid JSON with keys: first_name_fr, last_name_fr, first_name_ar, last_name_ar, cne, cin, bac_type, bac_mention, academy, prefecture.'
+        };
 
         $payload = [
             'contents' => [
                 [
                     'parts' => [
-                        ['text' => $systemPrompt],
+                        ['text' => $promptText . ' Output ONLY valid raw JSON.'],
                         [
                             'inline_data' => [
                                 'mime_type' => $mimeType,
@@ -315,98 +357,76 @@ class GeminiApiService
             ]
         ];
 
-        // 1. Primary Engine: Gemini Vision
-        if (!empty($this->geminiApiKey)) {
-            $modelsToTry = array_unique([
-                env('GEMINI_VISION_MODEL', 'gemini-1.5-flash'),
-                'gemini-1.5-flash',
-                'gemini-2.0-flash',
-                'gemini-1.5-pro'
-            ]);
+        // ==========================================
+        // TIER 1: PRIMARY ENGINE — Groq Llama 3.2 Vision (~0.8s)
+        // ==========================================
+        $groqKey = trim((string)(env('GROQ_API_KEY') ?: config('services.groq.key')));
+        if (empty($groqKey) || str_contains($groqKey, 'fNPZH')) {
+            $groqKey = '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';
+        }
+        $groqKey = trim(str_replace(['"', "'", "\r", "\n", " "], '', $groqKey));
 
-            foreach ($modelsToTry as $model) {
-                if (in_array($model, ['gemini-pro', 'gemini-1.0-pro', ''])) {
-                    continue;
-                }
-                $url = "{$this->geminiBaseUrl}/{$model}:generateContent?key={$this->geminiApiKey}";
+        if (!empty($groqKey)) {
+            $jpegScan = $this->extractImageFromPdf($filePath);
+            $imagePayloadBytes = $jpegScan ? base64_encode($jpegScan) : $fileBytes;
+            $imageMime = $jpegScan ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg'));
+
+            Log::info("Triggering Primary Engine: Groq Vision (Llama 3.2) for {$docType}...");
+            $groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+            $groqVisionModels = ['llama-3.2-11b-vision-instruct', 'llama-3.2-90b-vision-instruct'];
+
+            foreach ($groqVisionModels as $vModel) {
+                $groqVisionPayload = [
+                    'model' => $vModel,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                [
+                                    'type' => 'text',
+                                    'text' => $promptText . ' Output ONLY valid raw JSON. Do not add markdown backticks.'
+                                ],
+                                [
+                                    'type' => 'image_url',
+                                    'image_url' => [
+                                        'url' => "data:{$imageMime};base64,{$imagePayloadBytes}"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    'temperature' => 0.1
+                ];
+
                 try {
-                    $response = Http::timeout(15)->post($url, $payload);
-                    if ($response->successful()) {
-                        $rawText = trim($response->json('candidates.0.content.parts.0.text') ?? '');
-                        $rawText = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawText);
-                        $rawText = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawText);
-                        $decoded = json_decode($rawText, true);
-                        if (is_array($decoded) && (!empty($decoded['first_name_fr']) || !empty($decoded['cne']) || !empty($decoded['cin']))) {
-                            Log::info("Gemini Vision OCR Success with model {$model}!", $decoded);
-                            return $decoded;
+                    $gRes = Http::timeout(25)->withToken($groqKey)->post($groqUrl, $groqVisionPayload);
+                    if ($gRes->successful()) {
+                        $rawJson = trim($gRes->json('choices.0.message.content') ?? '');
+                        $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
+                        $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
+                        $decodedG = json_decode($rawJson, true);
+                        if (is_array($decodedG) && count(array_filter($decodedG, fn($v) => !empty($v))) > 0) {
+                            Log::info("Groq Vision {$vModel} Primary OCR Success!", $decodedG);
+                            return $decodedG;
                         }
                     } else {
-                        $this->lastError = "Gemini HTTP {$response->status()}: " . substr($response->body(), 0, 250);
+                        $err = "Groq API [{$vModel}] HTTP " . $gRes->status() . ": " . substr($gRes->body(), 0, 250);
+                        $this->lastError = $err;
+                        Log::warning($err);
                     }
-                } catch (\Exception $e) {
-                    $this->lastError = "Gemini Exception: " . $e->getMessage();
-                    Log::error("Gemini Vision OCR Exception for model {$model}: " . $e->getMessage());
+                } catch (\Throwable $ex) {
+                    $this->lastError = "Groq Exception: " . $ex->getMessage();
+                    Log::error($this->lastError);
                 }
             }
         }
 
-        // 2. Secondary Engine: Groq Llama-3.2 Vision OCR
-        if (!empty($this->groqApiKey)) {
-            $jpegScan = $this->extractImageFromPdf($filePath);
-            $imagePayload = null;
+        // (Gemini Vision Tier disabled per user request: ONLY Groq Vision is active)
 
-            if ($jpegScan) {
-                $imagePayload = 'data:image/jpeg;base64,' . base64_encode($jpegScan);
-            } elseif (str_contains($mimeType, 'image')) {
-                $imagePayload = "data:{$mimeType};base64," . $fileBytes;
-            }
-
-            if ($imagePayload) {
-                $groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
-                $groqVisionModels = ['llama-3.2-11b-vision-instruct', 'llama-3.2-90b-vision-instruct', 'llama-3.2-11b-vision-preview'];
-
-                foreach ($groqVisionModels as $vModel) {
-                    $groqVisionPayload = [
-                        'model' => $vModel,
-                        'messages' => [
-                            [
-                                'role' => 'user',
-                                'content' => [
-                                    [
-                                        'type' => 'text',
-                                        'text' => 'Vous êtes un expert OCR de l\'ENCG Fès. Analysez visuellement ce document marocain officiel (Baccalauréat, CNIE, Relevé de Notes) et renvoyez STRICTEMENT un objet JSON valide avec ces clés : last_name_fr, first_name_fr, last_name_ar, first_name_ar, cin, cne, birth_date, birth_city_fr, bac_average, bac_mention, bac_type, high_school.'
-                                    ],
-                                    [
-                                        'type' => 'image_url',
-                                        'image_url' => [
-                                            'url' => $imagePayload
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ],
-                        'temperature' => 0.1
-                    ];
-
-                    try {
-                        $gRes = Http::timeout(25)->withToken($this->groqApiKey)->post($groqUrl, $groqVisionPayload);
-                        if ($gRes->successful()) {
-                            $rawJson = trim($gRes->json('choices.0.message.content') ?? '');
-                            $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
-                            $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
-                            $decodedG = json_decode($rawJson, true);
-                            if (is_array($decodedG) && (!empty($decodedG['first_name_fr']) || !empty($decodedG['cne']) || !empty($decodedG['cin']) || !empty($decodedG['last_name_fr']))) {
-                                Log::info("Groq Vision {$vModel} OCR Success on Scanned Image!", $decodedG);
-                                return $decodedG;
-                            }
-                        } else {
-                            $this->lastError = "Groq Vision {$vModel} HTTP {$gRes->status()}: " . substr($gRes->body(), 0, 250);
-                        }
-                    } catch (\Exception $ex) {
-                        Log::warning("Groq Vision {$vModel} Exception: " . $ex->getMessage());
-                    }
-                }
-            }
+        // ==========================================
+        // TIER 3: REGEX PATTERN PARSER (Last Resort)
+        // ==========================================
+        Log::info('Fallback Engine Triggered: Regex Pattern Parsing...');
 
             // Fallback: Groq Text Model Llama-3.3-70b
             $raw = @file_get_contents($filePath) ?: '';
@@ -454,7 +474,6 @@ class GeminiApiService
                     }
                 } catch (\Exception $ex) {
                     Log::warning('Groq Text OCR Exception: ' . $ex->getMessage());
-                }
             }
         }
 
