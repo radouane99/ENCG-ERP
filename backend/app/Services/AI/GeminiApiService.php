@@ -384,7 +384,7 @@ class GeminiApiService
                             'content' => [
                                 [
                                     'type' => 'text',
-                                    'text' => $promptText . ' Output ONLY valid raw JSON. Do not add markdown backticks.'
+                                    'text' => $promptText . ' Output ONLY valid raw JSON.'
                                 ],
                                 [
                                     'type' => 'image_url',
@@ -395,7 +395,8 @@ class GeminiApiService
                             ]
                         ]
                     ],
-                    'temperature' => 0.1
+                    'temperature' => 0.1,
+                    'response_format' => ['type' => 'json_object']
                 ];
 
                 try {
