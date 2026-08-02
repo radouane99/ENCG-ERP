@@ -20,8 +20,8 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = 'AQ.Ab8RN6JNODBBN52ysbfC3WksNXXxzzboiYUtiGzrI2h5nne8DA';
-        $this->groqApiKey = env('GROQ_API_KEY') ?: config('services.groq.key') ?: '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';
+        $this->geminiApiKey = env('GEMINI_API_KEY') ?: (string)config('services.gemini.key', '');
+        $this->groqApiKey = env('GROQ_API_KEY') ?: (string)config('services.groq.key', '');
     }
 
     /**
