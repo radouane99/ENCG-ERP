@@ -1009,7 +1009,7 @@ class AdmissionController extends Controller
                 'message' => 'Extraction réussie !',
                 'ocr_data' => $realTimeOcr,
                 'ai_debug_error' => $geminiService->getLastError()
-            ], 200);
+            ], 200, [], JSON_UNESCAPED_UNICODE);
 
         } catch (\Throwable $e) {
             Log::error('OCR_CONTROLLER_CRASH: ' . $e->getMessage(), [

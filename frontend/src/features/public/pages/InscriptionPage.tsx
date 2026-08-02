@@ -172,7 +172,7 @@ function CustomSelect({
 }
 
 function Field({
-  icon: Icon, label, required, className = '', as: As = 'input', isRtl = false, children, ...props
+  icon: Icon, label, required, className = '', as: As = 'input', isRtl = false, onUnlock, children, ...props
 }: {
   icon: React.ElementType;
   label: string;
@@ -180,6 +180,7 @@ function Field({
   className?: string;
   as?: 'input' | 'select';
   isRtl?: boolean;
+  onUnlock?: () => void;
   children?: React.ReactNode;
 } & (React.InputHTMLAttributes<HTMLInputElement> | React.SelectHTMLAttributes<HTMLSelectElement>)) {
   const cleanLabel = label.replace(/\s*\*\s*$/, '').trim();
@@ -236,16 +237,22 @@ function Field({
           className={cn(
             "w-full rounded-2xl py-4 text-base sm:text-lg font-extrabold placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-all shadow-sm",
             isReadOnly
-              ? "bg-slate-100/90 dark:bg-slate-800/80 border-2 border-emerald-400/60 dark:border-emerald-600/50 cursor-not-allowed text-slate-800 dark:text-slate-100"
+              ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 cursor-not-allowed shadow-inner"
               : "bg-white dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20",
             isRtl ? "pr-12 pl-4 text-right font-serif text-xl font-bold" : "pl-12 pr-4",
-            isReadOnly && !isRtl && "pr-24"
+            isReadOnly && !isRtl && "pr-36"
           )}
         />
         {isReadOnly && (
-          <span className={cn("absolute inset-y-0 flex items-center text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-400/40 h-6 my-auto pointer-events-none", isRtl ? "left-3" : "right-3")}>
-            🔒 OCR IA
-          </span>
+          <button
+            type="button"
+            onClick={onUnlock}
+            title="Cliquer pour déverrouiller et modifier ce champ"
+            className={cn("absolute inset-y-0 flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/30 px-2.5 py-0.5 rounded-lg border border-emerald-400/50 h-6 my-auto cursor-pointer transition-all shadow-xs hover:scale-105", isRtl ? "left-3" : "right-3")}
+          >
+            <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span>Extrait IA (Éditer ✏️)</span>
+          </button>
         )}
       </div>
     </div>
@@ -271,12 +278,13 @@ function VirtualArabicKeyboardModal({
   onClose,
   lang = 'fr',
 }: {
-  target: { fieldName: string; fieldLabel: string };
+  target: { fieldName: string; fieldLabel: string } | null;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   onClose: () => void;
   lang?: Lang;
 }) {
+  if (!target) return null;
   const { fieldName, fieldLabel } = target;
   const currentValue = formData[fieldName] || '';
   const isAr = lang === 'ar';
@@ -551,6 +559,16 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     disability_details: '' as string,
   });
 
+  const [ocrExtractedFields, setOcrExtractedFields] = useState<Record<string, boolean>>({});
+
+  const toggleFieldLock = (fieldName: string) => {
+    setOcrExtractedFields(prev => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }));
+    toast.info(`🔓 Champ déverrouillé pour modification.`);
+  };
+
   const { user } = useAuthStore();
 
   // In editMode: load existing data from DB and pre-fill form
@@ -656,10 +674,13 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         first_name_ar: ocr.first_name_ar || formData.first_name_ar || '',
         birth_date: ocr.birth_date || formData.birth_date || '',
         birth_city_fr: ocr.birth_city_fr || formData.birth_city_fr || '',
+        birth_city_ar: ocr.birth_city_ar || formData.birth_city_ar || '',
+        address_fr: ocr.address_fr || formData.address_fr || '',
         bac_average: ocr.bac_average || formData.bac_average || '',
         bac_mention: ocr.bac_mention || formData.bac_mention || '',
         bac_type: ocr.bac_type || formData.bac_name || '',
         high_school: ocr.high_school || formData.high_school || '',
+        academy: ocr.academy || formData.academy || '',
         doc_count: Object.keys(uploadedFiles).length
       };
 
@@ -673,21 +694,52 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         last_name_ar: ocr.last_name_ar || prev.last_name_ar,
         first_name_ar: ocr.first_name_ar || prev.first_name_ar,
         birth_date: ocr.birth_date || prev.birth_date,
+        gender: ocr.gender || prev.gender,
         birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
         birth_city_ar: ocr.birth_city_ar || prev.birth_city_ar,
 
         // Parents & Tuteurs Attributes
-        father_last_name_fr: ocr.father_name_fr || ocr.father_first_name_fr || prev.father_last_name_fr,
-        mother_last_name_fr: ocr.mother_name_fr || ocr.mother_first_name_fr || prev.mother_last_name_fr,
+        father_first_name_fr: ocr.father_name_fr ? ocr.father_name_fr.split(' ')[0] : (ocr.father_first_name_fr || prev.father_first_name_fr),
+        father_last_name_fr: ocr.father_name_fr ? ocr.father_name_fr.split(' ').slice(1).join(' ') : (extractedLastName || prev.father_last_name_fr),
+        father_first_name_ar: ocr.father_name_ar || prev.father_first_name_ar,
+        mother_first_name_fr: ocr.mother_name_fr ? ocr.mother_name_fr.split(' ')[0] : (ocr.mother_first_name_fr || prev.mother_first_name_fr),
+        mother_last_name_fr: ocr.mother_name_fr ? ocr.mother_name_fr.split(' ').slice(1).join(' ') : (ocr.mother_last_name_fr || prev.mother_last_name_fr),
+        mother_first_name_ar: ocr.mother_name_ar || prev.mother_first_name_ar,
         address_fr: ocr.address_fr || ocr.address || prev.address_fr,
+        address_ar: ocr.address_ar || prev.address_ar,
 
         // Parcours Académique Attributes
         bac_average: ocr.bac_average || prev.bac_average,
         bac_mention: ocr.bac_mention || prev.bac_mention,
-        bac_name: ocr.bac_type || prev.bac_name,
+        bac_name: ocr.bac_type ? (ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`) : prev.bac_name,
         high_school: ocr.high_school || prev.high_school,
         academy: ocr.academy || prev.academy,
         province: ocr.prefecture || ocr.province || prev.province,
+      }));
+
+      setOcrExtractedFields(prev => ({
+        ...prev,
+        ...(extractedCne ? { cne: true } : {}),
+        ...(extractedCin ? { cin: true } : {}),
+        ...(extractedLastName ? { last_name_fr: true } : {}),
+        ...(extractedFirstName ? { first_name_fr: true } : {}),
+        ...(ocr.last_name_ar ? { last_name_ar: true } : {}),
+        ...(ocr.first_name_ar ? { first_name_ar: true } : {}),
+        ...(ocr.birth_date ? { birth_date: true } : {}),
+        ...(ocr.birth_city_fr ? { birth_city_fr: true } : {}),
+        ...(ocr.birth_city_ar ? { birth_city_ar: true } : {}),
+        ...(ocr.address_fr || ocr.address ? { address_fr: true } : {}),
+        ...(ocr.address_ar ? { address_ar: true } : {}),
+        ...(ocr.father_name_fr ? { father_first_name_fr: true, father_last_name_fr: true } : {}),
+        ...(ocr.father_name_ar ? { father_first_name_ar: true } : {}),
+        ...(ocr.mother_name_fr ? { mother_first_name_fr: true, mother_last_name_fr: true } : {}),
+        ...(ocr.mother_name_ar ? { mother_first_name_ar: true } : {}),
+        ...(ocr.bac_type ? { bac_name: true } : {}),
+        ...(ocr.bac_average ? { bac_average: true } : {}),
+        ...(ocr.bac_mention ? { bac_mention: true } : {}),
+        ...(ocr.high_school ? { high_school: true } : {}),
+        ...(ocr.academy ? { academy: true } : {}),
+        ...((ocr.prefecture || ocr.province) ? { province: true } : {}),
       }));
 
       setExtractedDataResult(resultData);
@@ -1259,14 +1311,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleTriggerOcrForDoc('bac')}
-                            className="w-full mt-2 px-3 py-2 bg-[#0f2863] hover:bg-[#163785] text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                            <span>⚡ Extraire le Bac (OCR IA)</span>
-                          </button>
                         </div>
 
                         <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
@@ -1312,14 +1356,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleTriggerOcrForDoc('cnie')}
-                            className="w-full mt-2 px-3 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                            <span>⚡ Extraire la CNIE (OCR IA)</span>
                           </button>
                         </div>
 
@@ -1368,14 +1404,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             className="flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline pt-1 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleTriggerOcrForDoc('releve_notes')}
-                            className="w-full mt-2 px-3 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                            <span>⚡ Extraire le Relevé (OCR IA)</span>
                           </button>
                         </div>
                       </div>
@@ -1428,34 +1456,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                     </SectionCard>
-
-                    {/* Test OCR Extraction Trigger Banner & Button */}
-                    <div className="p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-[#0f2863] rounded-3xl border-2 border-indigo-500/30 text-white shadow-xl space-y-3">
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0 font-black text-xl">
-                            ⚡
-                          </div>
-                          <div>
-                            <h4 className="font-extrabold text-sm text-amber-300 uppercase tracking-wide">
-                              {isRTL ? 'اختبار استخراج البيانات بالذكاء الاصطناعي' : 'Test Extraction & Validation OCR IA'}
-                            </h4>
-                            <p className="text-xs text-blue-100 font-medium">
-                              {isRTL ? 'انقر على الزر لاستخراج البيانات وتأكيدها قبل الانتقال إلى الخطوة التالية.' : 'Cliquez sur le bouton ci-contre pour prévisualiser les données extraites avant de continuer.'}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleTriggerOcrForDoc(selectedTargetDoc)}
-                          disabled={ocrExtracting}
-                          className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
-                        >
-                          <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
-                          <span>{ocrExtracting ? 'Extraction...' : '⚡ Extraction des Données (OCR IA)'}</span>
-                        </button>
-                      </div>
-                    </div>
 
                     {/* CNDP Legal Consent Checkbox */}
                     <div className="p-4 sm:p-5 bg-[#0f2863]/5 dark:bg-blue-500/10 border-2 border-[#0f2863]/20 dark:border-blue-400/30 rounded-2xl flex items-start gap-3 mt-4">
@@ -1543,8 +1543,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     {/* Section 1: Identifiants Principaux */}
                     <SectionCard title={isRTL ? '1. معرفات الترشيح والحساب الرسمية' : '1. Identifiants de Candidature & Compte (Anti-Fraude Check)'} icon={Hash} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={Hash} label={isRTL ? 'رمز مسار (CNE) *' : 'CNE (Code Massar) *'} required type="text" name="cne" value={formData.cne} onChange={handleChange} placeholder={isRTL ? "مثال: N123456789" : "Ex: N123456789"} isRtl={isRTL} />
-                        <Field icon={Hash} label={isRTL ? 'بطاقة التعريف الوطنية (CNIE) *' : "CNIE (Carte d'Identité) *"} required type="text" name="cin" value={formData.cin} onChange={handleChange} placeholder={isRTL ? "مثال: CD123456" : "Ex: CD123456"} isRtl={isRTL} />
+                        <Field icon={Hash} label={isRTL ? 'رمز مسار (CNE) *' : 'CNE (Code Massar) *'} required type="text" name="cne" value={formData.cne} onChange={handleChange} readOnly={!!ocrExtractedFields.cne} onUnlock={() => toggleFieldLock('cne')} placeholder={isRTL ? "مثال: N123456789" : "Ex: N123456789"} isRtl={isRTL} />
+                        <Field icon={Hash} label={isRTL ? 'بطاقة التعريف الوطنية (CNIE) *' : "CNIE (Carte d'Identité) *"} required type="text" name="cin" value={formData.cin} onChange={handleChange} readOnly={!!ocrExtractedFields.cin} onUnlock={() => toggleFieldLock('cin')} placeholder={isRTL ? "مثال: CD123456" : "Ex: CD123456"} isRtl={isRTL} />
                         <Field icon={Mail} label={isRTL ? 'البريد الإلكتروني *' : 'Adresse E-mail *'} required type="email" name="email" value={formData.email} onChange={handleChange} placeholder={isRTL ? "مثال: etudiant@gmail.com" : "Ex: etudiant@gmail.com"} isRtl={isRTL} />
                         <Field icon={Phone} label={isRTL ? 'الهاتف المحمول *' : 'Téléphone Portable *'} required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder={isRTL ? "مثال: 0612345678" : "Ex: 0612345678"} isRtl={isRTL} />
                       </div>
@@ -1566,8 +1566,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     {/* Section 2: Nom & Prénom en FR & AR */}
                     <SectionCard title={isRTL ? '2. الهوية بالفرنسية وبالعربية' : '2. Identité en Français & en Arabe'} icon={User} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={User} label={isRTL ? 'النسب بالفرنسية *' : 'Nom (FR) *'} required type="text" name="last_name_fr" value={formData.last_name_fr} onChange={handleChange} placeholder={isRTL ? "مثال: BENNANI" : "Ex: BENNANI"} isRtl={isRTL} />
-                        <Field icon={User} label={isRTL ? 'الاسم الشخصي بالفرنسية *' : 'Prénom (FR) *'} required type="text" name="first_name_fr" value={formData.first_name_fr} onChange={handleChange} placeholder={isRTL ? "مثال: Youssef" : "Ex: Youssef"} isRtl={isRTL} />
+                        <Field icon={User} label={isRTL ? 'النسب بالفرنسية *' : 'Nom (FR) *'} required type="text" name="last_name_fr" value={formData.last_name_fr} onChange={handleChange} readOnly={!!ocrExtractedFields.last_name_fr} onUnlock={() => toggleFieldLock('last_name_fr')} placeholder={isRTL ? "مثال: BENNANI" : "Ex: BENNANI"} isRtl={isRTL} />
+                        <Field icon={User} label={isRTL ? 'الاسم الشخصي بالفرنسية *' : 'Prénom (FR) *'} required type="text" name="first_name_fr" value={formData.first_name_fr} onChange={handleChange} readOnly={!!ocrExtractedFields.first_name_fr} onUnlock={() => toggleFieldLock('first_name_fr')} placeholder={isRTL ? "مثال: Youssef" : "Ex: Youssef"} isRtl={isRTL} />
                         
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -1614,14 +1614,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     {/* Section 3: Naissance & État Civil */}
                     <SectionCard title={isRTL ? '3. الولادة والحالة المدنية' : '3. Naissance & État Civil'} icon={Calendar} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={Calendar} label={isRTL ? 'تاريخ الازدياد *' : 'Date de naissance *'} required type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} isRtl={isRTL} />
+                        <Field icon={Calendar} label={isRTL ? 'تاريخ الازدياد *' : 'Date de naissance *'} required type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} readOnly={!!ocrExtractedFields.birth_date} onUnlock={() => toggleFieldLock('birth_date')} isRtl={isRTL} />
                         
                         <Field icon={User} label={isRTL ? 'الجنس *' : 'Sexe *'} required as="select" name="gender" value={formData.gender} onChange={handleChange} isRtl={isRTL}>
                           <option value="female">{isRTL ? 'أنثى' : 'Féminin'}</option>
                           <option value="male">{isRTL ? 'ذكر' : 'Masculin'}</option>
                         </Field>
 
-                        <Field icon={MapPin} label={isRTL ? 'مكان الازدياد بالفرنسية *' : 'Lieu de naissance (FR) *'} required type="text" name="birth_city_fr" value={formData.birth_city_fr} onChange={handleChange} placeholder="FES" isRtl={isRTL} />
+                        <Field icon={MapPin} label={isRTL ? 'مكان الازدياد بالفرنسية *' : 'Lieu de naissance (FR) *'} required type="text" name="birth_city_fr" value={formData.birth_city_fr} onChange={handleChange} readOnly={!!ocrExtractedFields.birth_city_fr} onUnlock={() => toggleFieldLock('birth_city_fr')} placeholder="FES" isRtl={isRTL} />
                         
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -2023,22 +2023,29 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     <SectionCard title={isRTL ? 'معلومات شهادة البكالوريا والمؤسسة' : 'Informations du Baccalauréat & Établissement'} icon={BookOpen} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Field icon={BookOpen} label={isRTL ? 'شعبة البكالوريا *' : 'Série du Baccalauréat *'} required as="select" name="bac_name" value={formData.bac_name} onChange={handleChange} isRtl={isRTL}>
+                          <option value="Bac Sciences Économiques">{isRTL ? 'علوم اقتصادية' : 'Bac Sciences Économiques'}</option>
+                          <option value="Sciences Économiques">{isRTL ? 'علوم اقتصادية' : 'Sciences Économiques'}</option>
                           <option value="Bac Sciences Mathématiques B - Option Français">{isRTL ? 'علوم رياضية "ب" - خيار فرنسية' : 'Bac Sciences Mathématiques B - Option Français'}</option>
                           <option value="Bac Sciences Mathématiques A - Option Français">{isRTL ? 'علوم رياضية "أ" - خيار فرنسية' : 'Bac Sciences Mathématiques A - Option Français'}</option>
+                          <option value="Sciences Mathématiques">{isRTL ? 'علوم رياضية' : 'Sciences Mathématiques'}</option>
                           <option value="Bac Physique-Chimie (PC)">{isRTL ? 'علوم فيزيائية' : 'Bac Physique-Chimie (PC)'}</option>
+                          <option value="Sciences Physiques">{isRTL ? 'علوم فيزيائية' : 'Sciences Physiques'}</option>
                           <option value="Bac Sciences de la Vie et de la Terre (SVT)">{isRTL ? 'علوم الحياة والأرض' : 'Bac Sciences de la Vie et de la Terre (SVT)'}</option>
-                          <option value="Bac Sciences Économiques">{isRTL ? 'علوم اقتصادية' : 'Bac Sciences Économiques'}</option>
+                          <option value="Sciences de la Vie et de la Terre">{isRTL ? 'علوم الحياة والأرض' : 'Sciences de la Vie et de la Terre'}</option>
                           <option value="Bac Techniques de Gestion et Comptabilité (TGC)">{isRTL ? 'علوم التدبير المحاسباتي' : 'Bac Techniques de Gestion et Comptabilité (TGC)'}</option>
                         </Field>
 
                         <Field icon={Star} label={isRTL ? 'الميزة في البكالوريا *' : 'Mention au Bac *'} required as="select" name="bac_mention" value={formData.bac_mention} onChange={handleChange} isRtl={isRTL}>
-                          <option value="Très Bien">{isRTL ? 'حسن جداً (≥ 16.00)' : 'Très Bien (≥ 16.00)'}</option>
                           <option value="Bien">{isRTL ? 'حسن (14.00 - 15.99)' : 'Bien (14.00 - 15.99)'}</option>
+                          <option value="BIEN">{isRTL ? 'حسن (14.00 - 15.99)' : 'Bien (14.00 - 15.99)'}</option>
+                          <option value="Très Bien">{isRTL ? 'حسن جداً (≥ 16.00)' : 'Très Bien (≥ 16.00)'}</option>
+                          <option value="TRÈS BIEN">{isRTL ? 'حسن جداً (≥ 16.00)' : 'Très Bien (≥ 16.00)'}</option>
                           <option value="Assez Bien">{isRTL ? 'مستحسن (12.00 - 13.99)' : 'Assez Bien (12.00 - 13.99)'}</option>
+                          <option value="ASSEZ BIEN">{isRTL ? 'مستحسن (12.00 - 13.99)' : 'Assez Bien (12.00 - 13.99)'}</option>
                           <option value="Passable">{isRTL ? 'مقبول (10.00 - 11.99)' : 'Passable (10.00 - 11.99)'}</option>
                         </Field>
 
-                        <Field icon={Star} label={isRTL ? 'المعدل العام للبكالوريا *' : 'Moyenne générale du Bac *'} required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} placeholder={isRTL ? "مثال: 16.00" : "Ex: 16.00"} isRtl={isRTL} />
+                        <Field icon={Star} label={isRTL ? 'المعدل العام للبكالوريا *' : 'Moyenne générale du Bac *'} required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} readOnly={!!ocrExtractedFields.bac_average} onUnlock={() => toggleFieldLock('bac_average')} placeholder={isRTL ? "مثال: 16.00" : "Ex: 16.00"} isRtl={isRTL} />
 
                         <Field icon={Calendar} label={isRTL ? 'سنة الحصول على البكالوريا *' : "Année d'obtention du Bac *"} required as="select" name="bac_year" value={formData.bac_year} onChange={handleChange} isRtl={isRTL}>
                           <option value="2026">2026</option>
@@ -2046,7 +2053,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           <option value="2024">2024</option>
                         </Field>
 
-                        <Field icon={Building2} label={isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *'} required type="text" name="high_school" value={formData.high_school} onChange={handleChange} placeholder={isRTL ? "مثال: ثانوية مولاي إدريس" : "Ex: Lycée Moulay Idriss"} className="sm:col-span-2" isRtl={isRTL} />
+                        <Field icon={Building2} label={isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *'} required type="text" name="high_school" value={formData.high_school} onChange={handleChange} readOnly={!!ocrExtractedFields.high_school} onUnlock={() => toggleFieldLock('high_school')} placeholder={isRTL ? "مثال: ثانوية مولاي إدريس" : "Ex: Lycée Moulay Idriss"} className="sm:col-span-2" isRtl={isRTL} />
 
                         <Field icon={Building2} label={isRTL ? 'الأكاديمية الجهوية *' : 'Académie Régionale *'} required as="select" name="academy" value={formData.academy} onChange={handleChange} isRtl={isRTL}>
                           <option value="ACADEMIE Fès-Meknès">{isRTL ? 'أكاديمية فاس - مكناس' : 'ACADÉMIE Fès-Meknès'}</option>
@@ -2384,6 +2391,16 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
                   <span className="text-[10px] font-black uppercase text-slate-400 block">Type de Baccalauréat</span>
                   <span className="font-bold text-slate-700 dark:text-slate-200">{extractedDataResult.bac_type}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Date & Lieu de Naissance</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{extractedDataResult.birth_date || 'En attente'} — {extractedDataResult.birth_city_fr || ''} ({extractedDataResult.birth_city_ar || ''})</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Lycée & Académie</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{extractedDataResult.high_school || ''} ({extractedDataResult.academy || 'Fès-Meknès'})</span>
                 </div>
               </div>
             </div>
