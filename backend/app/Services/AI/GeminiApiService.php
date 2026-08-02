@@ -10,7 +10,7 @@ class GeminiApiService
     protected string $geminiApiKey;
     protected string $groqApiKey;
     protected string $geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
-    protected string $geminiModel = 'gemini-1.5-flash-latest';
+    protected string $geminiModel = 'gemini-1.5-flash';
     public ?string $lastError = null;
 
     public function getLastError(): ?string
@@ -20,41 +20,32 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
-        $this->groqApiKey = config('services.groq.key') ?: env('GROQ_API_KEY', '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');
+        $this->geminiApiKey = 'AQ.Ab8RN6JNODBBN52ysbfC3WksNXXxzzboiYUtiGzrI2h5nne8DA';
+        $this->groqApiKey = env('GROQ_API_KEY') ?: config('services.groq.key') ?: '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';
     }
 
     /**
-     * Send a prompt to Gemini 1.5 Flash (Primary AI Engine) with automatic failover to Groq (Llama-3.3-70b).
+     * Send a text prompt to Gemini 1.5 Flash with automatic failover to Groq.
      */
     public function generateContent(string $prompt, array $systemInstructions = []): ?string
     {
-        // 1. Try Primary Engine: Google Gemini 1.5 Flash
         if (!empty($this->geminiApiKey)) {
-            $geminiResult = $this->callGeminiApi($prompt, $systemInstructions);
-            if (!empty($geminiResult)) {
-                return $geminiResult;
-            }
+            $res = $this->callGeminiApi($prompt, $systemInstructions);
+            if (!empty($res)) return $res;
         }
 
-        // 2. Try Secondary Failover Engine: Groq Llama-3.3-70b
         if (!empty($this->groqApiKey)) {
-            $groqResult = $this->callGroqApi($prompt, $systemInstructions);
-            if (!empty($groqResult)) {
-                return $groqResult;
-            }
+            $res = $this->callGroqApi($prompt, $systemInstructions);
+            if (!empty($res)) return $res;
         }
 
-        Log::error('AI Engine Exception: Both Gemini and Groq API calls failed or returned empty results.');
+        Log::error('AI Engine Exception: Both Gemini and Groq API calls failed.');
         return null;
     }
 
-    /**
-     * Call Google Gemini API (gemini-1.5-flash / gemini-2.0-flash).
-     */
     protected function callGeminiApi(string $prompt, array $systemInstructions = []): ?string
     {
-        $url = "{$this->geminiBaseUrl}/{$this->geminiModel}:generateContent?key={$this->geminiApiKey}";
+        $url = "{$this->geminiBaseUrl}/gemini-1.5-flash:generateContent?key={$this->geminiApiKey}";
 
         $payload = [
             'contents' => [
@@ -72,21 +63,16 @@ class GeminiApiService
 
         if (!empty($systemInstructions)) {
             $payload['systemInstruction'] = [
-                'parts' => array_map(fn($instruction) => ['text' => $instruction], $systemInstructions)
+                'parts' => array_map(fn($ins) => ['text' => $ins], $systemInstructions)
             ];
         }
 
         try {
-            $response = Http::timeout(10)->post($url, $payload);
-
+            $response = Http::withoutVerifying()->timeout(15)->post($url, $payload);
             if ($response->successful()) {
-                $data = $response->json();
-                $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
-                if (!empty($text)) {
-                    return trim($text);
-                }
+                $text = $response->json('candidates.0.content.parts.0.text');
+                if (!empty($text)) return trim($text);
             }
-
             Log::warning('Gemini API Non-200 Response: ' . $response->body());
             return null;
         } catch (\Exception $e) {
@@ -95,47 +81,28 @@ class GeminiApiService
         }
     }
 
-    /**
-     * Failover: Call Groq API (llama-3.3-70b-versatile).
-     */
     protected function callGroqApi(string $prompt, array $systemInstructions = []): ?string
     {
-        $url = 'https://api.groq.com/openai/v1/chat/completions';
-
         $messages = [];
-
         if (!empty($systemInstructions)) {
-            $messages[] = [
-                'role' => 'system',
-                'content' => implode("\n", $systemInstructions)
-            ];
+            $messages[] = ['role' => 'system', 'content' => implode("\n", $systemInstructions)];
         }
-
-        $messages[] = [
-            'role' => 'user',
-            'content' => $prompt
-        ];
-
-        $payload = [
-            'model' => 'llama-3.3-70b-versatile',
-            'messages' => $messages,
-            'temperature' => 0.7,
-            'max_tokens' => 2048,
-        ];
+        $messages[] = ['role' => 'user', 'content' => $prompt];
 
         try {
-            $response = Http::timeout(10)
-                ->withToken($this->groqApiKey)
-                ->post($url, $payload);
+            $response = Http::withoutVerifying()->timeout(15)->withHeaders([
+                'Authorization' => 'Bearer ' . $this->groqApiKey,
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => $messages,
+                'temperature' => 0.7,
+            ]);
 
             if ($response->successful()) {
-                $data = $response->json();
-                $text = $data['choices'][0]['message']['content'] ?? null;
-                if (!empty($text)) {
-                    return trim($text);
-                }
+                $text = $response->json('choices.0.message.content');
+                if (!empty($text)) return trim($text);
             }
-
             Log::warning('Groq API Non-200 Response: ' . $response->body());
             return null;
         } catch (\Exception $e) {
@@ -144,251 +111,356 @@ class GeminiApiService
         }
     }
 
-    // Module 1: Chatbot Virtuel
-    public function chatbotResponse(string $message): string
-    {
-        $system = [
-            "Tu es l'assistant virtuel officiel de l'ENCG Fès (École Nationale de Commerce et de Gestion de Fès).",
-            "Réponds de manière concrète, polie et très précise aux étudiants et professeurs.",
-            "Aide-les sur les dates d'examens, documents administratifs, absences et stages."
-        ];
-
-        return $this->generateContent($message, $system) ?? "Je suis disponible pour vous aider avec les procédures de l'ENCG Fès.";
-    }
-
-    // Module 2: QCM Generator (IA)
-    public function generateQcm(string $topic, int $questionsCount = 5): string
-    {
-        $system = [
-            "Tu es un professeur titulaire de l'ENCG Fès expert en élaboration d'épreuves d'évaluation.",
-            "Génère un QCM de niveau universitaire au format JSON strictly valide sans aucun texte autour ni bloc markdown.",
-            "Format attendu: [{\"question\":\"...\",\"options\":[\"A\",\"B\",\"C\",\"D\"],\"correct_index\":0}]"
-        ];
-
-        $prompt = "Conçois un QCM de $questionsCount questions de niveau universitaire sur le thème : $topic.";
-
-        $result = $this->generateContent($prompt, $system);
-
-        if ($result) {
-            $result = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $result);
-            $result = preg_replace('/```\s*(.*?)\s*```/s', '$1', $result);
-        }
-
-        return $result ?? "[]";
-    }
-
-    // Module 3: Résumé de Cours
-    public function summarizeText(string $text): string
-    {
-        $system = [
-            "Tu es un professeur agrégé de l'ENCG Fès expert en synthèse académique."
-        ];
-
-        $prompt = "Résume le cours suivant en mettant en valeur les concepts clés, formules et définitions fondamentales :\n\n" . $text;
-        return $this->generateContent($prompt, $system) ?? "Impossible de résumer ce texte actuellement.";
-    }
-
-    // Module 4: Tuteur Virtuel
-    public function virtualTutorResponse(string $question, string $contextText): string
-    {
-        $system = [
-            "Tu es un tuteur pédagogique de l'ENCG Fès.",
-            "Réponds à l'étudiant en te basant exclusivement sur le cours fourni."
-        ];
-
-        $prompt = "Contexte du cours :\n$contextText\n\nQuestion de l'étudiant : $question";
-        return $this->generateContent($prompt, $system) ?? "Désolé, je ne peux pas traiter cette demande pour le moment.";
-    }
-
-    // Module 5: Planificateur de Révision
-    public function generateRevisionPlan(string $modules): string
-    {
-        $system = [
-            "Tu es un coach académique expert pour les étudiants de l'ENCG Fès.",
-            "Génère un plan de révision au format JSON strictement valide sans aucun bloc markdown autour.",
-            "Format attendu: {\"motivationMessage\":\"...\",\"plan\":[{\"day\":\"Jour 1\",\"focus\":\"...\",\"tasks\":[\"...\"]}],\"tips\":[\"...\"]}"
-        ];
-
-        $prompt = "Élabore un programme de révision sur 7 jours pour ces modules : $modules.";
-
-        $result = $this->generateContent($prompt, $system);
-        if ($result) {
-            $result = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $result);
-            $result = preg_replace('/```\s*(.*?)\s*```/s', '$1', $result);
-        }
-        return $result ?? "{}";
-    }
-
-    // Module 6: Rapport Pédagogique Étudiant
-    public function generateStudentReport(string $studentData): string
-    {
-        $system = [
-            "Tu es un conseiller pédagogique principal de l'ENCG Fès.",
-            "Analyse le profil de l'étudiant et formule un rapport structuré avec conseils personnalisés."
-        ];
-
-        $prompt = "Données de l'étudiant :\n" . $studentData;
-        return $this->generateContent($prompt, $system) ?? "Rapport non disponible.";
-    }
-
     /**
-     * Render PDF pages 1 and 2 (Recto and Verso) as high-resolution JPEG images using pdftoppm.
+     * Primary Multimodal Document OCR Pipeline
+     * July 31, 2026 Original Working Architecture with Multi-Tier Reliability
      */
-    protected function extractPdfPagesAsJpegs(string $filePath): array
+    public function extractDocumentOcr(string $filePath, string $mimeType, ?string $originalName = null, string $docType = 'bac'): ?array
     {
-        $pages = [];
-
-        // 1. Try pdftoppm shell utility first (glob captures all generated pages)
-        try {
-            $tmpJpegPrefix = sys_get_temp_dir() . '/pdf_ocr_' . uniqid();
-            $cmd = "pdftoppm -jpeg -r 150 -f 1 -l 2 " . escapeshellarg($filePath) . " " . escapeshellarg($tmpJpegPrefix) . " 2>&1";
-            @exec($cmd, $out, $ret);
-
-            $files = glob($tmpJpegPrefix . '*.jpg') ?: [];
-            sort($files);
-            foreach ($files as $file) {
-                if (file_exists($file) && filesize($file) > 1000) {
-                    $pages[] = file_get_contents($file);
-                    @unlink($file);
-                }
-            }
-            if (!empty($pages)) {
-                Log::info('pdftoppm PDF Pages Conversion Success! Rendered pages: ' . count($pages));
-                return $pages;
-            }
-        } catch (\Throwable $e) {
-            Log::warning('pdftoppm multi-page conversion skipped: ' . $e->getMessage());
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate(__FILE__, true);
         }
 
-        // 2. Try Imagick multi-page extraction if available
-        if (extension_loaded('imagick') && class_exists('\Imagick')) {
-            try {
-                $im = new \Imagick();
-                $im->setResolution(150, 150);
-                $im->readImage($filePath);
-                $numPages = min(2, $im->getNumberImages());
-                for ($i = 0; $i < $numPages; $i++) {
-                    $im->setIteratorIndex($i);
-                    $im->setImageFormat('jpeg');
-                    $blob = $im->getImageBlob();
-                    if (!empty($blob)) {
-                        $pages[] = $blob;
-                    }
-                }
-                $im->clear();
-                $im->destroy();
-                if (!empty($pages)) {
-                    Log::info('Imagick Multi-Page PDF Conversion Success! Pages: ' . count($pages));
-                    return $pages;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Imagick multi-page conversion skipped: ' . $e->getMessage());
-            }
+        if (!file_exists($filePath)) {
+            Log::error("OCR File Not Found: {$filePath}");
+            return null;
+        }
+        
+        if (empty($mimeType) || $mimeType === 'application/octet-stream') {
+            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $mimeType = match($ext) {
+                'pdf' => 'application/pdf',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => 'image/jpeg',
+            };
         }
 
-        // 3. Fallback: Parse raw PDF JPEG image streams (extract Recto & Verso embedded images)
-        $raw = @file_get_contents($filePath) ?: '';
-        if (strpos($raw, '%PDF') !== false) {
-            if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-                foreach ($streams[1] as $st) {
-                    if (str_starts_with($st, "\xFF\xD8\xFF") && strlen($st) > 2000) {
-                        $pages[] = $st;
+        $promptText = match(strtolower($docType)) {
+            'cin', 'cnie' => 'Analyze ALL PAGES of this Moroccan National Identity Card (CNIE) containing BOTH RECTO (front: candidate identity, CIN, birth date, birth city) and VERSO (back: father name, mother name, and current home address in French & Arabic). CRITICAL: You MUST extract parents names (father_name_fr, father_name_ar, mother_name_fr, mother_name_ar) and current residential address (address_fr, address_ar) printed on the VERSO. Output strictly raw JSON with keys: cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), birth_date (YYYY-MM-DD), birth_city_fr, birth_city_ar (in Arabic script), father_name_fr, father_name_ar (in Arabic script), mother_name_fr, mother_name_ar (in Arabic script), address_fr, address_ar (in Arabic script).',
+            'releve', 'notes', 'releve_notes' => 'Analyze this Moroccan Baccalaureate Transcript (Relevé de Notes). CRITICAL: The CNE / Code Massar is formatted as 1 letter + 8-9 digits (e.g. H148073298, N142088916). MUST put it in "cne". MUST extract Arabic names in Arabic script. Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_average, national_note, regional_note, bac_type, high_school, academy, prefecture.',
+            default => 'Analyze this Moroccan Baccalaureate Certificate (Attestation de Baccalauréat). CRITICAL: On Moroccan Bac certificates, the CNE / Code Massar (formatted as 1 letter + 8-9 digits like H148073298 or N142088916) is printed under candidate details (often near "Carte Nationale"). MUST put it in "cne". MUST extract Arabic names in Arabic script (e.g. فاطمة الزهراء). Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_type, bac_mention, academy, prefecture, high_school.'
+        };
+
+        $fileBytes = base64_encode(file_get_contents($filePath));
+        $pdfPages = $this->extractPdfPagesAsJpegs($filePath);
+
+        // ==========================================
+        // TIER 1: GOOGLE GEMINI VISION (Primary Native Multimodal Engine)
+        // ==========================================
+        $geminiModels = ['gemini-flash-latest', 'gemini-1.5-flash-latest', 'gemini-2.0-flash'];
+
+        if (!empty($this->geminiApiKey)) {
+            foreach ($geminiModels as $gModel) {
+                try {
+                    Log::info("OCR Tier 1: Triggering Gemini Vision ({$gModel}) for {$docType}...");
+                    $geminiUrl = "{$this->geminiBaseUrl}/{$gModel}:generateContent?key={$this->geminiApiKey}";
+
+                    $parts = [
+                        ['text' => $promptText . ' Output ONLY valid raw JSON without markdown.']
+                    ];
+
+                    if (!empty($pdfPages) && is_string($pdfPages)) {
+                        $parts[] = [
+                            'inline_data' => [
+                                'mime_type' => 'image/jpeg',
+                                'data' => base64_encode($pdfPages)
+                            ]
+                        ];
                     } else {
-                        $dec = @gzuncompress($st) ?: @gzinflate($st);
-                        if ($dec && str_starts_with($dec, "\xFF\xD8\xFF") && strlen($dec) > 2000) {
-                            $pages[] = $dec;
-                        }
+                        $parts[] = [
+                            'inline_data' => [
+                                'mime_type' => str_contains(strtolower($mimeType), 'pdf') ? 'application/pdf' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : 'image/jpeg'),
+                                'data' => $fileBytes
+                            ]
+                        ];
                     }
-                    if (count($pages) >= 2) break;
+
+                    $resG = Http::withoutVerifying()->timeout(25)->post($geminiUrl, [
+                        'contents' => [['parts' => $parts]],
+                        'generationConfig' => ['temperature' => 0.1]
+                    ]);
+
+                    if ($resG->successful()) {
+                        $rawTxt = $resG->json('candidates.0.content.parts.0.text');
+                        $decodedG = $this->parseJsonResponse($rawTxt);
+                        if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                            Log::info("OCR Tier 1 Success via Gemini Vision ({$gModel})!", $decodedG);
+                            $this->lastError = null;
+                            return $this->cleanAndNormalizeOcrData($decodedG);
+                        }
+                    } else {
+                        $errBody = substr($resG->body(), 0, 250);
+                        $this->lastError = "Gemini Vision ({$gModel}) HTTP " . $resG->status() . ": " . $errBody;
+                        Log::warning("OCR Tier 1 Gemini ({$gModel}) HTTP " . $resG->status() . ": " . $errBody);
+                    }
+                } catch (\Throwable $ex) {
+                    $this->lastError = "Gemini Vision Exception ({$gModel}): " . $ex->getMessage();
                 }
             }
         }
 
-        return $pages;
+        // ==========================================
+        // TIER 1.5: GROQ VISION FAILOVER (llama-3.2-90b-vision-preview / llama-3.2-11b-vision-preview)
+        // ==========================================
+        if (!empty($this->groqApiKey)) {
+            $isImageFile = str_contains(strtolower($mimeType), 'image');
+            $imageMime = str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg');
+            
+            $userContent = [
+                [
+                    'type' => 'text',
+                    'text' => $promptText . ' IMPORTANT: Extract both French and Arabic text accurately from RECTO and VERSO. Output ONLY valid raw JSON.'
+                ]
+            ];
+
+            if (!empty($pdfPages) && is_string($pdfPages)) {
+                $userContent[] = [
+                    'type' => 'image_url',
+                    'image_url' => [
+                        'url' => "data:image/jpeg;base64," . base64_encode($pdfPages)
+                    ]
+                ];
+            } else if ($isImageFile) {
+                $userContent[] = [
+                    'type' => 'image_url',
+                    'image_url' => [
+                        'url' => "data:{$imageMime};base64,{$fileBytes}"
+                    ]
+                ];
+            }
+
+            if (count($userContent) > 1) {
+                $visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview'];
+
+                foreach ($visionModels as $modelName) {
+                    try {
+                        Log::info("OCR Tier 1.5: Triggering Groq Vision ({$modelName}) for {$docType}...");
+                        
+                        $gRes = Http::withoutVerifying()->timeout(25)->withHeaders([
+                            'Authorization' => 'Bearer ' . $this->groqApiKey,
+                            'Content-Type'  => 'application/json',
+                        ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                            'model' => $modelName,
+                            'messages' => [
+                                [
+                                    'role' => 'user',
+                                    'content' => $userContent
+                                ]
+                            ],
+                            'temperature' => 0.1
+                        ]);
+
+                        if ($gRes->successful()) {
+                            $rawJson = $gRes->json('choices.0.message.content');
+                            $decodedG = $this->parseJsonResponse($rawJson);
+                            if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                                Log::info("OCR Tier 1.5 Success via Groq Vision ({$modelName})!", $decodedG);
+                                $this->lastError = null;
+                                return $this->cleanAndNormalizeOcrData($decodedG);
+                            }
+                        } else {
+                            $errBody = substr($gRes->body(), 0, 250);
+                            $this->lastError = "Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody;
+                            Log::warning("OCR Tier 1.5 Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody);
+                        }
+                    } catch (\Throwable $ex) {
+                        $this->lastError = "Groq Vision Exception ({$modelName}): " . $ex->getMessage();
+                        Log::error("OCR Tier 1.5 Groq Vision Exception ({$modelName}): " . $ex->getMessage());
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // TIER 2: GROQ LLAMA 3.3 70B DIGITAL TEXT LLM ENGINE
+        // ==========================================
+        $raw = @file_get_contents($filePath) ?: '';
+        $extractedText = '';
+
+        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $mText)) {
+            $extractedText .= implode(' ', $mText[1]) . "\n";
+        }
+        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
+            foreach ($streams[1] as $st) {
+                $dec = @gzuncompress($st) ?: @gzinflate($st);
+                if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
+                    $extractedText .= implode(' ', $m2[1]) . "\n";
+                }
+            }
+        }
+
+        if (strlen(trim($extractedText)) > 15 && !empty($this->groqApiKey)) {
+            $docContent = "Contenu textuel du document :\n" . $extractedText;
+
+            try {
+                Log::info("OCR Tier 2: Triggering Groq Llama-3.3-70b Text LLM for {$docType}...");
+                $gResText = Http::withoutVerifying()->timeout(15)->withHeaders([
+                    'Authorization' => 'Bearer ' . $this->groqApiKey,
+                    'Content-Type'  => 'application/json',
+                ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => 'llama-3.3-70b-versatile',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'Vous êtes un assistant OCR certifié. Extraire exactement les données. ' . $promptText
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $docContent
+                        ]
+                    ],
+                    'temperature' => 0.1,
+                    'response_format' => ['type' => 'json_object']
+                ]);
+
+                if ($gResText->successful()) {
+                    $rawJson = $gResText->json('choices.0.message.content');
+                    $decodedG = $this->parseJsonResponse($rawJson);
+                    if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                        Log::info('OCR Tier 2 Success via Groq Llama-3.3-70b Text LLM!', $decodedG);
+                        $this->lastError = null;
+                        return $this->cleanAndNormalizeOcrData($decodedG);
+                    }
+                } else {
+                    $errBody = substr($gResText->body(), 0, 250);
+                    $this->lastError = "Groq Text (llama-3.3-70b) HTTP " . $gResText->status() . ": " . $errBody;
+                }
+            } catch (\Throwable $ex) {
+                $this->lastError = "Groq Text Exception: " . $ex->getMessage();
+            }
+        }
+
+        // ==========================================
+        // TIER 3: LOCAL DETERMINISTIC STREAM & REGEX FALLBACK
+        // ==========================================
+        Log::info("OCR Tier 3: Executing Local Extraction Fallback for {$docType}...");
+
+        $targetName = $originalName ?: basename($filePath);
+        $fullText = $targetName . "\n" . ($extractedText ?: '') . "\n" . $raw;
+
+        $cne = null;
+        if (preg_match('/(?:Massar|CNE|Code)\s*[:\.]?\s*([A-Za-z]\d{8,9}|\d{10})/i', $fullText, $mCne1)) {
+            $cne = strtoupper($mCne1[1]);
+        } elseif (preg_match('/([A-Za-z]\d{8,9})/', $fullText, $mCne2)) {
+            $cne = strtoupper($mCne2[1]);
+        }
+
+        $cin = null;
+        if (preg_match_all('/([A-Za-z]{1,2}\d{5,7})/', $fullText, $mCins)) {
+            foreach ($mCins[1] as $cCand) {
+                $cCand = strtoupper($cCand);
+                if ($cne && str_starts_with($cne, $cCand)) continue;
+                $cin = $cCand;
+                break;
+            }
+        }
+
+        $lastNameFr = '';
+        if (preg_match('/(?:Nom|Nom\s*de\s*famille)\s*[:\.]?\s*([A-Za-z\s\-]{2,30})/i', $fullText, $mLast)) {
+            $lastNameFr = trim($mLast[1]);
+        }
+
+        $firstNameFr = '';
+        if (preg_match('/(?:Prénom|Prénoms)\s*[:\.]?\s*([A-Za-z\s\-]{2,30})/i', $fullText, $mFirst)) {
+            $firstNameFr = trim($mFirst[1]);
+        }
+
+        $birthDate = '';
+        if (preg_match('/(?:Né\(e\)\s*le|Date\s*de\s*naissance)\s*[:\.]?\s*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4}|\d{4}[\/\.-]\d{2}[\/\.-]\d{2})/i', $fullText, $mBirth)) {
+            $bRaw = $mBirth[1];
+            if (preg_match('/^(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})$/', $bRaw, $mD)) {
+                $birthDate = "{$mD[3]}-{$mD[2]}-{$mD[1]}";
+            } else {
+                $birthDate = $bRaw;
+            }
+        }
+
+        $bacAvg = null;
+        if (preg_match('/(1[0-9]\.[0-9]{1,2}|20\.00)/', $fullText, $mAvg)) {
+            $bacAvg = $mAvg[1];
+        }
+
+        $bacType = '';
+        if (preg_match('/(Sciences\s+Physiques|Sciences\s+Math|Sciences\s+Economiques|STMG|SM|PC|SVT)/i', $fullText, $mBranch)) {
+            $bacType = $mBranch[1];
+        }
+
+        return $this->cleanAndNormalizeOcrData([
+            'first_name_fr' => $firstNameFr,
+            'last_name_fr' => $lastNameFr,
+            'first_name_ar' => '',
+            'last_name_ar' => '',
+            'cne' => $cne ?: '',
+            'cin' => $cin ?: '',
+            'birth_date' => $birthDate,
+            'birth_city_fr' => '',
+            'birth_city_ar' => '',
+            'father_name_fr' => '',
+            'father_name_ar' => '',
+            'mother_name_fr' => '',
+            'mother_name_ar' => '',
+            'address_fr' => '',
+            'address_ar' => '',
+            'bac_average' => $bacAvg ?: '',
+            'bac_mention' => '',
+            'bac_type' => $bacType ?: '',
+            'high_school' => '',
+        ]);
     }
 
-    /**
-     * Extract raw uncorrupted embedded JPEG photo scan from PDF objects (/DCTDecode or /FlateDecode) or Imagick.
-     */
-    protected function extractImageFromPdf(string $filePath): ?string
+    protected function extractPdfPagesAsJpegs(string $filePath): ?string
     {
-        // 1. Try pdftoppm shell utility first for 100% accurate PDF page rendering
-        try {
-            $tmpJpegPrefix = sys_get_temp_dir() . '/pdf_ocr_' . uniqid();
-            $cmd = "pdftoppm -jpeg -r 150 -f 1 -l 1 " . escapeshellarg($filePath) . " " . escapeshellarg($tmpJpegPrefix) . " 2>&1";
-            @exec($cmd, $out, $ret);
-            $generatedJpeg = $tmpJpegPrefix . '-1.jpg';
-            if (file_exists($generatedJpeg) && filesize($generatedJpeg) > 1000) {
-                $jpegData = file_get_contents($generatedJpeg);
-                @unlink($generatedJpeg);
-                Log::info('pdftoppm PDF Page 1 Conversion Success!');
-                return $jpegData;
-            }
-        } catch (\Throwable $e) {
-            Log::warning('pdftoppm conversion skipped: ' . $e->getMessage());
-        }
-
-        // 2. Try Imagick extension safely if available
-        if (extension_loaded('imagick') && class_exists('\Imagick')) {
-            try {
-                $im = new \Imagick();
-                $im->setResolution(150, 150);
-                $im->readImage($filePath);
-                $im->setImageFormat('jpeg');
-                $blob = $im->getImageBlob();
-                $im->clear();
-                $im->destroy();
-                if (!empty($blob)) {
-                    Log::info('Imagick PDF Page 1 Conversion Success');
-                    return $blob;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Imagick PDF conversion skipped: ' . $e->getMessage());
-            }
-        }
-
         $raw = @file_get_contents($filePath) ?: '';
         if (strpos($raw, '%PDF') === false) {
             return null;
         }
 
-        $largest = null;
-        $maxLen = 0;
+        $extractedImages = [];
 
-        // Match full JPEG streams bounded by PDF 'stream' and 'endstream' keywords
-        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-            foreach ($streams[1] as $st) {
-                if (str_starts_with($st, "\xFF\xD8\xFF") && strlen($st) > $maxLen) {
-                    $maxLen = strlen($st);
-                    $largest = $st;
+        // 1. Search for raw JPEG streams (\xFF\xD8\xFF ... \xFF\xD9)
+        if (preg_match_all('/\xFF\xD8\xFF.*?\xFF\xD9/s', $raw, $jpgMatches)) {
+            foreach ($jpgMatches[0] as $jData) {
+                if (strlen($jData) > 1000) {
+                    $extractedImages[] = $jData;
                 }
             }
         }
 
-        if ($largest && $maxLen > 2000) {
-            return $largest;
-        }
-
-        // Search inside decompressed FlateDecode streams
+        // 2. Search inside decompressed FlateDecode streams
         if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
             foreach ($streams[1] as $st) {
                 $dec = @gzuncompress($st) ?: @gzinflate($st);
-                if ($dec && str_starts_with($dec, "\xFF\xD8\xFF") && strlen($dec) > $maxLen) {
-                    $maxLen = strlen($dec);
-                    $largest = $dec;
+                if ($dec) {
+                    if (preg_match_all('/\xFF\xD8\xFF.*?\xFF\xD9/s', $dec, $mDecJpg)) {
+                        foreach ($mDecJpg[0] as $jDec) {
+                            if (strlen($jDec) > 1000) {
+                                $extractedImages[] = $jDec;
+                            }
+                        }
+                    }
+                    if (preg_match_all('/\x89PNG\x0D\x0A\x1A\x0A.*?IEND\xAE\x42\x60\x82/s', $dec, $mDecPng)) {
+                        foreach ($mDecPng[0] as $pDec) {
+                            if (strlen($pDec) > 1000) {
+                                $extractedImages[] = $pDec;
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if (!$largest) {
-            Log::warning('PDF Image Conversion Failed for file: ' . basename($filePath));
+        if (count($extractedImages) >= 2) {
+            return $this->combineImagesVertically($extractedImages);
+        } elseif (!empty($extractedImages)) {
+            return $extractedImages[0];
         }
 
-        return $largest;
+        return null;
     }
 
     /**
-     * Combine multi-page PDF rendered images vertically into 1 unified image for Groq Vision.
+     * Combine multi-page PDF rendered images vertically into 1 unified image for Gemini/Groq Vision.
      */
     protected function combineImagesVertically(array $imageBlobs): ?string
     {
@@ -439,7 +511,7 @@ class GeminiApiService
             imagedestroy($canvas);
 
             if (!empty($combinedJpeg)) {
-                Log::info("Stitched " . count($imageBlobs) . " PDF pages vertically into single {$finalW}x{$finalH} image (" . strlen($combinedJpeg) . " bytes) for Groq Vision.");
+                Log::info("Combined " . count($imageBlobs) . " PDF pages vertically into single {$finalW}x{$finalH} image (" . strlen($combinedJpeg) . " bytes).");
                 return $combinedJpeg;
             }
         } catch (\Throwable $e) {
@@ -449,346 +521,6 @@ class GeminiApiService
         return $imageBlobs[0];
     }
 
-    /**
-     * Downscale and compress large scanned JPG/PNG images to max 1800px width for fast Groq Vision processing.
-     */
-    protected function resizeImageForOcr(string $filePath): string
-    {
-        $bytes = @file_get_contents($filePath);
-        if (!$bytes || strlen($bytes) < 100) {
-            return base64_encode($bytes ?: '');
-        }
-
-        if (function_exists('imagecreatefromstring') && strlen($bytes) > 600000) {
-            try {
-                $img = @imagecreatefromstring($bytes);
-                if ($img) {
-                    $w = imagesx($img);
-                    $h = imagesy($img);
-                    if ($w > 1800 || $h > 1800) {
-                        $newW = 1800;
-                        $newH = (int)round(($h / $w) * 1800);
-                        $resized = imagecreatetruecolor($newW, $newH);
-                        imagecopyresampled($resized, $img, 0, 0, 0, 0, $newW, $newH, $w, $h);
-                        ob_start();
-                        imagejpeg($resized, null, 85);
-                        $compressed = ob_get_clean();
-                        imagedestroy($img);
-                        imagedestroy($resized);
-                        if (!empty($compressed)) {
-                            Log::info("Resized Scanned Image for OCR from {$w}x{$h} to {$newW}x{$newH} (Size: " . strlen($compressed) . " bytes)");
-                            return base64_encode($compressed);
-                        }
-                    }
-                    imagedestroy($img);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Image resize for OCR skipped: ' . $e->getMessage());
-            }
-        }
-
-        return base64_encode($bytes);
-    }
-
-    /**
-     * Safely parse JSON output from LLMs handling markdown code blocks, conversational text, and trailing commas.
-     */
-    public function parseJsonResponse(?string $rawContent): ?array
-    {
-        if (empty($rawContent)) {
-            return null;
-        }
-
-        // 1. Strip markdown code fences if present
-        $clean = preg_replace('/^```(?:json)?\s*/i', '', trim($rawContent));
-        $clean = preg_replace('/\s*```$/i', '', $clean);
-
-        // 2. Extract first valid JSON object payload { ... }
-        if (preg_match('/\{.*\}/s', $clean, $matches)) {
-            $jsonStr = $matches[0];
-            // Remove trailing commas before closing braces/brackets
-            $jsonStr = preg_replace('/,(\s*[\}\]])/', '$1', $jsonStr);
-            $decoded = json_decode($jsonStr, true);
-            if (is_array($decoded)) {
-                return $decoded;
-            }
-        }
-
-        // 3. Fallback direct json_decode
-        $decoded = json_decode($clean, true);
-        return is_array($decoded) ? $decoded : null;
-    }
-
-    /**
-     * Real-time OCR Document Data Extraction with Multi-Tier Fallback:
-     * Tier 1: Groq Vision API (llama-3.2-11b-vision-preview / llama-3.2-90b-vision-preview)
-     * Tier 2: Digital PDF Text Extraction + Groq Text LLM (llama-3.3-70b-versatile)
-     * Tier 3: Pure Regex Stream Pattern Matching
-     */
-    public function extractDocumentOcr(string $filePath, string $mimeType, ?string $originalName = null, string $docType = 'bac'): ?array
-    {
-        if (function_exists('opcache_invalidate')) {
-            @opcache_invalidate(__FILE__, true);
-        }
-
-        if (!file_exists($filePath)) {
-            Log::error("OCR File Not Found: {$filePath}");
-            return null;
-        }
-        
-        if (empty($mimeType) || $mimeType === 'application/octet-stream') {
-            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-            $mimeType = match($ext) {
-                'pdf' => 'application/pdf',
-                'png' => 'image/png',
-                'webp' => 'image/webp',
-                default => 'image/jpeg',
-            };
-        }
-
-        // Dynamic extraction instruction tailored to exact document fields with explicit Arabic & Recto/Verso instructions
-        $promptText = match(strtolower($docType)) {
-            'cin', 'cnie' => 'Analyze this Moroccan National Identity Card (CNIE) containing RECTO (front: student personal details) and VERSO (back: parents & current address). MUST extract Arabic names in Arabic script (e.g. النميلي, فاطمة الزهراء). Extract strictly raw JSON with keys: cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), birth_date (YYYY-MM-DD), birth_city_fr, birth_city_ar (in Arabic script), father_name_fr, father_name_ar (in Arabic script), mother_name_fr, mother_name_ar (in Arabic script), address_fr, address_ar (in Arabic script).',
-            'releve', 'notes', 'releve_notes' => 'Analyze this Moroccan Baccalaureate Transcript (Relevé de Notes). CRITICAL: The CNE / Code Massar is formatted as 1 letter + 8-9 digits (e.g. H148073298, N142088916). MUST put it in "cne". MUST extract Arabic names in Arabic script. Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_average, national_note, regional_note, bac_type, high_school, academy, prefecture.',
-            default => 'Analyze this Moroccan Baccalaureate Certificate (Attestation de Baccalauréat). CRITICAL: On Moroccan Bac certificates, the CNE / Code Massar (formatted as 1 letter + 8-9 digits like H148073298 or N142088916) is printed under candidate details (often near "Carte Nationale"). MUST put it in "cne". MUST extract Arabic names in Arabic script (e.g. فاطمة الزهراء). Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_type, bac_mention, academy, prefecture, high_school.'
-        };
-
-        // ==========================================
-        // TIER 1: GROQ VISION & GEMINI 2.0 FLASH VISION ENGINES
-        // ==========================================
-        $groqKey = config('services.groq.key') ?: $this->groqApiKey;
-        $geminiKey = config('services.gemini.key') ?: $this->geminiApiKey;
-
-        $isImageFile = str_contains(strtolower($mimeType), 'image');
-        $imageMime = str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg');
-        $fileBytes = base64_encode(file_get_contents($filePath));
-        $pdfPages = $this->extractPdfPagesAsJpegs($filePath);
-
-        if (!empty($groqKey)) {
-            $userContent = [
-                [
-                    'type' => 'text',
-                    'text' => $promptText . ' IMPORTANT: Extract both French and Arabic text accurately. Output ONLY valid raw JSON.'
-                ]
-            ];
-
-            if (!empty($pdfPages) && is_string($pdfPages)) {
-                $userContent[] = [
-                    'type' => 'image_url',
-                    'image_url' => [
-                        'url' => "data:image/jpeg;base64," . base64_encode($pdfPages)
-                    ]
-                ];
-            } else if (is_array($pdfPages) && !empty($pdfPages)) {
-                $singleBlob = (count($pdfPages) >= 2) ? $this->combineImagesVertically($pdfPages) : $pdfPages[0];
-                $userContent[] = [
-                    'type' => 'image_url',
-                    'image_url' => [
-                        'url' => "data:image/jpeg;base64," . base64_encode($singleBlob ?: $pdfPages[0])
-                    ]
-                ];
-            } else if ($isImageFile) {
-                $userContent[] = [
-                    'type' => 'image_url',
-                    'image_url' => [
-                        'url' => "data:{$imageMime};base64,{$fileBytes}"
-                    ]
-                ];
-            }
-
-            $visionModels = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
-
-            foreach ($visionModels as $modelName) {
-                try {
-                    Log::info("OCR Tier 1: Triggering Groq Vision ({$modelName}) for {$docType}...");
-                    
-                    $gRes = Http::withoutVerifying()->timeout(25)->withHeaders([
-                        'Authorization' => 'Bearer ' . $groqKey,
-                        'Content-Type'  => 'application/json',
-                    ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                        'model' => $modelName,
-                        'messages' => [
-                            [
-                                'role' => 'user',
-                                'content' => $userContent
-                            ]
-                        ],
-                        'temperature' => 0.1
-                    ]);
-
-                    if ($gRes->successful()) {
-                        $rawJson = $gRes->json('choices.0.message.content');
-                        $decodedG = $this->parseJsonResponse($rawJson);
-                        if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
-                            Log::info("OCR Tier 1 Success via Groq Vision ({$modelName})!", $decodedG);
-                            $this->lastError = null;
-                            return $this->cleanAndNormalizeOcrData($decodedG);
-                        } else {
-                            $this->lastError = "Groq Vision ({$modelName}) empty/unparsed JSON: " . substr($rawJson ?? '', 0, 150);
-                        }
-                    } else {
-                        $errBody = substr($gRes->body(), 0, 250);
-                        $this->lastError = "Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody;
-                        Log::warning("OCR Tier 1 Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody);
-                    }
-                } catch (\Throwable $ex) {
-                    $this->lastError = "Groq Vision Exception ({$modelName}): " . $ex->getMessage();
-                    Log::error("OCR Tier 1 Groq Vision Exception ({$modelName}): " . $ex->getMessage());
-                }
-            }
-        }
-
-        // ==========================================
-        // TIER 2: GROQ TEXT ENGINE (llama-3.3-70b-versatile) - Digital Text Extraction
-        // ==========================================
-        Log::info("OCR Tier 1 Vision failed or unavailable. Falling back to Tier 2 Digital Text Extraction for {$docType}...");
-
-        $raw = @file_get_contents($filePath) ?: '';
-        $extractedText = '';
-
-        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $mText)) {
-            $extractedText .= implode(' ', $mText[1]) . "\n";
-        }
-        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-            foreach ($streams[1] as $st) {
-                $dec = @gzuncompress($st) ?: @gzinflate($st);
-                if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
-                    $extractedText .= implode(' ', $m2[1]) . "\n";
-                }
-            }
-        }
-
-        if (strlen(trim($extractedText)) > 20 && !empty($groqKey)) {
-            $docContent = "Contenu textuel du document :\n" . $extractedText;
-
-            try {
-                Log::info("OCR Tier 2: Processing Digital Text via Groq Llama-3.3-70b...");
-                $gResText = Http::timeout(15)->withHeaders([
-                    'Authorization' => 'Bearer ' . $groqKey,
-                    'Content-Type'  => 'application/json',
-                ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => 'llama-3.3-70b-versatile',
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Vous êtes un assistant OCR certifié. NE JAMAIS inventer de noms ou d\'adresses. Extract exact data. ' . $promptText
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => $docContent
-                        ]
-                    ],
-                    'temperature' => 0.1,
-                    'response_format' => ['type' => 'json_object']
-                ]);
-
-                if ($gResText->successful()) {
-                    $rawJson = $gResText->json('choices.0.message.content');
-                    $decodedG = $this->parseJsonResponse($rawJson);
-                    if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
-                        Log::info('OCR Tier 2 Success via Groq Llama-3.3-70b Text!', $decodedG);
-                        return $this->cleanAndNormalizeOcrData($decodedG);
-                    }
-                } else {
-                    Log::warning("OCR Tier 2 Groq Text HTTP " . $gResText->status() . ": " . substr($gResText->body(), 0, 200));
-                }
-            } catch (\Throwable $ex) {
-                Log::error("OCR Tier 2 Groq Text Exception: " . $ex->getMessage());
-            }
-        }
-
-        // ==========================================
-        // TIER 3: ENHANCED LOCAL REGEX & PDF TEXT PARSER (Zero Token / 100% Free Fallback)
-        // ==========================================
-        Log::info("OCR Tier 2 Text failed or document is scanned image. Falling back to Tier 3 Enhanced Local Parser for {$docType}...");
-
-        $targetName = $originalName ?: basename($filePath);
-        $fullText = $targetName . "\n" . ($extractedText ?: '') . "\n" . $raw;
-
-        // 1. CNE / Code Massar (1 letter + 8-9 digits OR 10 digits)
-        $cne = null;
-        if (preg_match('/(?:Massar|CNE|Code)\s*[:\.]?\s*([A-Za-z]\d{8,9}|\d{10})/i', $fullText, $mCne1)) {
-            $cne = strtoupper($mCne1[1]);
-        } elseif (preg_match('/([A-Za-z]\d{8,9})/', $fullText, $mCne2)) {
-            $cne = strtoupper($mCne2[1]);
-        }
-
-        // 2. CIN (1-2 letters + 5-7 digits)
-        $cin = null;
-        if (preg_match_all('/([A-Za-z]{1,2}\d{5,7})/', $fullText, $mCins)) {
-            foreach ($mCins[1] as $cCand) {
-                $cCand = strtoupper($cCand);
-                if ($cne && str_starts_with($cne, $cCand)) {
-                    continue;
-                }
-                $cin = $cCand;
-                break;
-            }
-        }
-
-        // 3. Nom (Last Name FR)
-        $lastNameFr = '';
-        if (preg_match('/(?:Nom|Nom\s*de\s*famille)\s*[:\.]?\s*([A-Za-z\s\-]{2,30})/i', $fullText, $mLast)) {
-            $lastNameFr = trim($mLast[1]);
-        }
-
-        // 4. Prénom (First Name FR)
-        $firstNameFr = '';
-        if (preg_match('/(?:Prénom|Prénoms)\s*[:\.]?\s*([A-Za-z\s\-]{2,30})/i', $fullText, $mFirst)) {
-            $firstNameFr = trim($mFirst[1]);
-        }
-
-        // 5. Date de Naissance
-        $birthDate = '';
-        if (preg_match('/(?:Né\(e\)\s*le|Date\s*de\s*naissance)\s*[:\.]?\s*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4}|\d{4}[\/\.-]\d{2}[\/\.-]\d{2})/i', $fullText, $mBirth)) {
-            $bRaw = $mBirth[1];
-            if (preg_match('/^(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})$/', $bRaw, $mD)) {
-                $birthDate = "{$mD[3]}-{$mD[2]}-{$mD[1]}";
-            } else {
-                $birthDate = $bRaw;
-            }
-        }
-
-        // 6. Bac Average
-        $bacAvg = null;
-        if (preg_match('/(1[0-9]\.[0-9]{1,2}|20\.00)/', $fullText, $mAvg)) {
-            $bacAvg = $mAvg[1];
-        }
-
-        // 7. Bac Type
-        $bacType = '';
-        if (preg_match('/(Sciences\s+Physiques|Sciences\s+Math|Sciences\s+Economiques|STMG|SM|PC|SVT)/i', $fullText, $mBranch)) {
-            $bacType = $mBranch[1];
-        }
-
-        Log::info("OCR Tier 3 Local Parsing completed for {$docType}.", ['cne' => $cne, 'cin' => $cin, 'first_name_fr' => $firstNameFr, 'last_name_fr' => $lastNameFr]);
-
-        return $this->cleanAndNormalizeOcrData([
-            'first_name_fr' => $firstNameFr,
-            'last_name_fr' => $lastNameFr,
-            'first_name_ar' => '',
-            'last_name_ar' => '',
-            'cne' => $cne ?: '',
-            'cin' => $cin ?: '',
-            'birth_date' => $birthDate,
-            'birth_city_fr' => '',
-            'birth_city_ar' => '',
-            'father_name_fr' => '',
-            'father_name_ar' => '',
-            'mother_name_fr' => '',
-            'mother_name_ar' => '',
-            'address_fr' => '',
-            'address_ar' => '',
-            'bac_average' => $bacAvg ?: '',
-            'bac_mention' => '',
-            'bac_type' => $bacType ?: '',
-            'high_school' => '',
-        ]);
-    }
-
-    /**
-     * Clean, normalize, and disambiguate OCR fields (CNE vs CIN, Date formats, Bac types, Mentions).
-     */
     public function cleanAndNormalizeOcrData(array $data): array
     {
         $cneRaw = strtoupper(trim((string)($data['cne'] ?? '')));
@@ -816,18 +548,9 @@ class GeminiApiService
             }
         }
 
-        // Regex Fallback scan for CNE (Massar format: 1 letter + 8-9 digits e.g. H148073298) across all fields
-        if (empty($finalCne)) {
-            $allText = json_encode($data);
-            if (preg_match('/\b([A-Z]\d{8,9}|\d{10})\b/', $allText, $mCne)) {
-                $finalCne = $mCne[1];
-            }
-        }
-
         $data['cin'] = $finalCin;
         $data['cne'] = $finalCne;
 
-        // Normalize Bac Type
         if (!empty($data['bac_type']) && $data['bac_type'] !== 'Inconnu') {
             $bt = strtoupper($data['bac_type']);
             if (str_contains($bt, 'ECONOMIQ')) $data['bac_type'] = 'Sciences Économiques';
@@ -838,7 +561,6 @@ class GeminiApiService
             elseif (str_contains($bt, 'LETTRE') || str_contains($bt, 'HUMAIN')) $data['bac_type'] = 'Lettres et Sciences Humaines';
         }
 
-        // Normalize Date of Birth (e.g. "1262/2008" or "26/12/2008")
         if (!empty($data['birth_date']) && $data['birth_date'] !== 'Inconnu') {
             $bd = trim($data['birth_date']);
             if (preg_match('/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/', $bd, $mDate)) {
@@ -857,7 +579,6 @@ class GeminiApiService
             }
         }
 
-        // Auto-Calculate or Normalize Bac Mention
         if (!empty($data['bac_average']) && is_numeric($data['bac_average'])) {
             $avg = (float)$data['bac_average'];
             if (empty($data['bac_mention']) || $data['bac_mention'] === 'Inconnu') {
@@ -868,25 +589,6 @@ class GeminiApiService
             }
         }
 
-        if (!empty($data['bac_mention']) && $data['bac_mention'] !== 'Inconnu') {
-            $m = strtoupper(trim($data['bac_mention']));
-            if (str_contains($m, 'TRÈS') || str_contains($m, 'TRES')) $data['bac_mention'] = 'Très Bien';
-            elseif (str_contains($m, 'ASSEZ')) $data['bac_mention'] = 'Assez Bien';
-            elseif (str_contains($m, 'BIEN')) $data['bac_mention'] = 'Bien';
-            elseif (str_contains($m, 'PASSABLE')) $data['bac_mention'] = 'Passable';
-        }
-
-        // Normalize Gender
-        if (!empty($data['gender']) || !empty($data['sexe'])) {
-            $g = strtoupper(trim((string)($data['gender'] ?? $data['sexe'] ?? '')));
-            if (str_starts_with($g, 'F') || str_contains($g, 'FEMININ') || str_contains($g, 'FILLE')) {
-                $data['gender'] = 'female';
-            } elseif (str_starts_with($g, 'M') || str_contains($g, 'MASCULIN') || str_contains($g, 'FILS')) {
-                $data['gender'] = 'male';
-            }
-        }
-
-        // Sanitize any missing/unknown values to empty string
         foreach ($data as $key => $val) {
             if (is_null($val) || in_array(strtolower(trim((string)$val)), ['inconnu', 'n/a', 'null', 'none', 'undefined', 'aucun'])) {
                 $data[$key] = '';
@@ -894,5 +596,25 @@ class GeminiApiService
         }
 
         return $data;
+    }
+
+    protected function parseJsonResponse(?string $jsonText): ?array
+    {
+        if (empty($jsonText)) return null;
+
+        $cleaned = trim($jsonText);
+        $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned);
+        $cleaned = preg_replace('/\s*```$/i', '', $cleaned);
+        $cleaned = trim($cleaned);
+
+        $decoded = json_decode($cleaned, true);
+        if (is_array($decoded)) return $decoded;
+
+        if (preg_match('/\{.*\}/s', $cleaned, $matches)) {
+            $decoded = json_decode($matches[0], true);
+            if (is_array($decoded)) return $decoded;
+        }
+
+        return null;
     }
 }
