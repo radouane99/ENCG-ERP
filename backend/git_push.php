@@ -6,7 +6,7 @@ $commitMsg = 'feat(ocr): version correcte & finale extraction OCR IA (Bac, CNIE 
 $output2 = shell_exec('git commit -m ' . escapeshellarg($commitMsg) . ' 2>&1');
 echo "GIT COMMIT:\n" . $output2 . "\n";
 
-$output3 = shell_exec('git push origin main 2>&1');
+$output3 = shell_exec('git push origin docker-v2 2>&1');
 if (empty($output3)) {
     $output3 = shell_exec('git push 2>&1');
 }
