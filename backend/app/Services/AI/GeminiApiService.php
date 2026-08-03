@@ -20,8 +20,10 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = env('GEMINI_API_KEY') ?: (string)config('services.gemini.key', '');
-        $this->groqApiKey = env('GROQ_API_KEY') ?: (string)config('services.groq.key', '');
+        $this->geminiApiKey = env('GEMINI_API_KEY', 'AQ.Ab8RN6JF3kpfjK3iYN-JQyQckhl2P91JaiKdX-NczeilSYTA7A');
+        // Updated Groq key - 2026-08-02 v2
+        $this->groqApiKey = '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';
+        Log::info('[GeminiApiService] Groq key prefix: ' . substr($this->groqApiKey, 0, 20));
     }
 
     /**
@@ -45,7 +47,7 @@ class GeminiApiService
 
     protected function callGeminiApi(string $prompt, array $systemInstructions = []): ?string
     {
-        $url = "{$this->geminiBaseUrl}/gemini-1.5-flash:generateContent?key={$this->geminiApiKey}";
+        $url = "{$this->geminiBaseUrl}/gemini-flash-latest:generateContent";
 
         $payload = [
             'contents' => [
@@ -68,7 +70,9 @@ class GeminiApiService
         }
 
         try {
-            $response = Http::withoutVerifying()->timeout(15)->post($url, $payload);
+            $response = Http::withoutVerifying()->timeout(15)->withHeaders([
+                'X-goog-api-key' => $this->geminiApiKey
+            ])->post($url, $payload);
             if ($response->successful()) {
                 $text = $response->json('candidates.0.content.parts.0.text');
                 if (!empty($text)) return trim($text);
@@ -119,6 +123,7 @@ class GeminiApiService
     {
         if (function_exists('opcache_invalidate')) {
             @opcache_invalidate(__FILE__, true);
+            @opcache_invalidate(app_path('Services/AI/LocalOcrService.php'), true);
         }
 
         if (!file_exists($filePath)) {
@@ -142,13 +147,29 @@ class GeminiApiService
             default => 'Analyze this Moroccan Baccalaureate Certificate (Attestation de Baccalauréat). CRITICAL: On Moroccan Bac certificates, the CNE / Code Massar (formatted as 1 letter + 8-9 digits like H148073298 or N142088916) is printed under candidate details (often near "Carte Nationale"). MUST put it in "cne". MUST extract Arabic names in Arabic script (e.g. فاطمة الزهراء). Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_type, bac_mention, academy, prefecture, high_school.'
         };
 
+        // ==========================================
+        // 100% LOCAL FREE OCR & PDF PARSER (Poppler + Tesseract)
+        // ==========================================
+        try {
+            Log::info("OCR Local Service: Triggering Local OCR & PDF Parser for {$docType}...");
+            $localOcr = new \App\Services\AI\LocalOcrService();
+            $localData = $localOcr->extractDocumentOcr($filePath, $mimeType, $originalName, $docType);
+
+            Log::info('[GeminiApiService] Local OCR Execution Completed Successfully', $localData);
+            $this->lastError = null;
+            return $localData;
+        } catch (\Throwable $e) {
+            Log::error('[GeminiApiService] Local OCR error: ' . $e->getMessage());
+        }
+
+
         $fileBytes = base64_encode(file_get_contents($filePath));
-        $pdfPages = $this->extractPdfPagesAsJpegs($filePath);
+        $pdfPages = $this->convertPdfToJpeg($filePath);
 
         // ==========================================
         // TIER 1: GOOGLE GEMINI VISION (Primary Native Multimodal Engine)
         // ==========================================
-        $geminiModels = ['gemini-flash-latest', 'gemini-1.5-flash-latest', 'gemini-2.0-flash'];
+        $geminiModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
         if (!empty($this->geminiApiKey)) {
             foreach ($geminiModels as $gModel) {
@@ -156,27 +177,22 @@ class GeminiApiService
                     Log::info("OCR Tier 1: Triggering Gemini Vision ({$gModel}) for {$docType}...");
                     $geminiUrl = "{$this->geminiBaseUrl}/{$gModel}:generateContent?key={$this->geminiApiKey}";
 
+                    $imgData = (!empty($pdfPages) && is_string($pdfPages)) ? $pdfPages : file_get_contents($filePath);
+                    $imgMime = (!empty($pdfPages) && is_string($pdfPages)) ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : 'image/jpeg');
+
                     $parts = [
-                        ['text' => $promptText . ' Output ONLY valid raw JSON without markdown.']
+                        ['text' => $promptText . ' Output ONLY valid raw JSON without markdown.'],
+                        [
+                            'inline_data' => [
+                                'mime_type' => $imgMime,
+                                'data' => base64_encode($imgData)
+                            ]
+                        ]
                     ];
 
-                    if (!empty($pdfPages) && is_string($pdfPages)) {
-                        $parts[] = [
-                            'inline_data' => [
-                                'mime_type' => 'image/jpeg',
-                                'data' => base64_encode($pdfPages)
-                            ]
-                        ];
-                    } else {
-                        $parts[] = [
-                            'inline_data' => [
-                                'mime_type' => str_contains(strtolower($mimeType), 'pdf') ? 'application/pdf' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : 'image/jpeg'),
-                                'data' => $fileBytes
-                            ]
-                        ];
-                    }
-
-                    $resG = Http::withoutVerifying()->timeout(25)->post($geminiUrl, [
+                    $resG = Http::withoutVerifying()->timeout(25)->withHeaders([
+                        'X-goog-api-key' => $this->geminiApiKey
+                    ])->post($geminiUrl, [
                         'contents' => [['parts' => $parts]],
                         'generationConfig' => ['temperature' => 0.1]
                     ]);
@@ -231,7 +247,7 @@ class GeminiApiService
             }
 
             if (count($userContent) > 1) {
-                $visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview'];
+                $visionModels = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview', 'llama-3.3-70b-versatile'];
 
                 foreach ($visionModels as $modelName) {
                     try {
@@ -290,7 +306,15 @@ class GeminiApiService
             }
         }
 
-        if (strlen(trim($extractedText)) > 15 && !empty($this->groqApiKey)) {
+        if (strlen(trim($extractedText)) < 15) {
+            // Extract clean ASCII and Arabic strings safely from binary stream
+            if (preg_match_all('/[a-zA-Z0-9\x{0600}-\x{06FF}\s\.\,\:\-\/]{3,}/u', $raw, $mStrings)) {
+                $cleanItems = array_filter(array_map('trim', $mStrings[0]), fn($s) => strlen($s) >= 3 && !preg_match('/^(stream|endstream|obj|endobj|xref|trailer|startxref)$/i', $s));
+                $extractedText .= implode("\n", array_slice(array_unique($cleanItems), 0, 200)) . "\n";
+            }
+        }
+
+        if (strlen(trim($extractedText)) > 5 && !empty($this->groqApiKey)) {
             $docContent = "Contenu textuel du document :\n" . $extractedText;
 
             try {
@@ -407,6 +431,41 @@ class GeminiApiService
             'bac_type' => $bacType ?: '',
             'high_school' => '',
         ]);
+    }
+
+    protected function convertPdfToJpeg(string $filePath): ?string
+    {
+        if (extension_loaded('imagick')) {
+            try {
+                $imagick = new \Imagick();
+                $imagick->setResolution(150, 150);
+                $imagick->readImage($filePath);
+                $imagick->setImageFormat('jpeg');
+                $imagick->setImageCompressionQuality(85);
+                
+                if ($imagick->getNumberImages() > 1) {
+                    $blobs = [];
+                    foreach ($imagick as $page) {
+                        $blobs[] = $page->getImageBlob();
+                    }
+                    return $this->combineImagesVertically($blobs);
+                }
+                return $imagick->getImageBlob();
+            } catch (\Throwable $e) {
+                Log::warning('Imagick PDF conversion failed: ' . $e->getMessage());
+            }
+        }
+
+        $tmpOut = sys_get_temp_dir() . '/pdf_pg_' . uniqid();
+        @exec("pdftoppm -jpeg -r 150 -f 1 -l 2 " . escapeshellarg($filePath) . " " . escapeshellarg($tmpOut));
+        $genFiles = glob("{$tmpOut}*.jpg");
+        if (!empty($genFiles)) {
+            $blobs = array_map('file_get_contents', $genFiles);
+            foreach ($genFiles as $f) { @unlink($f); }
+            return $this->combineImagesVertically($blobs);
+        }
+
+        return $this->extractPdfPagesAsJpegs($filePath);
     }
 
     protected function extractPdfPagesAsJpegs(string $filePath): ?string
@@ -588,6 +647,8 @@ class GeminiApiService
                 elseif ($avg >= 10) $data['bac_mention'] = 'Passable';
             }
         }
+
+
 
         foreach ($data as $key => $val) {
             if (is_null($val) || in_array(strtolower(trim((string)$val)), ['inconnu', 'n/a', 'null', 'none', 'undefined', 'aucun'])) {

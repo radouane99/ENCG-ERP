@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Users, GraduationCap, CheckCircle2, Lock, Mail,
   MapPin, Calendar, Hash, Star, Building2, BookOpen,
-  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon, Eye, Sparkles
+  ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon, Eye, Sparkles, AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
@@ -118,7 +118,10 @@ function CustomSelect({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "w-full flex items-center justify-between bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-white/20 rounded-2xl py-3.5 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20 transition-all cursor-pointer shadow-sm text-left group hover:border-[#0f2863]/60 dark:hover:border-blue-400/60",
+          "w-full flex items-center justify-between rounded-2xl py-3.5 text-base sm:text-lg font-extrabold focus:outline-none transition-all cursor-pointer shadow-sm text-left group",
+          (value !== undefined && value !== null && value !== '')
+            ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner"
+            : "bg-white dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20",
           isOpen && "border-[#0f2863] dark:border-blue-400 ring-4 ring-[#0f2863]/20 shadow-md",
           isRtl ? "pr-12 pl-4 text-right font-serif text-xl" : "pl-12 pr-4"
         )}
@@ -221,6 +224,8 @@ function Field({
   }
 
   const isReadOnly = (props as any).readOnly;
+  const inputValue = (props as any).value;
+  const hasVal = inputValue !== undefined && inputValue !== null && inputValue !== '';
 
   return (
     <div className={cn('flex flex-col gap-2.5', className)}>
@@ -236,8 +241,8 @@ function Field({
           {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
           className={cn(
             "w-full rounded-2xl py-4 text-base sm:text-lg font-extrabold placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-all shadow-sm",
-            isReadOnly
-              ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 cursor-not-allowed shadow-inner"
+            isReadOnly || hasVal
+              ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner"
               : "bg-white dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20",
             isRtl ? "pr-12 pl-4 text-right font-serif text-xl font-bold" : "pl-12 pr-4",
             isReadOnly && !isRtl && "pr-36"
@@ -632,6 +637,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
   const [ocrExtracting, setOcrExtracting] = useState(false);
 
   const [selectedTargetDoc, setSelectedTargetDoc] = useState<'bac' | 'cnie' | 'releve_notes'>('bac');
+  const [missingFieldsList, setMissingFieldsList] = useState<string[]>([]);
+  const [showMissingModal, setShowMissingModal] = useState(false);
 
   const handleTriggerOcrForDoc = async (docType: 'bac' | 'cnie' | 'releve_notes') => {
     const file = uploadedFiles[docType];
@@ -666,81 +673,129 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       const resultData = {
         doc_type_label: docType === 'bac' ? 'Baccalauréat Original' : (docType === 'cnie' ? 'Carte Nationale (CNIE)' : 'Relevé de Notes du Bac'),
         file_name: file.name,
-        cne: extractedCne || formData.cne || 'En attente',
-        cin: extractedCin || formData.cin || 'En attente',
+        cne: docType !== 'cnie' ? (extractedCne || formData.cne || 'Non applicable') : 'Non applicable',
+        cin: extractedCin || formData.cin || 'Non applicable',
         last_name_fr: extractedLastName || formData.last_name_fr || '',
         first_name_fr: extractedFirstName || formData.first_name_fr || '',
         last_name_ar: ocr.last_name_ar || formData.last_name_ar || '',
         first_name_ar: ocr.first_name_ar || formData.first_name_ar || '',
-        birth_date: ocr.birth_date || formData.birth_date || '',
-        birth_city_fr: ocr.birth_city_fr || formData.birth_city_fr || '',
-        birth_city_ar: ocr.birth_city_ar || formData.birth_city_ar || '',
-        address_fr: ocr.address_fr || formData.address_fr || '',
-        bac_average: ocr.bac_average || formData.bac_average || '',
-        bac_mention: ocr.bac_mention || formData.bac_mention || '',
-        bac_type: ocr.bac_type || formData.bac_name || '',
-        high_school: ocr.high_school || formData.high_school || '',
-        academy: ocr.academy || formData.academy || '',
+        birth_date: docType === 'cnie' ? (ocr.birth_date || formData.birth_date || '') : 'Non applicable',
+        birth_city_fr: docType === 'cnie' ? (ocr.birth_city_fr || formData.birth_city_fr || '') : 'Non applicable',
+        birth_city_ar: docType === 'cnie' ? (ocr.birth_city_ar || formData.birth_city_ar || '') : 'Non applicable',
+        address_fr: docType === 'cnie' ? (ocr.address_fr || formData.address_fr || '') : 'Non applicable',
+        bac_average: docType === 'releve_notes' ? (ocr.bac_average || formData.bac_average || '') : 'Non applicable',
+        bac_mention: docType !== 'cnie' ? (ocr.bac_mention || formData.bac_mention || '') : 'Non applicable',
+        bac_type: docType !== 'cnie' ? (ocr.bac_type || formData.bac_name || '') : 'Non applicable',
+        high_school: docType !== 'cnie' ? (ocr.high_school || formData.high_school || '') : 'Non applicable',
+        academy: docType === 'bac' ? (ocr.academy || formData.academy || '') : 'Non applicable',
         doc_count: Object.keys(uploadedFiles).length
       };
 
-      setFormData(prev => ({
-        ...prev,
-        // Identity Attributes
-        cne: extractedCne || prev.cne,
-        cin: extractedCin || prev.cin,
-        last_name_fr: extractedLastName || prev.last_name_fr,
-        first_name_fr: extractedFirstName || prev.first_name_fr,
-        last_name_ar: ocr.last_name_ar || prev.last_name_ar,
-        first_name_ar: ocr.first_name_ar || prev.first_name_ar,
-        birth_date: ocr.birth_date || prev.birth_date,
-        gender: ocr.gender || prev.gender,
-        birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
-        birth_city_ar: ocr.birth_city_ar || prev.birth_city_ar,
+      setFormData(prev => {
+        const newData = { ...prev };
 
-        // Parents & Tuteurs Attributes
-        father_first_name_fr: ocr.father_name_fr ? ocr.father_name_fr.split(' ')[0] : (ocr.father_first_name_fr || prev.father_first_name_fr),
-        father_last_name_fr: ocr.father_name_fr ? ocr.father_name_fr.split(' ').slice(1).join(' ') : (extractedLastName || prev.father_last_name_fr),
-        father_first_name_ar: ocr.father_name_ar || prev.father_first_name_ar,
-        mother_first_name_fr: ocr.mother_name_fr ? ocr.mother_name_fr.split(' ')[0] : (ocr.mother_first_name_fr || prev.mother_first_name_fr),
-        mother_last_name_fr: ocr.mother_name_fr ? ocr.mother_name_fr.split(' ').slice(1).join(' ') : (ocr.mother_last_name_fr || prev.mother_last_name_fr),
-        mother_first_name_ar: ocr.mother_name_ar || prev.mother_first_name_ar,
-        address_fr: ocr.address_fr || ocr.address || prev.address_fr,
-        address_ar: ocr.address_ar || prev.address_ar,
+        if (docType === 'cnie') {
+          if (extractedCin) newData.cin = extractedCin;
+          if (extractedLastName) newData.last_name_fr = extractedLastName;
+          if (extractedFirstName) newData.first_name_fr = extractedFirstName;
+          if (ocr.last_name_ar && ocr.last_name_ar.length >= 2) newData.last_name_ar = ocr.last_name_ar;
+          if (ocr.first_name_ar && ocr.first_name_ar.length >= 2) newData.first_name_ar = ocr.first_name_ar;
+          if (ocr.birth_date) newData.birth_date = ocr.birth_date;
+          if (ocr.gender) newData.gender = ocr.gender;
+          if (ocr.birth_city_fr) newData.birth_city_fr = ocr.birth_city_fr;
+          if (ocr.birth_city_ar) newData.birth_city_ar = ocr.birth_city_ar;
 
-        // Parcours Académique Attributes
-        bac_average: ocr.bac_average || prev.bac_average,
-        bac_mention: ocr.bac_mention || prev.bac_mention,
-        bac_name: ocr.bac_type ? (ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`) : prev.bac_name,
-        high_school: ocr.high_school || prev.high_school,
-        academy: ocr.academy || prev.academy,
-        province: ocr.prefecture || ocr.province || prev.province,
-      }));
+          // Parents (Moroccan CNIE Verso Naming Convention)
+          if (ocr.father_name_fr) {
+            newData.father_first_name_fr = ocr.father_name_fr.split(/\s+(?:ben|bin|bne)\s+/i)[0].trim();
+            newData.father_last_name_fr = extractedLastName || prev.last_name_fr;
+          }
+          if (ocr.father_name_ar) {
+            newData.father_first_name_ar = ocr.father_name_ar.split(/\s+بن\s+/)[0].trim();
+            newData.father_last_name_ar = ocr.last_name_ar || prev.last_name_ar;
+          }
+          if (ocr.mother_name_fr) {
+            newData.mother_first_name_fr = ocr.mother_name_fr.split(/\s+(?:bent|bint)\s+/i)[0].trim();
+            newData.mother_last_name_fr = '';
+          }
+          if (ocr.mother_name_ar) {
+            newData.mother_first_name_ar = ocr.mother_name_ar.split(/\s+بنت\s+/)[0].trim();
+            newData.mother_last_name_ar = '';
+          }
 
-      setOcrExtractedFields(prev => ({
-        ...prev,
-        ...(extractedCne ? { cne: true } : {}),
-        ...(extractedCin ? { cin: true } : {}),
-        ...(extractedLastName ? { last_name_fr: true } : {}),
-        ...(extractedFirstName ? { first_name_fr: true } : {}),
-        ...(ocr.last_name_ar ? { last_name_ar: true } : {}),
-        ...(ocr.first_name_ar ? { first_name_ar: true } : {}),
-        ...(ocr.birth_date ? { birth_date: true } : {}),
-        ...(ocr.birth_city_fr ? { birth_city_fr: true } : {}),
-        ...(ocr.birth_city_ar ? { birth_city_ar: true } : {}),
-        ...(ocr.address_fr || ocr.address ? { address_fr: true } : {}),
-        ...(ocr.address_ar ? { address_ar: true } : {}),
-        ...(ocr.father_name_fr ? { father_first_name_fr: true, father_last_name_fr: true } : {}),
-        ...(ocr.father_name_ar ? { father_first_name_ar: true } : {}),
-        ...(ocr.mother_name_fr ? { mother_first_name_fr: true, mother_last_name_fr: true } : {}),
-        ...(ocr.mother_name_ar ? { mother_first_name_ar: true } : {}),
-        ...(ocr.bac_type ? { bac_name: true } : {}),
-        ...(ocr.bac_average ? { bac_average: true } : {}),
-        ...(ocr.bac_mention ? { bac_mention: true } : {}),
-        ...(ocr.high_school ? { high_school: true } : {}),
-        ...(ocr.academy ? { academy: true } : {}),
-        ...((ocr.prefecture || ocr.province) ? { province: true } : {}),
-      }));
+          // Address
+          if (ocr.address_fr || ocr.address) newData.address_fr = ocr.address_fr || ocr.address;
+          if (ocr.address_ar) newData.address_ar = ocr.address_ar;
+        }
+
+        if (docType === 'bac') {
+          if (extractedCne) newData.cne = extractedCne;
+          if (extractedCin && !newData.cin) newData.cin = extractedCin;
+          if (extractedLastName && !newData.last_name_fr) newData.last_name_fr = extractedLastName;
+          if (extractedFirstName && !newData.first_name_fr) newData.first_name_fr = extractedFirstName;
+          if (ocr.last_name_ar && ocr.last_name_ar.length >= 2 && !newData.last_name_ar) newData.last_name_ar = ocr.last_name_ar;
+          if (ocr.first_name_ar && ocr.first_name_ar.length >= 2 && !newData.first_name_ar) newData.first_name_ar = ocr.first_name_ar;
+          if (ocr.bac_mention) newData.bac_mention = ocr.bac_mention;
+          if (ocr.bac_type) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
+          if (ocr.high_school) newData.high_school = ocr.high_school;
+          if (ocr.academy) newData.academy = ocr.academy;
+          if (ocr.prefecture || ocr.province) newData.province = ocr.prefecture || ocr.province;
+        }
+
+        if (docType === 'releve_notes') {
+          if (extractedCne && !newData.cne) newData.cne = extractedCne;
+          if (extractedCin && !newData.cin) newData.cin = extractedCin;
+          if (ocr.bac_average) newData.bac_average = ocr.bac_average;
+          if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = ocr.bac_mention;
+          if (ocr.bac_type && !newData.bac_name) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
+          if (ocr.high_school && !newData.high_school) newData.high_school = ocr.high_school;
+        }
+
+        return newData;
+      });
+
+      setOcrExtractedFields(prev => {
+        const newFields = { ...prev };
+        
+        if (extractedLastName) newFields.last_name_fr = true;
+        if (extractedFirstName) newFields.first_name_fr = true;
+        if (ocr.last_name_ar) newFields.last_name_ar = true;
+        if (ocr.first_name_ar) newFields.first_name_ar = true;
+
+        if (docType === 'cnie') {
+          if (extractedCin) newFields.cin = true;
+          if (ocr.birth_date) newFields.birth_date = true;
+          if (ocr.birth_city_fr) newFields.birth_city_fr = true;
+          if (ocr.birth_city_ar) newFields.birth_city_ar = true;
+          if (ocr.father_name_fr) { newFields.father_first_name_fr = true; newFields.father_last_name_fr = true; }
+          if (ocr.father_name_ar) newFields.father_first_name_ar = true;
+          if (ocr.mother_name_fr) { newFields.mother_first_name_fr = true; newFields.mother_last_name_fr = true; }
+          if (ocr.mother_name_ar) newFields.mother_first_name_ar = true;
+          if (ocr.address_fr || ocr.address) newFields.address_fr = true;
+          if (ocr.address_ar) newFields.address_ar = true;
+        }
+
+        if (docType === 'bac') {
+          if (extractedCne) newFields.cne = true;
+          if (extractedCin) newFields.cin = true;
+          if (ocr.bac_type) newFields.bac_name = true;
+          if (ocr.bac_mention) newFields.bac_mention = true;
+          if (ocr.high_school) newFields.high_school = true;
+          if (ocr.academy) newFields.academy = true;
+          if (ocr.prefecture || ocr.province) newFields.province = true;
+        }
+
+        if (docType === 'releve_notes') {
+          if (extractedCne) newFields.cne = true;
+          if (extractedCin) newFields.cin = true;
+          if (ocr.bac_average) newFields.bac_average = true;
+          if (ocr.bac_mention) newFields.bac_mention = true;
+          if (ocr.bac_type) newFields.bac_name = true;
+          if (ocr.high_school) newFields.high_school = true;
+        }
+
+        return newFields;
+      });
 
       setExtractedDataResult(resultData);
       if (res.data?.ai_debug_error) {
@@ -760,7 +815,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
   const handleOcrDocumentUpload = async (docType: string, file: File) => {
     setUploadedFiles(prev => ({ ...prev, [docType]: file }));
-    const toastId = toast.loading(`🤖 Gemini 1.5 Flash Vision AI: Extraction OCR de ${file.name}...`);
+    setOcrExtracting(true);
+    const toastId = toast.loading(`🤖 Gemini Vision AI : Extraction OCR de ${file.name}...`);
     try {
       const fd = new FormData();
       fd.append('file', file);
@@ -772,36 +828,127 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
       const ocr = res.data.ocr_data;
       if (ocr) {
-        setFormData(prev => ({
-          ...prev,
-          first_name_fr: ocr.first_name_fr || prev.first_name_fr,
-          last_name_fr: ocr.last_name_fr || prev.last_name_fr,
-          first_name_ar: ocr.first_name_ar || prev.first_name_ar,
-          last_name_ar: ocr.last_name_ar || prev.last_name_ar,
-          cin: ocr.cin || prev.cin,
-          cne: ocr.cne || prev.cne,
-          email: prev.email || `${(ocr.first_name_fr || 'etudiant').toLowerCase()}.${(ocr.last_name_fr || 'encg').toLowerCase()}@gmail.com`,
-          phone: prev.phone || '0661234567',
-          birth_date: ocr.birth_date || prev.birth_date,
-          birth_city_fr: ocr.birth_city_fr || prev.birth_city_fr,
-          birth_city_ar: ocr.birth_city_ar || prev.birth_city_ar,
-          father_last_name_fr: ocr.father_last_name_fr || prev.father_last_name_fr,
-          father_first_name_fr: ocr.father_first_name_fr || prev.father_first_name_fr,
-          mother_last_name_fr: ocr.mother_last_name_fr || prev.mother_last_name_fr,
-          mother_first_name_fr: ocr.mother_first_name_fr || prev.mother_first_name_fr,
-          address_fr: ocr.address_fr || prev.address_fr,
-          province: ocr.province || prev.province,
-          academy: ocr.academy || prev.academy,
-          bac_average: ocr.bac_average || prev.bac_average,
-          bac_mention: ocr.bac_mention || prev.bac_mention,
-          bac_name: ocr.bac_type || prev.bac_name,
-          high_school: ocr.high_school || prev.high_school,
-        }));
+        setFormData(prev => {
+          const newData = { ...prev };
+          const extFirstName = ocr.first_name_fr || ocr.first_name || '';
+          const extLastName = ocr.last_name_fr || ocr.last_name || '';
+          const extCin = ocr.cin || ocr.cnie || '';
+          const extCne = ocr.cne || ocr.code_massar || '';
+
+          if (docType === 'cnie') {
+            if (extCin) newData.cin = extCin;
+            if (extLastName) newData.last_name_fr = extLastName;
+            if (extFirstName) newData.first_name_fr = extFirstName;
+            if (ocr.last_name_ar && ocr.last_name_ar.length >= 2) newData.last_name_ar = ocr.last_name_ar;
+            if (ocr.first_name_ar && ocr.first_name_ar.length >= 2) newData.first_name_ar = ocr.first_name_ar;
+            if (ocr.birth_date) newData.birth_date = ocr.birth_date;
+            if (ocr.gender) newData.gender = ocr.gender;
+            if (ocr.birth_city_fr) newData.birth_city_fr = ocr.birth_city_fr;
+            if (ocr.birth_city_ar) newData.birth_city_ar = ocr.birth_city_ar;
+
+            // Parents (Moroccan CNIE Verso Naming Convention)
+            if (ocr.father_name_fr) {
+              newData.father_first_name_fr = ocr.father_name_fr.split(/\s+(?:ben|bin|bne)\s+/i)[0].trim();
+              newData.father_last_name_fr = extLastName || prev.last_name_fr;
+            }
+            if (ocr.father_name_ar) {
+              newData.father_first_name_ar = ocr.father_name_ar.split(/\s+بن\s+/)[0].trim();
+              newData.father_last_name_ar = ocr.last_name_ar || prev.last_name_ar;
+            }
+            if (ocr.mother_name_fr) {
+              newData.mother_first_name_fr = ocr.mother_name_fr.split(/\s+(?:bent|bint)\s+/i)[0].trim();
+              newData.mother_last_name_fr = '';
+            }
+            if (ocr.mother_name_ar) {
+              newData.mother_first_name_ar = ocr.mother_name_ar.split(/\s+بنت\s+/)[0].trim();
+              newData.mother_last_name_ar = '';
+            }
+
+            // Address
+            if (ocr.address_fr || ocr.address) newData.address_fr = ocr.address_fr || ocr.address;
+            if (ocr.address_ar) newData.address_ar = ocr.address_ar;
+          }
+
+          if (docType === 'bac') {
+            if (extCne) newData.cne = extCne;
+            if (extCin && !newData.cin) newData.cin = extCin;
+            if (extLastName && !newData.last_name_fr) newData.last_name_fr = extLastName;
+            if (extFirstName && !newData.first_name_fr) newData.first_name_fr = extFirstName;
+            if (ocr.last_name_ar && ocr.last_name_ar.length >= 2 && !newData.last_name_ar) newData.last_name_ar = ocr.last_name_ar;
+            if (ocr.first_name_ar && ocr.first_name_ar.length >= 2 && !newData.first_name_ar) newData.first_name_ar = ocr.first_name_ar;
+            if (ocr.bac_mention) newData.bac_mention = ocr.bac_mention;
+            if (ocr.bac_type) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
+            if (ocr.high_school) newData.high_school = ocr.high_school;
+            if (ocr.academy) newData.academy = ocr.academy;
+            if (ocr.prefecture || ocr.province) newData.province = ocr.prefecture || ocr.province;
+          }
+
+          if (docType === 'releve_notes') {
+            if (extCne && !newData.cne) newData.cne = extCne;
+            if (extCin && !newData.cin) newData.cin = extCin;
+            if (ocr.bac_average) newData.bac_average = ocr.bac_average;
+            if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = ocr.bac_mention;
+            if (ocr.bac_type && !newData.bac_name) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
+            if (ocr.high_school && !newData.high_school) newData.high_school = ocr.high_school;
+          }
+
+          return newData;
+        });
+
+
+        setOcrExtractedFields(prev => {
+          const newFields = { ...prev };
+          const extFirstName = ocr.first_name_fr || ocr.first_name || '';
+          const extLastName = ocr.last_name_fr || ocr.last_name || '';
+          const extCin = ocr.cin || ocr.cnie || '';
+          const extCne = ocr.cne || ocr.code_massar || '';
+
+          if (extLastName) newFields.last_name_fr = true;
+          if (extFirstName) newFields.first_name_fr = true;
+          if (ocr.last_name_ar) newFields.last_name_ar = true;
+          if (ocr.first_name_ar) newFields.first_name_ar = true;
+
+          if (docType === 'cnie') {
+            if (extCin) newFields.cin = true;
+            if (ocr.birth_date) newFields.birth_date = true;
+            if (ocr.birth_city_fr) newFields.birth_city_fr = true;
+            if (ocr.birth_city_ar) newFields.birth_city_ar = true;
+            if (ocr.father_name_fr) { newFields.father_first_name_fr = true; newFields.father_last_name_fr = true; }
+            if (ocr.father_name_ar) newFields.father_first_name_ar = true;
+            if (ocr.mother_name_fr) { newFields.mother_first_name_fr = true; newFields.mother_last_name_fr = true; }
+            if (ocr.mother_name_ar) newFields.mother_first_name_ar = true;
+            if (ocr.address_fr || ocr.address) newFields.address_fr = true;
+            if (ocr.address_ar) newFields.address_ar = true;
+          }
+
+          if (docType === 'bac') {
+            if (extCne) newFields.cne = true;
+            if (extCin) newFields.cin = true;
+            if (ocr.bac_type) newFields.bac_name = true;
+            if (ocr.bac_mention) newFields.bac_mention = true;
+            if (ocr.high_school) newFields.high_school = true;
+            if (ocr.academy) newFields.academy = true;
+            if (ocr.prefecture || ocr.province) newFields.province = true;
+          }
+
+          if (docType === 'releve_notes') {
+            if (extCne) newFields.cne = true;
+            if (extCin) newFields.cin = true;
+            if (ocr.bac_average) newFields.bac_average = true;
+            if (ocr.bac_mention) newFields.bac_mention = true;
+            if (ocr.bac_type) newFields.bac_name = true;
+            if (ocr.high_school) newFields.high_school = true;
+          }
+
+          return newFields;
+        });
 
         toast.success(`✨ Gemini Vision AI : Extraction réussie du fichier ${file.name} !`, { id: toastId });
       }
     } catch (err) {
       toast.dismiss(toastId);
+    } finally {
+      setOcrExtracting(false);
     }
   };
 
@@ -858,19 +1005,76 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
   const isRtl = isRTL;
   const currentTheme = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
 
-  const goNext = () => setStep(s => Math.min(s + 1, 5) as StepId);
+  const validateStep = (currentStep: number): boolean => {
+    if (ocrExtracting) {
+      toast.warning(isRTL ? '⏳ يرجى الانتظار حتى الانتهاء من استخراج البيانات بالذكاء الاصطناعي...' : '⏳ Extraction des données par l\'IA en cours... Veuillez patienter.');
+      return false;
+    }
+
+    const missing: string[] = [];
+
+    if (currentStep === 1) {
+      if (!cndpConsent) {
+        missing.push(isRTL ? 'الموافقة على شروط حماية المعطيات الشخصية (القانون 09-08) *' : 'Acceptation des conditions CNDP (Loi 09-08) *');
+      }
+    }
+
+    if (currentStep === 2) {
+      if (!formData.cne) missing.push(isRTL ? 'رمز مسار (CNE) *' : 'Code MASSAR (CNE) *');
+      if (!formData.cin) missing.push(isRTL ? 'رقم البطاقة الوطنية (CNIE) *' : 'CNIE (Carte d\'Identité) *');
+      if (!formData.email) missing.push(isRTL ? 'البريد الإلكتروني الشخصي *' : 'Adresse E-mail *');
+      if (!formData.phone) missing.push(isRTL ? 'رقم الهاتف المحمول *' : 'Téléphone Portable *');
+      if (!formData.last_name_fr) missing.push(isRTL ? 'النسب بالفرنسية *' : 'Nom en Français *');
+      if (!formData.first_name_fr) missing.push(isRTL ? 'الاسم بالفرنسية *' : 'Prénom en Français *');
+      if (!formData.last_name_ar) missing.push(isRTL ? 'النسب بالعربية *' : 'Nom en Arabe *');
+      if (!formData.first_name_ar) missing.push(isRTL ? 'الاسم بالعربية *' : 'Prénom en Arabe *');
+      if (!formData.birth_date) missing.push(isRTL ? 'تاريخ الازدياد *' : 'Date de Naissance *');
+      if (!formData.birth_city_fr) missing.push(isRTL ? 'مكان الازدياد بالفرنسية *' : 'Lieu de Naissance (FR) *');
+      if (!formData.birth_city_ar) missing.push(isRTL ? 'مكان الازدياد بالعربية *' : 'Lieu de Naissance en Arabe *');
+      if (!formData.address_fr) missing.push(isRTL ? 'عنوان السكن بالفرنسية *' : 'Adresse de Résidence (FR) *');
+      if (!formData.address_ar) missing.push(isRTL ? 'عنوان السكن بالعربية *' : 'Adresse de Résidence en Arabe *');
+      if (!editMode && (!formData.password || formData.password.length < 8)) missing.push(isRTL ? 'كلمة المرور (8 أحرف على الأقل) *' : 'Mot de Passe (min. 8 caractères) *');
+      if (!editMode && formData.password !== formData.password_confirmation) missing.push(isRTL ? 'تأكيد كلمة المرور غير متطابق *' : 'Confirmation du Mot de Passe *');
+    }
+
+    if (currentStep === 3) {
+      if (!formData.father_last_name_fr) missing.push(isRTL ? 'نسب الأب بالفرنسية *' : 'Nom du Père (FR) *');
+      if (!formData.father_first_name_fr) missing.push(isRTL ? 'الاسم الشخصي للأب بالفرنسية *' : 'Prénom du Père (FR) *');
+      if (!formData.father_last_name_ar) missing.push(isRTL ? 'نسب الأب بالعربية *' : 'Nom du Père en Arabe *');
+      if (!formData.father_first_name_ar) missing.push(isRTL ? 'الاسم الشخصي للأب بالعربية *' : 'Prénom du Père en Arabe *');
+      if (!formData.father_cin) missing.push(isRTL ? 'البطاقة الوطنية للأب (CNIE) *' : 'CNIE du Père *');
+      if (!formData.father_phone) missing.push(isRTL ? 'هاتف الأب *' : 'Téléphone du Père *');
+      if (!formData.mother_first_name_fr) missing.push(isRTL ? 'الاسم الشخصي للأم بالفرنسية *' : 'Prénom de la Mère (FR) *');
+      if (!formData.mother_first_name_ar) missing.push(isRTL ? 'الاسم الشخصي للأم بالعربية *' : 'Prénom de la Mère en Arabe *');
+      if (!formData.mother_cin) missing.push(isRTL ? 'البطاقة الوطنية للأم (CNIE) *' : 'CNIE de la Mère *');
+    }
+
+    if (currentStep === 4) {
+      if (!formData.bac_average) missing.push(isRTL ? 'معدل البكالوريا *' : 'Moyenne Générale du Bac *');
+      if (!formData.high_school) missing.push(isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *');
+      if (!formData.filiere) missing.push(isRTL ? 'الشعبة المطلوبة *' : 'Filière Demandée *');
+    }
+
+    if (missing.length > 0) {
+      setMissingFieldsList(missing);
+      setShowMissingModal(true);
+      return false;
+    }
+
+    setShowMissingModal(false);
+    return true;
+  };
+
+  const goNext = () => {
+    if (validateStep(step)) {
+      setStep(s => Math.min(s + 1, 5) as StepId);
+    }
+  };
   const goPrev = () => setStep(s => Math.max(s - 1, 1) as StepId);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-
-    if (step === 1 && !editMode) {
-      if (!cndpConsent) {
-        setErrorMsg(lang === 'ar' ? 'يجب عليك الموافقة على معالجة البيانات الشخصية (القانون 09-08).' : 'Vous devez accepter le traitement de vos données personnelles conformément à la loi 09-08 (CNDP).');
-        return;
-      }
-    }
 
     if (step < 5) { goNext(); return; }
 
@@ -1199,7 +1403,26 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                              : active ? 'bg-white dark:bg-slate-900 border-[#0f2863] dark:border-blue-400 text-[#0f2863] dark:text-blue-400 scale-110 shadow-xl ring-4 ring-[#0f2863]/15'
                                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/15 text-slate-400 dark:text-slate-600'
                     )}
-                    onClick={() => { if (id < step) setStep(id); }}
+                    onClick={() => {
+                      if (ocrExtracting) {
+                        toast.warning(isRTL ? '⏳ يرجى الانتظار حتى الانتهاء من استخراج البيانات بالذكاء الاصطناعي...' : '⏳ Extraction des données en cours... Veuillez patienter.');
+                        return;
+                      }
+                      if (id < step) {
+                        setStep(id);
+                      } else if (id > step) {
+                        let canAdvance = true;
+                        for (let s = step; s < id; s++) {
+                          if (!validateStep(s)) {
+                            canAdvance = false;
+                            break;
+                          }
+                        }
+                        if (canAdvance) {
+                          setStep(id);
+                        }
+                      }
+                    }}
                     >
                       {done_ ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-5 h-5" />}
                     </div>
@@ -1264,6 +1487,44 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </p>
                       </div>
                     </div>
+
+                    {/* Live Extraction Loading / Ready Status Banner */}
+                    {ocrExtracting ? (
+                      <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl flex items-center justify-between gap-4 text-amber-900 dark:text-amber-300 animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                            <svg className="animate-spin w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h5 className="font-black text-sm text-amber-900 dark:text-amber-200">
+                              {isRTL ? 'جاري تحليل الوثيقة واستخراج البيانات بالذكاء الاصطناعي... ⏳' : 'Extraction & Analyse IA du document en cours... ⏳'}
+                            </h5>
+                            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mt-0.5">
+                              {isRTL ? 'يرجى الانتظار، سيتم تفعيل زر "متابعة" فور انتهاء الاستخراج.' : 'Veuillez patienter, le bouton "Continuer" sera déverrouillé dès que le chargement sera terminé.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (Object.keys(uploadedFiles).length > 0) && (
+                      <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl flex items-center justify-between gap-4 text-emerald-900 dark:text-emerald-300">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <div>
+                            <h5 className="font-black text-sm text-emerald-900 dark:text-emerald-200">
+                              {isRTL ? 'تم استخراج البيانات بنجاح! 🟢' : 'Données Extraintes & Prêtes ! 🟢'}
+                            </h5>
+                            <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                              {isRTL ? 'تم استخراج البيانات وتعبئتها تلقائياً. يمكنك الآن الضغط على زر "متابعة" للمرور إلى الخطوة الموالية.' : 'Toutes les données ont été pré-remplies. Cliquez sur "Continuer" pour passer à l\'étape suivante.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <SectionCard title={isRTL ? '1. شهادة البكالوريا، بيان النقاط والبطاقة الوطنية (PDF/صورة)' : '1. Scans du Baccalauréat, Relevé de Notes & CNIE (PDF / Image Max 10Mo)'} icon={FileText} isRtl={isRtl}>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1585,7 +1846,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             </button>
                           </div>
                           <div className="relative">
-                            <input type="text" dir="rtl" name="last_name_ar" value={formData.last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بناني" : "بناني"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                            <input type="text" dir="rtl" name="last_name_ar" value={formData.last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بناني" : "بناني"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.last_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                           </div>
                         </div>
 
@@ -1605,7 +1866,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                             </button>
                           </div>
                           <div className="relative">
-                            <input type="text" dir="rtl" name="first_name_ar" value={formData.first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: يوسف" : "يوسف"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                            <input type="text" dir="rtl" name="first_name_ar" value={formData.first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: يوسف" : "يوسف"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.first_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                           </div>
                         </div>
                       </div>
@@ -1638,7 +1899,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="birth_city_ar" value={formData.birth_city_ar} onChange={handleChange} placeholder="فاس" className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="birth_city_ar" value={formData.birth_city_ar} onChange={handleChange} placeholder="فاس" className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.birth_city_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <Field icon={User} label={isRTL ? 'الحالة العائلية *' : 'Situation Familiale *'} required as="select" name="family_status" value={formData.family_status} onChange={handleChange} isRtl={isRTL}>
@@ -1683,7 +1944,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                           <label className={cn("text-xs sm:text-sm font-bold tracking-wide uppercase text-slate-700 dark:text-slate-300", isRTL && "font-serif text-base")}>
                             {isRTL ? 'عنوان السكن بالفرنسية *' : 'Adresse de Résidence (FR) *'}
                           </label>
-                          <input type="text" name="address_fr" value={formData.address_fr} onChange={handleChange} placeholder={isRTL ? "22AV MLY RACHID RCE JAWHARA APPT8 BOURAMANA VN FES" : "Ex: 22 Av. Moulay Rachid, Res. Jawhara, Appt 8, Fès"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base font-semibold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" name="address_fr" value={formData.address_fr} onChange={handleChange} placeholder={isRTL ? "22AV MLY RACHID RCE JAWHARA APPT8 BOURAMANA VN FES" : "Ex: 22 Av. Moulay Rachid, Res. Jawhara, Appt 8, Fès"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base font-semibold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.address_fr ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <div className="sm:col-span-2 space-y-2">
@@ -1701,7 +1962,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="address_ar" value={formData.address_ar} onChange={handleChange} placeholder="22 شارع مولاي رشيد إقامة جوهرة شقة 8 بورمانة فاس" className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="address_ar" value={formData.address_ar} onChange={handleChange} placeholder="22 شارع مولاي رشيد إقامة جوهرة شقة 8 بورمانة فاس" className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.address_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <Field icon={Lock} label={isRTL ? 'كلمة المرور *' : 'Mot de passe *'} required type="password" name="password" value={formData.password} onChange={handleChange} placeholder={isRTL ? "8 أحرف على الأقل" : "Min. 8 caractères"} isRtl={isRTL} />
@@ -1871,7 +2132,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                       </span>
                     </div>
 
-
                     {/* Section Père */}
                     <SectionCard title={isRTL ? 'معلومات الأب' : 'Informations du Père'} icon={User} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1893,7 +2153,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="father_last_name_ar" value={formData.father_last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بناني" : "بناني"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="father_last_name_ar" value={formData.father_last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بناني" : "بناني"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.father_last_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <div className="space-y-2">
@@ -1911,7 +2171,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="father_first_name_ar" value={formData.father_first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: محمد" : "محمد"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="father_first_name_ar" value={formData.father_first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: محمد" : "محمد"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.father_first_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <Field icon={Hash} label={isRTL ? 'البطاقة الوطنية للأب (CNIE) *' : 'CNIE du père *'} required type="text" name="father_cin" value={formData.father_cin} onChange={handleChange} placeholder={isRTL ? "مثال: E123456" : "Ex: E123456"} isRtl={isRTL} />
@@ -1951,7 +2211,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="mother_last_name_ar" value={formData.mother_last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: الساطوري" : "الساطوري"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="mother_last_name_ar" value={formData.mother_last_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: الساطوري" : "الساطوري"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.mother_last_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <div className="space-y-2">
@@ -1969,7 +2229,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               <span>{isRTL ? 'لوحة المفاتيح ⌨️' : 'Clavier Arabe ⌨️'}</span>
                             </button>
                           </div>
-                          <input type="text" dir="rtl" name="mother_first_name_ar" value={formData.mother_first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بثينة" : "بثينة"} className="w-full bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs" />
+                          <input type="text" dir="rtl" name="mother_first_name_ar" value={formData.mother_first_name_ar} onChange={handleChange} placeholder={isRTL ? "مثال: بثينة" : "بثينة"} className={cn("w-full rounded-2xl px-4 py-3.5 text-base sm:text-lg font-serif font-bold outline-none focus:ring-4 focus:ring-[#0f2863]/15 shadow-xs transition-all", formData.mother_first_name_ar ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-white dark:bg-slate-900/90 border border-slate-300/80 dark:border-white/15 text-slate-900 dark:text-white")} />
                         </div>
 
                         <Field icon={Hash} label={isRTL ? 'البطاقة الوطنية للأم (CNIE) *' : 'CNIE de la mère *'} required type="text" name="mother_cin" value={formData.mother_cin} onChange={handleChange} placeholder={isRTL ? "C567108" : "Ex: C567108"} isRtl={isRTL} />
@@ -2199,13 +2459,24 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || ocrExtracting}
                     className={cn(
-                      "flex items-center gap-2.5 bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#09193d] hover:opacity-95 text-white px-7 sm:px-9 py-3.5 rounded-2xl font-black text-base sm:text-lg tracking-wide transition-all shadow-xl shadow-[#0f2863]/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer",
+                      "flex items-center gap-2.5 text-white px-7 sm:px-9 py-3.5 rounded-2xl font-black text-base sm:text-lg tracking-wide transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer",
+                      ocrExtracting 
+                        ? "bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 animate-pulse cursor-wait shadow-amber-600/30 ring-4 ring-amber-500/20" 
+                        : "bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#09193d] hover:opacity-95 shadow-[#0f2863]/25",
                       isRTL && "font-serif"
                     )}
                   >
-                    {submitting ? (
+                    {ocrExtracting ? (
+                      <>
+                        <svg className="animate-spin w-5 h-5 text-amber-200" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        <span>{isRTL ? 'جاري استخراج البيانات... ⏳' : 'Extraction IA en cours... ⏳'}</span>
+                      </>
+                    ) : submitting ? (
                       <>
                         <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -2579,6 +2850,49 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
           onClose={() => setArabicKbdTarget(null)}
           lang={lang}
         />
+      )}
+
+      {/* ── Modal d'Alerte Champs Manquants ── */}
+      {showMissingModal && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border-2 border-red-500/40 rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 relative overflow-hidden text-left" dir={isRTL ? "rtl" : "ltr"}>
+            <div className="h-2 bg-gradient-to-r from-red-500 via-amber-500 to-red-600 absolute top-0 left-0 right-0" />
+            
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className={cn("text-xl font-black text-slate-900 dark:text-white", isRTL && "font-serif text-2xl")}>
+                  {isRTL ? `حقول إجبارية غير مكتملة (${missingFieldsList.length})` : `Champs Obligatoires Incomplets (${missingFieldsList.length})`}
+                </h3>
+                <p className={cn("text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-1", isRTL && "font-serif")}>
+                  {isRTL ? 'يرجى ملء الحقول الإجبارية التالية للتمكن من المرور إلى الخطوة الموالية:' : 'Veuillez renseigner les champs ci-dessous pour pouvoir continuer à l\'étape suivante :'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50/70 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-2xl p-4 max-h-60 overflow-y-auto space-y-2.5">
+              {missingFieldsList.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-red-700 dark:text-red-300">
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMissingModal(false);
+                window.scrollTo({ top: 400, behavior: 'smooth' });
+              }}
+              className="w-full py-4 bg-gradient-to-r from-[#0f2863] to-indigo-700 hover:opacity-95 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider shadow-lg cursor-pointer transition-all hover:scale-[1.02]"
+            >
+              {isRTL ? 'فهمت، سأقوم باستكمال البيانات ✍️' : 'Compris, Je Complète Mes Données ✍️'}
+            </button>
+          </div>
+        </div>
       )}
 
       <CndpPrivacyModal isOpen={showCndpModal} onClose={() => setShowCndpModal(false)} lang={lang} />

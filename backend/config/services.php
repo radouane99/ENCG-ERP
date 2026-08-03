@@ -42,11 +42,11 @@ return [
     ],
 
     'groq' => [
-        'key' => env('GROQ_API_KEY'),
+        'key' => env('GROQ_API_KEY', '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'),
     ],
 
     'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
+        'key' => env('GEMINI_API_KEY', 'AQ.Ab8RN6JNODBBN52ysbfC3WksNXXxzzboiYUtiGzrI2h5nne8DA'),
     ],
 
 ];

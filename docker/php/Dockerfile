@@ -18,7 +18,17 @@ RUN apk add --no-cache \
     libxml2-dev \
     postgresql-dev \
     linux-headers \
-    $PHPIZE_DEPS
+    $PHPIZE_DEPS \
+    # ── OCR & PDF tools (FREE, local) ────────────────────────
+    tesseract-ocr \
+    tesseract-ocr-data-fra \
+    tesseract-ocr-data-ara \
+    tesseract-ocr-data-eng \
+    poppler-utils \
+    ghostscript \
+    imagemagick \
+    imagemagick-pdf \
+    imagemagick-dev
 
 # ── PHP extensions ────────────────────────────────────────────
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
