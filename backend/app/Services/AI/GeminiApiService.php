@@ -124,6 +124,9 @@ class GeminiApiService
         if (function_exists('opcache_invalidate')) {
             @opcache_invalidate(__FILE__, true);
             @opcache_invalidate(app_path('Services/AI/LocalOcrService.php'), true);
+            @opcache_invalidate(app_path('OCR/OcrPipeline.php'), true);
+            @opcache_invalidate(app_path('OCR/Engines/TesseractEngine.php'), true);
+            @opcache_invalidate(app_path('OCR/Parsers/CnieParser.php'), true);
         }
 
         if (!file_exists($filePath)) {
@@ -152,7 +155,8 @@ class GeminiApiService
         // ==========================================
         try {
             Log::info("OCR Local Service: Triggering Local OCR & PDF Parser for {$docType}...");
-            $localOcr = new \App\Services\AI\LocalOcrService();
+            // Use Laravel container to properly resolve all injected dependencies
+            $localOcr  = app(\App\Services\AI\LocalOcrService::class);
             $localData = $localOcr->extractDocumentOcr($filePath, $mimeType, $originalName, $docType);
 
             Log::info('[GeminiApiService] Local OCR Execution Completed Successfully', $localData);
