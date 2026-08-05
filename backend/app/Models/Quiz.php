@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quiz extends Model
 {
@@ -25,22 +27,22 @@ class Quiz extends Model
         ];
     }
 
-    public function module(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
     }
 
-    public function academicYear(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function academicYear(): BelongsTo
     {
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function questions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function questions(): HasMany
     {
         return $this->hasMany(QuizQuestion::class);
     }
 
-    public function attempts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function attempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
     }

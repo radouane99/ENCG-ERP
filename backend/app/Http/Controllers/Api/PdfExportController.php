@@ -3,160 +3,158 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Application;
+use App\Models\Exam;
+use App\Models\ExamIncident;
+use App\Models\ExamSeating;
+use App\Models\ExamSession;
+use App\Models\ExamSurveillance;
+use App\Models\Filiere;
+use App\Models\Grade;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\ModuleProfessor;
+use App\Models\ModulePvSignature;
+use App\Models\Professor;
+use App\Models\ResitEligibility;
+use App\Models\Room;
+use App\Models\Student;
+use App\Models\StudentDocument;
+use App\Models\StudentRegistration;
+use App\Models\User;
+use App\Services\Academic\DeliberationService;
+use App\Services\Academic\GradeService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PdfExportController extends Controller
 {
-    protected function getPdfInstance($view, $data = [])
-    {
-        // Embed Base64 Logo
-        $logoPath = public_path('logo-encg.png');
-        if (file_exists($logoPath)) {
-            $data['logoBase64'] = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        } else {
-            $data['logoBase64'] = '';
-        }
+    public function __construct(
+        private DeliberationService $deliberationService,
+        private GradeService $gradeService
+    ) {}
 
-        // Generate dynamic verification URL if not provided
+    /**
+     * Retourne une instance PDF préconfigurée avec logo et QR code.
+     */
+    private function getPdfInstance(string $view, array $data = []): Pdf
+    {
+        $logoPath = public_path('logo-encg.png');
+        $data['logoBase64'] = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : '';
+
         if (!isset($data['verifyUrl'])) {
             $data['verifyUrl'] = url('/verify/document/' . Str::random(10));
         }
 
-        // Generate Base64 QR Code using SimpleSoftwareIO
         try {
-            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->margin(0)->generate($data['verifyUrl']);
+            $qrSvg = QrCode::size(150)->margin(0)->generate($data['verifyUrl']);
             $data['qrBase64'] = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
         } catch (\Exception $e) {
             $data['qrBase64'] = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($data['verifyUrl']);
         }
 
-        // Set Dompdf Options
         return Pdf::setOption([
             'isRemoteEnabled' => true,
             'chroot' => public_path(),
         ])->loadView($view, $data);
     }
 
-    public function exportRecepisseTafemPdf(Request $request)
+    // ─── RÉCÉPISSÉ TAFEM ────────────────────────────────────────
 
+    public function exportRecepisseTafemPdf(Request $request)
     {
         $cne = strtoupper(trim($request->query('cne', '')));
         $cin = strtoupper(trim($request->query('cin', '')));
 
         $candidate = null;
+
         if (!empty($cne) || !empty($cin)) {
-            $candidate = \Illuminate\Support\Facades\DB::table('applications')
-                ->where(function($q) use ($cne, $cin) {
-                    if (!empty($cne)) {
-                        $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
-                    }
-                    if (!empty($cin)) {
-                        $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
-                    }
-                })->first();
+            $candidate = Application::where(function ($q) use ($cne, $cin) {
+                if (!empty($cne)) $q->where('cne', $cne);
+                if (!empty($cin)) $q->orWhere('cin', $cin);
+            })->first();
 
             if (!$candidate) {
-                $std = \Illuminate\Support\Facades\DB::table('students')
-                    ->join('users', 'students.user_id', '=', 'users.id')
-                    ->leftJoin('student_pathways', function($j) {
-                        $j->on('students.id', '=', 'student_pathways.student_id')->where('student_pathways.is_current', true);
-                    })
-                    ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-                    ->where(function($q) use ($cne, $cin) {
-                        if (!empty($cne)) {
-                            $q->whereRaw('UPPER(TRIM(students.cne)) = ?', [$cne]);
-                        }
-                        if (!empty($cin)) {
-                            $q->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$cin]);
-                        }
-                    })->select(
-                        'users.name', 'students.cne', 'users.cin',
-                        'filieres.name as filiere_name', 'students.status'
-                    )->first();
+                $std = Student::with(['user', 'pathways.filiere'])
+                    ->where(function ($q) use ($cne, $cin) {
+                        if (!empty($cne)) $q->where('cne', $cne);
+                        if (!empty($cin)) $q->orWhereHas('user', fn($u) => $u->where('cin', $cin));
+                    })->first();
 
                 if ($std) {
-                    $candidate = (object)[
-                        'first_name' => $std->name,
-                        'last_name' => '',
-                        'cne' => $std->cne,
-                        'cin' => $std->cin,
-                        'reference_number' => $std->filiere_name ?? 'Deux années préparatoires',
-                        'status' => 'accepted',
-                        'selection_score' => 150.00
+                    $candidate = (object) [
+                        'first_name'      => $std->user->name ?? '',
+                        'last_name'       => '',
+                        'cne'             => $std->cne,
+                        'cin'             => $std->user->cin ?? '',
+                        'reference_number' => $std->pathways->first()?->filiere?->name ?? 'Deux années préparatoires',
+                        'status'          => 'accepted',
+                        'selection_score' => 150.00,
                     ];
                 }
             }
         }
 
         if (!$candidate) {
-            $candidate = (object)[
-                'first_name' => 'Candidat',
-                'last_name' => 'ENCG Fès',
-                'cne' => !empty($cne) ? $cne : 'N142088916',
-                'cin' => !empty($cin) ? $cin : 'CD72910',
+            $candidate = (object) [
+                'first_name'       => 'Candidat',
+                'last_name'        => 'ENCG Fès',
+                'cne'              => !empty($cne) ? $cne : 'N142088916',
+                'cin'              => !empty($cin) ? $cin : 'CD72910',
                 'reference_number' => 'Deux années préparatoires (TAFEM S1)',
-                'status' => 'en_attente',
-                'selection_score' => 150.00
+                'status'           => 'en_attente',
+                'selection_score'  => 150.00,
             ];
         }
 
         $data = [
-            'name' => trim(($candidate->first_name ?? '') . ' ' . ($candidate->last_name ?? '')),
-            'cne' => $candidate->cne ?? $cne,
-            'cin' => $candidate->cin ?? $cin,
-            'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-            'score' => number_format($candidate->selection_score ?? $candidate->entrance_exam_score ?? 150.00, 2) . ' pts',
+            'name'       => trim(($candidate->first_name ?? '') . ' ' . ($candidate->last_name ?? '')),
+            'cne'        => $candidate->cne ?? $cne,
+            'cin'        => $candidate->cin ?? $cin,
+            'filiere'    => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
+            'score'      => number_format($candidate->selection_score ?? 150.00, 2) . ' pts',
             'statusLabel' => 'Admis sur Liste Principale',
-            'verifyUrl' => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne))
+            'verifyUrl'  => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne)),
         ];
-
 
         $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
         return $pdf->stream("Recepisse_TAFEM_" . ($data['cne']) . ".pdf", ["Attachment" => false]);
     }
 
-    public function printSession(Request $request)
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Étudiants (Session)']);
-        return $pdf->download('convocations_session.pdf');
-    }
+    // ─── CONVOCATIONS ÉTUDIANTS ──────────────────────────────────
 
-    public function studentConvocationPdf($seatingId)
+    public function studentConvocationPdf(int $seatingId)
     {
-        $seating = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])->findOrFail($seatingId);
-        
+        $seating = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])->findOrFail($seatingId);
         $pdf = $this->generateSingleConvocationPdf($seating);
         $name = ($seating->student->user->last_name ?? 'Etudiant') . '_' . ($seating->student->user->first_name ?? '');
         return $pdf->download("Convocation_{$name}.pdf");
     }
 
-    public function studentConvocationPreview($seatingId)
+    public function studentConvocationPreview(int $seatingId)
     {
-        $seating = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])->findOrFail($seatingId);
-        
+        $seating = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])->findOrFail($seatingId);
         $pdf = $this->generateSingleConvocationPdf($seating);
         return $pdf->stream("convocation_preview.pdf", ["Attachment" => false]);
     }
 
-    public function surveillantConvocationPdf($surveillanceId)
+    public function surveillantConvocationPdf(int $surveillanceId)
     {
-        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
-        if (!$surveillance) abort(404, 'Surveillance introuvable');
-        
+        $surveillance = ExamSurveillance::findOrFail($surveillanceId);
         $pdf = $this->generateSingleSurveillantConvocationPdf($surveillanceId);
-        $prof = \App\Models\User::find($surveillance->professor_id);
+        $prof = User::find($surveillance->professor_id);
         $name = ($prof->last_name ?? 'Professeur') . '_' . ($prof->first_name ?? '');
-        
         return $pdf->download("Convocation_Surveillance_{$name}.pdf");
     }
 
-    public function surveillantConvocationPreview($surveillanceId)
+    public function surveillantConvocationPreview(int $surveillanceId)
     {
-        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
-        if (!$surveillance) abort(404, 'Surveillance introuvable');
-
+        ExamSurveillance::findOrFail($surveillanceId);
         $pdf = $this->generateSingleSurveillantConvocationPdf($surveillanceId);
         return $pdf->stream("convocation_surveillance_preview.pdf", ["Attachment" => false]);
     }
@@ -168,7 +166,7 @@ class PdfExportController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucune convocation sélectionnée.'], 400);
         }
 
-        $seatings = \App\Models\ExamSeating::with(['student.user', 'student.pathways.filiere', 'exam.module', 'room', 'exam.session'])
+        $seatings = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])
             ->whereIn('id', $seatingIds)
             ->get();
 
@@ -176,91 +174,64 @@ class PdfExportController extends Controller
         foreach ($seatings->groupBy('student_id') as $studentId => $studentSeatings) {
             $student = $studentSeatings->first()->student;
             $sessionId = $studentSeatings->first()->exam->exam_session_id;
-            
-            $allStudentSeatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
+
+            $allStudentSeatings = ExamSeating::with(['exam.module', 'room'])
                 ->where('student_id', $student->id)
-                ->whereHas('exam', function($query) use ($sessionId) {
-                    $query->where('exam_session_id', $sessionId);
-                })
+                ->whereHas('exam', fn($q) => $q->where('exam_session_id', $sessionId))
                 ->get();
-            
+
             $exams = [];
             foreach ($allStudentSeatings as $s) {
                 if ($s->exam) {
-                    $profName = '-';
-                    if ($s->exam->module_id) {
-                        $profData = \Illuminate\Support\Facades\DB::table('module_professor')
-                            ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
-                            ->join('users', 'professors.user_id', '=', 'users.id')
-                            ->where('module_professor.module_id', $s->exam->module_id)
-                            ->select('users.last_name', 'users.first_name')
-                            ->first();
-                        if ($profData) {
-                            $profName = mb_strtoupper($profData->last_name) . ' ' . $profData->first_name;
-                        }
-                    }
-
+                    $profName = $this->getProfessorNameForModule($s->exam->module_id);
                     $exams[] = [
-                        'date' => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
-                        'time' => $s->exam->start_time . ' - ' . $s->exam->end_time,
-                        'module' => $s->exam->module->name ?? 'Module N/A',
+                        'date'       => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                        'time'       => $s->exam->start_time . ' - ' . $s->exam->end_time,
+                        'module'     => $s->exam->module->name ?? 'Module N/A',
                         'enseignant' => $profName,
-                        'room' => $s->room->name ?? 'Salle N/A',
-                        'seat' => $s->seat_number ?? 'N/A',
-                        'qr_token' => $s->qr_token
+                        'room'       => $s->room->name ?? 'Salle N/A',
+                        'seat'       => $s->seat_number ?? 'N/A',
+                        'qr_token'   => $s->qr_token,
                     ];
                 }
             }
-            
-            usort($exams, function($a, $b) {
-                $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
-                $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
-                return strcmp($dateA, $dateB);
-            });
-            
+
+            usort($exams, fn($a, $b) => strcmp($a['date'] . ' ' . $a['time'], $b['date'] . ' ' . $b['time']));
+
             $studentsData[] = [
-                'person_name' => $student->user->last_name . ' ' . $student->user->first_name,
-                'person_id' => $student->user->cin ?? 'N/A',
+                'person_name'  => $student->user->last_name . ' ' . $student->user->first_name,
+                'person_id'    => $student->user->cin ?? 'N/A',
                 'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
-                'session_type' => $studentSeatings->first()->exam->session->type ?? 'ORDINAIRE',
-                'session_name' => $studentSeatings->first()->exam->session->name ?? 'Session Principale',
-                'exams' => $exams,
-                'qr_token' => $allStudentSeatings->first()->qr_token ?? null,
-                'id' => $studentSeatings->first()->id,
-                'created_at' => clone $studentSeatings->first()->created_at
+                'session_type' => $studentSeatings->first()->exam->examSession->type ?? 'ORDINAIRE',
+                'session_name' => $studentSeatings->first()->exam->examSession->name ?? 'Session Principale',
+                'exams'        => $exams,
             ];
         }
 
-        $pdf = $this->getPdfInstance('pdf.convocations_batch', [
-            'studentsData' => $studentsData
-        ]);
-        
+        $pdf = $this->getPdfInstance('pdf.convocations_batch', compact('studentsData'));
         return $pdf->download('convocations_lot.pdf');
     }
 
-    public function batchDownloadSurveillantsPdf(Request $request, $sessionId)
+    public function batchDownloadSurveillantsPdf(Request $request, int $sessionId)
     {
-        $seatingIds = $request->input('seating_ids', []); // Actually surveillance_ids
-        if (empty($seatingIds)) {
-            return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné'], 400);
+        $surveillanceIds = $request->input('seating_ids', []);
+        if (empty($surveillanceIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné.'], 400);
         }
 
-        $session = \App\Models\ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
+        $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
         $examIds = $session->exams->pluck('id');
 
-        $selectedSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
-            ->whereIn('exam_id', $examIds)
-            ->whereIn('id', $seatingIds)
+        $selectedSurveillances = ExamSurveillance::whereIn('exam_id', $examIds)
+            ->whereIn('id', $surveillanceIds)
             ->get();
 
         $profIds = $selectedSurveillances->pluck('professor_id')->unique();
-        
-        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
-            ->whereIn('exam_id', $examIds)
+        $allSurveillances = ExamSurveillance::whereIn('exam_id', $examIds)
             ->whereIn('professor_id', $profIds)
             ->get();
 
-        $professors = \App\Models\User::whereIn('id', $profIds)->get();
+        $professors = User::whereIn('id', $profIds)->get();
         $professorsData = [];
 
         foreach ($professors as $prof) {
@@ -271,226 +242,54 @@ class PdfExportController extends Controller
                 $exam = $session->exams->firstWhere('id', $s->exam_id);
                 if ($exam) {
                     $exams[] = [
-                        'date' => $exam->exam_date ? $exam->exam_date->format('d/m/Y') : 'N/A',
-                        'time' => $exam->start_time ? substr($exam->start_time, 0, 5) . ' - ' . date('H:i', strtotime($exam->start_time) + ($exam->duration_minutes * 60)) : 'N/A',
+                        'date'   => $exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                        'time'   => $exam->start_time ? substr($exam->start_time, 0, 5) . ' - ' . date('H:i', strtotime($exam->start_time) + ($exam->duration_minutes * 60)) : 'N/A',
                         'module' => $exam->module->name ?? 'N/A',
-                        'room' => $exam->room->name ?? 'N/A',
-                        'role' => $s->role ?? 'Surveillant'
+                        'room'   => $exam->room->name ?? 'N/A',
+                        'role'   => $s->role ?? 'Surveillant',
                     ];
                 }
             }
 
-            usort($exams, function($a, $b) {
-                $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
-                $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
-                return strcmp($dateA, $dateB);
-            });
+            usort($exams, fn($a, $b) => strcmp($a['date'] . ' ' . $a['time'], $b['date'] . ' ' . $b['time']));
 
-            $token = $profSurvs->first()->qr_token ?? \Illuminate\Support\Str::random(16);
+            $token = $profSurvs->first()->qr_token ?? Str::random(16);
             $verifyUrl = url("/api/v1/admin/convocations/verify/{$token}");
-            $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verifyUrl));
+            $qrCodeBase64 = base64_encode(QrCode::format('svg')->size(100)->generate($verifyUrl));
 
             $professorsData[] = [
-                'person_name' => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
-                'person_id' => $prof->cin ?? 'N/A',
-                'person_role' => 'Professeur',
+                'person_name'  => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
+                'person_id'    => $prof->cin ?? 'N/A',
+                'person_role'  => 'Professeur',
                 'filiere_name' => 'Corps Professoral ENCG',
                 'session_type' => $session->type ?? 'ORDINAIRE',
                 'session_name' => $session->name ?? 'Session Principale',
-                'exams' => $exams,
+                'exams'        => $exams,
                 'qrCodeBase64' => $qrCodeBase64,
-                'id' => $profSurvs->first()->id,
-                'created_at' => clone $session->created_at
             ];
         }
 
-        $pdf = $this->getPdfInstance('pdf.convocations_profs_batch', [
-            'professorsData' => $professorsData
-        ]);
-        
+        $pdf = $this->getPdfInstance('pdf.convocations_profs_batch', compact('professorsData'));
         return $pdf->download('convocations_surveillants_lot.pdf');
     }
 
-    private function generateSingleConvocationPdf($seating)
+    // ─── PV EXAMEN ──────────────────────────────────────────────
+
+    public function pvExamen(int $examId)
     {
-        $student = $seating->student;
-        $sessionId = $seating->exam->exam_session_id;
-        
-        // Fetch ALL seatings for this student in the same session
-        $allSeatings = \App\Models\ExamSeating::with(['exam.module', 'room'])
-            ->where('student_id', $student->id)
-            ->whereHas('exam', function($query) use ($sessionId) {
-                $query->where('exam_session_id', $sessionId);
-            })
-            ->get();
+        $exam = Exam::with(['module.filiere', 'group', 'room', 'examSession'])->findOrFail($examId);
 
-        $exams = [];
-        foreach ($allSeatings as $s) {
-            if ($s->exam) {
-                $profName = '';
-                if ($s->exam->module_id) {
-                    $profData = \Illuminate\Support\Facades\DB::table('module_professor')
-                        ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
-                        ->join('users', 'professors.user_id', '=', 'users.id')
-                        ->where('module_professor.module_id', $s->exam->module_id)
-                        ->select('users.last_name', 'users.first_name')
-                        ->first();
-                    if ($profData) {
-                        $profName = mb_strtoupper($profData->last_name) . ' ' . $profData->first_name;
-                    }
-                }
-                if (!$profName) {
-                    $survProf = \Illuminate\Support\Facades\DB::table('exam_surveillances')
-                        ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-                        ->where('exam_surveillances.exam_id', $s->exam->id)
-                        ->select('users.name')
-                        ->first();
-                    if ($survProf) {
-                        $profName = $survProf->name;
-                    }
-                }
-                if (!$profName) {
-                    $profName = 'Prof. ENCG';
-                }
-
-                $exams[] = [
-                    'date'       => $s->exam->exam_date ? $s->exam->exam_date->format('d/m/Y') : 'N/A',
-                    'time'       => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
-                    'module'     => $s->exam->module->name ?? 'Module N/A',
-                    'enseignant' => $profName,
-                    'room'       => $s->room->name ?? $s->exam->room->name ?? 'Salle non assignée',
-                    'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
-                    'qr_token'   => $s->qr_token
-                ];
-            }
-        }
-
-        // Sort exams by date and time
-        usort($exams, function($a, $b) {
-            $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
-            $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
-            return strcmp($dateA, $dateB);
-        });
-
-        $qrToken = $allSeatings->first()->qr_token ?? ('ENCG-' . ($student->cne ?? $student->id));
-        $qrCodeBase64 = '';
-        try {
-            $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(140)->margin(1)->generate($qrToken);
-            $qrCodeBase64 = base64_encode($qrPng);
-        } catch (\Throwable $e) {
-            try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->margin(1)->generate($qrToken);
-                $qrCodeBase64 = base64_encode($qrSvg);
-            } catch (\Throwable $e2) {}
-        }
-
-        $firstModuleSem = (int) ($allSeatings->first()->exam->module->semester_number ?? 1);
-        $niveauName = ($firstModuleSem <= 2) ? '1ère Année' : (($firstModuleSem <= 4) ? '2ème Année' : (($firstModuleSem <= 6) ? '3ème Année' : (($firstModuleSem <= 8) ? '4ème Année' : '5ème Année')));
-
-        return $this->getPdfInstance('pdf.convocation', [
-            'person_name'  => strtoupper(($student->user->last_name ?? '') . ' ' . ($student->user->first_name ?? $student->user->name ?? '')),
-            'person_role'  => 'Étudiant',
-            'person_id'    => $student->cne ?? $student->user->cin ?? 'N/A',
-            'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun ENCG',
-            'niveau_name'  => $niveauName,
-            'session_type' => $seating->exam->session->type ?? 'ORDINAIRE',
-            'session_name' => $seating->exam->session->name ?? 'Session Principale',
-            'exams'        => $exams,
-            'qr_token'     => $qrToken,
-            'qrCodeBase64' => $qrCodeBase64,
-        ]);
-    }
-
-    private function generateSingleSurveillantConvocationPdf($surveillanceId)
-    {
-        $surveillance = \Illuminate\Support\Facades\DB::table('exam_surveillances')->where('id', $surveillanceId)->first();
-        if (!$surveillance) abort(404, 'Surveillance introuvable');
-        
-        $prof = \App\Models\User::find($surveillance->professor_id);
-        $exam = \App\Models\Exam::find($surveillance->exam_id);
-        $sessionId = $exam->exam_session_id;
-        $session = \App\Models\ExamSession::with(['exams.module', 'exams.room'])->find($sessionId);
-        
-        $examIds = $session->exams->pluck('id');
-        
-        // Fetch ALL surveillances for this professor in the same session
-        $allSurveillances = \Illuminate\Support\Facades\DB::table('exam_surveillances')
-            ->where('professor_id', $prof->id)
-            ->whereIn('exam_id', $examIds)
-            ->get();
-
-        $exams = [];
-        foreach ($allSurveillances as $s) {
-            $sessExam = $session->exams->firstWhere('id', $s->exam_id);
-            if ($sessExam) {
-                $exams[] = [
-                    'date' => $sessExam->exam_date ? $sessExam->exam_date->format('d/m/Y') : 'N/A',
-                    'time' => $sessExam->start_time ? substr($sessExam->start_time, 0, 5) . ' - ' . date('H:i', strtotime($sessExam->start_time) + ($sessExam->duration_minutes * 60)) : 'N/A',
-                    'module' => $sessExam->module->name ?? 'N/A',
-                    'room' => $sessExam->room->name ?? 'N/A',
-                    'role' => $s->role ?? 'Surveillant'
-                ];
-            }
-        }
-
-        // Sort exams by date and time
-        usort($exams, function($a, $b) {
-            $dateA = \Carbon\Carbon::createFromFormat('d/m/Y', $a['date'] === 'N/A' ? '01/01/2099' : $a['date'])->format('Y-m-d') . ' ' . $a['time'];
-            $dateB = \Carbon\Carbon::createFromFormat('d/m/Y', $b['date'] === 'N/A' ? '01/01/2099' : $b['date'])->format('Y-m-d') . ' ' . $b['time'];
-            return strcmp($dateA, $dateB);
-        });
-
-        $token = $allSurveillances->first()->qr_token ?? \Illuminate\Support\Str::random(16);
-        $verifyUrl = url("/api/v1/admin/convocations/verify/{$token}");
-        $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($verifyUrl));
-
-        $professorsData = [[
-            'person_name' => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
-            'person_id' => $prof->cin ?? 'N/A',
-            'person_role' => 'Professeur',
-            'filiere_name' => 'Corps Professoral ENCG',
-            'session_type' => $session->type ?? 'ORDINAIRE',
-            'session_name' => $session->name ?? 'Session Principale',
-            'exams' => $exams,
-            'qrCodeBase64' => $qrCodeBase64,
-            'id' => $allSurveillances->first()->id,
-            'created_at' => clone $session->created_at
-        ]];
-
-        return $this->getPdfInstance('pdf.convocations_profs_batch', [
-            'professorsData' => $professorsData
-        ]);
-    }
-
-    public function printProfessors(Request $request)
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Surveillants']);
-        return $pdf->download('convocations_profs.pdf');
-    }
-
-    public function pvExamen($examId)
-    {
-        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room', 'examSession'])->findOrFail($examId);
-
-        $seatings = \DB::table('exam_seatings')
-            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->leftJoin('users', 'students.user_id', '=', 'users.id')
-            ->where('exam_seatings.exam_id', $examId)
-            ->select('exam_seatings.*', 'users.first_name', 'users.last_name', 'users.name as user_name', 'students.cne')
-            ->orderBy('exam_seatings.seat_number')
-            ->get();
-
-        $surveillances = \DB::table('exam_surveillances')
-            ->leftJoin('users', 'exam_surveillances.professor_id', '=', 'users.id')
+        $seatings = ExamSeating::with(['student.user'])
             ->where('exam_id', $examId)
-            ->select('users.first_name', 'users.last_name', 'users.name as prof_name')
+            ->orderBy('seat_number')
             ->get();
 
-        $incidents = \DB::table('exam_incidents')
-            ->leftJoin('students', 'exam_incidents.student_id', '=', 'students.id')
-            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+        $surveillances = ExamSurveillance::with('professor')
             ->where('exam_id', $examId)
-            ->select('exam_incidents.*', 'users.first_name', 'users.last_name', 'users.name as student_name', 'students.cne')
+            ->get();
+
+        $incidents = ExamIncident::with(['student.user'])
+            ->where('exam_id', $examId)
             ->get();
 
         $seal = 'SHA256:ENCG-FES-' . $examId . '-' . strtoupper(substr(md5($examId . ($exam->locked_at ?? now())), 0, 16));
@@ -501,639 +300,117 @@ class PdfExportController extends Controller
         }
 
         $pdf = $this->getPdfInstance('pdf.pv_examen', [
-            'exam_id' => $examId,
-            'exam' => $exam,
-            'seatings' => $seatings,
-            'surveillances' => $surveillances,
-            'incidents' => $incidents,
-            'mode' => $mode,
-            'total_students' => $seatings->count(),
+            'exam_id'          => $examId,
+            'exam'             => $exam,
+            'seatings'         => $seatings,
+            'surveillances'    => $surveillances,
+            'incidents'        => $incidents,
+            'mode'             => $mode,
+            'total_students'   => $seatings->count(),
             'present_students' => $seatings->where('is_present', true)->count(),
-            'absent_students' => $seatings->where('is_present', false)->count(),
-            'seal' => $seal,
-            'generated_at' => now()->format('d/m/Y H:i CASABLANCA')
+            'absent_students'  => $seatings->where('is_present', false)->count(),
+            'seal'             => $seal,
+            'generated_at'     => now()->format('d/m/Y H:i'),
         ]);
 
         return $pdf->stream("PV_Examen_{$examId}.pdf", ["Attachment" => false]);
     }
 
-    public function pvGlobal()
+    // ─── ATTESTATIONS & DOCUMENTS ───────────────────────────────
+
+    public function attestationReussite(int $studentId, string $year)
     {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'PV Global - Synthèse Filière']);
-        return $pdf->download('pv_global.pdf');
-    }
-
-    public function releveNotes($studentId = null, $year = null)
-    {
-        $student = \App\Models\Student::with(['latestPathway.filiere'])->find($studentId);
-        if (!$student) abort(404, 'Étudiant introuvable');
-
-        $grades = \App\Models\Grade::with('gradeComponent.module')->where('student_id', $studentId)->get();
-        
-        $modules = $grades->map(function ($grade) {
-            return [
-                'code' => $grade->gradeComponent->module->code ?? 'N/A',
-                'name' => $grade->gradeComponent->module->name ?? 'Module Inconnu',
-                'score' => $grade->value,
-                'is_validated' => $grade->value >= 10,
-            ];
-        });
-
-        $avgGrade = $grades->count() > 0 ? $grades->avg('value') : 0;
-
-        $pdf = $this->getPdfInstance('pdf.releve_notes', [
-            'student' => $student,
-            'year' => $year ?? '2025/2026',
-            'modules' => $modules,
-            'avgGrade' => $avgGrade,
-            'verifyUrl' => url('/verify/document/' . ($student->student_number ?? '000'))
-        ]);
-        
-        return $pdf->stream("releve_notes_{$studentId}.pdf");
-    }
-
-    public function previewOrdreMission()
-    {
-        $professor = \App\Models\Professor::with(['user', 'department'])->first();
-        $mission = [
-            'destination' => 'Rabat, Maroc',
-            'start_date' => date('d/m/Y', strtotime('+2 days')),
-            'end_date' => date('d/m/Y', strtotime('+5 days')),
-            'motif' => 'Participation à une conférence académique'
-        ];
-        $pdf = $this->getPdfInstance('pdf.ordre_mission', [
-            'professor' => $professor,
-            'mission' => $mission
-        ]);
-        return $pdf->stream("ordre_mission.pdf");
-    }
-
-    public function previewConventionStage()
-    {
-        $pdf = $this->getPdfInstance('pdf.convention_stage');
-        return $pdf->stream("convention_stage.pdf");
-    }
-
-    public function previewAttestationTravail()
-    {
-        $pdf = $this->getPdfInstance('pdf.attestation_travail');
-        return $pdf->stream("attestation_travail.pdf");
-    }
-
-    public function attestationReussite($studentId, $year)
-    {
-        $student = \App\Models\Student::with(['latestPathway.filiere'])->find($studentId);
-        if (!$student) abort(404, 'Étudiant introuvable');
+        $student = Student::with(['latestPathway.filiere'])->findOrFail($studentId);
 
         $pdf = $this->getPdfInstance('pdf.attestation', [
-            'student' => $student, 
-            'year' => $year,
-            'verifyUrl' => url('/verify/document/' . ($student->student_number ?? '000'))
+            'student'   => $student,
+            'year'      => $year,
+            'verifyUrl' => url('/verify/document/' . ($student->student_number ?? '000')),
         ]);
-        
+
         return $pdf->download("attestation_{$studentId}_{$year}.pdf");
     }
 
-    public function exportProfessorOrdreDeServicePdf(Request $request)
+    public function downloadAttestationInscriptionPdf(Request $request, int $studentId)
     {
-        $profName = $request->query('prof', 'Abdelhak El Amrani');
-        
-        $mockAssignments = [
-            ['module' => 'TC-S1-M01 Mathématiques pour la Gestion', 'group' => 'TC-S2-G1'],
-            ['module' => 'TC-S1-M05 Management de Base', 'group' => 'TC-S2-G2'],
-            ['module' => 'TC-S1-M06 Informatique de Gestion I', 'group' => 'TC-S2-G1'],
-        ];
+        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
 
-        try {
-            $filtered = \Illuminate\Support\Facades\DB::table('module_professor')
-                ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
-                ->join('users', 'professors.user_id', '=', 'users.id')
-                ->join('modules', 'module_professor.module_id', '=', 'modules.id')
-                ->join('groups', 'module_professor.group_id', '=', 'groups.id')
-                ->select(
-                    'users.first_name', 'users.last_name',
-                    'modules.code as module_code', 'modules.name as module_name',
-                    'groups.name as group_name'
-                )
-                ->get()
-                ->filter(function($row) use ($profName) {
-                    $fullName = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
-                    return strtolower($fullName) === strtolower(trim($profName));
-                })
-                ->map(function($row) {
-                    return [
-                        'module' => $row->module_code . ' ' . $row->module_name,
-                        'group' => $row->group_name
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            $assignments = !empty($filtered) ? $filtered : $mockAssignments;
-        } catch (\Exception $e) {
-            $assignments = $mockAssignments;
+        $photoPath = null;
+        $photoDoc = StudentDocument::where('student_id', $studentId)->where('type', 'photo')->first();
+        if ($photoDoc?->file_path) {
+            $fullPath = storage_path('app/public/' . str_replace('/storage/', '', $photoDoc->file_path));
+            if (file_exists($fullPath)) $photoPath = $fullPath;
         }
-
-        $pdf = $this->getPdfInstance('pdf.ordre_de_service', [
-            'profName' => $profName,
-            'profId' => rand(100, 999),
-            'departmentName' => 'Département des Sciences de Gestion & Commerce',
-            'academicYear' => '2026/2027',
-            'assignments' => $assignments,
-            'verifyUrl' => url('/verify/document/OS-' . md5($profName))
-        ]);
-
-        $safeName = \Illuminate\Support\Str::slug($profName);
-        return $pdf->stream("Ordre_De_Service_A4_{$safeName}.pdf");
-    }
-
-    public function exportArreteNominationPdf(Request $request)
-    {
-        $deptCode = $request->query('code', 'SG');
-        $deptName = $request->query('dept', 'Sciences de Gestion');
-        $headName = $request->query('head', 'Abdelhak El Amrani');
-
-        $pdf = $this->getPdfInstance('pdf.arrete_nomination', [
-            'departmentCode' => $deptCode,
-            'departmentName' => $deptName,
-            'headName' => $headName,
-            'academicYear' => '2026/2027',
-            'verifyUrl' => url('/verify/document/ARRETE-' . md5($deptCode))
-        ]);
-
-        $safeCode = \Illuminate\Support\Str::slug($deptCode);
-        return $pdf->stream("Arrete_De_Nomination_Chef_Departement_{$safeCode}.pdf");
-    }
-
-    public function exportMaquetteFilierePdf(Request $request)
-    {
-        $code = $request->query('code', 'GFC');
-        $name = $request->query('name', 'Gestion Financière et Comptable');
-        $coord = $request->query('coord', 'Prof. Abdelhak El Amrani');
-
-        $pdf = $this->getPdfInstance('pdf.maquette_filiere', [
-            'filiereCode' => $code,
-            'filiereName' => $name,
-            'coordinatorName' => $coord,
-            'durationYears' => 5,
-            'verifyUrl' => url('/verify/document/MAQUETTE-' . md5($code))
-        ]);
-
-        $safeCode = \Illuminate\Support\Str::slug($code);
-        return $pdf->stream("Maquette_Pedagogique_{$safeCode}.pdf");
-    }
-
-    public function exportSyllabiqueModulePdf(Request $request)
-    {
-        $code = $request->query('code', 'GFC-S5-M02');
-        $name = $request->query('name', 'Analyse Financière');
-        $prof = $request->query('prof', 'Prof. Abdelhak El Amrani');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
-        $semester = $request->query('semester', 'S5');
-        $hours = $request->query('hours', '45');
-        $coeff = $request->query('coeff', '3.00');
-
-        // Check if module exists in DB
-        $dbModule = \App\Models\Module::where('code', $code)->with(['filiere', 'professors', 'assessments'])->first();
-
-        if ($dbModule) {
-            $name = $dbModule->name ?? $name;
-            $filiere = $dbModule->filiere?->name ?? $filiere;
-            $hours = $dbModule->credit_hours ?? $hours;
-            $coeff = number_format($dbModule->coefficient ?? $coeff, 2);
-            if ($dbModule->professors && $dbModule->professors->isNotEmpty()) {
-                $p = $dbModule->professors->first();
-                $prof = 'Prof. ' . $p->first_name . ' ' . $p->last_name;
-            }
-        }
-
-        // Dynamic Syllabus Generation according to Module Domain
-        $lowerName = mb_strtolower($name);
-        if (str_contains($lowerName, 'financ') || str_contains($lowerName, 'comptab')) {
-            $objectifs = "Ce module vise à maîtriser les outils fondamentaux du diagnostic financier des entreprises (Bilan financier, SIG, Tableau de Financement, Ratios de rentabilité et de solvabilité). À l'issue du cours, les étudiants seront capables d'analyser la santé financière d'une entité et d'émettre des recommandations stratégiques.";
-            $chapitres = [
-                "Chapitre I : Retraitements du Bilan comptable et établissement du Bilan Financier.",
-                "Chapitre II : Analyse du Solde Intermédiaire de Gestion (SIG) et de la CAF.",
-                "Chapitre III : Analyse du Bilan Fonctionnel (FRNG, BFR, Trésorerie Nette).",
-                "Chapitre IV : Méthode des Ratios (Liquidité, Solvabilité, Rentabilité)."
-            ];
-        } elseif (str_contains($lowerName, 'market') || str_contains($lowerName, 'vente') || str_contains($lowerName, 'consommateur')) {
-            $objectifs = "Acquérir les concepts clés du marketing stratégique et opérationnel, comprendre les motivations d'achat des consommateurs et concevoir des plans d'action commerciale adaptés aux marchés modernes.";
-            $chapitres = [
-                "Chapitre I : Démarche et Étude du Comportement du Consommateur.",
-                "Chapitre II : Études de Marché Quantitative et Qualitative.",
-                "Chapitre III : Segmentation, Ciblaged et Positionnement Marque.",
-                "Chapitre IV : Élaboration du Mix Marketing (Produit, Prix, Distribution, Communication)."
-            ];
-        } elseif (str_contains($lowerName, 'droit') || str_contains($lowerName, 'fisca') || str_contains($lowerName, 'jurid')) {
-            $objectifs = "Comprendre le cadre juridique et fiscal régissant l'activité des entreprises au Maroc (Fiscalité des sociétés, TVA, Impôt sur le Revenu, Droit des Contrats et des Sociétés).";
-            $chapitres = [
-                "Chapitre I : Principes généraux du Droit des Affaires et des Contrats.",
-                "Chapitre II : Impôt sur les Sociétés (IS) : Détermination du Résultat Fiscal.",
-                "Chapitre III : Taxe sur la Valeur Ajoutée (TVA) et Régime des Déductions.",
-                "Chapitre IV : Droit des Sociétés Commerciales (SARL, SA, Gouvernance)."
-            ];
-        } else {
-            $objectifs = "Développer des compétences managériales avancées et structurer une réflexion stratégique globale face aux enjeux contemporains des organisations et de la transformation digitale.";
-            $chapitres = [
-                "Chapitre I : Fondements théoriques et écoles de pensée du Management.",
-                "Chapitre II : Diagnostic Stratégique Interne et Externe (SWOT, PESTEL, Porter).",
-                "Chapitre III : Management des Projets et Conduite du Changement.",
-                "Chapitre IV : Performance Organisationnelle et Leadership Éthique."
-            ];
-        }
-
-        $pdf = $this->getPdfInstance('pdf.syllabique_module', [
-            'moduleCode' => $code,
-            'moduleName' => $name,
-            'professorName' => $prof,
-            'filiereName' => $filiere,
-            'semester' => $semester,
-            'creditHours' => $hours,
-            'coefficient' => $coeff,
-            'objectifs' => $objectifs,
-            'chapitres' => $chapitres,
-            'verifyUrl' => url('/verify/document/SYLLABUS-' . md5($code))
-        ]);
-
-        $safeCode = \Illuminate\Support\Str::slug($code);
-        return $pdf->stream("Fiche_Syllabique_Module_{$safeCode}.pdf");
-    }
-
-    public function exportPvAccreditationModulePdf(Request $request)
-    {
-        $code = $request->query('code', 'GFC-S5-M02');
-        $name = $request->query('name', 'Analyse Financière');
-        $prof = $request->query('prof', 'Prof. Abdelhak El Amrani');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
-        $semester = $request->query('semester', 'S5');
-        $hours = $request->query('hours', '45');
-        $coeff = $request->query('coeff', '3.00');
-
-        $pdf = $this->getPdfInstance('pdf.pv_accreditation_module', [
-            'moduleCode' => $code,
-            'moduleName' => $name,
-            'professorName' => $prof,
-            'filiereName' => $filiere,
-            'semester' => $semester,
-            'creditHours' => $hours,
-            'coefficient' => $coeff,
-            'verifyUrl' => url('/verify/document/PV-MODULE-' . md5($code))
-        ]);
-
-        $safeCode = \Illuminate\Support\Str::slug($code);
-        return $pdf->stream("PV_Accreditation_Module_{$safeCode}.pdf");
-    }
-
-    public function exportEmargementGroupePdf(Request $request)
-    {
-        $code = $request->query('code', 'GFC-S5-G1');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
-        $semester = $request->query('semester', 'S5');
-        $count = $request->query('count', '28');
-        $capacity = $request->query('capacity', '30');
-
-        // Query real group and real students from Database
-        $dbGroup = \App\Models\Group::where('name', $code)->with(['filiere', 'students.user'])->first();
-        $realStudents = [];
-
-        if ($dbGroup) {
-            $filiere = $dbGroup->filiere?->name ?? $filiere;
-            $semester = 'S' . $dbGroup->semester_number;
-            $capacity = $dbGroup->capacity ?? $capacity;
-
-            if ($dbGroup->students && $dbGroup->students->isNotEmpty()) {
-                foreach ($dbGroup->students as $st) {
-                    $realStudents[] = [
-                        'cne' => $st->cne ?? ('N' . rand(10000000, 99999999)),
-                        'name' => ($st->user?->first_name ?? 'Étudiant') . ' ' . ($st->user?->last_name ?? 'ENCG'),
-                        'status' => 'Inscrit Régulier'
-                    ];
-                }
-                $count = count($realStudents);
-            }
-        }
-
-        // Fallback to real DB students if specific group has no linked pivot records yet
-        if (empty($realStudents)) {
-            $dbStudents = \App\Models\Student::with('user')->limit(15)->get();
-            if ($dbStudents->isNotEmpty()) {
-                foreach ($dbStudents as $st) {
-                    $realStudents[] = [
-                        'cne' => $st->cne ?? ('N' . rand(10000000, 99999999)),
-                        'name' => ($st->user?->first_name ?? 'Étudiant') . ' ' . ($st->user?->last_name ?? 'ENCG'),
-                        'status' => 'Inscrit Régulier'
-                    ];
-                }
-                $count = count($realStudents);
-            }
-        }
-
-        $delegateName = 'Non assigné';
-
-        $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
-            'groupName' => $code,
-            'filiereName' => $filiere,
-            'semester' => $semester,
-            'studentCount' => $count,
-            'capacity' => $capacity,
-            'delegateName' => $delegateName,
-            'realStudents' => $realStudents,
-            'verifyUrl' => url('/verify/document/EMARGEMENT-' . md5($code))
-        ]);
-
-        $safeCode = \Illuminate\Support\Str::slug($code);
-        return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
-    }
-
-    public function exportAttestationInscriptionPdf(Request $request)
-
-    {
-        $name = $request->query('name', 'Sara Alami');
-        $cne = $request->query('cne', 'N13809281');
-        $cin = $request->query('cin', 'CD729102');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable (GFC)');
-        $group = $request->query('group', 'TC-S1-G1');
 
         $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-            'studentName' => $name,
-            'cne' => $cne,
-            'cin' => $cin,
-            'filiereName' => $filiere,
-            'groupName' => $group,
-            'verifyUrl' => url('/verify/document/ATTESTATION-' . md5($cne))
-        ]);
+            'studentName'  => strtoupper($student->last_name . ' ' . $student->first_name),
+            'cne'          => $student->cne ?? 'N/A',
+            'cin'          => $student->user->cin ?? 'N/A',
+            'birthDate'    => $student->birth_date ?? 'N/A',
+            'birthCity'    => $student->birth_city ?? 'N/A',
+            'filiereName'  => $student->latestPathway->filiere->name ?? 'Tronc Commun',
+            'semester'     => 'Semestre 1',
+            'cycle'        => 'Deux années préparatoires',
+            'academicYear' => '2026-2027',
+            'photoPath'    => $photoPath,
+            'verifyUrl'    => url("/verify-attestation?cne={$student->cne}&hash=" . md5($student->cne . 'ENCG')),
+        ])->setPaper('a4', 'portrait');
 
-        $safeName = \Illuminate\Support\Str::slug($name);
-        return $pdf->stream("Attestation_Inscription_{$safeName}.pdf");
+        return $pdf->download("Attestation_Inscription_{$student->cne}.pdf");
     }
 
-    public function exportEtiquettesTableTafemPdf(Request $request)
-    {
-        $amphi = $request->query('amphi', 'Amphi Al Khwarizmi');
+    // ─── PV MODULE ──────────────────────────────────────────────
 
-        $dbStudents = \App\Models\Student::with('user')->limit(8)->get();
-        $labels = [];
-
-        if ($dbStudents->isNotEmpty()) {
-            foreach ($dbStudents as $idx => $st) {
-                $labels[] = [
-                    'table_number' => ($idx + 1),
-                    'name' => ($st->user?->first_name ?? 'Candidat') . ' ' . ($st->user?->last_name ?? 'TAFEM'),
-                    'cne' => $st->cne ?? ('N' . (13800000 + $st->id)),
-                    'cin' => $st->cin ?? ('CD' . (700000 + $st->id)),
-                    'amphi' => $amphi
-                ];
-            }
-        } else {
-            for ($i = 1; $i <= 8; $i++) {
-                $labels[] = [
-                    'table_number' => $i,
-                    'name' => "Candidat TAFEM #{$i}",
-                    'cne' => "N1380000{$i}",
-                    'cin' => "CD72910{$i}",
-                    'amphi' => $amphi
-                ];
-            }
-        }
-
-        $pdf = $this->getPdfInstance('pdf.etiquettes_table_tafem', [
-            'amphi' => $amphi,
-            'labels' => $labels,
-            'verifyUrl' => url('/verify/document/TAFEM-LABELS-' . md5($amphi))
-        ]);
-
-        $safeAmphi = \Illuminate\Support\Str::slug($amphi);
-        return $pdf->stream("Etiquettes_Table_TAFEM_{$safeAmphi}.pdf");
-    }
-
-
-
-
-
-
-
-
-
-
-
-    public function notifyProfessorAssignment(Request $request)
-    {
-        $profName = $request->input('prof_name', $request->input('prof', 'Abdelhak El Amrani'));
-
-        $mockAssignments = [
-            ['module' => 'TC-S1-M01 Mathématiques pour la Gestion', 'group' => 'TC-S2-G1'],
-            ['module' => 'TC-S1-M05 Management de Base', 'group' => 'TC-S2-G2'],
-            ['module' => 'TC-S1-M06 Informatique de Gestion I', 'group' => 'TC-S2-G1'],
-        ];
-
-        $targetEmail = 'najlae.encg@gmail.com';
-
-        try {
-            $filtered = \Illuminate\Support\Facades\DB::table('module_professor')
-                ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
-                ->join('users', 'professors.user_id', '=', 'users.id')
-                ->join('modules', 'module_professor.module_id', '=', 'modules.id')
-                ->join('groups', 'module_professor.group_id', '=', 'groups.id')
-                ->select(
-                    'users.first_name', 'users.last_name', 'users.email',
-                    'modules.code as module_code', 'modules.name as module_name',
-                    'groups.name as group_name'
-                )
-                ->get()
-                ->filter(function($row) use ($profName, &$targetEmail) {
-                    $fullName = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
-                    if (strtolower($fullName) === strtolower(trim($profName))) {
-                        if (!empty($row->email)) $targetEmail = $row->email;
-                        return true;
-                    }
-                    return false;
-                })
-                ->map(function($row) {
-                    return [
-                        'module' => $row->module_code . ' ' . $row->module_name,
-                        'group' => $row->group_name
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            $assignments = !empty($filtered) ? $filtered : $mockAssignments;
-        } catch (\Exception $e) {
-            $assignments = $mockAssignments;
-        }
-
-        $count = count($assignments);
-        $totalHours = $count * 48;
-        $weeklyHours = $count * 4;
-
-        $profData = [
-            'profName' => $profName,
-            'assignments' => $assignments,
-            'totalHours' => $totalHours,
-            'weeklyHours' => $weeklyHours,
-            'academicYear' => '2026/2027',
-        ];
-
-        // Generate PDF Binary for Email Attachment
-        $pdfOutput = null;
-        try {
-            $pdf = $this->getPdfInstance('pdf.ordre_de_service', [
-                'profName' => $profName,
-                'profId' => rand(100, 999),
-                'departmentName' => 'Département des Sciences de Gestion & Commerce',
-                'academicYear' => '2026/2027',
-                'assignments' => $assignments,
-                'verifyUrl' => url('/verify/document/OS-' . md5($profName))
-            ]);
-            $pdfOutput = $pdf->output();
-        } catch (\Exception $e) {
-            $pdfOutput = null;
-        }
-
-        try {
-            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfessorAssignmentNotificationMail($profData, $pdfOutput));
-            return response()->json([
-                'success' => true,
-                'message' => "Email d'affectation officiel avec l'Ordre de Service PDF signé joint envoyé avec succès via Resend à {$profName} ({$targetEmail}) !",
-                'email' => $targetEmail
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => true,
-                'message' => "Notification d'affectation avec Ordre de Service PDF expédiée avec succès à {$profName} ({$targetEmail}) !",
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-
-
-
-
-    public function attendanceSheet($examId)
-    {
-        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
-        $students = \App\Models\ExamSeating::with('student.user')
-                    ->where('exam_id', $examId)
-                    ->orderBy('seat_number', 'asc')
-                    ->get();
-                    
-        $pdf = $this->getPdfInstance('pdf.attendance_sheet', [
-            'exam' => $exam,
-            'students' => $students,
-            'title' => 'Feuille de Présence - Examen ' . $examId
-        ]);
-        return $pdf->download("fiche_emargement_{$examId}.pdf");
-    }
-
-    public function rapportAbsences()
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Rapport des Absences']);
-        return $pdf->download('rapport_absences.pdf');
-    }
-
-    public function exportScheduleGroupPdf()
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Emploi du Temps - Groupe']);
-        return $pdf->download('schedule_group.pdf');
-    }
-
-    public function liveAttendancePdf($examId)
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Présence Live - Examen ' . $examId]);
-        return $pdf->download("live_attendance_{$examId}.pdf");
-    }
-
-    public function displayList($examId)
-    {
-        $pdf = $this->getPdfInstance('pdf.generic_report', ['title' => 'Liste Affichage Examen ' . $examId]);
-        return $pdf->download("affichage_examen_{$examId}.pdf");
-    }
-
-    public function exportModulePvPdf(Request $request, $moduleId)
+    public function exportModulePvPdf(Request $request, int $moduleId)
     {
         $groupId = $request->query('group_id');
-        $sessionType = $request->query('session', 'normale');
         $academicYearId = $request->query('academic_year_id', 1);
+        $session = strtolower($request->query('session', 'normale'));
 
-        $module = \App\Models\Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
-        
-        $query = \App\Models\StudentRegistration::query();
-        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) {
-            $query->where('group_id', $groupId);
+        $module = Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
+
+        $query = StudentRegistration::query();
+        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+            $query->where('group_id', (int) $groupId);
         } else {
-            $query->where('filiere_id', $module->filiere_id)
-                  ->where('academic_year_id', $academicYearId);
+            $query->where('filiere_id', $module->filiere_id)->where('academic_year_id', $academicYearId);
         }
 
-        $registrations = $query->with('student.user')->get();
-        $students = $registrations->map(fn($reg) => $reg->student)->filter();
+        $students = $query->with('student.user')->get()->map(fn($reg) => $reg->student)->filter();
 
-        // Get assessments
-        $normaleAssessments = $module->assessments->filter(fn($a) => strtolower($a->type) !== 'rattrapage');
-        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
-        // Fetch fraud cases strictly for this module or expanded semester/annual sanctions
-        $moduleExams = \App\Models\Exam::where('module_id', $moduleId)->pluck('id');
-        $directModuleFraudStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
-            ->where(function($q) use ($moduleExams, $moduleId) {
-                $q->whereIn('exam_id', $moduleExams)
-                  ->orWhere('exam_id', $moduleId);
-            })
-            ->pluck('student_id')
-            ->toArray();
+        $normaleAssessments = $module->assessments->filter(function ($a) {
+            $t = strtolower((string) $a->type);
+            return !str_contains($t, 'ratt') && !str_contains($t, 'resit');
+        });
+        $rattrapageAssessment = $module->assessments->first(function ($a) {
+            $t = strtolower((string) $a->type);
+            return str_contains($t, 'ratt') || str_contains($t, 'resit');
+        });
 
-        $semesterModuleIds = \App\Models\Module::where('filiere_id', $module->filiere_id ?? 1)
-            ->where('semester_number', $module->semester_number ?? 1)
-            ->pluck('id');
-        $semesterExams = \App\Models\Exam::whereIn('module_id', $semesterModuleIds)->pluck('id');
+        $fraudIds = $this->gradeService->getFraudStudentIds($module);
+        $resitStudentIds = ResitEligibility::where('module_id', $moduleId)->pluck('student_id')->toArray();
 
-        $expandedSanctionStudentIds = \Illuminate\Support\Facades\DB::table('exam_incidents')
-            ->whereIn('exam_id', $semesterExams)
-            ->whereIn('sanction_scope', ['semestre', 'annee'])
-            ->pluck('student_id')
-            ->toArray();
-
-        $moduleFraudStudentIds = array_unique(array_merge($directModuleFraudStudentIds, $expandedSanctionStudentIds));
-
-        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $moduleFraudStudentIds) {
-            $isStudentFraudInThisModule = in_array($student->id, $moduleFraudStudentIds);
-
-            $studentGrades = \App\Models\Grade::where('student_id', $student->id)
-                ->whereIn('assessment_id', $module->assessments->pluck('id'))
-                ->get();
+        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $fraudIds) {
+            $isFraud = in_array($student->id, $fraudIds);
+            $studentGrades = Grade::where('student_id', $student->id)->whereIn('assessment_id', $module->assessments->pluck('id'))->get();
 
             $gradesDetail = [];
             $totalWeight = 0;
             $weightedSum = 0;
 
             foreach ($normaleAssessments as $a) {
-                $typeLower = strtolower(trim($a->type));
-                $isExamType = str_contains($typeLower, 'exam') || str_contains($typeLower, 'examen') || str_contains($typeLower, 'final') || $a->weight >= 50;
-
                 $grade = $studentGrades->firstWhere('assessment_id', $a->id);
-                $val = $grade ? $grade->value : null;
-                $isAbsent = $grade ? $grade->absent : false;
+                $val = $grade?->value;
+                $isAbsent = $grade?->absent ?? false;
 
-                if ($isStudentFraudInThisModule && $isExamType) {
+                if ($isFraud && $a->weight >= 50) {
                     $val = 0.0;
                     $isAbsent = false;
                 }
 
-                $gradesDetail[$a->id] = [
-                    'value' => ($isStudentFraudInThisModule && $isExamType) ? 0.0 : $val,
-                    'is_absent' => $isAbsent,
-                    'is_fraud' => ($isStudentFraudInThisModule && $isExamType),
-                    'weight' => $a->weight,
-                    'type' => $a->type
-                ];
-                $gradesDetail[$a->type] = $gradesDetail[$a->id];
+                $gradesDetail[$a->id] = ['value' => $val, 'is_absent' => $isAbsent, 'weight' => $a->weight, 'type' => $a->type, 'is_fraud' => ($isFraud && $a->weight >= 50)];
 
                 $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
-                if ($isStudentFraudInThisModule && $isExamType) {
-                    $calcVal = 0.0;
-                }
-
                 if ($calcVal !== null) {
                     $weightedSum += $calcVal * ($a->weight / 100);
                     $totalWeight += $a->weight;
@@ -1141,52 +418,33 @@ class PdfExportController extends Controller
             }
 
             $moyenneNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
-            $decisionNormale = '';
-            if ($moyenneNormale !== null) {
-                if ($moyenneNormale >= 10) $decisionNormale = 'V';
-                elseif ($moyenneNormale < 6) $decisionNormale = 'NV';
-                else $decisionNormale = 'R';
-            }
+            $decisionNormale = $this->gradeService->determineDecision($moyenneNormale);
 
-            $rattrapageGradeVal = null;
-            $rattrapageIsAbsent = false;
-            if ($rattrapageAssessment) {
-                $rGrade = $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id);
-                if ($rGrade) {
-                    $rattrapageGradeVal = $rGrade->value;
-                    $rattrapageIsAbsent = $rGrade->absent;
-                }
+            $rGrade = $rattrapageAssessment ? $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id) : null;
+            if (!$rGrade) {
+                $rGrade = $studentGrades->first(function ($g) {
+                    $t = strtolower((string) ($g->assessment->type ?? ''));
+                    return str_contains($t, 'ratt') || str_contains($t, 'resit');
+                });
             }
-
             $moyenneFinale = $moyenneNormale;
             $decisionFinale = $decisionNormale;
 
-            if (($decisionNormale === 'R' || $decisionNormale === 'NV') && ($rattrapageGradeVal !== null || $rattrapageIsAbsent)) {
-                $examAssessment = $normaleAssessments->first(fn($a) => str_contains(strtolower($a->type), 'exam'));
-                $rCalcVal = $rattrapageIsAbsent ? 0 : floatval($rattrapageGradeVal);
-                if ($examAssessment) {
-                    $newWeightedSum = 0;
-                    $newTotalWeight = 0;
-                    foreach ($normaleAssessments as $a) {
-                        $grade = $studentGrades->firstWhere('assessment_id', $a->id);
-                        $val = $grade ? $grade->value : null;
-                        $isAbsent = $grade ? $grade->absent : false;
-                        $calcVal = $isAbsent ? 0 : ($val !== null ? floatval($val) : null);
-                        if ($a->id === $examAssessment->id) $calcVal = $rCalcVal;
-                        if ($calcVal !== null) {
-                            $newWeightedSum += $calcVal * ($a->weight / 100);
-                            $newTotalWeight += $a->weight;
-                        }
-                    }
-                    $moyenneRattrapage = $newTotalWeight > 0 ? ($newWeightedSum * (100 / $newTotalWeight)) : 0;
-                    $moyenneFinale = max($moyenneNormale ?? 0, round($moyenneRattrapage, 2));
-                } else {
-                    $moyenneFinale = max($moyenneNormale ?? 0, $rCalcVal);
+            if ($rGrade && in_array($decisionNormale, ['R', 'NV'])) {
+                if (!$rGrade->absent && $rGrade->value !== null) {
+                    $moyenneRattrapage = $this->gradeService->calculateRattrapageAverage(
+                        $student, $normaleAssessments, $rattrapageAssessment
+                    );
+                    $result = $this->gradeService->determineFinalRattrapageResult($moyenneNormale, $moyenneRattrapage);
+                    $moyenneFinale = $result['moyenne_finale'];
+                    $decisionFinale = $result['decision_finale'];
+                } elseif ($rGrade->absent) {
+                    $moyenneFinale = $moyenneNormale;
+                    $decisionFinale = 'NV';
                 }
-                $decisionFinale = $moyenneFinale >= 10 ? 'VAR' : 'NV';
             }
 
-            if ($isStudentFraudInThisModule) {
+            if ($isFraud) {
                 $moyenneNormale = 0.00;
                 $decisionNormale = 'FRAUDE';
                 $moyenneFinale = 0.00;
@@ -1194,79 +452,73 @@ class PdfExportController extends Controller
             }
 
             return [
-                'student_id' => $student->id,
-                'apogee' => $student->student_number ?? $student->id,
-                'last_name' => $student->last_name,
-                'first_name' => $student->first_name,
-                'grades_detail' => $gradesDetail,
-                'moyenne_normale' => $moyenneNormale,
-                'decision_normale' => $decisionNormale,
-                'rattrapage_note' => $rattrapageGradeVal,
-                'rattrapage_absent' => $rattrapageIsAbsent,
-                'moyenne_finale' => $moyenneFinale,
-                'decision_finale' => $decisionFinale
+                'student_id'        => $student->id,
+                'apogee'            => $student->student_number ?? $student->id,
+                'last_name'         => $student->last_name,
+                'first_name'        => $student->first_name,
+                'grades_detail'     => $gradesDetail,
+                'moyenne_normale'   => $moyenneNormale,
+                'decision_normale'  => $decisionNormale,
+                'rattrapage_note'   => $rGrade?->value,
+                'rattrapage_absent' => $rGrade ? (bool) $rGrade->absent : false,
+                'moyenne_finale'    => $moyenneFinale,
+                'decision_finale'   => $decisionFinale,
+                'is_fraud'          => $isFraud,
             ];
         });
 
-        // Signature record query
-        $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
-
-        $signature = null;
-        if ($sigRecord) {
-            $signature = [
-                'signed_by' => $sigRecord->signer?->name ?? ($sigRecord->signer?->email ?? 'Enseignant Responsable'),
-                'signed_at' => $sigRecord->signed_at ? $sigRecord->signed_at->format('d/m/Y H:i') : date('d/m/Y H:i'),
-                'signature_data' => $sigRecord->signature_data,
-                'ip_address' => $sigRecord->ip_address,
-                'digital_seal' => $sigRecord->digital_seal,
-            ];
+        if ($session === 'rattrapage') {
+            $data = $data->filter(function ($student) use ($resitStudentIds) {
+                return in_array($student['student_id'], $resitStudentIds)
+                    || in_array($student['decision_normale'], ['R', 'NV'], true)
+                    || !empty($student['rattrapage_absent'])
+                    || ($student['rattrapage_note'] !== null && $student['rattrapage_note'] !== '');
+            })->values();
         }
 
-        // Base64 Logo
-        $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+        $sigRecord = ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
+        $signature = $sigRecord ? [
+            'signed_by'      => $sigRecord->signer?->name ?? 'Enseignant',
+            'signed_at'      => $sigRecord->signed_at?->format('d/m/Y H:i') ?? date('d/m/Y H:i'),
+            'digital_seal'   => $sigRecord->digital_seal,
+            'ip_address'     => $sigRecord->ip_address ?? 'N/A',
+            'signature_data' => $sigRecord->signature_data ?? null,
+        ] : null;
 
-        // Dynamic verification URL & QR Code
         $verifyUrl = url("/verify/pv/{$moduleId}/" . ($groupId ?: 'all'));
-        try {
-            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl);
-            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
-        } catch (\Exception $e) {
-            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($verifyUrl);
+        $qrBase64 = $this->generateQrBase64($verifyUrl);
+
+        $perimetreLabel = ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) ? "Groupe {$groupId}" : "Module Complet";
+        if ($session === 'rattrapage') {
+            $perimetreLabel .= " (Session Rattrapage)";
+        } elseif ($session === 'totale' || $session === 'complet') {
+            $perimetreLabel .= " (Bilan Complet)";
         }
 
-        $semesterNum = $request->query('semester', $module->semester_number ?? 1);
+        $pdf = Pdf::setOption(['isRemoteEnabled' => true, 'chroot' => public_path()])
+            ->loadView('pdf.module_pv', [
+                'module'             => $module,
+                'session'            => $session,
+                'normaleAssessments' => $normaleAssessments,
+                'students'           => $data,
+                'signature'          => $signature,
+                'logoBase64'         => $this->getLogoBase64(),
+                'qrBase64'           => $qrBase64,
+                'verifyUrl'          => $verifyUrl,
+                'perimetre'          => $perimetreLabel,
+                'academicYear'       => '2026/2027',
+                'semester'           => 'S' . ($module->semester_number ?? 1),
+                'date'               => date('d/m/Y H:i'),
+            ])->setPaper('a4', 'landscape');
 
-        $pdf = Pdf::setOption([
-            'isRemoteEnabled' => true,
-            'chroot' => public_path(),
-        ])->loadView('pdf.module_pv', [
-            'module' => $module,
-            'session' => $sessionType,
-            'normaleAssessments' => $normaleAssessments,
-            'students' => $data,
-            'signature' => $signature,
-            'logoBase64' => $logoBase64,
-            'qrBase64' => $qrBase64,
-            'verifyUrl' => $verifyUrl,
-            'perimetre' => ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''])) ? "Groupe {$groupId}" : "Module Complet",
-            'academicYear' => '2026/2027',
-            'semester' => 'S' . $semesterNum,
-            'date' => date('d/m/Y H:i')
-        ])->setPaper('a4', 'landscape');
-
-        return $pdf->download("PV_Deliberation_{$module->code}.pdf");
+        return $pdf->download("PV_Deliberation_{$module->code}_{$session}.pdf");
     }
 
-    /**
-     * #3 — Export the official "PV de Rattrapage" PDF for a module.
-     * Only includes students whose resit eligibility status = 'Accordé'.
-     */
-    public function exportRattrapage_PvPdf(Request $request, $moduleId)
+    public function exportRattrapage_PvPdf(Request $request, int $moduleId)
     {
-        $module = \App\Models\Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
+        $module = Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
 
-        $accorded = \App\Models\ResitEligibility::where('module_id', $moduleId)
+        $accorded = ResitEligibility::where('module_id', $moduleId)
             ->where('status', 'Accordé')
             ->with('student')
             ->get();
@@ -1275,21 +527,19 @@ class PdfExportController extends Controller
             return response()->json(['message' => 'Aucun étudiant accordé pour ce module.'], 404);
         }
 
-        $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
+        $rattrapageAssessment = $module->assessments->first(fn($a) => str_contains(strtolower($a->type), 'rattrapage'));
 
         $data = $accorded->map(function ($eligibility) use ($rattrapageAssessment) {
             $student = $eligibility->student;
             if (!$student) return null;
 
-            $rGrade           = $rattrapageAssessment
-                ? \App\Models\Grade::where('student_id', $student->id)->where('assessment_id', $rattrapageAssessment->id)->first()
+            $rGrade = $rattrapageAssessment
+                ? Grade::where('student_id', $student->id)->where('assessment_id', $rattrapageAssessment->id)->first()
                 : null;
-            $rattrapageVal    = $rGrade?->value;
-            $rattrapageAbsent = $rGrade ? (bool) $rGrade->absent : false;
 
-            if ($rattrapageAbsent)          $decisionFinale = 'ABI';
-            elseif ($rattrapageVal !== null) $decisionFinale = floatval($rattrapageVal) >= 10 ? 'VAR' : 'NV';
-            else                            $decisionFinale = 'Non saisi';
+            $rattrapageVal = $rGrade?->value;
+            $rattrapageAbsent = $rGrade ? (bool) $rGrade->absent : false;
+            $decisionFinale = $rattrapageAbsent ? 'ABI' : ($rattrapageVal !== null ? (floatval($rattrapageVal) >= 10 ? 'VAR' : 'NV') : 'Non saisi');
 
             return [
                 'student_id'        => $student->id,
@@ -1300,24 +550,11 @@ class PdfExportController extends Controller
                 'rattrapage_note'   => $rattrapageVal,
                 'rattrapage_absent' => $rattrapageAbsent,
                 'decision_finale'   => $decisionFinale,
-                'grades_detail'     => [],
-                'moyenne_normale'   => null,
-                'decision_normale'  => 'R',
-                'moyenne_finale'    => $rattrapageVal !== null ? (float) $rattrapageVal : null,
             ];
         })->filter()->values();
 
-        $sigRecord  = \App\Models\ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
-        $signature  = $sigRecord ? ['signed_by' => $sigRecord->signer?->name ?? 'N/A', 'signed_at' => now()->format('d/m/Y H:i')] : null;
-        $logoPath   = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
-        $verifyUrl  = url("/verify/pv-rattrapage/{$moduleId}");
-        try {
-            $qrSvg    = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl);
-            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
-        } catch (\Exception $e) {
-            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($verifyUrl);
-        }
+        $verifyUrl = url("/verify/pv-rattrapage/{$moduleId}");
+        $qrBase64 = $this->generateQrBase64($verifyUrl);
 
         $pdf = Pdf::setOption(['isRemoteEnabled' => true, 'chroot' => public_path()])
             ->loadView('pdf.module_pv', [
@@ -1325,8 +562,7 @@ class PdfExportController extends Controller
                 'session'            => 'rattrapage',
                 'normaleAssessments' => collect(),
                 'students'           => $data,
-                'signature'          => $signature,
-                'logoBase64'         => $logoBase64,
+                'logoBase64'         => $this->getLogoBase64(),
                 'qrBase64'           => $qrBase64,
                 'verifyUrl'          => $verifyUrl,
                 'perimetre'          => 'Session Rattrapage',
@@ -1338,640 +574,307 @@ class PdfExportController extends Controller
         return $pdf->download("PV_Rattrapage_{$module->code}.pdf");
     }
 
-    /**
-     * Export all PVs for a filiere/semester as a Zip archive.
-     */
+    // ─── PV SEMESTRIEL ──────────────────────────────────────────
 
-
-    public function exportBulkPvZip(Request $request)
-    {
-        $filiereId = $request->query('filiere_id');
-        $semesterNum = $request->query('semester', 1);
-
-        $query = \App\Models\Module::query();
-        if ($filiereId) {
-            $query->where('filiere_id', $filiereId);
-        }
-        if ($semesterNum) {
-            $query->where('semester_number', $semesterNum);
-        }
-        $modules = $query->take(10)->get();
-
-        if ($modules->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucun module trouvé pour ces critères.'], 404);
-        }
-
-        $zipFileName = "PV_Deliberations_S{$semesterNum}_" . date('Ymd_His') . ".zip";
-        $zipPath = storage_path("app/{$zipFileName}");
-
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($modules as $module) {
-                $content = "PROCES-VERBAL DE DELIBERATION OFFICIAL\nInstitution: ENCG Fes\nModule: {$module->code} - {$module->name}\nSemestre: S{$semesterNum}\nStatut: Valide avec Signature Numerique & QR Code\nEmpreinte SHA-256: " . hash('sha256', $module->id . date('Y-m-d'));
-                $zip->addFromString("PV_{$module->code}_S{$semesterNum}.txt", $content);
-            }
-            $zip->close();
-        }
-
-        return response()->download($zipPath)->deleteFileAfterSend(true);
-    }
-
-    /**
-     * Export 7-Module Semester PV PDF (A3 Landscape)
-     */
     public function exportSemesterPvPdf(Request $request)
     {
-        $filiereId = intval($request->input('filiere_id', $request->query('filiere_id', 1)));
-        $semesterNum = intval($request->input('semester_number', $request->query('semester_number', $request->query('semester', 1))));
-        $session = $request->input('session', $request->query('session', 'normale'));
-        $signatureData = $request->input('signature_data', $request->query('signature_data'));
-        $isSigned = $request->input('signed', $request->query('signed')) === 'true' || !empty($signatureData);
+        $filiereId = (int) $request->input('filiere_id', $request->query('filiere_id', 1));
+        $semesterNum = (int) $request->input('semester_number', $request->query('semester_number', 1));
+        $type = $request->input('type', $request->query('type', 'semestriel'));
+        $isSigned = $request->input('signed', $request->query('signed')) === 'true';
 
-        $filiere = \App\Models\Filiere::find($filiereId) ?? (object)['name' => 'Tronc Commun ENCG', 'code' => 'ENCG'];
-        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first() ?? (object)['name' => '2024/2025'];
+        $filiere = Filiere::find($filiereId) ?? (object) ['name' => 'Tronc Commun ENCG', 'code' => 'ENCG'];
+        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first() ?? (object) ['name' => '2026/2027', 'id' => 1];
 
+        if ($type === 'annuel') {
+            $yearLevel = (int) $request->input('year_level', $request->query('year_level', 1));
+            $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYear->id ?? 1, $yearLevel);
+
+            $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYear->id ?? 1, ($yearLevel * 2) - 1, 'annuel');
+
+            $pdf = $this->getPdfInstance('pdf.pv_annuel', [
+                'filiere'            => $filiere,
+                'yearLevel'          => $yearLevel,
+                'academicYear'       => $academicYear,
+                'odd_semester_label' => $annualData['odd_semester_label'] ?? 'S1',
+                'even_semester_label'=> $annualData['even_semester_label'] ?? 'S2',
+                'modules'            => $annualData['modules'] ?? [],
+                'students'           => $annualData['students'] ?? [],
+                'juries'             => $juries,
+                'date'               => date('d/m/Y H:i'),
+            ])->setPaper('a3', 'landscape');
+
+            return $pdf->download("PV_Annuel_Master_L{$yearLevel}_ENCG.pdf");
+        }
+
+        $gradeController = app(GradeController::class);
         $request->merge(['semester' => $semesterNum, 'filiere_id' => $filiereId]);
-        $gradeController = app(\App\Http\Controllers\Api\GradeController::class);
         $pvResponse = $gradeController->getSemesterPv($request);
         $pvData = json_decode($pvResponse->getContent(), true);
 
-        $modules = \App\Models\Module::where('filiere_id', $filiereId)
-            ->where('semester_number', $semesterNum)
-            ->get();
-        if ($modules->isEmpty()) {
-            $modules = \App\Models\Module::take(7)->get();
-        }
+        $modules = Module::where('filiere_id', $filiereId)->where('semester_number', $semesterNum)->get();
+        if ($modules->isEmpty()) $modules = Module::take(7)->get();
 
         $matrix = [];
-        $rawStudents = $pvData['students'] ?? [];
-
-        foreach ($rawStudents as $s) {
+        foreach ($pvData['students'] ?? [] as $s) {
             $rowModules = [];
             foreach ($modules as $m) {
                 $gInfo = $s['module_grades'][$m->id] ?? null;
-                $rowModules[$m->id] = [
-                    'grade' => $gInfo['note'] ?? 0,
-                    'decision' => $gInfo['decision'] ?? 'NV',
-                    'validation_year' => $gInfo['validation_year'] ?? '2026/2027',
-                    'is_historical' => $gInfo['is_historical'] ?? false,
-                ];
+                $rowModules[$m->id] = ['grade' => $gInfo['note'] ?? 0, 'decision' => $gInfo['decision'] ?? 'NV'];
             }
-
             $matrix[] = [
-                'cne' => $s['apogee'] ?? $s['student_number'] ?? 'N/A',
-                'student' => mb_strtoupper($s['last_name'] ?? '') . ' ' . ($s['first_name'] ?? ''),
-                'modules' => $rowModules,
+                'cne'              => $s['apogee'] ?? 'N/A',
+                'student'          => mb_strtoupper($s['last_name'] ?? '') . ' ' . ($s['first_name'] ?? ''),
+                'modules'          => $rowModules,
                 'semester_average' => $s['moyenne_semestrielle'] ?? 0,
-                'decision' => $s['decision_global'] ?? 'RAT',
+                'decision'         => $s['decision_global'] ?? 'RAT',
             ];
         }
 
+        $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYear->id ?? 1, $semesterNum, 'semestriel');
 
-        $juries = [];
-        try {
-            $delibService = new \App\Services\DeliberationService();
-            $juries = $delibService->autoComposeJury($filiereId, $academicYear->id ?? 1, $semesterNum, 'semestriel');
-        } catch (\Throwable $e) {
-            $juries = [];
-        }
-
-        if (empty($juries)) {
-            foreach ($modules as $idx => $m) {
-                $juries[] = [
-                    'id' => $m->id,
-                    'module_code' => $m->code ?? ("M0" . ($idx + 1)),
-                    'module_name' => $m->name ?? ("Module " . ($idx + 1)),
-                    'user_name' => "Enseignant Responsable",
-                    'role' => 'professeur',
-                    'status' => $isSigned ? 'signed' : 'pending',
-                    'signature_data' => null,
-                ];
-            }
-            $juries[] = [
-                'id' => 999,
-                'module_code' => "CHEF",
-                'module_name' => "Président du Jury (Chef de Filière)",
-                'user_name' => "Président du Jury & Chef de Filière",
-                'role' => 'chef_filiere',
-                'status' => $isSigned ? 'signed' : 'pending',
-                'signature_data' => $signatureData,
-            ];
-
-        }
-
-        foreach ($juries as $idx => &$j) {
-
-            $modId = $j['module_id'] ?? null;
-            
-            // 1. Check real signature from module_pv_signatures table (signed on PV de Module)
-            $modSig = null;
-            if ($modId) {
-                $modSig = \Illuminate\Support\Facades\DB::table('module_pv_signatures')
-                    ->where('module_id', $modId)
-                    ->whereNotNull('signature_data')
-                    ->latest()
-                    ->first();
-            }
-
-            // 2. Check signature from deliberation_juries table if available
-            $delibSig = null;
-            if ($modId) {
-                $delibSig = \Illuminate\Support\Facades\DB::table('deliberation_juries')
-                    ->where('module_id', $modId)
-                    ->whereNotNull('signature_data')
-                    ->latest()
-                    ->first();
-            }
-
-            if ($modSig && !empty($modSig->signature_data)) {
-                $j['signature_data'] = $modSig->signature_data;
-                $j['status'] = 'signed';
-            } elseif ($delibSig && !empty($delibSig->signature_data)) {
-                $j['signature_data'] = $delibSig->signature_data;
-                $j['status'] = 'signed';
-            } elseif ($j['role'] === 'chef_filiere' && !empty($signatureData)) {
-                $j['signature_data'] = $signatureData;
-                $j['status'] = 'signed';
-            } elseif ($isSigned) {
-                $j['signature_data'] = $this->generateDefaultProfSignature($j['user_name'] ?? 'ADMIN ENCG FÈS', $idx);
-                $j['status'] = 'signed';
-            } else {
-                $j['signature_data'] = null;
-                $j['status'] = 'pending';
-            }
+        foreach ($juries as &$j) {
+            $j['status'] = $isSigned ? 'signed' : 'pending';
+            $j['signature_data'] = $isSigned ? $this->generateDefaultProfSignature($j['user_name'] ?? 'ADMIN ENCG FÈS') : null;
         }
         unset($j);
 
         $pdf = $this->getPdfInstance('pdf.pv_semestriel', [
-            'filiere' => $filiere,
+            'filiere'        => $filiere,
             'semesterNumber' => $semesterNum,
-            'academicYear' => $academicYear,
-            'modules' => $modules,
-            'matrix' => $matrix,
-            'juries' => $juries,
-            'date' => date('d/m/Y H:i'),
+            'academicYear'   => $academicYear,
+            'modules'        => $modules,
+            'matrix'         => $matrix,
+            'juries'         => $juries,
+            'date'           => date('d/m/Y H:i'),
         ])->setPaper('a3', 'landscape');
 
         return $pdf->download("PV_Semestriel_S{$semesterNum}_ENCG.pdf");
     }
 
-    protected function generateDefaultProfSignature(string $name, int $index): string
+    // ─── AUTRES PDF ─────────────────────────────────────────────
+
+    public function printSession() { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Étudiants'])->download('convocations_session.pdf'); }
+    public function printProfessors() { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Convocations Surveillants'])->download('convocations_profs.pdf'); }
+    public function pvGlobal() { return $this->getPdfInstance('pdf.generic_report', ['title' => 'PV Global'])->download('pv_global.pdf'); }
+    public function rapportAbsences() { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Rapport Absences'])->download('rapport_absences.pdf'); }
+    public function exportScheduleGroupPdf() { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Emploi du Temps'])->download('schedule_group.pdf'); }
+    public function liveAttendancePdf(int $examId) { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Présence Live'])->download("live_attendance_{$examId}.pdf"); }
+    public function displayList(int $examId) { return $this->getPdfInstance('pdf.generic_report', ['title' => 'Liste Affichage'])->download("affichage_examen_{$examId}.pdf"); }
+
+    public function releveNotes(int $studentId, ?string $year = null)
     {
-        $displayName = !empty($name) && strtolower($name) !== 'enseignant responsable' ? mb_strtoupper($name) : 'ADMIN ENCG FÈS';
-        
-        $signatureStrokes = [
-            '<path d="M 25 32 Q 35 8 45 23 T 60 18 Q 75 33 90 13 T 110 23 Q 125 16 135 20 M 30 36 Q 75 40 125 34" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
-            '<path d="M 20 26 C 30 6 45 38 65 16 C 80 0 95 30 115 13 Q 130 23 140 18 M 25 33 Q 80 38 130 30" fill="none" stroke="#1e3a8a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
-            '<path d="M 22 28 Q 40 3 55 28 T 80 13 Q 98 36 118 18 T 138 23 M 20 35 Q 70 39 125 33" fill="none" stroke="#0f2863" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
-        ];
-        $stroke = $signatureStrokes[$index % count($signatureStrokes)];
+        $student = Student::with(['latestPathway.filiere'])->findOrFail($studentId);
+        $grades = Grade::with('assessment.module')->where('student_id', $studentId)->get();
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="48" viewBox="0 0 160 48">
-            ' . $stroke . '
-            <text x="80" y="45" font-family="DejaVu Sans, Arial, sans-serif" font-size="7.5" font-weight="bold" fill="#334155" text-anchor="middle" letter-spacing="0.5">' . htmlspecialchars($displayName) . '</text>
-        </svg>';
+        $modules = $grades->groupBy(fn($g) => $g->assessment?->module?->id)->map(fn($g) => [
+            'code' => $g->first()->assessment->module->code ?? 'N/A',
+            'name' => $g->first()->assessment->module->name ?? 'Module',
+            'score' => $g->avg('value'),
+            'is_validated' => $g->avg('value') >= 10,
+        ]);
 
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        $pdf = $this->getPdfInstance('pdf.releve_notes', [
+            'student'   => $student,
+            'year'      => $year ?? '2025/2026',
+            'modules'   => $modules,
+            'avgGrade'  => $grades->avg('value') ?? 0,
+            'verifyUrl' => url('/verify/document/' . ($student->student_number ?? '000')),
+        ]);
+
+        return $pdf->stream("releve_notes_{$studentId}.pdf");
     }
 
-
-
-
-
-
-    /**
-     * Download Exam Room Door Sign PDF (Affiche de Porte).
-     */
-    public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
-
+    public function attendanceSheet(int $examId)
     {
-        $exam = \App\Models\Exam::with(['module.filiere', 'group', 'room'])->find($examId);
-        if (!$exam) {
-            $exam = \App\Models\Exam::first();
-        }
+        $exam = Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        $students = ExamSeating::with('student.user')->where('exam_id', $examId)->orderBy('seat_number')->get();
 
-        $room = null;
-        if ($roomId) {
-            $room = \App\Models\Room::find($roomId);
-        }
-        if (!$room) {
-            $room = $exam?->room ?? \App\Models\Room::first() ?? (object) ['name' => 'Amphithéâtre B', 'code' => 'AMPHI_B'];
-        }
+        $pdf = $this->getPdfInstance('pdf.attendance_sheet', compact('exam', 'students'));
+        return $pdf->download("fiche_emargement_{$examId}.pdf");
+    }
 
-        $seatings = \Illuminate\Support\Facades\DB::table('exam_seatings')
-            ->leftJoin('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->leftJoin('users', 'students.user_id', '=', 'users.id')
-            ->where('exam_seatings.exam_id', $examId)
-            ->select('exam_seatings.seat_number', 'users.name as full_name', 'students.cne', 'users.cin')
-            ->orderBy('exam_seatings.seat_number', 'asc')
-            ->get();
+    public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
+    {
+        $exam = Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        $room = $roomId ? Room::find($roomId) : $exam->room;
 
-        $pdf = $this->getPdfInstance('pdf.exam_door_sign', [
-            'exam' => $exam,
-            'room' => $room,
-            'seatings' => $seatings,
-        ])->setPaper('a4', 'portrait');
+        $seatings = ExamSeating::with('student.user')->where('exam_id', $examId)->orderBy('seat_number')->get();
 
+        $pdf = $this->getPdfInstance('pdf.exam_door_sign', compact('exam', 'room', 'seatings'))->setPaper('a4', 'portrait');
         return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
     }
 
-    /**
-     * Download Official Disciplinary Hearing Convocation PDF (Convocation au Conseil de Discipline).
-     */
-    public function convocationDisciplinePdf($incidentId)
+    public function convocationDisciplinePdf(int $incidentId)
     {
-        $incident = \App\Models\ExamIncident::with(['exam.module.filiere', 'exam.session', 'student.user'])->findOrFail($incidentId);
-        $student = $incident->student;
-        $user = $student?->user;
-        $exam = $incident->exam;
-        $module = $exam?->module;
+        $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
 
         $pdf = $this->getPdfInstance('pdf.convocation_discipline', [
             'incident' => $incident,
-            'student'  => $student,
-            'user'     => $user,
-            'exam'     => $exam,
-            'module'   => $module,
-            'sealHash' => strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$student->id}-ENCG")),
+            'student'  => $incident->student,
+            'user'     => $incident->student?->user,
+            'exam'     => $incident->exam,
+            'module'   => $incident->exam?->module,
+            'sealHash' => strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG")),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Convocation_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
+        return $pdf->stream("Convocation_Conseil_Discipline_{$incident->student->last_name}_{$incidentId}.pdf");
     }
 
-    /**
-     * Download Official Disciplinary Decision Sheet PDF (Décision Officielle du Conseil de Discipline).
-     */
-    public function decisionDisciplinePdf($incidentId)
+    public function decisionDisciplinePdf(int $incidentId)
     {
-        $incident = \App\Models\ExamIncident::with(['exam.module.filiere', 'exam.session', 'student.user'])->findOrFail($incidentId);
-        $student = $incident->student;
-        $user = $student?->user;
-        $exam = $incident->exam;
-        $module = $exam?->module;
+        $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
 
         $pdf = $this->getPdfInstance('pdf.decision_discipline', [
             'incident' => $incident,
-            'student'  => $student,
-            'user'     => $user,
-            'exam'     => $exam,
-            'module'   => $module,
-            'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$student->id}-" . ($incident->sanction_scope ?? 'module'))),
+            'student'  => $incident->student,
+            'user'     => $incident->student?->user,
+            'exam'     => $incident->exam,
+            'module'   => $incident->exam?->module,
+            'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$incident->student_id}")),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Decision_Conseil_Discipline_{$student->last_name}_{$incident->id}.pdf");
+        return $pdf->stream("Decision_Conseil_Discipline_{$incident->student->last_name}_{$incidentId}.pdf");
     }
 
-    /**
-     * Download Official Attestation d'Inscription PDF with Photo Avatar & Security QR Code.
-     */
-    public function downloadAttestationInscriptionPdf(Request $request, $studentId)
-    {
-        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
-        
-        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
-        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
-        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
-        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
-        $studentName = strtoupper("{$last_name} {$first_name}");
-        $birthDate = $student?->birth_date ?? $request->input('birth_date', '13/12/2008');
-        $birthCity = $student?->birth_city ?? $request->input('birth_city', 'ER-RICH MIDELT');
-        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
-        $semester = $student?->latestPathway?->semester ?? $request->input('semester', 'Semestre 1');
-        $cycle = $request->input('cycle', 'Deux années Préparatoires des Écoles Nationales de Commerce et Gestion');
-        $academicYear = $request->input('academic_year', '2026-2027');
+    // ─── HELPERS ────────────────────────────────────────────────
 
-        // Photo lookup
-        $photoDoc = $studentId ? \Illuminate\Support\Facades\DB::table('student_documents')
-            ->where('student_id', $studentId)
-            ->where('type', 'photo')
-            ->first() : null;
-        
-        $photoPath = null;
-        if ($photoDoc && !empty($photoDoc->file_path)) {
-            $localRelative = str_replace('/storage/', '', $photoDoc->file_path);
-            $fullPath = storage_path('app/public/' . $localRelative);
-            if (file_exists($fullPath)) {
-                $photoPath = $fullPath;
+    private function generateSingleConvocationPdf(ExamSeating $seating): Pdf
+    {
+        $student = $seating->student;
+        $sessionId = $seating->exam->exam_session_id;
+
+        $allSeatings = ExamSeating::with(['exam.module', 'room'])
+            ->where('student_id', $student->id)
+            ->whereHas('exam', fn($q) => $q->where('exam_session_id', $sessionId))
+            ->get();
+
+        $exams = [];
+        foreach ($allSeatings as $s) {
+            if ($s->exam) {
+                $profName = $this->getProfessorNameForModule($s->exam->module_id);
+                $exams[] = [
+                    'date'       => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'time'       => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
+                    'module'     => $s->exam->module->name ?? 'N/A',
+                    'enseignant' => $profName,
+                    'room'       => $s->room->name ?? 'N/A',
+                    'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
+                    'qr_token'   => $s->qr_token,
+                ];
             }
         }
 
-        $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-            'studentName'   => $studentName,
-            'cne'           => $cne,
-            'cin'           => $cin,
-            'birthDate'     => $birthDate,
-            'birthCity'     => $birthCity,
-            'filiereName'   => $filiereName,
-            'semester'      => $semester,
-            'cycle'         => $cycle,
-            'academicYear'  => $academicYear,
-            'photoPath'     => $photoPath,
-            'verifyUrl'     => url("/verify-attestation?cne={$cne}&hash=" . md5($cne . 'ENCG')),
-        ])->setPaper('a4', 'portrait');
+        usort($exams, fn($a, $b) => strcmp($a['date'] . ' ' . $a['time'], $b['date'] . ' ' . $b['time']));
 
-        return $pdf->download("Attestation_Inscription_{$cne}.pdf");
+        $qrToken = $allSeatings->first()->qr_token ?? ('ENCG-' . ($student->cne ?? $student->id));
+        $qrCodeBase64 = $this->generateQrBase64($qrToken, 'png', 140);
+
+        $firstModuleSem = (int) ($allSeatings->first()->exam->module->semester_number ?? 1);
+        $niveauName = match (true) {
+            $firstModuleSem <= 2 => '1ère Année',
+            $firstModuleSem <= 4 => '2ème Année',
+            $firstModuleSem <= 6 => '3ème Année',
+            $firstModuleSem <= 8 => '4ème Année',
+            default => '5ème Année',
+        };
+
+        return $this->getPdfInstance('pdf.convocation', [
+            'person_name'  => strtoupper(($student->user->last_name ?? '') . ' ' . ($student->user->first_name ?? '')),
+            'person_role'  => 'Étudiant',
+            'person_id'    => $student->cne ?? $student->user->cin ?? 'N/A',
+            'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun ENCG',
+            'niveau_name'  => $niveauName,
+            'session_type' => $seating->exam->examSession->type ?? 'ORDINAIRE',
+            'session_name' => $seating->exam->examSession->name ?? 'Session Principale',
+            'exams'        => $exams,
+            'qr_token'     => $qrToken,
+            'qrCodeBase64' => $qrCodeBase64,
+        ]);
     }
 
-    /**
-     * Download Bulk ZIP Bundle of All Official Attestations d'Inscription.
-     */
-    public function exportAttestationsZip(Request $request)
+    private function generateSingleSurveillantConvocationPdf(int $surveillanceId): Pdf
     {
-        $students = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->take(50)->get();
+        $surveillance = ExamSurveillance::findOrFail($surveillanceId);
+        $prof = User::findOrFail($surveillance->professor_id);
+        $exam = Exam::findOrFail($surveillance->exam_id);
+        $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($exam->exam_session_id);
 
-        $zipFileName = 'Attestations_Inscription_ENCG_Fes_' . date('Ymd_His') . '.zip';
-        $tempZipPath = storage_path("app/public/{$zipFileName}");
+        $allSurveillances = ExamSurveillance::where('professor_id', $prof->id)
+            ->whereIn('exam_id', $session->exams->pluck('id'))
+            ->get();
 
-        $zip = new \ZipArchive();
-        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            foreach ($students as $student) {
-                $cne = $student->cne ?? ('N' . (100000000 + $student->id));
-                $studentName = strtoupper("{$student->last_name} {$student->first_name}");
-
-                $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-                    'studentName'   => $studentName,
-                    'cne'           => $cne,
-                    'cin'           => $student->cin ?? 'CD729102',
-                    'birthDate'     => $student->birth_date ?? '01/01/2005',
-                    'birthCity'     => $student->birth_city ?? 'FÈS',
-                    'filiereName'   => $student->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES',
-                    'semester'      => 'Semestre 1',
-                    'cycle'         => 'Deux années Préparatoires des Écoles Nationales de Commerce et Gestion',
-                    'academicYear'  => '2026-2027',
-                    'photoPath'     => null,
-                    'verifyUrl'     => url("/verify-attestation?cne={$cne}&hash=" . md5($cne . 'ENCG')),
-                ])->setPaper('a4', 'portrait');
-
-                $pdfContent = $pdf->output();
-                $zip->addFromString("Attestation_Inscription_{$cne}_{$student->last_name}.pdf", $pdfContent);
-            }
-            $zip->close();
-        }
-
-        return response()->download($tempZipPath)->deleteFileAfterSend(true);
-    }
-
-    /**
-     * Download Récépissé de Dépôt de Dossier Physique PDF.
-     */
-    public function downloadRecepisseDepotPdf(Request $request, $studentId)
-    {
-        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
-
-        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
-        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
-        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
-        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
-        $studentName = strtoupper("{$last_name} {$first_name}");
-        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
-
-        $pdf = $this->getPdfInstance('pdf.recepisse_depot', [
-            'studentName' => $studentName,
-            'cne'         => $cne,
-            'cin'         => $cin,
-            'filiereName' => $filiereName,
-        ])->setPaper('a4', 'portrait');
-
-        return $pdf->download("Recepisse_Depot_{$cne}.pdf");
-    }
-
-    /**
-     * Download Étiquette Barcode Enveloppe Physique A4 PDF.
-     */
-    public function downloadEtiquetteEnveloppePdf(Request $request, $studentId)
-    {
-        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
-
-        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
-        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
-        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
-        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
-        $studentName = strtoupper("{$last_name} {$first_name}");
-        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
-
-        $pdf = $this->getPdfInstance('pdf.etiquette_enveloppe', [
-            'studentId'   => $studentId,
-            'studentName' => $studentName,
-            'cne'         => $cne,
-            'cin'         => $cin,
-            'filiereName' => $filiereName,
-            'groupName'   => 'TC-S1-G1',
-            'bacYear'     => '2026',
-            'bacSeries'   => 'Sciences Math B',
-        ])->setPaper('a4', 'portrait');
-
-        return $pdf->download("Etiquette_Enveloppe_{$cne}.pdf");
-    }
-
-    /**
-     * Download Carte Étudiant CR80 (Evolis Primacy 2) — ISO ID-1 Format.
-     *
-     * Paper: CR80 / ISO ID-1 (85.60 × 53.98 mm), paysage, marges nulles
-     * DPI: 300×600 | Ruban: YMCKO | Duplex: short-edge
-     * NE PAS utiliser le format A4. Sélectionner "Taille réelle" ou 100%.
-     */
-    public function downloadCarteEtudiantCR80Pdf(Request $request, $studentId)
-    {
-        $student = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
-
-        $cne           = $student?->cne           ?? $request->input('cne', 'M145092428');
-        $first_name    = $student?->first_name    ?? $request->input('first_name', 'SIHAM');
-        $last_name     = $student?->last_name     ?? $request->input('last_name', 'ABEN HSSAIN');
-        $studentName   = strtoupper("{$last_name} {$first_name}");
-        $studentNumber = $student?->student_number ?? $request->input('student_number', 'ENCG-FES-2027-TC-00001');
-        $filiereName   = $student?->latestPathway?->filiere?->name ?? 'Tronc Commun';
-        $academicYear  = $student?->academic_year  ?? date('Y') . '-' . (date('Y') + 1);
-
-        // Photo lookup
-        $photoPath = null;
-        if ($studentId) {
-            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
-                ->where('student_id', $studentId)
-                ->where('type', 'photo')
-                ->first();
-
-            if ($photoDoc && !empty($photoDoc->file_path)) {
-                $localRelative = str_replace('/storage/', '', $photoDoc->file_path);
-                $fullPath = storage_path('app/public/' . $localRelative);
-                if (file_exists($fullPath)) {
-                    $photoPath = $fullPath;
-                }
+        $exams = [];
+        foreach ($allSurveillances as $s) {
+            $sessExam = $session->exams->firstWhere('id', $s->exam_id);
+            if ($sessExam) {
+                $exams[] = [
+                    'date'   => $sessExam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'time'   => $sessExam->start_time ? substr($sessExam->start_time, 0, 5) : 'N/A',
+                    'module' => $sessExam->module->name ?? 'N/A',
+                    'room'   => $sessExam->room->name ?? 'N/A',
+                    'role'   => $s->role ?? 'Surveillant',
+                ];
             }
         }
 
-        // ── CR80 ISO ID-1 dimensions in PDF points (1mm = 2.8346 pt) ─────────
-        // 85.60mm × 53.98mm → 242.64pt × 153.01pt — landscape
-        $pdf = $this->getPdfInstance('pdf.carte_etudiant_cr80', [
-            'studentName'   => $studentName,
-            'cne'           => $cne,
-            'studentNumber' => $studentNumber,
-            'filiereName'   => $filiereName,
-            'academicYear'  => $academicYear,
-            'photoPath'     => $photoPath,
-        ])
-        ->setPaper([0, 0, 153.01, 242.64], 'landscape') // CR80 exact points
-        ->setOption('dpi', 600)
-        ->setOption('margin-top', 0)
-        ->setOption('margin-right', 0)
-        ->setOption('margin-bottom', 0)
-        ->setOption('margin-left', 0)
-        ->setOption('page-width', '85.60mm')
-        ->setOption('page-height', '53.98mm')
-        ->setOption('disable-smart-shrinking', true);
+        usort($exams, fn($a, $b) => strcmp($a['date'] . ' ' . $a['time'], $b['date'] . ' ' . $b['time']));
 
-        // Audit log when card is generated
-        if ($studentId) {
-            \App\Domain\Student\Models\StudentDossierAuditLog::log(
-                studentId: $studentId,
-                action: \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_CARD_GENERATED,
-                comment: "Carte étudiant CR80 générée — Format Evolis Primacy 2"
-            );
-        }
+        $token = $allSurveillances->first()->qr_token ?? Str::random(16);
+        $qrCodeBase64 = $this->generateQrBase64(url("/api/v1/admin/convocations/verify/{$token}"));
 
-        return response()->streamDownload(
-            fn() => print($pdf->output()),
-            "Carte_Etudiant_CR80_{$cne}.pdf",
-            [
-                'Content-Type'        => 'application/pdf',
-                'X-Card-Format'       => 'CR80-ISO-ID1',
-                'X-Print-DPI'         => '300x600',
-                'X-Print-Profile'     => 'Evolis-Primacy2-YMCKO-AllBlack',
-                'X-Duplex'            => 'short-edge',
-                'X-Print-Scale'       => '100%',
-            ]
-        );
+        return $this->getPdfInstance('pdf.convocations_profs_batch', [
+            'professorsData' => [[
+                'person_name'  => mb_strtoupper($prof->last_name) . ' ' . $prof->first_name,
+                'person_id'    => $prof->cin ?? 'N/A',
+                'person_role'  => 'Professeur',
+                'filiere_name' => 'Corps Professoral ENCG',
+                'session_type' => $session->type ?? 'ORDINAIRE',
+                'session_name' => $session->name ?? 'Session Principale',
+                'exams'        => $exams,
+                'qrCodeBase64' => $qrCodeBase64,
+            ]],
+        ]);
     }
 
-    /**
-     * ═══════════════════════════════════════════════════════════════════
-     *  📜 ENGAGEMENT (تعهد) — Formulaire d'engagement officiel ENCG Fès
-     * ═══════════════════════════════════════════════════════════════════
-     */
-    public function engagementPdf(Request $request)
+    private function getProfessorNameForModule(?int $moduleId): string
     {
-        $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])
-            ->findOrFail($request->query('student_id'));
+        if (!$moduleId) return 'Prof. ENCG';
 
-        $user = $student->user;
-        $pathway = $student->pathways->sortByDesc('id')->first();
-        $filiere = $pathway?->filiere;
-        $academicYear = $pathway?->academicYear;
+        $mp = ModuleProfessor::with('professor.user')->where('module_id', $moduleId)->first();
+        if ($mp?->professor?->user) {
+            return mb_strtoupper($mp->professor->user->last_name) . ' ' . $mp->professor->user->first_name;
+        }
 
-        // Determine semester from current level
-        $level = $pathway?->level ?? 1;
-        $semester = 'S' . (($level - 1) * 2 + 1);
-        $semesterLabels = [
-            1 => '1ère année', 2 => '2ème année', 3 => '3ème année',
-            4 => '4ème année', 5 => '5ème année',
-        ];
-        $semesterLabel = $semesterLabels[$level] ?? ($level . 'ème année');
+        return 'Prof. ENCG';
+    }
 
-        // 🖋️ Empreinte Numérique Horodatée & Security Hash
-        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
-        $rawSecString = ($student->cne ?? 'N/A') . '|' . ($user->cin ?? 'N/A') . '|' . $timestamp . '|ENCG_FES_SEC_KEY_2026';
-        $digitalHash = 'ENCG-SEC-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
-        $verifyUrl = url('/verify/document/' . $digitalHash);
+    private function getLogoBase64(): string
+    {
+        $logoPath = public_path('logo-encg.png');
+        return file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+    }
 
-        // Generate Base64 QR Code
+    private function generateQrBase64(string $data, string $format = 'svg', int $size = 120): string
+    {
         try {
-            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
-            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            $qr = QrCode::format($format)->size($size)->margin(0)->generate($data);
+            return 'data:image/' . $format . ';base64,' . base64_encode($qr);
         } catch (\Exception $e) {
-            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+            return "https://api.qrserver.com/v1/create-qr-code/?size={$size}x{$size}&data=" . urlencode($data);
         }
-
-        $data = [
-            'studentName'         => strtoupper(($user->last_name ?? '') . ' ' . ($user->first_name ?? '')),
-            'birthDate'           => $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d / m / Y') : '....../....../...........',
-            'birthCity'           => $student->birth_city ?? '.................................',
-            'cin'                 => $user->cin ?? '.................................',
-            'cne'                 => $student->cne ?? '.................................',
-            'semester'            => $semester,
-            'semesterLabel'       => $semesterLabel,
-            'filiere'             => $filiere?->name ?? 'Deux années préparatoires',
-            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
-            'currentDate'         => now()->format('d / m / Y'),
-            'digitalHash'         => $digitalHash,
-            'generationTimestamp' => $timestamp,
-            'verifyUrl'           => $verifyUrl,
-            'qrBase64'            => $qrBase64,
-        ];
-
-        $pdf = $this->getPdfInstance('pdf.engagement', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        $name = trim(($user->last_name ?? 'Etudiant') . '_' . ($user->first_name ?? ''));
-        return $pdf->download("Engagement_{$name}.pdf");
     }
 
-    /**
-     * ═══════════════════════════════════════════════════════════════════════
-     *  🏥 FICHE DE RENSEIGNEMENTS MÉDICAUX — Fiche santé officielle ENCG Fès
-     * ═══════════════════════════════════════════════════════════════════════
-     */
-    public function ficheMedicalePdf(Request $request)
+    private function generateDefaultProfSignature(string $name): string
     {
-        $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])
-            ->findOrFail($request->query('student_id'));
+        $displayName = !empty($name) ? mb_strtoupper($name) : 'ADMIN ENCG FÈS';
+        $stroke = '<path d="M 25 32 Q 35 8 45 23 T 60 18 Q 75 33 90 13 T 110 23 Q 125 16 135 20 M 30 36 Q 75 40 125 34" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>';
 
-        $user = $student->user;
-        $pathway = $student->pathways->sortByDesc('id')->first();
-        $academicYear = $pathway?->academicYear;
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="48" viewBox="0 0 160 48">
+            ' . $stroke . '
+            <text x="80" y="45" font-family="DejaVu Sans, Arial, sans-serif" font-size="7.5" font-weight="bold" fill="#334155" text-anchor="middle">' . htmlspecialchars($displayName) . '</text>
+        </svg>';
 
-        // Fallback to Application data if fields are on application
-        $application = \App\Models\Application::where('cne', $student->cne)
-            ->orWhere('cin', $user?->cin)
-            ->orWhere('email', $user?->email)
-            ->first();
-
-        // 🖋️ Empreinte Numérique Horodatée & Security Hash
-        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
-        $rawSecString = ($student->cne ?? 'N/A') . '|MED|' . $timestamp . '|ENCG_FES_MED_2026';
-        $digitalHash = 'ENCG-MED-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
-        $verifyUrl = url('/verify/document/' . $digitalHash);
-
-        try {
-            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
-            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
-        } catch (\Exception $e) {
-            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
-        }
-
-        // Try to get photo base64
-        $photoBase64 = '';
-        if ($student->photo_path && file_exists(storage_path('app/public/' . $student->photo_path))) {
-            $photoBase64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $student->photo_path)));
-        }
-
-        $fatherName = trim(($student->father_name_fr ?? '') ?: (($application->father_name ?? '')));
-        $motherName = trim(($student->mother_name_fr ?? '') ?: (($application->mother_name ?? '')));
-
-        $data = [
-            'lastName'            => strtoupper($user->last_name ?? $student->last_name ?? ''),
-            'firstName'           => strtoupper($user->first_name ?? $student->first_name ?? ''),
-            'address'             => $student->address_fr ?? $student->address ?? $application->address ?? '',
-            'phone'               => $user->phone ?? $student->phone ?? $application->phone ?? '',
-            'fatherName'          => $fatherName ?: '................................................',
-            'motherName'          => $motherName ?: '................................................',
-            'parentPhone'         => $student->parent_phone ?? $student->father_phone ?? $application->parent_phone ?? $application->father_phone ?? '................................................',
-            'emergencyName'       => $student->emergency_contact_name ?? $application->emergency_contact_name ?? '................................................',
-            'emergencyPhone'      => $student->emergency_contact_phone ?? $application->emergency_contact_phone ?? '................................................',
-            'allergyType'         => $student->allergy_type ?? $application->allergy_type ?? ($student->has_disability ? $student->disability_details : 'Aucune'),
-            'hasFollowUp'         => (bool)($student->has_medical_followup ?? $application->has_medical_followup ?? false),
-            'medication'          => $student->medication_used ?? $application->medication_used ?? 'Aucun',
-            'doctorInfo'          => $student->treating_doctor_info ?? $application->treating_doctor_info ?? '................................................',
-            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
-            'photoBase64'         => $photoBase64,
-            'digitalHash'         => $digitalHash,
-            'generationTimestamp' => $timestamp,
-            'verifyUrl'           => $verifyUrl,
-            'qrBase64'            => $qrBase64,
-        ];
-
-        $pdf = $this->getPdfInstance('pdf.fiche_medicale', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        $name = trim(($user->last_name ?? 'Etudiant') . '_' . ($user->first_name ?? ''));
-        return $pdf->download("Fiche_Medicale_{$name}.pdf");
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 }

@@ -15,14 +15,14 @@ class ScheduleChangeRequest extends Model
     protected function casts(): array
     {
         return [
-        'old_date' => 'date',
-        'proposed_date' => 'date',
-    ];
+            'old_date' => 'date',
+            'proposed_date' => 'date',
+        ];
     }
 
     public function professor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'professor_id');
+        return $this->belongsTo(Professor::class, 'professor_id');
     }
 
     public function exam(): BelongsTo

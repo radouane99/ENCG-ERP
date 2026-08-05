@@ -2,23 +2,30 @@
 
 namespace App\OCR\Contracts;
 
+use App\OCR\OcrResult;
+
 /**
- * Contract for all OCR text extraction engines.
- *
- * Each engine is responsible for a single extraction strategy:
- *  - PdfTextEngine  → Poppler pdftotext (digital PDFs)
- *  - TesseractEngine → Tesseract OCR (image-based PDFs, CNIE)
- *  - PdfBinaryEngine → Raw PDF binary stream fallback
+ * Interface for OCR engines
  */
 interface OcrEngineInterface
 {
     /**
-     * Determine if this engine can handle the given file.
+     * Get engine priority (lower number = higher priority)
+     */
+    public function getPriority(): int;
+
+    /**
+     * Check if engine supports the file
      */
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool;
 
     /**
-     * Extract raw text from the given file.
+     * Extract text from file (simple)
      */
-    public function extract(string $filePath, string $mimeType): string;
+    public function extractText(string $filePath): string;
+
+    /**
+     * Extract text with structured result
+     */
+    public function extract(string $filePath, string $mimeType, string $docType = ''): OcrResult;
 }

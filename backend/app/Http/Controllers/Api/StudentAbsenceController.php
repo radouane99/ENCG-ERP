@@ -5,35 +5,44 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Services\AbsenceManagementService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class StudentAbsenceController extends Controller
 {
     public function __construct(
-        protected AbsenceManagementService $absenceService
+        private AbsenceManagementService $absenceService
     ) {}
 
-    public function index()
+    /**
+     * Liste des absences de l'étudiant connecté.
+     */
+    public function index(): JsonResponse
     {
         $studentId = Auth::user()->student->id;
 
-        // Get all absences for this student
         $absences = Attendance::with(['attendanceSession.module', 'absenceJustification.media'])
             ->where('student_id', $studentId)
             ->whereIn('status', ['absent', 'late', 'excused'])
             ->latest()
             ->get();
 
-        return response()->json(['data' => $absences]);
+        return response()->json([
+            'success' => true,
+            'data'    => $absences,
+        ]);
     }
 
-    public function justify(Request $request, Attendance $attendance)
+    /**
+     * Justifier une absence.
+     */
+    public function justify(Request $request, Attendance $attendance): JsonResponse
     {
         $request->validate([
-            'reason' => 'required|string|max:255',
+            'reason'      => 'required|string|max:255',
             'description' => 'nullable|string',
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'document'    => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         $student = Auth::user()->student;
@@ -47,12 +56,14 @@ class StudentAbsenceController extends Controller
             );
 
             return response()->json([
-                'message' => 'Justification submitted successfully.',
-                'data' => $justification->load('media')
+                'success' => true,
+                'message' => 'Justificatif soumis avec succès.',
+                'data'    => $justification->load('media'),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 422);
         }
     }

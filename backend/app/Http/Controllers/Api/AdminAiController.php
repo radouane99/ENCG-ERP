@@ -3,79 +3,67 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\Grade;
+use App\Models\Student;
+use App\Models\User;
 use App\Services\AI\AdminAiCopilotService;
-use App\Services\AI\AiPredictiveAnalyticsService;
 use App\Services\AI\AiFinancialForecasterService;
+use App\Services\AI\AiPredictiveAnalyticsService;
+use App\Services\AI\GeminiApiService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminAiController extends Controller
 {
-    protected AdminAiCopilotService $copilotService;
-    protected AiPredictiveAnalyticsService $predictiveService;
-    protected AiFinancialForecasterService $financialService;
-
     public function __construct(
-        AdminAiCopilotService $copilotService,
-        AiPredictiveAnalyticsService $predictiveService,
-        AiFinancialForecasterService $financialService
-    ) {
-        $this->copilotService = $copilotService;
-        $this->predictiveService = $predictiveService;
-        $this->financialService = $financialService;
-    }
+        private AdminAiCopilotService $copilotService,
+        private AiPredictiveAnalyticsService $predictiveService,
+        private AiFinancialForecasterService $financialService,
+        private GeminiApiService $geminiService
+    ) {}
 
     /**
-     * Process Admin AI Copilot natural language queries.
+     * Assistant IA : requête en langage naturel.
      */
     public function copilotQuery(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'query' => 'required|string|min:2|max:500'
+            'query' => 'required|string|min:2|max:500',
         ]);
-
-        $response = $this->copilotService->processQuery($validated['query']);
 
         return response()->json([
             'success' => true,
-            'data' => $response
+            'data'    => $this->copilotService->processQuery($validated['query']),
         ]);
     }
 
     /**
-     * Get AI Predictive Student Dropout Risk Analysis.
+     * Analyse prédictive des risques de décrochage.
      */
     public function getPredictiveAnalytics(): JsonResponse
     {
-        $analytics = $this->predictiveService->getPredictiveDropoutRisk();
-
-        return response()->json($analytics);
+        return response()->json($this->predictiveService->getPredictiveDropoutRisk());
     }
 
     /**
-     * Get AI Financial Forecast for Vacation Payroll.
+     * Prévision financière des vacations.
      */
     public function getFinancialForecast(): JsonResponse
     {
-        $forecast = $this->financialService->getVacationBudgetForecast();
-
-        return response()->json($forecast);
+        return response()->json($this->financialService->getVacationBudgetForecast());
     }
 
     /**
-     * AI Matching PFE & Supervisor: Recommend top 3 professors based on PFE topic & domain.
+     * Matching PFE ↔ Enseignant via IA.
      */
     public function matchPfeSupervisor(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'pfe_title' => 'required|string',
-            'pfe_description' => 'nullable|string'
+            'pfe_title'       => 'required|string',
+            'pfe_description' => 'nullable|string',
         ]);
 
-        $gemini = app(\App\Services\AI\GeminiApiService::class);
-        
-        $professors = \Illuminate\Support\Facades\DB::table('users')
-            ->whereIn('role', ['professor', 'department-head'])
+        $professors = User::whereIn('role', ['professor', 'department-head'])
             ->select('id', 'name', 'email')
             ->limit(10)
             ->get();
@@ -84,137 +72,101 @@ class AdminAiController extends Controller
 
         $system = [
             "Tu es le conseiller scientifique de l'ENCG Fès.",
-            "Analyse le sujet de PFE et recommande les 3 enseignants les plus adaptés dans la liste.",
-            "Retourne la réponse au format JSON strictement valide sans markdown autour.",
-            "Format attendu: {\"recommended_professors\":[{\"professor_id\":1,\"name\":\"...\",\"match_score\":\"95%\",\"reason\":\"...\"}]}"
+            "Analyse le sujet de PFE et recommande les 3 enseignants les plus adaptés.",
+            "Retourne un JSON valide : {\"recommended_professors\":[{\"professor_id\":1,\"name\":\"...\",\"match_score\":\"95%\",\"reason\":\"...\"}]}",
         ];
 
         $prompt = "Sujet PFE : {$validated['pfe_title']}\nDescription : " . ($validated['pfe_description'] ?? '') . "\n\nEnseignants :\n" . $profList;
 
-        $rawJson = $gemini->generateContent($prompt, $system);
+        $rawJson = $this->geminiService->generateContent($prompt, $system);
 
         if ($rawJson) {
             $rawJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $rawJson);
             $rawJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $rawJson);
             $parsed = json_decode($rawJson, true);
+
             if (json_last_error() === JSON_ERROR_NONE && is_array($parsed)) {
                 return response()->json(array_merge(['success' => true], $parsed));
             }
         }
 
+        // Fallback
         return response()->json([
-            'success' => true,
-            'recommended_professors' => $professors->slice(0, 3)->values()->map(fn($p, $i) => [
+            'success'                 => true,
+            'recommended_professors'  => $professors->take(3)->values()->map(fn($p, $i) => [
                 'professor_id' => $p->id,
-                'name' => $p->name,
-                'match_score' => (95 - $i * 5) . '%',
-                'reason' => 'Expertise reconnue en gestion, audit et gouvernance d\'entreprise.'
-            ])
+                'name'         => $p->name,
+                'match_score'  => (95 - $i * 5) . '%',
+                'reason'       => 'Expertise reconnue en gestion et gouvernance.',
+            ]),
         ]);
     }
 
     /**
-     * AI Grade Anomaly Detection: Scan DB for unusual grade spikes/drops & typos.
+     * Détection d'anomalies dans les notes.
      */
     public function detectGradeAnomalies(): JsonResponse
     {
-        try {
-            $anomalies = [];
+        $anomalies = [];
 
-            // Fetch students with abnormally low grades compared to their average
-            $studentsWithGrades = \Illuminate\Support\Facades\DB::table('grades')
-                ->join('students', 'grades.student_id', '=', 'students.id')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
-                ->join('modules', 'assessments.module_id', '=', 'modules.id')
-                ->select(
-                    'students.id as student_id',
-                    'users.name as student_name',
-                    'modules.name as module_name',
-                    'grades.grade',
-                    'grades.id as grade_id'
-                )
-                ->where('grades.grade', '<', 5.0)
-                ->limit(10)
-                ->get();
+        $lowGrades = Grade::with(['student.user', 'assessment.module'])
+            ->where('value', '<', 5.0)
+            ->limit(10)
+            ->get();
 
-            foreach ($studentsWithGrades as $g) {
-                $studentAvg = \Illuminate\Support\Facades\DB::table('grades')
-                    ->where('student_id', $g->student_id)
-                    ->avg('grade');
+        foreach ($lowGrades as $grade) {
+            $studentAvg = Grade::where('student_id', $grade->student_id)->avg('value');
 
-                if ($studentAvg && $studentAvg >= 12.0) {
-                    $anomalies[] = [
-                        'id' => $g->grade_id,
-                        'student_name' => $g->student_name,
-                        'module_name' => $g->module_name,
-                        'suspect_grade' => $g->grade . '/20',
-                        'student_average' => round($studentAvg, 2) . '/20',
-                        'anomaly_type' => 'Inversion suspecte ou note très basse (< 5/20) pour un bon étudiant',
-                        'recommendation' => 'Vérifier la copie originale ou contacter l\'enseignant.'
-                    ];
-                }
+            if ($studentAvg && $studentAvg >= 12.0) {
+                $anomalies[] = [
+                    'id'             => $grade->id,
+                    'student_name'   => $grade->student->user->name ?? 'N/A',
+                    'module_name'    => $grade->assessment->module->name ?? 'N/A',
+                    'suspect_grade'  => $grade->value . '/20',
+                    'student_average' => round($studentAvg, 2) . '/20',
+                    'anomaly_type'   => 'Note très basse (< 5/20) pour un bon étudiant',
+                    'recommendation' => 'Vérifier la copie originale.',
+                ];
             }
-
-            return response()->json([
-                'success' => true,
-                'anomalies_count' => count($anomalies),
-                'anomalies' => $anomalies,
-                'scanned_at' => now()->toIso8601String()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+
+        return response()->json([
+            'success'        => true,
+            'anomalies_count' => count($anomalies),
+            'anomalies'      => $anomalies,
+            'scanned_at'     => now()->toIso8601String(),
+        ]);
     }
 
     /**
-     * AI Recommendation Letter Generator for Students.
+     * Génération de lettre de recommandation par IA.
      */
-    public function generateRecommendationLetter($studentId): JsonResponse
+    public function generateRecommendationLetter(int $studentId): JsonResponse
     {
-        try {
-            $student = \Illuminate\Support\Facades\DB::table('students')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->leftJoin('student_pathways', function($join) {
-                    $join->on('students.id', '=', 'student_pathways.student_id')
-                         ->where('student_pathways.is_current', '=', true);
-                })
-                ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-                ->where('students.id', $studentId)
-                ->select('users.name', 'users.email', 'students.cne', 'filieres.name as filiere')
-                ->first();
+        $student = Student::with(['user', 'latestPathway.filiere'])->find($studentId);
 
-            if (!$student) {
-                return response()->json(['success' => false, 'message' => 'Étudiant introuvable'], 404);
-            }
-
-            $grades = \Illuminate\Support\Facades\DB::table('grades')
-                ->where('student_id', $studentId)
-                ->pluck('grade');
-
-            $avg = $grades->isNotEmpty() ? round($grades->avg(), 2) : 14.5;
-
-            $gemini = app(\App\Services\AI\GeminiApiService::class);
-
-            $system = [
-                "Tu es le Directeur des Études de l'ENCG Fès.",
-                "Rédige une lettre de recommandation académique officielle et très élogieuse pour un étudiant posant sa candidature à un Master ou à une mobilité internationale.",
-                "Utilise le format Markdown avec date, en-tête de l'ENCG Fès, appréciation détaillée et formule de politesse."
-            ];
-
-            $prompt = "Étudiant : {$student->name}\nFilière : " . ($student->filiere ?? 'Commerce & Gestion') . "\nMoyenne Générale : {$avg}/20";
-
-            $letter = $gemini->generateContent($prompt, $system)
-                ?? "Nous certifions que M./Mme {$student->name} s'est distingué(e) par son sérieux et son excellence académique à l'ENCG Fès.";
-
-            return response()->json([
-                'success' => true,
-                'student_name' => $student->name,
-                'average_grade' => $avg,
-                'letter' => $letter
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
+
+        $avg = Grade::where('student_id', $studentId)->avg('value');
+        $avg = $avg ? round($avg, 2) : 14.5;
+
+        $system = [
+            "Tu es le Directeur des Études de l'ENCG Fès.",
+            "Rédige une lettre de recommandation académique officielle pour un étudiant.",
+        ];
+
+        $prompt = "Étudiant : {$student->user->name}\nFilière : " . ($student->latestPathway->filiere->name ?? 'Commerce & Gestion') . "\nMoyenne : {$avg}/20";
+
+        $letter = $this->geminiService->generateContent($prompt, $system)
+            ?? "Nous certifions que {$student->user->name} s'est distingué(e) par son excellence académique à l'ENCG Fès.";
+
+        return response()->json([
+            'success'       => true,
+            'student_name'  => $student->user->name,
+            'average_grade' => $avg,
+            'letter'        => $letter,
+        ]);
     }
 }

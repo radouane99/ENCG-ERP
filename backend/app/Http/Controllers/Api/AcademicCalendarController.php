@@ -9,41 +9,39 @@ use Illuminate\Http\JsonResponse;
 
 class AcademicCalendarController extends Controller
 {
-    protected AcademicCalendarService $calendarService;
-
-    public function __construct(AcademicCalendarService $calendarService)
-    {
-        $this->calendarService = $calendarService;
-    }
+    public function __construct(
+        private AcademicCalendarService $calendarService
+    ) {}
 
     /**
-     * Get all academic events for the calendar view.
+     * Événements du calendrier académique.
      */
     public function events(): JsonResponse
     {
-        // For a full implementation, we might filter by the active academic year
         $events = AcademicEvent::where('is_active', true)
             ->with('academicYear')
             ->orderBy('start_date')
             ->get();
 
         return response()->json([
-            'data' => $events
+            'success' => true,
+            'data'    => $events,
         ]);
     }
 
     /**
-     * Get the status of various academic periods.
+     * Statut des périodes académiques.
      */
     public function status(): JsonResponse
     {
         return response()->json([
-            'data' => [
-                'can_submit_documents' => $this->calendarService->isDocumentSubmissionOpen(),
-                'can_enter_grades' => $this->calendarService->isGradeEntryOpen(),
-                'is_registration_open' => $this->calendarService->isRegistrationOpen(),
-                'are_exams_ongoing' => $this->calendarService->areExamsOngoing(),
-            ]
+            'success' => true,
+            'data'    => [
+                'can_submit_documents'  => $this->calendarService->isDocumentSubmissionOpen(),
+                'can_enter_grades'      => $this->calendarService->isGradeEntryOpen(),
+                'is_registration_open'  => $this->calendarService->isRegistrationOpen(),
+                'are_exams_ongoing'     => $this->calendarService->areExamsOngoing(),
+            ],
         ]);
     }
 }

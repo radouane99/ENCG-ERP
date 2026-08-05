@@ -3,34 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\Academic\StudentLifeService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ClubController extends Controller
 {
-    protected StudentLifeService $studentLifeService;
-
-    public function __construct(StudentLifeService $studentLifeService)
-    {
-        $this->studentLifeService = $studentLifeService;
-    }
+    public function __construct(
+        private StudentLifeService $studentLifeService
+    ) {}
 
     /**
-     * Display a listing of the clubs.
+     * Liste des clubs.
      */
     public function index(): JsonResponse
     {
         $clubs = $this->studentLifeService->getAllClubs();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $clubs
+            'data'    => $clubs,
         ]);
     }
 
     /**
-     * Store a newly created club.
+     * Créer un club.
      */
     public function store(Request $request): JsonResponse
     {
@@ -38,7 +35,7 @@ class ClubController extends Controller
             'name'         => 'required|string|max:255',
             'description'  => 'required|string',
             'president_id' => 'required|integer|exists:students,id',
-            'logo_url'     => 'nullable|url'
+            'logo_url'     => 'nullable|url',
         ]);
 
         $club = $this->studentLifeService->createClub($validated);
@@ -46,25 +43,25 @@ class ClubController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Club créé et en attente de validation.',
-            'data' => $club
+            'data'    => $club,
         ], 201);
     }
 
     /**
-     * Update the specified club (e.g. change status).
+     * Mettre à jour le statut d'un club.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        // Simple update wrapper (e.g. status validation)
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             try {
-                $club = $this->studentLifeService->updateClubStatus((int) $id, $request->status);
+                $club = $this->studentLifeService->updateClubStatus($id, $request->status);
+
                 return response()->json(['success' => true, 'data' => $club]);
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
             }
         }
 
-        return response()->json(['success' => false, 'message' => 'Mise à jour non supportée ici.'], 400);
+        return response()->json(['success' => false, 'message' => 'Statut requis.'], 400);
     }
 }

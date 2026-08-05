@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exam extends Model
 {
@@ -15,10 +16,10 @@ class Exam extends Model
     protected function casts(): array
     {
         return [
-        'exam_date' => 'date',
-        'duration_minutes' => 'integer',
-        'grades_published' => 'boolean',
-    ];
+            'exam_date' => 'date',
+            'duration_minutes' => 'integer',
+            'grades_published' => 'boolean',
+        ];
     }
 
     public function session(): BelongsTo
@@ -46,13 +47,19 @@ class Exam extends Model
         return $this->belongsTo(ExamSession::class, 'exam_session_id');
     }
 
-    public function surveillances()
+    public function surveillances(): HasMany
     {
-        return $this->hasMany(\App\Models\ExamSurveillance::class);
+        return $this->hasMany(ExamSurveillance::class);
     }
 
-    public function seatings()
+    public function seatings(): HasMany
     {
-        return $this->hasMany(\App\Models\ExamSeating::class);
+        return $this->hasMany(ExamSeating::class);
+    }
+
+    // ✅ AJOUTÉ : Relation pour les convocations
+    public function convocations(): HasMany
+    {
+        return $this->hasMany(Convocation::class);
     }
 }

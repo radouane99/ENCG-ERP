@@ -2,36 +2,41 @@
 
 namespace App\Services;
 
+use App\Mail\DocumentRequestCreatedMail;
+use App\Mail\DocumentRequestStatusMail;
 use App\Models\AcademicYear;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\GeneratedDocument;
 use App\Models\Grade;
+use App\Models\NotificationLog;
 use App\Models\Student;
+use App\Models\User;
+use App\Notifications\DocumentRequestCreatedNotification;
+use App\Notifications\DocumentRequestStatusUpdatedNotification;
+use App\Notifications\NewDocumentRequestAdminNotification;
 use App\Services\Core\PdfEngineService;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
-use App\Mail\DocumentRequestCreatedMail;
-use App\Mail\DocumentRequestStatusMail;
-use Illuminate\Support\Facades\Mail;
-
 class DocumentRequestService
 {
     public function __construct(
-        protected PdfEngineService $pdfEngine
-    ) {
-    }
+        private PdfEngineService $pdfEngine
+    ) {}
 
+    /**
+     * Vérifier l'éligibilité.
+     */
     public function checkEligibility(Student $student, DocumentType $type): bool
     {
-        if (! $type->is_active) {
-            return false;
-        }
+        if (!$type->is_active) return false;
 
         $hasPending = DocumentRequest::where('student_id', $student->id)
             ->where('document_type_id', $type->id)
@@ -39,93 +44,68 @@ class DocumentRequestService
             ->exists();
 
         if ($hasPending) {
-            throw new Exception('You already have a pending request for this document type.');
+            throw new Exception('Vous avez déjà une demande en cours pour ce type de document.');
         }
 
         return true;
     }
 
+    /**
+     * Créer une demande de document.
+     */
     public function createRequest(Student $student, array $data): DocumentRequest
     {
         $type = DocumentType::findOrFail($data['document_type_id']);
-
         $this->checkEligibility($student, $type);
 
         $docRequest = DocumentRequest::create([
-            'student_id' => $student->id,
-            'document_type_id' => $type->id,
-            'status' => 'pending',
-            'requested_at' => now(),
+            'student_id'        => $student->id,
+            'document_type_id'  => $type->id,
+            'status'            => 'pending',
+            'requested_at'      => now(),
         ]);
 
-        // 1. In-App Notification for Student & Admins
+        $studentUser = $student->user;
+
         try {
-            $studentUser = $student->user;
+            // Notification étudiant
             if ($studentUser) {
-                DB::table('notifications')->insert([
-                    'id' => (string) Str::uuid(),
-                    'type' => 'App\\Notifications\\DocumentRequestCreatedNotification',
-                    'notifiable_type' => 'App\\Models\\User',
-                    'notifiable_id' => $studentUser->id,
-                    'data' => json_encode([
-                        'title' => 'Demande de document enregistrée',
-                        'message' => "Votre demande pour [{$type->name}] a été enregistrée avec succès.",
-                        'action_url' => '/student/requests',
-                        'type' => 'document_request',
-                        'created_at' => now()->toIso8601String(),
-                    ]),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                $studentUser->notify(new DocumentRequestCreatedNotification($docRequest));
             }
 
-            // Notify Admin users in-app
-            $admins = \App\Models\User::role(['super-admin', 'institution-admin', 'director', 'admin'])->get();
-            foreach ($admins as $admin) {
-                DB::table('notifications')->insert([
-                    'id' => (string) Str::uuid(),
-                    'type' => 'App\\Notifications\\NewDocumentRequestAdminNotification',
-                    'notifiable_type' => 'App\\Models\\User',
-                    'notifiable_id' => $admin->id,
-                    'data' => json_encode([
-                        'title' => 'Nouvelle demande de document',
-                        'message' => "L'étudiant {$studentUser?->name} ({$student->cne}) a demandé [{$type->name}].",
-                        'action_url' => '/admin/requests',
-                        'type' => 'document_request',
-                        'created_at' => now()->toIso8601String(),
-                    ]),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            // Notification admins
+            User::role(['super-admin', 'institution-admin', 'director', 'admin'])
+                ->get()
+                ->each(fn($admin) => $admin->notify(new NewDocumentRequestAdminNotification($docRequest, $studentUser)));
         } catch (\Throwable $e) {
-            logger()->error('Failed to insert in-app notifications on request creation: ' . $e->getMessage());
+            Log::error('Échec notification création demande: ' . $e->getMessage());
         }
 
-        // 2. Email Notification to Admin via Resend Transport
+        // Email admin
         try {
-            $emailData = [
-                'student_name' => $student->user?->name ?? 'Étudiant',
-                'student_cne' => $student->cne ?? 'N/A',
-                'document_type' => $type->name,
-                'request_id' => $docRequest->id,
-            ];
-
-            $adminMail = config('mail.from.address', 'admin@encg-fes.ma');
-            Mail::to($adminMail)->send(new DocumentRequestCreatedMail($emailData));
+            Mail::to(config('mail.from.address', 'admin@encg-fes.ma'))
+                ->send(new DocumentRequestCreatedMail([
+                    'student_name'  => $studentUser?->name ?? 'Étudiant',
+                    'student_cne'   => $student->cne ?? 'N/A',
+                    'document_type' => $type->name,
+                    'request_id'    => $docRequest->id,
+                ]));
         } catch (\Throwable $e) {
-            logger()->error('Failed sending DocumentRequestCreatedMail email: ' . $e->getMessage());
+            Log::error('Échec email admin: ' . $e->getMessage());
         }
 
         return $docRequest;
     }
 
+    /**
+     * Traiter une demande.
+     */
     public function processRequest(DocumentRequest $request, string $status, ?array $adminNotes = null): DocumentRequest
     {
         return DB::transaction(function () use ($request, $status, $adminNotes) {
             $request->update([
-                'status' => $status,
-                'admin_notes' => $adminNotes,
+                'status'       => $status,
+                'admin_notes'  => $adminNotes,
                 'processed_at' => in_array($status, ['ready', 'approved'], true) ? now() : null,
             ]);
 
@@ -134,193 +114,130 @@ class DocumentRequestService
             }
 
             $fresh = $request->fresh(['student.user', 'documentType']);
+            $studentUser = $fresh->student?->user;
 
-            // 1. In-App Notification for Student
             try {
-                $studentUser = $fresh->student?->user;
                 if ($studentUser) {
-                    $isApproved = in_array($status, ['ready', 'approved'], true);
-                    $title = $isApproved ? 'Demande accordée & Document généré' : 'Demande non accordée';
-                    $message = $isApproved
-                        ? "Votre document [{$fresh->documentType?->name}] a été validé et est prêt au téléchargement."
-                        : "Votre demande pour [{$fresh->documentType?->name}] n'a pas été accordée." . (isset($adminNotes['reason']) ? " Motif: {$adminNotes['reason']}" : '');
+                    $studentUser->notify(new DocumentRequestStatusUpdatedNotification($fresh));
 
-                    DB::table('notifications')->insert([
-                        'id' => (string) Str::uuid(),
-                        'type' => 'App\\Notifications\\DocumentRequestStatusUpdatedNotification',
-                        'notifiable_type' => 'App\\Models\\User',
-                        'notifiable_id' => $studentUser->id,
-                        'data' => json_encode([
-                            'title' => $title,
-                            'message' => $message,
-                            'action_url' => '/student/requests',
-                            'type' => 'document_request',
-                            'created_at' => now()->toIso8601String(),
-                        ]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    // 2. Email Notification to Student via Resend Transport
                     if (!empty($studentUser->email)) {
-                        $emailData = [
-                            'student_name' => $studentUser->name,
-                            'document_type' => $fresh->documentType?->name ?? 'Document Administratif',
-                            'request_id' => $fresh->id,
-                            'status' => $status,
-                            'rejection_reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
-                        ];
+                        Mail::to($studentUser->email)->send(new DocumentRequestStatusMail([
+                            'student_name'    => $studentUser->name,
+                            'document_type'   => $fresh->documentType?->name ?? 'Document',
+                            'request_id'      => $fresh->id,
+                            'status'          => $status,
+                            'rejection_reason' => $adminNotes['reason'] ?? null,
+                        ]));
 
-                        try {
-                            Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
-                            
-                            $currentNotes = is_array($fresh->admin_notes) ? $fresh->admin_notes : [];
-                            $currentNotes['email_sent'] = true;
-                            $currentNotes['email_sent_at'] = now()->toIso8601String();
-                            $currentNotes['email_recipient'] = $studentUser->email;
-                            $fresh->update(['admin_notes' => $currentNotes]);
-
-                            \App\Models\NotificationLog::create([
-                                'user_id' => $studentUser->id,
-                                'type' => 'email',
-                                'recipient' => $studentUser->email,
-                                'message' => "Email de statut [{$fresh->documentType?->name}] envoyé à {$studentUser->email}.",
-                                'status' => 'sent',
-                            ]);
-                        } catch (\Throwable $mailErr) {
-                            logger()->error('Email sending error: ' . $mailErr->getMessage());
-                            $currentNotes = is_array($fresh->admin_notes) ? $fresh->admin_notes : [];
-                            $currentNotes['email_sent'] = false;
-                            $currentNotes['email_error'] = $mailErr->getMessage();
-                            $fresh->update(['admin_notes' => $currentNotes]);
-
-                            \App\Models\NotificationLog::create([
-                                'user_id' => $studentUser->id,
-                                'type' => 'email',
-                                'recipient' => $studentUser->email ?? 'N/A',
-                                'message' => "Échec d'envoi d'email : " . $mailErr->getMessage(),
-                                'status' => 'failed',
-                            ]);
-                        }
+                        NotificationLog::create([
+                            'user_id'   => $studentUser->id,
+                            'type'      => 'email',
+                            'recipient' => $studentUser->email,
+                            'message'   => "Email statut [{$fresh->documentType?->name}] envoyé.",
+                            'status'    => 'sent',
+                        ]);
                     }
                 }
             } catch (\Throwable $e) {
-                logger()->error('Failed sending status update in-app/email notifications: ' . $e->getMessage());
+                Log::error('Échec notification/email statut: ' . $e->getMessage());
             }
 
             return $fresh;
         });
     }
 
+    /**
+     * Récupérer le document généré.
+     */
     public function getGeneratedDocument(DocumentRequest $request): ?GeneratedDocument
     {
         return GeneratedDocument::where('document_request_id', $request->id)->latest('id')->first();
     }
 
-    protected function generateDocumentPdf(DocumentRequest $request): GeneratedDocument
+    /**
+     * Générer le PDF du document.
+     */
+    private function generateDocumentPdf(DocumentRequest $request): GeneratedDocument
     {
         $request->loadMissing(['student.user', 'documentType']);
 
-        $student = $request->student;
-        $type = $request->documentType;
-
+        $student  = $request->student;
+        $type     = $request->documentType;
         $viewName = $this->resolveViewName($type);
 
-        if (! View::exists($viewName)) {
-            throw new Exception("Blade view [{$viewName}] does not exist for this document type (Original: {$type->view_name}).");
+        if (!View::exists($viewName)) {
+            throw new Exception("Vue [{$viewName}] introuvable.");
         }
 
         $academicYear = AcademicYear::where('is_current', true)->first();
-        $year = $academicYear?->label ?? $academicYear?->name ?? (now()->year . '-' . (now()->year + 1));
+        $year = $academicYear?->label ?? (now()->year . '-' . (now()->year + 1));
 
         $trackingCode = Str::upper($type->code . '-' . Str::random(12));
-        $verifyUrl = route('document.verify', ['documentId' => $trackingCode]);
-        $svg = QrCode::size(100)->generate($verifyUrl);
-        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
+        $verifyUrl    = route('document.verify', ['documentId' => $trackingCode]);
+        $qrBase64     = 'data:image/svg+xml;base64,' . base64_encode(QrCode::size(100)->generate($verifyUrl));
 
-        $logoPath = public_path('logo-encg.png');
+        $logoPath   = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath)
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
-            : 'data:image/svg+xml;base64,' . base64_encode('<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="60" rx="8" fill="#002e5b"/><text x="100" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">ENCG FÈS</text></svg>');
-
-        $signatoryTitle = $request->admin_notes['signatory_title'] ?? null;
-
-        $watermarkText = sprintf("Généré le %s par le système centralisé ENCG ERP - Document Sécurisé", now()->format('d/m/Y H:i:s'));
+            : '';
 
         $data = [
-            'student' => $student,
+            'student'        => $student,
             'documentRequest' => $request,
-            'date' => now()->format('d/m/Y'),
-            'year' => $year,
-            'qrBase64' => $qrBase64,
-            'logoBase64' => $logoBase64,
-            'signatoryTitle' => $signatoryTitle,
-            'watermark' => $watermarkText,
+            'date'           => now()->format('d/m/Y'),
+            'year'           => $year,
+            'qrBase64'       => $qrBase64,
+            'logoBase64'     => $logoBase64,
+            'signatoryTitle' => $request->admin_notes['signatory_title'] ?? null,
         ];
 
         if ($viewName === 'pdf.releve_notes') {
-            $grades = Grade::with('assessment.module')
-                ->where('student_id', $student->id)
-                ->get();
-
-            $modules = $grades->map(function (Grade $grade) {
-                return [
-                    'code' => $grade->assessment?->module?->code ?? 'N/A',
-                    'name' => $grade->assessment?->module?->name ?? 'Module Inconnu',
-                    'score' => $grade->value,
-                    'is_validated' => (float) $grade->value >= 10,
-                ];
-            });
-
+            $grades = Grade::with('assessment.module')->where('student_id', $student->id)->get();
+            $data['modules'] = $grades->map(fn(Grade $g) => [
+                'code'         => $g->assessment?->module?->code ?? 'N/A',
+                'name'         => $g->assessment?->module?->name ?? 'N/A',
+                'score'        => $g->value,
+                'is_validated' => (float) $g->value >= 10,
+            ]);
             $data['avgGrade'] = round((float) $grades->avg('value'), 2);
-            $data['modules'] = $modules;
         }
 
         $filename = sprintf('%s_%s_%s.pdf', $type->code, $student->id, now()->timestamp);
-        $pdfPath = $this->pdfEngine->generateFromView(
-            $viewName,
-            $data,
-            'documents/generated/' . now()->format('Y/m'),
-            $filename,
-            'private'
-        );
+        $pdfPath  = $this->pdfEngine->generateFromView($viewName, $data, 'documents/generated/' . now()->format('Y/m'), $filename, 'private');
 
-        $existingGeneratedDocument = $this->getGeneratedDocument($request);
-        if ($existingGeneratedDocument && Storage::disk('private')->exists($existingGeneratedDocument->file_path)) {
-            Storage::disk('private')->delete($existingGeneratedDocument->file_path);
+        // Supprimer l'ancien document
+        $existing = $this->getGeneratedDocument($request);
+        if ($existing && Storage::disk('private')->exists($existing->file_path)) {
+            Storage::disk('private')->delete($existing->file_path);
         }
 
         return GeneratedDocument::updateOrCreate(
             ['document_request_id' => $request->id],
             [
-                'student_id' => $student->id,
-                'document_type' => $type->code,
-                'file_path' => $pdfPath,
-                'verification_token' => $trackingCode,
-                'verification_url' => $verifyUrl,
-                'expires_at' => now()->addYear(),
+                'student_id'          => $student->id,
+                'document_type'       => $type->code,
+                'file_path'           => $pdfPath,
+                'verification_token'  => $trackingCode,
+                'verification_url'    => $verifyUrl,
+                'expires_at'          => now()->addYear(),
             ]
         );
     }
 
+    /**
+     * Résoudre le nom de la vue Blade.
+     */
     private function resolveViewName(DocumentType $type): string
     {
         $viewMap = [
             'documents.attestation_scolarite' => 'pdf.attestation',
-            'documents.convention_stage' => 'pdf.convention_stage',
-            'documents.releve_notes' => 'pdf.releve_notes',
-            'documents.attestation_travail' => 'pdf.attestation_travail',
-            'documents.ordre_mission' => 'pdf.ordre_mission',
+            'documents.convention_stage'      => 'pdf.convention_stage',
+            'documents.releve_notes'          => 'pdf.releve_notes',
+            'documents.attestation_travail'   => 'pdf.attestation_travail',
+            'documents.ordre_mission'         => 'pdf.ordre_mission',
         ];
 
-        if (array_key_exists($type->view_name, $viewMap)) {
-            return $viewMap[$type->view_name];
-        }
-
-        if (str_starts_with($type->view_name, 'documents.')) {
-            return str_replace('documents.', 'pdf.', $type->view_name);
-        }
-
-        throw new \InvalidArgumentException("Unsupported document view name [{$type->view_name}].");
+        return $viewMap[$type->view_name]
+            ?? (str_starts_with($type->view_name, 'documents.') ? str_replace('documents.', 'pdf.', $type->view_name) : throw new \InvalidArgumentException("Vue non supportée [{$type->view_name}]."));
     }
 }

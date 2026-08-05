@@ -3,126 +3,161 @@
 namespace App\OCR\Engines;
 
 use App\OCR\Contracts\OcrEngineInterface;
+use App\OCR\OcrResult;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Tier 2 OCR Engine — Tesseract with ROI (Region of Interest) Preprocessing
- *
- * Moroccan CNIE Optimization Architecture:
- *  1. High-resolution 450 DPI rendering via pdftoppm.
- *  2. Image Binarization (-threshold 60%): Strips decorative guilloche micro-prints & seals into pure white.
- *  3. MRZ ROI Zone Crop (Bottom 35%): Scanned with `-l eng --psm 6` for 100% clean MRZ line extraction.
- *  4. Body Text ROI Zone Crop (Center 75%): Scanned with `-l fra+ara --psm 6` for clean name/date extraction.
- *  5. Whole-page passes with PSM 3 & PSM 11.
+ * Tesseract Engine - Version Ultra Rapide
+ * Optimisé pour la vitesse avec des passes minimales
  */
 class TesseractEngine implements OcrEngineInterface
 {
+    private string $processId;
+    private array $config;
+
+    public function __construct(array $config = [])
+    {
+        $this->processId = getmypid() . '_' . uniqid();
+        $this->config = array_merge([
+            'dpi' => 200, // Réduit pour la vitesse
+            'max_pages' => 1, // Une seule page pour la vitesse
+            'enable_roi_cropping' => false, // Désactivé pour la vitesse
+            'enable_binarization' => false, // Désactivé pour la vitesse
+            'default_lang' => 'ara+fra+eng',
+            'quick_mode' => true, // Mode rapide
+        ], $config);
+    }
+
+    public function getPriority(): int
+    {
+        return 3; // Priorité moyenne
+    }
+
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool
     {
-        return true;
+        $imageTypes = ['image/jpeg', 'image/png', 'image/tiff', 'image/bmp', 'image/gif', 'image/webp'];
+        
+        if (in_array($mimeType, $imageTypes)) {
+            return true;
+        }
+
+        if (str_contains(strtolower($mimeType), 'pdf')) {
+            return true;
+        }
+
+        return false;
     }
 
-    public function extract(string $filePath, string $mimeType): string
+    public function extractText(string $filePath): string
     {
-        $tmpDir  = sys_get_temp_dir();
+        $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
+        $result = $this->extract($filePath, $mimeType, '');
+        return $result->text;
+    }
+
+    public function extract(string $filePath, string $mimeType, string $docType = ''): OcrResult
+    {
+        $tmpDir = sys_get_temp_dir();
         $allText = '';
+        $createdFiles = [];
 
         try {
-            $images = $this->toImages($filePath, $mimeType, $tmpDir);
+            // Conversion rapide en image
+            $images = $this->toImages($filePath, $mimeType, $tmpDir, $createdFiles);
 
-            if (empty($images)) return '';
-
-            foreach ($images as $img) {
-                // Pass 1: High-resolution original image — Auto Page Layout (PSM 3)
-                $allText .= $this->runTesseractPass($img, 'ara+fra+eng', 3, $tmpDir);
-
-                // Pass 2: High-resolution original image — Sparse Text & Tables Layout (PSM 11)
-                $allText .= $this->runTesseractPass($img, 'ara+fra+eng', 11, $tmpDir);
-
-                // Pass 3: Binarized whole-page pass (Strips background guilloche micro-prints & seals into pure white)
-                $binarized = $this->binarizeImage($img, $tmpDir);
-                if ($binarized) {
-                    $allText .= $this->runTesseractPass($binarized, 'ara+fra+eng', 6, $tmpDir);
-                    @unlink($binarized);
-                }
-
-                // Pass 4: MRZ ROI Crop (Bottom 35% of page — Verso MRZ zone with English only)
-                $mrzCrop = $this->cropRoi($img, '100%x35%+0+65%', $tmpDir, 'mrz');
-                if ($mrzCrop) {
-                    $allText .= "\n" . $this->runTesseractPass($mrzCrop, 'eng', 6, $tmpDir);
-                    @unlink($mrzCrop);
-                }
-
-                @unlink($img);
+            if (empty($images)) {
+                return new OcrResult('');
             }
 
-            return $allText;
+            // Une seule image pour la vitesse
+            $image = $images[0];
+            $availableLangs = $this->getInstalledLanguages();
+            $lang = $this->getBestLanguage($availableLangs);
 
+            // Une seule passe OCR
+            $text = $this->runTesseractPass($image, $lang, 3, $tmpDir, $createdFiles);
+            $allText .= $text;
+
+            // Si le texte est court, essayer avec une autre langue
+            if (strlen(trim($text)) < 50 && count($availableLangs) > 1) {
+                $secondLang = $this->getSecondLanguage($availableLangs, $lang);
+                $text2 = $this->runTesseractPass($image, $secondLang, 3, $tmpDir, $createdFiles);
+                if (strlen(trim($text2)) > strlen(trim($text))) {
+                    $allText = $text2;
+                }
+            }
+
+            // Nettoyage rapide
+            $allText = $this->quickClean($allText);
+
+            return new OcrResult(trim($allText));
+
+        } catch (\Throwable $e) {
+            return new OcrResult('');
         } finally {
-            foreach (glob($tmpDir . '/pdf_pg_*.png')  as $pg) { @unlink($pg); }
-            foreach (glob($tmpDir . '/ocr_img_*.png') as $pg) { @unlink($pg); }
-            foreach (glob($tmpDir . '/roi_*.png')     as $pg) { @unlink($pg); }
+            foreach ($createdFiles as $file) {
+                if (file_exists($file)) {
+                    @unlink($file);
+                }
+            }
         }
     }
 
-    /**
-     * Convert PDF pages to 450 DPI high-resolution PNG images.
-     */
-    private function toImages(string $filePath, string $mimeType, string $tmpDir): array
+    private function toImages(string $filePath, string $mimeType, string $tmpDir, array &$createdFiles): array
     {
         if ($this->isPdf($mimeType, $filePath)) {
-            $tmpPrefix = $tmpDir . '/pdf_pg_' . uniqid();
-            // Render max 2 pages at 300 DPI (CNIE Recto/Verso or Bac 1-2 pages)
-            @exec('pdftoppm -png -r 300 -l 2 ' . escapeshellarg($filePath) . ' ' . escapeshellarg($tmpPrefix) . ' 2>/dev/null');
-            return glob("{$tmpPrefix}*.png") ?: [];
+            if (!$this->hasCommand('pdftoppm')) {
+                return [];
+            }
+
+            $tmpPrefix = $tmpDir . '/pdf_pg_' . $this->processId;
+            $cmd = sprintf('pdftoppm -png -r 150 -l 1 %s %s 2>/dev/null', // r 150 pour la vitesse
+                escapeshellarg($filePath),
+                escapeshellarg($tmpPrefix)
+            );
+            @exec($cmd);
+
+            $pages = glob("{$tmpPrefix}*.png") ?: [];
+            foreach ($pages as $p) {
+                $createdFiles[] = $p;
+            }
+            
+            // Limiter à une page
+            return array_slice($pages, 0, 1);
         }
 
-        $tmpImg = $tmpDir . '/ocr_img_' . uniqid() . '.png';
-        @copy($filePath, $tmpImg);
-        return file_exists($tmpImg) ? [$tmpImg] : [];
+        $tmpImg = $tmpDir . '/ocr_img_' . $this->processId . '.png';
+        if (@copy($filePath, $tmpImg)) {
+            $createdFiles[] = $tmpImg;
+            return [$tmpImg];
+        }
+
+        return [];
     }
 
-    /**
-     * Binarize image (convert background micro-prints & colored seals to pure white).
-     */
-    private function binarizeImage(string $imgPath, string $tmpDir): ?string
-    {
-        $out = $tmpDir . '/roi_bw_' . uniqid() . '.png';
-        $cmd = 'convert ' . escapeshellarg($imgPath) .
-               ' -colorspace Gray -contrast-stretch 1%x99% -threshold 60% ' .
-               escapeshellarg($out) . ' 2>/dev/null';
-        @exec($cmd);
-
-        return (file_exists($out) && filesize($out) > 100) ? $out : null;
-    }
-
-    /**
-     * Crop specific Region of Interest (ROI) from image.
-     */
-    private function cropRoi(string $imgPath, string $geometry, string $tmpDir, string $label): ?string
-    {
-        $out = $tmpDir . '/roi_' . $label . '_' . uniqid() . '.png';
-        $cmd = 'convert ' . escapeshellarg($imgPath) .
-               ' -crop ' . escapeshellarg($geometry) .
-               ' -colorspace Gray -contrast-stretch 1%x98% ' .
-               escapeshellarg($out) . ' 2>/dev/null';
-        @exec($cmd);
-
-        return (file_exists($out) && filesize($out) > 100) ? $out : null;
-    }
-
-    /**
-     * Run a single Tesseract pass with specified language and PSM mode.
-     */
-    private function runTesseractPass(string $imgPath, string $lang, int $psm, string $tmpDir): string
-    {
-        $outPath = $tmpDir . '/ocr_pass_' . uniqid();
-        $cmd = 'tesseract ' . escapeshellarg($imgPath) . ' ' . escapeshellarg($outPath) .
-               ' -l ' . escapeshellarg($lang) . ' --psm ' . $psm . ' 2>/dev/null';
-        @exec($cmd);
-
+    private function runTesseractPass(
+        string $imgPath,
+        string $lang,
+        int $psm,
+        string $tmpDir,
+        array &$createdFiles,
+        string $extraConfig = ''
+    ): string {
+        $outPath = $tmpDir . '/ocr_pass_' . $this->processId . '_' . uniqid();
         $txtFile = "{$outPath}.txt";
+
+        // Options de vitesse
+        $cmd = sprintf(
+            'tesseract %s %s -l %s --psm %d -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÿ\x{0600}-\x{06FF} 2>/dev/null',
+            escapeshellarg($imgPath),
+            escapeshellarg($outPath),
+            escapeshellarg($lang),
+            $psm
+        );
+        @exec($cmd);
+
         if (file_exists($txtFile)) {
+            $createdFiles[] = $txtFile;
             $text = file_get_contents($txtFile) ?: '';
             @unlink($txtFile);
             return $text;
@@ -131,10 +166,75 @@ class TesseractEngine implements OcrEngineInterface
         return '';
     }
 
+    private function getInstalledLanguages(): array
+    {
+        $output = [];
+        @exec('tesseract --list-langs 2>/dev/null', $output);
+
+        $langs = [];
+        foreach ($output as $line) {
+            $line = trim($line);
+            if ($line !== '' && !str_contains($line, 'List of available languages') && !str_contains($line, ':')) {
+                $langs[] = $line;
+            }
+        }
+
+        return $langs;
+    }
+
+    private function getBestLanguage(array $available): string
+    {
+        $preferred = ['ara+fra+eng', 'fra+eng', 'ara+eng', 'fra', 'eng', 'ara'];
+        
+        foreach ($preferred as $lang) {
+            $parts = explode('+', $lang);
+            $allAvailable = true;
+            foreach ($parts as $part) {
+                if (!in_array($part, $available)) {
+                    $allAvailable = false;
+                    break;
+                }
+            }
+            if ($allAvailable) {
+                return $lang;
+            }
+        }
+
+        return $available[0] ?? 'eng';
+    }
+
+    private function getSecondLanguage(array $available, string $currentLang): string
+    {
+        foreach ($available as $lang) {
+            if (!str_contains($currentLang, $lang)) {
+                return $lang;
+            }
+        }
+        return $available[0] ?? 'eng';
+    }
+
+    private function quickClean(string $text): string
+    {
+        $text = preg_replace('/\s+/', ' ', $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", $text);
+        return trim($text);
+    }
+
     private function isPdf(string $mimeType, string $filePath): bool
     {
-        if (str_contains(strtolower($mimeType), 'pdf')) return true;
+        if (str_contains(strtolower($mimeType), 'pdf')) {
+            return true;
+        }
+
         $raw = @file_get_contents($filePath, false, null, 0, 4);
         return str_starts_with((string)$raw, '%PDF');
+    }
+
+    private function hasCommand(string $cmd): bool
+    {
+        $returnVar = -1;
+        $output = [];
+        @exec("which {$cmd} 2>/dev/null", $output, $returnVar);
+        return $returnVar === 0;
     }
 }

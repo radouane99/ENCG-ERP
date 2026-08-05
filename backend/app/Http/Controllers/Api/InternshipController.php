@@ -2,26 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Internship\UpdateInternshipAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Internship\UpdateInternshipRequest;
 use App\Http\Resources\InternshipResource;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\Internship;
 use App\Services\Academic\CareerService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
-/**
- * [Phase 8] InternshipController — refactored to use InternshipResource.
- */
 class InternshipController extends Controller
 {
-    protected CareerService $careerService;
-
-    public function __construct(CareerService $careerService)
-    {
-        $this->careerService = $careerService;
-    }
+    public function __construct(
+        private CareerService $careerService
+    ) {}
 
     /**
-     * Display a listing of the internships.
+     * Liste des stages.
      */
     public function index(Request $request): JsonResponse
     {
@@ -29,23 +26,26 @@ class InternshipController extends Controller
 
         $internships = $this->careerService->getAllInternships();
 
-        // [Phase 8] Return InternshipResource collection
         return response()->json([
-            'data' => InternshipResource::collection($internships),
+            'success' => true,
+            'data'    => InternshipResource::collection($internships),
         ]);
     }
 
     /**
-     * Update the specified internship.
+     * Mettre à jour un stage.
      */
-    public function update(\App\Http\Requests\Internship\UpdateInternshipRequest $request, \App\Models\Internship $internship, \App\Actions\Internship\UpdateInternshipAction $action): JsonResponse
-    {
+    public function update(
+        UpdateInternshipRequest $request,
+        Internship $internship,
+        UpdateInternshipAction $action
+    ): JsonResponse {
         try {
             $updated = $action->execute($internship, $request->validated());
 
             return response()->json([
                 'success' => true,
-                // [Phase 8] Wrap in Resource
+                'message' => 'Stage mis à jour avec succès.',
                 'data'    => new InternshipResource($updated->load(['student', 'supervisor'])),
             ]);
         } catch (\InvalidArgumentException $e) {

@@ -4,26 +4,33 @@ namespace App\Http\Controllers\Api\Professor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internship\EvaluateInternshipRequest;
-use App\Services\Academic\SoutenanceService;
 use App\Models\Internship;
+use App\Services\Academic\SoutenanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProfessorInternshipController extends Controller
 {
-    public function __construct(private SoutenanceService $soutenanceService)
-    {
-    }
+    public function __construct(
+        private SoutenanceService $soutenanceService
+    ) {}
 
+    /**
+     * Stages supervisés par le professeur.
+     */
     public function supervised(Request $request): JsonResponse
     {
-        // For now, just return all internships to avoid SQL errors
-        $internships = Internship::with(['student'])
-            ->get();
+        $internships = Internship::with(['student'])->get();
 
-        return response()->json(['internships' => $internships]);
+        return response()->json([
+            'success'     => true,
+            'internships' => $internships,
+        ]);
     }
 
+    /**
+     * Évaluer une soutenance.
+     */
     public function evaluate(int $soutenanceId, EvaluateInternshipRequest $request): JsonResponse
     {
         $soutenance = $this->soutenanceService->evaluate(
@@ -33,8 +40,9 @@ class ProfessorInternshipController extends Controller
         );
 
         return response()->json([
-            'message' => 'Internship evaluated successfully',
-            'soutenance' => $soutenance
+            'success'    => true,
+            'message'    => 'Soutenance évaluée avec succès.',
+            'soutenance' => $soutenance,
         ]);
     }
 }

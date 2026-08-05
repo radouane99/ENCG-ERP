@@ -2,40 +2,40 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Models\Exam;
-use App\Models\ExamSession;
-use App\Models\Student;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\ConvocationEmail;
+use App\Mail\ProfessorConvocationEmail;
+use App\Models\Exam;
+use App\Models\ExamSeating;
+use App\Models\ExamSession;
+use App\Models\ExamSurveillance;
+use App\Models\Room;
+use App\Models\Student;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ExamConvocationService
 {
     /**
-     * Generate convocations for all exams in a session
+     * Générer les convocations pour tous les examens d'une session.
      */
     public function generateSessionConvocations(int $sessionId): array
     {
         $session = ExamSession::with(['exams.group.students', 'exams.module'])->findOrFail($sessionId);
-        
-        $totalGenerated = 0;
-        
-        foreach ($session->exams as $exam) {
-            $generatedCount = 0;
-            
-            // First, update any existing seatings that don't have a QR token, room_id, or seat_number
-            $existingSeatings = DB::table('exam_seatings')
-                ->where('exam_id', $exam->id)
-                ->get();
 
-            $existingStudentIds = $existingSeatings->pluck('student_id')->toArray();
-            $generatedCount = $existingSeatings->max('seat_number') ?? 0;
-            $defaultRoomId = $exam->room_id ?? $exam->room?->id ?? \App\Models\Room::first()?->id;
+        $totalGenerated = 0;
+
+        foreach ($session->exams as $exam) {
+            $existingSeatings = ExamSeating::where('exam_id', $exam->id)->get();
+            $defaultRoomId    = $exam->room_id ?? Room::first()?->id;
 
             foreach ($existingSeatings as $index => $seating) {
                 $updates = [];
+
                 if (empty($seating->qr_token)) {
                     $updates['qr_token'] = Str::uuid()->toString();
                 }
@@ -45,276 +45,153 @@ class ExamConvocationService
                 if (empty($seating->seat_number)) {
                     $updates['seat_number'] = $index + 1;
                 }
+
                 if (!empty($updates)) {
-                    DB::table('exam_seatings')
-                        ->where('id', $seating->id)
-                        ->update($updates);
+                    $seating->update($updates);
                     $totalGenerated++;
                 }
             }
 
-            // Only fetch students to create new seatings if this is a manually created exam without complete seatings
-            // Or if we specifically want to enforce all students of a group are seated
-            $students = collect();
-            if ($exam->group_id && $exam->group) {
-                // If it's a specific group exam (e.g. manual creation)
-                $students = $exam->group->students;
-            } elseif ($exam->module && $exam->module->filiere_id) {
-                // If no group, take the whole filiere
-                $students = \App\Models\Student::whereHas('pathways', function ($q) use ($exam) {
-                    $q->where('filiere_id', $exam->module->filiere_id)
-                      ->where('is_current', true);
-                })->get();
-            }
-
-            // Only insert new seatings if there are NO existing seatings for this exam.
-            // (If auto-generated, seatings are already distributed across rooms, we shouldn't insert missing students into every room).
-            if ($existingSeatings->isEmpty() && $students->isNotEmpty()) {
-                $roomId = $exam->room_id ?? $exam->room?->id;
-                if (!$roomId) {
-                    continue; // Skip if no room assigned
-                }
-
-                foreach ($students as $student) {
-                    if (!in_array($student->id, $existingStudentIds)) {
-                        DB::table('exam_seatings')->insert([
-                            'exam_id' => $exam->id,
-                            'student_id' => $student->id,
-                            'room_id' => $roomId,
-                            'seat_number' => ++$generatedCount,
-                            'qr_token' => Str::uuid()->toString(),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                        $totalGenerated++;
-                    }
-                }
-            }
-
-            // Also generate QR tokens for professors (surveillances)
-            $existingSurveillances = DB::table('exam_surveillances')
-                ->where('exam_id', $exam->id)
+            // Générer les QR tokens pour les surveillances
+            ExamSurveillance::where('exam_id', $exam->id)
                 ->whereNull('qr_token')
-                ->get();
-
-            foreach ($existingSurveillances as $surveillance) {
-                DB::table('exam_surveillances')
-                    ->where('id', $surveillance->id)
-                    ->update(['qr_token' => Str::uuid()->toString()]);
-            }
+                ->get()
+                ->each(fn($s) => $s->update(['qr_token' => Str::uuid()->toString()]));
         }
 
         return [
-            'success' => true,
-            'message' => 'Convocations générées pour la session (QR assignés)',
-            'generated_count' => $totalGenerated
+            'success'         => true,
+            'message'         => 'Convocations générées (QR assignés).',
+            'generated_count' => $totalGenerated,
         ];
     }
 
     /**
-     * Send emails for all unsent convocations in a session
+     * Envoyer les emails pour toutes les convocations non envoyées.
      */
     public function sendSessionEmails(int $sessionId): array
     {
-        $session = ExamSession::findOrFail($sessionId);
-        $examIds = DB::table('exams')->where('exam_session_id', $sessionId)->pluck('id');
-        
-        $seatingIds = DB::table('exam_seatings')
-            ->whereIn('exam_id', $examIds)
+        $examIds = Exam::where('exam_session_id', $sessionId)->pluck('id');
+
+        $seatingIds = ExamSeating::whereIn('exam_id', $examIds)
             ->whereNull('sent_at')
             ->pluck('id')
             ->toArray();
 
         if (empty($seatingIds)) {
-            $seatingIds = DB::table('exam_seatings')
-                ->whereIn('exam_id', $examIds)
-                ->pluck('id')
-                ->toArray();
+            $seatingIds = ExamSeating::whereIn('exam_id', $examIds)->pluck('id')->toArray();
         }
 
         if (empty($seatingIds)) {
-            return [
-                'success' => false,
-                'message' => 'Aucune convocation à envoyer pour cette session. Veuillez d\'abord générer les convocations.'
-            ];
+            return ['success' => false, 'message' => 'Aucune convocation à envoyer.'];
         }
 
         return $this->sendBatchEmails($sessionId, $seatingIds);
     }
 
     /**
-     * Send emails for selected seatings — one email per student with all their exams
+     * Envoyer les emails par lot — un email par étudiant avec tous ses examens.
      */
     public function sendBatchEmails(int $sessionId, array $seatingIds): array
     {
-        // Extract student IDs from requested seatings
-        $studentIds = DB::table('exam_seatings')
-            ->whereIn('id', $seatingIds)
-            ->pluck('student_id')
-            ->unique();
+        $studentIds = ExamSeating::whereIn('id', $seatingIds)->pluck('student_id')->unique();
 
         if ($studentIds->isEmpty()) {
-            return [
-                'success' => false,
-                'message' => 'Aucun étudiant correspondant sélectionné.'
-            ];
+            return ['success' => false, 'message' => 'Aucun étudiant sélectionné.'];
         }
 
-        // Fetch all seatings for these students
-        $seatings = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
-            ->join('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
-            ->join('modules', 'exams.module_id', '=', 'modules.id')
-            ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
-            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
-            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
-            ->leftJoin('exam_surveillances', function($join) {
-                $join->on('exam_surveillances.exam_id', '=', 'exams.id')
-                     ->where('exam_surveillances.role', '=', 'president_salle');
-            })
-            ->leftJoin('users as prof_users', 'exam_surveillances.professor_id', '=', 'prof_users.id')
-            ->whereIn('exam_seatings.student_id', $studentIds)
-            ->select(
-                'exam_seatings.id as seating_id',
-                'exam_seatings.student_id',
-                'exam_seatings.qr_token',
-                'exam_seatings.seat_number',
-                'students.cne',
-                DB::raw("COALESCE(users.cin, 'N/A') as student_cin"),
-                'users.name as student_name',
-                'users.email as student_email',
-                'modules.name as module_name',
-                'modules.semester_number',
-                'filieres.name as filiere_name',
-                'exam_sessions.name as session_name',
-                'exams.exam_date',
-                'exams.start_time',
-                DB::raw("COALESCE(seating_rooms.name, exam_rooms.name, 'Salle non assignée') as room_name"),
-                DB::raw("COALESCE(prof_users.name, 'Prof. Responsable') as professor_name")
-            )
-            ->orderBy('exams.exam_date')
-            ->orderBy('exams.start_time')
+        $seatings = ExamSeating::with([
+            'student.user',
+            'exam.module.filiere',
+            'exam.examSession',
+            'room',
+        ])
+            ->whereIn('student_id', $studentIds)
+            ->orderBy('exam_id')
             ->get()
             ->groupBy('student_id');
 
         $sentCount = 0;
 
-        $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
-
         foreach ($seatings as $studentId => $studentSeatings) {
             $first = $studentSeatings->first();
-            if (!$first->student_email) continue;
+            $email = $first->student->user->email ?? null;
+            if (!$email) continue;
 
-            // Build list of all exams for this student
-            $examsData = $studentSeatings->map(function ($s) {
-                return [
-                    'moduleName'    => $s->module_name ?? 'N/A',
-                    'examDate'      => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
-                    'examTime'      => $s->start_time ? substr($s->start_time, 0, 5) : 'N/A',
-                    'roomName'      => $s->room_name ?? 'Salle non assignée',
-                    'seatNumber'    => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
-                    'professorName' => $s->professor_name ?? 'Prof. ENCG',
-                    'qrToken'       => $s->qr_token,
-                ];
-            })->values()->toArray();
+            $examsData = $studentSeatings->map(fn($s) => [
+                'moduleName'    => $s->exam->module->name ?? 'N/A',
+                'examDate'      => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                'examTime'      => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : 'N/A',
+                'roomName'      => $s->room->name ?? 'N/A',
+                'seatNumber'    => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
+                'professorName' => 'Prof. ENCG',
+                'qrToken'       => $s->qr_token,
+            ])->values()->toArray();
+
+            $qrToken = $first->qr_token ?? ('ENCG-' . ($first->student->cne ?? 'STUDENT'));
+            $qrCodeBase64 = $this->generateQrBase64($qrToken);
+
+            $semNum     = (int) ($first->exam->module->semester_number ?? 1);
+            $niveauName = match (true) {
+                $semNum <= 2 => '1ère Année',
+                $semNum <= 4 => '2ème Année',
+                $semNum <= 6 => '3ème Année',
+                $semNum <= 8 => '4ème Année',
+                default      => '5ème Année',
+            };
+
+            $pdfExamsData = $studentSeatings->map(fn($s) => [
+                'date'       => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                'time'       => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '--:--',
+                'module'     => $s->exam->module->name ?? 'N/A',
+                'enseignant' => 'Prof. ENCG',
+                'room'       => $s->room->name ?? 'N/A',
+                'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
+            ])->values()->toArray();
+
+            $pdfData = [
+                'session_name'  => $first->exam->examSession->name ?? 'Session d\'Examens',
+                'session_type'  => 'ORDINAIRE',
+                'person_id'     => $first->student->cne ?? 'N/A',
+                'person_name'   => strtoupper($first->student->user->name ?? ''),
+                'filiere_name'  => $first->exam->module->filiere->name ?? 'N/A',
+                'niveau_name'   => $niveauName,
+                'exams'         => $pdfExamsData,
+                'qr_token'      => $qrToken,
+                'qrCodeBase64'  => $qrCodeBase64,
+            ];
 
             $emailData = [
-                'studentName' => $first->student_name,
-                'sessionName' => $first->session_name ?? 'Session d\'Examens',
-                'logoBase64'  => $logoBase64,
+                'studentName' => $first->student->user->name ?? 'Étudiant',
+                'sessionName' => $first->exam->examSession->name ?? 'Session',
                 'exams'       => $examsData,
             ];
 
             try {
-                $qrToken = $first->qr_token ?? ('ENCG-' . ($first->cne ?? 'STUDENT') . '-' . $studentId);
-                $qrCodeBase64 = '';
-                try {
-                    $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(140)->margin(1)->generate($qrToken);
-                    $qrCodeBase64 = base64_encode($qrPng);
-                } catch (\Throwable $e) {
-                    try {
-                        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->margin(1)->generate($qrToken);
-                        $qrCodeBase64 = base64_encode($qrSvg);
-                    } catch (\Throwable $e2) {}
-                }
-
-                // Build PDF data in the format of the official pdf/convocation template
-                $pdfExamsData = $studentSeatings->map(function ($s) {
-                    return [
-                        'date'       => $s->exam_date ? \Carbon\Carbon::parse($s->exam_date)->format('d/m/Y') : 'N/A',
-                        'time'       => ($s->start_time ? substr($s->start_time, 0, 5) : '--:--'),
-                        'module'     => $s->module_name ?? 'N/A',
-                        'enseignant' => $s->professor_name ?? 'Prof. ENCG',
-                        'room'       => $s->room_name ?? 'Salle non assignée',
-                        'seat'       => $s->seat_number ? ('N° ' . $s->seat_number) : '-',
-                    ];
-                })->values()->toArray();
-
-                $semNum = (int) ($first->semester_number ?? 1);
-                $niveauName = ($semNum <= 2) ? '1ère Année' : (($semNum <= 4) ? '2ème Année' : (($semNum <= 6) ? '3ème Année' : (($semNum <= 8) ? '4ème Année' : '5ème Année')));
-
-                $digitalHash = strtoupper(substr(hash('sha256', ($first->cne ?? 'ENCG') . ($first->student_cin ?? 'CIN') . ($qrToken ?? 'QR') . config('app.key')), 0, 32));
-                $digitalSignatureFormatted = implode('-', str_split($digitalHash, 4));
-
-                $pdfData = [
-                    'session_name'      => $first->session_name ?? 'Session d\'Examens',
-                    'session_type'      => 'ORDINAIRE',
-                    'person_id'         => $first->cne ?? 'N/A',
-                    'person_cin'        => $first->student_cin ?? 'N/A',
-                    'person_name'       => strtoupper($first->student_name),
-                    'filiere_name'      => $first->filiere_name ?? 'N/A',
-                    'niveau_name'       => $niveauName,
-                    'exams'             => $pdfExamsData,
-                    'qr_token'          => $qrToken,
-                    'qrCodeBase64'      => $qrCodeBase64,
-                    'digital_signature' => $digitalSignatureFormatted,
-                    'generated_at'      => now()->format('d/m/Y H:i:s CASABLANCA'),
-                ];
-
                 $pdf = Pdf::loadView('pdf.convocation', $pdfData);
 
-                try {
-                    Mail::to($first->student_email)->send(
-                        new ConvocationEmail($emailData, $pdf->output())
-                    );
+                Mail::to($email)->send(new ConvocationEmail($emailData, $pdf->output()));
 
-                    // Mark all seatings as sent only on successful mail send
-                    DB::table('exam_seatings')
-                        ->whereIn('id', $studentSeatings->pluck('seating_id'))
-                        ->update(['sent_at' => now()]);
-
-                    $sentCount++;
-                } catch (\Throwable $mailErr) {
-                    \Illuminate\Support\Facades\Log::error('Resend email error for ' . $first->student_email . ': ' . $mailErr->getMessage());
-                    return [
-                        'success' => false,
-                        'message' => 'Erreur Resend pour (' . $first->student_email . '): ' . $mailErr->getMessage(),
-                        'sent_count' => $sentCount,
-                    ];
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Student convocation batch error for student_id ' . $studentId . ': ' . $e->getMessage());
+                ExamSeating::whereIn('id', $studentSeatings->pluck('id'))->update(['sent_at' => now()]);
+                $sentCount++;
+            } catch (\Throwable $e) {
+                Log::error('Erreur email convocation: ' . $email . ' — ' . $e->getMessage());
+                return ['success' => false, 'message' => 'Erreur d\'envoi pour ' . $email, 'sent_count' => $sentCount];
             }
         }
 
-        return [
-            'success' => true,
-            'message' => "{$sentCount} étudiant(s) ont reçu leur convocation par email."
-        ];
+        return ['success' => true, 'message' => "{$sentCount} étudiant(s) notifié(s)."];
     }
 
     /**
-     * Send emails for selected surveillances (professors)
+     * Envoyer les emails aux surveillants.
      */
     public function sendBatchSurveillantsEmails(int $sessionId, array $surveillanceIds): array
     {
         $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
         $examIds = $session->exams->pluck('id');
-        
-        $surveillances = DB::table('exam_surveillances')
+
+        $surveillances = ExamSurveillance::with(['exam.module', 'room'])
             ->whereIn('exam_id', $examIds)
             ->whereIn('id', $surveillanceIds)
             ->get()
@@ -323,92 +200,67 @@ class ExamConvocationService
         $sentCount = 0;
 
         foreach ($surveillances as $professorId => $profSurveillances) {
-            $professor = \App\Models\User::find($professorId);
-            if (!$professor || !$professor->email) continue;
+            $professor = User::find($professorId);
+            if (!$professor?->email) continue;
 
-            // Collect all exams for this professor
-            $profExamsData = [];
-            foreach ($profSurveillances as $surv) {
-                $exam = $session->exams->firstWhere('id', $surv->exam_id);
-                if (!$exam) continue;
+            $profExams = $profSurveillances->map(fn($s) => [
+                'moduleName' => $s->exam->module->name ?? 'N/A',
+                'examDate'   => $s->exam->exam_date?->format('Y-m-d') ?? 'N/A',
+                'examTime'   => $s->exam->start_time ?? 'N/A',
+                'roomName'   => $s->room->name ?? 'N/A',
+                'role'       => $s->role ?? 'Surveillant',
+                'qrToken'    => $s->qr_token,
+            ])->values()->toArray();
 
-                $profExamsData[] = [
-                    'moduleName' => $exam->module?->name ?? 'N/A',
-                    'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
-                    'examTime' => $exam->start_time ?? 'N/A',
-                    'roomName' => $exam->room?->name ?? 'N/A',
-                    'role' => $surv->role ?? 'Surveillant',
-                    'qrToken' => $surv->qr_token,
-                ];
-            }
+            $profPdfExams = $profSurveillances->map(fn($s) => [
+                'date'   => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                'time'   => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : 'N/A',
+                'module' => $s->exam->module->name ?? 'N/A',
+                'room'   => $s->room->name ?? 'N/A',
+                'role'   => $s->role ?? 'Surveillant',
+            ])->values()->toArray();
 
-            if (empty($profExamsData)) continue;
+            $professorData = [[
+                'id'           => $professor->id,
+                'person_name'  => strtoupper($professor->name),
+                'filiere_name' => 'Département Enseignant',
+                'person_role'  => $profExams[0]['role'] ?? 'Surveillant',
+                'session_name' => $session->name,
+                'session_type' => '',
+                'exams'        => $profPdfExams,
+                'qr_token'     => $profExams[0]['qrToken'] ?? null,
+                'qrCodeBase64' => null,
+            ]];
 
             $emailData = [
                 'professorName' => $professor->name,
-                'sessionName' => $session->name,
-                'exams' => $profExamsData,
-                'confirmUrl' => url('/api/verify/surveillance/' . $profExamsData[0]['qrToken'] . '/confirm')
+                'sessionName'   => $session->name,
+                'exams'         => $profExams,
+                'confirmUrl'    => url('/api/verify/surveillance/' . ($profExams[0]['qrToken'] ?? '') . '/confirm'),
             ];
 
             try {
-                // Build PDF data in the format of the official pdf/convocations_profs_batch template
-                $profPdfExams = array_map(function ($exam) {
-                    return [
-                        'date'   => $exam['examDate'],
-                        'time'   => substr($exam['examTime'], 0, 5),
-                        'module' => $exam['moduleName'],
-                        'room'   => $exam['roomName'],
-                        'role'   => $exam['role'],
-                    ];
-                }, $profExamsData);
-
-                $professorData = [[
-                    'id'           => $professor->id,
-                    'created_at'   => now()->toDateTimeString(),
-                    'person_id'    => $professor->professor_id ?? $professor->id,
-                    'person_name'  => strtoupper($professor->name),
-                    'filiere_name' => 'Département Enseignant',
-                    'person_role'  => $profExamsData[0]['role'] ?? 'Surveillant',
-                    'session_name' => $session->name,
-                    'session_type' => '',
-                    'exams'        => $profPdfExams,
-                    'qr_token'     => $profExamsData[0]['qrToken'] ?? null,
-                    'qrCodeBase64' => null,
-                ]];
-
                 $pdf = Pdf::loadView('pdf.convocations_profs_batch', ['professorsData' => $professorData]);
-                Mail::to($professor->email)->send(
-                    new \App\Mail\ProfessorConvocationEmail($emailData, $pdf->output())
-                );
-                
-                DB::table('exam_surveillances')
-                    ->whereIn('id', $profSurveillances->pluck('id'))
-                    ->update(['sent_at' => now()]);
-                    
+
+                Mail::to($professor->email)->send(new ProfessorConvocationEmail($emailData, $pdf->output()));
+
+                ExamSurveillance::whereIn('id', $profSurveillances->pluck('id'))->update(['sent_at' => now()]);
                 $sentCount++;
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Convocation email error for professor ' . $professor->id . ': ' . $e->getMessage());
-                return [
-                    'success' => false,
-                    'message' => 'Erreur lors de l\'envoi à ' . $professor->name . ' (' . $professor->email . '): ' . $e->getMessage(),
-                    'sent_count' => $sentCount,
-                ];
+            } catch (\Throwable $e) {
+                Log::error('Erreur email surveillant: ' . $professor->email . ' — ' . $e->getMessage());
+                return ['success' => false, 'message' => 'Erreur d\'envoi pour ' . $professor->email, 'sent_count' => $sentCount];
             }
         }
 
-        return [
-            'success' => true,
-            'message' => "{$sentCount} e-mails envoyés avec succès aux surveillants."
-        ];
+        return ['success' => true, 'message' => "{$sentCount} surveillant(s) notifié(s)."];
     }
 
     /**
-     * Verify convocation by reference (QR token UUID)
+     * Vérifier une convocation par QR token.
      */
     public function verifyByReference(string $reference): array
     {
-        $seating = DB::table('exam_seatings')
+        $seating = ExamSeating::with(['student.user', 'exam.module', 'exam.room'])
             ->where('qr_token', $reference)
             ->first();
 
@@ -416,431 +268,232 @@ class ExamConvocationService
             return ['success' => false, 'message' => 'Convocation introuvable.'];
         }
 
-        $student = Student::with('user')->find($seating->student_id);
-        $exam = Exam::with(['module', 'room'])->find($seating->exam_id);
-
         return [
             'success' => true,
-            'data' => [
-                'student_name' => $student->user->name ?? 'N/A',
-                'module' => $exam->module->name ?? 'N/A',
-                'room' => $exam->room->name ?? 'N/A',
-                'date' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
-                'status' => $seating->is_present ? 'present' : 'absent'
-            ]
+            'data'    => [
+                'student_name' => $seating->student->user->name ?? 'N/A',
+                'module'       => $seating->exam->module->name ?? 'N/A',
+                'room'         => $seating->exam->room->name ?? 'N/A',
+                'date'         => $seating->exam->exam_date?->format('Y-m-d') ?? 'N/A',
+                'status'       => $seating->is_present ? 'present' : 'absent',
+            ],
         ];
     }
 
     /**
-     * Mark presence by reference (QR token UUID)
+     * Marquer la présence par QR token.
      */
     public function markAsPresent(string $reference): array
     {
-        $seating = DB::table('exam_seatings')
-            ->where('qr_token', $reference)
-            ->first();
+        $seating = ExamSeating::where('qr_token', $reference)->first();
 
         if (!$seating) {
             return ['success' => false, 'message' => 'Convocation introuvable.'];
         }
 
-        DB::table('exam_seatings')
-            ->where('id', $seating->id)
-            ->update([
-                'is_present' => true,
-                'updated_at' => now(),
-            ]);
+        $seating->update(['is_present' => true]);
 
-        return [
-            'success' => true,
-            'message' => 'Présence enregistrée.'
-        ];
+        return ['success' => true, 'message' => 'Présence enregistrée.'];
     }
 
     /**
-     * Generate QR seatings for an exam
-     */
-    public function generateConvocations(int $examId): array
-    {
-        $exam = Exam::findOrFail($examId);
-        
-        $seatings = DB::table('exam_seatings')
-            ->where('exam_id', $exam->id)
-            ->get();
-
-        $generatedCount = 0;
-        foreach ($seatings as $seating) {
-            if (empty($seating->qr_token)) {
-                DB::table('exam_seatings')
-                    ->where('id', $seating->id)
-                    ->update(['qr_token' => Str::uuid()->toString()]);
-            }
-            $generatedCount++;
-        }
-
-        return [
-            'success' => true,
-            'message' => 'Convocations générées (QR assignés)',
-            'generated_count' => $generatedCount
-        ];
-    }
-
-    public function sendEmails(int $examId): array
-    {
-        $exam = Exam::with(['module', 'room'])->findOrFail($examId);
-        $seatings = DB::table('exam_seatings')->where('exam_id', $examId)->get()->keyBy('student_id');
-
-        $students = \App\Models\Student::with('user')
-            ->whereIn('id', $seatings->keys())
-            ->get();
-
-        $sentCount = 0;
-        foreach ($students as $student) {
-            if (!$student->user || !$student->user->email) continue;
-
-            $seating = $seatings->get($student->id);
-            if (!$seating || !$seating->qr_token) continue;
-
-            $examData = [
-                'studentName' => $student->user->name,
-                'moduleName' => $exam->module->name ?? 'N/A',
-                'examDate' => $exam->exam_date ? $exam->exam_date->format('Y-m-d') : 'N/A',
-                'examTime' => $exam->start_time ?? 'N/A',
-                'roomName' => $exam->room->name ?? 'N/A',
-                'qrToken' => $seating->qr_token,
-            ];
-
-            if (class_exists(Pdf::class) && class_exists(ConvocationEmail::class)) {
-                try {
-                    $pdf = Pdf::loadView('emails.convocation', $examData);
-                    Mail::to($student->user->email)->send(
-                        new ConvocationEmail($examData, $pdf->output())
-                    );
-                    // Mark as sent
-                    DB::table('exam_seatings')
-                        ->where('id', $seating->id)
-                        ->update(['sent_at' => now()]);
-                    $sentCount++;
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Error sending convocation email to student ID ' . $student->id . ': ' . $e->getMessage(), ['exception' => $e]);
-                }
-            }
-        }
-
-        return [
-            'success' => true,
-            'message' => "{$sentCount} emails envoyés avec succès aux étudiants."
-        ];
-    }
-
-    /**
-     * Scan QR and mark presence
+     * Scanner un QR code et marquer la présence.
      */
     public function scanQr(int $examId, string $qrToken): array
     {
-        $seating = DB::table('exam_seatings')
-            ->where('exam_id', $examId)
-            ->where('qr_token', $qrToken)
-            ->first();
+        $seating = ExamSeating::where('exam_id', $examId)->where('qr_token', $qrToken)->first();
 
         if (!$seating) {
-            return ['success' => false, 'message' => 'QR Code invalide ou introuvable.'];
+            return ['success' => false, 'message' => 'QR Code invalide.'];
         }
 
-        DB::table('exam_seatings')
-            ->where('id', $seating->id)
-            ->update([
-                'is_present' => true,
-                'updated_at' => now(),
-            ]);
+        $seating->update(['is_present' => true]);
 
         $student = Student::with('user')->find($seating->student_id);
 
         return [
-            'success' => true,
-            'student_name' => $student->user->name ?? 'Étudiant inconnu',
-            'status' => 'present',
-            'time' => now()->toTimeString(),
-            'message' => 'Présence validée.'
+            'success'      => true,
+            'student_name' => $student->user->name ?? 'Inconnu',
+            'status'       => 'present',
+            'time'         => now()->toTimeString(),
+            'message'      => 'Présence validée.',
         ];
     }
 
     /**
-     * Get live stats for an exam
+     * Statistiques en direct pour un examen.
      */
     public function getLiveStats(int $examId): array
     {
-        $exam = Exam::with(['module.filiere', 'group'])->find($examId);
-        $total = DB::table('exam_seatings')->where('exam_id', $examId)->count();
-        $present = DB::table('exam_seatings')->where('exam_id', $examId)->where('is_present', true)->count();
-        
-        $latestScans = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
+        $exam   = Exam::with(['module.filiere', 'group'])->find($examId);
+        $total  = ExamSeating::where('exam_id', $examId)->count();
+        $present = ExamSeating::where('exam_id', $examId)->where('is_present', true)->count();
+
+        $latestScans = ExamSeating::with('student.user')
             ->where('exam_id', $examId)
             ->where('is_present', true)
-            ->select('users.name as student_name', 'exam_seatings.updated_at as scan_time')
-            ->orderBy('exam_seatings.updated_at', 'desc')
+            ->latest('updated_at')
             ->limit(50)
-            ->get();
+            ->get()
+            ->map(fn($s) => [
+                'student_name' => $s->student->user->name ?? 'N/A',
+                'scan_time'    => $s->updated_at,
+            ]);
 
         return [
             'success' => true,
-            'data' => [
-                'exam' => $exam ? [
-                    'module_name' => $exam->module->name ?? 'N/A',
+            'data'    => [
+                'exam'           => $exam ? [
+                    'module_name'  => $exam->module->name ?? 'N/A',
                     'filiere_name' => $exam->module->filiere->name ?? 'N/A',
-                    'group_name' => $exam->group->name ?? 'N/A',
+                    'group_name'   => $exam->group->name ?? 'N/A',
                 ] : null,
                 'total_students' => $total,
-                'present' => $present,
-                'absent' => $total - $present,
-                'latest_scans' => $latestScans
-            ]
+                'present'        => $present,
+                'absent'         => $total - $present,
+                'latest_scans'   => $latestScans,
+            ],
         ];
     }
 
     /**
-     * Get global live stats for an entire session
+     * Stats globales pour une session.
      */
     public function getGlobalLiveStats(int $sessionId): array
     {
-        $session = ExamSession::with(['exams.module.filiere', 'exams.group'])->find($sessionId);
-        if (!$session) {
-            return ['success' => false, 'message' => 'Session not found'];
-        }
+        $session = ExamSession::with('exams')->find($sessionId);
+        if (!$session) return ['success' => false, 'message' => 'Session introuvable.'];
 
         $examIds = $session->exams->pluck('id');
 
-        // Students Stats
-        $totalStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->count();
-        $presentStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->count();
+        $totalStudents  = ExamSeating::whereIn('exam_id', $examIds)->count();
+        $presentStudents = ExamSeating::whereIn('exam_id', $examIds)->where('is_present', true)->count();
 
-        // Professors Stats (Surveillants)
-        $totalSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->count();
-        $presentSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->where('has_attended', true)->count();
-        $confirmedSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->whereNotNull('confirmed_at')->count();
-
-        // Latest Scans (Students)
-        $latestStudentScans = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->whereIn('exam_seatings.exam_id', $examIds)
-            ->where('exam_seatings.is_present', true)
-            ->select('users.name as student_name', 'exam_seatings.updated_at as scan_time')
-            ->orderBy('exam_seatings.updated_at', 'desc')
-            ->limit(10)
-            ->get();
-
-        // Latest Confirmations (Professors)
-        $latestProfConfirmations = DB::table('exam_surveillances')
-            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-            ->whereIn('exam_surveillances.exam_id', $examIds)
-            ->whereNotNull('exam_surveillances.confirmed_at')
-            ->select('users.name as professor_name', 'exam_surveillances.confirmed_at as confirm_time')
-            ->orderBy('exam_surveillances.confirmed_at', 'desc')
-            ->limit(10)
-            ->get();
+        $totalSurveillants   = ExamSurveillance::whereIn('exam_id', $examIds)->count();
+        $confirmedSurveillants = ExamSurveillance::whereIn('exam_id', $examIds)->whereNotNull('confirmed_at')->count();
 
         return [
             'success' => true,
-            'data' => [
+            'data'    => [
                 'session_name' => $session->name,
-                'students' => [
-                    'total' => $totalStudents,
-                    'present' => $presentStudents,
-                    'absent' => $totalStudents - $presentStudents,
-                    'latest_scans' => $latestStudentScans
-                ],
-                'professors' => [
-                    'total' => $totalSurveillants,
-                    'present' => $presentSurveillants,
-                    'confirmed' => $confirmedSurveillants,
-                    'absent' => $totalSurveillants - $presentSurveillants,
-                    'latest_confirmations' => $latestProfConfirmations
-                ]
-            ]
+                'students'     => compact('totalStudents', 'presentStudents') + ['absent' => $totalStudents - $presentStudents],
+                'professors'   => compact('totalSurveillants', 'confirmedSurveillants'),
+            ],
         ];
     }
 
     /**
-     * Notify absents
-     */
-    public function notifyAbsents(int $examId): array
-    {
-        return [
-            'success' => true,
-            'message' => 'Procédure ABI lancée. Les étudiants ont 48h pour justifier leur absence.'
-        ];
-    }
-
-    /**
-     * Upload medical certificate
-     */
-    public function uploadJustification(int $examId, $certificateFile): array
-    {
-        return [
-            'success' => true,
-            'message' => 'Certificat médical reçu. Votre statut est passé en ABJ (En attente de validation).'
-        ];
-    }
-
-    /**
-     * Fetch exam details (seatings & surveillances)
+     * Détails d'un examen.
      */
     public function getExamDetails(int $examId): array
     {
         $exam = Exam::with(['module.filiere', 'group', 'room'])->find($examId);
 
-        $seatings = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('rooms', 'exam_seatings.room_id', '=', 'rooms.id')
+        $seatings = ExamSeating::with(['student.user', 'room'])
             ->where('exam_id', $examId)
-            ->select('exam_seatings.*', 'users.name as student_name', 'students.cne', 'rooms.name as room_name')
-            ->orderBy('exam_seatings.seat_number')
+            ->orderBy('seat_number')
             ->get();
 
-        $surveillances = DB::table('exam_surveillances')
-            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-            ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
+        $surveillances = ExamSurveillance::with(['professor', 'room'])
             ->where('exam_id', $examId)
-            ->select('exam_surveillances.*', 'users.name', 'rooms.name as room_name')
             ->get();
 
         return [
             'success' => true,
-            'data' => [
-                'exam' => $exam,
-                'seatings' => $seatings,
-                'surveillances' => $surveillances
-            ]
+            'data'    => compact('exam', 'seatings', 'surveillances'),
         ];
     }
 
     /**
-     * Get aggregate stats for a session's convocations (Dashboard)
+     * Stats de convocations pour une session.
      */
     public function getSessionConvocationStats(int $sessionId): array
     {
-        $session = ExamSession::with('exams')->findOrFail($sessionId);
-        $examIds = $session->exams->pluck('id');
-
-        if ($examIds->isEmpty()) {
-            return [
-                'success' => true,
-                'data' => [
-                    'students' => ['total' => 0, 'generated' => 0, 'sent' => 0, 'downloaded' => 0],
-                    'surveillants' => ['total' => 0, 'generated' => 0, 'sent' => 0, 'confirmed' => 0]
-                ]
-            ];
-        }
-
-        // Students metrics
-        $totalSeatings = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->count();
-        $generated = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('qr_token')->distinct('student_id')->count('student_id');
-        $sent = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->whereNotNull('sent_at')->distinct('student_id')->count('student_id');
-        $present = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->where('is_present', true)->distinct('student_id')->count('student_id');
-        $totalDistinctStudents = DB::table('exam_seatings')->whereIn('exam_id', $examIds)->distinct('student_id')->count('student_id');
-
-        // Surveillants metrics
-        $totalSurveillants = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->distinct('professor_id')->count('professor_id');
-        $surveillancesGenerated = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->count();
-        $surveillancesAttended = DB::table('exam_surveillances')->whereIn('exam_id', $examIds)->where('has_attended', true)->count();
-
-        return [
-            'success' => true,
-            'data' => [
-                'students' => [
-                    'total' => $totalDistinctStudents, // Unique students
-                    'total_seatings' => $totalSeatings, // Total exams taken
-                    'generated' => $generated,
-                    'sent' => $sent,
-                    'downloaded' => $present, // Using present as proxy for now
-                ],
-                'surveillants' => [
-                    'total' => $totalSurveillants,
-                    'generated' => $surveillancesGenerated,
-                    'sent' => 0, // Not tracked in db schema yet
-                    'confirmed' => $surveillancesAttended // Using attended as confirmed
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Get detailed list of convocations for a session
-     */
-    public function getSessionConvocationsList(int $sessionId, array $filters = []): array
-    {
-        $session = ExamSession::with('exams')->findOrFail($sessionId);
-        $examIds = $session->exams->pluck('id');
+        $examIds = Exam::where('exam_session_id', $sessionId)->pluck('id');
 
         if ($examIds->isEmpty()) {
             return ['success' => true, 'data' => ['students' => [], 'surveillants' => []]];
         }
 
-        $studentQuery = DB::table('exam_seatings')
-            ->join('students', 'exam_seatings.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->join('exams', 'exam_seatings.exam_id', '=', 'exams.id')
-            ->join('modules', 'exams.module_id', '=', 'modules.id')
-            ->join('filieres', 'modules.filiere_id', '=', 'filieres.id')
-            ->leftJoin('groups', 'exams.group_id', '=', 'groups.id')
-            ->leftJoin('rooms as seating_rooms', 'exam_seatings.room_id', '=', 'seating_rooms.id')
-            ->leftJoin('rooms as exam_rooms', 'exams.room_id', '=', 'exam_rooms.id')
-            ->whereIn('exam_seatings.exam_id', $examIds)
-            ->select(
-                'exam_seatings.id',
-                'exam_seatings.student_id',
-                'users.name as student_name',
-                'students.cne',
-                'filieres.code as filiere',
-                'groups.name as group_name',
-                'modules.name as exam_name',
-                'exams.exam_date',
-                'exams.start_time',
-                DB::raw('COALESCE(seating_rooms.name, exam_rooms.name) as room_name'),
-                'exam_seatings.seat_number',
-                'exam_seatings.qr_token',
-                'exam_seatings.sent_at',
-                'exam_seatings.is_present'
-            );
-
-        if (!empty($filters['filiere'])) {
-            $studentQuery->where('filieres.code', $filters['filiere']);
-        }
-
-        $studentsList = $studentQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();
-
-        $surveillantQuery = DB::table('exam_surveillances')
-            ->join('users', 'exam_surveillances.professor_id', '=', 'users.id')
-            ->join('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
-            ->join('modules', 'exams.module_id', '=', 'modules.id')
-            ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
-            ->whereIn('exam_surveillances.exam_id', $examIds)
-            ->select(
-                'exam_surveillances.id',
-                'users.name as professor_name',
-                'modules.name as exam_name',
-                'rooms.name as room_name',
-                'exams.exam_date',
-                'exams.start_time',
-                'exam_surveillances.role',
-                'exam_surveillances.has_attended',
-                'exam_surveillances.sent_at',
-                'exam_surveillances.qr_token',
-                'exam_surveillances.confirmed_at'
-            );
-
-        $surveillantsList = $surveillantQuery->orderBy('exams.exam_date')->orderBy('users.name')->get();
+        $totalSeatings   = ExamSeating::whereIn('exam_id', $examIds)->count();
+        $generated       = ExamSeating::whereIn('exam_id', $examIds)->whereNotNull('qr_token')->distinct('student_id')->count('student_id');
+        $sent            = ExamSeating::whereIn('exam_id', $examIds)->whereNotNull('sent_at')->distinct('student_id')->count('student_id');
+        $totalStudents   = ExamSeating::whereIn('exam_id', $examIds)->distinct('student_id')->count('student_id');
+        $totalSurveillants = ExamSurveillance::whereIn('exam_id', $examIds)->distinct('professor_id')->count('professor_id');
+        $confirmed       = ExamSurveillance::whereIn('exam_id', $examIds)->whereNotNull('confirmed_at')->count();
 
         return [
             'success' => true,
-            'data' => [
-                'students' => $studentsList,
-                'surveillants' => $surveillantsList
-            ]
+            'data'    => [
+                'students'     => compact('totalStudents', 'totalSeatings', 'generated', 'sent'),
+                'surveillants' => compact('totalSurveillants', 'confirmed'),
+            ],
         ];
+    }
+
+    /**
+     * Lister les convocations d'une session.
+     */
+    public function getSessionConvocationsList(int $sessionId, array $filters = []): array
+    {
+        $examIds = Exam::where('exam_session_id', $sessionId)->pluck('id');
+        if ($examIds->isEmpty()) return ['success' => true, 'data' => ['students' => [], 'surveillants' => []]];
+
+        $studentsQuery = ExamSeating::with(['student.user', 'exam.module.filiere', 'room'])
+            ->whereIn('exam_id', $examIds);
+
+        if (!empty($filters['filiere'])) {
+            $studentsQuery->whereHas('exam.module.filiere', fn($q) => $q->where('code', $filters['filiere']));
+        }
+
+        $studentsList = $studentsQuery->orderBy('exam_id')->get()->map(fn($s) => [
+            'id'            => $s->id,
+            'student_name'  => $s->student->user->name ?? 'N/A',
+            'cne'           => $s->student->cne ?? 'N/A',
+            'filiere'       => $s->exam->module->filiere->code ?? 'N/A',
+            'exam_name'     => $s->exam->module->name ?? 'N/A',
+            'exam_date'     => $s->exam->exam_date,
+            'start_time'    => $s->exam->start_time,
+            'room_name'     => $s->room->name ?? 'N/A',
+            'seat_number'   => $s->seat_number,
+            'qr_token'      => $s->qr_token,
+            'sent_at'       => $s->sent_at,
+            'is_present'    => $s->is_present,
+        ]);
+
+        $surveillantsList = ExamSurveillance::with(['professor', 'exam.module', 'room'])
+            ->whereIn('exam_id', $examIds)
+            ->orderBy('exam_id')
+            ->get()
+            ->map(fn($s) => [
+                'id'              => $s->id,
+                'professor_name'  => $s->professor->name ?? 'N/A',
+                'exam_name'       => $s->exam->module->name ?? 'N/A',
+                'room_name'       => $s->room->name ?? 'N/A',
+                'exam_date'       => $s->exam->exam_date,
+                'start_time'      => $s->exam->start_time,
+                'role'            => $s->role,
+                'has_attended'    => $s->has_attended,
+                'sent_at'         => $s->sent_at,
+                'qr_token'        => $s->qr_token,
+                'confirmed_at'    => $s->confirmed_at,
+            ]);
+
+        return ['success' => true, 'data' => compact('studentsList', 'surveillantsList')];
+    }
+
+    // ─── Helpers ───────────────────────────────────────────────
+
+    private function generateQrBase64(string $data): string
+    {
+        try {
+            return base64_encode(QrCode::format('png')->size(140)->margin(1)->generate($data));
+        } catch (\Throwable $e) {
+            try {
+                return base64_encode(QrCode::format('svg')->size(140)->margin(1)->generate($data));
+            } catch (\Throwable $e2) {
+                return '';
+            }
+        }
     }
 }

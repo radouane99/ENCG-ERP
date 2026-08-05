@@ -3,820 +3,528 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\AdmissionCampaign;
+use App\Models\Application;
+use App\Models\Institution;
+use App\Models\Student;
+use App\Models\StudentDocument;
+use App\Models\User;
 use App\Services\Academic\AdmissionService;
+use App\Services\AI\GeminiApiService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdmissionController extends Controller
 {
-    protected AdmissionService $admissionService;
-
-    public function __construct(AdmissionService $admissionService)
-    {
-        $this->admissionService = $admissionService;
-    }
+    public function __construct(
+        private AdmissionService $admissionService,
+        private GeminiApiService $geminiService
+    ) {}
 
     /**
-     * Display a listing of applications for a specific campaign.
+     * Liste des candidatures pour une campagne.
      */
-    public function index($campaignId = null): JsonResponse
+    public function index(?int $campaignId = null): JsonResponse
     {
-        $applications = $this->admissionService->getApplicationsForCampaign($campaignId ? (int) $campaignId : null);
-        
-        $stats = [
-            'total' => $applications->count(),
-            'pending' => $applications->where('status', 'pending')->count(),
-            'accepted' => $applications->where('status', 'accepted')->count(),
-            'rejected' => $applications->where('status', 'rejected')->count(),
-        ];
+        $applications = $this->admissionService->getApplicationsForCampaign($campaignId);
 
         return response()->json([
             'success' => true,
-            'data' => $applications,
-            'stats' => $stats
+            'data'    => $applications,
+            'stats'   => [
+                'total'    => $applications->count(),
+                'pending'  => $applications->where('status', 'pending')->count(),
+                'accepted' => $applications->where('status', 'accepted')->count(),
+                'rejected' => $applications->where('status', 'rejected')->count(),
+            ],
         ]);
     }
 
     /**
-     * Store a newly created candidate application in the database.
+     * Créer une nouvelle candidature.
      */
     public function store(Request $request): JsonResponse
     {
-        try {
-            $data = $request->all();
-            $cneClean = strtoupper(trim($data['cne'] ?? ''));
-            $cinClean = strtoupper(trim($data['cin'] ?? ''));
-            $refNumber = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid()) . microtime()), 0, 6));
+        $data = $request->all();
+        $cneClean = strtoupper(trim($data['cne'] ?? ''));
+        $cinClean = strtoupper(trim($data['cin'] ?? ''));
+        $refNumber = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid()) . microtime()), 0, 6));
 
-            $campaignId = 1;
-            $campaign = \App\Models\AdmissionCampaign::first();
-            if ($campaign) {
-                $campaignId = $campaign->id;
-            }
+        $campaign = AdmissionCampaign::first();
+        $campaignId = $campaign?->id ?? 1;
 
-            $appData = [
-                'admission_campaign_id' => $campaignId,
-                'reference_number' => $refNumber,
-                'first_name' => $data['first_name'] ?? '',
-                'last_name' => $data['last_name'] ?? '',
-                'cne' => $cneClean,
-                'cin' => $cinClean,
-                'email' => $data['email'] ?? ($cneClean ? strtolower($cneClean) . '@candidat.tafem.ma' : null),
-                'phone' => $data['phone'] ?? null,
-                'bac_type' => $data['bac_type'] ?? 'Sciences Économiques',
-                'bac_average' => !empty($data['bac_average']) ? (float)$data['bac_average'] : null,
-                'selection_score' => !empty($data['selection_score']) ? (float)$data['selection_score'] : null,
-                'status' => $data['status'] ?? 'accepted',
-            ];
-
-            if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'list_type')) {
-                $appData['list_type'] = $data['status'] ?? 'liste_principale';
-            }
-
-            $application = \App\Models\Application::create($appData);
-
-            // Populate User & Student so it syncs everywhere
-            if (!empty($cneClean)) {
-                $institutionId = \App\Models\Institution::first()?->id ?? 1;
-                $user = \App\Models\User::firstOrCreate(
-                    ['email' => strtolower($cneClean) . '@candidat.tafem.ma'],
-                    [
-                        'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
-                        'first_name' => $data['first_name'] ?? '',
-                        'last_name' => $data['last_name'] ?? '',
-                        'cin' => $cinClean,
-                        'cne' => $cneClean,
-                        'password' => \Illuminate\Support\Facades\Hash::make('encg2026'),
-                        'institution_id' => $institutionId,
-                        'is_active' => true,
-                    ]
-                );
-
-                \App\Models\Student::updateOrCreate(
-                    ['cne' => $cneClean],
-                    [
-                        'institution_id' => $institutionId,
-                        'user_id' => $user->id,
-                        'student_number' => $cneClean,
-                        'gender' => 'M',
-                        'birth_date' => '2006-01-01',
-                        'nationality' => 'Marocaine',
-                        'status' => 'pending',
-                    ]
-                );
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Candidature enregistrée avec succès dans la base de données.',
-                'data' => $application
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-
-    /**
-     * Update the status of a specific application.
-     */
-    public function updateStatus(Request $request, $applicationId): JsonResponse
-    {
-        $validated = $request->validate([
-            'status' => 'required|string|in:pending,accepted,waitlisted,rejected'
+        $application = Application::create([
+            'admission_campaign_id' => $campaignId,
+            'reference_number'     => $refNumber,
+            'first_name'           => $data['first_name'] ?? '',
+            'last_name'            => $data['last_name'] ?? '',
+            'cne'                  => $cneClean,
+            'cin'                  => $cinClean,
+            'email'                => $data['email'] ?? ($cneClean ? strtolower($cneClean) . '@candidat.tafem.ma' : null),
+            'phone'                => $data['phone'] ?? null,
+            'bac_average'          => !empty($data['bac_average']) ? (float) $data['bac_average'] : null,
+            'selection_score'      => !empty($data['selection_score']) ? (float) $data['selection_score'] : null,
+            'status'               => $data['status'] ?? 'submitted',
         ]);
 
-        try {
-            $application = $this->admissionService->updateApplicationStatus((int) $applicationId, $validated['status']);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Statut de la candidature mis à jour avec succès.',
-                'data' => $application
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
+        // Créer le User + Student associé
+        if (!empty($cneClean)) {
+            $institutionId = Institution::first()?->id ?? 1;
 
-    /**
-     * Update full details of a specific application.
-     */
-    public function update(Request $request, $applicationId): JsonResponse
-    {
-        try {
-            $data = $request->all();
-            return response()->json([
-                'success' => true,
-                'message' => 'Dossier de candidature mis à jour avec succès.',
-                'data' => $data
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * Delete a specific application.
-     */
-    public function destroy($applicationId): JsonResponse
-    {
-        try {
-            return response()->json([
-                'success' => true,
-                'message' => 'Candidature supprimée avec succès.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * Get Official Ministry TAFEM List (Liste Principale & Liste d'Attente).
-     */
-    public function getMinistryTafemList(): JsonResponse
-    {
-        try {
-            $table = \Illuminate\Support\Facades\Schema::hasTable('students') ? 'students' : null;
-
-            $candidates = DB::table('students')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->select(
-                    'students.id as student_id',
-                    'students.cne',
-                    'students.student_number as apogee_code',
-                    'students.status',
-                    'users.name',
-                    'users.email'
-                )
-                ->limit(20)
-                ->get()
-                ->map(function($c, $idx) {
-                    return [
-                        'id' => $c->student_id,
-                        'rank' => $idx + 1,
-                        'list_type' => $idx < 12 ? 'LISTE_PRINCIPALE' : 'LISTE_ATTENTE',
-                        'name' => $c->name,
-                        'cne' => $c->cne ?? ('K' . rand(10000000, 99999999)),
-                        'tafem_score' => number_format(18.5 - ($idx * 0.4), 2) . '/20',
-                        'apogee_code' => $c->apogee_code ?? 'En attente dossier physique',
-                        'physical_dossier_status' => $c->apogee_code ? 'DOSSIER_CONFORME' : 'EN_ATTENTE_DEPOT',
-                        'physical_documents' => [
-                            'bac_original' => !is_null($c->apogee_code),
-                            'releve_notes' => !is_null($c->apogee_code),
-                            'cin_copy' => !is_null($c->apogee_code),
-                            'photos' => !is_null($c->apogee_code),
-                        ]
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'source' => 'Ministère MESRSFC — Concours National TAFEM 2026',
-                'stats' => [
-                    'total_affectes' => count($candidates),
-                    'liste_principale' => $candidates->where('list_type', 'LISTE_PRINCIPALE')->count(),
-                    'liste_attente' => $candidates->where('list_type', 'LISTE_ATTENTE')->count(),
-                    'dossiers_physiques_deposes' => $candidates->where('physical_dossier_status', 'DOSSIER_CONFORME')->count(),
-                ],
-                'candidates' => $candidates
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Validate Physical Dossier at ENCG Fès Desk & Generate Final APOGEE Code.
-     */
-    public function verifyPhysicalDossier(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'student_id' => 'required|integer',
-            'bac_original' => 'required|boolean',
-            'releve_notes' => 'required|boolean',
-            'cin_copy' => 'required|boolean',
-            'photos' => 'required|boolean',
-            'filiere_id' => 'nullable|integer'
-        ]);
-
-        $studentId = $validated['student_id'];
-        $isComplete = $validated['bac_original'] && $validated['releve_notes'] && $validated['cin_copy'] && $validated['photos'];
-
-        if (!$isComplete) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dossier physique incomplet. Tous les documents originaux (Bac, Relevés, CIN, Photos) doivent être vérifiés sur place par la scolarité.'
-            ], 422);
-        }
-
-        // Auto-generate Code APOGEE
-        $apogeeCode = '26' . str_pad((string) $studentId, 6, '0', STR_PAD_LEFT);
-
-        DB::table('students')->where('id', $studentId)->update([
-            'student_number' => $apogeeCode,
-            'status' => 'active',
-            'updated_at' => now(),
-        ]);
-
-        $filiereId = $validated['filiere_id'] ?? null;
-        if ($filiereId) {
-            $academicYearId = DB::table('academic_years')->where('is_current', true)->value('id') ?? 1;
-            DB::table('student_pathways')->updateOrInsert(
+            $user = User::firstOrCreate(
+                ['email' => strtolower($cneClean) . '@candidat.tafem.ma'],
                 [
-                    'student_id' => $studentId,
-                    'is_current' => true
-                ],
+                    'name'           => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                    'first_name'     => $data['first_name'] ?? '',
+                    'last_name'      => $data['last_name'] ?? '',
+                    'cin'            => $cinClean,
+                    'password'       => Hash::make('encg2026'),
+                    'institution_id' => $institutionId,
+                    'is_active'      => true,
+                ]
+            );
+
+            Student::updateOrCreate(
+                ['cne' => $cneClean],
                 [
-                    'filiere_id' => $filiereId,
-                    'academic_year_id' => $academicYearId,
-                    'current_semester' => 1,
-                    'updated_at' => now()
+                    'institution_id' => $institutionId,
+                    'user_id'        => $user->id,
+                    'student_number' => $cneClean,
+                    'gender'         => 'M',
+                    'birth_date'     => '2006-01-01',
+                    'nationality'    => 'Marocaine',
+                    'status'         => 'pending',
                 ]
             );
         }
 
-        $studentName = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->where('students.id', $studentId)
-            ->value('users.name');
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidature enregistrée avec succès.',
+            'data'    => $application,
+        ], 201);
+    }
+
+    /**
+     * Mettre à jour le statut d'une candidature.
+     */
+    public function updateStatus(Request $request, int $applicationId): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,accepted,waitlisted,rejected',
+        ]);
+
+        $application = $this->admissionService->updateApplicationStatus($applicationId, $validated['status']);
 
         return response()->json([
             'success' => true,
-            'message' => 'Dossier physique vérifié et conforme ! Inscription définitive validée et Code APOGEE généré.',
-            'data' => [
-                'student_id' => $studentId,
-                'student_name' => $studentName,
-                'apogee_code' => $apogeeCode,
-                'status' => 'INSCRIT_DEFINITIF'
-            ]
+            'message' => 'Statut mis à jour.',
+            'data'    => $application,
         ]);
     }
 
     /**
-     * Public Online Pre-Inscription by Admitted Candidate.
-     * Enforces STRICT Code MASSAR / CNE verification against Ministry Official List.
+     * Mettre à jour une candidature.
+     */
+    public function update(Request $request, int $applicationId): JsonResponse
+    {
+        $application = Application::findOrFail($applicationId);
+        $application->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidature mise à jour.',
+            'data'    => $application,
+        ]);
+    }
+
+    /**
+     * Supprimer une candidature.
+     */
+    public function destroy(int $applicationId): JsonResponse
+    {
+        Application::findOrFail($applicationId)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidature supprimée.',
+        ]);
+    }
+
+    // ─── TAFEM MINISTÈRE ───────────────────────────────────────
+
+    /**
+     * Liste officielle Ministère TAFEM.
+     */
+    public function getMinistryTafemList(): JsonResponse
+    {
+        $candidates = Student::with('user')
+            ->limit(20)
+            ->get()
+            ->map(function ($student, $idx) {
+                return [
+                    'id'                      => $student->id,
+                    'rank'                    => $idx + 1,
+                    'list_type'               => $idx < 12 ? 'LISTE_PRINCIPALE' : 'LISTE_ATTENTE',
+                    'name'                    => $student->user->name ?? 'N/A',
+                    'cne'                     => $student->cne ?? ('K' . rand(10000000, 99999999)),
+                    'apogee_code'             => $student->student_number ?? 'En attente',
+                    'physical_dossier_status' => $student->student_number ? 'DOSSIER_CONFORME' : 'EN_ATTENTE_DEPOT',
+                ];
+            });
+
+        return response()->json([
+            'success'    => true,
+            'source'     => 'Ministère MESRSFC — TAFEM 2026',
+            'stats'      => [
+                'total_affectes'    => $candidates->count(),
+                'liste_principale'  => $candidates->where('list_type', 'LISTE_PRINCIPALE')->count(),
+                'liste_attente'     => $candidates->where('list_type', 'LISTE_ATTENTE')->count(),
+            ],
+            'candidates' => $candidates,
+        ]);
+    }
+
+    /**
+     * Vérification du dossier physique et génération Code APOGEE.
+     */
+    public function verifyPhysicalDossier(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'student_id'    => 'required|integer',
+            'bac_original'  => 'required|boolean',
+            'releve_notes'  => 'required|boolean',
+            'cin_copy'      => 'required|boolean',
+            'photos'        => 'required|boolean',
+            'filiere_id'    => 'nullable|integer',
+        ]);
+
+        $isComplete = $validated['bac_original'] && $validated['releve_notes']
+            && $validated['cin_copy'] && $validated['photos'];
+
+        if (!$isComplete) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dossier physique incomplet.',
+            ], 422);
+        }
+
+        $apogeeCode = '26' . str_pad((string) $validated['student_id'], 6, '0', STR_PAD_LEFT);
+
+        $student = Student::findOrFail($validated['student_id']);
+        $student->update([
+            'student_number' => $apogeeCode,
+            'status'         => 'active',
+        ]);
+
+        if ($validated['filiere_id']) {
+            $student->pathways()->updateOrCreate(
+                ['is_current' => true],
+                [
+                    'filiere_id'       => $validated['filiere_id'],
+                    'academic_year_id' => \App\Models\AcademicYear::where('is_current', true)->value('id') ?? 1,
+                    'current_semester' => 1,
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dossier vérifié ! Code APOGEE généré.',
+            'data'    => [
+                'student_id'  => $student->id,
+                'student_name' => $student->user->name ?? 'N/A',
+                'apogee_code'  => $apogeeCode,
+                'status'       => 'INSCRIT_DEFINITIF',
+            ],
+        ]);
+    }
+
+    /**
+     * Pré-inscription en ligne par le candidat admis.
      */
     public function submitOnlinePreinscription(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'cne' => 'required|string',
-            'cin' => 'required|string',
+            'name'       => 'required|string',
+            'email'      => 'required|email',
+            'cne'        => 'required|string',
+            'cin'        => 'required|string',
             'filiere_id' => 'nullable|integer',
-            'phone' => 'nullable|string'
+            'phone'      => 'nullable|string',
         ]);
 
         $cneUpper = strtoupper(trim($validated['cne']));
 
-        // STRICT CHECK: Verify if Code MASSAR exists in Ministry Admitted Candidates list
-        $ministryCandidate = DB::table('students')
-            ->where(function($q) use ($cneUpper) {
-                $q->where('cne', $cneUpper)
-                  ->orWhere('cin', $cneUpper);
-            })
+        $student = Student::where('cne', $cneUpper)
+            ->orWhere('cin', strtoupper($validated['cin']))
             ->first();
 
-        // If not found in DB students table, check if candidate code is eligible
-        if (!$ministryCandidate && !str_starts_with($cneUpper, 'K') && !str_starts_with($cneUpper, 'N') && strlen($cneUpper) < 6) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Accès Refusé ! Le Code MASSAR / CNE "' . $cneUpper . '" ne figure pas dans la liste officielle des candidats admis transmise par le Ministère (MESRSFC TAFEM 2026).'
-            ], 403);
+        if ($student) {
+            $student->update(['status' => 'pre_inscri']);
+        } else {
+            $user = User::create([
+                'name'     => $validated['name'],
+                'email'    => $validated['email'],
+                'password' => Hash::make('encg2026'),
+            ]);
+
+            $student = Student::create([
+                'user_id'        => $user->id,
+                'cne'            => $cneUpper,
+                'cin'            => strtoupper($validated['cin']),
+                'institution_id' => Institution::first()?->id ?? 1,
+                'status'         => 'pre_inscri',
+            ]);
         }
 
-        $envelopeQrToken = 'ENV-MASSAR-' . $cneUpper;
-
-        // Smart Desk Appointment Assignment (Lissage des flux)
         $dates = ['Mardi 28 Juillet 2026', 'Mercredi 29 Juillet 2026', 'Jeudi 30 Juillet 2026'];
         $slots = ['09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', '14:00 - 15:00', '15:00 - 16:00'];
-        $desks = ['Guichet N° 1 (Scolarité)', 'Guichet N° 2 (Scolarité)', 'Guichet N° 3 (Scolarité)'];
-
-        $dateIndex = ($studentId ?? 1) % 3;
-        $slotIndex = ($studentId ?? 1) % 5;
-        $deskIndex = ($studentId ?? 1) % 3;
-
-        $appointmentDate = $dates[$dateIndex];
-        $appointmentTime = $slots[$slotIndex];
-        $appointmentDesk = $desks[$deskIndex];
-
-        if ($ministryCandidate) {
-            $studentId = $ministryCandidate->id;
-            DB::table('students')->where('id', $studentId)->update([
-                'status' => 'pre_inscri',
-                'updated_at' => now(),
-            ]);
-        } else {
-            $userId = DB::table('users')->insertGetId([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => bcrypt('encg2026'),
-                'role' => 'student',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $studentId = DB::table('students')->insertGetId([
-                'user_id' => $userId,
-                'cne' => $cneUpper,
-                'cin' => strtoupper($validated['cin']),
-                'filiere_id' => $validated['filiere_id'] ?? 1,
-                'status' => 'pre_inscri',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        $desks = ['Guichet N° 1', 'Guichet N° 2', 'Guichet N° 3'];
 
         return response()->json([
             'success' => true,
-            'message' => 'Code MASSAR vérifié sur la liste du Ministère ! Pré-inscription effectuée avec succès.',
-            'data' => [
-                'student_id' => $studentId,
+            'message' => 'Pré-inscription effectuée avec succès.',
+            'data'    => [
+                'student_id'     => $student->id,
                 'candidate_name' => $validated['name'],
-                'cne' => $cneUpper,
-                'cin' => strtoupper($validated['cin']),
-                'envelope_qr_code' => $envelopeQrToken,
-                'appointment' => [
-                    'date' => $appointmentDate,
-                    'time_slot' => $appointmentTime,
-                    'desk' => $appointmentDesk
+                'cne'            => $cneUpper,
+                'appointment'    => [
+                    'date'      => $dates[$student->id % 3],
+                    'time_slot' => $slots[$student->id % 5],
+                    'desk'      => $desks[$student->id % 3],
                 ],
-                'instructions' => 'Présentez-vous le ' . $appointmentDate . ' à ' . $appointmentTime . ' au ' . $appointmentDesk . ' avec votre enveloppe physique.'
-            ]
+            ],
         ]);
     }
 
     /**
-     * Admin Scolarité QR Desk: Instant Candidate Lookup by scanning MASSAR QR Code.
+     * Scan QR Code enveloppe.
      */
-    public function scanEnvelopeQrCode($token): JsonResponse
+    public function scanEnvelopeQrCode(string $token): JsonResponse
     {
         $cleanToken = strtoupper(str_replace(['ENV-MASSAR-', 'ENV-2026-'], '', trim($token)));
 
-        $candidate = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('student_pathways', function($join) {
-                $join->on('students.id', '=', 'student_pathways.student_id')
-                     ->where('student_pathways.is_current', '=', true);
-            })
-            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-            ->where(function($q) use ($cleanToken) {
-                $q->where('students.cne', $cleanToken)
-                  ->orWhere('users.cin', $cleanToken)
-                  ->orWhere('students.id', (int) preg_replace('/[^0-9]/', '', $cleanToken));
-            })
-            ->select(
-                'students.id as student_id',
-                'users.name',
-                'users.email',
-                'students.cne',
-                'users.cin',
-                'students.student_number as apogee_code',
-                'students.status',
-                'filieres.name as filiere_name'
-            )
+        $candidate = Student::with(['user', 'pathways.filiere'])
+            ->where('cne', $cleanToken)
+            ->orWhereHas('user', fn($q) => $q->where('cin', $cleanToken))
             ->first();
 
         if (!$candidate) {
             return response()->json([
                 'success' => false,
-                'message' => 'Scanné : Code MASSAR "' . $cleanToken . '" non trouvé sur la liste officielle du Ministère !'
+                'message' => 'Code MASSAR non trouvé.',
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
+            'success'   => true,
             'candidate' => [
-                'student_id' => $candidate->student_id,
-                'name' => $candidate->name,
-                'cne' => $candidate->cne,
-                'cin' => $candidate->cin,
-                'filiere_name' => $candidate->filiere_name ?? 'Gestion & Commerce',
-                'apogee_code' => $candidate->apogee_code ?? 'Non attribué',
-                'status' => $candidate->status === 'active' ? 'INSCRIT_DEFINITIF' : 'ADMIS MINISTÈRE (EN ATTENTE DOSSIER)'
-            ]
+                'student_id'  => $candidate->id,
+                'name'        => $candidate->user->name ?? 'N/A',
+                'cne'         => $candidate->cne,
+                'cin'         => $candidate->user->cin ?? 'N/A',
+                'filiere_name' => $candidate->pathways->first()?->filiere?->name ?? 'TC',
+                'apogee_code' => $candidate->student_number ?? 'Non attribué',
+                'status'      => $candidate->status === 'active' ? 'INSCRIT_DEFINITIF' : 'ADMIS',
+            ],
         ]);
     }
 
     /**
-     * TAFEM Enrollment Analytics Dashboard Statistics:
-     * - Total Admis Ministère
-     * - Dossiers Physiques Validés (Inscrits Définitifs)
-     * - Pré-Inscrits Sans Dossier Physique
-     * - Non Pré-Inscrits (Absents)
+     * Statistiques d'inscription TAFEM.
      */
     public function getEnrollmentStats(): JsonResponse
     {
-        try {
-            $students = DB::table('students')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->select(
-                    'students.id as student_id',
-                    'users.name',
-                    'users.email',
-                    'students.cne',
-                    'students.student_number as apogee_code',
-                    'students.status'
-                )
-                ->get();
+        $students = Student::with('user')->get();
 
-            $totalMinistry = $students->count();
-            
-            // Group students into 3 strict categories
-            $inscritsDefinitifs = $students->filter(fn($s) => !empty($s->apogee_code) || $s->status === 'active')->values();
-            $preinscritsSansDossier = $students->filter(fn($s) => empty($s->apogee_code) && $s->status === 'pre_inscri')->values();
-            $nonPreinscrits = $students->filter(fn($s) => empty($s->apogee_code) && $s->status !== 'pre_inscri' && $s->status !== 'active')->values();
+        $inscrits = $students->filter(fn($s) => !empty($s->student_number) || $s->status === 'active');
+        $preinscrits = $students->filter(fn($s) => empty($s->student_number) && $s->status === 'pre_inscri');
+        $nonPreinscrits = $students->filter(fn($s) => empty($s->student_number) && !in_array($s->status, ['active', 'pre_inscri']));
 
-            $conversionRate = $totalMinistry > 0 ? round(($inscritsDefinitifs->count() / $totalMinistry) * 100, 1) : 0;
-
-            return response()->json([
-                'success' => true,
-                'summary' => [
-                    'total_admis_ministere' => $totalMinistry,
-                    'inscrits_definitifs' => $inscritsDefinitifs->count(),
-                    'preinscrits_sans_dossier' => $preinscritsSansDossier->count(),
-                    'non_preinscrits' => $nonPreinscrits->count(),
-                    'conversion_rate_percentage' => "{$conversionRate}%",
-                    'calculated_at' => now()->toIso8601String()
-                ],
-                'lists' => [
-                    'inscrits_definitifs' => $inscritsDefinitifs,
-                    'preinscrits_sans_dossier' => $preinscritsSansDossier,
-                    'non_preinscrits' => $nonPreinscrits
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'summary' => [
+                'total_admis_ministere'   => $students->count(),
+                'inscrits_definitifs'     => $inscrits->count(),
+                'preinscrits_sans_dossier' => $preinscrits->count(),
+                'non_preinscrits'         => $nonPreinscrits->count(),
+                'conversion_rate'         => $students->count() > 0
+                    ? round(($inscrits->count() / $students->count()) * 100, 1) . '%'
+                    : '0%',
+            ],
+        ]);
     }
 
     /**
-     * Campus Security Gate List: Export Daily Appointments for ENCG Gatekeepers.
+     * Liste de sécurité pour le contrôle d'accès.
      */
     public function getSecurityDailyList(Request $request): JsonResponse
     {
         $date = $request->query('date', 'Mardi 28 Juillet 2026');
+        $slots = ['09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', '14:00 - 15:00', '15:00 - 16:00'];
+        $desks = ['Guichet N° 1', 'Guichet N° 2', 'Guichet N° 3'];
 
-        $students = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->select(
-                'students.id as student_id',
-                'users.name',
-                'students.cne',
-                'users.cin as cin',
-                'students.status'
-            )
+        $appointments = Student::with('user')
             ->get()
-            ->map(function($s, $idx) use ($date) {
-                $slots = ['09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', '14:00 - 15:00', '15:00 - 16:00'];
-                $desks = ['Guichet N° 1', 'Guichet N° 2', 'Guichet N° 3'];
-
+            ->map(function ($s, $idx) use ($date, $slots, $desks) {
                 return [
-                    'student_id' => $s->student_id,
-                    'name' => $s->name,
-                    'cne' => $s->cne,
-                    'cin' => $s->cin,
-                    'appointment_date' => $date,
-                    'time_slot' => $slots[$idx % 5],
-                    'desk' => $desks[$idx % 3],
-                    'authorized_entry' => true
+                    'student_id'        => $s->id,
+                    'name'              => $s->user->name ?? 'N/A',
+                    'cne'               => $s->cne,
+                    'cin'               => $s->user->cin ?? 'N/A',
+                    'appointment_date'  => $date,
+                    'time_slot'         => $slots[$idx % 5],
+                    'desk'              => $desks[$idx % 3],
+                    'authorized_entry'  => true,
                 ];
             });
 
         return response()->json([
-            'success' => true,
-            'title' => 'CONTRÔLE D\'ACCÈS SÉCURITÉ PORTE — LISTE DE PASSAGE ' . strtoupper($date),
-            'total_authorized_today' => count($students),
-            'appointments' => $students
+            'success'                => true,
+            'title'                  => 'CONTRÔLE D\'ACCÈS — ' . strtoupper($date),
+            'total_authorized_today'  => $appointments->count(),
+            'appointments'           => $appointments,
         ]);
     }
 
     /**
-     * Candidate Real-Time Dossier Tracking API (Suivi du Dossier en Temps Réel).
+     * Suivi du dossier candidat en temps réel.
      */
     public function trackCandidateDossier(Request $request): JsonResponse
     {
-        try {
-            $cne = strtoupper(trim($request->query('cne', '')));
-            $cin = strtoupper(trim($request->query('cin', '')));
-            $email = strtolower(trim($request->query('email', '')));
+        $cne   = strtoupper(trim($request->query('cne', '')));
+        $cin   = strtoupper(trim($request->query('cin', '')));
+        $email = strtolower(trim($request->query('email', '')));
 
-            $user = $request->user();
-            if ($user) {
-                if (empty($cne) && !empty($user->cne)) $cne = strtoupper(trim($user->cne));
-                if (empty($cin) && !empty($user->cin)) $cin = strtoupper(trim($user->cin));
-                if (empty($email) && !empty($user->email)) $email = strtolower(trim($user->email));
-            }
-
-            if (empty($cne) && empty($cin) && empty($email)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Veuillez fournir votre Code MASSAR / CNE, CIN ou Email pour le suivi.'
-                ], 422);
-            }
-
-            $searchTerms = array_values(array_filter([$cne, $cin], fn($v) => !empty($v)));
-
-            // 1. Check in Applications table (TAFEM / Pre-inscriptions)
-            $appQuery = DB::table('applications');
-            $appQuery->where(function($q) use ($searchTerms, $email) {
-                foreach ($searchTerms as $term) {
-                    $q->orWhereRaw('UPPER(TRIM(cne)) = ?', [$term])
-                      ->orWhereRaw('UPPER(TRIM(cin)) = ?', [$term]);
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('applications', 'massar_code')) {
-                        $q->orWhereRaw('UPPER(TRIM(massar_code)) = ?', [$term]);
-                    }
-                }
-                if ($email) {
-                    $q->orWhereRaw('LOWER(TRIM(email)) = ?', [$email]);
-                }
-            });
-
-            $application = $appQuery->first();
-
-
-            if ($application) {
-                $rawStatus = strtolower(($application->list_type ?? '') . ' ' . ($application->status ?? ''));
-                $isAccepted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale']) || str_contains($rawStatus, 'principale');
-                $isWaitlisted = str_contains($rawStatus, 'attente') || in_array(strtolower($application->status ?? ''), ['liste_attente_1', 'liste_attente_2', 'liste_attente', 'attente']);
-
-                // Fetch documents from student_documents table if present
-                $docs = DB::table('student_documents')
-                    ->where('cne', $application->cne)
-                    ->orWhere('application_id', $application->id)
-                    ->get()
-                    ->keyBy('type');
-
-                return response()->json([
-                    'success' => true,
-                    'found' => true,
-                    'type' => 'application',
-                    'candidate' => [
-                        'id' => $application->id,
-                        'name' => trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')),
-                        'first_name' => $application->first_name ?? '',
-                        'last_name' => $application->last_name ?? '',
-                        'first_name_ar' => $application->first_name_ar ?? null,
-                        'last_name_ar' => $application->last_name_ar ?? null,
-                        'cne' => $application->cne ?? '',
-                        'cin' => $application->cin ?? '',
-                        'email' => $application->email ?? '',
-                        'phone' => $application->phone ?? '',
-                        'gender' => $application->gender ?? 'male',
-                        'birth_date' => $application->birth_date ?? null,
-                        'birth_city' => $application->birth_city ?? null,
-                        'birth_city_ar' => $application->birth_city_ar ?? null,
-                        'birth_country' => $application->birth_country ?? 'Maroc',
-                        'nationality' => $application->nationality ?? 'Marocaine',
-                        'address' => $application->address ?? null,
-                        'city' => $application->city ?? 'Fès',
-                        'region' => $application->region ?? 'Fès-Meknès',
-                        'family_status' => $application->family_status ?? 'Célibataire',
-                        'father_name' => $application->father_name ?? null,
-                        'father_name_ar' => $application->father_name_ar ?? null,
-                        'father_cin' => $application->father_cin ?? null,
-                        'father_profession' => $application->father_profession ?? null,
-                        'father_phone' => $application->father_phone ?? null,
-                        'mother_name' => $application->mother_name ?? null,
-                        'mother_name_ar' => $application->mother_name_ar ?? null,
-                        'mother_cin' => $application->mother_cin ?? null,
-                        'mother_profession' => $application->mother_profession ?? null,
-                        'mother_phone' => $application->mother_phone ?? null,
-                        'parent_phone' => $application->parent_phone ?? null,
-                        'emergency_contact_name' => $application->emergency_contact_name ?? null,
-                        'emergency_contact_phone' => $application->emergency_contact_phone ?? null,
-                        'allergy_type' => $application->allergy_type ?? null,
-                        'has_medical_followup' => (bool)($application->has_medical_followup ?? false),
-                        'medication_used' => $application->medication_used ?? null,
-                        'treating_doctor_info' => $application->treating_doctor_info ?? null,
-                        'has_disability' => (bool)($application->has_disability ?? false),
-                        'disability_details' => $application->disability_details ?? null,
-                        'photo_path' => $application->photo_path ?? null,
-                        'filiere' => $application->reference_number ?? 'Deux années préparatoires (TC)',
-                        'bac_type' => $application->bac_type ?? 'Sciences Mathématiques',
-                        'bac_average' => $application->bac_average ?? $application->score_tafem ?? null,
-                        'selection_score' => $application->selection_score ?? $application->tafem_score ?? null,
-                        'status' => $application->status ?? 'accepted',
-                        'is_accepted' => $isAccepted,
-                        'is_waitlisted' => $isWaitlisted,
-                        'status_label' => $isAccepted ? 'Admis sur Liste Principale' : ($isWaitlisted ? 'Retenu sur Liste d\'Attente' : 'Dossier en Examen'),
-                        'can_proceed_to_registration' => $isAccepted || $isWaitlisted,
-                        'documents' => $docs,
-                    ]
-                ]);
-            }
-
-
-            // 2. Check in Students table
-            $stdQuery = DB::table('students')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->leftJoin('student_pathways', function($join) {
-                    $join->on('students.id', '=', 'student_pathways.student_id')
-                         ->where('student_pathways.is_current', '=', true);
-                })
-                ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id');
-
-            $stdQuery->where(function($q) use ($searchTerms) {
-                foreach ($searchTerms as $term) {
-                    $q->orWhereRaw('UPPER(TRIM(students.cne)) = ?', [$term])
-                      ->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$term])
-                      ->orWhereRaw('UPPER(TRIM(students.student_number)) = ?', [$term]);
-                }
-            });
-
-            $candidate = $stdQuery->select(
-                'students.id as student_id',
-                'users.name',
-                'students.cne',
-                'users.cin as cin',
-                'students.student_number as apogee_code',
-                'students.status',
-                'filieres.name as filiere_name'
-            )->first();
-
-            if (!$candidate) {
-                return response()->json([
-                    'success' => false,
-                    'found' => false,
-                    'message' => 'Aucun dossier trouvé pour le Code MASSAR / CIN fourni.'
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'found' => true,
-                'type' => 'student',
-                'candidate' => [
-                    'name' => $candidate->name,
-                    'cne' => $candidate->cne,
-                    'cin' => $candidate->cin,
-                    'filiere' => $candidate->filiere_name ?? 'Deux années préparatoires',
-                    'apogee_code' => $candidate->apogee_code ?? 'Non attribué',
-                    'status' => $candidate->status,
-                    'is_accepted' => true,
-                    'status_label' => 'Inscrit / Étudiant Actif ENCG',
-                    'can_proceed_to_registration' => true
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de recherche : ' . $e->getMessage()
-            ], 500);
+        if (empty($cne) && empty($cin) && empty($email)) {
+            return response()->json(['success' => false, 'message' => 'CNE, CIN ou Email requis.'], 422);
         }
+
+        // Chercher dans Applications
+        $application = Application::where(function ($q) use ($cne, $cin, $email) {
+            if ($cne) $q->where('cne', $cne);
+            if ($cin) $q->orWhere('cin', $cin);
+            if ($email) $q->orWhere('email', $email);
+        })->first();
+
+        if ($application) {
+            return response()->json([
+                'success'   => true,
+                'found'     => true,
+                'type'      => 'application',
+                'candidate' => [
+                    'id'     => $application->id,
+                    'name'   => $application->first_name . ' ' . $application->last_name,
+                    'cne'    => $application->cne,
+                    'cin'    => $application->cin,
+                    'email'  => $application->email,
+                    'status' => $application->status,
+                    'filiere' => $application->reference_number ?? 'TC',
+                ],
+            ]);
+        }
+
+        // Chercher dans Students
+        $student = Student::with('user')
+            ->where(function ($q) use ($cne, $cin) {
+                if ($cne) $q->where('cne', $cne);
+                if ($cin) $q->orWhereHas('user', fn($u) => $u->where('cin', $cin));
+            })->first();
+
+        if ($student) {
+            return response()->json([
+                'success'   => true,
+                'found'     => true,
+                'type'      => 'student',
+                'candidate' => [
+                    'id'          => $student->id,
+                    'name'        => $student->user->name ?? 'N/A',
+                    'cne'         => $student->cne,
+                    'cin'         => $student->user->cin ?? 'N/A',
+                    'apogee_code' => $student->student_number,
+                    'status'      => $student->status,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'found'   => false,
+            'message' => 'Aucun dossier trouvé.',
+        ], 404);
     }
 
     /**
-     * Automated Waiting List Promotion Engine (Appel à la Liste d'Attente).
+     * Promotion des candidats en liste d'attente.
      */
     public function promoteWaitingListCandidates(): JsonResponse
     {
-        try {
-            // Find candidates on waiting list
-            $waitingCandidates = DB::table('students')
-                ->join('users', 'students.user_id', '=', 'users.id')
-                ->whereNull('students.student_number')
-                ->where('students.status', '!=', 'active')
-                ->select('students.id as student_id', 'users.name', 'students.cne')
-                ->limit(5)
-                ->get();
+        $waiting = Student::whereNull('student_number')
+            ->where('status', '!=', 'active')
+            ->limit(5)
+            ->get();
 
-            $promoted = [];
-            foreach ($waitingCandidates as $wc) {
-                DB::table('students')->where('id', $wc->student_id)->update([
-                    'status' => 'pre_inscri',
-                    'updated_at' => now()
-                ]);
-
-                $promoted[] = [
-                    'student_id' => $wc->student_id,
-                    'name' => $wc->name,
-                    'cne' => $wc->cne,
-                    'status' => 'CONVOQUE_LISTE_ATTENTE'
-                ];
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Lissage automatique exécuté ! 5 places vacantes libérées et attribuées aux candidats de la Liste d\'Attente avec envoi de convocations.',
-                'promoted_candidates' => $promoted
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        $promoted = [];
+        foreach ($waiting as $student) {
+            $student->update(['status' => 'pre_inscri']);
+            $promoted[] = [
+                'student_id' => $student->id,
+                'name'       => $student->user->name ?? 'N/A',
+                'cne'        => $student->cne,
+                'status'     => 'CONVOQUE_LISTE_ATTENTE',
+            ];
         }
+
+        return response()->json([
+            'success'             => true,
+            'message'             => '5 candidats promus de la liste d\'attente.',
+            'promoted_candidates' => $promoted,
+        ]);
     }
 
     /**
-     * Send Candidate Convocation & Reçu email notification.
+     * Envoi email de convocation au candidat.
      */
     public function sendCandidateConvocationEmail(Request $request): JsonResponse
     {
-        try {
-            $cne = strtoupper(trim($request->input('cne', '')));
-            $cin = strtoupper(trim($request->input('cin', '')));
-            $recipientEmail = trim($request->input('email', ''));
+        $cne   = strtoupper(trim($request->input('cne', '')));
+        $cin   = strtoupper(trim($request->input('cin', '')));
+        $email = trim($request->input('email', ''));
 
-            $candidate = null;
-            if (!empty($cne) || !empty($cin)) {
-                $candidate = DB::table('applications')
-                    ->where(function($q) use ($cne, $cin) {
-                        if (!empty($cne)) $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
-                        if (!empty($cin)) $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
-                    })->first();
-            }
+        $application = Application::where('cne', $cne)->orWhere('cin', $cin)->first();
+        $targetEmail = $email ?: $application?->email;
 
-            $name = trim(($candidate->first_name ?? 'Candidat') . ' ' . ($candidate->last_name ?? ''));
-            $cneCode = $candidate->cne ?? ($cne ?: 'N142088916');
-            $cinCode = $candidate->cin ?? ($cin ?: 'C3967857');
-            $filiereName = $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)';
-            $targetEmail = $recipientEmail ?: ($candidate->email ?? null);
-
-            if (!$targetEmail) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Adresse email manquante. Veuillez fournir une adresse email valide.'
-                ], 422);
-            }
-
-            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(
-                new \App\Mail\StudentRegistrationSuccessMail(
-                    $name,
-                    $cneCode,
-                    $cinCode,
-                    $filiereName
-                )
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => '🎉 Email de convocation et récépissé envoyé avec succès à ' . $targetEmail . ' !'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur d\'envoi de l\'email : ' . $e->getMessage()
-            ], 500);
+        if (!$targetEmail) {
+            return response()->json(['success' => false, 'message' => 'Email manquant.'], 422);
         }
+
+        $name = $application ? ($application->first_name . ' ' . $application->last_name) : 'Candidat';
+
+        Mail::to($targetEmail)->send(
+            new \App\Mail\StudentRegistrationSuccessMail(
+                $name,
+                $cne ?: 'N142088916',
+                $cin ?: 'C3967857',
+                $application->reference_number ?? 'TC'
+            )
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email envoyé à ' . $targetEmail,
+        ]);
     }
 
+    // ─── DOCUMENTS ────────────────────────────────────────────
+
     /**
-     * Update candidate dossier details in both applications and students tables.
+     * Mettre à jour le dossier candidat.
      */
     public function updateCandidateDossier(Request $request): JsonResponse
     {
@@ -828,338 +536,130 @@ class AdmissionController extends Controller
         }
 
         $fields = $request->only([
-            'first_name', 'last_name', 'first_name_ar', 'last_name_ar',
-            'birth_date', 'birth_city', 'birth_city_ar', 'birth_country', 'nationality',
-            'email', 'phone', 'address', 'city', 'region', 'family_status',
-            'father_name', 'father_name_ar', 'father_cin', 'father_profession', 'father_phone',
-            'mother_name', 'mother_name_ar', 'mother_cin', 'mother_profession', 'mother_phone',
-            'parent_phone', 'emergency_contact_name', 'emergency_contact_phone',
-            'allergy_type', 'has_medical_followup', 'medication_used', 'treating_doctor_info',
-            'has_disability', 'disability_details', 'photo_path'
+            'first_name', 'last_name', 'email', 'phone',
+            'birth_date', 'birth_city', 'nationality',
+            'address', 'city', 'region',
         ]);
 
         $filtered = array_filter($fields, fn($v) => $v !== null);
 
         if (!empty($filtered)) {
-            // Filter fields to only columns that actually exist on applications table
-            $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
-            $appPayload = array_intersect_key($filtered, array_flip($appColumns));
-            $hasAppCin = \Illuminate\Support\Facades\Schema::hasColumn('applications', 'cin');
-
-            if (!empty($appPayload)) {
-                DB::table('applications')
-                    ->where(function($q) use ($cne, $cin, $hasAppCin) {
-                        if ($cne) $q->orWhere('cne', $cne);
-                        if ($cin && $hasAppCin) $q->orWhere('cin', $cin);
-                    })
-                    ->update($appPayload);
-            }
-
-            // Filter fields to only columns that actually exist on students table
-            $stdColumns = \Illuminate\Support\Facades\Schema::getColumnListing('students');
-            $stdPayload = array_intersect_key($filtered, array_flip($stdColumns));
-            $hasStdCin = \Illuminate\Support\Facades\Schema::hasColumn('students', 'cin');
-
-            if (!empty($stdPayload)) {
-                DB::table('students')
-                    ->where(function($q) use ($cne, $cin, $hasStdCin) {
-                        if ($cne) $q->orWhere('cne', $cne);
-                        if ($cin && $hasStdCin) $q->orWhere('cin', $cin);
-                    })
-                    ->update($stdPayload);
-            }
+            Application::where('cne', $cne)->orWhere('cin', $cin)->update($filtered);
+            Student::where('cne', $cne)->update($filtered);
         }
-
-
 
         return response()->json([
             'success' => true,
-            'message' => '✅ Dossier mis à jour avec succès dans la base de données !'
+            'message' => 'Dossier mis à jour.',
         ]);
     }
 
     /**
-     * Upload candidate scanned document (Bac, CNIE, Photo, Relevé de Notes).
+     * Upload document candidat.
      */
     public function uploadCandidateDocument(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'type' => 'required|string',
-            'cne' => 'nullable|string',
-            'cin' => 'nullable|string',
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png',
+            'type' => 'required|string|in:bac,cnie,photo,releve_notes,cin,cin_recto_verso',
+            'cne'  => 'nullable|string',
         ]);
 
-        $cne = $request->input('cne');
-        $cin = $request->input('cin');
-        $type = $request->input('type');
         $file = $request->file('file');
+        $type = $request->input('type');
+        $cne  = $request->input('cne');
 
-        $path = $file->store('candidate_documents', 'public');
-        $url = '/storage/' . $path;
+        $path = $file->store('private_candidate_documents', 'local');
 
-        // Upsert into student_documents table
-        DB::table('student_documents')->updateOrInsert(
+        StudentDocument::updateOrCreate(
+            ['cne' => $cne, 'type' => $type],
             [
-                'cne' => $cne,
-                'type' => $type,
-            ],
-            [
-                'file_path' => $url,
+                'file_path'         => $path,
                 'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getClientMimeType(),
-                'file_size' => $file->getSize(),
-                'status' => 'pending',
-                'updated_at' => now(),
-                'created_at' => now(),
+                'mime_type'         => $file->getMimeType(),
+                'file_size'         => $file->getSize(),
+                'status'            => 'pending',
             ]
         );
 
-        // If type is photo, also update photo_path on application and student
-        if ($type === 'photo') {
-            if ($cne) {
-                DB::table('applications')->where('cne', $cne)->update(['photo_path' => $url]);
-                DB::table('students')->where('cne', $cne)->update(['photo_path' => $url]);
-            }
-        }
-
         return response()->json([
             'success' => true,
-            'message' => "✅ Document '{$type}' téléversé et enregistré avec succès !",
-            'file_path' => $url,
+            'message' => "Document '{$type}' uploadé avec succès.",
         ]);
     }
 
     /**
-     * Delete candidate scanned document from PostgreSQL database and storage.
+     * Servir un document privé.
+     */
+    public function serveCandidateDocument(string $type, string $cne): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        $document = StudentDocument::where('cne', $cne)->where('type', $type)->first();
+
+        if (!$document || !Storage::disk('local')->exists($document->file_path)) {
+            return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
+        }
+
+        return response()->file(Storage::disk('local')->path($document->file_path), [
+            'Content-Type' => $document->mime_type,
+        ]);
+    }
+
+    /**
+     * Supprimer un document candidat.
      */
     public function deleteCandidateDocument(Request $request): JsonResponse
     {
         $request->validate([
-            'cne' => 'nullable|string',
-            'cin' => 'nullable|string',
+            'cne'  => 'nullable|string',
             'type' => 'required|string',
         ]);
 
-        $cne = $request->input('cne');
-        $cin = $request->input('cin');
-        $type = $request->input('type');
-
-        $deleted = DB::table('student_documents')
-            ->where(function($q) use ($cne, $cin) {
-                if ($cne) $q->orWhere('cne', $cne);
-            })
-            ->where('type', $type)
+        StudentDocument::where('cne', $request->input('cne'))
+            ->where('type', $request->input('type'))
             ->delete();
-
-        if ($type === 'photo') {
-            if ($cne) {
-                DB::table('applications')->where('cne', $cne)->update(['photo_path' => null]);
-                DB::table('students')->where('cne', $cne)->update(['photo_path' => null]);
-            }
-        }
 
         return response()->json([
             'success' => true,
-            'message' => "🗑️ Document '{$type}' supprimé avec succès de la base de données PostgreSQL !",
-            'deleted_count' => $deleted,
+            'message' => 'Document supprimé.',
         ]);
     }
 
-
     /**
-     * 🤖 Public OCR Document Data Extraction (Gemini 1.5 Flash Vision AI).
+     * Extraction OCR via Gemini AI.
      */
     public function extractDocumentDataOcr(Request $request): JsonResponse
     {
-        try {
-            if (!$request->hasFile('file')) {
-                return response()->json(['success' => false, 'message' => 'Aucun fichier fourni.'], 400);
-            }
+        $request->validate([
+            'file'     => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png',
+            'doc_type' => 'nullable|string',
+        ]);
 
-            $file = $request->file('file');
-            $realPath = $file->getRealPath();
-            $mimeType = $file->getClientMimeType() ?: 'application/pdf';
-            $originalName = $file->getClientOriginalName();
+        $file    = $request->file('file');
+        $docType = $request->input('doc_type', $request->input('type', 'bac'));
 
-            $docType = $request->input('doc_type', $request->input('type', 'bac'));
+        $ocrData = $this->geminiService->extractDocumentOcr(
+            $file->getRealPath(),
+            $file->getClientMimeType() ?: 'application/pdf',
+            $file->getClientOriginalName(),
+            $docType
+        );
 
-            /** @var \App\Services\AI\GeminiApiService $geminiService */
-            $geminiService = app(\App\Services\AI\GeminiApiService::class);
-            $realTimeOcr = $geminiService->extractDocumentOcr($realPath, $mimeType, $originalName, $docType);
-
-            Log::info('OCR_RAW_RESPONSE', [
-                'data' => $realTimeOcr,
-                'error' => $geminiService->getLastError(),
-                'filename' => $originalName
-            ]);
-
-            if (empty($realTimeOcr)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'IA OCR Warning: Impossible d\'extraire les données.',
-                    'error_details' => $geminiService->getLastError() ?: 'Fichier non lisible.',
-                    'ocr_data' => null
-                ], 200);
-            }
-
-            return response()->json([
-                'success' => true,
-                'is_realtime' => true,
-                'message' => 'Extraction réussie !',
-                'ocr_data' => $realTimeOcr,
-                'ai_debug_error' => $geminiService->getLastError()
-            ], 200, [], JSON_UNESCAPED_UNICODE);
-
-        } catch (\Throwable $e) {
-            Log::error('OCR_CONTROLLER_CRASH: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+        if (empty($ocrData)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du traitement OCR: ' . $e->getMessage(),
-                'ocr_data' => null
-            ], 200);
-        }
-    }
-
-    /**
-     * Decompress and extract plain text streams from PDF files.
-     */
-    protected function extractPdfRawText(string $filePath): string
-    {
-        $raw = @file_get_contents($filePath) ?: '';
-        if (strpos($raw, '%PDF') === false) {
-            return $raw;
+                'message' => 'Extraction OCR impossible.',
+            ]);
         }
 
-        $text = $raw;
-        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $matches)) {
-            $text .= "\n" . implode(' ', $matches[1]);
-        }
-
-        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-            foreach ($streams[1] as $stream) {
-                $decompressed = @gzuncompress($stream);
-                if (!$decompressed) {
-                    $decompressed = @gzinflate($stream);
-                }
-                if ($decompressed) {
-                    if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $decompressed, $m2)) {
-                        $text .= "\n" . implode(' ', $m2[1]);
-                    } else {
-                        $clean = preg_replace('/[^\x20-\x7E]/', ' ', $decompressed);
-                        if ($clean !== null) {
-                            $text .= "\n" . $clean;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $text;
-    }
-
-    /**
-     * Parse dynamic OCR values directly from the user's uploaded file contents and filename.
-     */
-    protected function parseFileContentOcr(string $filePath, string $originalName, ?string $docType): array
-    {
-        $rawContents = $this->extractPdfRawText($filePath);
-
-        // Generate deterministic seed from uploaded file name and file size
-        $fileHash = md5($originalName . '_' . @filesize($filePath));
-        $hashNum = hexdec(substr($fileHash, 0, 8));
-
-        // 1. Extract Code MASSAR / CNE (e.g. N142088916, H148073298, K13009281)
-        $cne = null;
-        if (preg_match('/([A-Za-z]\d{8,9})/', $originalName . ' ' . $rawContents, $mCne)) {
-            $cne = strtoupper($mCne[1]);
-        }
-        if (!$cne) {
-            $letters = ['K', 'N', 'H', 'R', 'G', 'L', 'P', 'M', 'J'];
-            $cne = $letters[$hashNum % count($letters)] . str_pad((string)($hashNum % 100000000), 8, '0', STR_PAD_LEFT);
-        }
-
-        // 2. Extract CNIE (e.g. ZG195334, CD72910, AB123456) - Filter out CNE false-positives
-        $cin = null;
-        if (preg_match_all('/([A-Za-z]{1,2}\d{5,7})/', $originalName . ' ' . $rawContents, $mCins)) {
-            foreach ($mCins[1] as $cCand) {
-                $cCand = strtoupper($cCand);
-                if ($cne && str_starts_with($cne, $cCand)) {
-                    continue; // Skip CNE prefix false positive match
-                }
-                $cin = $cCand;
-                break;
-            }
-        }
-        if (!$cin) {
-            $prefixes = ['CD', 'ZG', 'AB', 'EE', 'BE', 'IA', 'MC', 'GK'];
-            $cin = $prefixes[$hashNum % count($prefixes)] . str_pad((string)(($hashNum >> 4) % 100000), 5, '0', STR_PAD_LEFT);
-        }
-
-        // 3. Extract Grade / Average dynamically
-        $bacAvg = null;
-        if (preg_match('/(1[0-9]\.[0-9]{1,2}|20\.00)/', $originalName . ' ' . $rawContents, $mAvg)) {
-            $bacAvg = $mAvg[1];
-        }
-        if (!$bacAvg) {
-            $bacAvg = number_format(15.20 + (($hashNum % 380) / 100), 2);
-        }
-
-        // 4. Parse Nom & Prénom - Filter out system hashes (kpn2rl, timestamps, etc.)
-        $cleanName = preg_replace('/[_\-\.\d]/', ' ', pathinfo($originalName, PATHINFO_FILENAME));
-        $tokens = array_values(array_filter(explode(' ', $cleanName), function($p) {
-            $lp = strtolower($p);
-            return strlen($p) >= 4 
-                && !in_array($lp, ['cin', 'bac', 'releve', 'pdf', 'jpg', 'png', 'doc', 'cnie', 'original', 'notes', 'attestation', 'scanne', 'copie', 'kpn2rl', '20260725174950', '20260727235426'])
-                && !preg_match('/^[a-z0-9]{5,8}$/i', $p);
-        }));
-
-        $lastNames = ['ENMILI', 'BENNANI', 'CHRAIBI', 'EL AMRANI', 'ALAOUI', 'BERRADA', 'TASI', 'IDRISSI', 'FASSI', 'BENCHEKROUN'];
-        $firstNames = ['FATIMA-ZAHRA', 'Youssef', 'Sami', 'Karim', 'Mehdi', 'Khadija', 'Houda', 'Aymane', 'Salma', 'Anas'];
-        $lastNamesAr = ['النميلي', 'بناني', 'الشرايبي', 'العمراني', 'العلوي', 'برادة', 'طاسي', 'الإدريسي', 'الفاسي', 'بنقرون'];
-        $firstNamesAr = ['فاطمة الزهراء', 'يوسف', 'سامي', 'كريم', 'مهدي', 'خديجة', 'هداء', 'أيمن', 'سلمى', 'أنس'];
-
-        $nameIdx = $hashNum % count($lastNames);
-
-        $lastNameFr = count($tokens) >= 1 ? strtoupper($tokens[0]) : $lastNames[$nameIdx];
-        $firstNameFr = count($tokens) >= 2 ? ucfirst(strtolower($tokens[1])) : $firstNames[$nameIdx];
-        $lastNameAr = $lastNamesAr[$nameIdx];
-        $firstNameAr = $firstNamesAr[$nameIdx];
-
-        $cities = ['Fès', 'Oujda', 'Rabat', 'Casablanca', 'Tangier', 'Marrakech', 'Meknès', 'Agadir'];
-        $citiesAr = ['فاس', 'وجدة', 'الرباط', 'الدار البيضاء', 'طنجة', 'مراكش', 'مكناس', 'أكادير'];
-        $cityIdx = ($hashNum >> 2) % count($cities);
-
-        $bacTypes = [
-            'Sciences Economiques et de Gestion',
-            'Sciences Mathématiques B - Option Français',
-            'Sciences Mathématiques A - Option Français',
-            'Sciences Physiques et Chimiques',
-            'Sciences de la Vie et de la Terre (SVT)',
-        ];
-
-        return [
-            'first_name_fr' => $firstNameFr,
-            'last_name_fr' => $lastNameFr,
-            'first_name_ar' => $firstNameAr,
-            'last_name_ar' => $lastNameAr,
-            'cne' => $cne,
-            'cin' => $cin,
-            'birth_date' => '200' . (($hashNum % 3) + 6) . '-0' . (($hashNum % 9) + 1) . '-' . str_pad((string)(($hashNum % 28) + 1), 2, '0', STR_PAD_LEFT),
-            'birth_city_fr' => $cities[$cityIdx],
-            'birth_city_ar' => $citiesAr[$cityIdx],
-            'bac_average' => $bacAvg,
-            'bac_mention' => floatval($bacAvg) >= 16 ? 'Très Bien' : (floatval($bacAvg) >= 14 ? 'Bien' : 'Assez Bien'),
-            'bac_type' => $bacTypes[$hashNum % count($bacTypes)],
-            'high_school' => 'Lycée Qualifiant ' . $cities[$cityIdx],
-        ];
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Extraction réussie.',
+            'ocr_data'  => $ocrData,
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
-
-
-

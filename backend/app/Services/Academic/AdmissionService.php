@@ -2,19 +2,21 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Application;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class AdmissionService
 {
+    private const VALID_STATUSES = ['pending', 'accepted', 'waitlisted', 'rejected'];
+
     /**
-     * Get applications for a specific campaign with eager loading.
+     * Récupérer les candidatures d'une campagne.
      */
     public function getApplicationsForCampaign(?int $campaignId = null): Collection
     {
         $query = Application::latest();
-        
+
         if ($campaignId && $campaignId > 0) {
             $query->where(function ($q) use ($campaignId) {
                 $q->where('admission_campaign_id', $campaignId)
@@ -26,36 +28,31 @@ class AdmissionService
     }
 
     /**
-     * Update the status of an application.
+     * Mettre à jour le statut d'une candidature.
      */
     public function updateApplicationStatus(int $applicationId, string $status): Application
     {
-        $validStatuses = ['pending', 'accepted', 'waitlisted', 'rejected'];
-        
-        if (!in_array($status, $validStatuses)) {
-            throw new \InvalidArgumentException("Invalid status provided.");
+        if (!in_array($status, self::VALID_STATUSES)) {
+            throw new \InvalidArgumentException("Statut invalide : {$status}");
         }
 
         return DB::transaction(function () use ($applicationId, $status) {
             $application = Application::findOrFail($applicationId);
-            $application->status = $status;
-            
-            // Here we could add logic like:
-            // if ($status === 'accepted') { $this->createStudentProfile($application); }
-            
-            $application->save();
+            $application->update(['status' => $status]);
 
             return $application;
         });
     }
 
     /**
-     * Bulk update application statuses (e.g. accepting top 100).
+     * Mettre à jour le statut en masse.
      */
     public function bulkUpdateStatus(array $applicationIds, string $status): int
     {
-        return DB::transaction(function () use ($applicationIds, $status) {
-            return Application::whereIn('id', $applicationIds)->update(['status' => $status]);
-        });
+        if (!in_array($status, self::VALID_STATUSES)) {
+            throw new \InvalidArgumentException("Statut invalide : {$status}");
+        }
+
+        return DB::transaction(fn() => Application::whereIn('id', $applicationIds)->update(['status' => $status]));
     }
 }

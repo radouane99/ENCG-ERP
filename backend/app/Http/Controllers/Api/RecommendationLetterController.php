@@ -3,195 +3,146 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\RecommendationLetterMail;
+use App\Models\Grade;
+use App\Models\RecommendationRequest;
+use App\Models\Student;
+use App\Models\User;
 use App\Services\AI\GeminiApiService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class RecommendationLetterController extends Controller
 {
-    protected GeminiApiService $gemini;
-
-    public function __construct(GeminiApiService $gemini)
-    {
-        $this->gemini = $gemini;
-    }
+    public function __construct(
+        private GeminiApiService $gemini
+    ) {}
 
     /**
-     * Student submits a recommendation letter request to a professor.
+     * Soumettre une demande de lettre de recommandation.
      */
     public function submitRequest(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'professor_id' => 'required|integer',
-            'purpose' => 'required|string',
+            'professor_id'    => 'required|integer',
+            'purpose'         => 'required|string',
             'delivery_method' => 'nullable|string|in:platform,email,both',
         ]);
 
-        $studentId = auth()->id() ?? 1;
-
-        // Fetch student details to compute AI eligibility score
-        $student = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->where('students.id', $studentId)
-            ->select('students.id', 'users.name', 'users.email')
-            ->first();
-
-        $grades = DB::table('grades')->where('student_id', $studentId)->pluck('grade');
-        $avgGrade = $grades->isNotEmpty() ? round($grades->avg(), 2) : 13.5;
-        $absences = DB::table('absences')->where('student_id', $studentId)->count();
-
-        // Calculate AI Eligibility Score
+        $student   = Student::with('user')->findOrFail(auth()->id());
+        $avgGrade  = Grade::where('student_id', $student->id)->avg('value') ?? 13.5;
+        $absences  = \App\Models\Attendance::where('student_id', $student->id)->count();
         $eligibilityScore = min(100, max(50, round(($avgGrade * 5) - ($absences * 2))));
 
-        // Generate AI draft letter
-        $profName = DB::table('users')->where('id', $validated['professor_id'])->value('name') ?? 'Enseignant Chercheur';
-        $prompt = "Rédige un projet de lettre de recommandation élogieux pour l'étudiant {$student->name} (Moyenne : {$avgGrade}/20, {$absences} absences) à l'attention de Pr. {$profName} pour la demande : {$validated['purpose']}.";
-        $system = ["Tu es l'assistant de rédaction officielle de l'ENCG Fès."];
+        $profName = User::find($validated['professor_id'])?->name ?? 'Enseignant Chercheur';
 
-        $aiDraft = $this->gemini->generateContent($prompt, $system)
-            ?? "Nous recommandons vivement M./Mme {$student->name} dont la rigueur et les résultats à l'ENCG Fès témoignent d'un excellent potentiel académique.";
+        $prompt = "Rédige une lettre de recommandation pour {$student->user->name} (Moyenne : {$avgGrade}/20) à l'attention de Pr. {$profName} pour : {$validated['purpose']}.";
+        $aiDraft = $this->gemini->generateContent($prompt, [
+            "Tu es l'assistant de rédaction officielle de l'ENCG Fès.",
+        ]) ?? "Nous recommandons vivement {$student->user->name} pour son excellence académique à l'ENCG Fès.";
 
-        $table = \Illuminate\Support\Facades\Schema::hasTable('recommendation_requests') ? 'recommendation_requests' : null;
-
-        if ($table) {
-            $requestId = DB::table('recommendation_requests')->insertGetId([
-                'student_id' => $studentId,
-                'professor_id' => $validated['professor_id'],
-                'purpose' => $validated['purpose'],
-                'status' => 'pending',
-                'ai_eligibility_score' => "{$eligibilityScore}%",
-                'ai_recommendation_text' => $aiDraft,
-                'delivery_method' => $validated['delivery_method'] ?? 'both',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $requestId = rand(100, 999);
-        }
+        $requestId = RecommendationRequest::create([
+            'student_id'              => $student->id,
+            'professor_id'            => $validated['professor_id'],
+            'purpose'                 => $validated['purpose'],
+            'status'                  => 'pending',
+            'ai_eligibility_score'    => "{$eligibilityScore}%",
+            'ai_recommendation_text'  => $aiDraft,
+            'delivery_method'         => $validated['delivery_method'] ?? 'both',
+        ])->id;
 
         return response()->json([
-            'success' => true,
-            'message' => 'Demande de lettre de recommandation soumise au professeur !',
-            'request_id' => $requestId,
-            'eligibility_score' => "{$eligibilityScore}%"
+            'success'           => true,
+            'message'           => 'Demande soumise au professeur.',
+            'request_id'        => $requestId,
+            'eligibility_score' => "{$eligibilityScore}%",
         ]);
     }
 
     /**
-     * Student views their submitted requests.
+     * Demandes de l'étudiant connecté.
      */
     public function getStudentRequests(): JsonResponse
     {
-        $studentId = auth()->id() ?? 1;
-
-        if (!\Illuminate\Support\Facades\Schema::hasTable('recommendation_requests')) {
-            return response()->json(['success' => true, 'requests' => []]);
-        }
-
-        $requests = DB::table('recommendation_requests')
-            ->leftJoin('users as prof', 'recommendation_requests.professor_id', '=', 'prof.id')
-            ->where('recommendation_requests.student_id', $studentId)
-            ->select(
-                'recommendation_requests.*',
-                'prof.name as professor_name'
-            )
-            ->orderBy('recommendation_requests.created_at', 'desc')
-            ->get();
+        $requests = RecommendationRequest::with('professor')
+            ->where('student_id', auth()->id())
+            ->latest()
+            ->get()
+            ->map(fn($r) => [
+                'id'              => $r->id,
+                'purpose'         => $r->purpose,
+                'status'          => $r->status,
+                'professor_name'  => $r->professor->name ?? 'N/A',
+                'ai_eligibility_score' => $r->ai_eligibility_score,
+                'created_at'      => $r->created_at->format('d/m/Y'),
+            ]);
 
         return response()->json(['success' => true, 'requests' => $requests]);
     }
 
     /**
-     * Professor views incoming requests with AI Decision Support & Eligibility Score.
+     * Demandes reçues par le professeur connecté.
      */
     public function getProfessorRequests(): JsonResponse
     {
-        $profId = auth()->id() ?? 1;
-
-        if (!\Illuminate\Support\Facades\Schema::hasTable('recommendation_requests')) {
-            return response()->json(['success' => true, 'requests' => []]);
-        }
-
-        $requests = DB::table('recommendation_requests')
-            ->join('students', 'recommendation_requests.student_id', '=', 'students.id')
-            ->join('users as st_user', 'students.user_id', '=', 'st_user.id')
-            ->leftJoin('student_pathways', function($join) {
-                $join->on('students.id', '=', 'student_pathways.student_id')
-                     ->where('student_pathways.is_current', '=', true);
-            })
-            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-            ->where(function($q) use ($profId) {
-                $q->where('recommendation_requests.professor_id', $profId)
-                  ->orWhereNull('recommendation_requests.professor_id');
-            })
-            ->select(
-                'recommendation_requests.*',
-                'st_user.name as student_name',
-                'st_user.email as student_email',
-                'filieres.name as filiere_name'
-            )
-            ->orderBy('recommendation_requests.created_at', 'desc')
-            ->get();
+        $requests = RecommendationRequest::with(['student.user', 'student.latestPathway.filiere'])
+            ->where('professor_id', auth()->id())
+            ->orWhereNull('professor_id')
+            ->latest()
+            ->get()
+            ->map(fn($r) => [
+                'id'              => $r->id,
+                'student_name'    => $r->student->user->name ?? 'N/A',
+                'student_email'   => $r->student->user->email ?? 'N/A',
+                'filiere_name'    => $r->student->latestPathway->filiere->name ?? 'N/A',
+                'purpose'         => $r->purpose,
+                'status'          => $r->status,
+                'ai_eligibility_score' => $r->ai_eligibility_score,
+                'ai_recommendation_text' => $r->ai_recommendation_text,
+                'created_at'      => $r->created_at->format('d/m/Y'),
+            ]);
 
         return response()->json(['success' => true, 'requests' => $requests]);
     }
 
     /**
-     * Professor approves, signs & delivers the recommendation letter (platform or email).
+     * Approuver et signer une lettre de recommandation.
      */
-    public function approveRequest(Request $request, $id): JsonResponse
+    public function approveRequest(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'letter_content' => 'required|string',
+            'letter_content'  => 'required|string',
             'delivery_method' => 'nullable|string|in:platform,email,both',
         ]);
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('recommendation_requests')) {
-            DB::table('recommendation_requests')->where('id', $id)->update([
-                'status' => 'approved',
-                'ai_recommendation_text' => $validated['letter_content'],
-                'delivery_method' => $validated['delivery_method'] ?? 'both',
-                'signed_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $rec = RecommendationRequest::with(['student.user', 'professor'])->findOrFail($id);
 
-            $rec = DB::table('recommendation_requests')
-                ->join('students', 'recommendation_requests.student_id', '=', 'students.id')
-                ->join('users as st_user', 'students.user_id', '=', 'st_user.id')
-                ->leftJoin('users as prof_user', 'recommendation_requests.professor_id', '=', 'prof_user.id')
-                ->where('recommendation_requests.id', $id)
-                ->select(
-                    'st_user.name as student_name',
-                    'st_user.email as student_email',
-                    'prof_user.name as professor_name',
-                    'recommendation_requests.purpose'
-                )
-                ->first();
+        $rec->update([
+            'status'                  => 'approved',
+            'ai_recommendation_text'  => $validated['letter_content'],
+            'delivery_method'         => $validated['delivery_method'] ?? 'both',
+            'signed_at'               => now(),
+        ]);
 
-            // Send Email if delivery method includes email or both
-            $method = $validated['delivery_method'] ?? 'both';
-            if ($rec && ($method === 'email' || $method === 'both') && $rec->student_email) {
-                try {
-                    Mail::to($rec->student_email)->send(
-                        new RecommendationLetterMail(
-                            $rec->student_name,
-                            $rec->professor_name ?? 'Professeur ENCG Fès',
-                            $validated['letter_content'],
-                            $rec->purpose
-                        )
-                    );
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('Email delivery error: ' . $e->getMessage());
-                }
+        $method = $validated['delivery_method'] ?? 'both';
+        if (in_array($method, ['email', 'both']) && $rec->student->user->email) {
+            try {
+                Mail::to($rec->student->user->email)->send(new RecommendationLetterMail(
+                    $rec->student->user->name,
+                    $rec->professor->name ?? 'Professeur ENCG Fès',
+                    $validated['letter_content'],
+                    $rec->purpose
+                ));
+            } catch (\Exception $e) {
+                Log::warning('Email lettre de recommandation échoué : ' . $e->getMessage());
             }
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Lettre de recommandation signée électroniquement et envoyée à l\'étudiant !'
+            'message' => 'Lettre signée et envoyée à l\'étudiant.',
         ]);
     }
 }

@@ -2,22 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Professor\CreateProfessorAction;
+use App\Actions\Professor\DeleteProfessorAction;
+use App\Actions\Professor\UpdateProfessorAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Professor\StoreProfessorRequest;
+use App\Http\Requests\Professor\UpdateProfessorRequest;
+use App\Http\Resources\ProfessorResource;
 use App\Models\Professor;
 use App\Services\HR\ProfessorService;
-use App\Http\Resources\ProfessorResource;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProfessorController extends Controller
 {
-    protected ProfessorService $professorService;
+    public function __construct(
+        private ProfessorService $professorService
+    ) {}
 
-    public function __construct(ProfessorService $professorService)
-    {
-        $this->professorService = $professorService;
-    }
-
+    /**
+     * Liste des professeurs.
+     */
     public function index(Request $request): JsonResponse
     {
         abort_unless($request->user()->can('professors.view'), 403);
@@ -26,68 +31,86 @@ class ProfessorController extends Controller
             $request->only(['search', 'contract_type'])
         );
 
-        // [Phase 8] Return ProfessorResource collection
         return response()->json([
-            'data' => ProfessorResource::collection($professors),
+            'success' => true,
+            'data'    => ProfessorResource::collection($professors),
         ]);
     }
 
-    public function store(\App\Http\Requests\Professor\StoreProfessorRequest $request, \App\Actions\Professor\CreateProfessorAction $action): JsonResponse
+    /**
+     * Créer un professeur.
+     */
+    public function store(StoreProfessorRequest $request, CreateProfessorAction $action): JsonResponse
     {
         try {
             $professor = $action->execute($request->validated());
 
             return response()->json([
+                'success' => true,
                 'message' => 'Professeur créé avec succès.',
-                // [Phase 8] Wrap in Resource
                 'data'    => new ProfessorResource($professor->load(['department', 'user'])),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Erreur lors de la création du professeur.',
                 'error'   => $e->getMessage(),
             ], 500);
         }
     }
 
+    /**
+     * Afficher un professeur.
+     */
     public function show(Professor $professor): JsonResponse
     {
         abort_unless(request()->user()->can('professors.view'), 403);
 
-        // [Phase 8] Wrap in ProfessorResource — includes department
         return response()->json([
-            'data' => new ProfessorResource($professor->load(['department', 'user'])),
+            'success' => true,
+            'data'    => new ProfessorResource($professor->load(['department', 'user'])),
         ]);
     }
 
-    public function update(\App\Http\Requests\Professor\UpdateProfessorRequest $request, Professor $professor, \App\Actions\Professor\UpdateProfessorAction $action): JsonResponse
+    /**
+     * Mettre à jour un professeur.
+     */
+    public function update(UpdateProfessorRequest $request, Professor $professor, UpdateProfessorAction $action): JsonResponse
     {
         try {
             $updated = $action->execute($professor, $request->validated());
 
             return response()->json([
+                'success' => true,
                 'message' => 'Professeur mis à jour avec succès.',
-                // [Phase 8] Wrap in Resource
                 'data'    => new ProfessorResource($updated->load(['department', 'user'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Erreur lors de la mise à jour du professeur.',
                 'error'   => $e->getMessage(),
             ], 500);
         }
     }
 
-    public function destroy(Professor $professor, \App\Actions\Professor\DeleteProfessorAction $action): JsonResponse
+    /**
+     * Supprimer un professeur.
+     */
+    public function destroy(Professor $professor, DeleteProfessorAction $action): JsonResponse
     {
         abort_unless(request()->user()->can('professors.delete'), 403);
 
         try {
             $action->execute($professor);
 
-            return response()->json(['message' => 'Professeur supprimé avec succès.']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Professeur supprimé avec succès.',
+            ]);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Erreur lors de la suppression du professeur.',
                 'error'   => $e->getMessage(),
             ], 500);

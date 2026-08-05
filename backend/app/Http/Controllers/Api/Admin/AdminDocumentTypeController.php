@@ -3,41 +3,73 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DocumentTemplate;
 use App\Http\Requests\StoreDocumentTypeRequest;
-use Illuminate\Http\Request;
+use App\Models\DocumentTemplate;
+use Illuminate\Http\JsonResponse;
 
 class AdminDocumentTypeController extends Controller
 {
-    public function index()
+    /**
+     * Liste des types de documents.
+     */
+    public function index(): JsonResponse
     {
-        $templates = DocumentTemplate::all();
-        return response()->json($templates);
+        return response()->json([
+            'success' => true,
+            'data'    => DocumentTemplate::all(),
+        ]);
     }
 
-    public function store(StoreDocumentTypeRequest $request)
+    /**
+     * Créer un type de document.
+     */
+    public function store(StoreDocumentTypeRequest $request): JsonResponse
     {
         $template = DocumentTemplate::create($request->validated());
-        return response()->json($template, 201);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Type de document créé.',
+            'data'    => $template,
+        ], 201);
     }
 
-    public function show($id)
+    /**
+     * Afficher un type de document.
+     */
+    public function show(int $id): JsonResponse
     {
-        $template = DocumentTemplate::findOrFail($id);
-        return response()->json($template);
+        return response()->json([
+            'success' => true,
+            'data'    => DocumentTemplate::findOrFail($id),
+        ]);
     }
 
-    public function update(StoreDocumentTypeRequest $request, $id)
+    /**
+     * Mettre à jour un type de document.
+     */
+    public function update(StoreDocumentTypeRequest $request, int $id): JsonResponse
     {
         $template = DocumentTemplate::findOrFail($id);
         $template->update($request->validated());
-        return response()->json($template);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Type de document mis à jour.',
+            'data'    => $template,
+        ]);
     }
 
-    public function destroy($id)
+    /**
+     * Supprimer un type de document.
+     */
+    public function destroy(int $id): JsonResponse
     {
-        $template = DocumentTemplate::findOrFail($id);
-        $template->delete();
-        return response()->json(null, 204);
+        DocumentTemplate::findOrFail($id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Type de document supprimé.',
+        ]);
     }
 }

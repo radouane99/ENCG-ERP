@@ -4,20 +4,32 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Room;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
+    /**
+     * Liste des salles.
+     */
     public function index(Request $request): JsonResponse
     {
         abort_unless($request->user()->can('infrastructure.view'), 403);
 
         $query = Room::query();
-        if ($request->type)   $query->where('type', $request->type);
-        if ($request->search) $query->where('name', 'like', "%{$request->search}%")->orWhere('code', 'like', "%{$request->search}%");
 
-        $rooms = $query->get()->map(fn ($r) => [
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('code', 'like', "%{$request->search}%");
+            });
+        }
+
+        $rooms = $query->get()->map(fn($r) => [
             'id'               => $r->id,
             'name'             => $r->name,
             'code'             => $r->code,
@@ -31,17 +43,21 @@ class RoomController extends Controller
         ]);
 
         return response()->json([
-            'data'  => $rooms,
-            'stats' => [
+            'success' => true,
+            'data'    => $rooms,
+            'stats'   => [
                 'total'               => $rooms->count(),
                 'available'           => $rooms->where('is_available', true)->count(),
                 'amphitheatres'       => $rooms->where('type', 'amphitheatre')->count(),
                 'total_capacity'      => $rooms->sum('capacity'),
                 'total_exam_capacity' => $rooms->sum('exam_capacity'),
-            ]
+            ],
         ]);
     }
 
+    /**
+     * Créer une salle.
+     */
     public function store(Request $request): JsonResponse
     {
         abort_unless($request->user()->can('infrastructure.create'), 403);
@@ -57,14 +73,24 @@ class RoomController extends Controller
             'is_available'     => 'boolean',
             'equipment_status' => 'nullable|array',
         ]);
+
         if (empty($validated['exam_capacity'])) {
             $validated['exam_capacity'] = (int) floor($validated['capacity'] / 2);
         }
+
         $validated['institution_id'] = 1;
         $room = Room::create($validated);
-        return response()->json(['message' => 'Salle créée avec succès.', 'data' => $room], 201);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle créée avec succès.',
+            'data'    => $room,
+        ], 201);
     }
 
+    /**
+     * Mettre à jour une salle.
+     */
     public function update(Request $request, Room $room): JsonResponse
     {
         abort_unless($request->user()->can('infrastructure.edit'), 403);
@@ -80,15 +106,28 @@ class RoomController extends Controller
             'is_available'     => 'boolean',
             'equipment_status' => 'nullable|array',
         ]);
+
         $room->update($validated);
-        return response()->json(['message' => 'Salle mise à jour.', 'data' => $room]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle mise à jour.',
+            'data'    => $room,
+        ]);
     }
 
+    /**
+     * Supprimer une salle.
+     */
     public function destroy(Request $request, Room $room): JsonResponse
     {
         abort_unless($request->user()->can('infrastructure.delete'), 403);
 
         $room->delete();
-        return response()->json(['message' => 'Salle supprimée.']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle supprimée.',
+        ]);
     }
 }

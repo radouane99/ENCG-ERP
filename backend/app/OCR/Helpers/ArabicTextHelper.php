@@ -5,52 +5,95 @@ namespace App\OCR\Helpers;
 /**
  * Arabic Text Helper
  *
- * Centralises all Arabic-language logic:
- *  - Stop-word list (Ministry headers, exam vocabulary, OCR noise)
- *  - Token filtering
- *  - Arabic name extraction (multi-strategy)
+ * Centralises Arabic language processing for OCR extraction:
+ *  - Arabic letter normalization (Alef, Tashkeel removal)
+ *  - Stop-word list (Ministry headers, administrative terms, OCR noise)
+ *  - Context-aware Arabic name extraction
+ *  - Address parsing
+ *  - Date parsing in Arabic format
+ *
+ * @version 2.0 Final
  */
 class ArabicTextHelper
 {
     /**
-     * Moroccan Ministry / State document stop-words (never candidate names).
+     * Moroccan Ministry / State document stop-words.
      */
     private array $stopWords = [
-        // ─── Ministry / Institution headers ───────────────────────────────────
+        // Ministry / Institution headers
         'المملكة', 'المغربية', 'وزارة', 'التربية', 'الوطنية', 'التكوين', 'المهني',
         'التعليم', 'العالي', 'البحث', 'العلمي', 'نيابة', 'أكاديمية', 'الأكاديمية',
-        // ─── Exam / Certificate vocabulary ────────────────────────────────────
+        'الجهوية', 'الإقليمية', 'المديرية', 'الإقليم', 'العمالة', 'الجهة',
+        // Exam / Certificate vocabulary
         'امتحانات', 'الامتحان', 'الوطني', 'الموحد', 'شهادة', 'البكالوريا', 'شعبة',
         'مسلك', 'رقم', 'الترشيح', 'الاسم', 'العائلي', 'الشخصي', 'بيان', 'النقط',
         'معدل', 'المعدل', 'العام', 'الدورة', 'العادية', 'الاستدراكية', 'سنة',
-        // ─── CNIE / Birth certificate vocabulary ──────────────────────────────
+        'الدراسية', 'التعليمية', 'والتكوين', 'للتربية', 'للتعليم', 'والتعليم',
+        // CNIE / Birth certificate vocabulary
         'مواليد', 'مكان', 'الازدياد', 'مواطن', 'البطاقة', 'الهوية',
-        'التعريفية', 'المغرب', 'التعليمية', 'الجهوية', 'الإقليمية',
-        'المديرية', 'الإقليم', 'العمالة', 'الجهة', 'الإقليمي', 'والتكوين',
-        'للتربية', 'للتعليم', 'والتعليم', 'مديرية', 'الابتدائي', 'الثانوي',
-        'التأهيلي', 'ثانوية', 'مؤسسة', 'ذكر', 'أنثى', 'المدينة', 'المنطقة',
-        'الرباط', 'المحمدية', 'إرقم', 'البلحاقة', 'للتعريف', 'قد', 'نجم',
-        // ─── BAC certificate boilerplate noise ────────────────────────────────
-        'فر', 'ابتحانات', 'يونيو', 'حسن', 'الح', 'كعمد', 'الرقم', 'التللي',
-        'يمكن', 'تليم', 'أي', 'هذه', 'الثمادة', 'ارقم', 'وا', 'العف', 'بلسي',
-        'ثمادة', 'عا', 'تتام', 'مه', 'امناء', 'عملم', 'بتاع', 'المي', 'سمي',
-        'لا', 'يي', 'مكيرة', 'متا', 'الل', 'الوأمنية', 'الأوثر', 'والرياضة',
-        'ما', 'وثيقة', 'خاصة', 'بيار', 'المحص', 'قر', 'دده', 'نلصا', 'المحصل',
-        'عليها', 'ببيان', 'شخصي', 'محصل',
-        // ─── Tesseract OCR noise / hallucinations ────────────────────────────
-        'وزير', 'يشمد', 'تصنت', 'عيبي', 'نزم', 'قاطمة', 'ححص', 'لصن', 'داوب', 'يسح', 'ذخ', 'صص', 'سمم', 'مقت',
-        'اب', 'هم', 'به', 'من', 'في', 'أو', 'على', 'إلى', 'عن', 'مع', 'حالة', 'المدنية', 'الحالة', 'رقم',
-        'هذا', 'هذه', 'ذلك', 'تلك', 'كان', 'كانت', 'يكون', 'تكون',
-        'هناك', 'حيث', 'إذا', 'لكن', 'لأن', 'لذلك', 'ولذلك', 'كما',
-        'بعد', 'قبل', 'بين', 'تحت', 'فوق', 'خلال', 'حول',
-        // ─── Minister / Government roles (header text) ───────────────────────
+        'التعريفية', 'المغرب', 'الابتدائي', 'الثانوي', 'التأهيلي',
+        'ثانوية', 'مؤسسة', 'ذكر', 'أنثى', 'المدينة', 'المنطقة',
+        'الرباط', 'المحمدية', 'للتعريف', 'حالة', 'المدنية', 'الحالة',
         'وزيرة', 'مدير', 'مديرة', 'رئيس', 'رئيسة', 'عميد', 'الأمين',
-        'العام', 'الأستاذ', 'الأستاذة', 'الدكتور', 'الدكتورة',
+        'العام', 'المعرف', 'الجنسية', 'الولادة', 'الازدياد',
+        // Additional administrative terms
+        'الصفحة', 'الرئيسية', 'الملاحظة', 'المواد', 'المادة',
+        'النقطة', 'النقاط', 'المراقبة', 'الامتحان', 'الجهوي',
     ];
 
     /**
-     * Filter a list of Arabic word strings against stop-words and minimum length.
-     * Only keeps words of >= 3 characters that are not in the stop-word list.
+     * Common Arabic name prefixes for compound names
+     */
+    private array $namePrefixes = [
+        'بن', 'ابن', 'آيت', 'ايت', 'بو', 'أبو', 'عبد', 'عبدالله',
+        'عبدالرحمن', 'عبدالرحيم', 'عبدالجليل', 'عبدالكريم',
+    ];
+
+    /**
+     * Pre-normalized stop words cache for O(1) matching.
+     */
+    private array $normalizedStopWords = [];
+    private array $normalizedPrefixes = [];
+
+    public function __construct()
+    {
+        foreach ($this->stopWords as $word) {
+            $this->normalizedStopWords[$this->normalizeArabic($word)] = true;
+        }
+        
+        foreach ($this->namePrefixes as $prefix) {
+            $this->normalizedPrefixes[$this->normalizeArabic($prefix)] = true;
+        }
+    }
+
+    /**
+     * Normalize Arabic string by removing Tashkeel and standardizing Alef variants.
+     */
+    public function normalizeArabic(string $text): string
+    {
+        // Strip Tashkeel (diacritics)
+        $text = preg_replace('/[\x{064B}-\x{0652}]/u', '', $text);
+        
+        // Normalize Alef forms (أ, إ, آ -> ا)
+        $text = preg_replace('/[أإآ]/u', 'ا', $text);
+        
+        // Normalize Yaa (ى -> ي)
+        $text = preg_replace('/ى/u', 'ي', $text);
+        
+        // Normalize Teh Marbuta (ة -> ه)
+        $text = preg_replace('/ة/u', 'ه', $text);
+        
+        // Normalize Waw with Hamza (ؤ -> و)
+        $text = preg_replace('/ؤ/u', 'و', $text);
+        
+        // Normalize Alef with Hamza (ئ -> ي)
+        $text = preg_replace('/ئ/u', 'ي', $text);
+
+        return trim($text);
+    }
+
+    /**
+     * Filter a list of Arabic words against stop-words and minimum length.
      */
     public function filterTokens(array $words): array
     {
@@ -58,40 +101,25 @@ class ArabicTextHelper
         foreach ($words as $w) {
             $w = trim((string)$w);
             if ($w === '') continue;
-            if (mb_strlen($w, 'UTF-8') < 3) continue;
-            if (in_array($w, $this->stopWords, true)) continue;
+
+            $normalized = $this->normalizeArabic($w);
+
+            // Minimum length check
+            if (mb_strlen($normalized, 'UTF-8') < 2) continue;
+            
+            // Skip stop words
+            if (isset($this->normalizedStopWords[$normalized])) continue;
+            
+            // Skip pure numbers
+            if (preg_match('/^[\d\.,]+$/', $w)) continue;
+
             $result[] = $w;
         }
         return $result;
     }
 
     /**
-     * Get all clean Arabic word tokens from a text (filtered, unique).
-     * @deprecated Prefer extractName() with context-anchored strategies.
-     */
-    public function getCleanTokens(string $text): array
-    {
-        $tokens = [];
-        if (preg_match_all('/[\x{0600}-\x{06FF}]{3,}/u', $text, $m)) {
-            foreach ($m[0] as $w) {
-                $w = trim($w);
-                if (!in_array($w, $this->stopWords, true) && mb_strlen($w, 'UTF-8') >= 3) {
-                    $tokens[] = $w;
-                }
-            }
-        }
-        return array_values(array_unique($tokens));
-    }
-
-    /**
      * Extract Arabic candidate name from OCR text.
-     *
-     * Strategy (ordered by confidence):
-     *  1. BAC label:    «أن المترشح(ة) : النميلي فاطمة الزهراء»
-     *  2. Relevé label: «الاسم العائلي : النميلي» + «الاسم الشخصي : فاطمة»
-     *  3. Generic: Line containing only 1-4 Arabic words (>= 3 chars each)
-     *  4. CNIE specific: name between «الاسم» and «تاريخ»
-     *  5. Give up — never guess random words
      *
      * @return array{last_name_ar: string, first_name_ar: string}
      */
@@ -99,58 +127,197 @@ class ArabicTextHelper
     {
         $arWord = '[\x{0600}-\x{06FF}]+';
 
-        // Strategy 1: BAC certificate label
-        if (preg_match('/(?:أن\s+)?المترشح(?:ة|\(ة\))?\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . '){0,3})/u', $text, $m)) {
+        // Strategy 1: BAC certificate label («أن المترشح(ة) : النميلي فاطمة الزهراء»)
+        if (preg_match('/(?:أن\s+)?المترشح(?:ة|\(ة\))?\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . '){0,4})/u', $text, $m)) {
             $tokens = $this->filterTokens(preg_split('/\s+/u', trim($m[1])));
             if (count($tokens) >= 1) {
-                return [
-                    'last_name_ar'  => $tokens[0],
-                    'first_name_ar' => isset($tokens[1]) ? implode(' ', array_slice($tokens, 1, 2)) : '',
-                ];
+                return $this->splitArabicNameTokens($tokens);
             }
         }
 
-        // Strategy 2: Relevé labeled fields
+        // Strategy 2: Labeled fields («الاسم العائلي : ...» + «الاسم الشخصي : ...»)
         $lastName  = '';
         $firstName = '';
-        if (preg_match('/(?:الاسم\s+العائلي|اللقب)\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . ')?)/u', $text, $m)) {
-            $t = $this->filterTokens([$m[1]]);
-            $lastName = $t[0] ?? '';
+
+        if (preg_match('/(?:الاسم\s+العائلي|اللقب|النسب)\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . '){0,3})/u', $text, $m)) {
+            $t = $this->filterTokens(preg_split('/\s+/u', trim($m[1])));
+            $lastName = implode(' ', $t);
         }
-        if (preg_match('/(?:الاسم\s+الشخصي|الاسم\s+الأول)\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . '){0,2})/u', $text, $m)) {
+
+        if (preg_match('/(?:الاسم\s+الشخصي|الاسم\s+الأول|الاسم\s+الذاتي)\s*[:\-]?\s*(' . $arWord . '(?:\s+' . $arWord . '){0,3})/u', $text, $m)) {
             $ts = $this->filterTokens(preg_split('/\s+/u', trim($m[1])));
             $firstName = implode(' ', $ts);
         }
-        if ($lastName) {
-            return ['last_name_ar' => $lastName, 'first_name_ar' => $firstName];
+
+        if ($lastName || $firstName) {
+            return [
+                'last_name_ar' => $lastName, 
+                'first_name_ar' => $firstName
+            ];
         }
 
-        // Strategy 3: Line containing only Arabic words (2–4 clean words)
+        // Strategy 3: Standalone Arabic line (2–4 valid name words)
         foreach (preg_split('/[\r\n]+/', $text) as $line) {
-            if (preg_match('/^\s*(' . $arWord . ')(?:\s+(' . $arWord . '))?(?:\s+(' . $arWord . '))?\s*$/u', trim($line), $m)) {
-                $candidate = $this->filterTokens(array_values(array_filter(array_slice($m, 1))));
-                $valid = array_filter($candidate, fn($w) => mb_strlen($w, 'UTF-8') >= 3);
-                if (count($valid) >= 1 && count($candidate) <= 4) {
-                    return [
-                        'last_name_ar'  => $candidate[0],
-                        'first_name_ar' => isset($candidate[1]) ? implode(' ', array_slice($candidate, 1, 2)) : '',
-                    ];
+            $cleanLine = trim($line);
+            if (preg_match('/^\s*(' . $arWord . '(?:\s+' . $arWord . '){1,3})\s*$/u', $cleanLine, $m)) {
+                $rawTokens = preg_split('/\s+/u', trim($m[1]));
+                $filtered = $this->filterTokens($rawTokens);
+
+                if (count($filtered) >= 2 && count($filtered) <= 4) {
+                    return $this->splitArabicNameTokens($filtered);
                 }
             }
         }
 
-        // Strategy 4: CNIE specific — name between «الاسم» and «تاريخ»
-        if (preg_match('/(?:الاسم|الإسم)\s+(' . $arWord . '(?:\s+' . $arWord . ')*?)\s+(?:تاريخ|مزداد)/u', $text, $m)) {
+        // Strategy 4: CNIE card layout («الاسم» ... «تاريخ»)
+        if (preg_match('/(?:الاسم|الإسم)\s+(' . $arWord . '(?:\s+' . $arWord . ')*?)\s+(?:تاريخ|مزداد|الازدياد)/u', $text, $m)) {
             $tokens = $this->filterTokens(preg_split('/\s+/u', trim($m[1])));
             if (count($tokens) >= 1) {
-                return [
-                    'last_name_ar'  => $tokens[0],
-                    'first_name_ar' => isset($tokens[1]) ? implode(' ', array_slice($tokens, 1, 2)) : '',
-                ];
+                return $this->splitArabicNameTokens($tokens);
             }
         }
 
-        // Give up: never return random words
+        // Strategy 5: Full name pattern with common prefixes
+        if (preg_match('/(' . $arWord . '(?:\s+' . $arWord . '){1,4})/u', $text, $m)) {
+            $tokens = $this->filterTokens(preg_split('/\s+/u', trim($m[1])));
+            if (count($tokens) >= 2) {
+                return $this->splitArabicNameTokens($tokens);
+            }
+        }
+
         return ['last_name_ar' => '', 'first_name_ar' => ''];
+    }
+
+    /**
+     * Extract Arabic address from text
+     */
+    public function extractAddress(string $text): string
+    {
+        $patterns = [
+            '/(?:العنوان|العنوان\s+الكامل)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s0-9\-\,\.]+)/u',
+            '/(?:الشارع|زنقة|دوار|حي|طريق)\s+([\x{0600}-\x{06FF}\s0-9]+)/u',
+            '/(?:المدينة|المنطقة)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]+)/u',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match)) {
+                $address = trim($match[1]);
+                if (mb_strlen($address, 'UTF-8') > 3) {
+                    return $this->normalizeArabic($address);
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Extract Arabic date from text
+     */
+    public function extractDate(string $text): ?string
+    {
+        $patterns = [
+            '/(\d{2})\s*[\/\-\.]\s*(\d{2})\s*[\/\-\.]\s*(\d{4})/',
+            '/(\d{2})\s+(\d{2})\s+(\d{4})/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match)) {
+                return "{$match[3]}-{$match[2]}-{$match[1]}";
+            }
+        }
+
+        // Arabic format: يوم DD شهر MM سنة YYYY
+        if (preg_match('/(?:يوم|بتاريخ)\s*(\d{1,2})\s*(?:شهر)?\s*(\d{1,2})\s*(?:سنة)?\s*(\d{4})/u', $text, $match)) {
+            return "{$match[3]}-{$match[2]}-{$match[1]}";
+        }
+
+        return null;
+    }
+
+    /**
+     * Helper to split filtered tokens into last_name and first_name,
+     * handling common Arabic compound name prefixes (عبد, آيت, بن, الدين).
+     */
+    private function splitArabicNameTokens(array $tokens): array
+    {
+        if (count($tokens) === 1) {
+            return ['last_name_ar' => $tokens[0], 'first_name_ar' => ''];
+        }
+
+        // Handle compound family name prefixes
+        $firstNormalized = $this->normalizeArabic($tokens[0]);
+
+        if (isset($this->normalizedPrefixes[$firstNormalized]) && isset($tokens[1])) {
+            $secondNormalized = $this->normalizeArabic($tokens[1]);
+            
+            // Handle double prefix like "آيت بن"
+            if (isset($this->normalizedPrefixes[$secondNormalized]) && isset($tokens[2])) {
+                $lastName = $tokens[0] . ' ' . $tokens[1] . ' ' . $tokens[2];
+                $firstName = implode(' ', array_slice($tokens, 3));
+            } else {
+                $lastName = $tokens[0] . ' ' . $tokens[1];
+                $firstName = implode(' ', array_slice($tokens, 2));
+            }
+        } else {
+            // Last token is often the first name in Arabic context
+            $lastName = $tokens[0];
+            $firstName = implode(' ', array_slice($tokens, 1));
+        }
+
+        // Clean up empty first name
+        if (empty(trim($firstName))) {
+            $firstName = '';
+        }
+
+        return [
+            'last_name_ar'  => trim($lastName),
+            'first_name_ar' => trim($firstName),
+        ];
+    }
+
+    /**
+     * Check if text contains Arabic script
+     */
+    public function hasArabicScript(string $text): bool
+    {
+        return preg_match('/[\x{0600}-\x{06FF}]/u', $text) === 1;
+    }
+
+    /**
+     * Extract Arabic words from text
+     */
+    public function extractArabicWords(string $text): array
+    {
+        preg_match_all('/[\x{0600}-\x{06FF}]+/u', $text, $matches);
+        return $matches[0] ?? [];
+    }
+
+    /**
+     * Remove Arabic diacritics (Tashkeel)
+     */
+    public function removeDiacritics(string $text): string
+    {
+        return preg_replace('/[\x{064B}-\x{0652}]/u', '', $text);
+    }
+
+    /**
+     * Detect if a string is likely an Arabic name
+     */
+    public function isLikelyArabicName(string $text): bool
+    {
+        $text = trim($text);
+        if (empty($text)) return false;
+        
+        // Check for Arabic script
+        if (!$this->hasArabicScript($text)) return false;
+        
+        // Check length (Arabic names are usually 2-5 words)
+        $words = preg_split('/\s+/u', $text);
+        if (count($words) < 1 || count($words) > 6) return false;
+        
+        // Filter tokens
+        $filtered = $this->filterTokens($words);
+        return count($filtered) >= 1;
     }
 }

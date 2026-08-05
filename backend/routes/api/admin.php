@@ -228,7 +228,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
 
 
-    Route::post('deliberations/apply-rachat', [GradeController::class, 'applyRachat']);
+    Route::post('deliberations/apply-rachat', [DeliberationController::class, 'applyRachat']);
+    Route::get('deliberations/export-pv-rachat', [DeliberationController::class, 'exportRattrapage']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
 
 

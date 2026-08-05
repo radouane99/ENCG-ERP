@@ -25,9 +25,11 @@ class SuspiciousLoginAlert extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $name = $notifiable->first_name ?? $notifiable->name ?? 'Utilisateur';
+
         return (new MailMessage)
                     ->subject('Alerte de Sécurité - Nouvelle connexion détectée')
-                    ->greeting("Bonjour {$notifiable->first_name},")
+                    ->greeting("Bonjour {$name},")
                     ->line("Nous avons détecté une connexion à votre compte depuis une nouvelle adresse IP ({$this->ipAddress}).")
                     ->line('Si vous êtes à l\'origine de cette connexion, vous pouvez ignorer ce message.')
                     ->line('Si vous ne reconnaissez pas cette activité, veuillez modifier votre mot de passe immédiatement et contacter l\'administration.')

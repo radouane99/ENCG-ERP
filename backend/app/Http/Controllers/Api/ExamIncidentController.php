@@ -3,244 +3,175 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\Assessment;
+use App\Models\Exam;
 use App\Models\ExamIncident;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use App\Models\ExamSeating;
+use App\Models\Filiere;
+use App\Models\Grade;
+use App\Models\Module;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ExamIncidentController extends Controller
 {
     /**
-     * Helper to ensure database table columns exist
-     */
-    private function ensureSchema()
-    {
-        try {
-            if (!Schema::hasColumn('exam_incidents', 'status')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS status VARCHAR(255) DEFAULT 'pending'");
-            }
-            if (!Schema::hasColumn('exam_incidents', 'hearing_date')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS hearing_date VARCHAR(255) NULL");
-            }
-            if (!Schema::hasColumn('exam_incidents', 'hearing_room')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS hearing_room VARCHAR(255) NULL");
-            }
-            if (!Schema::hasColumn('exam_incidents', 'decision')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS decision TEXT NULL");
-            }
-            if (!Schema::hasColumn('exam_incidents', 'sanction_scope')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS sanction_scope VARCHAR(255) NULL");
-            }
-            if (!Schema::hasColumn('exam_incidents', 'confiscated_items')) {
-                DB::statement("ALTER TABLE exam_incidents ADD COLUMN IF NOT EXISTS confiscated_items VARCHAR(255) NULL");
-            }
-            if (!Schema::hasColumn('exams', 'is_locked')) {
-                DB::statement("ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE");
-            }
-            if (!Schema::hasColumn('exams', 'locked_at')) {
-                DB::statement("ALTER TABLE exams ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP NULL");
-            }
-        } catch (\Throwable $e) {}
-    }
-
-    /**
-     * Display a listing of incidents for Discipline Council from Real Database.
+     * Liste des incidents.
      */
     public function index(Request $request): JsonResponse
     {
-        $this->ensureSchema();
+        $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter']);
 
-        $query = ExamIncident::with(['exam.module.filiere', 'exam.session', 'student.user', 'reporter']);
-
-        if ($request->has('session_id')) {
-            $query->whereHas('exam', function ($q) use ($request) {
-                $q->where('exam_session_id', $request->session_id);
-            });
+        if ($request->filled('session_id')) {
+            $query->whereHas('exam', fn($q) => $q->where('exam_session_id', $request->session_id));
         }
 
-        if ($request->has('exam_id')) {
+        if ($request->filled('exam_id')) {
             $query->where('exam_id', $request->exam_id);
         }
 
-        $incidents = $query->orderBy('created_at', 'desc')->get();
-
-        $mappedData = $incidents->map(function ($inc) {
+        $incidents = $query->latest()->get()->map(function ($inc) {
             $student = $inc->student;
-            $user = $student->user ?? null;
-            $exam = $inc->exam;
-            $module = $exam->module ?? null;
+            $user    = $student->user ?? null;
+            $exam    = $inc->exam;
+            $module  = $exam->module ?? null;
 
             return [
-                'id' => $inc->id,
-                'student' => [
-                    'id' => $inc->student_id,
+                'id'                => $inc->id,
+                'student'           => [
+                    'id'         => $inc->student_id,
                     'first_name' => $student->first_name ?? $user->name ?? 'Étudiant',
-                    'last_name' => $student->last_name ?? '',
-                    'cne' => $student->cne ?? 'N/A',
-                    'apogee' => $student->apogee ?? $student->cne ?? 'N/A',
-                    'email' => $user->email ?? 'etudiant@encg-fes.ac.ma',
-                    'filiere' => $module->filiere->name ?? 'ENCG Grande École S4',
-                    'guardian_email' => 'tuteur.' . strtolower($student->last_name ?? 'tuteur') . '@gmail.com'
+                    'last_name'  => $student->last_name ?? '',
+                    'cne'        => $student->cne ?? 'N/A',
+                    'email'      => $user->email ?? 'N/A',
+                    'filiere'    => $module->filiere->name ?? 'N/A',
                 ],
-                'module_name' => $module->name ?? 'Management Stratégique',
-                'exam_date' => $exam->exam_date ?? ($inc->created_at ? $inc->created_at->format('Y-m-d') : date('Y-m-d')),
-                'type' => $inc->type === 'fraude' ? '🚨 Fraude (Examen)' : ucfirst($inc->type),
-                'description' => $inc->description ?? 'Incident d\'examen',
-                'confiscated_items' => $inc->confiscated_items ?? '',
-                'severity' => $inc->type === 'fraude' ? 'high' : 'medium',
-                'status' => $inc->status ?? 'pending',
-                'hearing_date' => $inc->hearing_date,
-                'hearing_room' => $inc->hearing_room,
-                'decision' => $inc->decision,
-                'sanction_scope' => $inc->sanction_scope,
-                'created_at' => $inc->created_at ? $inc->created_at->format('Y-m-d') : date('Y-m-d')
+                'module_name'       => $module->name ?? 'N/A',
+                'exam_date'         => $exam->exam_date ?? $inc->created_at?->format('Y-m-d'),
+                'type'              => $inc->type === 'fraude' ? '🚨 Fraude' : ucfirst($inc->type),
+                'description'       => $inc->description,
+                'confiscated_items' => $inc->confiscated_items,
+                'severity'          => $inc->type === 'fraude' ? 'high' : 'medium',
+                'status'            => $inc->status ?? 'pending',
+                'hearing_date'      => $inc->hearing_date,
+                'hearing_room'      => $inc->hearing_room,
+                'decision'          => $inc->decision,
+                'sanction_scope'    => $inc->sanction_scope,
+                'created_at'        => $inc->created_at?->format('Y-m-d'),
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $mappedData
+            'data'    => $incidents,
         ]);
     }
 
     /**
-     * Store a newly created incident in storage.
+     * Créer un incident.
      */
     public function store(Request $request): JsonResponse
     {
-        $this->ensureSchema();
-
         $validated = $request->validate([
-            'exam_id' => 'required|exists:exams,id',
-            'student_id' => 'required|exists:students,id',
-            'type' => 'required|string',
-            'description' => 'nullable|string',
-            'confiscated_items' => 'nullable|string'
+            'exam_id'           => 'required|exists:exams,id',
+            'student_id'        => 'required|exists:students,id',
+            'type'              => 'required|string',
+            'description'       => 'nullable|string',
+            'confiscated_items' => 'nullable|string',
         ]);
 
-        $exam = \App\Models\Exam::find($validated['exam_id']);
-        if ($exam && $exam->is_locked) {
-            return response()->json([
-                'success' => false,
-                'message' => '🔒 Ce PV d\'examen est scellé. Aucun incident ne peut être ajouté après scellement.'
-            ], 403);
+        $exam = Exam::find($validated['exam_id']);
+        if ($exam?->is_locked) {
+            return response()->json(['success' => false, 'message' => '🔒 PV scellé. Aucun incident ne peut être ajouté.'], 403);
         }
 
         $incident = ExamIncident::create([
-            'exam_id' => $validated['exam_id'],
-            'student_id' => $validated['student_id'],
-            'reported_by' => $request->user()->id ?? null,
-            'type' => $validated['type'],
-            'description' => $validated['description'] ?? null,
+            'exam_id'           => $validated['exam_id'],
+            'student_id'        => $validated['student_id'],
+            'reported_by'       => $request->user()?->id,
+            'type'              => $validated['type'],
+            'description'       => $validated['description'] ?? null,
             'confiscated_items' => $validated['confiscated_items'] ?? null,
-            'status' => 'pending'
+            'status'            => 'pending',
         ]);
 
-        // 🚨 ENCG AUTOMATIC SANCTION RULE FOR FRAUD:
-        // If type is 'fraude', automatically assign 0.00 / 20 note with decision 'FRAUDE' to the student's module
-        if ($validated['type'] === 'fraude') {
-            $exam = \App\Models\Exam::find($validated['exam_id']);
-            if ($exam && $exam->module_id) {
-                $assessment = \App\Models\Assessment::where('module_id', $exam->module_id)->first();
-                if (!$assessment) {
-                    $assessment = \App\Models\Assessment::create([
-                        'module_id' => $exam->module_id,
-                        'name' => 'Examen Final',
-                        'type' => 'examen',
-                        'weight' => 100
-                    ]);
-                }
-                \App\Models\Grade::updateOrCreate(
-                    [
-                        'student_id' => $validated['student_id'],
-                        'assessment_id' => $assessment->id,
-                    ],
-                    [
-                        'note' => 0.00,
-                        'absent' => false,
-                        'is_fraud' => true,
-                        'decision' => 'FRAUDE',
-                        'comments' => 'Règle ENCG : Note 0.00 appliquée d\'office pour motif de FRAUDE — Dossier transmis au Conseil de Discipline'
-                    ]
-                );
+        // Sanction automatique pour fraude
+        if ($validated['type'] === 'fraude' && $exam?->module_id) {
+            $assessment = Assessment::firstOrCreate(
+                ['module_id' => $exam->module_id, 'type' => 'examen'],
+                ['weight' => 100]
+            );
 
-                try {
-                    DB::table('module_validations')->updateOrInsert(
-                        ['student_id' => $validated['student_id'], 'module_id' => $exam->module_id],
-                        ['note' => 0.00, 'decision' => 'FRAUDE', 'updated_at' => now()]
-                    );
-                } catch (\Throwable $e) {}
-            }
+            Grade::updateOrCreate(
+                ['student_id' => $validated['student_id'], 'assessment_id' => $assessment->id],
+                ['value' => 0.00, 'absent' => false]
+            );
 
-            // Update seating presence status
-            DB::table('exam_seatings')
-                ->where('exam_id', $validated['exam_id'])
+            ExamSeating::where('exam_id', $validated['exam_id'])
                 ->where('student_id', $validated['student_id'])
-                ->update(['is_present' => false, 'updated_at' => now()]);
+                ->update(['is_present' => false]);
         }
-
 
         return response()->json([
             'success' => true,
-            'message' => '🚨 Incident de FRAUDE enregistré avec succès ! La note 0.00/20 avec motif "FRAUDE" a été automatiquement appliquée au PV.',
-            'data' => $incident
+            'message' => 'Incident enregistré avec succès.',
+            'data'    => $incident,
         ], 201);
     }
 
     /**
-     * Convoke student to Disciplinary Hearing (Update DB)
+     * Convoquer au conseil de discipline.
      */
     public function convoke(Request $request, int $id): JsonResponse
     {
-        $this->ensureSchema();
         $incident = ExamIncident::findOrFail($id);
 
-        $incident->status = 'convoked';
-        $incident->hearing_date = $request->input('hearing_date', date('Y-m-d à 10h00'));
-        $incident->hearing_room = $request->input('hearing_room', 'Salle des Actes — ENCG Fès');
-        $incident->save();
+        $incident->update([
+            'status'       => 'convoked',
+            'hearing_date' => $request->input('hearing_date', date('Y-m-d à 10h00')),
+            'hearing_room' => $request->input('hearing_room', 'Salle des Actes — ENCG Fès'),
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => '✉️ Convocation enregistrée avec succès dans la base de données !',
-            'data' => $incident
+            'message' => 'Convocation enregistrée.',
+            'data'    => $incident,
         ]);
     }
 
     /**
-     * Pronounce Disciplinary Council Decision (Update DB & Apply Grades)
+     * Prononcer la décision du conseil de discipline.
      */
     public function decide(Request $request, int $id): JsonResponse
     {
-        $this->ensureSchema();
         $incident = ExamIncident::findOrFail($id);
-
         $sanction = $request->input('sanction', 'module');
-        $observations = $request->input('observations', 'Délibération du Conseil de Discipline');
 
-        $incident->status = 'resolved';
-        $incident->sanction_scope = $sanction;
-        $incident->decision = $sanction === 'module'
-            ? 'Note 0.00/20 attribuée d\'office au module'
-            : ($sanction === 'semestre'
-                ? 'Note 0.00/20 étendue à l\'ensemble des modules du semestre S1/S2'
-                : ($sanction === 'blame'
-                    ? 'Blâme officiel avec inscription au dossier'
-                    : 'Exclusion temporaire de 1 an universitaire'));
-        $incident->hearing_notes = $observations;
-        $incident->save();
+        $decisionText = match ($sanction) {
+            'semestre' => 'Note 0.00/20 étendue à tous les modules du semestre',
+            'blame'    => 'Blâme officiel avec inscription au dossier',
+            'annee'    => 'Exclusion temporaire de 1 an',
+            default    => 'Note 0.00/20 attribuée au module',
+        };
 
-        // If sanction is semestre, update ALL module grades for this student to 0.00
+        $incident->update([
+            'status'         => 'resolved',
+            'sanction_scope' => $sanction,
+            'decision'       => $decisionText,
+        ]);
+
+        // Appliquer la sanction au semestre entier
         if ($sanction === 'semestre') {
-            $exam = \App\Models\Exam::find($incident->exam_id);
-            if ($exam && $exam->module && $exam->module->semester_id) {
-                $moduleIds = \App\Models\Module::where('semester_id', $exam->module->semester_id)->pluck('id');
-                $assessmentIds = \App\Models\Assessment::whereIn('module_id', $moduleIds)->pluck('id');
+            $exam = Exam::find($incident->exam_id);
+            if ($exam?->module) {
+                $moduleIds = Module::where('semester_id', $exam->module->semester_id)->pluck('id');
+                $assessmentIds = Assessment::whereIn('module_id', $moduleIds)->pluck('id');
+
                 foreach ($assessmentIds as $assId) {
-                    \App\Models\Grade::updateOrCreate(
+                    Grade::updateOrCreate(
                         ['student_id' => $incident->student_id, 'assessment_id' => $assId],
-                        ['note' => 0.00, 'is_fraud' => true, 'decision' => 'FRAUDE']
+                        ['value' => 0.00, 'absent' => false]
                     );
                 }
             }
@@ -248,161 +179,94 @@ class ExamIncidentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => '⚖️ Décision du Conseil de Discipline enregistrée et appliquée dans la BDD !',
-            'data' => $incident
+            'message' => 'Décision enregistrée et appliquée.',
+            'data'    => $incident,
         ]);
     }
 
     /**
-     * Real DB Exam Analytics & Cartography
-     */
-    public function examAnalytics(Request $request): JsonResponse
-    {
-        $totalExams = DB::table('exams')->count();
-        if ($totalExams === 0) $totalExams = 142;
-
-        $totalSeatings = DB::table('exam_seatings')->count();
-        $presentSeatings = DB::table('exam_seatings')->where('is_present', true)->count();
-        $absentSeatings = DB::table('exam_seatings')->where('is_present', false)->count();
-
-        $presenceRate = $totalSeatings > 0 ? round(($presentSeatings / $totalSeatings) * 100, 1) : 94.2;
-
-        $totalIncidents = DB::table('exam_incidents')->count();
-
-        $byFiliere = DB::table('filieres')
-            ->select('name')
-            ->get()
-            ->map(function ($f, $idx) {
-                return [
-                    'name' => $f->name,
-                    'presence' => round(94 + ($idx % 5) * 1.1, 1),
-                    'absence' => round(6 - ($idx % 5) * 1.1, 1),
-                    'fraudes' => $idx % 3
-                ];
-            });
-
-        if ($byFiliere->isEmpty()) {
-            $byFiliere = [
-                ['name' => 'ENCG Grande École', 'presence' => 96.1, 'absence' => 3.9, 'fraudes' => 4],
-                ['name' => 'Master Audit & Contrôle', 'presence' => 98.4, 'absence' => 1.6, 'fraudes' => 1],
-                ['name' => 'Master Marketing Digital', 'presence' => 95.0, 'absence' => 5.0, 'fraudes' => 2],
-                ['name' => 'Master Management RH', 'presence' => 97.2, 'absence' => 2.8, 'fraudes' => 1],
-                ['name' => 'Executive Master Finance', 'presence' => 91.5, 'absence' => 8.5, 'fraudes' => 0]
-            ];
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'overview' => [
-                    'total_exams' => $totalExams,
-                    'total_students_convoked' => $totalSeatings > 0 ? $totalSeatings : 3450,
-                    'average_presence_rate' => $presenceRate,
-                    'total_absences' => $absentSeatings > 0 ? $absentSeatings : 201,
-                    'total_incidents' => $totalIncidents > 0 ? $totalIncidents : 12
-                ],
-                'by_filiere' => $byFiliere,
-                'by_timeslot' => [
-                    ['time' => '08h30 - 10h30 (Matin 1)', 'absence_rate' => 6.8, 'retard_rate' => 4.2],
-                    ['time' => '11h00 - 13h00 (Matin 2)', 'absence_rate' => 3.1, 'retard_rate' => 1.8],
-                    ['time' => '14h30 - 16h30 (Apremo 1)', 'absence_rate' => 4.5, 'retard_rate' => 2.1],
-                    ['time' => '17h00 - 19h00 (Apremo 2)', 'absence_rate' => 7.9, 'retard_rate' => 5.4]
-                ],
-                'by_room' => [
-                    ['room' => 'Amphi A', 'convoked' => 420, 'absents' => 18, 'fraudes' => 3],
-                    ['room' => 'Amphi B', 'convoked' => 380, 'absents' => 12, 'fraudes' => 2],
-                    ['room' => 'Amphi C', 'convoked' => 390, 'absents' => 22, 'fraudes' => 4],
-                    ['room' => 'Salle 12 (Bloc 2)', 'convoked' => 60, 'absents' => 4, 'fraudes' => 1],
-                    ['room' => 'Salle 14 (Bloc 2)', 'convoked' => 60, 'absents' => 2, 'fraudes' => 0]
-                ]
-            ]
-        ]);
-    }
-
-    /**
-     * Download official PDF Procès-Verbal for an incident.
+     * Télécharger le PDF du PV d'incident.
      */
     public function downloadPdf(int $id)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user', 'reporter'])->findOrFail($id);
-        
-        $pdf = \PDF::loadView('pdf.exam_incident_pv', compact('incident'));
+        $pdf = Pdf::loadView('pdf.exam_incident_pv', compact('incident'));
         return $pdf->download("PV_Incident_{$incident->id}.pdf");
     }
 
     /**
-     * Lock PV and generate SHA-256 Seal
+     * Verrouiller le PV et générer le scellé SHA-256.
      */
     public function lockPv(Request $request, int $id): JsonResponse
     {
-        $this->ensureSchema();
-        $exam = \App\Models\Exam::find($id);
-        $supervisorName = $request->input('supervisor_name', 'Administrateur ENCG');
+        $exam = Exam::findOrFail($id);
 
-        $seal = 'SHA256:ENCG-FES-' . strtoupper(substr(md5(now() . $id . $supervisorName), 0, 16));
+        $seal = 'SHA256:ENCG-FES-' . strtoupper(substr(md5(now() . $id), 0, 16));
 
-        if ($exam) {
-            $exam->is_locked = true;
-            $exam->locked_at = now();
-            $exam->save();
-        }
+        $exam->update(['is_locked' => true, 'locked_at' => now()]);
 
         return response()->json([
-            'success' => true,
-            'message' => '🔒 Procès-Verbal d\'examen verrouillé et scellé avec succès !',
-            'seal' => $seal,
-            'locked_at' => now()->toIso8601String()
+            'success'   => true,
+            'message'   => '🔒 PV scellé avec succès.',
+            'seal'      => $seal,
+            'locked_at' => now()->toIso8601String(),
         ]);
     }
 
     /**
-     * Return Global Institution Analytics for Dashboard
+     * Analytics des examens (données réelles).
+     */
+    public function examAnalytics(Request $request): JsonResponse
+    {
+        $totalExams     = Exam::count();
+        $totalSeatings  = ExamSeating::count();
+        $presentSeatings = ExamSeating::where('is_present', true)->count();
+        $totalIncidents = ExamIncident::count();
+
+        $byFiliere = Filiere::withCount(['modules'])->get()->map(function ($f) {
+            return [
+                'name'     => $f->name,
+                'presence' => 0,
+                'absence'  => 0,
+                'fraudes'  => ExamIncident::whereHas('exam.module', fn($q) => $q->where('filiere_id', $f->id))->count(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'overview' => [
+                    'total_exams'              => $totalExams,
+                    'total_students_convoked'  => $totalSeatings,
+                    'average_presence_rate'    => $totalSeatings > 0 ? round(($presentSeatings / $totalSeatings) * 100, 1) : 0,
+                    'total_absences'           => $totalSeatings - $presentSeatings,
+                    'total_incidents'          => $totalIncidents,
+                ],
+                'by_filiere' => $byFiliere,
+            ],
+        ]);
+    }
+
+    /**
+     * Analytics globales (données réelles).
      */
     public function globalAnalytics(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data' => [
+            'data'    => [
                 'document_requests' => [
-                    'total' => 482,
-                    'pending_count' => 14,
-                    'status_breakdown' => [
-                        ['name' => 'Délivrés', 'value' => 412],
-                        ['name' => 'En cours', 'value' => 56],
-                        ['name' => 'Rejetés', 'value' => 14]
-                    ],
-                    'monthly_trend' => [
-                        ['month' => 'Jan', 'count' => 45],
-                        ['month' => 'Fév', 'count' => 62],
-                        ['month' => 'Mar', 'count' => 88],
-                        ['month' => 'Avr', 'count' => 74],
-                        ['month' => 'Mai', 'count' => 95],
-                        ['month' => 'Juin', 'count' => 118]
-                    ]
+                    'total'          => \App\Models\DocumentRequest::count(),
+                    'pending_count'  => \App\Models\DocumentRequest::where('status', 'pending')->count(),
                 ],
                 'academic_projects' => [
-                    'total' => 124,
-                    'active_count' => 42,
-                    'completion_rate' => 88.5,
-                    'type_distribution' => [
-                        ['name' => 'PFE Master', 'value' => 45],
-                        ['name' => 'PFA Grande École', 'value' => 55],
-                        ['name' => 'Projets de Recherche', 'value' => 24]
-                    ]
+                    'total'        => \App\Models\FinalProject::count(),
+                    'active_count' => \App\Models\FinalProject::whereIn('status', ['in_progress', 'assigned'])->count(),
                 ],
                 'student_activity' => [
-                    'total_active' => 3450,
-                    'filiere_breakdown' => [
-                        ['name' => 'ENCG Grande École', 'value' => 2400],
-                        ['name' => 'Master Audit & Contrôle', 'value' => 350],
-                        ['name' => 'Master Marketing Digital', 'value' => 280],
-                        ['name' => 'Master Management RH', 'value' => 240],
-                        ['name' => 'Executive Master', 'value' => 180]
-                    ]
-                ]
-            ]
+                    'total_active' => \App\Models\Student::where('status', 'active')->count(),
+                ],
+            ],
         ]);
     }
 }
-
-

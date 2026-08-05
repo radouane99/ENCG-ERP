@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, CheckCircle2, FileText, Download, Mail, Edit3, 
+import {
+  User, CheckCircle2, FileText, Download, Mail, Edit3,
   Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
@@ -196,7 +196,7 @@ export default function CandidateDossierPortal() {
         {/* ── Banner Welcome Header ── */}
         <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#0f2863] via-blue-900 to-indigo-950 p-6 sm:p-10 text-white shadow-2xl border border-blue-800/40">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
-          
+
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-widest">
@@ -418,10 +418,10 @@ export default function CandidateDossierPortal() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPreviewModal({ 
-                      title: 'Baccalauréat Original (Scanné PDF)', 
-                      url: docFiles.bac?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`, 
-                      isPdf: true 
+                    onClick={() => setPreviewModal({
+                      title: 'Baccalauréat Original (Scanné PDF)',
+                      url: docFiles.bac?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`,
+                      isPdf: true
                     })}
                     className="flex items-center justify-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
                   >
@@ -461,10 +461,10 @@ export default function CandidateDossierPortal() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPreviewModal({ 
-                      title: 'Carte d\'Identité Nationale (CNIE PDF)', 
-                      url: docFiles.cnie?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`, 
-                      isPdf: true 
+                    onClick={() => setPreviewModal({
+                      title: 'Carte d\'Identité Nationale (CNIE PDF)',
+                      url: docFiles.cnie?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`,
+                      isPdf: true
                     })}
                     className="flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
                   >
@@ -513,10 +513,10 @@ export default function CandidateDossierPortal() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setPreviewModal({ 
-                        title: 'Photo d\'Identité Officielle (Format 35x45mm)', 
-                        url: docFiles.photo?.url, 
-                        isPdf: false 
+                      onClick={() => setPreviewModal({
+                        title: 'Photo d\'Identité Officielle (Format 35x45mm)',
+                        url: docFiles.photo?.url,
+                        isPdf: false
                       })}
                       className="flex items-center justify-center gap-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-extrabold px-4 py-3 rounded-xl transition-all cursor-pointer hover:scale-105"
                     >

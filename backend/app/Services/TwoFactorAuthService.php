@@ -5,31 +5,27 @@ namespace App\Services;
 use App\Models\User;
 use PragmaRX\Google2FA\Google2FA;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TwoFactorAuthService
 {
-    protected Google2FA $google2fa;
-
-    public function __construct()
-    {
-        $this->google2fa = new Google2FA();
-    }
+    public function __construct(
+        private Google2FA $google2fa = new Google2FA()
+    ) {}
 
     /**
-     * Generate a new 2FA secret key and recovery codes for a user.
-     * Returns setup data: QR code URL and recovery codes.
+     * Générer une clé secrète 2FA et des codes de récupération.
      */
     public function generateSetupData(User $user): array
     {
-        $secret = $this->google2fa->generateSecretKey();
+        $secret        = $this->google2fa->generateSecretKey();
         $recoveryCodes = $this->generateRecoveryCodes();
 
-        // Store encrypted secret temporarily (not confirmed yet)
         $user->update([
-            'two_factor_secret' => encrypt($secret),
-            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
-            'two_factor_confirmed_at' => null,
+            'two_factor_secret'          => encrypt($secret),
+            'two_factor_recovery_codes'  => encrypt(json_encode($recoveryCodes)),
+            'two_factor_confirmed_at'    => null,
         ]);
 
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
@@ -39,14 +35,14 @@ class TwoFactorAuthService
         );
 
         return [
-            'qr_code_url' => $qrCodeUrl,
-            'secret' => $secret,
+            'qr_code_url'    => $qrCodeUrl,
+            'secret'         => $secret,
             'recovery_codes' => $recoveryCodes,
         ];
     }
 
     /**
-     * Confirm and enable 2FA after user verifies with their authenticator app.
+     * Confirmer et activer la 2FA après vérification du code.
      */
     public function confirmAndEnable(User $user, string $code): bool
     {
@@ -54,37 +50,25 @@ class TwoFactorAuthService
             return false;
         }
 
-        $cleanCode = trim($code);
-        
-        // [AUDIT SEC-06] Master passcodes strictly prohibited in production
-        $isLocalDev = app()->environment(['local', 'testing']) && config('app.debug', false);
-        $isMaster = $isLocalDev && in_array($cleanCode, ['123456', '000000', '888888', '111111']);
-
-        try {
-            $secret = $this->getDecryptedSecret($user);
-            $valid = $isMaster || ($secret && $this->google2fa->verifyKey($secret, $cleanCode, 20));
-        } catch (\Exception $e) {
-            $valid = $isMaster;
-        }
-
-        \Log::info("2FA Confirmation Attempt", [
-            'user' => $user->email,
-            'valid' => $valid,
-            'server_time' => now()->toDateTimeString(),
-        ]);
+        $valid = $this->verifyTotp($user, $code);
 
         if ($valid) {
             $user->update([
-                'two_factor_enabled' => true,
-                'two_factor_confirmed_at' => now(),
+                'two_factor_enabled'       => true,
+                'two_factor_confirmed_at'  => now(),
             ]);
         }
+
+        Log::info('2FA Confirmation', [
+            'user'  => $user->email,
+            'valid' => $valid,
+        ]);
 
         return $valid;
     }
 
     /**
-     * Verify a TOTP code during login.
+     * Vérifier un code TOTP lors de la connexion.
      */
     public function verify(User $user, string $code): bool
     {
@@ -92,60 +76,51 @@ class TwoFactorAuthService
             return false;
         }
 
-        $cleanCode = trim($code);
-
-        // [AUDIT SEC-06] Master passcodes strictly prohibited in production environment
-        $isLocalDev = app()->environment(['local', 'testing']) && config('app.debug', false);
-        if ($isLocalDev && in_array($cleanCode, ['123456', '000000', '888888', '111111'])) {
+        // Vérifier le code TOTP
+        if ($this->verifyTotp($user, $code)) {
             return true;
         }
 
-        try {
-            // Check real Google Authenticator / Authy TOTP code
-            $secret = $this->getDecryptedSecret($user);
-            if ($secret && $this->google2fa->verifyKey($secret, $cleanCode, 20)) {
-                return true;
-            }
-        } catch (\Exception $e) {
-            \Log::warning("2FA verification error: " . $e->getMessage());
-        }
-
-        // Check recovery codes
-        return $this->verifyRecoveryCode($user, $cleanCode);
+        // Vérifier les codes de récupération
+        return $this->verifyRecoveryCode($user, $code);
     }
 
     /**
-     * Helper to safely retrieve 2FA secret whether encrypted or stored in plaintext.
-     */
-    private function getDecryptedSecret(User $user): ?string
-    {
-        if (!$user->two_factor_secret) {
-            return null;
-        }
-
-        try {
-            return decrypt($user->two_factor_secret);
-        } catch (\Throwable $e) {
-            // If stored in plaintext in DB (e.g. from seeders)
-            return $user->two_factor_secret;
-        }
-    }
-
-    /**
-     * Disable 2FA for a user.
+     * Désactiver la 2FA.
      */
     public function disable(User $user): void
     {
         $user->update([
-            'two_factor_enabled' => false,
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
+            'two_factor_enabled'         => false,
+            'two_factor_secret'          => null,
+            'two_factor_recovery_codes'  => null,
+            'two_factor_confirmed_at'    => null,
         ]);
     }
 
     /**
-     * Verify and consume a recovery code.
+     * Vérifier un code TOTP.
+     */
+    private function verifyTotp(User $user, string $code): bool
+    {
+        $cleanCode = trim($code);
+
+        // Master codes uniquement en développement
+        if ($this->isMasterCodeAllowed() && in_array($cleanCode, ['123456', '000000', '888888', '111111'])) {
+            return true;
+        }
+
+        try {
+            $secret = $this->getDecryptedSecret($user);
+            return $secret && $this->google2fa->verifyKey($secret, $cleanCode, 20);
+        } catch (\Exception $e) {
+            Log::warning('Erreur vérification 2FA: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Vérifier et consommer un code de récupération.
      */
     private function verifyRecoveryCode(User $user, string $code): bool
     {
@@ -153,12 +128,11 @@ class TwoFactorAuthService
             return false;
         }
 
-        $codes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $codes          = json_decode(decrypt($user->two_factor_recovery_codes), true);
         $normalizedCode = str_replace('-', '', strtoupper(trim($code)));
 
         foreach ($codes as $index => $storedCode) {
             if (hash_equals($storedCode, $normalizedCode)) {
-                // Consume the recovery code (remove it from list)
                 unset($codes[$index]);
                 $user->update([
                     'two_factor_recovery_codes' => encrypt(json_encode(array_values($codes))),
@@ -171,12 +145,35 @@ class TwoFactorAuthService
     }
 
     /**
-     * Generate a set of recovery codes.
+     * Décrypter la clé secrète 2FA.
+     */
+    private function getDecryptedSecret(User $user): ?string
+    {
+        if (!$user->two_factor_secret) {
+            return null;
+        }
+
+        try {
+            return decrypt($user->two_factor_secret);
+        } catch (\Throwable $e) {
+            // Si stocké en clair (seeders)
+            return $user->two_factor_secret;
+        }
+    }
+
+    /**
+     * Vérifier si les master codes sont autorisés.
+     */
+    private function isMasterCodeAllowed(): bool
+    {
+        return app()->environment(['local', 'testing']) && config('app.debug', false);
+    }
+
+    /**
+     * Générer des codes de récupération.
      */
     private function generateRecoveryCodes(int $count = 8): array
     {
-        return Collection::times($count, function () {
-            return strtoupper(Str::random(5) . '-' . Str::random(5));
-        })->toArray();
+        return Collection::times($count, fn() => strtoupper(Str::random(5) . '-' . Str::random(5)))->toArray();
     }
 }

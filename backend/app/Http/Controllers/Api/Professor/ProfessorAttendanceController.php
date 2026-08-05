@@ -3,18 +3,24 @@
 namespace App\Http\Controllers\Api\Professor;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Academic\StartAttendanceSessionRequest;
 use App\Http\Requests\Academic\ManualCallRequest;
-use App\Services\Academic\AttendanceService;
+use App\Http\Requests\Academic\StartAttendanceSessionRequest;
+use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\Student;
+use App\Services\Academic\AttendanceService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProfessorAttendanceController extends Controller
 {
-    public function __construct(private AttendanceService $attendanceService)
-    {
-    }
+    public function __construct(
+        private AttendanceService $attendanceService
+    ) {}
 
+    /**
+     * Démarrer une session de présence.
+     */
     public function startSession(StartAttendanceSessionRequest $request): JsonResponse
     {
         $session = $this->attendanceService->startSession(
@@ -25,11 +31,15 @@ class ProfessorAttendanceController extends Controller
         );
 
         return response()->json([
-            'message' => 'Attendance session started successfully',
-            'session' => $session
+            'success' => true,
+            'message' => 'Session de présence démarrée.',
+            'session' => $session,
         ], 201);
     }
 
+    /**
+     * Appel manuel d'un étudiant.
+     */
     public function manualCall(AttendanceSession $session, ManualCallRequest $request): JsonResponse
     {
         $record = $this->attendanceService->markPresence(
@@ -39,59 +49,58 @@ class ProfessorAttendanceController extends Controller
         );
 
         return response()->json([
-            'message' => 'Attendance marked',
-            'record' => $record
+            'success' => true,
+            'message' => 'Présence marquée.',
+            'record'  => $record,
         ]);
     }
 
+    /**
+     * Fermer une session de présence.
+     */
     public function closeSession(AttendanceSession $session): JsonResponse
     {
         $closedSession = $this->attendanceService->closeSession($session->id);
 
         return response()->json([
-            'message' => 'Attendance session closed',
-            'session' => $closedSession
+            'success' => true,
+            'message' => 'Session de présence fermée.',
+            'session' => $closedSession,
         ]);
-    public function scanQrCode(AttendanceSession $session, \Illuminate\Http\Request $request): JsonResponse
+    }
+
+    /**
+     * Scanner un QR code de présence.
+     */
+    public function scanQrCode(AttendanceSession $session, Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'token' => 'required|string'
+            'token' => 'required|string',
         ]);
 
-        // In a real scenario, the token would be decrypted/verified.
-        // For ENCG ERP V1, the token contains the student_id prefixed with "STU-"
         $tokenParts = explode('-', $validated['token']);
-        $studentId = count($tokenParts) > 1 ? (int)$tokenParts[1] : (int)$validated['token'];
+        $studentId  = count($tokenParts) > 1 ? (int) $tokenParts[1] : (int) $validated['token'];
 
-        // Check if student exists
-        $student = \App\Models\Student::with('user')->find($studentId);
+        $student = Student::with('user')->find($studentId);
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
-        // Mark presence
-        $record = $this->attendanceService->markPresence(
-            $session->id,
-            $studentId,
-            'present'
-        );
+        $record = $this->attendanceService->markPresence($session->id, $studentId, 'present');
 
-        // Check total absences for ENCG limits
-        $totalAbsences = \App\Models\AttendanceRecord::where('student_id', $studentId)
-            ->where('status', 'absent')
-            ->count();
+        $totalAbsences = Attendance::where('student_id', $studentId)->where('status', 'absent')->count();
 
         $warning = null;
         if ($totalAbsences >= 3) {
-            $warning = "Attention: L'étudiant a atteint $totalAbsences absences.";
+            $warning = "Attention : L'étudiant a atteint {$totalAbsences} absences.";
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Présence validée.',
+            'success'      => true,
+            'message'      => 'Présence validée.',
             'student_name' => $student->user->name ?? 'Étudiant',
-            'warning' => $warning,
-            'record' => $record
+            'warning'      => $warning,
+            'record'       => $record,
         ]);
     }
 }

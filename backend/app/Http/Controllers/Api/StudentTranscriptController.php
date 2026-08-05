@@ -3,80 +3,130 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
 use App\Models\Grade;
-use App\Models\Assessment;
+use App\Models\Module;
+use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentTranscriptController extends Controller
 {
     /**
-     * Generate PDF transcript for a student (admin access).
+     * Relevé de notes PDF (admin).
      */
-    public function generateForAdmin(Request $request, $studentId): Response
+    public function generateForAdmin(Request $request, int $studentId): Response
     {
         $student = Student::with(['user', 'registrations.filiere', 'registrations.academicYear'])
             ->findOrFail($studentId);
 
-        $semester = $request->query('semester', 'all');
-        $academicYearId = $request->query('academic_year_id');
-
-        $pdfContent = $this->buildPdf($student, $academicYearId, $semester);
-
-        $filename = 'Releve_Notes_' . strtoupper($student->user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
-        return $pdfContent->download($filename);
+        return $this->generatePdfResponse(
+            $student,
+            $request->query('academic_year_id'),
+            $request->query('semester', 'all')
+        );
     }
 
     /**
-     * Generate PDF transcript for the authenticated student.
+     * Relevé de notes PDF (étudiant connecté).
      */
     public function generateForStudent(Request $request): Response
     {
-        $user    = $request->user();
         $student = Student::with(['user', 'registrations.filiere', 'registrations.academicYear'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $semester = $request->query('semester', 'all');
-        $academicYearId = $request->query('academic_year_id');
-
-        $pdfContent = $this->buildPdf($student, $academicYearId, $semester);
-
-        $filename = 'Releve_Notes_' . strtoupper($user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
-        return $pdfContent->download($filename);
+        return $this->generatePdfResponse(
+            $student,
+            $request->query('academic_year_id'),
+            $request->query('semester', 'all')
+        );
     }
 
     /**
-     * Build the PDF using dompdf.
+     * Génère la réponse PDF.
      */
-    private function buildPdf(Student $student, ?string $academicYearId = null, string $semester = 'all')
+    private function generatePdfResponse(Student $student, ?string $academicYearId, string $semester): Response
     {
-        // Find the relevant registration (latest or by academic year)
+        $pdf = $this->buildPdf($student, $academicYearId, $semester);
+        $filename = 'Releve_Notes_' . strtoupper($student->user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Construit le PDF du relevé de notes.
+     */
+    private function buildPdf(Student $student, ?string $academicYearId, string $semester): Pdf
+    {
         $registration = $academicYearId
             ? $student->registrations->firstWhere('academic_year_id', $academicYearId)
             : $student->registrations->sortByDesc('id')->first();
 
-        $filiere = $registration?->filiere;
+        $filiere      = $registration?->filiere;
         $academicYear = $registration?->academicYear;
 
-        // Load all modules from this filiere
-        $modulesQuery = $filiere
-            ? \App\Models\Module::where('filiere_id', $filiere->id)->with(['assessments'])
-            : collect();
+        $modules = $this->getModulesForTranscript($filiere, $semester);
+        $transcriptRows = $this->buildTranscriptRows($student, $modules);
 
-        if ($filiere && $semester !== 'all') {
-            $modulesQuery->where(function($q) use ($semester) {
+        $gpa = $this->calculateGpa($transcriptRows);
+
+        $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y-m-d'));
+        $verifyUrl   = config('app.url', 'http://localhost:8000') . "/verify/transcript/{$verifyToken}";
+
+        $qrBase64 = base64_encode(QrCode::size(150)->generate($verifyUrl));
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : '';
+
+        return Pdf::loadView('pdf.transcript', [
+            'student'       => $student,
+            'filiere'       => $filiere,
+            'academic_year' => $academicYear,
+            'semester'      => strtoupper($semester),
+            'rows'          => $transcriptRows->values(),
+            'gpa'           => $gpa,
+            'logoBase64'    => $logoBase64,
+            'qrBase64'      => $qrBase64,
+            'verify_url'    => $verifyUrl,
+            'generated_at'  => now()->format('d/m/Y à H:i'),
+        ])
+        ->setPaper('a4', 'portrait')
+        ->setOptions([
+            'dpi'                  => 150,
+            'defaultFont'          => 'DejaVu Sans',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled'      => true,
+        ]);
+    }
+
+    /**
+     * Récupère les modules pour le relevé.
+     */
+    private function getModulesForTranscript($filiere, string $semester)
+    {
+        if (!$filiere) return collect();
+
+        $query = Module::where('filiere_id', $filiere->id)->with(['assessments']);
+
+        if ($semester !== 'all') {
+            $query->where(function ($q) use ($semester) {
                 $q->where('code', 'LIKE', "%{$semester}%")
                   ->orWhere('name', 'LIKE', "%{$semester}%");
             });
         }
 
-        $modules = $filiere ? $modulesQuery->get() : collect();
+        return $query->get();
+    }
 
-        // Build module-level transcript data
-        $transcriptRows = $modules->map(function ($module) use ($student) {
+    /**
+     * Construit les lignes du relevé pour un étudiant.
+     */
+    private function buildTranscriptRows(Student $student, $modules)
+    {
+        return $modules->map(function ($module) use ($student) {
             $assessments = $module->assessments->where('type', '!=', 'Rattrapage');
 
             $totalWeight  = 0;
@@ -106,82 +156,71 @@ class StudentTranscriptController extends Controller
 
             $moyenne = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
 
-            // Check rattrapage
-            $rattrapageAssessment = $module->assessments->first(fn($a) => strtolower($a->type) === 'rattrapage');
-            $rattrapageGrade = null;
-            if ($rattrapageAssessment) {
-                $rg = Grade::where('student_id', $student->id)
-                    ->where('assessment_id', $rattrapageAssessment->id)
-                    ->first();
-                if ($rg) {
-                    $rattrapageGrade = $rg->absent ? 0 : floatval($rg->value);
-                }
-            }
-
-            $moyenneFinale = $moyenne;
-            $decision = '–';
-
-            if ($moyenne !== null) {
-                if ($moyenne >= 10) {
-                    $decision = 'Validé';
-                } elseif ($moyenne < 6) {
-                    $decision = 'Non Validé';
-                } else {
-                    $decision = 'Rattrapage';
-                    if ($rattrapageGrade !== null) {
-                        $moyenneFinale = max($moyenne, $rattrapageGrade);
-                        $decision = $moyenneFinale >= 10 ? 'Validé (R)' : 'Non Validé';
-                    }
-                }
-            }
+            $rattrapageGrade = $this->getRattrapageGrade($student, $module);
+            $moyenneFinale   = $moyenne;
+            $decision        = $this->determineTranscriptDecision($moyenne, $rattrapageGrade, $moyenneFinale);
 
             return [
-                'module'          => $module->name,
-                'code'            => $module->code,
-                'credits'         => $module->credits ?? '–',
-                'grades_detail'   => $gradesDetail,
-                'moyenne'         => $moyenne,
-                'rattrapage'      => $rattrapageGrade,
-                'moyenne_finale'  => $moyenneFinale,
-                'decision'        => $decision,
+                'module'         => $module->name,
+                'code'           => $module->code,
+                'credits'        => $module->credits ?? '–',
+                'grades_detail'  => $gradesDetail,
+                'moyenne'        => $moyenne,
+                'rattrapage'     => $rattrapageGrade,
+                'moyenne_finale' => $moyenneFinale,
+                'decision'       => $decision,
             ];
         })->filter(fn($r) => $r['moyenne'] !== null || !empty($r['grades_detail']));
+    }
 
-        // Overall GPA
-        $moyennesFinales = $transcriptRows->pluck('moyenne_finale')->filter();
-        $gpa = $moyennesFinales->isNotEmpty() ? round($moyennesFinales->avg(), 2) : null;
+    /**
+     * Récupère la note de rattrapage.
+     */
+    private function getRattrapageGrade(Student $student, Module $module): ?float
+    {
+        $rattrapageAssessment = $module->assessments->first(
+            fn($a) => strtolower($a->type) === 'rattrapage'
+        );
 
-        // Generate verification token & QR Code URL
-        $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y-m-d'));
-        $verifyUrl = config('app.url', 'http://localhost:8000') . "/verify/transcript/{$verifyToken}";
-        
-        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate($verifyUrl);
-        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        if (!$rattrapageAssessment) return null;
 
-        $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+        $rg = Grade::where('student_id', $student->id)
+            ->where('assessment_id', $rattrapageAssessment->id)
+            ->first();
 
-        $data = [
-            'student'      => $student,
-            'filiere'      => $filiere,
-            'academic_year' => $academicYear,
-            'semester'     => strtoupper($semester),
-            'rows'         => $transcriptRows->values(),
-            'gpa'          => $gpa,
-            'logoPath'     => $logoPath,
-            'logoBase64'   => $logoBase64,
-            'qrBase64'     => $qrBase64,
-            'verify_url'   => $verifyUrl,
-            'generated_at' => now()->format('d/m/Y à H:i'),
-        ];
+        return $rg ? ($rg->absent ? 0 : floatval($rg->value)) : null;
+    }
 
-        return Pdf::loadView('pdf.transcript', $data)
-            ->setPaper('a4', 'portrait')
-            ->setOptions([
-                'dpi'                  => 150,
-                'defaultFont'          => 'DejaVu Sans',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled'      => true,
-            ]);
+    /**
+     * Détermine la décision du relevé.
+     */
+    private function determineTranscriptDecision(?float $moyenne, ?float $rattrapageGrade, ?float &$moyenneFinale): string
+    {
+        if ($moyenne === null) return '–';
+
+        if ($moyenne >= 10) return 'Validé';
+
+        if ($rattrapageGrade !== null) {
+            $rawAverage = max($moyenne, $rattrapageGrade);
+            if ($rawAverage >= 10) {
+                $moyenneFinale = min(12.00, round($rawAverage, 2));
+                return 'Validé (R)';
+            }
+            $moyenneFinale = round($rawAverage, 2);
+            return 'Non Validé';
+        }
+
+        if ($moyenne < 6) return 'Non Validé';
+
+        return 'Rattrapage';
+    }
+
+    /**
+     * Calcule la moyenne générale (GPA).
+     */
+    private function calculateGpa($transcriptRows): ?float
+    {
+        $moyennes = $transcriptRows->pluck('moyenne_finale')->filter();
+        return $moyennes->isNotEmpty() ? round($moyennes->avg(), 2) : null;
     }
 }

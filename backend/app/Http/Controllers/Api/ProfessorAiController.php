@@ -3,27 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\AI\ProfAiService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProfessorAiController extends Controller
 {
-    protected ProfAiService $profAiService;
-
-    public function __construct(ProfAiService $profAiService)
-    {
-        $this->profAiService = $profAiService;
-    }
+    public function __construct(
+        private ProfAiService $profAiService
+    ) {}
 
     /**
-     * AI Exam Generator for Professors.
+     * Générer un sujet d'examen par IA.
      */
     public function generateExam(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'module_id' => 'required|integer',
-            'type' => 'nullable|string'
+            'type'      => 'nullable|string',
         ]);
 
         $result = $this->profAiService->generateExamSubject(
@@ -35,41 +32,38 @@ class ProfessorAiController extends Controller
     }
 
     /**
-     * AI Class Analytics for Professors.
+     * Analytics de classe par IA.
      */
     public function getClassAnalytics(int $moduleId): JsonResponse
     {
-        $result = $this->profAiService->getClassAnalytics($moduleId);
-
-        return response()->json($result);
+        return response()->json($this->profAiService->getClassAnalytics($moduleId));
     }
 
     /**
-     * Professor AI Copilot Natural Language Query.
+     * Assistant IA pour professeurs.
      */
     public function copilotQuery(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'query' => 'required|string|min:2'
+            'query' => 'required|string|min:2',
         ]);
 
-        $profId = auth()->id() ?? 1;
-        $result = $this->profAiService->processProfQuery($validated['query'], $profId);
+        $result = $this->profAiService->processProfQuery($validated['query'], auth()->id() ?? 1);
 
         return response()->json([
             'success' => true,
-            'data' => $result
+            'data'    => $result,
         ]);
     }
 
     /**
-     * AI Automated Student Report / Homework Grading.
+     * Correction automatique de rapport par IA.
      */
     public function gradeReport(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'report_content' => 'required|string|min:10',
-            'rubric' => 'nullable|string'
+            'rubric'         => 'nullable|string',
         ]);
 
         $result = $this->profAiService->gradeReport(

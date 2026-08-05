@@ -2,148 +2,132 @@
 
 namespace App\Services;
 
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-use App\Models\Student;
 use App\Models\ExamSession;
-use App\Services\Core\PdfEngineService;
-
 use App\Models\GeneratedDocument;
+use App\Models\Student;
+use App\Services\Core\PdfEngineService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DocumentGeneratorService
 {
-    protected PdfEngineService $pdfEngine;
+    public function __construct(
+        private PdfEngineService $pdfEngine
+    ) {}
 
-    public function __construct(PdfEngineService $pdfEngine)
-    {
-        $this->pdfEngine = $pdfEngine;
-    }
     /**
-     * Helper to load the ENCG logo in Base64 for DomPDF.
+     * Logo ENCG en Base64.
      */
     private function getLogoBase64(): string
     {
         $path = public_path('images/encg_logo.png');
         if (file_exists($path)) {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $data = file_get_contents($path);
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            return 'data:image/' . pathinfo($path, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($path));
         }
         return '';
     }
 
     /**
-     * Generate a PDF for an exam convocation.
+     * Générer une convocation d'examen PDF.
      */
     public function generateConvocation(
-        Student $student, 
-        ExamSession $session, 
-        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
+        Student $student,
+        ExamSession $session,
+        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS",
         ?string $signatureBase64 = null
     ): string {
-        $token = Str::uuid()->toString();
+        $token     = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
-        $qrCodeSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
-        $qrCodeBase64 = base64_encode($qrCodeSvg);
+        $qrBase64  = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(120)->generate($verifyUrl));
 
         $data = [
-            'student' => $student,
-            'session' => $session,
-            'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
-            'logoBase64' => $this->getLogoBase64(),
-            'verifyUrl' => $verifyUrl,
-            'signatoryTitle' => $signatoryTitle,
-            'signatureBase64' => $signatureBase64
+            'student'         => $student,
+            'session'         => $session,
+            'qrBase64'        => $qrBase64,
+            'logoBase64'      => $this->getLogoBase64(),
+            'verifyUrl'       => $verifyUrl,
+            'signatoryTitle'  => $signatoryTitle,
+            'signatureBase64' => $signatureBase64,
         ];
 
-        $filename = "student_{$student->id}_" . time() . ".pdf";
+        $filename  = "student_{$student->id}_" . time() . ".pdf";
         $directory = "convocations/session_{$session->id}";
-        
-        $path = $this->pdfEngine->generateFromView('pdf.convocation', $data, $directory, $filename);
+        $path      = $this->pdfEngine->generateFromView('pdf.convocation', $data, $directory, $filename);
 
         GeneratedDocument::create([
-            'student_id' => $student->id,
-            'document_type' => 'convocation',
-            'file_path' => $path,
-            'verification_token' => $token,
-            'verification_url' => $verifyUrl,
-            'expires_at' => null
+            'student_id'          => $student->id,
+            'document_type'       => 'convocation',
+            'file_path'           => $path,
+            'verification_token'  => $token,
+            'verification_url'    => $verifyUrl,
         ]);
 
         return $path;
     }
 
     /**
-     * Generate an official grade transcript (Relevé de notes).
+     * Générer un relevé de notes PDF.
      */
     public function generateTranscript(
-        Student $student, 
+        Student $student,
         int $academicYearId,
-        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS", 
+        string $signatoryTitle = "LE DIRECTEUR DE L'ENCG FÈS",
         ?string $signatureBase64 = null
     ): string {
-        // Fetch all grades for this student.
-        // In a real scenario, grades could be filtered by the current academic year if a pivot/relation exists.
-        $grades = $student->grades()
-            ->with(['assessment.module'])
-            ->get();
-            
+        $grades = $student->grades()->with(['assessment.module'])->get();
+
         $formattedModules = [];
         $totalScore = 0;
-        $totalCoef = 0;
+        $totalCoef  = 0;
 
         foreach ($grades as $grade) {
-            if (!$grade->assessment || !$grade->assessment->module) continue;
-            
+            if (!$grade->assessment?->module) continue;
+
             $module = $grade->assessment->module;
-            $score = $grade->value;
-            $coef = $module->coefficient ?? 1;
-            
+            $score  = $grade->value;
+            $coef   = $module->coefficient ?? 1;
+
             $formattedModules[] = [
-                'code' => $module->code ?? 'N/A',
-                'name' => $module->name,
-                'score' => $score,
-                'is_validated' => $score >= 10
+                'code'         => $module->code ?? 'N/A',
+                'name'         => $module->name,
+                'score'        => $score,
+                'is_validated' => $score >= 10,
             ];
-            
+
             $totalScore += ($score * $coef);
-            $totalCoef += $coef;
+            $totalCoef  += $coef;
         }
-        
+
         $avgGrade = $totalCoef > 0 ? ($totalScore / $totalCoef) : 0;
-        
-        $token = Str::uuid()->toString();
+
+        $token     = Str::uuid()->toString();
         $verifyUrl = config('app.url') . "/api/documents/verify/{$token}";
-        $qrCodeSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
-        $qrCodeBase64 = base64_encode($qrCodeSvg);
+        $qrBase64  = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(120)->generate($verifyUrl));
 
         $data = [
-            'student' => $student,
-            'modules' => $formattedModules,
-            'avgGrade' => $avgGrade,
-            'year' => '2025/2026', // Ideally fetched from DB
-            'date' => now()->format('d/m/Y'),
-            'qrBase64' => 'data:image/svg+xml;base64,' . $qrCodeBase64,
-            'logoBase64' => $this->getLogoBase64(),
-            'verifyUrl' => $verifyUrl,
-            'signatoryTitle' => $signatoryTitle,
-            'signatureBase64' => $signatureBase64
+            'student'         => $student,
+            'modules'         => $formattedModules,
+            'avgGrade'        => $avgGrade,
+            'year'            => config('app.academic_year', '2025/2026'),
+            'date'            => now()->format('d/m/Y'),
+            'qrBase64'        => $qrBase64,
+            'logoBase64'      => $this->getLogoBase64(),
+            'verifyUrl'       => $verifyUrl,
+            'signatoryTitle'  => $signatoryTitle,
+            'signatureBase64' => $signatureBase64,
         ];
 
-        $filename = "student_{$student->id}_" . time() . ".pdf";
+        $filename  = "student_{$student->id}_" . time() . ".pdf";
         $directory = "transcripts/year_{$academicYearId}";
-        
-        $path = $this->pdfEngine->generateFromView('pdf.releve_notes', $data, $directory, $filename);
+        $path      = $this->pdfEngine->generateFromView('pdf.releve_notes', $data, $directory, $filename);
 
         GeneratedDocument::create([
-            'student_id' => $student->id,
-            'document_type' => 'releve_notes',
-            'file_path' => $path,
-            'verification_token' => $token,
-            'verification_url' => $verifyUrl,
-            'expires_at' => null
+            'student_id'          => $student->id,
+            'document_type'       => 'releve_notes',
+            'file_path'           => $path,
+            'verification_token'  => $token,
+            'verification_url'    => $verifyUrl,
         ]);
 
         return $path;

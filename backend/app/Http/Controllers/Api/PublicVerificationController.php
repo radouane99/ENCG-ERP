@@ -3,40 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\GeneratedDocument;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\ModulePvSignature;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class PublicVerificationController extends Controller
 {
     /**
-     * Verifies a document based on its unique verification token.
-     * This route is intentionally public and requires no authentication.
+     * Vérifier un document par son token.
      */
     public function verifyDocument(Request $request, string $documentId): JsonResponse
     {
-        // Lookup in the generated_documents table by verification_token
-        $document = DB::table('generated_documents')
-            ->join('students', 'generated_documents.student_id', '=', 'students.id')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->where('generated_documents.verification_token', $documentId)
-            ->select(
-                'generated_documents.document_type',
-                'generated_documents.created_at',
-                'users.first_name',
-                'users.last_name',
-                'students.student_number'
-            )
+        $document = GeneratedDocument::with('student.user')
+            ->where('verification_token', $documentId)
             ->first();
 
-        if (!$document) {
+        if (!$document || !$document->student) {
             return response()->json([
                 'success' => false,
                 'message' => 'Document invalide, introuvable ou falsifié.',
             ], 404);
         }
 
-        // Log verification event
         activity()
             ->event('verified')
             ->withProperties([
@@ -44,30 +35,30 @@ class PublicVerificationController extends Controller
                 'user_agent'  => $request->userAgent(),
                 'document_id' => $documentId,
             ])
-            ->log('Document Verified via Public Portal');
+            ->log('Document vérifié via le portail public');
 
         return response()->json([
             'success' => true,
             'data'    => [
-                'document_type' => $document->document_type,
-                'student_name'  => strtoupper($document->last_name) . ' ' . $document->first_name,
-                'student_number'=> $document->student_number,
-                'issued_at'     => $document->created_at,
-                'status'        => 'Authentique',
-                'institution'   => 'ENCG Fès',
+                'document_type'  => $document->document_type,
+                'student_name'   => strtoupper($document->student->user->last_name) . ' ' . $document->student->user->first_name,
+                'student_number' => $document->student->student_number,
+                'issued_at'      => $document->created_at,
+                'status'         => 'Authentique',
+                'institution'    => 'ENCG Fès',
             ],
         ]);
     }
 
     /**
-     * Verifies a module PV signature.
+     * Vérifier la signature d'un PV de module.
      */
-    public function verifyModulePv(Request $request, $moduleId, $groupId): JsonResponse
+    public function verifyModulePv(Request $request, int $moduleId, int $groupId): JsonResponse
     {
-        $module = \App\Models\Module::with('filiere')->findOrFail($moduleId);
-        $group = \App\Models\Group::findOrFail($groupId);
+        $module = Module::with('filiere')->findOrFail($moduleId);
+        $group  = Group::findOrFail($groupId);
 
-        $signature = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+        $signature = ModulePvSignature::where('module_id', $moduleId)
             ->where('group_id', $groupId)
             ->with('signer')
             ->first();
@@ -75,7 +66,7 @@ class PublicVerificationController extends Controller
         if (!$signature) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ce procès-verbal de délibération n\'a pas encore été signé électroniquement ou validé.',
+                'message' => 'Ce PV n\'a pas encore été signé électroniquement.',
             ], 404);
         }
 
@@ -91,9 +82,8 @@ class PublicVerificationController extends Controller
                 'signed_at'     => $signature->signed_at->toIso8601String(),
                 'ip_address'    => $signature->ip_address,
                 'status'        => 'Authentique & Sécurisé (Signé)',
-                'fingerprint'   => $signature->digital_seal ?? hash('sha256', "pv-{$moduleId}-{$groupId}-{$signature->signed_at}")
+                'fingerprint'   => $signature->digital_seal ?? hash('sha256', "pv-{$moduleId}-{$groupId}-{$signature->signed_at}"),
             ],
         ]);
     }
 }
-

@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -41,11 +41,6 @@ class User extends Authenticatable implements HasMedia
         'two_factor_recovery_codes',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -76,6 +71,12 @@ class User extends Authenticatable implements HasMedia
     public function professor(): HasOne
     {
         return $this->hasOne(Professor::class);
+    }
+
+    // ✅ AJOUTÉ : Relation pour les disponibilités des professeurs
+    public function professorAvailabilities(): HasMany
+    {
+        return $this->hasMany(ProfessorAvailability::class);
     }
 
     public function uniqueIds(): array

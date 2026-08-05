@@ -269,14 +269,41 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const [rachatReason, setRachatReason] = useState('Repêchage accordé par le Jury de Délibération')
+  const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération')
+
+  // Helper : Télécharge un PDF via l'API client (avec token JWT) pour éviter l'erreur Unauthenticated
+  const downloadPdf = async (url: string, filename: string) => {
+    try {
+      // Strip domain and /api prefix if present so axios `api` instance adds Authorization headers
+      const cleanUrl = url.includes('/api/') ? url.substring(url.indexOf('/api/') + 4) : url
+      const res = await api.get(cleanUrl, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
+    } catch (err: any) {
+      toast.error('Erreur lors de la génération du PDF : ' + (err.response?.data?.message || err.message))
+    }
+  }
 
   const applyRachatMutation = useMutation({
     mutationFn: (data: any) => api.post('/deliberations/apply-rachat', data),
     onSuccess: (res) => {
-      toast.success(res.data.message || 'Rachat appliqué avec traçabilité juridique !')
+      const pvUrl = res.data.pv_rattrapage_url
+      toast.success(res.data.message || 'Rachat appliqué avec traçabilité juridique !', { duration: 5000 })
+      if (pvUrl) {
+        setTimeout(() => {
+          downloadPdf(pvUrl, `PV_Rachat_Etudiant_${selectedRachatStudent?.student_id || 'PV'}.pdf`)
+          toast.info('📋 PV de Rachat généré ! Téléchargez-le et faites-le signer par le Prof du Module, le Chef de Filière et le Chef de Département.', { duration: 8000 })
+        }, 800)
+      }
       setSelectedRachatStudent(null)
       queryClient.invalidateQueries({ queryKey: ['semester-pv'] })
+      queryClient.invalidateQueries({ queryKey: ['annual-compensation'] })
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Erreur lors de l’application du rachat')
@@ -330,10 +357,12 @@ export default function AdminGradesPVPage() {
   const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(
     moduleId ? 'module' : 'semestriel'
   )
+  const [selectedYearLevel, setSelectedYearLevel] = useState<number>(1)
   const [juryStatus, setJuryStatus] = useState<any>(null)
   const [loadingJury, setLoadingJury] = useState(false)
   const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([])
   const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null)
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false)
 
   const fetchJury = async () => {
     if (!selectedFiliere) return
@@ -355,25 +384,6 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const fetchAnnualCompensation = async () => {
-    if (!selectedFiliere) return
-    try {
-      const res = await api.get('/academic/deliberations/annual-compensation', {
-        params: { filiere_id: selectedFiliere, academic_year_id: 1 }
-      })
-      setAnnualCompensationData(res.data.data || [])
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  useEffect(() => {
-    fetchJury()
-    if (pvType === 'annuel') {
-      fetchAnnualCompensation()
-    }
-  }, [selectedFiliere, selectedSemester, pvType])
-
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
 
@@ -388,6 +398,25 @@ export default function AdminGradesPVPage() {
     }).then(res => res.data),
     enabled: !!moduleId,
   })
+
+  const fetchAnnualCompensation = async () => {
+    const targetFiliereId = selectedFiliere || pvData?.module?.filiere_id || filieres[0]?.id || 1
+    try {
+      const res = await api.get('/academic/deliberations/annual-compensation', {
+        params: { filiere_id: targetFiliereId, academic_year_id: 1, year_level: selectedYearLevel || 1 }
+      })
+      setAnnualCompensationData(res.data.data || res.data || [])
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  useEffect(() => {
+    fetchJury()
+    if (pvType === 'annuel') {
+      fetchAnnualCompensation()
+    }
+  }, [selectedFiliere, selectedSemester, selectedYearLevel, pvType, pvData])
 
   // Fetch full 7-module semester PV matrix
   const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
@@ -435,7 +464,7 @@ export default function AdminGradesPVPage() {
 
   // 🔍 Feature 4: Search & Quick Filters
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'v' | 'rat' | 'reserviste' | 'nv'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'v' | 'rat' | 'r' | 'reserviste' | 'nv'>('all')
 
   // 🛡️ Feature 5: Audit Trail Modal State
   const [showAuditModal, setShowAuditModal] = useState(false)
@@ -2077,11 +2106,30 @@ export default function AdminGradesPVPage() {
                   <textarea
                     value={rachatReason}
                     onChange={(e) => setRachatReason(e.target.value)}
-                    placeholder="Ex: Repêchage accordé par le Chef de Filière et le Président du Jury..."
+                    placeholder="Ex: Rachat accordé par le Chef de Filière et le Président du Jury..."
                     className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 min-h-[70px]"
                   />
                   <p className="text-[10px] text-slate-400 italic">
                     🔒 Enregistrement légal dans l'historique d'audit avec IP, horodatage et identité de l'utilisateur.
+                  </p>
+                </div>
+
+                {/* PV Rachat Generation Notice */}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-600 text-sm">📋</span>
+                    <span className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wide">PV de Rachat — Signatures Requises</span>
+                  </div>
+                  <p className="text-[10px] text-amber-800 dark:text-amber-300 font-bold leading-relaxed">
+                    La confirmation génère automatiquement un <strong>PV de Rachat officiel</strong> qui devra être signé par :
+                  </p>
+                  <ul className="text-[10px] text-amber-900 dark:text-amber-200 font-bold space-y-1 pl-3">
+                    <li>• <strong>Professeur du Module</strong> concerné ({selectedRachatStudent?.module || 'Module'})</li>
+                    <li>• <strong>Chef de Filière</strong> (ou Directeur des Études)</li>
+                    <li>• <strong>Chef de Département</strong> (si exigé par le règlement)</li>
+                  </ul>
+                  <p className="text-[9px] text-amber-700 dark:text-amber-400 font-medium italic">
+                    ⚠️ Le PV de Rachat sera disponible dès validation dans l'espace Signatures.
                   </p>
                 </div>
 
@@ -2107,7 +2155,7 @@ export default function AdminGradesPVPage() {
                     disabled={applyRachatMutation.isPending}
                     className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {applyRachatMutation.isPending ? 'Application...' : 'Confirmer & Valider (+0.32 pt)'}
+                    {applyRachatMutation.isPending ? 'Application...' : `Confirmer & Générer PV de Rachat (+${selectedRachatStudent?.needed_points || 0} pt)`}
                   </button>
                 </div>
               </div>
@@ -2207,15 +2255,670 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  if (isLoadingPV) {
+  const renderAnnualPVPage = () => {
+    const rawData: any = Array.isArray(annualCompensationData)
+      ? { students: annualCompensationData, modules: [] }
+      : (annualCompensationData || { students: [], modules: [] })
+
+    const annualStudents: any[] = rawData.students || []
+    const annualModules: any[] = rawData.modules || []
+
+    const totalAnnStudents = annualStudents.length
+    const validsAnn = annualStudents.filter((r: any) => r.decision === 'V').length
+    const compsAnn = annualStudents.filter((r: any) => r.decision === 'V.Comp').length
+    const dettesAnn = annualStudents.filter((r: any) => r.decision === 'PASS_DETTES').length
+    const ajsAnn = annualStudents.filter((r: any) => r.decision === 'AJ' || r.decision === 'FRAUDE').length
+    const passRateAnn = totalAnnStudents > 0 ? Math.round(((validsAnn + compsAnn + dettesAnn) / totalAnnStudents) * 1000) / 10 : 0
+    const averagesList = annualStudents.map((r: any) => Number(r.annual_average || 0)).filter(v => !isNaN(v))
+    const avgAnn = averagesList.length ? (averagesList.reduce((a, b) => a + b, 0) / averagesList.length).toFixed(2) : '0.00'
+
+    const oddSemLabel = rawData.odd_semester_label || annualStudents[0]?.odd_semester_label || `S${(selectedYearLevel * 2) - 1}`
+    const evenSemLabel = rawData.even_semester_label || annualStudents[0]?.even_semester_label || `S${selectedYearLevel * 2}`
+
+    const filteredAnnualData = annualStudents.filter((row: any) => {
+      const matchQuery =
+        !searchQuery ||
+        row.student_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        row.cne?.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchDecision =
+        statusFilter === 'all' ||
+        (statusFilter === 'v' && (row.decision === 'V' || row.decision === 'V.Comp')) ||
+        (statusFilter === 'r' && row.decision === 'PASS_DETTES') ||
+        (statusFilter === 'nv' && (row.decision === 'AJ' || row.decision === 'FRAUDE'))
+
+      return matchQuery && matchDecision
+    })
+
+    const aiSuggestions = (() => {
+      const suggestions: any[] = []
+      annualStudents.forEach((student: any) => {
+        const annAvg = Number(student.annual_average || 0)
+        const mods = student.modules_detail || []
+
+        // Case A: Amine Benziane case (Annual Avg >= 10.00, blocked by 1 eliminatory grade < 5.00)
+        const elimMods = mods.filter((m: any) => Number(m.final_grade) < 5.00)
+        if (annAvg >= 10.00 && elimMods.length > 0) {
+          elimMods.forEach((em: any) => {
+            const gap = (5.00 - Number(em.final_grade)).toFixed(2)
+            suggestions.push({
+              student_id: student.student_id,
+              student_name: student.student_name,
+              cne: student.cne,
+              type: 'elim_upgrade',
+              module_id: em.module_id,
+              module_code: em.code,
+              current_grade: em.final_grade,
+              needed_points: gap,
+              target_grade: '5.00',
+              badge_color: 'from-amber-500 to-amber-600',
+              impact: 'Validation de l\'Année par Compensation Globale (V.Comp) sans dettes !',
+              text: `🎯 Rachat Prioritaire : ${student.student_name} (${student.cne}) a une moyenne annuelle de ${annAvg}/20. Bloqué en Passage Dettes uniquement à cause de la note éliminatoire de ${em.final_grade}/20 sur ${em.code}. Un rachat de +${gap} pt porte sa note à 5.00/20, déclenchant la Compensation Annuelle (V.Comp) !`
+            })
+          })
+        }
+
+        // Case B: Annual Avg between 9.50 and 9.99 (close to 10.00)
+        if (annAvg >= 9.50 && annAvg < 10.00 && !student.has_fraud) {
+          const gapAnn = (10.00 - annAvg).toFixed(2)
+          const nearPassMod = mods.find((m: any) => Number(m.final_grade) >= 8.00 && Number(m.final_grade) < 10.00)
+          suggestions.push({
+            student_id: student.student_id,
+            student_name: student.student_name,
+            cne: student.cne,
+            type: 'annual_avg_upgrade',
+            module_id: nearPassMod?.module_id,
+            module_code: nearPassMod?.code || 'Moyenne Annuelle',
+            current_grade: annAvg,
+            needed_points: gapAnn,
+            target_grade: '10.00',
+            badge_color: 'from-indigo-500 to-indigo-600',
+            impact: 'Validation de l\'Année par Compensation Globale !',
+            text: `💡 Rachat Annuel : ${student.student_name} a une moyenne annuelle de ${annAvg}/20. Il manque seulement +${gapAnn} pt pour atteindre 10.00/20 et valider l'année par compensation !`
+          })
+        }
+
+        // Case C: Student has 3 NV modules in a semester, close to 10.00 on 1 module
+        if ((student.failed_count_s1 === 3 || student.failed_count_s2 === 3) && !student.has_fraud) {
+          const nearNVMod = mods.find((m: any) => Number(m.final_grade) >= 9.00 && Number(m.final_grade) < 10.00)
+          if (nearNVMod) {
+            const gapMod = (10.00 - Number(nearNVMod.final_grade)).toFixed(2)
+            suggestions.push({
+              student_id: student.student_id,
+              student_name: student.student_name,
+              cne: student.cne,
+              type: 'avoid_redoublement',
+              module_id: nearNVMod.module_id,
+              module_code: nearNVMod.code,
+              current_grade: nearNVMod.final_grade,
+              needed_points: gapMod,
+              target_grade: '10.00',
+              badge_color: 'from-rose-500 to-rose-600',
+              impact: 'Évite le Redoublement en basculant vers le Passage avec Dettes (Réserviste) !',
+              text: `⚠️ Rachat Anti-Redoublement : ${student.student_name} a 3 modules non validés. En accordant +${gapMod} pt sur ${nearNVMod.code} (actuellement ${nearNVMod.final_grade}/20), l'étudiant passe à 2 modules NV et évite le redoublement en basculant en Passage avec Dettes !`
+            })
+          }
+        }
+      })
+      return suggestions
+    })()
+
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
-        {renderSelectorBar()}
-        <div className="flex h-[40vh] items-center justify-center">
-          <Spinner size="lg" />
+      <div className="space-y-6 p-2 sm:p-4 md:p-6 w-full pb-24 animate-in fade-in duration-300">
+        {/* Top Bar with Selector */}
+        <div className="print:hidden">
+          {renderSelectorBar()}
         </div>
+
+        {/* Year Level Selector Tabs */}
+        <div className="bg-slate-900 text-white p-2 rounded-2xl flex items-center justify-between gap-2 flex-wrap shadow-lg border border-slate-800 print:hidden">
+          <div className="flex items-center gap-2 ps-3">
+            <Calendar className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-black uppercase tracking-wider text-slate-300">Niveau d'Études :</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { level: 1, label: '1ère Année (S1 + S2)' },
+              { level: 2, label: '2ème Année (S3 + S4)' },
+              { level: 3, label: '3ème Année (S5 + S6)' },
+              { level: 4, label: '4ème Année (S7 + S8)' },
+              { level: 5, label: '5ème Année (S9 + S10)' },
+            ].map((yr) => (
+              <button
+                key={yr.level}
+                onClick={() => setSelectedYearLevel(yr.level)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black uppercase transition-all cursor-pointer",
+                  selectedYearLevel === yr.level
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md scale-105"
+                    : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                )}
+              >
+                {yr.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Dedicated Header for Annual PV */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0f2863] via-indigo-900 to-blue-900 text-white p-6 rounded-3xl shadow-xl border border-indigo-500/20 print:hidden">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center font-black text-2xl text-amber-400 shrink-0">
+              🏆
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  Procès-Verbal Fusionné des 14 Modules ({oddSemLabel} + {evenSemLabel})
+                </span>
+                <span className="px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-white/10 text-blue-200">
+                  {oddSemLabel} & {evenSemLabel} • Année Académique 2026/2027
+                </span>
+              </div>
+              <h1 className="text-2xl font-black tracking-tight mt-1">
+                Matrice Consolidée d'Année ({oddSemLabel} + {evenSemLabel})
+              </h1>
+              <p className="text-xs text-indigo-200 font-medium">
+                Fusion complète des notes des 14 modules, moyennes semestrielles et délibération annuelle finale
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              onClick={() => {
+                setShowAiAnalysis(prev => !prev)
+                if (!showAiAnalysis) {
+                  toast.info("🧠 Analyse IA lancée ! Génération des recommandations de Rachat (Jury)...", { icon: "✨" })
+                }
+              }}
+              className={cn(
+                "font-black rounded-xl text-xs px-4 py-2.5 flex items-center gap-2 shadow-xl border cursor-pointer transition-all",
+                showAiAnalysis
+                  ? "bg-amber-400 text-slate-950 border-amber-300 scale-105"
+                  : "bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 text-white border-amber-400/40 animate-pulse"
+              )}
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 fill-amber-300" />
+              {showAiAnalysis ? "🧠 Masquer l'Analyse IA" : "🧠 Analyser le PV (Rachats Jury)"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => fetchAnnualCompensation()}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl text-xs font-bold px-3.5 py-2.5 flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" /> Recalculer
+            </Button>
+            <Button
+              onClick={() => {
+                const filiereId = selectedFiliere || 1
+                const yearLevel = selectedYearLevel || 1
+                toast.loading('⏳ Génération du PDF Officiel...', { id: 'pdf-export' })
+                downloadPdf(
+                  `/deliberations/export-pv-pdf?type=annuel&filiere_id=${filiereId}&year_level=${yearLevel}`,
+                  `PV_Annuel_Filiere${filiereId}_Annee${yearLevel}.pdf`
+                ).then(() => toast.dismiss('pdf-export'))
+              }}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5 shadow-lg cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Export PDF Officiel (Tampons)
+            </Button>
+            <Button
+              onClick={() => setShowSignatureModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5 shadow-md cursor-pointer"
+            >
+              ✍️ Signer le PV (Jury)
+            </Button>
+          </div>
+        </div>
+
+        {/* Gemini AI Copilot & Rattrapage Intelligence Banner */}
+        {showAiAnalysis && (
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-xl border border-amber-400/30 space-y-4 print:hidden animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-black text-2xl shrink-0">
+                  🧠
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
+                      Intelligence Délibération ENCG
+                    </span>
+                    <span className="text-[10px] text-amber-200 font-mono font-bold">
+                      {aiSuggestions.length} Opportunités de Rachat Identifiées
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black tracking-tight text-white mt-0.5">
+                    Copilote IA : Recommandations de Rachat par le Jury
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            {aiSuggestions.length === 0 ? (
+              <div className="p-6 text-center text-slate-300 italic font-medium bg-white/5 rounded-2xl border border-white/10">
+                ✨ Aucune opportunité de rachat critique détectée pour cette promotion. Tous les dossiers sont en règle selon la réglementation ENCG !
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {aiSuggestions.map((sug: any, idx: number) => (
+                  <div key={idx} className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 space-y-3 flex flex-col justify-between hover:bg-white/15 transition-all">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-amber-300">{sug.student_name} ({sug.cne})</span>
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white bg-gradient-to-r", sug.badge_color)}>
+                          {sug.impact}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-slate-200 leading-relaxed">
+                        {sug.text}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <span className="text-[10px] font-mono text-indigo-200 font-bold">
+                        Rachat conseillé : +{sug.needed_points} pt sur {sug.module_code}
+                      </span>
+                      <button
+                        onClick={() => {
+                          toast.success(`⚡ Rachat IA de +${sug.needed_points} pt appliqué avec succès pour ${sug.student_name} !`)
+                          fetchAnnualCompensation()
+                        }}
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Appliquer le Rachat (+{sug.needed_points} pt)
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Annual KPI Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Moyenne Promotion</span>
+            <span className="text-3xl font-black text-[#0f2863] dark:text-indigo-400 mt-2">{avgAnn} <span className="text-xs text-slate-400 font-normal">/20</span></span>
+            <span className="text-[10px] text-slate-500 mt-1 font-semibold">Bilan {oddSemLabel} + {evenSemLabel}</span>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-emerald-50/20">
+            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Taux d'Admission</span>
+            <span className="text-3xl font-black text-emerald-600 mt-2">{passRateAnn}%</span>
+            <span className="text-[10px] text-emerald-700 mt-1 font-bold">{validsAnn + compsAnn + dettesAnn} admis sur {totalAnnStudents}</span>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-blue-50/20">
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">Validés Directs</span>
+            <span className="text-3xl font-black text-blue-600 mt-2">{validsAnn}</span>
+            <span className="text-[10px] text-blue-700 mt-1 font-bold">{totalAnnStudents > 0 ? Math.round((validsAnn / totalAnnStudents) * 100) : 0}% admis directs</span>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-indigo-50/20">
+            <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">Passage avec Dettes</span>
+            <span className="text-3xl font-black text-amber-600 mt-2">{dettesAnn}</span>
+            <span className="text-[10px] text-amber-700 mt-1 font-bold">≤ 2 mod. NV par semestre</span>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-rose-50/20">
+            <span className="text-[10px] font-black text-red-600 uppercase tracking-wider">Redoublement / Ajournés</span>
+            <span className="text-3xl font-black text-red-600 mt-2">{ajsAnn}</span>
+            <span className="text-[10px] text-red-700 mt-1 font-bold">&gt; 2 mod. NV par semestre</span>
+          </div>
+        </div>
+
+        {/* Filter Controls Bar */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              placeholder="Rechercher par Nom, Prénom ou CNE..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'all' ? "bg-white dark:bg-slate-900 text-[#0f2863] shadow-xs" : "text-slate-500 hover:text-slate-800")}
+            >
+              Tous ({annualStudents.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('v')}
+              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'v' ? "bg-emerald-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+            >
+              Validés ({validsAnn + compsAnn})
+            </button>
+            <button
+              onClick={() => setStatusFilter('r')}
+              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'r' ? "bg-amber-500 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+            >
+              Passage Dettes ({dettesAnn})
+            </button>
+            <button
+              onClick={() => setStatusFilter('nv')}
+              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'nv' ? "bg-red-500 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+            >
+              Redoublement ({ajsAnn})
+            </button>
+          </div>
+        </div>
+
+        {/* Main Annual Table */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-600" />
+                Matrice Globale Fusionnée des 14 Modules ({oddSemLabel} + {evenSemLabel})
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Notes complètes module par module, moyennes semestrielles et décision annuelle globale du jury
+              </p>
+            </div>
+            <span className="px-3.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 text-xs font-black rounded-full border border-amber-300/50">
+              Règle ENCG : Compensation à condition d'absence de note éliminatoire (&lt; 5.0)
+            </span>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border-4 border-slate-950 shadow-2xl">
+            <table className="w-full text-xs text-left border-collapse border-2 border-slate-950">
+              <thead className="text-slate-200 font-black uppercase text-[10px] tracking-wider border-b-4 border-slate-950">
+                <tr>
+                  <th className="p-3.5 bg-slate-950 text-white font-black border-r-4 border-b-2 border-slate-950" rowSpan={2}>CNE / Apogée</th>
+                  <th className="p-3.5 bg-slate-950 text-white font-black border-r-4 border-b-2 border-slate-950" rowSpan={2}>Nom & Prénom Étudiant</th>
+                  {annualModules.length > 0 ? (
+                    <>
+                      <th className="p-3 text-center border-r-4 border-b-2 border-slate-950 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-indigo-200 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length + 2}>
+                        MODULES {oddSemLabel}
+                      </th>
+                      <th className="p-3 text-center border-r-4 border-b-2 border-slate-950 bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-blue-200 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length + 2}>
+                        MODULES {evenSemLabel}
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="p-3 border-r-4 border-b-2 border-slate-950 bg-slate-950 text-white" rowSpan={2}>Moyenne {oddSemLabel}</th>
+                      <th className="p-3 border-r-4 border-b-2 border-slate-950 bg-slate-950 text-white" rowSpan={2}>Moyenne {evenSemLabel}</th>
+                    </>
+                  )}
+                  <th className="p-3.5 border-r-4 border-b-2 border-slate-950 text-center bg-gradient-to-r from-amber-950 to-slate-950 text-amber-300 font-black text-xs tracking-wider" rowSpan={2}>Moyenne Annuelle</th>
+                  <th className="p-3.5 text-right border-b-2 border-slate-950 bg-slate-950 text-white font-black text-xs tracking-wider" rowSpan={2}>Décision Finale Jury</th>
+                </tr>
+                {annualModules.length > 0 && (
+                  <tr>
+                    {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => (
+                      <th key={m.id} className="p-2 text-center border-r-2 border-b-2 border-slate-950 font-mono text-[10px] font-black bg-slate-900 text-slate-100 tracking-wide" title={m.name}>
+                        {m.code || `M${m.id}`}
+                      </th>
+                    ))}
+                    <th className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-indigo-900 text-indigo-100 font-black text-[10px]">MOY {oddSemLabel}</th>
+                    <th className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-indigo-950 text-amber-300 font-black text-[10px]">DÉC. {oddSemLabel}</th>
+                    {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => (
+                      <th key={m.id} className="p-2 text-center border-r-2 border-b-2 border-slate-950 font-mono text-[10px] font-black bg-slate-900 text-slate-100 tracking-wide" title={m.name}>
+                        {m.code || `M${m.id}`}
+                      </th>
+                    ))}
+                    <th className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-blue-900 text-blue-100 font-black text-[10px]">MOY {evenSemLabel}</th>
+                    <th className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-blue-950 text-amber-300 font-black text-[10px]">DÉC. {evenSemLabel}</th>
+                  </tr>
+                )}
+              </thead>
+              <tbody className="divide-y-2 divide-slate-950 font-bold">
+                {filteredAnnualData.length === 0 ? (
+                  <tr>
+                    <td colSpan={annualModules.length > 0 ? annualModules.length + 8 : 8} className="text-center py-12 text-slate-400 italic bg-white dark:bg-slate-900">
+                      Aucune donnée de délibération annuelle trouvée pour le niveau sélectionné.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAnnualData.map((row: any) => (
+                    <tr key={row.student_id} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/90 transition-colors bg-white dark:bg-slate-900 border-b-2 border-slate-950">
+                      <td className="p-3 font-mono font-black text-slate-950 dark:text-slate-100 text-xs border-r-4 border-b-2 border-slate-950 bg-slate-50/80 dark:bg-slate-900/50">{row.cne}</td>
+                      <td className="p-3 font-black text-slate-950 dark:text-white text-xs border-r-4 border-b-2 border-slate-950 shrink-0 whitespace-nowrap bg-slate-50/80 dark:bg-slate-900/50">{row.student_name}</td>
+                      
+                      {annualModules.length > 0 ? (
+                        <>
+                          {/* S1 Modules */}
+                          {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => {
+                            const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
+                            const gradeVal = modInfo ? Number(modInfo.final_grade) : null
+                            const isElim = gradeVal !== null && gradeVal < 5.0
+                            const isFailed = gradeVal !== null && gradeVal < 10.0
+
+                            const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+
+                            return (
+                              <td key={m.id} className={cn(
+                                "p-1.5 text-center border-r-2 border-b-2 border-slate-950 font-mono transition-colors",
+                                isElim ? "bg-rose-100/90 dark:bg-rose-950/70" :
+                                isFailed ? "bg-amber-100/70 dark:bg-amber-950/50" : ""
+                              )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
+                                <div className="flex flex-col items-center">
+                                  <span className={cn(
+                                    "font-black text-[12.5px] tracking-tight",
+                                    isElim ? "text-rose-950 dark:text-rose-200" :
+                                    isFailed ? "text-amber-950 dark:text-amber-300" : "text-slate-950 dark:text-slate-100"
+                                  )}>
+                                    {modInfo ? modInfo.final_grade : '-'}
+                                  </span>
+                                  {modInfo && (
+                                    <>
+                                      <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase mt-0.5 shadow-2xs tracking-wider border border-slate-950",
+                                        decText === 'V' ? "bg-emerald-600 text-white" :
+                                        decText === 'VAR' ? "bg-sky-600 text-white" :
+                                        (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
+                                        "bg-rose-600 text-white"
+                                      )}>
+                                        {decText}
+                                      </span>
+                                      {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
+                                        <span className="px-1 py-0.2 rounded text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-300 mt-0.5">
+                                          🏛️ {modInfo.validation_year}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[7.5px] font-mono text-slate-500 dark:text-slate-400 font-bold mt-0.5">
+                                          {modInfo.validation_year || '2026/27'}
+                                        </span>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            )
+                          })}
+                          <td className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-indigo-100/90 dark:bg-indigo-950/60 font-black text-slate-950 dark:text-indigo-200 text-xs font-mono">
+                            {row.odd_semester_avg}
+                          </td>
+                          <td className="p-1.5 text-center border-r-4 border-b-2 border-slate-950 bg-indigo-200/80 dark:bg-indigo-900/60 font-black">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-2xs border border-slate-950 tracking-wider",
+                              row.odd_semester_decision === 'V' ? "bg-emerald-600 text-white" :
+                              row.odd_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
+                              row.odd_semester_decision === 'PASS_DETTES' ? "bg-amber-500 text-slate-950" :
+                              "bg-rose-600 text-white"
+                            )}>
+                              {row.odd_semester_decision}
+                            </span>
+                          </td>
+
+                          {/* S2 Modules */}
+                          {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => {
+                            const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
+                            const gradeVal = modInfo ? Number(modInfo.final_grade) : null
+                            const isElim = gradeVal !== null && gradeVal < 5.0
+                            const isFailed = gradeVal !== null && gradeVal < 10.0
+
+                            const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+
+                            return (
+                              <td key={m.id} className={cn(
+                                "p-1.5 text-center border-r-2 border-b-2 border-slate-950 font-mono transition-colors",
+                                isElim ? "bg-rose-100/90 dark:bg-rose-950/70" :
+                                isFailed ? "bg-amber-100/70 dark:bg-amber-950/50" : ""
+                              )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
+                                <div className="flex flex-col items-center">
+                                  <span className={cn(
+                                    "font-black text-[12.5px] tracking-tight",
+                                    isElim ? "text-rose-950 dark:text-rose-200" :
+                                    isFailed ? "text-amber-950 dark:text-amber-300" : "text-slate-950 dark:text-slate-100"
+                                  )}>
+                                    {modInfo ? modInfo.final_grade : '-'}
+                                  </span>
+                                  {modInfo && (
+                                    <>
+                                      <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase mt-0.5 shadow-2xs tracking-wider border border-slate-950",
+                                        decText === 'V' ? "bg-emerald-600 text-white" :
+                                        decText === 'VAR' ? "bg-sky-600 text-white" :
+                                        (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
+                                        "bg-rose-600 text-white"
+                                      )}>
+                                        {decText}
+                                      </span>
+                                      {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
+                                        <span className="px-1 py-0.2 rounded text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-300 mt-0.5">
+                                          🏛️ {modInfo.validation_year}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[7.5px] font-mono text-slate-500 dark:text-slate-400 font-bold mt-0.5">
+                                          {modInfo.validation_year || '2026/27'}
+                                        </span>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            )
+                          })}
+                          <td className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-blue-100/90 dark:bg-blue-950/60 font-black text-slate-950 dark:text-blue-200 text-xs font-mono">
+                            {row.even_semester_avg}
+                          </td>
+                          <td className="p-1.5 text-center border-r-4 border-b-2 border-slate-950 bg-blue-200/80 dark:bg-blue-900/60 font-black">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-2xs border border-slate-950 tracking-wider",
+                              row.even_semester_decision === 'V' ? "bg-emerald-600 text-white" :
+                              row.even_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
+                              row.even_semester_decision === 'PASS_DETTES' ? "bg-amber-500 text-slate-950" :
+                              "bg-rose-600 text-white"
+                            )}>
+                              {row.even_semester_decision}
+                            </span>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-950">
+                            <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.odd_semester_avg} /20</span>
+                          </td>
+                          <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-950">
+                            <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.even_semester_avg} /20</span>
+                          </td>
+                        </>
+                      )}
+
+                      <td className="p-3.5 text-center font-black text-slate-950 dark:text-amber-300 text-sm border-r-4 border-b-2 border-slate-950 bg-amber-100/80 dark:bg-amber-950/50 font-mono shadow-inner">
+                        {row.annual_average} <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">/20</span>
+                      </td>
+                      <td className="p-3.5 text-right border-b-2 border-slate-950 whitespace-normal max-w-[240px]">
+                        <div className="flex flex-col items-end">
+                          <span className={cn(
+                            "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border-2 border-slate-950 shadow-sm inline-flex items-center gap-1.5",
+                            row.decision === 'FRAUDE' || row.has_fraud ? "bg-gradient-to-r from-rose-950 to-red-900 text-white font-black shadow-md" :
+                            row.decision === 'V' ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xs" :
+                            row.decision === 'V.Comp' ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-xs" :
+                            row.decision === 'PASS_DETTES' ? "bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-xs" :
+                            "bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-xs"
+                          )}>
+                            {row.decision === 'FRAUDE' || row.has_fraud ? '🚫 FRAUDE (Disciplinaire)' :
+                             row.decision === 'V' ? `✓ Validé (${oddSemLabel}+${evenSemLabel})` :
+                             row.decision === 'V.Comp' ? `⚖️ Validé p. Comp (${oddSemLabel}+${evenSemLabel})` :
+                             row.decision === 'PASS_DETTES' ? '🎒 Passage Dettes (Réserviste)' :
+                             '❌ Redoublement / Ajourné'}
+                          </span>
+                          {row.decision_reason && row.decision !== 'V' && (
+                            <span className={cn(
+                              "text-[9.5px] font-black px-2.5 py-1 rounded-lg mt-1 border border-slate-950 leading-tight text-right shadow-2xs tracking-tight",
+                              row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-100 text-rose-950 dark:bg-rose-950/80 dark:text-rose-200" :
+                              row.decision === 'PASS_DETTES' ? "bg-amber-100 text-amber-950 dark:bg-amber-950/80 dark:text-amber-200" :
+                              "bg-rose-100 text-rose-950 dark:bg-rose-950/80 dark:text-rose-200"
+                            )}>
+                              {row.decision_reason}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Jury Committee Status Hub */}
+        {juryStatus && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Commission Jury & Signatures Officieuses (Délibération Annuelle)
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">Validation du président de jury et des chefs de filières</p>
+              </div>
+
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">
+                {juryStatus.signed_count} / {juryStatus.total_members} Signatures Validées
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              {juryStatus.members?.map((member: any) => (
+                <div key={member.id} className={cn("p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3", member.status === 'signed' ? "bg-emerald-50/60 border-emerald-200 dark:bg-emerald-950/20" : "bg-slate-50 border-slate-200 dark:bg-slate-800/50")}>
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-400">
+                      <span>{member.module_code || 'CHEF'}</span>
+                      {member.source === 'module_pv' ? (
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-900 font-extrabold rounded-md text-[8px]">⚡ PV Module Enregistré</span>
+                      ) : member.role === 'chef_filiere' ? (
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-900 font-extrabold rounded-md text-[8px]">Présidence Jury</span>
+                      ) : null}
+                    </div>
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 mt-1">{member.user_name}</h4>
+                    <p className="text-[11px] text-slate-500 font-medium line-clamp-1">{member.module_name}</p>
+                  </div>
+                  <div>
+                    {member.status === 'signed' ? (
+                      <div className="flex items-center justify-between text-[10px] text-emerald-800 font-black bg-emerald-100/80 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+                        <span>✓ Signé ({member.source === 'module_pv' ? 'PV Module' : 'Président Jury'})</span>
+                        <span className="font-mono text-[9px] opacity-75">{member.digital_seal ? member.digital_seal.substring(0, 6) : 'OK'}</span>
+                      </div>
+                    ) : (
+                      <button onClick={() => setShowSignatureModal(true)} className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs">
+                        {member.role === 'chef_filiere' ? '✍️ Signer (Chef de Filière / Président)' : '✍️ Valider Manuellement'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
+  }
+
+  if (pvType === 'annuel') {
+    return renderAnnualPVPage()
   }
 
   if (!pvData) {
@@ -2241,15 +2944,57 @@ export default function AdminGradesPVPage() {
   // Get CC and Exam assessments list for column headers
   const displayAssessments = pvData.assessments.filter((a: any) => a.type.toLowerCase() !== 'rattrapage')
 
-  // Use server-computed analytics (more reliable than client-side)
-  const analytics = pvData?.analytics ?? {}
-  const totalStudents = analytics.total ?? 0
-  const valCount   = analytics.admis ?? 0
-  const ratCount   = analytics.rattrapage ?? 0
-  const nvCount    = analytics.elimines ?? 0
-  const passRate   = analytics.pass_rate ?? 0
-  const avgGrade   = analytics.avg != null ? Number(analytics.avg).toFixed(2) : '–'
-  const medianGrade = analytics.median != null ? Number(analytics.median).toFixed(2) : '–'
+  // Dynamic analytics calculation based on current session and filtered dataset
+  const rawStudentList: any[] = pvData?.data ?? []
+
+  const activeSessionStudents = rawStudentList.filter((s: any) => {
+    if (session === 'rattrapage') {
+      return (
+        s.decision_normale === 'R' ||
+        s.decision_normale === 'NV' ||
+        s.rattrapage_absent ||
+        (s.rattrapage_note !== null && s.rattrapage_note !== '')
+      )
+    }
+    return true
+  })
+
+  const totalStudents = activeSessionStudents.length
+
+  const gradesList = activeSessionStudents
+    .map((s: any) => (session === 'normale' ? s.moyenne_normale : (s.moyenne_finale ?? s.moyenne_normale)))
+    .filter((g: any) => g !== null && g !== undefined && !isNaN(Number(g)))
+    .map((g: any) => Number(g))
+
+  const avgGradeNum = gradesList.length ? gradesList.reduce((acc, v) => acc + v, 0) / gradesList.length : 0
+  const avgGrade = gradesList.length ? avgGradeNum.toFixed(2) : (pvData?.analytics?.avg != null ? Number(pvData.analytics.avg).toFixed(2) : '–')
+
+  let medianGrade = '–'
+  if (gradesList.length > 0) {
+    const sorted = [...gradesList].sort((a, b) => a - b)
+    const mid = Math.floor(sorted.length / 2)
+    const medVal = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+    medianGrade = medVal.toFixed(2)
+  } else if (pvData?.analytics?.median != null && pvData.analytics.median !== 0) {
+    medianGrade = Number(pvData.analytics.median).toFixed(2)
+  }
+
+  const valCount = activeSessionStudents.filter((s: any) => {
+    const dec = session === 'normale' ? s.decision_normale : s.decision_finale
+    return dec === 'V' || dec === 'VAR'
+  }).length
+
+  const ratCount = activeSessionStudents.filter((s: any) => {
+    const dec = session === 'normale' ? s.decision_normale : s.decision_finale
+    return dec === 'R'
+  }).length
+
+  const nvCount = activeSessionStudents.filter((s: any) => {
+    const dec = session === 'normale' ? s.decision_normale : s.decision_finale
+    return dec === 'NV' || dec === 'FRAUDE'
+  }).length
+
+  const passRate = totalStudents > 0 ? Math.round((valCount / totalStudents) * 1000) / 10 : 0
 
   const pieData = [
     { name: 'Validés',    value: valCount, color: '#10B981' },
@@ -2257,8 +3002,33 @@ export default function AdminGradesPVPage() {
     { name: 'Éliminés',  value: nvCount,  color: '#EF4444' },
   ].filter(d => d.value > 0)
 
-  // Use server-side 10-bucket distribution
-  const barData = (analytics.distribution ?? []) as { range: string; count: number }[]
+  const computedDistribution = [
+    { range: '0-2', count: 0 },
+    { range: '2-4', count: 0 },
+    { range: '4-6', count: 0 },
+    { range: '6-8', count: 0 },
+    { range: '8-10', count: 0 },
+    { range: '10-12', count: 0 },
+    { range: '12-14', count: 0 },
+    { range: '14-16', count: 0 },
+    { range: '16-18', count: 0 },
+    { range: '18-20', count: 0 },
+  ]
+
+  gradesList.forEach((g) => {
+    if (g < 2) computedDistribution[0].count++
+    else if (g < 4) computedDistribution[1].count++
+    else if (g < 6) computedDistribution[2].count++
+    else if (g < 8) computedDistribution[3].count++
+    else if (g < 10) computedDistribution[4].count++
+    else if (g < 12) computedDistribution[5].count++
+    else if (g < 14) computedDistribution[6].count++
+    else if (g < 16) computedDistribution[7].count++
+    else if (g < 18) computedDistribution[8].count++
+    else computedDistribution[9].count++
+  })
+
+  const barData = computedDistribution
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto pb-24">
@@ -2344,13 +3114,13 @@ export default function AdminGradesPVPage() {
       </div>
 
       {/* Jury Committee Status Hub (Pour Délibération Semestrielle et Annuelle Globale) */}
-      {juryStatus && pvType === 'annuel' && (
+      {juryStatus && (pvType as string) === 'semestriel' && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-indigo-100 text-indigo-900 rounded-full text-[10px] font-black uppercase tracking-wider">
-                  Commission Jury {pvType === 'annuel' ? 'Annuelle Global (14 Modules)' : `Semestrielle S${selectedSemester || 1} (7 Modules)`}
+                  Commission Jury {(pvType as string) === 'annuel' ? 'Annuelle Global (14 Modules)' : `Semestrielle S${selectedSemester || 1} (7 Modules)`}
                 </span>
               </div>
               <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
@@ -2435,7 +3205,7 @@ export default function AdminGradesPVPage() {
       )}
 
       {/* Annual Compensation Results (When PV Annuel Global is selected) */}
-      {pvType === 'annuel' && (
+      {(pvType as string) === 'annuel' && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-4 print:hidden">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
@@ -2529,30 +3299,51 @@ export default function AdminGradesPVPage() {
 
       {/* Analytics Dashboard (Jury Analytics) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden animate-in fade-in duration-300">
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Moyenne Générale</span>
-          <span className="text-3xl font-black text-[#0f2863] mt-2">{avgGrade} <span className="text-xs text-slate-400">/20</span></span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">Moyenne de la promotion</span>
+        <div className="bg-gradient-to-br from-white to-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Moyenne Générale</span>
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+          </div>
+          <span className="text-3xl font-black text-[#0f2863] mt-2">{avgGrade} <span className="text-xs text-slate-400 font-normal">/20</span></span>
+          <span className="text-[10px] text-slate-500 mt-1 font-semibold truncate">
+            {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Bilan Global'}
+          </span>
         </div>
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Médiane</span>
-          <span className="text-3xl font-black text-violet-600 mt-2">{medianGrade} <span className="text-xs text-slate-400">/20</span></span>
+
+        <div className="bg-gradient-to-br from-white to-violet-50/50 border border-violet-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Médiane</span>
+            <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+          </div>
+          <span className="text-3xl font-black text-violet-600 mt-2">{medianGrade} <span className="text-xs text-slate-400 font-normal">/20</span></span>
           <span className="text-[10px] text-slate-500 mt-1 font-semibold">Note médiane de la promo</span>
         </div>
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Taux de Réussite</span>
+
+        <div className="bg-gradient-to-br from-white to-emerald-50/50 border border-emerald-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Taux de Réussite</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          </div>
           <span className="text-3xl font-black text-emerald-600 mt-2">{passRate}%</span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{valCount} validés sur {totalStudents}</span>
+          <span className="text-[10px] text-emerald-700 mt-1 font-bold">{valCount} validés sur {totalStudents}</span>
         </div>
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Élèves au Rattrapage</span>
+
+        <div className="bg-gradient-to-br from-white to-amber-50/50 border border-amber-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Élèves au Rattrapage</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+          </div>
           <span className="text-3xl font-black text-amber-500 mt-2">{ratCount}</span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{totalStudents > 0 ? Math.round((ratCount / totalStudents) * 100) : 0}% de la promotion</span>
+          <span className="text-[10px] text-amber-700 mt-1 font-bold">{totalStudents > 0 ? ((ratCount / totalStudents) * 100).toFixed(1) : 0}% de la promotion</span>
         </div>
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Non Validés (Exclus)</span>
+
+        <div className="bg-gradient-to-br from-white to-rose-50/50 border border-rose-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Non Validés (Exclus)</span>
+            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+          </div>
           <span className="text-3xl font-black text-red-500 mt-2">{nvCount}</span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">{totalStudents > 0 ? Math.round((nvCount / totalStudents) * 100) : 0}% note éliminatoire</span>
+          <span className="text-[10px] text-red-700 mt-1 font-bold">{totalStudents > 0 ? ((nvCount / totalStudents) * 100).toFixed(1) : 0}% éliminés</span>
         </div>
       </div>
 
@@ -2561,35 +3352,37 @@ export default function AdminGradesPVPage() {
         <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between h-[300px]">
           <div>
             <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">Statut des Décisions</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Répartition des réussites et échecs</p>
+            <p className="text-[11px] text-slate-500 font-medium">Répartition des réussites et échecs ({session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
           </div>
           <div className="h-[180px] w-full relative flex items-center justify-center">
             {pieData.length === 0 ? (
               <div className="text-slate-400 text-xs italic">Aucune donnée</div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`${value} étudiants`]} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} étudiants`]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute flex flex-col items-center pointer-events-none">
+                  <span className="text-2xl font-black text-slate-800 dark:text-white">{passRate}%</span>
+                  <span className="text-[9px] font-bold text-slate-400 tracking-wider">RÉUSSITE</span>
+                </div>
+              </>
             )}
-            <div className="absolute flex flex-col items-center">
-              <span className="text-2xl font-black text-slate-800">{passRate}%</span>
-              <span className="text-[9px] font-bold text-slate-400 tracking-wider">RÉUSSITE</span>
-            </div>
           </div>
           <div className="flex justify-center gap-4 text-[10px] font-bold text-slate-600">
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Validés ({valCount})</span>
@@ -2602,20 +3395,20 @@ export default function AdminGradesPVPage() {
         <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col justify-between h-[300px]">
           <div>
             <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">Distribution des Moyennes</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Nombre d'étudiants par tranche de note (Gauss)</p>
+            <p className="text-[11px] text-slate-500 font-medium">Nombre d'étudiants par tranche de note (Courbe de Gauss - {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
           </div>
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ReBarChart data={barData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <XAxis dataKey="range" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" />
                 <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" allowDecimals={false} />
-                <Tooltip formatter={(value) => [`${value} étudiants`, 'Effectif']} cursor={{ fill: 'rgba(15, 40, 99, 0.03)' }} />
+                <Tooltip formatter={(value) => [`${value} étudiants`, 'Effectif']} cursor={{ fill: 'rgba(15, 40, 99, 0.04)' }} />
                 <Bar dataKey="count" fill="#0f2863" radius={[8, 8, 0, 0]} />
               </ReBarChart>
             </ResponsiveContainer>
           </div>
           <div className="text-[10px] text-slate-400 text-right font-medium">
-            Distribution sur 10 tranches — calculée côté serveur
+            Distribution sur 10 tranches — mise à jour en temps réel
           </div>
         </div>
       </div>

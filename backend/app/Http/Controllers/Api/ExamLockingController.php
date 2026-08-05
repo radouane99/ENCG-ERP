@@ -2,78 +2,81 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\GradeEntryPeriodChanged;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Mail\GradePhaseUpdatedMail;
 use App\Models\ExamLockingAudit;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use App\Models\ExamSession;
+use App\Models\Institution;
+use App\Models\Module;
+use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\Academic\DeliberationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 class ExamLockingController extends Controller
 {
+    public function __construct(
+        private DeliberationService $deliberationService
+    ) {}
+
     /**
-     * Get current locking status and audit history
+     * Statut actuel et historique.
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        $institution = \App\Models\Institution::first();
-        $settings = [];
-        if ($institution) {
-            $settings = is_array($institution->settings) 
-                ? $institution->settings 
-                : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
-        }
+        $institution = Institution::first();
+        $settings = $institution ? (is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : [])) : [];
+
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
-        $deadline = $settings['exam_lock_deadline'] ?? null;
-        
-        $audits = ExamLockingAudit::latest()->take(20)->get()->map(function($audit) {
-            return [
-                'id' => $audit->id,
-                'date' => $audit->created_at ? $audit->created_at->format('d/m/Y H:i:s') : date('d/m/Y H:i:s'),
-                'user' => $audit->user_name,
-                'oldPhase' => $audit->old_phase,
-                'newPhase' => $audit->new_phase,
-                'reason' => $audit->reason ?? 'Non précisé',
-                'ip' => $audit->ip_address,
-                'isRed' => $audit->new_phase === 'Verrouillage Total' || $audit->new_phase === 'Verrouillé',
-            ];
-        });
+        $deadline     = $settings['exam_lock_deadline'] ?? null;
+
+        $audits = ExamLockingAudit::latest()->take(20)->get()->map(fn($audit) => [
+            'id'       => $audit->id,
+            'date'     => $audit->created_at?->format('d/m/Y H:i:s') ?? date('d/m/Y H:i:s'),
+            'user'     => $audit->user_name,
+            'oldPhase' => $audit->old_phase,
+            'newPhase' => $audit->new_phase,
+            'reason'   => $audit->reason ?? 'Non précisé',
+            'ip'       => $audit->ip_address,
+            'isRed'    => in_array($audit->new_phase, ['Verrouillage Total', 'Verrouillé']),
+        ]);
 
         return response()->json([
+            'success'       => true,
             'current_phase' => $currentPhase,
-            'deadline' => $deadline,
-            'audits' => $audits
+            'deadline'      => $deadline,
+            'audits'        => $audits,
         ]);
     }
 
     /**
-     * Change locking phase
+     * Changer la phase de verrouillage.
      */
-    public function updateStatus(Request $request)
+    public function updateStatus(Request $request): JsonResponse
     {
         $request->validate([
             'new_phase' => 'required|string',
-            'deadline' => 'nullable|string',
-            'reason' => 'nullable|string',
+            'deadline'  => 'nullable|string',
+            'reason'    => 'nullable|string',
         ]);
 
-        $institution = \App\Models\Institution::first();
-        if (! $institution) {
-            $institution = \App\Models\Institution::create([
-                'name' => 'ENCG Fès',
-                'code' => 'ENCG-FES',
-                'settings' => ['exam_lock_phase' => 'Verrouillé'],
-            ]);
-        }
+        $institution = Institution::first() ?? Institution::create([
+            'name'     => 'ENCG Fès',
+            'code'     => 'ENCG-FES',
+            'settings' => ['exam_lock_phase' => 'Verrouillé'],
+        ]);
 
-        $settings = is_array($institution->settings) 
-            ? $institution->settings 
-            : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
+        $settings = is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
 
-        $oldPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
-        $newPhase = $request->new_phase;
-        $deadline = $request->input('deadline');
-        $reason = $request->input('reason', 'Changement de phase');
+        $oldPhase  = $settings['exam_lock_phase'] ?? 'Verrouillé';
+        $newPhase  = $request->new_phase;
+        $deadline  = $request->input('deadline');
+        $reason    = $request->input('reason', 'Changement de phase');
 
         if ($oldPhase !== $newPhase || $deadline !== null) {
             $settings['exam_lock_phase'] = $newPhase;
@@ -84,60 +87,51 @@ class ExamLockingController extends Controller
 
             $user = $request->user();
             ExamLockingAudit::create([
-                'user_id' => $user ? $user->id : null,
-                'user_name' => $user ? ($user->name ?? $user->email) : 'Système',
+                'user_id'   => $user?->id,
+                'user_name' => $user?->name ?? $user?->email ?? 'Système',
                 'old_phase' => $oldPhase,
                 'new_phase' => $newPhase,
-                'reason' => $reason,
+                'reason'    => $reason,
                 'ip_address' => $request->ip(),
             ]);
 
-            // ⚖️ JURY DELIBERATION
-            if ($newPhase === 'Verrouillé' || $newPhase === 'Verrouillage Total') {
-                $deliberationService = new \App\Services\Academic\DeliberationService();
-                $modules = \App\Models\Module::all();
-                
-                // Try to find the active exam session
-                $session = \Illuminate\Support\Facades\DB::table('exam_sessions')
-                    ->where('status', 'active')
-                    ->latest('id')
-                    ->first();
-                $sessionId = $session ? $session->id : null;
+            // Déclencher la délibération si verrouillage
+            if (in_array($newPhase, ['Verrouillé', 'Verrouillage Total'])) {
+                $modules   = Module::all();
+                $sessionId = ExamSession::where('status', 'active')->latest('id')->value('id');
 
                 foreach ($modules as $module) {
                     try {
-                        $deliberationService->processModuleDeliberation($module->id, $sessionId);
+                        $this->deliberationService->processModuleDeliberation($module->id, $sessionId);
                     } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error("Failed to deliberate module {$module->id}: " . $e->getMessage());
+                        Log::error("Échec délibération module {$module->id}: " . $e->getMessage());
                     }
                 }
             }
 
-            // Notify all professors about the phase change
-            $professors = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire']))->get();
+            // Notifier les professeurs
+            $professors = User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire']))->get();
+
             if ($professors->isNotEmpty()) {
                 Notification::send($professors, new SystemNotification(
-                    "Changement de phase des notes",
+                    'Changement de phase des notes',
                     "La phase de saisie des notes est passée à : {$newPhase}.",
-                    "system",
-                    "/professor/grades"
+                    'system',
+                    '/professor/grades'
                 ));
 
-                // Send email alerts in the background / try-catch
                 try {
-                    $emails = $professors->pluck('email')->filter()->toArray();
-                    if (!empty($emails)) {
-                        foreach ($emails as $email) {
-                            \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\GradePhaseUpdatedMail($newPhase));
+                    foreach ($professors as $prof) {
+                        if ($prof->email) {
+                            Mail::to($prof->email)->send(new GradePhaseUpdatedMail($newPhase));
                         }
                     }
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to send phase update emails: " . $e->getMessage());
+                    Log::error('Échec envoi emails de phase: ' . $e->getMessage());
                 }
             }
-            
-            // Broadcast via Reverb
-            event(new \App\Events\GradeEntryPeriodChanged($newPhase));
+
+            event(new GradeEntryPeriodChanged($newPhase));
         }
 
         return $this->index();

@@ -3,64 +3,69 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Liste des départements.
      */
-    public function index()
+    public function index(): JsonResponse
     {
         return response()->json([
-            'data' => \App\Models\Department::all()
+            'success' => true,
+            'data'    => Department::all(),
         ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Créer un département.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'name_ar' => 'nullable|string|max:255',
-            'code' => 'required|string|max:50|unique:departments,code',
+            'name'      => 'required|string|max:255',
+            'name_ar'   => 'nullable|string|max:255',
+            'code'      => 'required|string|max:50|unique:departments,code',
             'head_name' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
 
-        // Assumes institution_id = 1 for now (multi-tenant default)
         $validated['institution_id'] = 1;
 
-        $department = \App\Models\Department::create($validated);
+        $department = Department::create($validated);
 
         return response()->json([
-            'message' => 'Département créé avec succès',
-            'data' => $department
+            'success' => true,
+            'message' => 'Département créé avec succès.',
+            'data'    => $department,
         ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Afficher un département.
      */
-    public function show(string $id)
+    public function show(int $id): JsonResponse
     {
-        $department = \App\Models\Department::findOrFail($id);
-        return response()->json(['data' => $department]);
+        return response()->json([
+            'success' => true,
+            'data'    => Department::findOrFail($id),
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Mettre à jour un département.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, int $id): JsonResponse
     {
-        $department = \App\Models\Department::findOrFail($id);
+        $department = Department::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'name_ar' => 'nullable|string|max:255',
-            'code' => 'required|string|max:50|unique:departments,code,' . $department->id,
+            'name'      => 'required|string|max:255',
+            'name_ar'   => 'nullable|string|max:255',
+            'code'      => 'required|string|max:50|unique:departments,code,' . $department->id,
             'head_name' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
@@ -68,21 +73,22 @@ class DepartmentController extends Controller
         $department->update($validated);
 
         return response()->json([
-            'message' => 'Département mis à jour avec succès',
-            'data' => $department
+            'success' => true,
+            'message' => 'Département mis à jour.',
+            'data'    => $department,
         ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Supprimer un département.
      */
-    public function destroy(string $id)
+    public function destroy(int $id): JsonResponse
     {
-        $department = \App\Models\Department::findOrFail($id);
-        $department->delete();
+        Department::findOrFail($id)->delete();
 
         return response()->json([
-            'message' => 'Département supprimé avec succès'
+            'success' => true,
+            'message' => 'Département supprimé.',
         ]);
     }
 }

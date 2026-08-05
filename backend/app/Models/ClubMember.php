@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClubMember extends Model
 {
@@ -14,17 +15,17 @@ class ClubMember extends Model
     protected function casts(): array
     {
         return [
-        'joined_at' => 'date',
-        'is_active' => 'boolean',
-    ];
+            'joined_at' => 'date',
+            'is_active' => 'boolean',
+        ];
     }
 
-    public function club()
+    public function club(): BelongsTo
     {
         return $this->belongsTo(Club::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

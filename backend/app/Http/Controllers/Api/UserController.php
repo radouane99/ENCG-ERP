@@ -5,13 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
-/**
- * [Phase 8] UserController — refactored to use UserResource.
- * [Audit SEC-01] All methods now have authorization guards.
- */
 class UserController extends Controller
 {
     private array $adminRoles = [
@@ -19,6 +15,9 @@ class UserController extends Controller
         'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee',
     ];
 
+    /**
+     * Liste des utilisateurs (hors étudiants).
+     */
     public function index(Request $request): JsonResponse
     {
         abort_unless($request->user()->can('users.view'), 403);
@@ -27,23 +26,31 @@ class UserController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->where('name', 'student'))
             ->get();
 
-        // [Phase 8] Return UserResource collection
         return response()->json([
-            'data' => UserResource::collection($users)->additional([]),
+            'success' => true,
+            'data'    => UserResource::collection($users),
         ]);
     }
 
-    public function show($id): JsonResponse
+    /**
+     * Afficher un utilisateur.
+     */
+    public function show(int $id): JsonResponse
     {
         abort_unless(request()->user()->can('users.view'), 403);
 
         $user = User::with('roles')->findOrFail($id);
 
-        // [Phase 8] Wrap in UserResource
-        return response()->json(['data' => new UserResource($user)]);
+        return response()->json([
+            'success' => true,
+            'data'    => new UserResource($user),
+        ]);
     }
 
-    public function update(Request $request, $id): JsonResponse
+    /**
+     * Mettre à jour un utilisateur.
+     */
+    public function update(Request $request, int $id): JsonResponse
     {
         abort_unless($request->user()->can('users.manage'), 403);
 
@@ -56,34 +63,43 @@ class UserController extends Controller
             'role'     => 'sometimes|required|string',
         ]);
 
-        if (isset($validated['name']))  $user->name  = $validated['name'];
-        if (isset($validated['email'])) $user->email = $validated['email'];
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+
         if (!empty($validated['password'])) {
             $user->password = bcrypt($validated['password']);
         }
+
         $user->save();
 
         if (isset($validated['role'])) {
             $user->syncRoles([$validated['role']]);
         }
 
-        $user->load('roles');
-
         return response()->json([
             'success' => true,
-            'message' => 'Utilisateur mis à jour avec succès',
-            // [Phase 8] Wrap in UserResource
-            'data'    => new UserResource($user),
+            'message' => 'Utilisateur mis à jour avec succès.',
+            'data'    => new UserResource($user->load('roles')),
         ]);
     }
 
-    public function destroy($id): JsonResponse
+    /**
+     * Supprimer un utilisateur.
+     */
+    public function destroy(int $id): JsonResponse
     {
         abort_unless(request()->user()->can('users.manage'), 403);
 
-        $user = User::findOrFail($id);
-        $user->delete();
+        User::findOrFail($id)->delete();
 
-        return response()->json(['success' => true, 'message' => 'Utilisateur supprimé avec succès']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Utilisateur supprimé avec succès.',
+        ]);
     }
 }

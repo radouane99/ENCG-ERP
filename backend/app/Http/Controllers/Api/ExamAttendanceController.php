@@ -4,70 +4,42 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Models\ExamSeating;
 use App\Models\Student;
-use App\Models\Attendance;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class ExamAttendanceController extends Controller
 {
     /**
-     * Renvoie les statistiques en direct pour un examen.
+     * Statistiques de présence en direct pour un examen.
      */
-    public function getLiveStats($examId): JsonResponse
+    public function getLiveStats(int $examId): JsonResponse
     {
         $exam = Exam::with(['module', 'group'])->findOrFail($examId);
-        
-        // Tous les étudiants inscrits à ce module/groupe
-        // Pour simplifier l'implémentation rapide : on compte tous les étudiants
-        // qui ont un enregistrement Attendance pour cette session d'examen (ou on compte les inscrits du module)
-        
-        // On suppose que l'examen a une attendance_session_id liée, ou bien on interroge la table attendances par un autre moyen
-        // Comme les modèles exacts varient, on va compter les étudiants inscrits au groupe de l'examen
-        $totalStudents = Student::whereHas('registrations', function ($q) use ($exam) {
-            $q->where('group_id', $exam->group_id);
-        })->count();
 
-        // Si totalStudents est 0, on essaie via la filière du module
+        // Étudiants inscrits au groupe de l'examen
+        $totalStudents = Student::whereHas('registrations', fn($q) => $q->where('group_id', $exam->group_id))->count();
+
+        // Fallback : par filière
         if ($totalStudents === 0) {
-            $totalStudents = Student::whereHas('registrations', function ($q) use ($exam) {
-                $q->where('filiere_id', $exam->module->filiere_id);
-            })->count();
+            $totalStudents = Student::whereHas('registrations', fn($q) => $q->where('filiere_id', $exam->module->filiere_id))->count();
         }
-
-        // Pour la démonstration réelle, on va chercher dans la table `grades` si is_absent=false 
-        // ou dans `attendances` si on scanne vraiment.
-        // On va simuler un vrai comptage depuis la table `attendances` en utilisant le module_id
-        
-        // Nombre d'étudiants marqués présents pour cet examen dans exam_seatings
-        $present = \DB::table('exam_seatings')
-            ->where('exam_id', $examId)
-            ->where('is_present', true)
-            ->count();
-
-        // Si pas d'émargement encore enregistré dans exam_seatings, compter via attendance_sessions ou grades
-        if ($present === 0 && $totalStudents > 0) {
-            $present = \DB::table('attendance_records')
-                ->whereHas('session', function($q) use ($exam) {
-                    $q->where('module_id', $exam->module_id);
-                })
-                ->where('status', 'present')
-                ->count();
-        }
-
 
         if ($totalStudents === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucun étudiant inscrit trouvé pour cet examen.'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Aucun étudiant inscrit trouvé.'], 404);
         }
+
+        // Présents via exam_seatings
+        $present = ExamSeating::where('exam_id', $examId)->where('is_present', true)->count();
 
         return response()->json([
-            'data' => [
+            'success' => true,
+            'data'    => [
                 'total_students' => $totalStudents,
-                'present' => $present,
-            ]
+                'present'        => $present,
+                'absent'         => $totalStudents - $present,
+                'rate'           => $totalStudents > 0 ? round(($present / $totalStudents) * 100, 1) : 0,
+            ],
         ]);
     }
 }

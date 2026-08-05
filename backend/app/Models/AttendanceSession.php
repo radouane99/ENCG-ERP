@@ -35,7 +35,7 @@ class AttendanceSession extends Model
 
     public function professor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'professor_id');
+        return $this->belongsTo(Professor::class, 'professor_id');
     }
 
     public function module(): BelongsTo
@@ -50,6 +50,11 @@ class AttendanceSession extends Model
 
     public function records(): HasMany
     {
-        return $this->hasMany(AttendanceRecord::class, 'attendance_session_id');
+        return $this->hasMany(Attendance::class, 'attendance_session_id');
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class, 'attendance_session_id');
     }
 }

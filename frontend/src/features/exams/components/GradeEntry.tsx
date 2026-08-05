@@ -55,6 +55,10 @@ export default function GradeEntry() {
   };
 
   const handleSave = async (updates: any[]) => {
+    if (!moduleId || !groupId) {
+      console.error('Module ID and Group ID are required to save grades');
+      return;
+    }
     try {
       setSaveStatus('saving');
       setIsSaving(true);

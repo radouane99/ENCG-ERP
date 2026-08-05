@@ -8,23 +8,21 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireAdmin2FA
 {
+    private const ADMIN_ROLES = ['super-admin', 'institution-admin', 'director'];
+
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Vérifie que l'admin a configuré la 2FA.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
-        // [AUDIT SEC-05] Fixed: check all admin roles, not just non-existent 'admin' role
-        $adminRoles = ['super-admin', 'institution-admin', 'director'];
-
-        if ($user && $user->hasAnyRole($adminRoles)) {
+        if ($user?->hasAnyRole(self::ADMIN_ROLES)) {
             if (!$user->two_factor_confirmed_at && !$user->two_factor_secret) {
                 return response()->json([
-                    'message' => '2FA is required for administrator accounts. Please complete 2FA setup.',
-                    'requires_2fa_setup' => true
+                    'success'            => false,
+                    'message'            => '2FA requise pour les comptes administrateurs.',
+                    'requires_2fa_setup' => true,
                 ], 403);
             }
         }

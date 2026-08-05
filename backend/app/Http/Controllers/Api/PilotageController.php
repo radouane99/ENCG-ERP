@@ -3,21 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 use App\Services\Analytics\DashboardAnalyticsService;
+use Illuminate\Http\JsonResponse;
 
 class PilotageController extends Controller
 {
-    protected DashboardAnalyticsService $analyticsService;
+    public function __construct(
+        private DashboardAnalyticsService $analyticsService
+    ) {}
 
-    public function __construct(DashboardAnalyticsService $analyticsService)
-    {
-        $this->analyticsService = $analyticsService;
-    }
-
+    /**
+     * Métriques globales de pilotage.
+     */
     public function getGlobalMetrics(): JsonResponse
     {
         $result = $this->analyticsService->getGlobalMetrics();
-        return response()->json($result['data']);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result['data'] ?? $result,
+        ]);
     }
 }

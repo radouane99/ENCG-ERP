@@ -169,7 +169,7 @@
                     DOCUMENT OFFICIEL
                 </div>
                 <div style="font-size: 8px; color: #475569; margin-top: 3px; font-weight: bold;">
-                    Session : {{ $session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage' }}
+                    Session : {{ $session === 'normale' ? 'Ordinaire (Normale)' : ($session === 'rattrapage' ? 'de Rattrapage' : 'Bilan Complet Module') }}
                 </div>
                 @if(!empty($qrBase64))
                     <div style="margin-top: 4px;">
@@ -189,7 +189,7 @@
     <!-- Banner Title -->
     <div class="banner-box">
         <div class="banner-title">
-            PROCES-VERBAL DE DELIBERATION - SESSION {{ $session === 'normale' ? 'ORDINAIRE' : 'DE RATTRAPAGE' }}
+            PROCES-VERBAL DE DELIBERATION - {{ $session === 'normale' ? 'SESSION ORDINAIRE' : ($session === 'rattrapage' ? 'SESSION DE RATTRAPAGE' : 'BILAN COMPLET DU MODULE') }}
         </div>
         <div class="banner-subtitle">
             MODULE : {{ $module->code }} - {{ $module->name }}
@@ -202,16 +202,18 @@
             <tr>
                 <th style="width: 110px; text-align: left;">Code Apogée</th>
                 <th style="text-align: left;">Nom & Prénom</th>
-                @foreach($normaleAssessments as $a)
-                    <th style="width: 75px;">
-                        {{ $a->type }}<br>
-                        <span style="font-size: 7.5px; color: #64748b;">({{ $a->weight }}%)</span>
-                    </th>
-                @endforeach
+                @if($session !== 'rattrapage')
+                    @foreach($normaleAssessments as $a)
+                        <th style="width: 75px;">
+                            {{ $a->type }}<br>
+                            <span style="font-size: 7.5px; color: #64748b;">({{ $a->weight }}%)</span>
+                        </th>
+                    @endforeach
+                @endif
                 <th style="width: 85px; background: #e2e8f0;">Moy. Normale</th>
                 <th style="width: 75px; background: #e2e8f0;">Dés. Normale</th>
 
-                @if($session === 'rattrapage')
+                @if($session === 'rattrapage' || $session === 'totale' || $session === 'complet')
                     <th style="width: 85px; background: #fef3c7;">Rattrapage</th>
                     <th style="width: 85px; background: #dbeafe;">Moy. Finale</th>
                     <th style="width: 75px; background: #dbeafe;">Dés. Finale</th>
@@ -227,36 +229,38 @@
                     <td class="apogee-col">{{ $student['apogee'] }}</td>
                     <td class="name-col">{{ $student['last_name'] }} {{ $student['first_name'] }}</td>
                     
-                    @foreach($normaleAssessments as $a)
-                        @php
-                            $info = $rowGrades[$a->id] ?? $rowGrades[$a->type] ?? null;
-                            $val = $info ? $info['value'] : null;
-                            $abs = $info ? $info['is_absent'] : false;
-                            $isFraudCell = $info ? ($info['is_fraud'] ?? false) : false;
-                        @endphp
-                        <td>
-                            @if($isFraudCell)
-                                <span style="color: #b91c1c; font-weight: bold;">0.00 (FRAUDE)</span>
-                            @elseif($abs)
-                                <span style="color: #dc2626; font-weight: bold;">ABI</span>
-                            @elseif($val !== null)
-                                {{ number_format((float)$val, 2, '.', '') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                    @endforeach
+                    @if($session !== 'rattrapage')
+                        @foreach($normaleAssessments as $a)
+                            @php
+                                $info = $rowGrades[$a->id] ?? $rowGrades[$a->type] ?? null;
+                                $val = $info ? $info['value'] : null;
+                                $abs = $info ? $info['is_absent'] : false;
+                                $isFraudCell = $info ? ($info['is_fraud'] ?? false) : false;
+                            @endphp
+                            <td>
+                                @if($isFraudCell)
+                                    <span style="color: #b91c1c; font-weight: bold;">0.00 (FRAUDE)</span>
+                                @elseif($abs)
+                                    <span style="color: #dc2626; font-weight: bold;">ABI</span>
+                                @elseif($val !== null)
+                                    {{ number_format((float)$val, 2, '.', '') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                        @endforeach
+                    @endif
 
                     <td class="moyenne-col">
-                        @if(!empty($student['is_fraud']) || $student['decision_normale'] === 'FRAUDE')
+                        @if(!empty($student['is_fraud']) || ($student['decision_normale'] ?? '') === 'FRAUDE')
                             <span style="color: #b91c1c; font-weight: bold;">0.00</span>
                         @else
-                            {{ $student['moyenne_normale'] !== null ? number_format((float)$student['moyenne_normale'], 2, '.', '') : '-' }}
+                            {{ isset($student['moyenne_normale']) && $student['moyenne_normale'] !== null ? number_format((float)$student['moyenne_normale'], 2, '.', '') : '-' }}
                         @endif
                     </td>
 
                     <td>
-                        @php $dec = $student['decision_normale']; @endphp
+                        @php $dec = $student['decision_normale'] ?? ''; @endphp
                         @if(!empty($student['is_fraud']) || $dec === 'FRAUDE')
                             <span class="badge badge-nv" style="background-color: #b91c1c; color: #fff; font-weight: bold;">FRAUDE</span>
                         @elseif($dec === 'V')
@@ -270,22 +274,28 @@
                         @endif
                     </td>
 
-                    @if($session === 'rattrapage')
+                    @if($session === 'rattrapage' || $session === 'totale' || $session === 'complet')
                         <td>
-                            @if($student['rattrapage_absent'])
+                            @if(!empty($student['rattrapage_absent']))
                                 <span style="color: #dc2626; font-weight: bold;">ABI</span>
-                            @elseif($student['rattrapage_note'] !== null)
+                            @elseif(isset($student['rattrapage_note']) && $student['rattrapage_note'] !== null && $student['rattrapage_note'] !== '')
                                 {{ number_format((float)$student['rattrapage_note'], 2, '.', '') }}
                             @else
                                 -
                             @endif
                         </td>
                         <td class="moyenne-col">
-                            {{ $student['moyenne_finale'] !== null ? number_format((float)$student['moyenne_finale'], 2, '.', '') : '-' }}
+                            @if(!empty($student['is_fraud']) || ($student['decision_finale'] ?? '') === 'FRAUDE')
+                                <span style="color: #b91c1c; font-weight: bold;">0.00</span>
+                            @else
+                                {{ isset($student['moyenne_finale']) && $student['moyenne_finale'] !== null ? number_format((float)$student['moyenne_finale'], 2, '.', '') : '-' }}
+                            @endif
                         </td>
                         <td>
-                            @php $decF = $student['decision_finale']; @endphp
-                            @if($decF === 'V' || $decF === 'VAR')
+                            @php $decF = $student['decision_finale'] ?? ''; @endphp
+                            @if(!empty($student['is_fraud']) || $decF === 'FRAUDE')
+                                <span class="badge badge-nv" style="background-color: #b91c1c; color: #fff; font-weight: bold;">FRAUDE</span>
+                            @elseif($decF === 'V' || $decF === 'VAR')
                                 <span class="badge badge-v">{{ $decF }}</span>
                             @elseif($decF === 'NV')
                                 <span class="badge badge-nv">NV</span>
@@ -310,7 +320,7 @@
                     @if(!empty($signature['signature_data']))
                         <img src="{{ $signature['signature_data'] }}" style="max-height: 50px;" alt="Signature">
                         <div style="font-size: 8px; color: #475569; margin-top: 3px;">
-                            Signé par {{ $signature['signed_by'] }} le {{ $signature['signed_at'] }} (IP: {{ $signature['ip_address'] }})
+                            Signé par {{ $signature['signed_by'] ?? 'Enseignant' }} le {{ $signature['signed_at'] ?? '' }} (IP: {{ $signature['ip_address'] ?? 'N/A' }})
                         </div>
                     @else
                         <div style="font-size: 8px; color: #94a3b8; margin-top: 30px;">(Signature manuscrite / numérique)</div>

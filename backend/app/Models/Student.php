@@ -124,6 +124,12 @@ class Student extends Model
         return $this->hasMany(AttendanceRecord::class);
     }
 
+    // ✅ AJOUTÉ : Relation pour les pointages de présence
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
     public function resitEligibilities(): HasMany
     {
         return $this->hasMany(ResitEligibility::class, 'student_id');

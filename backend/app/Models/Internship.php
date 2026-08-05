@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Internship extends Model
 {
@@ -20,22 +22,22 @@ class Internship extends Model
         ];
     }
 
-    public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
     }
 
-    public function internshipDocuments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function internshipDocuments(): HasMany
     {
         return $this->hasMany(InternshipDocument::class);
     }
 
-    public function internshipReports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function internshipReports(): HasMany
     {
         return $this->hasMany(InternshipReport::class);
     }
 
-    public function internshipEvaluations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function internshipEvaluations(): HasMany
     {
         return $this->hasMany(InternshipEvaluation::class);
     }

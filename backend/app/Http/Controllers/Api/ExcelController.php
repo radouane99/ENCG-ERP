@@ -3,23 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\Core\ExportService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ExcelController extends Controller
 {
-    protected ExportService $exportService;
+    public function __construct(
+        private ExportService $exportService
+    ) {}
 
-    public function __construct(ExportService $exportService)
-    {
-        $this->exportService = $exportService;
-    }
-
-    public function export($model, Request $request)
+    /**
+     * Exporter en Excel.
+     */
+    public function export(string $model, Request $request)
     {
         $result = $this->exportService->exportToExcel($model, $request->all());
-        
+
         if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
             return $result;
         }
@@ -27,10 +27,13 @@ class ExcelController extends Controller
         return response()->json($result);
     }
 
-    public function template($model)
+    /**
+     * Télécharger un template Excel.
+     */
+    public function template(string $model)
     {
         $result = $this->exportService->templateToExcel($model);
-        
+
         if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
             return $result;
         }
@@ -38,10 +41,13 @@ class ExcelController extends Controller
         return response()->json($result);
     }
 
-    public function import(Request $request, $model): JsonResponse
+    /**
+     * Importer depuis Excel.
+     */
+    public function import(Request $request, string $model): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,csv'
+            'file' => 'required|file|mimes:xlsx,csv',
         ]);
 
         $result = $this->exportService->processImport($model, $request->file('file'));

@@ -9,10 +9,13 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __construct(protected DashboardAnalyticsService $analyticsService)
-    {
-    }
+    public function __construct(
+        private DashboardAnalyticsService $analyticsService
+    ) {}
 
+    /**
+     * Statistiques selon le rôle.
+     */
     public function getStats(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -22,37 +25,41 @@ class DashboardController extends Controller
         }
 
         if ($user->hasAnyRole(['professor', 'vacataire'])) {
-            $result = $this->analyticsService->getProfessorStats($user->id);
-
-            return response()->json($result, isset($result['success']) && ! $result['success'] ? 404 : 200);
+            return response()->json($this->analyticsService->getProfessorStats($user->id));
         }
 
-        $result = $this->analyticsService->getStudentStats($user->id);
-
-        return response()->json($result, isset($result['success']) && ! $result['success'] ? 404 : 200);
+        return response()->json($this->analyticsService->getStudentStats($user->id));
     }
 
-    public function getAdminStats(Request $request): JsonResponse
+    /**
+     * Stats admin.
+     */
+    public function getAdminStats(): JsonResponse
     {
         return response()->json($this->analyticsService->getAdminStats());
     }
 
-    public function getExecutiveStats(Request $request): JsonResponse
+    /**
+     * Stats direction.
+     */
+    public function getExecutiveStats(): JsonResponse
     {
         return response()->json($this->analyticsService->getGlobalMetrics());
     }
 
+    /**
+     * Stats étudiant.
+     */
     public function getStudentStats(Request $request): JsonResponse
     {
-        $result = $this->analyticsService->getStudentStats($request->user()->id);
-
-        return response()->json($result, isset($result['success']) && ! $result['success'] ? 404 : 200);
+        return response()->json($this->analyticsService->getStudentStats($request->user()->id));
     }
 
+    /**
+     * Stats professeur.
+     */
     public function getProfessorStats(Request $request): JsonResponse
     {
-        $result = $this->analyticsService->getProfessorStats($request->user()->id);
-
-        return response()->json($result, isset($result['success']) && ! $result['success'] ? 404 : 200);
+        return response()->json($this->analyticsService->getProfessorStats($request->user()->id));
     }
 }

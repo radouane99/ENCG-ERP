@@ -3,34 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\Academic\AlumniService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AlumniController extends Controller
 {
-    protected AlumniService $alumniService;
-
-    public function __construct(AlumniService $alumniService)
-    {
-        $this->alumniService = $alumniService;
-    }
+    public function __construct(
+        private AlumniService $alumniService
+    ) {}
 
     /**
-     * Get Alumni Dashboard Statistics.
+     * Statistiques du tableau de bord Alumni.
      */
     public function getDashboardStats(): JsonResponse
     {
         $stats = $this->alumniService->getDashboardStats();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $stats
+            'data'    => $stats,
         ]);
     }
 
     /**
-     * Get the Alumni Directory list.
+     * Annuaire des Alumni.
      */
     public function index(Request $request): JsonResponse
     {
@@ -38,7 +35,7 @@ class AlumniController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $directory
+            'data'    => $directory,
         ]);
     }
 }

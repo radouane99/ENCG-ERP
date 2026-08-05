@@ -14,7 +14,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import pytest
+import  pytest
 
 SCRIPTS = Path(__file__).resolve().parent.parent
 SCRIPT = SCRIPTS / "sync-brand-to-tokens.cjs"

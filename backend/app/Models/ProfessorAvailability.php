@@ -18,12 +18,12 @@ class ProfessorAvailability extends Model
     {
         return [
             'is_available' => 'boolean',
-            'start_time' => 'datetime:H:i',
-            'end_time' => 'datetime:H:i',
+            'start_time' => 'datetime',
+            'end_time' => 'datetime',
         ];
     }
 
-    public function professor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function professor(): BelongsTo
     {
         return $this->belongsTo(Professor::class, 'professor_id');
     }

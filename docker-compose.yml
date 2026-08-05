@@ -223,6 +223,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@encg.ma
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     networks:

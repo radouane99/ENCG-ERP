@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExamSurveillance extends Model
 {
@@ -11,7 +12,18 @@ class ExamSurveillance extends Model
 
     protected $guarded = ['id'];
 
-    public function exam() { return $this->belongsTo(Exam::class); }
-    public function room() { return $this->belongsTo(Room::class); }
-    public function professor() { return $this->belongsTo(User::class, 'professor_id'); }
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(Exam::class);
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function professor(): BelongsTo
+    {
+        return $this->belongsTo(Professor::class, 'professor_id');
+    }
 }

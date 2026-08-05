@@ -3,104 +3,108 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Mail\ScheduleChangeNotificationMail;
+use App\Models\Professor;
 use App\Models\ScheduleChangeRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ScheduleChangeRequestController extends Controller
 {
+    /**
+     * Liste des demandes de changement.
+     */
     public function index(): JsonResponse
     {
-        $requests = ScheduleChangeRequest::with(['professor.professor.department', 'exam.module'])->get()->map(function ($req) {
-            return [
-                'id' => $req->id,
-                'professor_name' => $req->professor->name ?? 'Inconnu',
-                'department' => $req->professor->professor->department->name ?? 'Inconnu',
-                'module_name' => $req->exam->module->name ?? 'N/A',
-                'old_date' => $req->old_date ? $req->old_date->format('d/m/Y') : 'N/A',
-                'old_start_time' => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',
-                'proposed_date' => $req->proposed_date->format('d/m/Y'),
-                'proposed_start_time' => substr($req->proposed_start_time, 0, 5),
-                'reason' => $req->reason,
-                'status' => $req->status,
-            ];
-        });
+        $requests = ScheduleChangeRequest::with(['professor.department', 'exam.module'])
+            ->get()
+            ->map(function ($req) {
+                return [
+                    'id'                  => $req->id,
+                    'professor_name'      => $req->professor->name ?? 'Inconnu',
+                    'department'          => $req->professor->department->name ?? 'Inconnu',
+                    'module_name'         => $req->exam->module->name ?? 'N/A',
+                    'old_date'            => $req->old_date?->format('d/m/Y') ?? 'N/A',
+                    'old_start_time'      => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',
+                    'proposed_date'       => $req->proposed_date?->format('d/m/Y'),
+                    'proposed_start_time' => $req->proposed_start_time ? substr($req->proposed_start_time, 0, 5) : 'N/A',
+                    'reason'              => $req->reason,
+                    'status'              => $req->status,
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'data' => $requests
+            'data'    => $requests,
         ]);
     }
 
+    /**
+     * Approuver ou rejeter une demande.
+     */
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:approved,rejected'
+            'status' => 'required|in:approved,rejected',
         ]);
 
-        $changeRequest = ScheduleChangeRequest::findOrFail($id);
-        $changeRequest->status = $validated['status'];
-        $changeRequest->save();
+        $changeRequest = ScheduleChangeRequest::with(['exam', 'professor'])->findOrFail($id);
+        $changeRequest->update(['status' => $validated['status']]);
 
-        if ($validated['status'] === 'approved') {
-            if ($changeRequest->exam_id) {
-                $exam = $changeRequest->exam;
-                $exam->exam_date = $changeRequest->proposed_date;
-                $exam->start_time = $changeRequest->proposed_start_time;
-                $exam->save();
-            }
+        if ($validated['status'] === 'approved' && $changeRequest->exam) {
+            $changeRequest->exam->update([
+                'exam_date'  => $changeRequest->proposed_date,
+                'start_time' => $changeRequest->proposed_start_time,
+            ]);
 
-            // Send notification via Resend
-            $email = $changeRequest->professor?->user?->email ?? $changeRequest->professor?->email;
+            $email = $changeRequest->professor->email ?? null;
             if ($email) {
-                $changeData = [
-                    'moduleName' => $changeRequest->exam?->module?->name ?? 'Module d\'Enseignement',
-                    'professorName' => $changeRequest->professor?->name ?? 'Enseignant ENCG',
-                    'newDate' => $changeRequest->proposed_date ? $changeRequest->proposed_date->format('d/m/Y') : 'À déterminer',
-                    'newStartTime' => substr($changeRequest->proposed_start_time, 0, 5),
-                    'newEndTime' => $changeRequest->exam?->end_time ? substr($changeRequest->exam->end_time, 0, 5) : null,
-                    'roomName' => $changeRequest->room?->name ?? 'Salle d\'Examen / Amphi',
-                    'reason' => $changeRequest->reason
-                ];
-
                 try {
-                    \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\ScheduleChangeNotificationMail($changeData));
+                    Mail::to($email)->send(new ScheduleChangeNotificationMail([
+                        'moduleName'    => $changeRequest->exam->module->name ?? 'N/A',
+                        'professorName' => $changeRequest->professor->name ?? 'Enseignant',
+                        'newDate'       => $changeRequest->proposed_date?->format('d/m/Y'),
+                        'newStartTime'  => substr($changeRequest->proposed_start_time ?? '', 0, 5),
+                        'reason'        => $changeRequest->reason,
+                    ]));
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to send schedule change mail to {$email}: " . $e->getMessage());
+                    Log::error("Email échec : {$email} — " . $e->getMessage());
                 }
             }
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Demande ' . ($validated['status'] === 'approved' ? 'approuvée (notifiée par e-mail)' : 'rejetée') . ' avec succès.'
+            'message' => $validated['status'] === 'approved'
+                ? 'Demande approuvée et notifiée.'
+                : 'Demande rejetée.',
         ]);
     }
 
     /**
-     * Suggest available professors in the same department for substitution.
+     * Suggérer des professeurs remplaçants.
      */
     public function suggestSubstitutes(Request $request): JsonResponse
     {
         $departmentId = $request->query('department_id');
-        
-        $professors = \App\Models\Professor::with('user')
+
+        $professors = Professor::with('user')
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
             ->take(5)
             ->get()
-            ->map(function ($prof) {
-                return [
-                    'id' => $prof->id,
-                    'name' => $prof->user ? $prof->user->name : "{$prof->first_name} {$prof->last_name}",
-                    'specialty' => $prof->specialty ?? 'Non défini',
-                    'available' => true,
-                    'contact' => $prof->email ?? 'N/A'
-                ];
-            });
+            ->map(fn($prof) => [
+                'id'        => $prof->id,
+                'name'      => $prof->user?->name ?? "{$prof->first_name} {$prof->last_name}",
+                'specialty' => $prof->specialty ?? 'Non défini',
+                'available' => true,
+                'contact'   => $prof->email ?? 'N/A',
+            ]);
 
         return response()->json([
-            'success' => true,
-            'substitutes' => $professors
+            'success'     => true,
+            'substitutes' => $professors,
         ]);
     }
 }

@@ -17,8 +17,8 @@ class StudentCard extends Model
     protected function casts(): array
     {
         return [
-        'expires_at' => 'datetime',
-    ];
+            'expires_at' => 'datetime',
+        ];
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -30,6 +30,6 @@ class StudentCard extends Model
 
     public function student(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id');
     }
 }

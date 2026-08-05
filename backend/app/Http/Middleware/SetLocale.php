@@ -9,20 +9,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
 {
+    private const SUPPORTED_LOCALES = ['fr', 'ar', 'en'];
+
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Définit la langue selon l'en-tête Accept-Language.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->header('Accept-Language', 'fr');
+        $locale = $request->getPreferredLanguage(self::SUPPORTED_LOCALES);
 
-        // Extract just the language code if it contains region or quality values (e.g. "fr-FR,fr;q=0.9")
-        $langCode = substr($locale, 0, 2);
-
-        if (in_array($langCode, ['fr', 'ar', 'en'])) {
-            App::setLocale($langCode);
+        if ($locale) {
+            App::setLocale($locale);
         }
 
         return $next($request);

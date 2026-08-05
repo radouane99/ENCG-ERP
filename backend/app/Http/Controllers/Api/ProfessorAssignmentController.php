@@ -3,103 +3,107 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use App\Models\AcademicYear;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\ModuleProfessor;
+use App\Models\Professor;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProfessorAssignmentController extends Controller
 {
+    /**
+     * Liste des affectations.
+     */
     public function index(Request $request): JsonResponse
     {
         $currentYear = AcademicYear::where('is_current', true)->first();
+
         if (!$currentYear) {
-            return response()->json(['data' => []]);
+            return response()->json(['success' => true, 'data' => []]);
         }
 
-        $assignments = DB::table('module_professor')
-            ->join('professors', 'module_professor.professor_id', '=', 'professors.id')
-            ->join('users', 'professors.user_id', '=', 'users.id')
-            ->join('modules', 'module_professor.module_id', '=', 'modules.id')
-            ->join('groups', 'module_professor.group_id', '=', 'groups.id')
-            ->where('module_professor.academic_year_id', $currentYear->id)
-            ->select(
-                'module_professor.id',
-                'users.first_name as prof_first_name',
-                'users.last_name as prof_last_name',
-                'modules.code as module_code',
-                'modules.name as module_name',
-                'groups.name as group_name'
-            )
+        $assignments = ModuleProfessor::with(['professor.user', 'module', 'group'])
+            ->where('academic_year_id', $currentYear->id)
             ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'prof' => trim($item->prof_first_name . ' ' . $item->prof_last_name),
-                    'module' => $item->module_code . ' ' . $item->module_name,
-                    'group' => $item->group_name
-                ];
-            });
+            ->map(fn($item) => [
+                'id'     => $item->id,
+                'prof'   => trim(($item->professor->user->first_name ?? '') . ' ' . ($item->professor->user->last_name ?? '')),
+                'module' => ($item->module->code ?? '') . ' ' . ($item->module->name ?? ''),
+                'group'  => $item->group->name ?? 'N/A',
+            ]);
 
-        return response()->json(['data' => $assignments]);
+        return response()->json([
+            'success' => true,
+            'data'    => $assignments,
+        ]);
     }
 
+    /**
+     * Créer une affectation.
+     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'professor_id' => 'required', // Can be UUID or ID
-            'module_id' => 'required',
-            'group_id' => 'required',
+            'professor_id' => 'required',
+            'module_id'    => 'required',
+            'group_id'     => 'required',
         ]);
 
         $currentYear = AcademicYear::where('is_current', true)->first();
         if (!$currentYear) {
-            return response()->json(['message' => 'Aucune année universitaire courante.'], 400);
+            return response()->json(['success' => false, 'message' => 'Aucune année universitaire en cours.'], 400);
         }
 
-        // Resolve IDs from UUIDs if they are strings
-        $profId = \App\Models\Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
-        $modId = \App\Models\Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
-        $grpId = \App\Models\Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
+        $profId = Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
+        $modId  = Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
+        $grpId  = Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
 
         if (!$profId || !$modId || !$grpId) {
-            return response()->json(['message' => 'Entités invalides fournies.'], 400);
+            return response()->json(['success' => false, 'message' => 'Entités invalides.'], 400);
         }
 
-        // Check if assignment already exists
-        $exists = DB::table('module_professor')
-            ->where('academic_year_id', $currentYear->id)
+        $exists = ModuleProfessor::where('academic_year_id', $currentYear->id)
             ->where('module_id', $modId)
             ->where('group_id', $grpId)
             ->where('professor_id', $profId)
             ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'Cette affectation existe déjà.'], 400);
+            return response()->json(['success' => false, 'message' => 'Cette affectation existe déjà.'], 400);
         }
 
-        $id = DB::table('module_professor')->insertGetId([
+        $assignment = ModuleProfessor::create([
             'academic_year_id' => $currentYear->id,
-            'module_id' => $modId,
-            'group_id' => $grpId,
-            'professor_id' => $profId,
-            'professor_type' => 'App\Models\Professor',
-            'session_type' => 'cm', // Defaulting to CM
-            'created_at' => now(),
-            'updated_at' => now(),
+            'module_id'        => $modId,
+            'group_id'         => $grpId,
+            'professor_id'     => $profId,
+            'professor_type'   => 'App\\Models\\Professor',
+            'session_type'     => 'cm',
         ]);
 
-        return response()->json(['message' => 'Affectation ajoutée.', 'data' => ['id' => $id]]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation ajoutée.',
+            'data'    => ['id' => $assignment->id],
+        ]);
     }
 
-    public function destroy(Request $request, $id): JsonResponse
+    /**
+     * Supprimer une affectation.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $deleted = DB::table('module_professor')->where('id', $id)->delete();
-        
+        $deleted = ModuleProfessor::where('id', $id)->delete();
+
         if (!$deleted) {
-            return response()->json(['message' => 'Affectation non trouvée.'], 404);
+            return response()->json(['success' => false, 'message' => 'Affectation non trouvée.'], 404);
         }
-        
-        return response()->json(['message' => 'Affectation supprimée.']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation supprimée.',
+        ]);
     }
 }

@@ -3,225 +3,176 @@
 namespace App\Services\Academic;
 
 use App\Models\AcademicYear;
-use App\Models\Semester;
+use App\Models\Grade;
 use App\Models\Group;
+use App\Models\ModuleProfessor;
+use App\Models\Semester;
 use App\Models\StudentPathway;
-use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
 class AcademicYearRolloverService
 {
-    protected ApogeeDeliberationEngine $deliberationEngine;
-
-    public function __construct(ApogeeDeliberationEngine $deliberationEngine)
-    {
-        $this->deliberationEngine = $deliberationEngine;
-    }
+    public function __construct(
+        private ApogeeDeliberationEngine $deliberationEngine
+    ) {}
 
     /**
-     * Executes the full rollover process.
+     * Exécuter le rollover complet.
      */
     public function executeRollover(int $currentYearId, string $newLabel, string $startDate, string $endDate): array
     {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function () use ($currentYearId, $newLabel, $startDate, $endDate) {
             $currentYear = AcademicYear::findOrFail($currentYearId);
-            
-            // 1. Close current year
-            $currentYear->update([
-                'is_current' => false,
-                'is_locked' => true
-            ]);
 
-            // 2. Create New Year
+            // 1. Fermer l'année actuelle
+            $currentYear->update(['is_current' => false, 'is_locked' => true]);
+
+            // 2. Créer la nouvelle année
             $newYear = AcademicYear::create([
                 'institution_id' => $currentYear->institution_id,
-                'label' => $newLabel,
-                'start_year' => (int) substr($newLabel, 0, 4),
-                'end_year' => (int) substr($newLabel, 5, 4),
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'is_current' => true,
-                'is_locked' => false,
+                'label'          => $newLabel,
+                'start_year'     => (int) substr($newLabel, 0, 4),
+                'end_year'       => (int) substr($newLabel, 5, 4),
+                'start_date'     => $startDate,
+                'end_date'       => $endDate,
+                'is_current'     => true,
+                'is_locked'      => false,
             ]);
 
-            // 3. Clone Semesters & Groups
+            // 3. Cloner la structure
             $this->cloneStructure($currentYear, $newYear);
 
-            // 4. Rollover Students based on Apogee Rules
+            // 4. Basculer les étudiants
             $stats = $this->rolloverStudents($currentYear, $newYear);
-
-            DB::commit();
 
             return [
                 'success' => true,
-                'message' => "Rollover complété avec succès. Bienvenue en {$newLabel}.",
-                'stats' => $stats
+                'message' => "Rollover complété. Bienvenue en {$newLabel}.",
+                'stats'   => $stats,
             ];
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Rollover Error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Erreur lors du rollover : ' . $e->getMessage()
-            ];
-        }
+        });
     }
 
-    protected function cloneStructure(AcademicYear $oldYear, AcademicYear $newYear)
+    /**
+     * Cloner les semestres, groupes et affectations.
+     */
+    private function cloneStructure(AcademicYear $oldYear, AcademicYear $newYear): void
     {
-        // Clone Semesters
-        $semesters = Semester::where('academic_year_id', $oldYear->id)->get();
-        foreach ($semesters as $semester) {
+        // Semestres
+        Semester::where('academic_year_id', $oldYear->id)->get()->each(function ($semester) use ($newYear) {
             Semester::create([
                 'academic_year_id' => $newYear->id,
-                'name' => $semester->name,
-                'number' => $semester->number,
-                'start_date' => $newYear->start_date, // Approx, should be adjusted manually later
-                'end_date' => clone $newYear->start_date->addMonths(5), // Approx
+                'name'             => $semester->name,
+                'number'           => $semester->number,
+                'start_date'       => $newYear->start_date,
+                'end_date'         => $newYear->start_date->copy()->addMonths(5),
             ]);
-        }
+        });
 
-        // Clone Groups
-        $groups = Group::where('academic_year_id', $oldYear->id)->get();
-        foreach ($groups as $group) {
-            Group::create([
-                'filiere_id' => $group->filiere_id,
+        // Groupes
+        $oldGroups = Group::where('academic_year_id', $oldYear->id)->get();
+        $newGroups = [];
+
+        foreach ($oldGroups as $group) {
+            $newGroups[$group->id] = Group::create([
+                'filiere_id'       => $group->filiere_id,
                 'academic_year_id' => $newYear->id,
-                'speciality_id' => $group->speciality_id,
-                'name' => $group->name,
-                'semester_number' => $group->semester_number,
-                'capacity' => $group->capacity,
-                'current_count' => 0, // Reset
-            ]);
+                'speciality_id'    => $group->speciality_id,
+                'name'             => $group->name,
+                'semester_number'  => $group->semester_number,
+                'capacity'         => $group->capacity,
+            ])->id;
         }
 
-        // Clone Module-Professor Assignments
-        $assignments = DB::table('module_professor')->where('academic_year_id', $oldYear->id)->get();
-        
-        // Eager load group mappings to prevent N+1
-        $oldGroups = Group::where('academic_year_id', $oldYear->id)->get()->keyBy('id');
-        $newGroups = Group::where('academic_year_id', $newYear->id)->get()->groupBy('filiere_id');
-        
-        $newAssignments = [];
-        $now = now();
+        // Affectations module-professeur
+        $assignments = ModuleProfessor::where('academic_year_id', $oldYear->id)->get();
 
         foreach ($assignments as $assignment) {
-            $oldGroup = $oldGroups->get($assignment->group_id);
-            if (!$oldGroup) {
-                continue;
-            }
+            $oldGroup = $oldGroups->firstWhere('id', $assignment->group_id);
+            if (!$oldGroup) continue;
 
-            // Find equivalent group in new year
-            $newGroup = $newGroups->get($oldGroup->filiere_id)?->firstWhere('name', $oldGroup->name);
+            $newGroupId = Group::where('academic_year_id', $newYear->id)
+                ->where('filiere_id', $oldGroup->filiere_id)
+                ->where('name', $oldGroup->name)
+                ->value('id');
 
-            if ($newGroup) {
-                $newAssignments[] = [
-                    'module_id' => $assignment->module_id,
-                    'professor_id' => $assignment->professor_id,
-                    'professor_type' => $assignment->professor_type,
+            if ($newGroupId) {
+                ModuleProfessor::create([
+                    'module_id'        => $assignment->module_id,
+                    'professor_id'     => $assignment->professor_id,
+                    'professor_type'   => $assignment->professor_type,
                     'academic_year_id' => $newYear->id,
-                    'group_id' => $newGroup->id,
-                    'session_type' => $assignment->session_type,
-                    'created_at' => $now,
-                    'updated_at' => $now
-                ];
+                    'group_id'         => $newGroupId,
+                    'session_type'     => $assignment->session_type,
+                ]);
             }
-        }
-        
-        // Bulk insert to prevent N+1
-        foreach (array_chunk($newAssignments, 500) as $chunk) {
-            DB::table('module_professor')->insert($chunk);
         }
     }
 
-    protected function rolloverStudents(AcademicYear $oldYear, AcademicYear $newYear): array
+    /**
+     * Basculer les étudiants selon les règles Apogee.
+     */
+    private function rolloverStudents(AcademicYear $oldYear, AcademicYear $newYear): array
     {
         $pathways = StudentPathway::where('academic_year_id', $oldYear->id)
-                                  ->where('is_current', true)
-                                  ->get();
+            ->where('is_current', true)
+            ->get();
 
         if ($pathways->isEmpty()) {
             return ['total_processed' => 0, 'passed' => 0, 'repeated' => 0];
         }
 
-        // 1. Bulk mark old pathways as no longer current
+        // Marquer les anciens parcours comme non courants
         StudentPathway::where('academic_year_id', $oldYear->id)
-                      ->where('is_current', true)
-                      ->update(['is_current' => false]);
+            ->where('is_current', true)
+            ->update(['is_current' => false]);
 
-        // 2. Fetch Grades & Calculate Decision via Apogee Engine without N+1
-        $studentIds = $pathways->pluck('student_id')->toArray();
-        
-        $failedCounts = DB::table('grades')
-            ->where('academic_year_id', $oldYear->id)
+        // Récupérer les notes en échec
+        $studentIds   = $pathways->pluck('student_id')->toArray();
+        $failedCounts = Grade::where('academic_year_id', $oldYear->id)
             ->whereIn('student_id', $studentIds)
             ->where('value', '<', 10)
-            ->select('student_id', DB::raw('count(*) as failed_count'))
+            ->selectRaw('student_id, count(*) as failed_count')
             ->groupBy('student_id')
             ->pluck('failed_count', 'student_id');
 
-        $newGroups = Group::where('academic_year_id', $newYear->id)->get();
-        $newPathways = [];
-        $groupIncrements = [];
-        
-        $passed = 0;
-        $repeated = 0;
-        $now = now();
+        $newGroups  = Group::where('academic_year_id', $newYear->id)->get();
+        $passed     = 0;
+        $repeated   = 0;
 
         foreach ($pathways as $pathway) {
-            $failedCount = $failedCounts->get($pathway->student_id, 0);
-            $decision = $this->deliberationEngine->evaluateProgression($failedCount);
+            $failedCount       = $failedCounts->get($pathway->student_id, 0);
+            $decision          = $this->deliberationEngine->evaluateProgression($failedCount);
             $newSemesterNumber = $pathway->current_semester;
 
-            if ($decision === 'PASS' || $decision === 'PASS_WITH_RESERVED_MODULES') {
-                $newSemesterNumber += 2; // Pass to next year (2 semesters)
+            if (in_array($decision, ['PASS', 'PASS_WITH_RESERVED_MODULES'])) {
+                $newSemesterNumber += 2;
                 $passed++;
             } else {
                 $repeated++;
             }
 
-            // Find new group for the student
             $newGroup = $newGroups->where('filiere_id', $pathway->filiere_id)
-                                  ->where('semester_number', $newSemesterNumber)
-                                  ->first();
+                ->where('semester_number', $newSemesterNumber)
+                ->first();
 
-            // 3. Create New Pathway payload
-            $newPathways[] = [
-                'student_id' => $pathway->student_id,
-                'filiere_id' => $pathway->filiere_id,
-                'speciality_id' => $pathway->speciality_id,
+            StudentPathway::create([
+                'student_id'       => $pathway->student_id,
+                'filiere_id'       => $pathway->filiere_id,
+                'speciality_id'    => $pathway->speciality_id,
                 'academic_year_id' => $newYear->id,
-                'group_id' => $newGroup ? $newGroup->id : null,
+                'group_id'         => $newGroup?->id,
                 'current_semester' => $newSemesterNumber,
-                'is_current' => true,
-                'created_at' => $now,
-                'updated_at' => $now
-            ];
-
-            if ($newGroup) {
-                $groupIncrements[$newGroup->id] = ($groupIncrements[$newGroup->id] ?? 0) + 1;
-            }
-        }
-
-        // Bulk insert pathways
-        foreach (array_chunk($newPathways, 500) as $chunk) {
-            StudentPathway::insert($chunk);
-        }
-
-        // Bulk increment group counts
-        foreach ($groupIncrements as $groupId => $count) {
-            Group::where('id', $groupId)->increment('current_count', $count);
+                'is_current'       => true,
+            ]);
         }
 
         return [
             'total_processed' => $pathways->count(),
-            'passed' => $passed,
-            'repeated' => $repeated
+            'passed'          => $passed,
+            'repeated'        => $repeated,
         ];
     }
 }

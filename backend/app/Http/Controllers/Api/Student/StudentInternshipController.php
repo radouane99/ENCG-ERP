@@ -5,17 +5,20 @@ namespace App\Http\Controllers\Api\Student;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internship\ApplyInternshipRequest;
 use App\Http\Requests\Internship\UploadInternshipDocumentRequest;
-use App\Services\Academic\InternshipService;
 use App\Models\Internship;
+use App\Services\Academic\InternshipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class StudentInternshipController extends Controller
 {
-    public function __construct(private InternshipService $internshipService)
-    {
-    }
+    public function __construct(
+        private InternshipService $internshipService
+    ) {}
 
+    /**
+     * Stages de l'étudiant.
+     */
     public function index(Request $request): JsonResponse
     {
         $student = $request->user()?->student;
@@ -25,9 +28,15 @@ class StudentInternshipController extends Controller
             ->with(['internshipDocuments'])
             ->get();
 
-        return response()->json(['internships' => $internships]);
+        return response()->json([
+            'success'     => true,
+            'internships' => $internships,
+        ]);
     }
 
+    /**
+     * Postuler à un stage.
+     */
     public function store(ApplyInternshipRequest $request): JsonResponse
     {
         $student = $request->user()?->student;
@@ -39,11 +48,15 @@ class StudentInternshipController extends Controller
         );
 
         return response()->json([
-            'message' => 'Internship application submitted successfully',
-            'internship' => $internship
+            'success'    => true,
+            'message'    => 'Candidature au stage soumise avec succès.',
+            'internship' => $internship,
         ], 201);
     }
 
+    /**
+     * Uploader un document de stage.
+     */
     public function uploadDocument(int $internshipId, UploadInternshipDocumentRequest $request): JsonResponse
     {
         $document = $this->internshipService->uploadDocument(
@@ -53,8 +66,9 @@ class StudentInternshipController extends Controller
         );
 
         return response()->json([
-            'message' => 'Document uploaded successfully',
-            'document' => $document
+            'success'  => true,
+            'message'  => 'Document uploadé avec succès.',
+            'document' => $document,
         ], 201);
     }
 }

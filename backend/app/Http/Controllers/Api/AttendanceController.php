@@ -14,10 +14,13 @@ use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    public function __construct(private AttendanceService $attendanceService)
-    {
-    }
+    public function __construct(
+        private AttendanceService $attendanceService
+    ) {}
 
+    /**
+     * Liste des sessions de présence.
+     */
     public function index(Request $request, ListAttendanceSessionsAction $action): JsonResponse
     {
         $result = $action->execute($request->search);
@@ -25,6 +28,9 @@ class AttendanceController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Démarrer une session de présence (admin).
+     */
     public function store(StartAttendanceSessionRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -36,32 +42,35 @@ class AttendanceController extends Controller
         );
 
         return response()->json([
-            'message' => 'Attendance session started successfully',
-            'data' => $session,
+            'success' => true,
+            'message' => 'Session de présence démarrée.',
+            'data'    => $session,
         ], 201);
     }
 
+    /**
+     * Créer une session de présence (professeur).
+     */
     public function createSession(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'module_id' => 'nullable|integer|exists:modules,id',
-            'module_name' => 'nullable|string|max:255',
-            'group_id' => 'nullable|integer|exists:groups,id',
-            'group_name' => 'nullable|string|max:255',
-            'room_name' => 'required|string|max:100',
+            'module_id'        => 'nullable|integer|exists:modules,id',
+            'module_name'      => 'nullable|string|max:255',
+            'group_id'         => 'nullable|integer|exists:groups,id',
+            'group_name'       => 'nullable|string|max:255',
+            'room_name'        => 'required|string|max:100',
             'duration_minutes' => 'nullable|integer|min:1|max:180',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude'         => 'nullable|numeric',
+            'longitude'        => 'nullable|numeric',
         ]);
 
-        $module = ! empty($validated['module_id'])
+        $module = !empty($validated['module_id'])
             ? Module::findOrFail($validated['module_id'])
-            : Module::query()
-                ->where('name', $validated['module_name'] ?? '')
+            : Module::where('name', $validated['module_name'] ?? '')
                 ->orWhere('code', $validated['module_name'] ?? '')
                 ->firstOrFail();
 
-        $group = ! empty($validated['group_id'])
+        $group = !empty($validated['group_id'])
             ? Group::findOrFail($validated['group_id'])
             : Group::where('name', $validated['group_name'] ?? '')->firstOrFail();
 
@@ -71,57 +80,65 @@ class AttendanceController extends Controller
             $request->user()->id,
             $validated['room_name'],
             [
-                'module_name' => $module->name,
-                'group_name' => $group->name,
+                'module_name'      => $module->name,
+                'group_name'       => $group->name,
                 'duration_minutes' => $validated['duration_minutes'] ?? 15,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
+                'latitude'         => $validated['latitude'] ?? null,
+                'longitude'        => $validated['longitude'] ?? null,
             ]
         );
 
         return response()->json([
-            'message' => 'Attendance session started successfully',
-            'data' => $session,
+            'success' => true,
+            'message' => 'Session de présence démarrée.',
+            'data'    => $session,
         ], 201);
     }
 
+    /**
+     * Statistiques d'une session de présence.
+     */
     public function sessionStats(int $id): JsonResponse
     {
         $session = AttendanceSession::with(['records.student.user'])->findOrFail($id);
         $records = $session->records;
-        $presentRecords = $records->filter(fn ($record) => in_array((string) $record->status, ['present', 'late', 'excused'], true));
+        $presentRecords = $records->filter(
+            fn($record) => in_array((string) $record->status, ['present', 'late', 'excused'], true)
+        );
 
         return response()->json([
-            'data' => [
-                'session_id' => $session->id,
-                'scans_count' => $presentRecords->count(),
+            'success' => true,
+            'data'    => [
+                'session_id'    => $session->id,
+                'scans_count'   => $presentRecords->count(),
                 'present_count' => $presentRecords->where('status', 'present')->count(),
-                'late_count' => $presentRecords->where('status', 'late')->count(),
-                'absent_count' => $records->where('status', 'absent')->count(),
-                'students' => $presentRecords->map(function ($record) {
-                    return [
-                        'id' => $record->student_id,
-                        'name' => $record->student?->user?->name ?? 'Étudiant',
-                        'status' => (string) $record->status,
-                        'scanned_at' => $record->scanned_at,
-                        'is_valid' => (bool) $record->is_valid,
-                    ];
-                })->values(),
+                'late_count'    => $presentRecords->where('status', 'late')->count(),
+                'absent_count'  => $records->where('status', 'absent')->count(),
+                'students'      => $presentRecords->map(fn($record) => [
+                    'id'         => $record->student_id,
+                    'name'       => $record->student?->user?->name ?? 'Étudiant',
+                    'status'     => (string) $record->status,
+                    'scanned_at' => $record->scanned_at,
+                    'is_valid'   => (bool) $record->is_valid,
+                ])->values(),
             ],
         ]);
     }
 
+    /**
+     * Scanner un QR code de présence (étudiant).
+     */
     public function scanQr(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'qr_token' => 'required|string',
-            'latitude' => 'nullable|numeric',
+            'qr_token'  => 'required|string',
+            'latitude'  => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
 
         $student = $request->user()?->student;
-        if (! $student) {
-            return response()->json(['message' => 'Profil étudiant introuvable.'], 403);
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
         $session = AttendanceSession::where('qr_token', $validated['qr_token'])
@@ -131,8 +148,8 @@ class AttendanceController extends Controller
             })
             ->first();
 
-        if (! $session) {
-            return response()->json(['message' => 'Session QR invalide ou expirée.'], 404);
+        if (!$session) {
+            return response()->json(['success' => false, 'message' => 'Session QR invalide ou expirée.'], 404);
         }
 
         $record = $this->attendanceService->markPresence(
@@ -144,15 +161,19 @@ class AttendanceController extends Controller
         );
 
         return response()->json([
+            'success' => true,
             'message' => 'Présence enregistrée avec succès.',
-            'data' => [
-                'session_id' => $session->id,
+            'data'    => [
+                'session_id'    => $session->id,
                 'attendance_id' => $record->id,
-                'status' => (string) $record->status,
+                'status'        => (string) $record->status,
             ],
         ]);
     }
 
+    /**
+     * Supprimer une session de présence.
+     */
     public function destroy(AttendanceSession $attendanceSession): JsonResponse
     {
         $attendanceSession->delete();
@@ -160,8 +181,11 @@ class AttendanceController extends Controller
         activity()
             ->causedBy(auth()->user())
             ->performedOn($attendanceSession)
-            ->log('Attendance session deleted');
+            ->log('Session de présence supprimée');
 
-        return response()->json(['message' => 'Session d\'absence supprimée.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Session de présence supprimée.',
+        ]);
     }
 }

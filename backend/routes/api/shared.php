@@ -61,6 +61,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/generate', [\App\Http\Controllers\Api\DocumentController::class, 'generate']);
         Route::get('/verify-internal/{token}', [\App\Http\Controllers\Api\DocumentController::class, 'verify']);
         
+        // Securely serve private student/candidate documents
+        Route::get('/serve/{type}/{cne}', [\App\Http\Controllers\Api\AdmissionController::class, 'serveCandidateDocument'])->name('documents.serve');
+        
         // PDF Previews
         Route::get('/preview/ordre-mission', [\App\Http\Controllers\Api\PdfExportController::class, 'previewOrdreMission']);
         Route::get('/preview/convention-stage', [\App\Http\Controllers\Api\PdfExportController::class, 'previewConventionStage']);

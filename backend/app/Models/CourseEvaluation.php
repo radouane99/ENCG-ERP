@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CourseEvaluation extends Model
 {
@@ -11,18 +12,18 @@ class CourseEvaluation extends Model
 
     protected $guarded = ['id'];
 
-    public function module()
+    public function module(): BelongsTo
     {
-        return $this->belongsTo(Module::class, 'module_id');
+        return $this->belongsTo(Module::class);
     }
 
-    public function professor()
+    public function professor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'professor_id');
+        return $this->belongsTo(Professor::class, 'professor_id');
     }
 
-    public function student()
+    public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(Student::class);
     }
 }

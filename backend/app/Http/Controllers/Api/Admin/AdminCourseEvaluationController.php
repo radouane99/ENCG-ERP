@@ -3,147 +3,101 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Models\CourseEvaluation;
 use App\Models\EvaluationCampaign;
-use App\Models\Module;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\StudentRegistration;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminCourseEvaluationController extends Controller
 {
     /**
-     * Get aggregated course evaluation metrics and comments directly from database.
+     * Statistiques des évaluations de cours.
      */
     public function getStats(Request $request): JsonResponse
     {
-        try {
-            // Check if the tables exist first
-            if (!\Illuminate\Support\Facades\Schema::hasTable('evaluation_campaigns')) {
-                return response()->json([
-                    'success' => true,
-                    'campaign' => ['id' => 1, 'name' => 'Campagne d\'Évaluation S5-S6 ENCG Fès', 'status' => 'OPEN', 'semester_number' => 5],
-                    'stats' => ['total_evaluations' => 0, 'global_average' => 0.00, 'participation_rate' => '0%'],
-                    'evaluations' => [],
-                    'comments' => [],
-                    '_note' => 'Tables non encore créées. Lancez: php artisan migrate'
-                ]);
-            }
+        $campaign = EvaluationCampaign::firstOrCreate(['id' => 1], [
+            'name'            => 'Campagne d\'Évaluation S5-S6 ENCG Fès',
+            'status'          => 'OPEN',
+            'semester_number' => 5,
+        ]);
 
-            // Fetch or create active campaign
-            $campaign = EvaluationCampaign::firstOrCreate(['id' => 1], [
-                'name' => 'Campagne d\'Évaluation S5-S6 ENCG Fès',
-                'status' => 'OPEN',
-                'semester_number' => 5
+        $evaluations = CourseEvaluation::with(['module.filiere', 'professor'])
+            ->get()
+            ->groupBy('module_id')
+            ->map(function ($group) {
+                $first = $group->first();
+                return [
+                    'module_id'      => $first->module_id,
+                    'module_code'    => $first->module->code ?? 'N/A',
+                    'module_name'    => $first->module->name ?? 'N/A',
+                    'professor_name' => $first->professor->name ?? 'Pr. Enseignant',
+                    'filiere_name'   => $first->module->filiere->name ?? 'N/A',
+                    'count'          => $group->count(),
+                    'q1'             => round($group->avg('q1_organisation'), 2),
+                    'q2'             => round($group->avg('q2_clarte'), 2),
+                    'q3'             => round($group->avg('q3_dispo'), 2),
+                    'q4'             => round($group->avg('q4_utilite'), 2),
+                    'score'          => round($group->avg(function ($e) {
+                        return ($e->q1_organisation + $e->q2_clarte + $e->q3_dispo + $e->q4_utilite) / 4;
+                    }), 2),
+                ];
+            })->values();
+
+        $comments = CourseEvaluation::with(['module', 'professor'])
+            ->whereNotNull('comment')
+            ->where('comment', '!=', '')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn($e) => [
+                'id'             => $e->id,
+                'module_name'    => $e->module->name ?? 'N/A',
+                'professor_name' => $e->professor->name ?? 'Pr. Enseignant',
+                'comment'        => $e->comment,
+                'created_at'     => $e->created_at,
             ]);
 
-            // Fetch real database evaluations grouped by module
-            $rawEvaluations = DB::table('course_evaluations')
-                ->join('modules', 'course_evaluations.module_id', '=', 'modules.id')
-                ->leftJoin('users', 'course_evaluations.professor_id', '=', 'users.id')
-                ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
-                ->select(
-                    'modules.id as module_id',
-                    'modules.code as module_code',
-                    'modules.name as module_name',
-                    DB::raw("COALESCE(users.name, 'Pr. Enseignant') as professor_name"),
-                    'filieres.name as filiere_name',
-                    DB::raw("COUNT(course_evaluations.id) as count"),
-                    DB::raw("ROUND(AVG(course_evaluations.q1_organisation)::numeric, 2) as q1"),
-                    DB::raw("ROUND(AVG(course_evaluations.q2_clarte)::numeric, 2) as q2"),
-                    DB::raw("ROUND(AVG(course_evaluations.q3_dispo)::numeric, 2) as q3"),
-                    DB::raw("ROUND(AVG(course_evaluations.q4_utilite)::numeric, 2) as q4"),
-                    DB::raw("ROUND(AVG((q1_organisation + q2_clarte + q3_dispo + q4_utilite) / 4.0)::numeric, 2) as score")
-                )
-                ->groupBy('modules.id', 'modules.code', 'modules.name', 'users.name', 'filieres.name')
-                ->get();
+        $totalEvaluations   = CourseEvaluation::count();
+        $uniqueStudents     = CourseEvaluation::distinct('student_id')->count('student_id');
+        $totalStudents      = StudentRegistration::distinct('student_id')->count('student_id');
+        $participationRate  = $totalStudents > 0 ? round(($uniqueStudents / $totalStudents) * 100, 1) . '%' : '0%';
 
-            // Fetch qualitative comments from DB
-            $comments = DB::table('course_evaluations')
-                ->join('modules', 'course_evaluations.module_id', '=', 'modules.id')
-                ->leftJoin('users', 'course_evaluations.professor_id', '=', 'users.id')
-                ->whereNotNull('course_evaluations.comment')
-                ->where('course_evaluations.comment', '!=', '')
-                ->orderBy('course_evaluations.created_at', 'desc')
-                ->limit(10)
-                ->select(
-                    'course_evaluations.id',
-                    'modules.name as module_name',
-                    DB::raw("COALESCE(users.name, 'Pr. Enseignant') as professor_name"),
-                    'course_evaluations.comment',
-                    'course_evaluations.created_at'
-                )
-                ->get();
+        $globalAverage = round(CourseEvaluation::selectRaw('AVG((q1_organisation + q2_clarte + q3_dispo + q4_utilite) / 4) as avg')->value('avg') ?? 0, 2);
 
-            $totalEvaluations = DB::table('course_evaluations')->count();
-            $uniqueStudentsEvaluated = DB::table('course_evaluations')->distinct('student_id')->count('student_id');
-            $totalRegisteredStudents = DB::table('student_registrations')->distinct('student_id')->count('student_id');
-            $participationRate = $totalRegisteredStudents > 0
-                ? round(($uniqueStudentsEvaluated / $totalRegisteredStudents) * 100, 1) . '%'
-                : '0%';
-
-            $globalAverage = DB::table('course_evaluations')
-                ->select(DB::raw("ROUND(AVG((q1_organisation + q2_clarte + q3_dispo + q4_utilite) / 4.0)::numeric, 2) as avg_score"))
-                ->value('avg_score') ?? 0.00;
-
-            return response()->json([
-                'success' => true,
-                'campaign' => [
-                    'id' => $campaign->id,
-                    'name' => $campaign->name,
-                    'status' => $campaign->status,
-                    'semester_number' => $campaign->semester_number,
-                ],
-                'stats' => [
-                    'total_evaluations' => $totalEvaluations,
-                    'global_average' => (float)$globalAverage,
-                    'participation_rate' => $participationRate,
-                ],
-                'evaluations' => $rawEvaluations,
-                'comments' => $comments
-            ]);
-
-        } catch (\Exception $e) {
-            // Graceful fallback: return empty safe state if any DB error
-            return response()->json([
-                'success' => true,
-                'campaign' => ['id' => 1, 'name' => 'Campagne d\'Évaluation S5-S6 ENCG Fès', 'status' => 'OPEN', 'semester_number' => 5],
-                'stats' => ['total_evaluations' => 0, 'global_average' => 0.00, 'participation_rate' => '0%'],
-                'evaluations' => [],
-                'comments' => [],
-                '_error' => $e->getMessage()
-            ]);
-        }
+        return response()->json([
+            'success'     => true,
+            'campaign'    => [
+                'id'              => $campaign->id,
+                'name'            => $campaign->name,
+                'status'          => $campaign->status,
+                'semester_number' => $campaign->semester_number,
+            ],
+            'stats'       => [
+                'total_evaluations'  => $totalEvaluations,
+                'global_average'     => (float) $globalAverage,
+                'participation_rate' => $participationRate,
+            ],
+            'evaluations' => $evaluations,
+            'comments'    => $comments,
+        ]);
     }
 
     /**
-     * Toggle campaign status (OPEN / CLOSED) in database.
+     * Basculer l'état de la campagne (OUVERT/FERMÉ).
      */
     public function toggleCampaign(Request $request): JsonResponse
     {
-        try {
-            if (!\Illuminate\Support\Facades\Schema::hasTable('evaluation_campaigns')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Table non créée. Lancez: docker exec encg_backend php artisan migrate'
-                ], 500);
-            }
+        $campaign  = EvaluationCampaign::firstOrCreate(['id' => 1]);
+        $newStatus = $campaign->status === 'OPEN' ? 'CLOSED' : 'OPEN';
+        $campaign->update(['status' => $newStatus]);
 
-            $campaign = EvaluationCampaign::firstOrCreate(['id' => 1]);
-            $newStatus = $campaign->status === 'OPEN' ? 'CLOSED' : 'OPEN';
-            $campaign->update(['status' => $newStatus]);
-
-            return response()->json([
-                'success' => true,
-                'status' => $newStatus,
-                'message' => $newStatus === 'OPEN' ? 'La campagne d\'évaluation est désormais OUVERTE.' : 'La campagne d\'évaluation a été CLÔTURÉE.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'status'  => $newStatus,
+            'message' => $newStatus === 'OPEN'
+                ? 'La campagne d\'évaluation est désormais OUVERTE.'
+                : 'La campagne d\'évaluation a été CLÔTURÉE.',
+        ]);
     }
 }

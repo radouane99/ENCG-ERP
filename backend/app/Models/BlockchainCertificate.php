@@ -12,9 +12,12 @@ class BlockchainCertificate extends Model
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'certified_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'certified_at' => 'datetime',
+        ];
+    }
 
     public function student(): BelongsTo
     {

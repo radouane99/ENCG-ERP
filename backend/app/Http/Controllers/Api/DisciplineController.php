@@ -3,34 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\Academic\StudentAffairsService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DisciplineController extends Controller
 {
-    protected StudentAffairsService $affairsService;
-
-    public function __construct(StudentAffairsService $affairsService)
-    {
-        $this->affairsService = $affairsService;
-    }
+    public function __construct(
+        private StudentAffairsService $affairsService
+    ) {}
 
     /**
-     * Display a listing of the discipline cases.
+     * Liste des cas disciplinaires.
      */
     public function index(): JsonResponse
     {
         $cases = $this->affairsService->getAllDisciplineCases();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $cases
+            'data'    => $cases,
         ]);
     }
 
     /**
-     * Report a new incident.
+     * Signaler un incident.
      */
     public function store(Request $request): JsonResponse
     {
@@ -39,7 +36,7 @@ class DisciplineController extends Controller
             'incident_date' => 'required|date',
             'type'          => 'required|string',
             'description'   => 'required|string',
-            'severity'      => 'nullable|string|in:low,medium,high'
+            'severity'      => 'nullable|string|in:low,medium,high',
         ]);
 
         $reporterId = auth()->id();
@@ -52,32 +49,32 @@ class DisciplineController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Incident signalé avec succès.',
-            'data' => $case
+            'data'    => $case,
         ], 201);
     }
 
     /**
-     * Make a decision on a specific discipline case.
+     * Prendre une décision disciplinaire.
      */
-    public function decide(Request $request, $id): JsonResponse
+    public function decide(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
             'decision' => 'required|string|in:warning,blame,annulation_module,annulation_semestre,exclusion,dismissed',
-            'notes'    => 'nullable|string'
+            'notes'    => 'nullable|string',
         ]);
 
         try {
-            $case = $this->affairsService->makeDecision((int) $id, $validated['decision'], $validated['notes'] ?? null);
-            
+            $case = $this->affairsService->makeDecision($id, $validated['decision'], $validated['notes'] ?? null);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Décision disciplinaire enregistrée.',
-                'data' => $case
+                'data'    => $case,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

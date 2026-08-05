@@ -3,13 +3,21 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\JobOffer;
+use Illuminate\Http\JsonResponse;
 
 class JobOfferController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Liste des offres d'emploi.
+     */
+    public function index(): JsonResponse
     {
-        $offers = \App\Models\JobOffer::latest()->get();
-        return response()->json(['data' => $offers]);
+        $offers = JobOffer::latest()->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $offers,
+        ]);
     }
 }

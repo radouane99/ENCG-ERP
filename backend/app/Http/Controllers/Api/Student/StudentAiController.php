@@ -3,101 +3,95 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\Exam;
+use App\Services\AI\GeminiApiService;
 use App\Services\AI\StudentAiService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class StudentAiController extends Controller
 {
-    protected StudentAiService $studentAiService;
-    protected \App\Services\AI\GeminiApiService $geminiApi;
-
-    public function __construct(StudentAiService $studentAiService, \App\Services\AI\GeminiApiService $geminiApi)
-    {
-        $this->studentAiService = $studentAiService;
-        $this->geminiApi = $geminiApi;
-    }
+    public function __construct(
+        private StudentAiService $studentAiService,
+        private GeminiApiService $geminiApi
+    ) {}
 
     /**
-     * Virtual AI Tutor for Students.
+     * Tuteur IA pour étudiants.
      */
     public function tutorQuery(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'query' => 'required|string|min:2'
+            'query' => 'required|string|min:2',
         ]);
 
-        $studentId = auth()->id() ?? 1;
-        $result = $this->studentAiService->processTutorQuery($validated['query'], $studentId);
+        $result = $this->studentAiService->processTutorQuery($validated['query'], auth()->id() ?? 1);
 
         return response()->json([
             'success' => true,
-            'data' => $result
+            'data'    => $result,
         ]);
     }
 
     /**
-     * Real Grade & Semester Compensation Simulator.
+     * Simuler une note et compensation.
      */
     public function simulateGrade(Request $request): JsonResponse
     {
         $targetGrade = (float) $request->query('target_grade', 12.0);
-        $studentId = auth()->id() ?? 1;
-
-        $result = $this->studentAiService->simulateGrade($studentId, $targetGrade);
+        $result      = $this->studentAiService->simulateGrade(auth()->id() ?? 1, $targetGrade);
 
         return response()->json($result);
     }
 
     /**
-     * AI Career & Internship Recommender.
+     * Recommandations de carrière par IA.
      */
     public function getCareerRecommendations(): JsonResponse
     {
-        $studentId = auth()->id() ?? 1;
-        $result = $this->studentAiService->getCareerRecommendations($studentId);
+        $result = $this->studentAiService->getCareerRecommendations(auth()->id() ?? 1);
 
         return response()->json($result);
     }
 
+    /**
+     * Assistant d'examen par IA.
+     */
     public function examAssistant(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'exam_id' => 'required|integer',
-            'query' => 'required|string|min:2'
+            'query'   => 'required|string|min:2',
         ]);
 
-        $exam = \App\Models\Exam::with('module')->find($validated['exam_id']);
-        
+        $exam = Exam::with('module')->find($validated['exam_id']);
         if (!$exam) {
-            return response()->json(['success' => false, 'message' => 'Examen introuvable'], 404);
+            return response()->json(['success' => false, 'message' => 'Examen introuvable.'], 404);
         }
 
-        $moduleName = $exam->module?->name ?? 'Module';
-        $prompt = $validated['query'];
+        $moduleName = $exam->module->name ?? 'Module';
         $system = [
             "Tu es l'assistant d'examen officiel de l'ENCG Fès pour l'épreuve : {$moduleName}.",
-            "L'examen se déroule le : " . ($exam->date ?? 'inconnue') . ".",
-            "Donne une réponse claire, précise et bienveillante en 2-3 phrases."
+            "Donne une réponse claire, précise et bienveillante en 2-3 phrases.",
         ];
 
-        $answer = $this->geminiApi->generateContent($prompt, $system)
-            ?? "Pour toute question concernant l'examen {$moduleName}, veuillez consulter les consignes figurant sur votre convocation officielle.";
+        $answer = $this->geminiApi->generateContent($validated['query'], $system)
+            ?? "Pour toute question concernant l'examen {$moduleName}, veuillez consulter les consignes de votre convocation officielle.";
 
         return response()->json([
             'success' => true,
-            'answer' => $answer
+            'answer'  => $answer,
         ]);
     }
 
     /**
-     * AI Course Material Analysis (Summary, Definitions & Mermaid Mindmap).
+     * Analyse de support de cours par IA.
      */
     public function analyzeCourse(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'course_content' => 'required|string|min:10',
-            'title' => 'nullable|string'
+            'title'          => 'nullable|string',
         ]);
 
         $result = $this->studentAiService->analyzeCourseMaterial(

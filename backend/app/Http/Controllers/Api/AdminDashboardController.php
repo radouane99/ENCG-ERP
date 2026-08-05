@@ -3,365 +3,204 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\AbsenceJustification;
+use App\Models\Assessment;
+use App\Models\DocumentRequest;
+use App\Models\Filiere;
+use App\Models\Grade;
+use App\Models\Professor;
 use App\Models\Student;
+use App\Models\StudentPathway;
 use App\Models\User;
-use App\Models\AttendanceRecord;
-use Illuminate\Support\Facades\DB;
+use App\Models\VacationContract;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
     /**
-     * Get statistics for the Admin Dashboard.
+     * Statistiques du tableau de bord administrateur.
      */
     public function getStats(Request $request): JsonResponse
     {
-        // Total active students
-        $studentsCount = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->where('users.is_active', true)
-            ->count();
+        $studentsCount   = Student::whereHas('user', fn($q) => $q->where('is_active', true))->count();
+        $professorsCount = User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire']))->where('is_active', true)->count();
+        $permanentsCount = User::whereHas('roles', fn($q) => $q->where('name', 'professor'))->where('is_active', true)->count();
+        $vacatairesCount = User::whereHas('roles', fn($q) => $q->where('name', 'vacataire'))->where('is_active', true)->count();
 
-        // Total professors (permanents and vacataires)
-        $professorsCount = User::whereHas('roles', function($q) {
-            $q->whereIn('name', ['professor', 'vacataire']);
-        })->where('is_active', true)->count();
+        $alertsCount = DocumentRequest::where('status', 'pending')->count()
+            + AbsenceJustification::where('status', 'pending')->count();
 
-        $permanentsCount = User::whereHas('roles', function($q) {
-            $q->where('name', 'professor');
-        })->where('is_active', true)->count();
-        
-        $vacatairesCount = User::whereHas('roles', function($q) {
-            $q->where('name', 'vacataire');
-        })->where('is_active', true)->count();
-
-        // Real attendance rate from actual records
-        $totalRecords   = 1000; // Mock data
-        $presentRecords = 850; // Mock data
-        $attendanceRate = 85.0; // Mock data
-
-        // Alerts (e.g. pending documents, pending justifications)
-        $alertsCount = DB::table('document_requests')->where('status', 'pending')->count()
-                     + DB::table('absence_justifications')->where('status', 'pending')->count();
-
-        // Filiere distribution
-        $filieres = DB::table('filieres')->select('id', 'code', 'name')->get();
+        // Distribution par filière
+        $filieres = Filiere::select('id', 'code', 'name')->get();
         $filiereDistribution = [];
         $colors = ['#10b981', '#3b82f6', '#f59e0b', '#6366f1', '#ec4899'];
         $totalFiliereStudents = 0;
-        
+
         foreach ($filieres as $index => $filiere) {
-            $count = DB::table('student_pathways')
-                ->where('filiere_id', $filiere->id)
-                ->where('is_current', true)
-                ->count();
-                
+            $count = StudentPathway::where('filiere_id', $filiere->id)->where('is_current', true)->count();
             $filiereDistribution[] = [
-                'name' => $filiere->code,
+                'name'  => $filiere->code,
                 'count' => $count,
-                'color' => $colors[$index % count($colors)]
+                'color' => $colors[$index % count($colors)],
             ];
             $totalFiliereStudents += $count;
         }
 
-        // Calculate percentages
-        if ($totalFiliereStudents > 0) {
-            foreach ($filiereDistribution as &$fd) {
-                $fd['value'] = round(($fd['count'] / $totalFiliereStudents) * 100);
-            }
-        } else {
-            $filiereDistribution = [];
+        foreach ($filiereDistribution as &$fd) {
+            $fd['value'] = $totalFiliereStudents > 0 ? round(($fd['count'] / $totalFiliereStudents) * 100) : 0;
         }
 
-        // --- New Dynamic Data for Charts ---
-
-        // 1. Enrollment Data (Cumulative students over recent months)
-        $enrollmentData = [];
-        $months = ['Sep', 'Oct', 'Nov', 'Déc', 'Jan', 'Fév', 'Mar'];
-        $baseCount = DB::table('students')->count(); // simplified cumulative
-        foreach ($months as $i => $monthName) {
-            // Very simplified approximation for visual chart
-            $enrollmentData[] = [
-                'month' => $monthName,
-                'students' => max($baseCount - (6 - $i) * 5, 0) // simulated historical curve based on real total
-            ];
-        }
-
-        // 2. Attendance by Week (Avg rate per day of week)
-        $daysMap = [1 => 'Lun', 2 => 'Mar', 3 => 'Mer', 4 => 'Jeu', 5 => 'Ven', 6 => 'Sam'];
-        $attendanceByWeek = [];
-        foreach ($daysMap as $dayNum => $dayName) {
-            $rate = rand(85, 98); // Mocked data since attendance_records was dropped
-            $attendanceByWeek[] = [
-                'day' => $dayName,
-                'rate' => $rate
-            ];
-        }
-
-        // 3. Recent Activities
-        $recentActivities = [];
-        
-        $latestStudent = DB::table('students')->orderBy('created_at', 'desc')->first();
-        if ($latestStudent) {
-            $recentActivities[] = [
-                'type' => 'student',
-                'message' => 'Nouveau dossier étudiant enregistré',
-                'time' => \Carbon\Carbon::parse($latestStudent->created_at)->diffForHumans()
-            ];
-        }
-
-        $latestGrade = DB::table('grades')->orderBy('created_at', 'desc')->first();
-        if ($latestGrade) {
-            $recentActivities[] = [
-                'type' => 'grade',
-                'message' => 'Nouvelle note saisie',
-                'time' => \Carbon\Carbon::parse($latestGrade->created_at)->diffForHumans()
-            ];
-        }
-
-        $latestDoc = DB::table('document_requests')->orderBy('created_at', 'desc')->first();
-        if ($latestDoc) {
-            $recentActivities[] = [
-                'type' => 'doc',
-                'message' => 'Nouvelle demande de document',
-                'time' => \Carbon\Carbon::parse($latestDoc->created_at)->diffForHumans()
-            ];
-        }
-
-        // 4. Grade Completion Rate
-        $totalAssessments = DB::table('assessments')->count();
-        $totalStudentsForGrades = DB::table('students')->count();
-        $expectedGrades = $totalAssessments * $totalStudentsForGrades;
-        $enteredGrades = DB::table('grades')->count();
+        // Taux de saisie des notes
+        $totalAssessments = Assessment::count();
+        $totalStudents = Student::count();
+        $expectedGrades = $totalAssessments * $totalStudents;
+        $enteredGrades = Grade::count();
         $gradesCompletionRate = $expectedGrades > 0 ? min(round(($enteredGrades / $expectedGrades) * 100, 1), 100) : 0;
 
-        // 5. Pending Complaints
-        $pendingComplaintsCount = 5; // Mock data since complaints table is dropped
+        // Activités récentes
+        $recentActivities = [];
+
+        $latestStudent = Student::latest()->first();
+        if ($latestStudent) {
+            $recentActivities[] = [
+                'type'    => 'student',
+                'message' => 'Nouveau dossier étudiant enregistré',
+                'time'    => $latestStudent->created_at->diffForHumans(),
+            ];
+        }
+
+        $latestGrade = Grade::latest()->first();
+        if ($latestGrade) {
+            $recentActivities[] = [
+                'type'    => 'grade',
+                'message' => 'Nouvelle note saisie',
+                'time'    => $latestGrade->created_at->diffForHumans(),
+            ];
+        }
+
+        $latestDoc = DocumentRequest::latest()->first();
+        if ($latestDoc) {
+            $recentActivities[] = [
+                'type'    => 'doc',
+                'message' => 'Nouvelle demande de document',
+                'time'    => $latestDoc->created_at->diffForHumans(),
+            ];
+        }
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'studentsCount' => $studentsCount,
-                'professorsCount' => $professorsCount,
-                'permanentsCount' => $permanentsCount,
-                'vacatairesCount' => $vacatairesCount,
-                'attendanceRate' => $attendanceRate,
-                'alertsCount' => $alertsCount,
-                'filiereDistribution' => $filiereDistribution,
-                'enrollmentData' => $enrollmentData,
-                'attendanceByWeek' => $attendanceByWeek,
-                'recentActivities' => $recentActivities,
+            'data'    => [
+                'studentsCount'        => $studentsCount,
+                'professorsCount'      => $professorsCount,
+                'permanentsCount'      => $permanentsCount,
+                'vacatairesCount'      => $vacatairesCount,
+                'alertsCount'          => $alertsCount,
+                'filiereDistribution'  => $filiereDistribution,
                 'gradesCompletionRate' => $gradesCompletionRate,
-                'pendingComplaintsCount' => $pendingComplaintsCount
-            ]
+                'recentActivities'     => $recentActivities,
+            ],
         ]);
     }
 
     /**
-     * Generate MESRSFC Ministry Audit & Statistics JSON/PDF Report data.
+     * Rapport Ministère MESRSFC.
      */
     public function generateMinistryReport(Request $request): JsonResponse
     {
-        $totalStudents = DB::table('students')->count();
-        $totalProfessors = DB::table('professors')->count();
+        $totalStudents   = Student::count();
+        $totalProfessors = Professor::count();
         $ratio = $totalProfessors > 0 ? round($totalStudents / $totalProfessors, 1) : 0;
 
         return response()->json([
             'success' => true,
-            'report' => [
-                'institution' => 'École Nationale de Commerce et de Gestion - Fès',
-                'academic_year' => '2025/2026',
-                'total_students' => $totalStudents,
-                'total_professors' => $totalProfessors,
+            'report'  => [
+                'institution'          => 'École Nationale de Commerce et de Gestion - Fès',
+                'academic_year'        => '2025/2026',
+                'total_students'       => $totalStudents,
+                'total_professors'     => $totalProfessors,
                 'student_teacher_ratio' => "1:{$ratio}",
-                'scholarship_rate' => '38.5%',
-                'global_pass_rate' => '91.4%',
-                'audit_date' => now()->format('d/m/Y H:i'),
-                'status' => 'CONFORME_MESRSFC'
-            ]
+                'audit_date'           => now()->format('d/m/Y H:i'),
+                'status'               => 'CONFORME_MESRSFC',
+            ],
         ]);
     }
 
     /**
-     * Get real finance & payment statistics for DAF ENCG.
+     * Statistiques financières DAF.
      */
     public function getFinanceStats(Request $request): JsonResponse
     {
-        $activeStudents = DB::table('students')->count();
-        $vacationContractsTotal = DB::table('vacation_contracts')->sum('hourly_rate') ?: 45000;
-        $pendingRequests = DB::table('document_requests')->where('status', 'pending')->count();
-
-        $students = DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->select('users.name', 'students.cne', 'students.created_at')
-            ->take(5)
-            ->get();
-
-        $payments = [];
-        foreach ($students as $index => $std) {
-            $payments[] = [
-                'id' => $index + 1,
-                'name' => $std->name,
-                'type' => 'Formation Continue / Master Exécutif',
-                'amount' => number_format(12500, 2) . ' MAD',
-                'date' => \Carbon\Carbon::parse($std->created_at)->format('d/m/Y'),
-                'status' => $index % 2 === 0 ? 'PAID' : ($index === 1 ? 'LATE' : 'PENDING')
-            ];
-        }
+        $activeStudents = Student::count();
+        $pendingRequests = DocumentRequest::where('status', 'pending')->count();
+        $vacationBudget = VacationContract::sum('hourly_rate') ?: 45000;
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'revenue_month' => number_format(max(1, $activeStudents) * 1250, 0) . ' MAD',
-                'unpaid_amount' => number_format(max(1, $pendingRequests) * 12500, 0) . ' MAD',
-                'unpaid_count' => $pendingRequests,
-                'club_budget' => number_format($vacationContractsTotal, 0) . ' MAD',
-                'scholarship_total' => '120,000 MAD',
-                'payments' => $payments
-            ]
+            'data'    => [
+                'active_students'   => $activeStudents,
+                'pending_requests'  => $pendingRequests,
+                'vacation_budget'   => number_format($vacationBudget, 0) . ' MAD',
+            ],
         ]);
     }
 
     /**
-     * Get real audit activity logs with full trace details & CNDP Law 09-08 compliance.
+     * Logs d'activité pour conformité CNDP.
      */
     public function getActivityLogs(Request $request): JsonResponse
     {
         $logs = [];
+        $currentUser = $request->user();
 
-        $currentUser = $request->user() ?? auth()->user();
-        
-        // 0. Current Active Session Log (Always Top Entry for currently logged in user)
+        // Session active
         $logs[] = [
-            'id' => 'LOG-AUTH-LIVE-' . rand(1000, 9999),
-            'user' => $currentUser ? $currentUser->name : 'Admin ENCG Fès',
-            'email' => $currentUser ? $currentUser->email : 'admin@encg-fes.ma',
-            'role' => $currentUser ? ucfirst((string)$currentUser->role) : 'Super Admin',
-            'action' => 'Session Active / Connexion (Loi 09-08)',
-            'type' => 'AUTHENTICATION',
-            'description' => "Session en cours d'utilisation sur le portail ERP ENCG (Conforme CNDP - Jeton Sanctum)",
-            'ip' => $request->ip() ?: '127.0.0.1',
-            'userAgent' => $request->header('User-Agent') ?: 'Mozilla/5.0 (Windows NT 10.0)',
-            'date' => now()->format('d/m/Y H:i:s'),
-            'severity' => 'success',
-            'payload' => [
-                'session_state' => 'ACTIVE',
-                'user_id' => $currentUser ? $currentUser->id : 1,
-                'ip_address' => $request->ip() ?: '127.0.0.1',
-                'cndp_declaration' => 'D-W-2025/ENCG-FES',
-                'login_time' => now()->toISOString()
-            ]
+            'id'          => 'LOG-AUTH-LIVE-' . ($currentUser?->id ?? 0),
+            'user'        => $currentUser?->name ?? 'Admin',
+            'email'       => $currentUser?->email ?? 'admin@encg-fes.ma',
+            'action'      => 'Session Active (Loi 09-08)',
+            'type'        => 'AUTHENTICATION',
+            'description' => 'Session en cours sur le portail ERP ENCG.',
+            'ip'          => $request->ip(),
+            'date'        => now()->format('d/m/Y H:i:s'),
+            'severity'    => 'success',
         ];
 
-        // 1. Document Requests Trace
-        if (\Illuminate\Support\Facades\Schema::hasTable('document_requests')) {
-            try {
-                $docs = DB::table('document_requests')
-                    ->leftJoin('students', 'document_requests.student_id', '=', 'students.id')
-                    ->leftJoin('users', 'students.user_id', '=', 'users.id')
-                    ->select(
-                        'document_requests.id as doc_id',
-                        'users.name as user_name',
-                        'users.email as user_email',
-                        'document_requests.status',
-                        'document_requests.created_at'
-                    )
-                    ->latest('document_requests.created_at')
-                    ->take(6)
-                    ->get();
+        // Dernières demandes de documents
+        DocumentRequest::with('student.user')->latest()->take(6)->get()->each(function ($doc) use (&$logs) {
+            $logs[] = [
+                'id'          => 'LOG-DOC-' . $doc->id,
+                'user'        => $doc->student->user->name ?? 'Étudiant',
+                'email'       => $doc->student->user->email ?? 'N/A',
+                'role'        => 'Étudiant',
+                'action'      => 'Demande de document',
+                'type'        => 'DATA_ACCESS',
+                'description' => "Demande de document — Statut : " . strtoupper($doc->status),
+                'date'        => $doc->created_at->format('d/m/Y H:i:s'),
+                'severity'    => 'info',
+            ];
+        });
 
-                foreach ($docs as $d) {
-                    $logs[] = [
-                        'id' => 'LOG-DOC-' . $d->doc_id,
-                        'user' => $d->user_name ?? 'Étudiant System',
-                        'email' => $d->user_email ?? 'etudiant@encg-fes.ma',
-                        'role' => 'Étudiant',
-                        'action' => 'Consultation / Demande Document',
-                        'type' => 'DATA_ACCESS',
-                        'description' => "Demande de document académique officielle (Traçabilité CNDP - Statut : " . strtoupper((string)($d->status ?? 'SOUMIS')) . ")",
-                        'ip' => '192.168.1.' . rand(10, 99),
-                        'userAgent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0',
-                        'date' => \Carbon\Carbon::parse($d->created_at)->format('d/m/Y H:i:s'),
-                        'severity' => 'info',
-                        'payload' => [
-                            'document_id' => $d->doc_id,
-                            'status' => $d->status ?? 'soumis',
-                            'cndp_compliance' => 'Loi 09-08 Art 12'
-                        ]
-                    ];
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("getActivityLogs doc query fallback: " . $e->getMessage());
-            }
-        }
-
-        // 2. Grade & Assessment Trace
-        if (\Illuminate\Support\Facades\Schema::hasTable('grades')) {
-            try {
-                $grades = DB::table('grades')
-                    ->leftJoin('students', 'grades.student_id', '=', 'students.id')
-                    ->leftJoin('users', 'students.user_id', '=', 'users.id')
-                    ->select('users.name as user_name', 'grades.value', 'grades.created_at')
-                    ->whereNotNull('grades.value')
-                    ->latest('grades.created_at')
-                    ->take(4)
-                    ->get();
-
-                foreach ($grades as $g) {
-                    $logs[] = [
-                        'id' => 'LOG-GRD-' . rand(1000, 9999),
-                        'user' => 'Prof. Département ENCG',
-                        'email' => 'professeur@encg-fes.ma',
-                        'role' => 'Enseignant-Chercheur',
-                        'action' => 'Modification / Saisie Note',
-                        'type' => 'DATA_MUTATION',
-                        'description' => "Saisie de note certifiée pour l'étudiant " . ($g->user_name ?? 'Étudiant') . " (Note : " . $g->value . "/20)",
-                        'ip' => '10.0.8.' . rand(10, 99),
-                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-                        'date' => \Carbon\Carbon::parse($g->created_at)->format('d/m/Y H:i:s'),
-                        'severity' => 'success',
-                        'payload' => [
-                            'grade_value' => $g->value,
-                            'audit_type' => 'ACADEMIC_INTEGRITY',
-                            'verification' => 'Empreinte Horodatée Non-Modifiable'
-                        ]
-                    ];
-                }
-            } catch (\Throwable $e) {}
-        }
-
-        // 3. User Authentication Trace
-        try {
-            $recentUsers = DB::table('users')->latest()->take(5)->get();
-            foreach ($recentUsers as $u) {
-                $logs[] = [
-                    'id' => 'LOG-AUTH-' . $u->id,
-                    'user' => $u->name,
-                    'email' => $u->email,
-                    'role' => ucfirst((string)($u->role ?? 'utilisateur')),
-                    'action' => 'Authentification JWT',
-                    'type' => 'AUTHENTICATION',
-                    'description' => "Session enregistrée avec jeton sécurisé Sanctum/JWT sur le portail ERP (Loi 09-08)",
-                    'ip' => '10.0.4.' . rand(1, 50),
-                    'userAgent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/126.0',
-                    'date' => \Carbon\Carbon::parse($u->created_at)->format('d/m/Y H:i:s'),
-                    'severity' => 'success',
-                    'payload' => [
-                        'user_id' => $u->id,
-                        'email' => $u->email,
-                        'auth_provider' => 'SANCTUM_BEARER_TOKEN',
-                        'cndp_privacy' => 'Pseudonymisation Active'
-                    ]
-                ];
-            }
-        } catch (\Throwable $e) {}
+        // Dernières notes saisies
+        Grade::with('student.user')->latest()->take(4)->get()->each(function ($grade) use (&$logs) {
+            $logs[] = [
+                'id'          => 'LOG-GRD-' . $grade->id,
+                'user'        => 'Prof. Département ENCG',
+                'email'       => 'professeur@encg-fes.ma',
+                'role'        => 'Enseignant',
+                'action'      => 'Saisie de note',
+                'type'        => 'DATA_MUTATION',
+                'description' => "Note saisie pour {$grade->student->user->name} : {$grade->value}/20",
+                'date'        => $grade->created_at->format('d/m/Y H:i:s'),
+                'severity'    => 'success',
+            ];
+        });
 
         return response()->json([
-            'success' => true,
-            'cndp_status' => 'CONFORME_LOI_09_08',
+            'success'                 => true,
+            'cndp_status'             => 'CONFORME_LOI_09_08',
             'cndp_declaration_number' => 'D-W-2025/ENCG-FES-0908',
-            'data' => $logs
+            'data'                    => $logs,
         ]);
     }
 }

@@ -50,4 +50,9 @@ class Filiere extends Model
     {
         return $this->belongsTo(User::class, 'responsable_id');
     }
+
+    public function studentPathways(): HasMany
+    {
+        return $this->hasMany(StudentPathway::class);
+    }
 }

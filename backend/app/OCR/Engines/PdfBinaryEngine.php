@@ -3,48 +3,93 @@
 namespace App\OCR\Engines;
 
 use App\OCR\Contracts\OcrEngineInterface;
+use App\OCR\OcrResult;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
-/**
- * Tier 3 OCR Engine — PDF Binary Stream Fallback
- *
- * Last resort when both pdftotext and Tesseract fail.
- * Reads raw PDF byte streams and extracts text strings from Tj/TJ operators.
- * Handles both uncompressed and zlib-compressed streams.
- */
 class PdfBinaryEngine implements OcrEngineInterface
 {
+    public function getPriority(): int
+    {
+        return 2;
+    }
+
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool
     {
-        return $this->isPdf($mimeType, $filePath);
+        return str_contains(strtolower($mimeType), 'pdf') 
+            || str_ends_with(strtolower($filePath), '.pdf');
     }
 
-    public function extract(string $filePath, string $mimeType): string
+    public function extractText(string $filePath): string
     {
-        $raw  = @file_get_contents($filePath) ?: '';
-        $text = '';
+        $mimeType = mime_content_type($filePath) ?: 'application/pdf';
+        $result = $this->extract($filePath, $mimeType, '');
+        return $result->text;
+    }
 
-        // Uncompressed Tj/TJ operators: (text) Tj
-        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $m)) {
-            $text .= implode(' ', $m[1]) . "\n";
+    public function extract(string $filePath, string $mimeType, string $docType = ''): OcrResult
+    {
+        if (!file_exists($filePath)) {
+            Log::warning("[PdfBinaryEngine] File not found: {$filePath}");
+            return new OcrResult('');
         }
 
-        // Compressed streams: inflate then extract Tj/TJ
-        if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
-            foreach ($streams[1] as $st) {
-                $dec = @gzuncompress($st) ?: @gzinflate($st);
-                if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
-                    $text .= implode(' ', $m2[1]) . "\n";
-                }
+        try {
+            // Use pdftotext with both layout and raw options
+            $output = [];
+            $returnVar = -1;
+            
+            // Try with layout first
+            $command = sprintf('pdftotext -layout -nopgbrk %s - 2>/dev/null', escapeshellarg($filePath));
+            @exec($command, $output, $returnVar);
+
+            $text = implode("\n", $output);
+
+            // If result is empty, try without layout
+            if ($returnVar !== 0 || empty(trim($text))) {
+                $output = [];
+                $command = sprintf('pdftotext %s - 2>/dev/null', escapeshellarg($filePath));
+                @exec($command, $output, $returnVar);
+                $text = implode("\n", $output);
             }
-        }
 
-        return $text;
+            // If still empty, try with pdftohtml as fallback
+            if (empty(trim($text))) {
+                $text = $this->extractWithPdfToHtml($filePath);
+            }
+
+            return new OcrResult(trim($text));
+
+        } catch (Throwable $e) {
+            Log::warning("[PdfBinaryEngine] Extraction failed: " . $e->getMessage());
+            return new OcrResult('');
+        }
     }
 
-    private function isPdf(string $mimeType, string $filePath): bool
+    /**
+     * Fallback extraction using pdftohtml
+     */
+    private function extractWithPdfToHtml(string $filePath): string
     {
-        if (str_contains(strtolower($mimeType), 'pdf')) return true;
-        $raw = @file_get_contents($filePath, false, null, 0, 4);
-        return str_starts_with((string)$raw, '%PDF');
+        $tmpDir = sys_get_temp_dir();
+        $tmpFile = $tmpDir . '/pdfhtml_' . uniqid() . '.html';
+        
+        $command = sprintf('pdftohtml -noframes -s -i %s %s 2>/dev/null', 
+            escapeshellarg($filePath), 
+            escapeshellarg($tmpFile)
+        );
+        
+        @exec($command);
+
+        if (file_exists($tmpFile)) {
+            $html = file_get_contents($tmpFile);
+            @unlink($tmpFile);
+            
+            // Extract text from HTML
+            $text = strip_tags($html);
+            return trim($text);
+        }
+
+        return '';
     }
 }

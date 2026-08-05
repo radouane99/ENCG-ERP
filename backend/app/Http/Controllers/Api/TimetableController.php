@@ -3,49 +3,44 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Services\Academic\TimetableService;
-use App\Services\Academic\SmartSchedulingEngine;
+use App\Models\Group;
+use App\Models\Schedule;
 use App\Services\Academic\ConflictResolutionService;
-use Illuminate\Support\Facades\DB;
+use App\Services\Academic\SmartSchedulingEngine;
+use App\Services\Academic\TimetableService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TimetableController extends Controller
 {
-    protected TimetableService $timetableService;
-    protected SmartSchedulingEngine $engine;
-    protected ConflictResolutionService $resolver;
-
     public function __construct(
-        TimetableService $timetableService,
-        SmartSchedulingEngine $engine, 
-        ConflictResolutionService $resolver
-    ) {
-        $this->timetableService = $timetableService;
-        $this->engine = $engine;
-        $this->resolver = $resolver;
-    }
+        private TimetableService $timetableService,
+        private SmartSchedulingEngine $engine,
+        private ConflictResolutionService $resolver
+    ) {}
 
     /**
-     * Get timetable for a specific context
+     * Récupérer l'emploi du temps.
      */
     public function index(Request $request): JsonResponse
     {
-        $schedules = $this->timetableService->getSchedules($request->only(['group_id', 'professor_id', 'room_id']));
+        $schedules = $this->timetableService->getSchedules(
+            $request->only(['group_id', 'professor_id', 'room_id'])
+        );
 
         return response()->json(['success' => true, 'data' => $schedules]);
     }
 
     /**
-     * Trigger automatic schedule generation
+     * Génération automatique de l'emploi du temps.
      */
     public function generate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'institution_id' => 'required|integer',
+            'institution_id'   => 'required|integer',
             'academic_year_id' => 'required|integer',
-            'semester_id' => 'required|integer',
-            'filiere_id' => 'required|integer'
+            'semester_id'      => 'required|integer',
+            'filiere_id'       => 'required|integer',
         ]);
 
         $result = $this->engine->generateSemesterTimetable(
@@ -59,16 +54,16 @@ class TimetableController extends Controller
     }
 
     /**
-     * Validate a Drag & Drop move
+     * Valider un déplacement Drag & Drop.
      */
     public function checkConflict(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'schedule_id' => 'required|string',
-            'new_day' => 'required|integer',
+            'schedule_id'    => 'required|integer',
+            'new_day'        => 'required|integer',
             'new_start_time' => 'required',
-            'new_end_time' => 'required',
-            'new_room_id' => 'required|integer'
+            'new_end_time'   => 'required',
+            'new_room_id'    => 'required|integer',
         ]);
 
         $result = $this->resolver->validateAndSuggestMove(
@@ -80,12 +75,11 @@ class TimetableController extends Controller
         );
 
         if ($result['success']) {
-            DB::table('schedules')->where('id', $validated['schedule_id'])->update([
+            Schedule::where('id', $validated['schedule_id'])->update([
                 'day_of_week' => $validated['new_day'],
-                'start_time' => $validated['new_start_time'],
-                'end_time' => $validated['new_end_time'],
-                'room_id' => $validated['new_room_id'],
-                'updated_at' => now()
+                'start_time'  => $validated['new_start_time'],
+                'end_time'    => $validated['new_end_time'],
+                'room_id'     => $validated['new_room_id'],
             ]);
         }
 
@@ -93,103 +87,112 @@ class TimetableController extends Controller
     }
 
     /**
-     * Publish drafted schedules for a specific filiere and semester
+     * Publier les emplois du temps d'une filière.
      */
     public function publish(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'academic_year_id' => 'required|integer',
-            'semester_id' => 'required|integer',
-            'filiere_id' => 'required|integer'
+            'semester_id'      => 'required|integer',
+            'filiere_id'       => 'required|integer',
         ]);
 
-        $groupIds = \App\Models\Group::where('filiere_id', $validated['filiere_id'])
-                       ->where('academic_year_id', $validated['academic_year_id'])
-                       ->pluck('id');
-
-        $updated = DB::table('schedules')
+        $groupIds = Group::where('filiere_id', $validated['filiere_id'])
             ->where('academic_year_id', $validated['academic_year_id'])
+            ->pluck('id');
+
+        $updated = Schedule::where('academic_year_id', $validated['academic_year_id'])
             ->where('semester_id', $validated['semester_id'])
             ->whereIn('group_id', $groupIds)
             ->where('is_active', false)
-            ->update(['is_active' => true, 'updated_at' => now()]);
+            ->update(['is_active' => true]);
 
         return response()->json([
             'success' => true,
-            'message' => "{$updated} emplois du temps publiés avec succès."
+            'message' => "{$updated} emplois du temps publiés avec succès.",
         ]);
     }
 
     /**
-     * Create a new schedule entry
+     * Créer une nouvelle séance.
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'institution_id' => 'required|integer',
+            'institution_id'   => 'required|integer',
             'academic_year_id' => 'required|integer',
-            'semester_id' => 'required|integer',
-            'group_id' => 'required|integer',
-            'module_id' => 'required|integer',
-            'room_id' => 'nullable|integer',
-            'professor_id' => 'required|integer',
-            'professor_type' => 'nullable|string',
-            'day_of_week' => 'required|integer|min:1|max:7',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'session_type' => 'required|string',
-            'recurrence' => 'nullable|string',
+            'semester_id'      => 'required|integer',
+            'group_id'         => 'required|integer',
+            'module_id'        => 'required|integer',
+            'room_id'          => 'nullable|integer',
+            'professor_id'     => 'required|integer',
+            'professor_type'   => 'nullable|string',
+            'day_of_week'      => 'required|integer|min:1|max:7',
+            'start_time'       => 'required|date_format:H:i',
+            'end_time'         => 'required|date_format:H:i|after:start_time',
+            'session_type'     => 'required|string',
+            'recurrence'       => 'nullable|string',
         ]);
 
-        $validated['professor_type'] = $validated['professor_type'] ?? 'App\\Models\\User';
-        $validated['recurrence'] = $validated['recurrence'] ?? 'weekly';
-        $validated['is_active'] = true;
-
-        $scheduleId = DB::table('schedules')->insertGetId(array_merge($validated, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]));
+        $schedule = Schedule::create([
+            'institution_id'   => $validated['institution_id'],
+            'academic_year_id' => $validated['academic_year_id'],
+            'semester_id'      => $validated['semester_id'],
+            'group_id'         => $validated['group_id'],
+            'module_id'        => $validated['module_id'],
+            'room_id'          => $validated['room_id'] ?? null,
+            'professor_id'     => $validated['professor_id'],
+            'professor_type'   => $validated['professor_type'] ?? 'App\\Models\\User',
+            'day_of_week'      => $validated['day_of_week'],
+            'start_time'       => $validated['start_time'],
+            'end_time'         => $validated['end_time'],
+            'session_type'     => $validated['session_type'],
+            'recurrence'       => $validated['recurrence'] ?? 'weekly',
+            'is_active'        => true,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Affectation créée avec succès',
-            'data' => DB::table('schedules')->where('id', $scheduleId)->first()
+            'message' => 'Séance créée avec succès.',
+            'data'    => $schedule,
         ]);
     }
 
     /**
-     * Update an existing schedule
+     * Mettre à jour une séance.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $schedule = Schedule::findOrFail($id);
+
         $validated = $request->validate([
-            'room_id' => 'nullable|integer',
+            'room_id'      => 'nullable|integer',
             'professor_id' => 'nullable|integer',
-            'day_of_week' => 'nullable|integer|min:1|max:7',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'day_of_week'  => 'nullable|integer|min:1|max:7',
+            'start_time'   => 'nullable|date_format:H:i',
+            'end_time'     => 'nullable|date_format:H:i|after:start_time',
             'session_type' => 'nullable|string',
         ]);
 
-        $validated['updated_at'] = now();
-
-        DB::table('schedules')->where('id', $id)->update($validated);
+        $schedule->update(array_filter($validated, fn($v) => $v !== null));
 
         return response()->json([
             'success' => true,
-            'message' => 'Affectation mise à jour avec succès'
+            'message' => 'Séance mise à jour avec succès.',
+            'data'    => $schedule->fresh(),
         ]);
     }
 
     /**
-     * Delete a schedule
+     * Supprimer une séance.
      */
-    public function destroy($id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        DB::table('schedules')->where('id', $id)->delete();
+        Schedule::findOrFail($id)->delete();
+
         return response()->json([
             'success' => true,
-            'message' => 'Affectation supprimée avec succès'
+            'message' => 'Séance supprimée avec succès.',
         ]);
     }
 }

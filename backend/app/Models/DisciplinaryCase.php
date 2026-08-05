@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DisciplinaryCase extends Model
 {
@@ -14,21 +16,21 @@ class DisciplinaryCase extends Model
     protected function casts(): array
     {
         return [
-        'incident_date' => 'date',
-    ];
+            'incident_date' => 'date',
+        ];
     }
 
-    public function student()
+    public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
     }
 
-    public function institution()
+    public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
     }
 
-    public function decision()
+    public function decision(): HasOne
     {
         return $this->hasOne(DisciplinaryDecision::class);
     }

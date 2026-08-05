@@ -24,24 +24,67 @@ class GradeGridController extends Controller
             $query->where('group_id', $groupId);
         })->with(['user'])->get();
 
-        $students = $students->map(fn($student) => [
-            'id' => $student->id,
-            'first_name' => $student->first_name,
-            'last_name' => $student->last_name,
-            'cc' => null,
-            'exam' => null,
-            'average' => null,
-            'status' => 'Non saisie',
-        ]);
-            ['id' => 2, 'first_name' => 'Salma', 'last_name' => 'El Fassi', 'cc' => 16.0, 'exam' => 15.0, 'average' => 15.5, 'status' => 'Validée'],
-            ['id' => 3, 'first_name' => 'Othmane', 'last_name' => 'Sekkat', 'cc' => 12.0, 'exam' => 10.0, 'average' => 11.0, 'status' => 'Validée'],
-            ['id' => 4, 'first_name' => 'Zineb', 'last_name' => 'Alaoui', 'cc' => null, 'exam' => null, 'average' => null, 'status' => 'Non saisie'],
-            ['id' => 5, 'first_name' => 'Mohammed', 'last_name' => 'Bennis', 'cc' => 8.0, 'exam' => 9.5, 'average' => 8.75, 'status' => 'Validée'],
-        ];
+        // Find or create CC and Exam assessments for this module
+        $ccAssessment = \App\Models\Assessment::firstOrCreate(
+            ['module_id' => $moduleId, 'type' => 'CC'],
+            ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
+        );
+
+        $examAssessment = \App\Models\Assessment::firstOrCreate(
+            ['module_id' => $moduleId, 'type' => 'Exam'],
+            ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
+        );
+
+        $studentIds = $students->pluck('id');
+
+        $ccGrades = \DB::table('grades')
+            ->whereIn('student_id', $studentIds)
+            ->where('assessment_id', $ccAssessment->id)
+            ->get()
+            ->keyBy('student_id');
+
+        $examGrades = \DB::table('grades')
+            ->whereIn('student_id', $studentIds)
+            ->where('assessment_id', $examAssessment->id)
+            ->get()
+            ->keyBy('student_id');
+
+        $gridData = $students->map(function ($student) use ($ccGrades, $examGrades) {
+            $ccGrade = $ccGrades->get($student->id);
+            $examGrade = $examGrades->get($student->id);
+
+            $ccNum = ($ccGrade && !$ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
+            $examNum = ($examGrade && !$examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
+
+            $ccAbsent = $ccGrade ? (bool)$ccGrade->absent : false;
+            $examAbsent = $examGrade ? (bool)$examGrade->absent : false;
+
+            $average = null;
+            $status = 'Non saisie';
+
+            if ($ccNum !== null && $examNum !== null) {
+                $average = ($ccNum * 0.5) + ($examNum * 0.5);
+                $status = 'Validée';
+            } elseif ($ccNum !== null || $examNum !== null || $ccAbsent || $examAbsent) {
+                $status = 'Saisie en cours';
+            }
+
+            return [
+                'id' => $student->id,
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'cc' => $ccNum,
+                'exam' => $examNum,
+                'cc_absent' => $ccAbsent,
+                'exam_absent' => $examAbsent,
+                'average' => $average,
+                'status' => $status,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $students,
+            'data' => $gridData,
             'meta' => [
                 'module_name' => \App\Models\Module::find($moduleId)?->name ?? 'Module inconnu',
                 'group_name' => \App\Models\Group::find($groupId)?->name ?? 'Groupe inconnu',
@@ -62,33 +105,92 @@ class GradeGridController extends Controller
             'updates.*.student_id' => 'required|integer',
             'updates.*.cc' => 'nullable|numeric|min:0|max:20',
             'updates.*.exam' => 'nullable|numeric|min:0|max:20',
+            'updates.*.cc_absent' => 'nullable|boolean',
+            'updates.*.exam_absent' => 'nullable|boolean',
         ]);
 
-        // Logic to calculate average based on weights
+        $moduleId = $validated['module_id'];
+
+        // Find or create CC and Exam assessments for this module
+        $ccAssessment = \App\Models\Assessment::firstOrCreate(
+            ['module_id' => $moduleId, 'type' => 'CC'],
+            ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
+        );
+
+        $examAssessment = \App\Models\Assessment::firstOrCreate(
+            ['module_id' => $moduleId, 'type' => 'Exam'],
+            ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
+        );
+
         $weightCc = 0.5;
         $weightExam = 0.5;
 
         $results = [];
 
         foreach ($validated['updates'] as $update) {
+            $studentId = $update['student_id'];
+
+            // Save CC Note
+            if (array_key_exists('cc', $update) || isset($update['cc_absent'])) {
+                $ccVal = $update['cc'] ?? null;
+                $ccAbsent = $update['cc_absent'] ?? false;
+
+                \DB::table('grades')->updateOrInsert(
+                    ['student_id' => $studentId, 'assessment_id' => $ccAssessment->id],
+                    [
+                        'value' => $ccAbsent ? null : $ccVal,
+                        'absent' => $ccAbsent,
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ]
+                );
+            }
+
+            // Save Exam Note
+            if (array_key_exists('exam', $update) || isset($update['exam_absent'])) {
+                $examVal = $update['exam'] ?? null;
+                $examAbsent = $update['exam_absent'] ?? false;
+
+                \DB::table('grades')->updateOrInsert(
+                    ['student_id' => $studentId, 'assessment_id' => $examAssessment->id],
+                    [
+                        'value' => $examAbsent ? null : $examVal,
+                        'absent' => $examAbsent,
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ]
+                );
+            }
+
+            // Re-fetch CC & Exam Notes to calculate correct averages
+            $ccGrade = \DB::table('grades')
+                ->where('student_id', $studentId)
+                ->where('assessment_id', $ccAssessment->id)
+                ->first();
+
+            $examGrade = \DB::table('grades')
+                ->where('student_id', $studentId)
+                ->where('assessment_id', $examAssessment->id)
+                ->first();
+
+            $ccNum = ($ccGrade && !$ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
+            $examNum = ($examGrade && !$examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
+
             $average = null;
             $status = 'Non saisie';
 
-            if (isset($update['cc']) && isset($update['exam'])) {
-                $average = ($update['cc'] * $weightCc) + ($update['exam'] * $weightExam);
+            if ($ccNum !== null && $examNum !== null) {
+                $average = ($ccNum * $weightCc) + ($examNum * $weightExam);
                 $status = 'Validée';
-            } elseif (isset($update['cc']) || isset($update['exam'])) {
+            } elseif ($ccNum !== null || $examNum !== null || ($ccGrade && $ccGrade->absent) || ($examGrade && $examGrade->absent)) {
                 $status = 'Saisie en cours';
             }
 
             $results[] = [
-                'student_id' => $update['student_id'],
+                'student_id' => $studentId,
                 'average' => $average,
                 'status' => $status
             ];
-            
-            // Here we would normally save to the DB:
-            // DB::table('grades')->updateOrInsert(...)
         }
 
         return response()->json([
