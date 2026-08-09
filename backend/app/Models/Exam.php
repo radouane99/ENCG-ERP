@@ -62,4 +62,9 @@ class Exam extends Model
     {
         return $this->hasMany(Convocation::class);
     }
+
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(ExamIncident::class);
+    }
 }

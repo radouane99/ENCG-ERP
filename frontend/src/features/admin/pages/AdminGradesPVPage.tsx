@@ -243,9 +243,30 @@ export default function AdminGradesPVPage() {
       return
     }
 
+    if (activeJurySigningId) {
+      setIsSigning(true)
+      try {
+        await api.post('/academic/deliberations/sign-jury', {
+          jury_id: activeJurySigningId,
+          signature_data: signatureDataUrl
+        })
+        toast.success("✒️ Signature tactile apposée et scellée sur le PV de Délibération !")
+        setShowSignatureModal(false)
+        setActiveJurySigningId(null)
+        queryClient.invalidateQueries({ queryKey: ['jury-status'] })
+        queryClient.invalidateQueries({ queryKey: ['semester-pv'] })
+        queryClient.invalidateQueries({ queryKey: ['annual-compensation'] })
+      } catch (err: any) {
+        toast.error(err.response?.data?.message || "Erreur lors de la signature du jury.")
+      } finally {
+        setIsSigning(false)
+      }
+      return
+    }
+
     const targetModuleId = moduleId || pvData?.module?.id
     if (!targetModuleId) {
-      toast.error("Veuillez sélectionner un module spécifique à signer.")
+      toast.error("Veuillez sélectionner un module spécifique ou un membre du jury à signer.")
       return
     }
 
@@ -272,11 +293,21 @@ export default function AdminGradesPVPage() {
   const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération')
 
   // Helper : Télécharge un PDF via l'API client (avec token JWT) pour éviter l'erreur Unauthenticated
-  const downloadPdf = async (url: string, filename: string) => {
+  const downloadPdf = async (url: string, fallbackFilename: string) => {
     try {
       // Strip domain and /api prefix if present so axios `api` instance adds Authorization headers
       const cleanUrl = url.includes('/api/') ? url.substring(url.indexOf('/api/') + 4) : url
       const res = await api.get(cleanUrl, { responseType: 'blob' })
+      
+      let filename = fallbackFilename
+      const disposition = res.headers['content-disposition']
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^";]+)"?/)
+        if (match && match[1]) {
+          filename = match[1]
+        }
+      }
+
       const blob = new Blob([res.data], { type: 'application/pdf' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
@@ -286,7 +317,19 @@ export default function AdminGradesPVPage() {
       document.body.removeChild(link)
       URL.revokeObjectURL(link.href)
     } catch (err: any) {
-      toast.error('Erreur lors de la génération du PDF : ' + (err.response?.data?.message || err.message))
+      // Quand responseType='blob', err.response.data est un Blob, pas un JSON.
+      // On doit le lire comme texte pour extraire le message d'erreur Laravel.
+      if (err.response?.data instanceof Blob) {
+        const text = await err.response.data.text()
+        try {
+          const json = JSON.parse(text)
+          toast.error('Erreur PDF : ' + (json.message || text))
+        } catch {
+          toast.error('Erreur PDF : ' + text.substring(0, 200))
+        }
+      } else {
+        toast.error('Erreur lors de la génération du PDF : ' + (err.response?.data?.message || err.message))
+      }
     }
   }
 
@@ -313,13 +356,20 @@ export default function AdminGradesPVPage() {
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [modules, setModules] = useState<any[]>([])
+  const [selectedRachatReason, setSelectedRachatReason] = useState<string>('')
 
 
 
 
 
   useEffect(() => {
-    api.get('/filieres').then(r => setFilieres(r.data.data || r.data)).catch(console.error)
+    api.get('/filieres').then(r => {
+      const data = r.data.data || r.data
+      setFilieres(data)
+      if (data.length > 0 && !selectedFiliere) {
+        setSelectedFiliere(String(data[0].id))
+      }
+    }).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -1883,38 +1933,39 @@ export default function AdminGradesPVPage() {
               })
 
               return (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left border-collapse">
+                <div className="overflow-x-auto rounded-3xl border-4 border-slate-900 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
+                  <table className="w-full text-xs text-left border-collapse border-2 border-slate-900">
                     <thead>
-                      <tr className="bg-[#0f2863] text-white border-b border-blue-900">
-                        <th rowSpan={2} className="py-3 px-4 font-black uppercase tracking-wider border-r border-blue-800/50 sticky left-0 bg-[#0f2863] z-20 shadow-md">Code Apogée</th>
-                        <th rowSpan={2} className="py-3 px-4 font-black uppercase tracking-wider border-r border-blue-800/50 sticky left-[110px] bg-[#0f2863] z-20 shadow-md min-w-[190px]">Nom & Prénom</th>
+                      <tr className="bg-[#081638] text-white border-b-4 border-slate-900">
+                        <th rowSpan={2} className="py-3.5 px-4 font-black uppercase tracking-wider border-r-2 border-slate-900 border-b-2 sticky left-0 bg-[#081638] z-30 shadow-md min-w-[100px]">Code Apogée</th>
+                        <th rowSpan={2} className="py-3.5 px-3 font-black uppercase tracking-wider border-r-2 border-slate-900 border-b-2 sticky left-[100px] bg-[#050e26] text-amber-300 z-30 shadow-md min-w-[80px]">CIN</th>
+                        <th rowSpan={2} className="py-3.5 px-4 font-black uppercase tracking-wider border-r-4 border-slate-900 border-b-2 sticky left-[180px] bg-[#081638] z-30 shadow-md min-w-[190px]">Nom & Prénom</th>
                         
                         {/* 7 Modules Group Headers */}
                         {semesterPvData.modules?.map((m: any, idx: number) => (
-                          <th key={m.id} colSpan={3} className="py-2.5 px-2 font-black text-center border-r border-blue-800/50 bg-[#163784]">
-                            <div className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">M0{idx+1} — {m.name}</div>
-                            <div className="font-mono text-[9px] text-blue-200">({m.code || `MOD-${m.id}`})</div>
+                          <th key={m.id} colSpan={3} className="py-3 px-2 font-black text-center border-r-2 border-slate-900 border-b-2 bg-[#102454]">
+                            <div className="text-xs text-amber-300 font-extrabold uppercase tracking-wider">M0{idx+1} — {m.name}</div>
+                            <div className="font-mono text-[9.5px] text-blue-200 font-bold">({m.code || `MOD-${m.id}`})</div>
                           </th>
                         ))}
 
-                        <th rowSpan={2} className="py-3 px-4 font-black text-center bg-indigo-900 border-r border-blue-800/50 min-w-[110px]">Moyenne</th>
-                        <th rowSpan={2} className="py-3 px-4 font-black text-center bg-indigo-950 border-r border-blue-800/50 min-w-[70px]">Crédits</th>
-                        <th rowSpan={2} className="py-3 px-4 font-black text-center bg-indigo-900 min-w-[130px]">Décision</th>
+                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-indigo-950 text-amber-300 border-r-2 border-slate-900 border-b-2 min-w-[110px]">Moyenne</th>
+                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-indigo-900 text-white border-r-2 border-slate-900 border-b-2 min-w-[70px]">Crédits</th>
+                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-[#081638] text-white border-b-2 border-slate-900 min-w-[130px]">Décision</th>
                       </tr>
-                      <tr className="bg-blue-950 text-blue-100 border-b border-blue-900">
+                      <tr className="bg-[#122a63] text-blue-100 border-b-4 border-slate-900">
                         {/* 3 Sub-columns per module: Note module, Decision, Année université */}
                         {semesterPvData.modules?.map((m: any) => (
                           <React.Fragment key={`sub-${m.id}`}>
-                            <th className="py-1.5 px-2 font-black text-[10px] text-center bg-blue-900/90 border-r border-blue-800/30 text-amber-200 min-w-[55px]">Note module</th>
-                            <th className="py-1.5 px-2 font-black text-[10px] text-center bg-blue-900/90 border-r border-blue-800/30 text-amber-200 min-w-[55px]">Décision</th>
-                            <th className="py-1.5 px-2 font-black text-[10px] text-center bg-blue-900/90 border-r border-blue-800/50 text-amber-200 min-w-[75px]">Année univ.</th>
+                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r border-slate-800 text-amber-200 min-w-[55px]">Note</th>
+                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r border-slate-800 text-amber-200 min-w-[55px]">Décision</th>
+                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r-2 border-slate-900 text-amber-200 min-w-[75px]">Année</th>
                           </React.Fragment>
                         ))}
                       </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
+                    <tbody className="divide-y-2 divide-slate-900 font-bold border-b-2 border-slate-900">
                       {filteredStudents.map((s: any, sIdx: number) => {
                         const studentExpandedSanction = (allExamIncidents || []).find((inc: any) => {
                           const incScope = inc.sanction_scope;
@@ -1933,22 +1984,20 @@ export default function AdminGradesPVPage() {
                         });
 
                         const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || !!studentExpandedSanction;
-
-                        const statusColorBorder = 
-                          hasStudentFraud ? 'border-l-4 border-l-rose-600' :
-                          s.decision_global === 'V' || s.decision_global === 'VAR' ? 'border-l-4 border-l-emerald-500' :
-                          s.decision_global === 'RAT' ? 'border-l-4 border-l-amber-500' :
-                          'border-l-4 border-l-red-500'
+                        const rowBgClass = sIdx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/70 dark:bg-slate-850'
 
                         return (
-                          <tr key={s.student_id} className={cn("transition-colors hover:bg-indigo-50/60 dark:hover:bg-slate-800/70", sIdx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-850', statusColorBorder)}>
-                            <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 sticky left-0 bg-white dark:bg-slate-900 z-10">
+                          <tr key={s.student_id} className={cn("transition-colors hover:bg-amber-50/70 dark:hover:bg-slate-800/80 border-b-2 border-slate-900", rowBgClass)}>
+                            <td className={cn("py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100 border-r-2 border-b-2 border-slate-900 sticky left-0 z-20 shadow-xs", rowBgClass)}>
                               {s.apogee}
                             </td>
-                            <td className="py-3.5 px-4 font-black text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800 sticky left-[110px] bg-white dark:bg-slate-900 z-10 whitespace-nowrap">
+                            <td className={cn("py-3 px-3 font-mono font-black text-indigo-950 dark:text-indigo-300 border-r-2 border-b-2 border-slate-900 sticky left-[100px] z-20 shadow-xs", rowBgClass)}>
+                              {s.cin || '-'}
+                            </td>
+                            <td className={cn("py-3 px-4 font-black text-slate-950 dark:text-white border-r-4 border-b-2 border-slate-950 sticky left-[180px] z-20 whitespace-nowrap shadow-sm", rowBgClass)}>
                               {s.last_name?.toUpperCase()} {s.first_name}
                               {hasStudentFraud && (
-                                <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white rounded font-black text-[9px] uppercase">
+                                <span className="ml-2 px-2 py-0.5 bg-rose-950 text-rose-100 rounded-md font-black text-[9px] uppercase border border-rose-500 shadow-xs">
                                   🚨 FRAUDE
                                 </span>
                               )}
@@ -1962,57 +2011,52 @@ export default function AdminGradesPVPage() {
                               const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (mInfo?.is_fraud || !!studentExpandedSanction))
 
                               const noteStyle = 
-                                isFraud ? 'text-rose-700 dark:text-rose-300 font-black bg-rose-100/90 dark:bg-rose-950/80 px-1 py-0.5 rounded border border-rose-400' :
+                                isFraud ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-950 font-black' :
                                 note === null || note === undefined ? '' :
-                                note >= 10.00 ? 'text-emerald-700 dark:text-emerald-300 font-extrabold' :
-                                note >= 6.00 ? 'text-amber-700 dark:text-amber-300 font-extrabold' :
-                                'text-red-700 dark:text-red-300 font-extrabold'
+                                note >= 10.00 ? 'text-slate-950 dark:text-white font-extrabold' :
+                                note >= 5.00 ? 'bg-amber-100/70 dark:bg-amber-950/50 text-amber-950 font-extrabold' :
+                                'bg-rose-100/90 dark:bg-rose-950/70 text-rose-950 font-extrabold'
 
                               return (
                                 <React.Fragment key={m.id}>
-                                  <td className={cn("py-3 px-2 text-center border-r border-slate-200 dark:border-slate-800 font-mono text-xs", noteStyle)}>
+                                  <td className={cn("py-2.5 px-2 text-center border-r border-b-2 border-slate-900 font-mono text-xs font-black", noteStyle)}>
                                     {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
                                   </td>
-                                  <td className="py-3 px-1.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                  <td className="py-2.5 px-1.5 text-center border-r border-b-2 border-slate-900">
                                     <span className={cn(
-                                      "text-[9px] px-1.5 py-0.5 rounded-full font-sans font-black uppercase tracking-wider",
-                                      isFraud ? "bg-rose-600 text-white shadow-md font-black animate-pulse" :
-                                      dec === 'V' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300" :
-                                      dec === 'VAR' ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" :
-                                      dec === 'VPC' || dec === 'VC' ? "bg-indigo-100 text-indigo-950 dark:bg-indigo-900/60 dark:text-indigo-200 border border-indigo-300 font-black" :
-                                      "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
+                                      "text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border-2 border-slate-950 shadow-xs",
+                                      isFraud ? "bg-rose-950 text-white animate-pulse" :
+                                      dec === 'V' ? "bg-emerald-600 text-white" :
+                                      dec === 'VAR' ? "bg-sky-600 text-white" :
+                                      dec === 'VPC' || dec === 'VC' ? "bg-indigo-600 text-white" :
+                                      "bg-rose-600 text-white"
                                     )}>
                                       {isFraud ? '🚨 FRAUDE' : (dec || 'NV')}
                                     </span>
                                   </td>
-                                  <td className="py-3 px-1.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                  <td className="py-2.5 px-1.5 text-center border-r-2 border-b-2 border-slate-900">
                                     <span className={cn(
-                                      "text-[9px] px-1.5 py-0.5 rounded-md font-mono font-bold whitespace-nowrap",
+                                      "text-[8.5px] px-1.5 py-0.5 rounded-md font-mono font-bold whitespace-nowrap border-2 border-slate-950",
                                       mInfo?.is_historical 
-                                        ? "bg-blue-100 text-blue-900 dark:bg-blue-900/60 dark:text-blue-200 border border-blue-300 font-black shadow-2xs" 
-                                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                        ? "bg-purple-200 text-purple-950 font-black" 
+                                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                     )}>
-                                      {mInfo?.is_historical ? `⭐ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year ? mInfo.validation_year.replace(/^20/, '').replace(/\/20/, '/') : '26-27')}
+                                      {mInfo?.is_historical ? `🏛️ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year || '26-27')}
                                     </span>
                                   </td>
                                 </React.Fragment>
                               )
                             })}
 
-
-
                             {/* Moyenne Semestrielle Cell */}
-                            <td className="py-3.5 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-indigo-50/50 dark:bg-indigo-950/20">
+                            <td className="py-3.5 px-4 text-center border-r-2 border-b-2 border-slate-900 font-mono font-black text-sm bg-indigo-100/90 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200">
                               {hasStudentFraud ? (
-                                <span className="px-3 py-1 rounded-xl text-xs font-black inline-block shadow-2xs font-mono bg-rose-600 text-white animate-pulse">
+                                <span className="px-3 py-1 rounded-xl text-xs font-black inline-block shadow-xs font-mono bg-rose-950 text-white border-2 border-slate-950">
                                   0.00 (FRAUDE)
                                 </span>
                               ) : (
                                 s.moyenne_semestrielle !== null ? (
-                                  <span className={cn(
-                                    "px-3 py-1 rounded-xl text-sm font-black inline-block shadow-2xs font-mono",
-                                    s.moyenne_semestrielle >= 10 ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-200"
-                                  )}>
+                                  <span className="font-mono font-black text-sm text-indigo-950 dark:text-indigo-200">
                                     {Number(s.moyenne_semestrielle).toFixed(2)}
                                   </span>
                                 ) : '–'
@@ -2291,77 +2335,123 @@ export default function AdminGradesPVPage() {
     })
 
     const aiSuggestions = (() => {
-      const suggestions: any[] = []
+      const mapByStudent = new Map<number, any>()
+
       annualStudents.forEach((student: any) => {
+        // Exclure strictement TOUT étudiant sanctionné pour FRAUDE (Aucun rachat possible)
+        if (student.has_fraud || student.decision === 'FRAUDE' || student.decision_global === 'FRAUDE' || student.is_fraude) return
+
         const annAvg = Number(student.annual_average || 0)
         const mods = student.modules_detail || []
+        const candidateSuggestions: any[] = []
 
-        // Case A: Amine Benziane case (Annual Avg >= 10.00, blocked by 1 eliminatory grade < 5.00)
-        const elimMods = mods.filter((m: any) => Number(m.final_grade) < 5.00)
-        if (annAvg >= 10.00 && elimMods.length > 0) {
-          elimMods.forEach((em: any) => {
-            const gap = (5.00 - Number(em.final_grade)).toFixed(2)
-            suggestions.push({
-              student_id: student.student_id,
-              student_name: student.student_name,
-              cne: student.cne,
-              type: 'elim_upgrade',
-              module_id: em.module_id,
-              module_code: em.code,
-              current_grade: em.final_grade,
-              needed_points: gap,
-              target_grade: '5.00',
-              badge_color: 'from-amber-500 to-amber-600',
-              impact: 'Validation de l\'Année par Compensation Globale (V.Comp) sans dettes !',
-              text: `🎯 Rachat Prioritaire : ${student.student_name} (${student.cne}) a une moyenne annuelle de ${annAvg}/20. Bloqué en Passage Dettes uniquement à cause de la note éliminatoire de ${em.final_grade}/20 sur ${em.code}. Un rachat de +${gap} pt porte sa note à 5.00/20, déclenchant la Compensation Annuelle (V.Comp) !`
-            })
-          })
-        }
+        const initialFailedMods = mods.filter((m: any) => Number(m.final_grade) < 10.00)
+        const initialUncompensableMods = mods.filter((m: any) => Number(m.final_grade) < 6.00)
 
-        // Case B: Annual Avg between 9.50 and 9.99 (close to 10.00)
-        if (annAvg >= 9.50 && annAvg < 10.00 && !student.has_fraud) {
+        // Traitement 1: Franchissement du Seuil de Compensation (Élévation de note < 6.00 à 6.00)
+        // Gère les cas : 5.50 -> 6.00 (+0.50pt), 5.00 -> 6.00 (+1.00pt), 4.50 -> 6.00 (+1.50pt)
+        initialUncompensableMods.forEach((uncompMod: any) => {
+          const currentG = Number(uncompMod.final_grade)
+          const pointsNeeded = 6.00 - currentG
+
+          if (pointsNeeded > 0 && pointsNeeded <= 2.50) {
+            // Simulation du résultat si ce module passe à 6.00
+            const simMods = mods.map((m: any) => m.module_id === uncompMod.module_id ? { ...m, final_grade: 6.00 } : m)
+            const simUncompCount = simMods.filter((m: any) => Number(m.final_grade) < 6.00).length
+            const simFailedCount = simMods.filter((m: any) => Number(m.final_grade) < 10.00).length
+
+            // Si le passage à 6.00 supprime les notes éliminatoires/non-compensables ET que les modules non-validés <= 1 ET moyenne annuelle >= 10.00 :
+            if (simUncompCount === 0 && simFailedCount <= 1 && annAvg >= 10.00) {
+              const gapStr = pointsNeeded.toFixed(2)
+              candidateSuggestions.push({
+                student_id: student.student_id,
+                student_name: student.student_name,
+                cne: student.cne,
+                cin: student.cin,
+                type: 'threshold_6_upgrade',
+                module_id: uncompMod.module_id,
+                module_code: uncompMod.code,
+                current_grade: uncompMod.final_grade,
+                needed_points: gapStr,
+                target_grade: '6.00',
+                badge_color: 'from-[#0f2863] to-indigo-700',
+                impact: 'Validation par Compensation Globale (V.Comp) en franchissant le seuil de 6.00/20 !',
+                text: `🎯 Rachat Seuil 6.00/20 : ${student.student_name} (${student.cne}) a une moyenne annuelle de ${annAvg}/20. Sa note de ${currentG}/20 sur ${uncompMod.code} est sous le seuil de compensation. Un rachat de +${gapStr} pt porte sa note à 6.00/20, débloquant la Compensation Globale (V.Comp) !`
+              })
+            }
+          }
+        })
+
+        // Traitement 2: Validation Directe de Module (Élévation de note < 10.00 à 10.00)
+        initialFailedMods.forEach((failedMod: any) => {
+          const currentG = Number(failedMod.final_grade)
+          const pointsNeeded = 10.00 - currentG
+
+          if (pointsNeeded > 0 && pointsNeeded <= 2.00) {
+            // Simulation du résultat si ce module passe à 10.00
+            const simMods = mods.map((m: any) => m.module_id === failedMod.module_id ? { ...m, final_grade: 10.00 } : m)
+            const simUncompCount = simMods.filter((m: any) => Number(m.final_grade) < 6.00).length
+            const simFailedCount = simMods.filter((m: any) => Number(m.final_grade) < 10.00).length
+
+            if (simUncompCount === 0 && simFailedCount <= 1) {
+              const gapStr = pointsNeeded.toFixed(2)
+              const simDecision = (annAvg >= 10.00 && simFailedCount <= 1) ? 'V.Comp' : 'PASS_DETTES'
+
+              if (simDecision !== student.decision) {
+                candidateSuggestions.push({
+                  student_id: student.student_id,
+                  student_name: student.student_name,
+                  cne: student.cne,
+                  cin: student.cin,
+                  type: 'module_10_upgrade',
+                  module_id: failedMod.module_id,
+                  module_code: failedMod.code,
+                  current_grade: failedMod.final_grade,
+                  needed_points: gapStr,
+                  target_grade: '10.00',
+                  badge_color: simDecision === 'V.Comp' ? 'from-emerald-600 to-teal-700' : 'from-amber-500 to-amber-600',
+                  impact: simDecision === 'V.Comp' ? 'Validation de l\'Année par Compensation Globale !' : 'Basculement vers le Passage avec Dettes (Réserviste) !',
+                  text: `💡 Rachat Module : ${student.student_name} a ${currentG}/20 sur ${failedMod.code}. En lui accordant +${gapStr} pt pour atteindre 10.00/20, l'étudiant valide ce module et passe à la décision : ${simDecision === 'V.Comp' ? 'Validé par Compensation' : 'Passage avec Dettes'} !`
+                })
+              }
+            }
+          }
+        })
+
+        // Traitement 3: Élévation de Moyenne Annuelle vers 10.00 (Moyenne entre 9.50 et 9.99)
+        if (annAvg >= 9.50 && annAvg < 10.00 && initialUncompensableMods.length === 0 && initialFailedMods.length <= 1) {
           const gapAnn = (10.00 - annAvg).toFixed(2)
-          const nearPassMod = mods.find((m: any) => Number(m.final_grade) >= 8.00 && Number(m.final_grade) < 10.00)
-          suggestions.push({
-            student_id: student.student_id,
-            student_name: student.student_name,
-            cne: student.cne,
-            type: 'annual_avg_upgrade',
-            module_id: nearPassMod?.module_id,
-            module_code: nearPassMod?.code || 'Moyenne Annuelle',
-            current_grade: annAvg,
-            needed_points: gapAnn,
-            target_grade: '10.00',
-            badge_color: 'from-indigo-500 to-indigo-600',
-            impact: 'Validation de l\'Année par Compensation Globale !',
-            text: `💡 Rachat Annuel : ${student.student_name} a une moyenne annuelle de ${annAvg}/20. Il manque seulement +${gapAnn} pt pour atteindre 10.00/20 et valider l'année par compensation !`
-          })
-        }
-
-        // Case C: Student has 3 NV modules in a semester, close to 10.00 on 1 module
-        if ((student.failed_count_s1 === 3 || student.failed_count_s2 === 3) && !student.has_fraud) {
-          const nearNVMod = mods.find((m: any) => Number(m.final_grade) >= 9.00 && Number(m.final_grade) < 10.00)
-          if (nearNVMod) {
-            const gapMod = (10.00 - Number(nearNVMod.final_grade)).toFixed(2)
-            suggestions.push({
+          const nearPassMod = initialFailedMods.find((m: any) => Number(m.final_grade) >= 8.00)
+          if (nearPassMod) {
+            candidateSuggestions.push({
               student_id: student.student_id,
               student_name: student.student_name,
               cne: student.cne,
-              type: 'avoid_redoublement',
-              module_id: nearNVMod.module_id,
-              module_code: nearNVMod.code,
-              current_grade: nearNVMod.final_grade,
-              needed_points: gapMod,
+              cin: student.cin,
+              type: 'annual_avg_upgrade',
+              module_id: nearPassMod.module_id,
+              module_code: nearPassMod.code,
+              current_grade: annAvg,
+              needed_points: gapAnn,
               target_grade: '10.00',
-              badge_color: 'from-rose-500 to-rose-600',
-              impact: 'Évite le Redoublement en basculant vers le Passage avec Dettes (Réserviste) !',
-              text: `⚠️ Rachat Anti-Redoublement : ${student.student_name} a 3 modules non validés. En accordant +${gapMod} pt sur ${nearNVMod.code} (actuellement ${nearNVMod.final_grade}/20), l'étudiant passe à 2 modules NV et évite le redoublement en basculant en Passage avec Dettes !`
+              badge_color: 'from-indigo-600 to-blue-700',
+              impact: 'Validation de l\'Année par Compensation Globale !',
+              text: `🌟 Rachat Moyenne Annuelle : ${student.student_name} a une moyenne annuelle de ${annAvg}/20. Il ne manque que +${gapAnn} pt sur ${nearPassMod.code} pour atteindre 10.00/20 et valider l'année par compensation !`
             })
           }
         }
+
+        if (candidateSuggestions.length > 0) {
+          candidateSuggestions.sort((a, b) => Number(a.needed_points) - Number(b.needed_points))
+          mapByStudent.set(student.student_id, candidateSuggestions[0])
+        }
       })
-      return suggestions
+
+      return Array.from(mapByStudent.values())
     })()
+
+    const currentFiliereObj = filieres.find((f: any) => String(f.id) === String(selectedFiliere))
+    const filiereName = currentFiliereObj?.name || currentFiliereObj?.code || rawData.filiere?.name || 'Filière ENCG'
 
     return (
       <div className="space-y-6 p-2 sm:p-4 md:p-6 w-full pb-24 animate-in fade-in duration-300">
@@ -2402,30 +2492,31 @@ export default function AdminGradesPVPage() {
         </div>
 
         {/* Dedicated Header for Annual PV */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0f2863] via-indigo-900 to-blue-900 text-white p-6 rounded-3xl shadow-xl border border-indigo-500/20 print:hidden">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center font-black text-2xl text-amber-400 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0b1f4d] via-[#0f2a6b] to-[#1e3a8a] text-white p-6 md:p-8 rounded-3xl shadow-2xl border-2 border-indigo-400/20 print:hidden relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-3xl shadow-lg border-2 border-amber-300 shrink-0">
               🏆
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                  Procès-Verbal Fusionné des 14 Modules ({oddSemLabel} + {evenSemLabel})
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-xs">
+                  {filiereName} • Procès-Verbal 14 Modules ({oddSemLabel} + {evenSemLabel})
                 </span>
-                <span className="px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-white/10 text-blue-200">
+                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-white/10 text-blue-200 border border-white/15">
                   {oddSemLabel} & {evenSemLabel} • Année Académique 2026/2027
                 </span>
               </div>
-              <h1 className="text-2xl font-black tracking-tight mt-1">
-                Matrice Consolidée d'Année ({oddSemLabel} + {evenSemLabel})
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-1.5 text-white drop-shadow-sm">
+                Matrice Consolidée d'Année ({filiereName} — {oddSemLabel} + {evenSemLabel})
               </h1>
-              <p className="text-xs text-indigo-200 font-medium">
+              <p className="text-xs md:text-sm text-indigo-100 font-medium mt-0.5">
                 Fusion complète des notes des 14 modules, moyennes semestrielles et délibération annuelle finale
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-3 relative z-10">
             <Button
               onClick={() => {
                 setShowAiAnalysis(prev => !prev)
@@ -2434,10 +2525,10 @@ export default function AdminGradesPVPage() {
                 }
               }}
               className={cn(
-                "font-black rounded-xl text-xs px-4 py-2.5 flex items-center gap-2 shadow-xl border cursor-pointer transition-all",
+                "font-black rounded-2xl text-xs px-5 py-3 flex items-center gap-2 shadow-2xl border-2 transition-all cursor-pointer",
                 showAiAnalysis
                   ? "bg-amber-400 text-slate-950 border-amber-300 scale-105"
-                  : "bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 text-white border-amber-400/40 animate-pulse"
+                  : "bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 text-white border-amber-400/50 shadow-indigo-500/20 animate-pulse"
               )}
             >
               <Sparkles className="w-4 h-4 text-amber-300 fill-amber-300" />
@@ -2446,7 +2537,7 @@ export default function AdminGradesPVPage() {
             <Button
               variant="outline"
               onClick={() => fetchAnnualCompensation()}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl text-xs font-bold px-3.5 py-2.5 flex items-center gap-1.5 cursor-pointer"
+              className="bg-white/10 hover:bg-white/20 text-white border-2 border-white/20 rounded-2xl text-xs font-bold px-4 py-3 flex items-center gap-2 cursor-pointer shadow-md"
             >
               <RefreshCw className="w-4 h-4" /> Recalculer
             </Button>
@@ -2460,13 +2551,21 @@ export default function AdminGradesPVPage() {
                   `PV_Annuel_Filiere${filiereId}_Annee${yearLevel}.pdf`
                 ).then(() => toast.dismiss('pdf-export'))
               }}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5 shadow-lg cursor-pointer"
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-2xl text-xs px-5 py-3 flex items-center gap-2 shadow-xl border-2 border-amber-400 cursor-pointer"
             >
               <Download className="w-4 h-4" /> Export PDF Officiel (Tampons)
             </Button>
             <Button
-              onClick={() => setShowSignatureModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5 shadow-md cursor-pointer"
+              onClick={() => {
+                const pendingMember = juryStatus?.members?.find((m: any) => m.status !== 'signed') || juryStatus?.members?.[0]
+                if (pendingMember) {
+                  setActiveJurySigningId(pendingMember.id)
+                } else {
+                  setActiveJurySigningId(null)
+                }
+                setShowSignatureModal(true)
+              }}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl text-xs px-5 py-3 flex items-center gap-2 shadow-xl border-2 border-emerald-400 cursor-pointer"
             >
               ✍️ Signer le PV (Jury)
             </Button>
@@ -2475,22 +2574,22 @@ export default function AdminGradesPVPage() {
 
         {/* Gemini AI Copilot & Rattrapage Intelligence Banner */}
         {showAiAnalysis && (
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-xl border border-amber-400/30 space-y-4 print:hidden animate-in fade-in duration-300">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-black text-2xl shrink-0">
+          <div className="bg-gradient-to-br from-[#071126] via-[#0c1e47] to-[#152e69] text-white p-6 md:p-8 rounded-3xl shadow-2xl border-2 border-amber-400/40 space-y-5 print:hidden animate-in fade-in duration-300 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/15 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 border-2 border-amber-400/40 flex items-center justify-center font-black text-2xl shrink-0 shadow-lg">
                   🧠
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-400 text-slate-950 border border-amber-300">
                       Intelligence Délibération ENCG
                     </span>
-                    <span className="text-[10px] text-amber-200 font-mono font-bold">
-                      {aiSuggestions.length} Opportunités de Rachat Identifiées
+                    <span className="text-xs text-amber-200 font-mono font-bold">
+                      {aiSuggestions.length} Éligibles au Rachat
                     </span>
                   </div>
-                  <h3 className="text-lg font-black tracking-tight text-white mt-0.5">
+                  <h3 className="text-xl font-black tracking-tight text-white mt-1">
                     Copilote IA : Recommandations de Rachat par le Jury
                   </h3>
                 </div>
@@ -2502,33 +2601,35 @@ export default function AdminGradesPVPage() {
                 ✨ Aucune opportunité de rachat critique détectée pour cette promotion. Tous les dossiers sont en règle selon la réglementation ENCG !
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiSuggestions.map((sug: any, idx: number) => (
-                  <div key={idx} className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 space-y-3 flex flex-col justify-between hover:bg-white/15 transition-all">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-amber-300">{sug.student_name} ({sug.cne})</span>
-                        <span className={cn("px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white bg-gradient-to-r", sug.badge_color)}>
+                  <div key={idx} className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border-2 border-white/20 space-y-3 flex flex-col justify-between hover:bg-white/15 transition-all shadow-lg">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-sm font-black text-amber-300 flex items-center gap-1.5">
+                          <span>👤</span> {sug.student_name} ({sug.cne})
+                        </span>
+                        <span className={cn("px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase text-white bg-gradient-to-r shadow-xs border border-white/20", sug.badge_color)}>
                           {sug.impact}
                         </span>
                       </div>
-                      <p className="text-xs font-medium text-slate-200 leading-relaxed">
+                      <p className="text-xs font-medium text-slate-100 leading-relaxed bg-black/20 p-3 rounded-xl border border-white/10">
                         {sug.text}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                      <span className="text-[10px] font-mono text-indigo-200 font-bold">
+                    <div className="flex items-center justify-between pt-3 border-t border-white/15">
+                      <span className="text-xs font-mono text-indigo-200 font-bold bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-400/30">
                         Rachat conseillé : +{sug.needed_points} pt sur {sug.module_code}
                       </span>
                       <button
                         onClick={() => {
-                          toast.success(`⚡ Rachat IA de +${sug.needed_points} pt appliqué avec succès pour ${sug.student_name} !`)
-                          fetchAnnualCompensation()
+                          setSelectedRachatStudent(sug)
+                          setSelectedRachatReason(sug.text)
                         }}
-                        className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-xl flex items-center gap-1.5 cursor-pointer border border-amber-300"
                       >
-                        <Sparkles className="w-3.5 h-3.5" /> Appliquer le Rachat (+{sug.needed_points} pt)
+                        <Sparkles className="w-4 h-4" /> Appliquer le Rachat (+{sug.needed_points} pt)
                       </button>
                     </div>
                   </div>
@@ -2540,39 +2641,39 @@ export default function AdminGradesPVPage() {
 
         {/* Annual KPI Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Moyenne Promotion</span>
-            <span className="text-3xl font-black text-[#0f2863] dark:text-indigo-400 mt-2">{avgAnn} <span className="text-xs text-slate-400 font-normal">/20</span></span>
-            <span className="text-[10px] text-slate-500 mt-1 font-semibold">Bilan {oddSemLabel} + {evenSemLabel}</span>
+          <div className="bg-gradient-to-br from-indigo-50/60 via-white to-indigo-50/30 dark:from-slate-900 dark:to-slate-850 border-2 border-indigo-200/80 dark:border-indigo-900/60 p-5 rounded-3xl shadow-lg flex flex-col justify-between">
+            <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Moyenne Promotion</span>
+            <span className="text-3xl font-black text-[#0f2863] dark:text-indigo-300 mt-2">{avgAnn} <span className="text-xs text-slate-400 font-normal">/20</span></span>
+            <span className="text-[10px] text-indigo-800 dark:text-indigo-300 mt-1 font-bold">Bilan {oddSemLabel} + {evenSemLabel}</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-emerald-50/20">
-            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Taux d'Admission</span>
+          <div className="bg-gradient-to-br from-emerald-50/60 via-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-850 border-2 border-emerald-200/80 dark:border-emerald-900/60 p-5 rounded-3xl shadow-lg flex flex-col justify-between">
+            <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Taux d'Admission</span>
             <span className="text-3xl font-black text-emerald-600 mt-2">{passRateAnn}%</span>
-            <span className="text-[10px] text-emerald-700 mt-1 font-bold">{validsAnn + compsAnn + dettesAnn} admis sur {totalAnnStudents}</span>
+            <span className="text-[10px] text-emerald-800 dark:text-emerald-300 mt-1 font-bold">{validsAnn + compsAnn + dettesAnn} admis sur {totalAnnStudents}</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-blue-50/20">
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">Validés Directs</span>
+          <div className="bg-gradient-to-br from-blue-50/60 via-white to-blue-50/30 dark:from-slate-900 dark:to-slate-850 border-2 border-blue-200/80 dark:border-blue-900/60 p-5 rounded-3xl shadow-lg flex flex-col justify-between">
+            <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-wider">Validés Directs</span>
             <span className="text-3xl font-black text-blue-600 mt-2">{validsAnn}</span>
-            <span className="text-[10px] text-blue-700 mt-1 font-bold">{totalAnnStudents > 0 ? Math.round((validsAnn / totalAnnStudents) * 100) : 0}% admis directs</span>
+            <span className="text-[10px] text-blue-800 dark:text-blue-300 mt-1 font-bold">{totalAnnStudents > 0 ? Math.round((validsAnn / totalAnnStudents) * 100) : 0}% admis directs</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-indigo-50/20">
-            <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">Passage avec Dettes</span>
+          <div className="bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 dark:from-slate-900 dark:to-slate-850 border-2 border-amber-200/80 dark:border-amber-900/60 p-5 rounded-3xl shadow-lg flex flex-col justify-between">
+            <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Passage avec Dettes</span>
             <span className="text-3xl font-black text-amber-600 mt-2">{dettesAnn}</span>
-            <span className="text-[10px] text-amber-700 mt-1 font-bold">≤ 2 mod. NV par semestre</span>
+            <span className="text-[10px] text-amber-800 dark:text-amber-300 mt-1 font-bold">Max 1 seul mod. NV par an</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/50 p-5 rounded-2xl shadow-xs flex flex-col justify-between bg-rose-50/20">
-            <span className="text-[10px] font-black text-red-600 uppercase tracking-wider">Redoublement / Ajournés</span>
-            <span className="text-3xl font-black text-red-600 mt-2">{ajsAnn}</span>
-            <span className="text-[10px] text-red-700 mt-1 font-bold">&gt; 2 mod. NV par semestre</span>
+          <div className="bg-gradient-to-br from-rose-50/60 via-white to-rose-50/30 dark:from-slate-900 dark:to-slate-850 border-2 border-rose-200/80 dark:border-rose-900/60 p-5 rounded-3xl shadow-lg flex flex-col justify-between">
+            <span className="text-[10px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-wider">Redoublement / Ajournés</span>
+            <span className="text-3xl font-black text-rose-600 mt-2">{ajsAnn}</span>
+            <span className="text-[10px] text-rose-800 dark:text-rose-300 mt-1 font-bold">&gt; 1 mod. NV par an</span>
           </div>
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+        <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-slate-800 p-4 rounded-3xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
           <div className="relative w-full md:w-80">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
@@ -2580,32 +2681,32 @@ export default function AdminGradesPVPage() {
               placeholder="Rechercher par Nom, Prénom ou CNE..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-700 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border-2 border-slate-900 w-full md:w-auto">
             <button
               onClick={() => setStatusFilter('all')}
-              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'all' ? "bg-white dark:bg-slate-900 text-[#0f2863] shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer", statusFilter === 'all' ? "bg-[#0f2863] text-white shadow-md" : "text-slate-600 hover:text-slate-900")}
             >
-              Tous ({annualStudents.length})
+              Tous ({totalAnnStudents})
             </button>
             <button
               onClick={() => setStatusFilter('v')}
-              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'v' ? "bg-emerald-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer", statusFilter === 'v' ? "bg-emerald-600 text-white shadow-md" : "text-slate-600 hover:text-slate-900")}
             >
               Validés ({validsAnn + compsAnn})
             </button>
             <button
               onClick={() => setStatusFilter('r')}
-              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'r' ? "bg-amber-500 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer", statusFilter === 'r' ? "bg-amber-500 text-slate-950 shadow-md" : "text-slate-600 hover:text-slate-900")}
             >
               Passage Dettes ({dettesAnn})
             </button>
             <button
               onClick={() => setStatusFilter('nv')}
-              className={cn("px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer", statusFilter === 'nv' ? "bg-red-500 text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer", statusFilter === 'nv' ? "bg-rose-600 text-white shadow-md" : "text-slate-600 hover:text-slate-900")}
             >
               Redoublement ({ajsAnn})
             </button>
@@ -2613,252 +2714,263 @@ export default function AdminGradesPVPage() {
         </div>
 
         {/* Main Annual Table */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b-2 border-slate-900 dark:border-slate-800 pb-4">
             <div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <FileText className="w-5 h-5 text-indigo-600" />
-                Matrice Globale Fusionnée des 14 Modules ({oddSemLabel} + {evenSemLabel})
+              <h3 className="text-xl font-black text-slate-950 dark:text-white flex items-center gap-2.5">
+                <FileText className="w-6 h-6 text-amber-500" />
+                Matrice Globale Fusionnée des 14 Modules — {filiereName} ({oddSemLabel} + {evenSemLabel})
               </h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Notes complètes module par module, moyennes semestrielles et décision annuelle globale du jury
+              <p className="text-xs text-slate-500 font-bold mt-1">
+                Notes complètes module par module, moyennes semestrielles et décision annuelle globale du jury ({filiereName})
               </p>
             </div>
-            <span className="px-3.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 text-xs font-black rounded-full border border-amber-300/50">
-              Règle ENCG : Compensation à condition d'absence de note éliminatoire (&lt; 5.0)
+            <span className="px-4 py-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-950 dark:text-amber-300 text-xs font-black rounded-full border-2 border-amber-400 shadow-xs">
+              Règle ENCG : Compensation sans note éliminatoire (&lt; 5.0) & Passage Dettes (≤ 1 mod. NV/an)
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border-4 border-slate-950 shadow-2xl">
-            <table className="w-full text-xs text-left border-collapse border-2 border-slate-950">
-              <thead className="text-slate-200 font-black uppercase text-[10px] tracking-wider border-b-4 border-slate-950">
-                <tr>
-                  <th className="p-3.5 bg-slate-950 text-white font-black border-r-4 border-b-2 border-slate-950" rowSpan={2}>CNE / Apogée</th>
-                  <th className="p-3.5 bg-slate-950 text-white font-black border-r-4 border-b-2 border-slate-950" rowSpan={2}>Nom & Prénom Étudiant</th>
+          <div className="overflow-x-auto rounded-3xl border-4 border-slate-900 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
+            <table className="w-full text-xs text-left border-collapse border-2 border-slate-900">
+              <thead className="text-slate-200 font-black uppercase text-[10px] tracking-wider border-b-4 border-slate-900">
+                <tr className="bg-[#0f2863] text-white">
+                  <th className="p-3.5 bg-[#0f2863] text-white font-black border-r-2 border-slate-900 border-b-2 sticky left-0 z-30 shadow-md min-w-[100px]" rowSpan={2}>Code Apogée</th>
+                  <th className="p-3.5 bg-[#0b1f4d] text-amber-300 font-black border-r-2 border-slate-900 border-b-2 sticky left-[100px] z-30 shadow-md min-w-[80px]" rowSpan={2}>CIN</th>
+                  <th className="p-3.5 bg-[#0f2863] text-white font-black border-r-4 border-slate-900 border-b-2 sticky left-[180px] z-30 shadow-md min-w-[190px]" rowSpan={2}>Nom & Prénom Étudiant</th>
                   {annualModules.length > 0 ? (
                     <>
-                      <th className="p-3 text-center border-r-4 border-b-2 border-slate-950 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-indigo-200 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length + 2}>
+                      <th className="p-3 text-center border-r-4 border-slate-900 border-b-2 bg-gradient-to-r from-[#0f2863] to-[#1e3a8a] text-amber-300 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length + 2}>
                         MODULES {oddSemLabel}
                       </th>
-                      <th className="p-3 text-center border-r-4 border-b-2 border-slate-950 bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-blue-200 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length + 2}>
+                      <th className="p-3 text-center border-r-4 border-slate-900 border-b-2 bg-gradient-to-r from-[#1e3a8a] to-[#1e1b4b] text-blue-200 font-black text-xs tracking-widest" colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length + 2}>
                         MODULES {evenSemLabel}
                       </th>
                     </>
                   ) : (
                     <>
-                      <th className="p-3 border-r-4 border-b-2 border-slate-950 bg-slate-950 text-white" rowSpan={2}>Moyenne {oddSemLabel}</th>
-                      <th className="p-3 border-r-4 border-b-2 border-slate-950 bg-slate-950 text-white" rowSpan={2}>Moyenne {evenSemLabel}</th>
+                      <th className="p-3 border-r-4 border-slate-900 border-b-2 bg-[#0f2863] text-white" rowSpan={2}>Moyenne {oddSemLabel}</th>
+                      <th className="p-3 border-r-4 border-slate-900 border-b-2 bg-[#0f2863] text-white" rowSpan={2}>Moyenne {evenSemLabel}</th>
                     </>
                   )}
-                  <th className="p-3.5 border-r-4 border-b-2 border-slate-950 text-center bg-gradient-to-r from-amber-950 to-slate-950 text-amber-300 font-black text-xs tracking-wider" rowSpan={2}>Moyenne Annuelle</th>
-                  <th className="p-3.5 text-right border-b-2 border-slate-950 bg-slate-950 text-white font-black text-xs tracking-wider" rowSpan={2}>Décision Finale Jury</th>
+                  <th className="p-3.5 border-r-4 border-slate-900 border-b-2 text-center bg-gradient-to-r from-amber-950 to-slate-950 text-amber-300 font-black text-xs tracking-wider min-w-[120px]" rowSpan={2}>Moyenne Annuelle</th>
+                  <th className="p-3.5 text-right bg-[#091533] text-white font-black text-xs tracking-wider border-b-2 border-slate-900 min-w-[220px]" rowSpan={2}>Décision Finale Jury</th>
                 </tr>
                 {annualModules.length > 0 && (
-                  <tr>
+                  <tr className="bg-[#163784] text-blue-100">
                     {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => (
-                      <th key={m.id} className="p-2 text-center border-r-2 border-b-2 border-slate-950 font-mono text-[10px] font-black bg-slate-900 text-slate-100 tracking-wide" title={m.name}>
+                      <th key={m.id} className="p-2 text-center border-r-2 border-slate-900 font-mono text-[10px] font-black bg-[#163784] text-white tracking-wide" title={m.name}>
                         {m.code || `M${m.id}`}
                       </th>
                     ))}
-                    <th className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-indigo-900 text-indigo-100 font-black text-[10px]">MOY {oddSemLabel}</th>
-                    <th className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-indigo-950 text-amber-300 font-black text-[10px]">DÉC. {oddSemLabel}</th>
+                    <th className="p-2 text-center border-r-2 border-slate-900 bg-[#1e40af] text-amber-200 font-black text-[10px]">MOY {oddSemLabel}</th>
+                    <th className="p-2 text-center border-r-4 border-slate-900 bg-[#1e1b4b] text-amber-300 font-black text-[10px]">DÉC. {oddSemLabel}</th>
                     {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => (
-                      <th key={m.id} className="p-2 text-center border-r-2 border-b-2 border-slate-950 font-mono text-[10px] font-black bg-slate-900 text-slate-100 tracking-wide" title={m.name}>
+                      <th key={m.id} className="p-2 text-center border-r-2 border-slate-900 font-mono text-[10px] font-black bg-[#163784] text-white tracking-wide" title={m.name}>
                         {m.code || `M${m.id}`}
                       </th>
                     ))}
-                    <th className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-blue-900 text-blue-100 font-black text-[10px]">MOY {evenSemLabel}</th>
-                    <th className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-blue-950 text-amber-300 font-black text-[10px]">DÉC. {evenSemLabel}</th>
+                    <th className="p-2 text-center border-r-2 border-slate-900 bg-[#1e40af] text-blue-200 font-black text-[10px]">MOY {evenSemLabel}</th>
+                    <th className="p-2 text-center border-r-4 border-slate-900 bg-[#1e1b4b] text-amber-300 font-black text-[10px]">DÉC. {evenSemLabel}</th>
                   </tr>
                 )}
               </thead>
-              <tbody className="divide-y-2 divide-slate-950 font-bold">
+              <tbody className="divide-y-2 divide-slate-900 font-bold border-b-2 border-slate-900">
                 {filteredAnnualData.length === 0 ? (
                   <tr>
-                    <td colSpan={annualModules.length > 0 ? annualModules.length + 8 : 8} className="text-center py-12 text-slate-400 italic bg-white dark:bg-slate-900">
+                    <td colSpan={annualModules.length > 0 ? annualModules.length + 9 : 9} className="text-center py-12 text-slate-400 italic bg-white dark:bg-slate-900">
                       Aucune donnée de délibération annuelle trouvée pour le niveau sélectionné.
                     </td>
                   </tr>
                 ) : (
-                  filteredAnnualData.map((row: any) => (
-                    <tr key={row.student_id} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/90 transition-colors bg-white dark:bg-slate-900 border-b-2 border-slate-950">
-                      <td className="p-3 font-mono font-black text-slate-950 dark:text-slate-100 text-xs border-r-4 border-b-2 border-slate-950 bg-slate-50/80 dark:bg-slate-900/50">{row.cne}</td>
-                      <td className="p-3 font-black text-slate-950 dark:text-white text-xs border-r-4 border-b-2 border-slate-950 shrink-0 whitespace-nowrap bg-slate-50/80 dark:bg-slate-900/50">{row.student_name}</td>
-                      
-                      {annualModules.length > 0 ? (
-                        <>
-                          {/* S1 Modules */}
-                          {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => {
-                            const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
-                            const gradeVal = modInfo ? Number(modInfo.final_grade) : null
-                            const isElim = gradeVal !== null && gradeVal < 5.0
-                            const isFailed = gradeVal !== null && gradeVal < 10.0
+                  filteredAnnualData.map((row: any, idx: number) => {
+                    const rowBgClass = idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/70 dark:bg-slate-850'
+                    return (
+                      <tr key={row.student_id} className={cn("hover:bg-amber-50/60 dark:hover:bg-slate-800/80 transition-colors border-b-2 border-slate-900", rowBgClass)}>
+                        <td className={cn("p-3 font-mono font-bold text-slate-900 dark:text-slate-100 text-xs border-r-2 border-b-2 border-slate-900 sticky left-0 z-20 shadow-xs", rowBgClass)}>
+                          {row.cne}
+                        </td>
+                        <td className={cn("p-3 font-mono font-black text-indigo-950 dark:text-indigo-300 text-xs border-r-2 border-b-2 border-slate-900 sticky left-[100px] z-20 shadow-xs", rowBgClass)}>
+                          {row.cin || '-'}
+                        </td>
+                        <td className={cn("p-3 font-black text-slate-950 dark:text-white text-xs border-r-4 border-b-2 border-slate-950 shrink-0 whitespace-nowrap sticky left-[180px] z-20 shadow-sm", rowBgClass)}>
+                          {row.student_name}
+                        </td>
+                        
+                        {annualModules.length > 0 ? (
+                          <>
+                            {/* S1 Modules */}
+                            {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => {
+                              const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
+                              const gradeVal = modInfo ? Number(modInfo.final_grade) : null
+                              const isElim = gradeVal !== null && gradeVal < 5.0
+                              const isFailed = gradeVal !== null && gradeVal < 10.0
 
-                            const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+                              const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
 
-                            return (
-                              <td key={m.id} className={cn(
-                                "p-1.5 text-center border-r-2 border-b-2 border-slate-950 font-mono transition-colors",
-                                isElim ? "bg-rose-100/90 dark:bg-rose-950/70" :
-                                isFailed ? "bg-amber-100/70 dark:bg-amber-950/50" : ""
-                              )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
-                                <div className="flex flex-col items-center">
-                                  <span className={cn(
-                                    "font-black text-[12.5px] tracking-tight",
-                                    isElim ? "text-rose-950 dark:text-rose-200" :
-                                    isFailed ? "text-amber-950 dark:text-amber-300" : "text-slate-950 dark:text-slate-100"
-                                  )}>
-                                    {modInfo ? modInfo.final_grade : '-'}
-                                  </span>
-                                  {modInfo && (
-                                    <>
-                                      <span className={cn(
-                                        "px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase mt-0.5 shadow-2xs tracking-wider border border-slate-950",
-                                        decText === 'V' ? "bg-emerald-600 text-white" :
-                                        decText === 'VAR' ? "bg-sky-600 text-white" :
-                                        (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
-                                        "bg-rose-600 text-white"
-                                      )}>
-                                        {decText}
-                                      </span>
-                                      {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
-                                        <span className="px-1 py-0.2 rounded text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-300 mt-0.5">
-                                          🏛️ {modInfo.validation_year}
+                              return (
+                                <td key={m.id} className={cn(
+                                  "p-2 text-center border-r-2 border-b-2 border-slate-900 font-mono transition-colors",
+                                  isElim ? "bg-rose-100/90 dark:bg-rose-950/70 text-rose-900" :
+                                  isFailed ? "bg-amber-100/70 dark:bg-amber-950/50 text-amber-900" : ""
+                                )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
+                                  <div className="flex flex-col items-center justify-center space-y-0.5">
+                                    <span className={cn(
+                                      "font-black text-xs tracking-tight font-mono",
+                                      isElim ? "text-rose-950 dark:text-rose-200 font-extrabold" :
+                                      isFailed ? "text-amber-950 dark:text-amber-300 font-extrabold" : "text-slate-950 dark:text-slate-100"
+                                    )}>
+                                      {modInfo ? modInfo.final_grade : '-'}
+                                    </span>
+                                    {modInfo && (
+                                      <>
+                                        <span className={cn(
+                                          "px-2 py-0.5 rounded-md text-[8.5px] font-black uppercase shadow-xs tracking-wider border-2 border-slate-950",
+                                          decText === 'V' ? "bg-emerald-600 text-white" :
+                                          decText === 'VAR' ? "bg-sky-600 text-white" :
+                                          (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
+                                          "bg-rose-600 text-white"
+                                        )}>
+                                          {decText}
                                         </span>
-                                      ) : (
-                                        <span className="text-[7.5px] font-mono text-slate-500 dark:text-slate-400 font-bold mt-0.5">
-                                          {modInfo.validation_year || '2026/27'}
+                                        {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
+                                          <span className="px-1.5 py-0.2 rounded-md text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-400">
+                                            🏛️ {modInfo.validation_year}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[7.5px] font-mono text-slate-500 font-bold">
+                                            {modInfo.validation_year || '2026/27'}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              )
+                            })}
+                            <td className="p-2 text-center border-r-2 border-b-2 border-slate-900 bg-indigo-100/90 dark:bg-indigo-950/60 font-black text-indigo-950 dark:text-indigo-200 text-xs font-mono">
+                              {row.odd_semester_avg}
+                            </td>
+                            <td className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-indigo-200/80 dark:bg-indigo-900/60 font-black">
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase shadow-xs border-2 border-slate-950 tracking-wider",
+                                row.odd_semester_decision === 'V' ? "bg-emerald-600 text-white" :
+                                row.odd_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
+                                row.odd_semester_decision === 'PASS_DETTES' ? "bg-amber-400 text-slate-950" :
+                                "bg-rose-600 text-white"
+                              )}>
+                                {row.odd_semester_decision}
+                              </span>
+                            </td>
+
+                            {/* S2 Modules */}
+                            {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => {
+                              const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
+                              const gradeVal = modInfo ? Number(modInfo.final_grade) : null
+                              const isElim = gradeVal !== null && gradeVal < 5.0
+                              const isFailed = gradeVal !== null && gradeVal < 10.0
+
+                              const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+
+                              return (
+                                <td key={m.id} className={cn(
+                                  "p-2 text-center border-r-2 border-b-2 border-slate-900 font-mono transition-colors",
+                                  isElim ? "bg-rose-100/90 dark:bg-rose-950/70 text-rose-900" :
+                                  isFailed ? "bg-amber-100/70 dark:bg-amber-950/50 text-amber-900" : ""
+                                )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
+                                  <div className="flex flex-col items-center justify-center space-y-0.5">
+                                    <span className={cn(
+                                      "font-black text-xs tracking-tight font-mono",
+                                      isElim ? "text-rose-950 dark:text-rose-200 font-extrabold" :
+                                      isFailed ? "text-amber-950 dark:text-amber-300 font-extrabold" : "text-slate-950 dark:text-slate-100"
+                                    )}>
+                                      {modInfo ? modInfo.final_grade : '-'}
+                                    </span>
+                                    {modInfo && (
+                                      <>
+                                        <span className={cn(
+                                          "px-2 py-0.5 rounded-md text-[8.5px] font-black uppercase shadow-xs tracking-wider border-2 border-slate-950",
+                                          decText === 'V' ? "bg-emerald-600 text-white" :
+                                          decText === 'VAR' ? "bg-sky-600 text-white" :
+                                          (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
+                                          "bg-rose-600 text-white"
+                                        )}>
+                                          {decText}
                                         </span>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </td>
-                            )
-                          })}
-                          <td className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-indigo-100/90 dark:bg-indigo-950/60 font-black text-slate-950 dark:text-indigo-200 text-xs font-mono">
-                            {row.odd_semester_avg}
-                          </td>
-                          <td className="p-1.5 text-center border-r-4 border-b-2 border-slate-950 bg-indigo-200/80 dark:bg-indigo-900/60 font-black">
+                                        {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
+                                          <span className="px-1.5 py-0.2 rounded-md text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-400">
+                                            🏛️ {modInfo.validation_year}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[7.5px] font-mono text-slate-500 font-bold">
+                                            {modInfo.validation_year || '2026/27'}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              )
+                            })}
+                            <td className="p-2 text-center border-r-2 border-b-2 border-slate-900 bg-blue-100/90 dark:bg-blue-950/50 font-black text-blue-950 dark:text-blue-200 text-xs font-mono">
+                              {row.even_semester_avg}
+                            </td>
+                            <td className="p-2 text-center border-r-4 border-b-2 border-slate-950 bg-blue-200/80 dark:bg-blue-900/40 font-black">
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase shadow-xs border-2 border-slate-950 tracking-wider",
+                                row.even_semester_decision === 'V' ? "bg-emerald-600 text-white" :
+                                row.even_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
+                                row.even_semester_decision === 'PASS_DETTES' ? "bg-amber-400 text-slate-950" :
+                                "bg-rose-600 text-white"
+                              )}>
+                                {row.even_semester_decision}
+                              </span>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-900">
+                              <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.odd_semester_avg} /20</span>
+                            </td>
+                            <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-900">
+                              <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.even_semester_avg} /20</span>
+                            </td>
+                          </>
+                        )}
+
+                        <td className="p-3.5 text-center font-black text-slate-950 dark:text-amber-300 text-sm border-r-4 border-b-2 border-slate-950 bg-amber-100/90 dark:bg-amber-950/40 font-mono shadow-xs">
+                          {row.annual_average} <span className="text-[10px] text-slate-500 font-normal">/20</span>
+                        </td>
+                        <td className="p-3.5 text-right border-b-2 border-slate-900 whitespace-normal max-w-[240px]">
+                          <div className="flex flex-col items-end space-y-1">
                             <span className={cn(
-                              "px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-2xs border border-slate-950 tracking-wider",
-                              row.odd_semester_decision === 'V' ? "bg-emerald-600 text-white" :
-                              row.odd_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
-                              row.odd_semester_decision === 'PASS_DETTES' ? "bg-amber-500 text-slate-950" :
-                              "bg-rose-600 text-white"
+                              "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm inline-flex items-center gap-1.5 border-2 border-slate-950",
+                              row.decision === 'FRAUDE' || row.has_fraud ? "bg-rose-950 text-rose-100 shadow-md" :
+                              row.decision === 'V' ? "bg-emerald-600 text-white shadow-xs" :
+                              row.decision === 'V.Comp' ? "bg-indigo-600 text-white shadow-xs" :
+                              row.decision === 'PASS_DETTES' ? "bg-amber-500 text-slate-950 shadow-xs" :
+                              "bg-rose-600 text-white shadow-xs"
                             )}>
-                              {row.odd_semester_decision}
+                              {row.decision === 'FRAUDE' || row.has_fraud ? '🚫 FRAUDE (Disciplinaire)' :
+                               row.decision === 'V' ? `✓ Validé (${oddSemLabel}+${evenSemLabel})` :
+                               row.decision === 'V.Comp' ? `⚖️ Validé p. Comp (${oddSemLabel}+${evenSemLabel})` :
+                               row.decision === 'PASS_DETTES' ? '🎒 Passage Dettes (Réserviste)' :
+                               '❌ Redoublement / Ajourné'}
                             </span>
-                          </td>
-
-                          {/* S2 Modules */}
-                          {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => {
-                            const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
-                            const gradeVal = modInfo ? Number(modInfo.final_grade) : null
-                            const isElim = gradeVal !== null && gradeVal < 5.0
-                            const isFailed = gradeVal !== null && gradeVal < 10.0
-
-                            const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
-
-                            return (
-                              <td key={m.id} className={cn(
-                                "p-1.5 text-center border-r-2 border-b-2 border-slate-950 font-mono transition-colors",
-                                isElim ? "bg-rose-100/90 dark:bg-rose-950/70" :
-                                isFailed ? "bg-amber-100/70 dark:bg-amber-950/50" : ""
-                              )} title={`${m.name} — Année: ${modInfo?.validation_year || '2026/2027'}`}>
-                                <div className="flex flex-col items-center">
-                                  <span className={cn(
-                                    "font-black text-[12.5px] tracking-tight",
-                                    isElim ? "text-rose-950 dark:text-rose-200" :
-                                    isFailed ? "text-amber-950 dark:text-amber-300" : "text-slate-950 dark:text-slate-100"
-                                  )}>
-                                    {modInfo ? modInfo.final_grade : '-'}
-                                  </span>
-                                  {modInfo && (
-                                    <>
-                                      <span className={cn(
-                                        "px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase mt-0.5 shadow-2xs tracking-wider border border-slate-950",
-                                        decText === 'V' ? "bg-emerald-600 text-white" :
-                                        decText === 'VAR' ? "bg-sky-600 text-white" :
-                                        (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-600 text-white" :
-                                        "bg-rose-600 text-white"
-                                      )}>
-                                        {decText}
-                                      </span>
-                                      {modInfo.is_historical || (modInfo.validation_year && modInfo.validation_year !== '2026/2027') ? (
-                                        <span className="px-1 py-0.2 rounded text-[7px] font-black bg-purple-200 text-purple-950 border border-purple-300 mt-0.5">
-                                          🏛️ {modInfo.validation_year}
-                                        </span>
-                                      ) : (
-                                        <span className="text-[7.5px] font-mono text-slate-500 dark:text-slate-400 font-bold mt-0.5">
-                                          {modInfo.validation_year || '2026/27'}
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </td>
-                            )
-                          })}
-                          <td className="p-2 text-center border-r-2 border-b-2 border-slate-950 bg-blue-100/90 dark:bg-blue-950/60 font-black text-slate-950 dark:text-blue-200 text-xs font-mono">
-                            {row.even_semester_avg}
-                          </td>
-                          <td className="p-1.5 text-center border-r-4 border-b-2 border-slate-950 bg-blue-200/80 dark:bg-blue-900/60 font-black">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-2xs border border-slate-950 tracking-wider",
-                              row.even_semester_decision === 'V' ? "bg-emerald-600 text-white" :
-                              row.even_semester_decision === 'V.Comp' ? "bg-indigo-600 text-white" :
-                              row.even_semester_decision === 'PASS_DETTES' ? "bg-amber-500 text-slate-950" :
-                              "bg-rose-600 text-white"
-                            )}>
-                              {row.even_semester_decision}
-                            </span>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-950">
-                            <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.odd_semester_avg} /20</span>
-                          </td>
-                          <td className="p-3.5 font-bold border-r-2 border-b-2 border-slate-950">
-                            <span className="text-indigo-600 dark:text-indigo-400 font-black">{row.even_semester_avg} /20</span>
-                          </td>
-                        </>
-                      )}
-
-                      <td className="p-3.5 text-center font-black text-slate-950 dark:text-amber-300 text-sm border-r-4 border-b-2 border-slate-950 bg-amber-100/80 dark:bg-amber-950/50 font-mono shadow-inner">
-                        {row.annual_average} <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">/20</span>
-                      </td>
-                      <td className="p-3.5 text-right border-b-2 border-slate-950 whitespace-normal max-w-[240px]">
-                        <div className="flex flex-col items-end">
-                          <span className={cn(
-                            "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border-2 border-slate-950 shadow-sm inline-flex items-center gap-1.5",
-                            row.decision === 'FRAUDE' || row.has_fraud ? "bg-gradient-to-r from-rose-950 to-red-900 text-white font-black shadow-md" :
-                            row.decision === 'V' ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xs" :
-                            row.decision === 'V.Comp' ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-xs" :
-                            row.decision === 'PASS_DETTES' ? "bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-xs" :
-                            "bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-xs"
-                          )}>
-                            {row.decision === 'FRAUDE' || row.has_fraud ? '🚫 FRAUDE (Disciplinaire)' :
-                             row.decision === 'V' ? `✓ Validé (${oddSemLabel}+${evenSemLabel})` :
-                             row.decision === 'V.Comp' ? `⚖️ Validé p. Comp (${oddSemLabel}+${evenSemLabel})` :
-                             row.decision === 'PASS_DETTES' ? '🎒 Passage Dettes (Réserviste)' :
-                             '❌ Redoublement / Ajourné'}
-                          </span>
-                          {row.decision_reason && row.decision !== 'V' && (
-                            <span className={cn(
-                              "text-[9.5px] font-black px-2.5 py-1 rounded-lg mt-1 border border-slate-950 leading-tight text-right shadow-2xs tracking-tight",
-                              row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-100 text-rose-950 dark:bg-rose-950/80 dark:text-rose-200" :
-                              row.decision === 'PASS_DETTES' ? "bg-amber-100 text-amber-950 dark:bg-amber-950/80 dark:text-amber-200" :
-                              "bg-rose-100 text-rose-950 dark:bg-rose-950/80 dark:text-rose-200"
-                            )}>
-                              {row.decision_reason}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                            {row.decision_reason && row.decision !== 'V' && (
+                              <span className={cn(
+                                "text-[9.5px] font-black px-2.5 py-1 rounded-lg border-2 border-slate-950 leading-tight text-right shadow-2xs tracking-tight",
+                                row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-100 text-rose-950" :
+                                row.decision === 'PASS_DETTES' ? "bg-amber-100 text-amber-950" :
+                                "bg-rose-100 text-rose-950"
+                              )}>
+                                {row.decision_reason}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -2903,13 +3015,76 @@ export default function AdminGradesPVPage() {
                         <span className="font-mono text-[9px] opacity-75">{member.digital_seal ? member.digital_seal.substring(0, 6) : 'OK'}</span>
                       </div>
                     ) : (
-                      <button onClick={() => setShowSignatureModal(true)} className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs">
+                      <button
+                        onClick={() => {
+                          setActiveJurySigningId(member.id)
+                          setShowSignatureModal(true)
+                        }}
+                        className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs"
+                      >
                         {member.role === 'chef_filiere' ? '✍️ Signer (Chef de Filière / Président)' : '✍️ Valider Manuellement'}
                       </button>
                     )}
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Signature Tactile Modal for Annual PV View */}
+        {showSignatureModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs print:hidden">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
+                    <ShieldCheck className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black">Signature Tactile du PV Officiel</h3>
+                    <p className="text-xs text-blue-200">Validation et horodatage certifié du Jury de Délibération</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowSignatureModal(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-slate-500 font-bold">
+                  Veuillez apposer votre signature manuscrite ci-dessous à l'aide de votre souris ou écran tactile.
+                </p>
+
+                <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
+                  <SignatureCanvasPad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
+                </div>
+
+                {signatureDataUrl && (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Signature Numérique Capturée et Horodatée en Temps Réel !</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                <button
+                  onClick={() => setShowSignatureModal(false)}
+                  className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSignature}
+                  disabled={isSigning}
+                  className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSigning ? <Spinner className="text-white" /> : null}
+                  {isSigning ? 'Scellé en cours...' : 'Valider & Sceller PV'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3114,7 +3289,7 @@ export default function AdminGradesPVPage() {
       </div>
 
       {/* Jury Committee Status Hub (Pour Délibération Semestrielle et Annuelle Globale) */}
-      {juryStatus && (pvType as string) === 'semestriel' && (
+      {juryStatus && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
@@ -3143,9 +3318,14 @@ export default function AdminGradesPVPage() {
 
               <Button
                 onClick={() => {
-                  window.open(`/api/deliberations/export-pv-pdf?type=${pvType}&filiere_id=${selectedFiliere || 1}&semester_number=${selectedSemester || 1}`, '_blank')
+                  const filiereId = selectedFiliere || 1
+                  const yearLevel = selectedYearLevel || 1
+                  toast.loading('⏳ Génération du PDF Officiel...', { id: 'pdf-export' })
+                  downloadPdf(
+                    `/deliberations/export-pv-pdf?type=${pvType}&filiere_id=${filiereId}&year_level=${yearLevel}&semester_number=${selectedSemester || 1}`,
+                    `PV_${pvType}_Filiere${filiereId}.pdf`
+                  ).then(() => toast.dismiss('pdf-export'))
                 }}
-
                 className="bg-[#0f2863] text-white rounded-xl text-xs font-bold px-4 py-2.5 shadow-md flex items-center gap-2 hover:bg-[#1a3a89]"
               >
                 <Download className="w-4 h-4" /> Exporter PDF avec Tampons
@@ -4445,6 +4625,99 @@ export default function AdminGradesPVPage() {
         )
       })()}
 
+
+      {/* 📋 PV de Rachat Confirmation & Export Modal */}
+      {selectedRachatStudent && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-slate-950 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 border-2 border-amber-400 flex items-center justify-center font-black text-2xl shadow-md">
+                  ⚖️
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-950 dark:text-white">Validation du PV de Rachat (Jury)</h3>
+                  <p className="text-xs text-slate-500 font-bold">Filière : {filieres.find((f: any) => String(f.id) === String(selectedFiliere))?.name || 'Filière ENCG'} • Année Académique 2026/2027</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedRachatStudent(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-800 rounded-2xl space-y-2">
+              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+                <span>Étudiant :</span>
+                <span className="text-amber-900 dark:text-amber-300 font-extrabold">{selectedRachatStudent.student_name} ({selectedRachatStudent.cne})</span>
+              </div>
+              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+                <span>CIN :</span>
+                <span className="font-mono text-indigo-900 dark:text-indigo-300 font-bold">{selectedRachatStudent.cin || '-'}</span>
+              </div>
+              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+                <span>Module Concerné :</span>
+                <span className="font-mono">{selectedRachatStudent.module_code}</span>
+              </div>
+              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+                <span>Points de Rachat Accordés :</span>
+                <span className="text-amber-700 dark:text-amber-400 font-extrabold text-sm">+{selectedRachatStudent.needed_points} pt</span>
+              </div>
+              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+                <span>Nouvelle Note Module :</span>
+                <span className="text-emerald-600 font-mono font-extrabold text-sm">{selectedRachatStudent.target_grade} / 20</span>
+              </div>
+              <div className="pt-2 border-t border-amber-200 dark:border-amber-800 flex justify-between text-xs font-black">
+                <span>Impact sur l'Année :</span>
+                <span className="text-indigo-700 dark:text-indigo-300">{selectedRachatStudent.impact}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                Motif & Justification Officielle du Jury :
+              </label>
+              <textarea
+                value={selectedRachatReason}
+                onChange={(e) => setSelectedRachatReason(e.target.value)}
+                rows={3}
+                className="w-full p-3 text-xs font-bold rounded-xl border-2 border-slate-950 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-2 border border-slate-300">
+              <span>📋 La validation génère automatiquement le Procès-Verbal de Rachat (PDF) à faire signer par le Professeur du Module, le Chef de Filière et le Chef de Département.</span>
+            </div>
+
+            <div className="pt-3 border-t-2 border-slate-950 dark:border-slate-800 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedRachatStudent(null)}
+                className="rounded-xl font-bold text-xs border-2 border-slate-950 cursor-pointer"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={() => {
+                  applyRachatMutation.mutate({
+                    student_id: selectedRachatStudent.student_id,
+                    filiere_id: Number(selectedFiliere || 1),
+                    semester: Number(selectedSemester || 1),
+                    module_id: selectedRachatStudent.module_id,
+                    new_grade: Number(selectedRachatStudent.target_grade),
+                    points_added: Number(selectedRachatStudent.needed_points),
+                    reason: selectedRachatReason || selectedRachatStudent.text,
+                  })
+                }}
+                disabled={applyRachatMutation.isPending}
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-5 py-2.5 shadow-lg border-2 border-slate-950 cursor-pointer flex items-center gap-2"
+              >
+                {applyRachatMutation.isPending ? <Spinner /> : <Sparkles className="w-4 h-4" />}
+                ⚡ Confirmer & Générer le PV de Rachat (PDF)
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🛡️ Audit Trail Modal */}
       {showAuditModal && (

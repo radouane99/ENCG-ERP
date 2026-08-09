@@ -40,6 +40,6 @@ class Room extends Model
 
     public function getRouteKeyName()
     {
-        return 'uuid';
+        return 'id';
     }
 }

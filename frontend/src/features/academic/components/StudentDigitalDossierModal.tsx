@@ -106,14 +106,12 @@ interface StudentDocumentItem {
 }
 
 const REQUIRED_DOCUMENTS = [
-  { key: 'photo', label: 'Photo d\'identité numérisée (Format Carte)', icon: '🖼️', format: 'Image (PNG/JPG)' },
-  { key: 'bac_recto', label: 'Original du Baccalauréat (Recto)', icon: '📜', format: 'PDF / Image' },
-  { key: 'bac_verso', label: 'Original du Baccalauréat (Verso)', icon: '📜', format: 'PDF / Image' },
-  { key: 'cin_recto_verso', label: 'Carte d\'Identité Nationale (CNIE)', icon: '🪪', format: 'PDF / Image' },
-  { key: 'releve_notes', label: 'Relevé de Notes du Baccalauréat / TAFEM', icon: '📊', format: 'PDF / Image' },
-  { key: 'extrait_naissance', label: 'Extrait de Naissance Récent', icon: '📜', format: 'PDF / Image' },
-  { key: 'engagement_reglement', label: 'Engagement du Règlement Interne (Signé)', icon: '📝', format: 'PDF' },
-  { key: 'fiche_medicale', label: 'Fiche des Renseignements Médicaux', icon: '🩺', format: 'PDF' },
+  { key: 'photo',           dbKey: 'photo',         label: 'Photo d\'identité numérisée (Format Carte)',                     icon: '🖼️', format: 'Image (PNG/JPG)', source: 'student' },
+  { key: 'bac_recto',      dbKey: 'bac',            label: 'Original du Baccalauréat (Scanné PDF)',                           icon: '📜', format: 'PDF / Image',    source: 'student' },
+  { key: 'cin_recto_verso', dbKey: 'cnie',          label: 'Carte d\'Identité Nationale (CNIE)',                              icon: '🪪', format: 'PDF / Image',    source: 'student' },
+  { key: 'releve_notes',   dbKey: 'releve_notes',   label: 'Relevé de Notes du Baccalauréat / TAFEM',                        icon: '📊', format: 'PDF / Image',    source: 'student' },
+  { key: 'engagement_reglement', dbKey: 'engagement_reglement', label: 'Engagement du Règlement Interne (Généré par le Système ENCG)', icon: '📝', format: 'PDF Généré',    source: 'system' },
+  { key: 'fiche_medicale', dbKey: 'fiche_medicale', label: 'Fiche des Renseignements Médicaux (Générée par le Système ENCG)',icon: '🩺', format: 'PDF Généré',    source: 'system' },
 ];
 
 interface Props {
@@ -173,24 +171,33 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   const fetchStudentDocuments = async (studentId: string | number) => {
     setLoadingDocs(true);
     try {
-      let docsList: StudentDocumentItem[] = [];
+      const map: Record<string, StudentDocumentItem> = {};
+
+      // Source 1: Admin uploaded docs (by student_id)
       const res = await api.get(`/students/${studentId}/documents`).catch(() => null);
       if (res?.data?.data && res.data.data.length > 0) {
-        docsList = res.data.data;
-      } else if (student?.cne || student?.cin) {
+        (res.data.data as StudentDocumentItem[]).forEach(d => {
+          if (d && d.type) map[d.type] = d;
+        });
+      }
+
+      // Source 2: Candidate portal uploaded docs (by CNE via track-dossier)
+      if (student?.cne || student?.cin) {
         const trackRes = await api.get('/public/track-dossier', {
           params: { cne: student?.cne, cin: student?.cin }
         }).catch(() => null);
 
         const candDocs = trackRes?.data?.candidate?.documents;
         if (candDocs) {
-          docsList = Object.values(candDocs);
+          Object.keys(candDocs).forEach(type => {
+            const d = candDocs[type];
+            if (d && d.file_path && !map[type]) {
+              map[type] = { type, ...d };
+            }
+          });
         }
       }
-      const map: Record<string, StudentDocumentItem> = {};
-      docsList.forEach(d => {
-        if (d && d.type) map[d.type] = d;
-      });
+
       setDocuments(map);
     } catch (err) {
       console.error(err);
@@ -532,25 +539,32 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   </div>
                   <div>
                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Date de Naissance</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_date || 'Non renseignée'}</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">
+                      {(() => {
+                        if (!student.birth_date) return 'Non renseignée';
+                        let clean = student.birth_date.includes('T') ? student.birth_date.split('T')[0] : student.birth_date;
+                        const parts = clean.split('-');
+                        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : clean;
+                      })()}
+                    </span>
                   </div>
 
                   <div>
                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (FR)</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_city || 'Fès'}</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_city || 'Non renseigné'}</span>
                   </div>
                   <div>
                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lieu de Naissance (AR)</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white font-serif">{student.birth_city_ar || 'فاس'}</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white font-serif">{student.birth_city_ar || 'غير محدد'}</span>
                   </div>
 
                   <div>
                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Nationalité</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{student.nationality || 'Marocaine (مغربية)'}</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{student.nationality || 'Marocaine'}</span>
                   </div>
                   <div>
                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Pays de Naissance</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_country || 'Maroc (المغرب)'}</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">{student.birth_country || 'Maroc'}</span>
                   </div>
                 </div>
               </div>
@@ -1082,9 +1096,11 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               {/* Scanned Documents Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {REQUIRED_DOCUMENTS.map(docReq => {
-                  const docItem = documents[docReq.key];
+                  // Use dbKey to find the document stored by the student portal
+                  const docItem = documents[(docReq as any).dbKey] || documents[docReq.key];
                   const hasFile = Boolean(docItem && docItem.file_path);
-                  const isUploadingThis = uploadingType === docReq.key;
+                  const isUploadingThis = uploadingType === (docReq as any).dbKey;
+                  const serveKey = (docReq as any).dbKey || docReq.key;
 
                   return (
                     <div key={docReq.key} className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4 hover:border-indigo-300 transition-colors">
@@ -1115,21 +1131,28 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                       {/* Action buttons */}
                       <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDoc({ 
-                            title: docReq.label, 
-                            url: docItem?.file_path || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || 'N142088916')}` 
-                          })}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-105"
-                        >
-                          <Eye className="w-4 h-4 text-white" />
-                          <span>Voir / Consulter le Scan</span>
-                        </button>
+                        {hasFile ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc({ 
+                              title: docReq.label, 
+                              url: `/api/public/serve-document/${serveKey}/${encodeURIComponent(student.cne || student.cin || '')}` 
+                            })}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-105"
+                          >
+                            <Eye className="w-4 h-4 text-white" />
+                            <span>Voir / Consulter le Scan</span>
+                          </button>
+                        ) : (
+                          <span className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-dashed border-slate-300 dark:border-slate-600">
+                            <AlertCircle className="w-4 h-4" />
+                            Aucun scan déposé
+                          </span>
+                        )}
 
-                        {hasFile && docItem?.file_path && (
+                        {hasFile && (
                           <a
-                            href={docItem.file_path}
+                            href={`/api/public/serve-document/${serveKey}/${encodeURIComponent(student.cne || student.cin || '')}`}
                             target="_blank"
                             rel="noreferrer"
                             download
@@ -1151,7 +1174,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                             className="hidden"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) handleFileUpload(docReq.key, file);
+                              if (file) handleFileUpload(serveKey, file);
                             }}
                           />
                         </label>
@@ -1161,6 +1184,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   );
                 })}
               </div>
+
             </div>
           )}
 
@@ -1291,10 +1315,10 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
       </div>
 
-      {/* Lightbox / Document Preview Modal */}
+      {/* Lightbox / Document Preview Modal (FULLY RESPONSIVE HIGH RES) */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] max-w-6xl w-[92vw] h-[88vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] max-w-6xl w-[94vw] sm:w-[90vw] lg:w-[85vw] h-[90vh] sm:h-[88vh] overflow-hidden flex flex-col justify-between shadow-2xl border border-slate-200 dark:border-slate-800 my-auto mx-auto">
             <div className="p-5 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between shrink-0">
               <h4 className="text-base font-black flex items-center gap-2">
                 <FileText className="w-5 h-5 text-amber-400" /> Aperçu du Scan Officiel : {previewDoc.title}

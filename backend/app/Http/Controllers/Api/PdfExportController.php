@@ -28,6 +28,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PdfExportController extends Controller
@@ -40,7 +41,7 @@ class PdfExportController extends Controller
     /**
      * Retourne une instance PDF préconfigurée avec logo et QR code.
      */
-    private function getPdfInstance(string $view, array $data = []): Pdf
+    private function getPdfInstance(string $view, array $data = []): \Barryvdh\DomPDF\PDF
     {
         $logoPath = public_path('logo-encg.png');
         $data['logoBase64'] = file_exists($logoPath)
@@ -112,14 +113,24 @@ class PdfExportController extends Controller
             ];
         }
 
+        $qrUrl = url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne));
+        $qrBase64 = '';
+        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            try {
+                $qrRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->generate($qrUrl);
+                $qrBase64 = 'data:image/png;base64,' . base64_encode($qrRaw);
+            } catch (\Throwable $e) {}
+        }
+
         $data = [
-            'name'       => trim(($candidate->first_name ?? '') . ' ' . ($candidate->last_name ?? '')),
-            'cne'        => $candidate->cne ?? $cne,
-            'cin'        => $candidate->cin ?? $cin,
-            'filiere'    => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-            'score'      => number_format($candidate->selection_score ?? 150.00, 2) . ' pts',
+            'name'        => trim(($candidate->first_name ?? '') . ' ' . ($candidate->last_name ?? '')),
+            'cne'         => $candidate->cne ?? $cne,
+            'cin'         => $candidate->cin ?? $cin,
+            'filiere'     => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
+            'score'       => number_format($candidate->selection_score ?? 150.00, 2) . ' pts',
             'statusLabel' => 'Admis sur Liste Principale',
-            'verifyUrl'  => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne)),
+            'verifyUrl'   => $qrUrl,
+            'qrBase64'    => $qrBase64,
         ];
 
         $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
@@ -612,8 +623,8 @@ class PdfExportController extends Controller
         $pvResponse = $gradeController->getSemesterPv($request);
         $pvData = json_decode($pvResponse->getContent(), true);
 
-        $modules = Module::where('filiere_id', $filiereId)->where('semester_number', $semesterNum)->get();
-        if ($modules->isEmpty()) $modules = Module::take(7)->get();
+        $modules = Module::with('assessments')->where('filiere_id', $filiereId)->where('semester_number', $semesterNum)->get();
+        if ($modules->isEmpty()) $modules = Module::with('assessments')->take(7)->get();
 
         $matrix = [];
         foreach ($pvData['students'] ?? [] as $s) {
@@ -876,5 +887,113 @@ class PdfExportController extends Controller
         </svg>';
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    /**
+     * Export Attestation d'Inscription PDF.
+     */
+    public function exportAttestationInscriptionPdf(Request $request)
+    {
+        $cne = trim($request->query('cne', ''));
+        $name = trim($request->query('name', ''));
+
+        $student = null;
+        if (!empty($cne)) {
+            $student = Student::where('cne', $cne)->orWhere('student_number', $cne)->first();
+        }
+        if (!$student && !empty($name)) {
+            $student = Student::whereHas('user', fn($q) => $q->where('name', 'like', "%{$name}%"))->first();
+        }
+        if (!$student) {
+            $student = Student::first();
+        }
+
+        $docType = \App\Models\DocumentType::where('code', 'ATT_SCOL')->first()
+            ?? \App\Models\DocumentType::firstOrCreate(
+                ['code' => 'ATT_SCOL'],
+                ['name' => 'Attestation de Scolarité', 'view_name' => 'documents.attestation_scolarite', 'is_active' => true]
+            );
+
+        $docRequest = \App\Models\DocumentRequest::create([
+            'student_id'       => $student?->id ?? 1,
+            'document_type_id' => $docType->id,
+            'status'           => 'ready',
+            'requested_at'     => now(),
+            'processed_at'     => now(),
+        ]);
+
+        $docService = app(\App\Services\DocumentRequestService::class);
+        $genDoc = $docService->generateDocumentPdf($docRequest);
+
+        $fullPath = null;
+        if (Storage::disk('private')->exists($genDoc->file_path)) {
+            $fullPath = Storage::disk('private')->path($genDoc->file_path);
+        } elseif (Storage::disk('local')->exists($genDoc->file_path)) {
+            $fullPath = Storage::disk('local')->path($genDoc->file_path);
+        } elseif (file_exists(storage_path('app/' . $genDoc->file_path))) {
+            $fullPath = storage_path('app/' . $genDoc->file_path);
+        }
+
+        if ($fullPath && file_exists($fullPath)) {
+            return response()->file($fullPath, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="Attestation_Inscription.pdf"',
+            ]);
+        }
+
+        return response('Erreur lors de la génération du PDF', 500);
+    }
+
+    /**
+     * Exportation de l'Autorisation Officielle d'Occupation d'Amphi / Salle (A4 PDF).
+     */
+    public function exportAutorisationSallePdf(Request $request, string $id)
+    {
+        $booking = null;
+        if (is_numeric($id) && class_exists(\App\Models\ClassroomReservation::class)) {
+            $booking = \App\Models\ClassroomReservation::with(['room', 'user', 'club'])->find((int)$id);
+        }
+
+        $clubName = $booking?->club?->name 
+            ?? $request->query('club_name') 
+            ?? ($booking?->user?->name ? 'Club ' . $booking->user->name : 'Club Enactus ENCG Fès');
+
+        $roomName = $booking?->room?->name 
+            ?? $booking?->room_name 
+            ?? $request->query('room_name', 'Amphithéâtre Al Khwarizmi');
+
+        $purpose = $booking?->purpose 
+            ?? $request->query('purpose', 'Conférence Annuelle de l\'Entrepreneuriat Social & Innovation');
+
+        $responsibleName = $booking?->user?->name 
+            ?? $request->query('responsible', 'Karima Belkhayat (Présidente du Club)');
+
+        $dateDisplay = $booking?->start_time 
+            ? \Carbon\Carbon::parse($booking->start_time)->translatedFormat('l d F Y') 
+            : $request->query('date', 'Lundi 15 Juin 2026');
+
+        $timeDisplay = ($booking?->start_time && $booking?->end_time)
+            ? \Carbon\Carbon::parse($booking->start_time)->format('H:i') . ' - ' . \Carbon\Carbon::parse($booking->end_time)->format('H:i')
+            : $request->query('time', '09h00 - 17h00');
+
+        $trackingCode = 'AUT-SALLE-' . date('Y') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+        $verifyUrl = url("/verify/document/{$trackingCode}");
+
+        $data = [
+            'title'           => 'AUTORISATION D\'OCCUPATION DES LOCAUX ET AMPHITHÉÂTRES',
+            'trackingCode'    => $trackingCode,
+            'verifyUrl'       => $verifyUrl,
+            'clubName'        => $clubName,
+            'roomName'        => $roomName,
+            'purpose'         => $purpose,
+            'responsibleName' => $responsibleName,
+            'dateDisplay'     => $dateDisplay,
+            'timeDisplay'     => $timeDisplay,
+            'capacity'        => $booking?->room?->capacity ?? 250,
+            'dateIssued'      => now()->format('d/m/Y'),
+        ];
+
+        return $this->getPdfInstance('pdf.autorisation_salle', $data)
+            ->download(sprintf('Autorisation_Salle_%s_%s.pdf', \Illuminate\Str::slug($roomName), $id));
     }
 }

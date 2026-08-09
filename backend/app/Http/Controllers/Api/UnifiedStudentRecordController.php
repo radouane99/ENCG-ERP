@@ -45,10 +45,7 @@ class UnifiedStudentRecordController extends Controller
             'user',
             'latestPathway.filiere',
             'latestPathway.group',
-            'grades' => function ($q) use ($year) {
-                if ($year) {
-                    $q->whereHas('assessment.module', fn($query) => $query->where('academic_year_id', $year));
-                }
+            'grades' => function ($q) {
                 $q->with('assessment.module');
             },
             'attendances' => function ($q) {

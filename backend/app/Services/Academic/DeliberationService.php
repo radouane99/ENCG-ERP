@@ -191,7 +191,7 @@ class DeliberationService
      */
     public function getSemesterPVWithReservistes(int $filiereId, int $academicYearId, int $semesterNumber): array
     {
-        $modules   = Module::where('filiere_id', $filiereId)->where('semester_number', $semesterNumber)->get();
+        $modules   = Module::with('assessments')->where('filiere_id', $filiereId)->where('semester_number', $semesterNumber)->get();
         $moduleIds = $modules->pluck('id')->toArray();
 
         $regularStudentIds = StudentRegistration::where('filiere_id', $filiereId)
@@ -259,6 +259,7 @@ class DeliberationService
                 'student_id'       => $student->id,
                 'student'          => mb_strtoupper($student->last_name) . ' ' . $student->first_name,
                 'cne'              => $student->cne ?? $student->student_number,
+                'cin'              => $student->cin ?? $student->user?->cin ?? '',
                 'is_reserviste'    => $isReserviste,
                 'semester_average' => $semesterAvg,
                 'decision'         => $decision,
@@ -274,7 +275,8 @@ class DeliberationService
      */
     public function autoComposeJury(int $filiereId, int $academicYearId, ?int $semesterNumber = null, string $type = 'semestriel'): array
     {
-        $modules = Module::where('filiere_id', $filiereId)
+        $modules = Module::with('assessments')
+            ->where('filiere_id', $filiereId)
             ->when($type === 'semestriel' && $semesterNumber, fn($q) => $q->where('semester_number', $semesterNumber))
             ->get();
 
@@ -340,7 +342,7 @@ class DeliberationService
 
         // Chef de filière
         $filiere    = Filiere::with('responsable')->find($filiereId);
-        $chefUserId = $filiere?->responsable?->id ?? User::role(['admin', 'professor', 'super-admin'])->first()?->id;
+        $chefUserId = $filiere?->responsable?->id ?? User::first()?->id;
         $chefName   = $filiere?->responsable?->name ?? 'Chef de Filière';
 
         $chefJury = DeliberationJury::firstOrCreate(
@@ -359,16 +361,17 @@ class DeliberationService
         );
 
         $juryMembers[] = [
-            'id'           => $chefJury->id,
-            'module_id'    => null,
-            'module_name'  => 'Coordination Globale & Présidence du Jury',
-            'module_code'  => 'CHEF',
-            'user_id'      => $chefUserId,
-            'user_name'    => $chefName,
-            'role'         => 'chef_filiere',
-            'status'       => $chefJury->status,
-            'signed_at'    => $chefJury->signed_at,
-            'digital_seal' => $chefJury->digital_seal,
+            'id'              => $chefJury->id,
+            'module_id'       => null,
+            'module_name'     => 'Coordination Globale & Présidence du Jury',
+            'module_code'     => 'CHEF',
+            'user_id'         => $chefUserId,
+            'user_name'       => $chefName,
+            'role'            => 'chef_filiere',
+            'status'          => $chefJury->status,
+            'signed_at'       => $chefJury->signed_at,
+            'digital_seal'    => $chefJury->digital_seal,
+            'signature_image' => $chefJury->signature_data,
         ];
 
         return $juryMembers;
@@ -417,18 +420,19 @@ class DeliberationService
         $evenSemNumber = $yearLevel * 2;       // e.g. 2, 4, 6, 8, 10
 
         $students = Student::with('user')
-            ->whereHas('registrations', function ($q) use ($filiereId, $academicYearId) {
+            ->whereHas('registrations', function ($q) use ($filiereId, $academicYearId, $oddSemNumber, $evenSemNumber) {
                 if ($filiereId) {
                     $q->where('filiere_id', $filiereId);
                 }
                 if ($academicYearId) {
                     $q->where('academic_year_id', $academicYearId);
                 }
+                $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]);
             })->get();
 
         if ($students->isEmpty() && $filiereId) {
             $students = Student::with('user')
-                ->whereHas('registrations', fn($q) => $q->where('filiere_id', $filiereId))
+                ->whereHas('registrations', fn($q) => $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]))
                 ->get();
         }
 
@@ -451,10 +455,22 @@ class DeliberationService
             ->get();
 
         if ($filiereModules->isEmpty()) {
-            $filiereModules = Module::whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
+            // Fallback to Tronc Commun (filiere_id = 1) for S1..S4 modules
+            $filiereModules = Module::where('filiere_id', 1)
+                ->whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
                 ->with('assessments')
                 ->orderBy('semester_number')
                 ->orderBy('id')
+                ->get();
+        }
+
+        if ($filiereModules->isEmpty()) {
+            $filiereModules = Module::whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
+                ->whereHas('assessments')
+                ->with('assessments')
+                ->orderBy('semester_number')
+                ->orderBy('id')
+                ->take(14)
                 ->get();
         }
 
@@ -617,9 +633,11 @@ class DeliberationService
                 unset($md);
             }
 
+            $failedTotal = $failedOddCount + $failedEvenCount;
+
             // 3. Annual Compensation S1+S2 (Moyenne Annuelle >= 10.00 & aucune note < 5.0 dans tout le bilan)
             $isAnnualCompensated = false;
-            if ($annualAvg >= 10.00 && !$hasEliminatory && !$hasFraud && $failedOddCount <= 2 && $failedEvenCount <= 2) {
+            if ($annualAvg >= 10.00 && !$hasEliminatory && !$hasFraud && $failedTotal <= 2) {
                 $isAnnualCompensated = true;
                 foreach ($allModuleDetails as &$md) {
                     if ($md['final_grade'] < 10.00) {
@@ -633,7 +651,7 @@ class DeliberationService
                 $hasFraud => 'FRAUDE',
                 $oddAvg >= 10.00 && !$hasEliminatoryOdd => ($oddModuleList->every(fn($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
                 $isAnnualCompensated => 'V.Comp',
-                $failedOddCount <= 2 => 'PASS_DETTES',
+                $failedOddCount <= 1 => 'PASS_DETTES',
                 default => 'NV',
             };
 
@@ -641,21 +659,22 @@ class DeliberationService
                 $hasFraud => 'FRAUDE',
                 $evenAvg >= 10.00 && !$hasEliminatoryEven => ($evenModuleList->every(fn($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
                 $isAnnualCompensated => 'V.Comp',
-                $failedEvenCount <= 2 => 'PASS_DETTES',
+                $failedEvenCount <= 1 => 'PASS_DETTES',
                 default => 'NV',
             };
 
+            // Nouvelle Règle ENCG : Passage avec dettes (Réserviste) autorisé uniquement si au maximum 1 SEUL module non validé sur TOUTE L'ANNÉE.
             $decision = match (true) {
                 $hasFraud => 'FRAUDE',
                 ($oddAvg >= 10.00 && $evenAvg >= 10.00 && !$hasEliminatoryOdd && !$hasEliminatoryEven) || $isAnnualCompensated => ($annualAvg >= 10.0 && !$isOddCompensated && !$isEvenCompensated && !$isAnnualCompensated ? 'V' : 'V.Comp'),
-                $failedOddCount <= 2 && $failedEvenCount <= 2 && $annualAvg >= 5.0 => 'PASS_DETTES',
+                $failedTotal <= 1 && $annualAvg >= 5.0 => 'PASS_DETTES',
                 default => 'AJ',
             };
 
             $reasonParts = [];
             if ($hasFraud) {
                 $modListStr = !empty($fraudModules) ? implode(', ', $fraudModules) : 'Examen';
-                $decisionReason = "🚫 Sanction Disciplinaire pour Fraude ({$modListStr}) — Non Compensable";
+                $decisionReason = "Sanction Disciplinaire pour Fraude ({$modListStr}) — Non Compensable";
             } elseif ($decision === 'V') {
                 $decisionReason = "Validation Directe du Bloc ({$oddSemNumber} & {$evenSemNumber})";
             } elseif ($decision === 'V.Comp') {
@@ -663,15 +682,15 @@ class DeliberationService
             } elseif ($decision === 'PASS_DETTES') {
                 $failedNames = collect($allModuleDetails)->filter(fn($m) => $m['final_grade'] < 10.00)->pluck('code')->toArray();
                 $modStr = !empty($failedNames) ? implode(', ', $failedNames) : '';
-                $decisionReason = "🎒 Passage avec Dettes (≤ 2 mod. NV/sem. : {$modStr})";
+                $decisionReason = "Passage avec Dettes (1 seul module NV dans l'année : {$modStr})";
             } else {
-                if ($failedOddCount > 2 || $failedEvenCount > 2) {
+                if ($failedTotal > 1) {
                     $details = [];
-                    if ($failedOddCount > 2) $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
-                    if ($failedEvenCount > 2) $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
-                    $decisionReason = "❌ Redoublement (Plus de 2 mod. NV/sem. : " . implode(', ', $details) . ")";
+                    if ($failedOddCount > 0) $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
+                    if ($failedEvenCount > 0) $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
+                    $decisionReason = "Redoublement (Plus de 1 module non validé dans l'année [{$failedTotal} mod. NV] : " . implode(', ', $details) . ")";
                 } else {
-                    $decisionReason = "❌ Redoublement (Moyenne Annuelle < 5.00 : {$annualAvg}/20)";
+                    $decisionReason = "Redoublement (Moyenne Annuelle < 5.00 : {$annualAvg}/20)";
                 }
             }
 
@@ -679,6 +698,7 @@ class DeliberationService
                 'student_id'            => $student->id,
                 'student_name'          => $student->user->name ?? $student->first_name . ' ' . $student->last_name,
                 'cne'                   => $student->cne ?? $student->student_number,
+                'cin'                   => $student->cin ?? $student->user?->cin ?? '',
                 'year_level'            => $yearLevel,
                 'odd_semester_label'    => "S{$oddSemNumber}",
                 'even_semester_label'   => "S{$evenSemNumber}",

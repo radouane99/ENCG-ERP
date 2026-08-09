@@ -18,6 +18,25 @@ class HolidayController extends Controller
     {
         $holidays = Holiday::orderBy('start_date')->get();
 
+        if ($holidays->isEmpty()) {
+            $defaultHolidays = [
+                ['name' => 'Aïd Al-Adha 2025',        'start_date' => '2025-06-06', 'end_date' => '2025-06-09', 'type' => 'religious', 'description' => 'Fête religieuse - Suspension des cours'],
+                ['name' => 'Fête du Trône',             'start_date' => '2025-07-30', 'end_date' => '2025-07-30', 'type' => 'national',  'description' => 'Fête Nationale officielle'],
+                ['name' => 'Aïd Al-Mawlid 2025',       'start_date' => '2025-09-04', 'end_date' => '2025-09-05', 'type' => 'religious', 'description' => 'Fête religieuse - Suspension des cours'],
+                ['name' => 'Vacances d\'Automne',       'start_date' => '2025-10-26', 'end_date' => '2025-11-02', 'type' => 'academic',  'description' => 'Vacances académiques mi-semestre S1'],
+                ['name' => 'Marche Verte',              'start_date' => '2025-11-06', 'end_date' => '2025-11-06', 'type' => 'national',  'description' => 'Fête Nationale officielle'],
+                ['name' => 'Fête de l\'Indépendance',  'start_date' => '2025-11-18', 'end_date' => '2025-11-18', 'type' => 'national',  'description' => 'Fête Nationale officielle'],
+                ['name' => 'Nouvel An 2026',             'start_date' => '2026-01-01', 'end_date' => '2026-01-01', 'type' => 'national',  'description' => 'Jour de l\'An'],
+                ['name' => 'Manifeste de l\'Indépendance', 'start_date' => '2026-01-11', 'end_date' => '2026-01-11', 'type' => 'national',  'description' => 'Fête Nationale officielle'],
+                ['name' => 'Vacances d\'Hiver',         'start_date' => '2026-01-25', 'end_date' => '2026-02-01', 'type' => 'academic',  'description' => 'Vacances inter-semestrielles (S1/S2)'],
+                ['name' => 'Fête du Travail',           'start_date' => '2026-05-01', 'end_date' => '2026-05-01', 'type' => 'national',  'description' => 'Fête du Travail'],
+            ];
+            foreach ($defaultHolidays as $h) {
+                Holiday::create($h);
+            }
+            $holidays = Holiday::orderBy('start_date')->get();
+        }
+
         return response()->json([
             'success' => true,
             'data'    => $holidays,

@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
 use App\Http\Controllers\Api\AdminAiController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminDashboardController;
-use App\Http\Controllers\Api\AdminDocumentRequestController;
+use App\Http\Controllers\Api\Admin\AdminDocumentRequestController;
 use App\Http\Controllers\Api\AdminExamController;
 use App\Http\Controllers\Api\AdminInternshipController;
 use App\Http\Controllers\Api\AdminPredictiveAnalyticsController;
@@ -100,6 +100,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);
     Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
+    Route::post('/admin/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
+    Route::get('/admin/pwa-notifications/stats', [NotificationController::class, 'getPwaStats']);
+    Route::get('/pwa-notifications/stats', [NotificationController::class, 'getPwaStats']);
     Route::post('/deliberations/simulate', [DeliberationController::class, 'simulate']);
     Route::post('/complaints/grade-appeal', [ComplaintController::class, 'submitGradeAppeal']);
     Route::get('/complaints/grade-appeals', [ComplaintController::class, 'listGradeAppeals']);
@@ -108,6 +111,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
     Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     Route::apiResource('holidays', HolidayController::class);
+    Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
+    Route::apiResource('admin/holidays', HolidayController::class);
+
+    // Room Bookings PDF Export & Management
+    Route::get('/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
+    Route::get('/admin/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
 
     // AI Predictive Analytics
     Route::get('/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
@@ -225,7 +234,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('admin/academic/deliberations', [DeliberationController::class, 'index']);
     Route::match(['get', 'post'], 'academic/deliberate', [DeliberationController::class, 'run']);
     Route::match(['get', 'post'], 'admin/deliberations/run', [DeliberationController::class, 'run']);
-    Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportSemesterPvPdf']);
+    Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [DeliberationController::class, 'exportPvQuery']);
 
 
     Route::post('deliberations/apply-rachat', [DeliberationController::class, 'applyRachat']);
@@ -524,7 +533,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Admin — Document Requests Management
     Route::prefix('admin/document-requests')->middleware('require-admin-2fa')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
-        Route::patch('/{documentRequest}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
+        Route::match(['put', 'patch'], '/{documentRequest}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
         Route::post('/{documentRequest}/generate', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
         Route::get('/{documentRequest}/download', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'download']);
     });
@@ -540,6 +549,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // [AUDIT ROUTE-01] Chatbot, alumni, REST, and dashboard routes moved to shared.php
     // [AUDIT ROUTE-02] Dead vacataire-manager group (all-commented) removed
     // [AUDIT ROUTE-03] Removed duplicate student-portal routes: grades/schedule/absences already handled under v1/student-portal in student.php
+
+    // Admin Academic Pilotage Dashboard
+    Route::get('/pilotage/dashboard', [\App\Http\Controllers\Api\PilotageController::class, 'getAcademicPilotageDashboard']);
+    Route::get('/admin/pilotage/dashboard', [\App\Http\Controllers\Api\PilotageController::class, 'getAcademicPilotageDashboard']);
 
     // [AUDIT ROUTE-01] Dashboard routes (stats, search, timeline, pilotage) live in shared.php
     // Admin-exclusive APOGEE Academic Engine routes kept here:
@@ -579,16 +592,44 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Admin Guichet & Analytics
     Route::get('/admin/analytics', [AdminAnalyticsController::class, 'index']);
     Route::get('/admin/document-requests', [AdminDocumentRequestController::class, 'index']);
-    Route::patch('/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
+    Route::post('/admin/document-requests/quick-generate', [AdminDocumentRequestController::class, 'quickGenerate']);
+    Route::match(['put', 'patch'], '/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
     Route::post('/admin/document-requests/{documentRequest}/generate', [AdminDocumentRequestController::class, 'generate']);
     Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
     Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
     Route::post('/admin/document-requests/{documentRequest}/send-email-notification', [AdminDocumentRequestController::class, 'sendEmailNotification']);
+
+    // Admin Absences & Justifications (With and Without /admin prefix)
+    Route::get('/absences-justifications', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
+    Route::patch('/absences-justifications/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/absences-justifications/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+    Route::get('/absences', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
+    Route::patch('/absences/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/absences/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+
+    Route::get('/admin/absences-justifications', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
+    Route::patch('/admin/absences-justifications/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/admin/absences-justifications/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+    Route::get('/admin/absences', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
+    Route::patch('/admin/absences/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/admin/absences/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
 });
 
 // ---------------------------------------------------------
 // PUBLIC PDF STREAMING ENDPOINTS (Accessible natively via window.open)
 // ---------------------------------------------------------
+Route::get('/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
+Route::get('/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
+Route::get('/v1/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
+Route::get('/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+Route::get('/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+Route::get('/v1/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+Route::get('/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
+Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
+Route::get('/v1/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/v1/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
 Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
 Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
 Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
@@ -903,6 +944,7 @@ Route::delete('/public/delete-candidate-document', [\App\Http\Controllers\Api\Ad
 Route::post('/public/ocr-extract-documents', [\App\Http\Controllers\Api\AdmissionController::class, 'extractDocumentDataOcr']);
 
 Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
+Route::get('/public/serve-document/{type}/{cne}', [\App\Http\Controllers\Api\AdmissionController::class, 'serveCandidateDocumentPublic']);
 
 Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
 Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);

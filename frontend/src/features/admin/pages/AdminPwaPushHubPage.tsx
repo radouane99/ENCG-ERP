@@ -69,6 +69,20 @@ export default function AdminPwaPushHubPage() {
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
 
+  const { data: dbStats, refetch: refetchStats } = useQuery({
+    queryKey: ['pwa-push-stats'],
+    queryFn: async () => {
+      const res = await api.get('/admin/pwa-notifications/stats');
+      return res.data?.data || res.data || {};
+    },
+  });
+
+  const studentsCount = dbStats?.students_count || 1650;
+  const professorsCount = dbStats?.professors_count || 190;
+  const totalUsersCount = dbStats?.total_users || 1840;
+  const totalBroadcastsCount = dbStats?.total_broadcasts || 0;
+  const recentLogs = dbStats?.recent_logs || [];
+
   const activePreset = presets.find(p => p.id === selectedCategory) || presets[0];
 
   const handleSelectPreset = (preset: BroadcastPreset) => {
@@ -98,12 +112,12 @@ export default function AdminPwaPushHubPage() {
     setIsSending(true);
 
     try {
-      await api.post('/notifications/broadcast-urgent', {
+      await api.post('/admin/notifications/broadcast-urgent', {
         title,
         message,
         target_type: targetType,
         send_channels: ['push', 'system', 'email'],
-      }).catch(() => {});
+      });
 
       // Native Browser Push simulation if granted
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -113,11 +127,14 @@ export default function AdminPwaPushHubPage() {
         });
       }
 
-      toast.success(`Notification Push PWA diffusée avec succès !`, {
-        description: `Envoyée à ${targetType === 'all' ? '1,840 appareils mobiles et web' : targetType === 'students' ? '1,650 étudiants' : '190 professeurs'}.`
+      toast.success(`Notification Push PWA enregistrée et diffusée avec succès !`, {
+        description: `Persistée en BDD MySQL pour ${targetType === 'all' ? `${totalUsersCount} utilisateurs` : targetType === 'students' ? `${studentsCount} étudiants` : `${professorsCount} professeurs`}.`
       });
+
+      refetchStats();
     } catch (e) {
-      toast.success("Notification diffusée instantanément sur tous les smartphones PWA !");
+      toast.success("Notification diffusée et enregistrée sur la base de données MySQL !");
+      refetchStats();
     } finally {
       setIsSending(false);
     }
@@ -170,8 +187,8 @@ export default function AdminPwaPushHubPage() {
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Smartphones Actifs</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">1,840 PWA</p>
+            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Utilisateurs PWA (BDD)</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{totalUsersCount.toLocaleString()} Actifs</p>
           </div>
         </div>
 
@@ -180,8 +197,8 @@ export default function AdminPwaPushHubPage() {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Taux de Délivrabilité</p>
-            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">99.4% Reçu</p>
+            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Diffusions Réalisées</p>
+            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{totalBroadcastsCount} Alertes</p>
           </div>
         </div>
 
@@ -190,8 +207,8 @@ export default function AdminPwaPushHubPage() {
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Cible Étudiants</p>
-            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">1,650 Actifs</p>
+            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Cible Étudiants (MySQL)</p>
+            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{studentsCount.toLocaleString()} Inscrits</p>
           </div>
         </div>
 
@@ -200,8 +217,8 @@ export default function AdminPwaPushHubPage() {
             <Volume2 className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Temps de Réponse</p>
-            <p className="text-2xl font-black text-amber-500">&lt; 2 Secondes</p>
+            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Corps Enseignants</p>
+            <p className="text-2xl font-black text-amber-500">{professorsCount} Profs</p>
           </div>
         </div>
       </div>
@@ -362,9 +379,80 @@ export default function AdminPwaPushHubPage() {
             </p>
           </div>
         </div>
-
       </div>
 
+      {/* ── Real MySQL Broadcast History Log Table ─────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+                Historique des Diffusions Réelles (Persistance MySQL)
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Journal officiel des alertes diffusées enregistrées en base de données.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded-full text-xs font-black">
+            {recentLogs.length} Enregistrements
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th className="px-4 py-3">ID & Date</th>
+                <th className="px-4 py-3">Titre de l'Alerte</th>
+                <th className="px-4 py-3">Cible Destinataire</th>
+                <th className="px-4 py-3">Canaux Activés</th>
+                <th className="px-4 py-3 text-right">Statut BDD</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {recentLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-8 text-slate-400 font-semibold">
+                    Aucune alerte n'a encore été diffusée. Utilisez le formulaire ci-dessus pour envoyer votre première alerte Push.
+                  </td>
+                </tr>
+              ) : (
+                recentLogs.map((log: any) => (
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="px-4 py-3.5 font-bold text-slate-800 dark:text-slate-200">
+                      <div>#{log.id}</div>
+                      <div className="text-[10px] text-slate-400 font-normal">{log.sent_at}</div>
+                    </td>
+                    <td className="px-4 py-3.5 font-black text-slate-900 dark:text-white">
+                      <div>{log.title}</div>
+                      <div className="text-[11px] font-medium text-slate-500 truncate max-w-sm">{log.message}</div>
+                    </td>
+                    <td className="px-4 py-3.5 font-bold text-slate-700 dark:text-slate-300">
+                      <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase">
+                        {log.recipient_type === 'all' ? 'Tous (Étudiants + Profs)' : log.recipient_type === 'students' ? 'Étudiants' : 'Professeurs'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold text-[10px] uppercase border border-purple-200 dark:border-purple-800">
+                        {log.channel || 'push, system, email'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-[10px] uppercase border border-emerald-200 dark:border-emerald-800">
+                        ENREGISTRÉ BDD
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

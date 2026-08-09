@@ -29,9 +29,23 @@ export default function AdminStudentsPage() {
   const [selectedSemester, setSelectedSemester] = useState('')
   const [selectedGroup, setSelectedGroup] = useState('')
 
-  // Modals
+  // Modals & Menus
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showZipMenu, setShowZipMenu] = useState(false)
+
+  const handleBulkZipExport = (docType: string, onlyPassed: boolean = false) => {
+    setShowZipMenu(false)
+    const filiereLabel = filieres.find((f: any) => String(f.id) === String(selectedFiliere))?.name || 'Toute la Filière'
+    toast.loading(`Génération de l'archive ZIP (${docType}) pour ${filiereLabel}...`)
+    
+    setTimeout(() => {
+      toast.dismiss()
+      toast.success(`📦 Archive ZIP (${docType}) générée ! Le téléchargement démarre.`)
+      const url = `/api/admin/students/bulk-export-zip?filiere_id=${selectedFiliere}&document_type=${docType}&only_passed=${onlyPassed}`
+      window.open(url, '_blank')
+    }, 800)
+  }
 
   const fetchStudents = async () => {
     try {
@@ -113,8 +127,8 @@ export default function AdminStudentsPage() {
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="relative bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none overflow-hidden"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
@@ -134,7 +148,62 @@ export default function AdminStudentsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <div className="flex items-center gap-3 flex-wrap shrink-0 z-50">
+            {/* Dropdown Exportation Groupée ZIP */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowZipMenu(!showZipMenu)}
+                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black transition-all text-xs uppercase tracking-wider cursor-pointer shadow-xl hover:scale-102"
+              >
+                <Printer className="w-4 h-4 text-amber-300" /> Imprimer Tous (ZIP Filière)
+              </button>
+
+              {showZipMenu && (
+                <div className="absolute right-0 mt-3 w-80 bg-slate-900/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] z-[100] p-2 text-xs font-semibold animate-in fade-in-50 zoom-in-95">
+                  <div className="px-3 py-2 text-[10px] font-black text-emerald-400 uppercase tracking-wider border-b border-slate-800/80 flex items-center justify-between">
+                    <span>Exportation ZIP (Filière)</span>
+                    <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full text-[9px]">ZIP</span>
+                  </div>
+                  <button
+                    onClick={() => handleBulkZipExport('REL_NOTES')}
+                    className="w-full text-left px-3 py-3 hover:bg-blue-600/20 hover:border-blue-500/30 border border-transparent rounded-xl text-white flex items-center gap-3 transition-all cursor-pointer mt-1 group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-white group-hover:text-blue-300 transition-all">Tous les Relevés de Notes</div>
+                      <div className="text-[10px] text-slate-400">PDFs A4 individuels dans un fichier ZIP</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleBulkZipExport('ATT_SCOL')}
+                    className="w-full text-left px-3 py-3 hover:bg-emerald-600/20 hover:border-emerald-500/30 border border-transparent rounded-xl text-white flex items-center gap-3 transition-all cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-white group-hover:text-emerald-300 transition-all">Attestations d'Inscription</div>
+                      <div className="text-[10px] text-slate-400">Pour tous les étudiants inscrits</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleBulkZipExport('ATT_REUSSITE', true)}
+                    className="w-full text-left px-3 py-3 hover:bg-amber-600/20 hover:border-amber-500/30 border border-transparent rounded-xl text-white flex items-center gap-3 transition-all cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-amber-300 group-hover:text-amber-200 transition-all">Attestations de Réussite</div>
+                      <div className="text-[10px] text-amber-200/80">Strictement étudiants Admis (PV Jury)</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer">
               <Upload className="w-4 h-4 text-amber-300" /> Importer CSV/Excel
             </button>

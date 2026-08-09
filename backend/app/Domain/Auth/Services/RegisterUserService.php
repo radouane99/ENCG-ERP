@@ -29,6 +29,29 @@ class RegisterUserService
             $user = null;
             if ($emailClean !== '') {
                 $user = User::where('email', $emailClean)->first();
+                if ($user) {
+                    // Vérifier si cet email appartient à un autre candidat (CNE/CIN différent)
+                    $userCne = strtoupper(trim($user->cne ?? ''));
+                    $userCin = strtoupper(trim($user->cin ?? ''));
+                    $isSameCandidate = false;
+
+                    if ($cneClean && $userCne === $cneClean) $isSameCandidate = true;
+                    if ($cinClean && $userCin === $cinClean) $isSameCandidate = true;
+
+                    // Si le CNE/CIN ne correspond pas du tout, refuser la réutilisation du même email
+                    if (!$isSameCandidate && $cneClean !== '') {
+                        $studentByCne = \App\Models\Student::where('cne', $cneClean)->first();
+                        if ($studentByCne && $studentByCne->user_id === $user->id) {
+                            $isSameCandidate = true;
+                        }
+                    }
+
+                    if (!$isSameCandidate && ($userCne !== '' || $userCin !== '')) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'email' => ['Cette adresse email est déjà utilisée par un autre candidat. Veuillez utiliser une adresse email unique.'],
+                        ]);
+                    }
+                }
             }
 
             if (!$user && ($cneClean !== '' || $cinClean !== '')) {

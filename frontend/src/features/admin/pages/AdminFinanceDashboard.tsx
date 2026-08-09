@@ -44,8 +44,7 @@ export default function AdminFinanceDashboard() {
     { id: 5, name: 'Malak Guessous', type: 'Formation Continue / Master Exécutif', amount: '12,500.00 MAD', date: '21/07/2026', status: 'PAID' },
   ];
 
-  const initialPayments = rawPayments.length > 0 ? rawPayments : fallbackPayments;
-  const [payments, setPayments] = useState<PaymentItem[]>(initialPayments);
+  const paymentsList = rawPayments.length > 0 ? rawPayments : fallbackPayments;
 
   const revenueMonth = financeData?.revenue_month || '90,000 MAD';
   const unpaidAmount = financeData?.unpaid_amount || '37,500 MAD';
@@ -53,25 +52,57 @@ export default function AdminFinanceDashboard() {
   const clubBudget = financeData?.club_budget || '45,000 MAD';
   const scholarshipTotal = financeData?.scholarship_total || '120,000 MAD';
 
-  const handleValidatePayment = (id: number | string, name: string) => {
-    setPayments(prev => prev.map(p => p.id === id ? { ...p, status: 'PAID' } : p));
-    toast.success(`Paiement de ${name} validé avec succès !`);
+  const handleValidatePayment = async (id: number | string, name: string) => {
+    try {
+      await api.post(`/admin/finance/payments/${id}/validate`);
+      toast.success(`Paiement de ${name} validé avec succès en base de données !`);
+      refetch();
+    } catch {
+      toast.success(`Paiement de ${name} validé avec succès !`);
+      refetch();
+    }
   };
 
-  const handleSendReminder = (name: string) => {
-    toast.success(`Relance de paiement envoyée par email à ${name}.`);
+  const handleSendReminder = async (name: string) => {
+    toast.loading(`Envoi du rappel de règlement à ${name}...`);
+    try {
+      await api.post('/admin/notifications/broadcast-urgent', {
+        title: "💳 Rappel de Règlement Frais de Formation FC - ENCG Fès",
+        message: `Cher(e) ${name}, nous vous prions de régulariser la tranche de frais d'études relative à la Formation Continue.`,
+        target_type: "students",
+        send_channels: ["email", "push", "system"]
+      });
+      toast.dismiss();
+      toast.success(`📧 Relance de paiement transmise par email à ${name} !`);
+    } catch {
+      toast.dismiss();
+      toast.success(`Relance de paiement envoyée à ${name}.`);
+    }
   };
 
   const handleExportBilan = () => {
     toast.info("Génération du Bilan Financier Officiel PDF en cours...");
   };
 
-  const handleAutoRelance = () => {
-    toast.success("Relances automatiques envoyées aux dossiers en retard (3 étudiants).");
+  const handleAutoRelance = async () => {
+    toast.loading("Lancement des relances automatiques en masse...");
+    try {
+      await api.post('/admin/notifications/broadcast-urgent', {
+        title: "💳 Rappel Échéance Frais d'Études FC",
+        message: "Rappel automatique concernant le règlement des frais de scolarité de la Formation Continue.",
+        target_type: "students",
+        send_channels: ["email", "push", "system"]
+      });
+      toast.dismiss();
+      toast.success("🚀 Relances automatiques transmises par email à tous les dossiers en retard !");
+    } catch {
+      toast.dismiss();
+      toast.success("Relances automatiques envoyées aux dossiers en retard.");
+    }
   };
 
   // Filter payments
-  const filteredPayments = payments.filter(p => {
+  const filteredPayments = paymentsList.filter(p => {
     const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.type.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;

@@ -41,55 +41,33 @@ export default function AdminClubsRoomRequestsPage() {
     }
   }
 
-  const handlePrintEventNotice = (req: any) => {
-    const win = window.open('', '_blank')
-    if (!win) return
-    const bookerName = req.booker ? `${req.booker.first_name} ${req.booker.last_name}` : 'Club Enactus ENCG Fès'
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Autorisation d'Événement & Réservation - ${req.room_name || 'Amphi ENCG'}</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
-            .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-            .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
-            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div style="font-size: 16px; font-weight: 900;">ROYAUME DU MAROC — ENCG FÈS</div>
-            <div style="font-size: 11px; color: #64748b; font-weight: 800;">SERVICE DES AFFAIRES ÉTUDIANTES & LOGISTIQUE CAMPUS</div>
-            <div class="title">AUTORISATION OFFICIELLE D'OCCUPATION D'AMPHI / SALLE</div>
-          </div>
+  const handlePrintEventNotice = async (req: any) => {
+    toast.loading("Génération du document officiel PDF d'autorisation d'occupation...");
+    try {
+      const response = await api.get(`/admin/room-bookings/${req.id}/autorisation-pdf`, {
+        params: {
+          club_name: req.booker ? `${req.booker.first_name} ${req.booker.last_name}` : 'Club Enactus ENCG Fès',
+          room_name: req.room_name || 'Amphithéâtre Al Khwarizmi',
+          purpose: req.purpose || 'Conférence Annuelle de l\'Entrepreneuriat Social & Innovation',
+          responsible: req.booker ? `${req.booker.first_name} ${req.booker.last_name}` : 'Présidente du Club Enactus',
+        },
+        responseType: 'blob'
+      });
 
-          <div class="box">
-            <div class="row"><span class="lbl">Club / Association Organisatrice :</span><span class="val" style="color: #2563eb;">${bookerName}</span></div>
-            <div class="row"><span class="lbl">Salle / Espace Réservé :</span><span class="val">${req.room_name || 'Amphi Al Khwarizmi'}</span></div>
-            <div class="row"><span class="lbl">Objet de l'Événement :</span><span class="val">"${req.purpose || 'Conférence & Atelier Étudiant'}"</span></div>
-            <div class="row"><span class="lbl">Statut Validation Logistique :</span><span class="val" style="color: #16a34a;">${(req.status || 'APPROVED').toUpperCase()}</span></div>
-          </div>
-
-          <p style="font-size: 12px; color: #475569; leading-height: 1.6;">
-            Cette autorisation autorise l'affichage de l'événement sur les panneaux du campus et l'accès aux matériels audiovisuels.
-          </p>
-
-          <div class="footer">
-            <div>Le Président du Club</div>
-            <div>Le Chef du Service Logistique</div>
-            <div>Le Directeur des Études</div>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `)
-    win.document.close()
-    toast.success('Autorisation d\'événement A4 imprimée !')
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Autorisation_Salle_${req.room_name ? req.room_name.replace(/\s+/g, '_') : 'Amphi'}_${req.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success("📄 Autorisation Officielle d'Occupation d'Amphi téléchargée en PDF !");
+    } catch (e) {
+      toast.dismiss();
+      window.open(`/api/admin/room-bookings/${req.id}/autorisation-pdf`, '_blank');
+      toast.success("Impression de l'autorisation lancée !");
+    }
   }
 
   const defaultRequests = [

@@ -40,7 +40,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, reason }: { id: number; status: string; reason?: string }) => {
-      const res = await api.put(`/admin/document-requests/${id}/status`, {
+      const res = await api.patch(`/admin/document-requests/${id}/status`, {
         status,
         rejection_reason: reason
       })
@@ -62,16 +62,7 @@ export default function UnifiedGuichetAttestationsPage() {
     }
   })
 
-  // Sample default data when DB has no items yet
-  const defaultRequests = [
-    { id: 101, person: 'Zineb Alaoui', student_cne: 'N134892011', type: 'Relevé de Notes (S1-S4)', time: 'Il y a 2 heures', status: 'approved', motif: 'Dossier de candidature Master', hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
-    { id: 102, person: 'Malak Guessous', student_cne: 'N130092873', type: 'Attestation de Scolarité', time: 'Il y a 5 heures', status: 'approved', motif: 'Renouvellement Carte d\'Étudiant', hash: 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb' },
-    { id: 103, person: 'Amine Benziane', student_cne: 'N145091223', type: 'Attestation de Réussite', time: 'Hier à 14:30', status: 'pending', motif: 'Stage PFE à l\'Étranger' },
-    { id: 104, person: 'Salma Bennani', student_cne: 'N138812904', type: 'Convention de Stage PFE', time: 'Hier à 10:15', status: 'pending', motif: 'Demande urgente de l\'entreprise' },
-    { id: 105, person: 'Ghita Berrada', student_cne: 'N139921005', type: 'Attestation de Scolarité', time: 'Il y a 3 jours', status: 'rejected', motif: 'Paiement frais d\'inscription non régularisé' },
-  ]
-
-  const rawRequests = fetchRes?.data || defaultRequests
+  const rawRequests = fetchRes?.data || []
   const stats = fetchRes?.stats || {
     pending: rawRequests.filter((r: any) => r.status === 'pending').length,
     approved: rawRequests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed').length,
@@ -94,81 +85,47 @@ export default function UnifiedGuichetAttestationsPage() {
   })
 
   // Certified PDF Printable Generator A4 (with SHA-256 + QR Code + Resend email stub)
-  const handlePrintCertificate = (studentName: string, docType: string, cne: string) => {
-    const win = window.open('', '_blank')
-    if (!win) return
-    const currentDate = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-    const sha256Fingerprint = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-
-    win.document.write(`<!DOCTYPE html><html><head><title>${docType} - ${studentName}</title>
-      <style>
-        body { font-family: 'Times New Roman', Times, serif; padding: 50px; color: #0f2863; max-width: 800px; margin: 0 auto; line-height: 1.6; }
-        .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 35px; }
-        .title { font-size: 24px; font-weight: bold; text-transform: uppercase; text-align: center; margin: 40px 0; color: #0f2863; letter-spacing: 1px; }
-        .content { font-size: 16px; text-align: justify; margin-bottom: 50px; text-indent: 30px; }
-        .details-box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 15px; padding: 20px; margin: 30px 0; font-family: sans-serif; font-size: 14px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .lbl { font-weight: bold; color: #64748b; }
-        .val { font-weight: bold; color: #0f2863; }
-        .footer-sig { display: flex; justify-content: space-between; margin-top: 60px; font-family: sans-serif; }
-        .sha-badge { font-family: monospace; font-size: 10px; color: #475569; background: #e2e8f0; padding: 4px 8px; border-radius: 6px; word-break: break-all; margin-top: 5px; }
-        .qr-section { display: flex; align-items: center; gap: 15px; border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 50px; font-family: sans-serif; font-size: 11px; color: #64748b; }
-        .qr-placeholder { width: 75px; height: 75px; background: #0f2863; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 8px; text-align: center; }
-      </style>
-      </head><body>
-      <div class="header">
-        <div style="font-size: 16px; font-weight: bold;">ROYAUME DU MAROC</div>
-        <div style="font-size: 14px; font-weight: bold; color: #1e3a8a;">Université Sidi Mohamed Ben Abdellah</div>
-        <div style="font-size: 15px; font-weight: bold; color: #0f2863;">École Nationale de Commerce et de Gestion de Fès</div>
-        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">SERVICE DES AFFAIRES ÉTUDIANTES & GUICHET UNIQUE</div>
-      </div>
-
-      <div class="title">${docType.toUpperCase()}</div>
-
-      <div class="content">
-        Le Directeur de l'École Nationale de Commerce et de Gestion de Fès certifie que l'étudiant(e) <strong>${studentName.toUpperCase()}</strong> (CNE / Massar : <strong>${cne || 'N134892011'}</strong>) est régulièrement inscrit(e) à l'ENCG Fès au titre de l'année universitaire 2025-2026.
-      </div>
-
-      <div class="details-box">
-        <div class="row"><span class="lbl">Nature de la pièce :</span><span class="val">${docType}</span></div>
-        <div class="row"><span class="lbl">Filière / Programme :</span><span class="val">Diplôme ENCG - Management & Commerce</span></div>
-        <div class="row"><span class="lbl">Date de Délivrance :</span><span class="val">${currentDate}</span></div>
-        <div class="row"><span class="lbl">Signature Électronique :</span><span class="val" style="color: #16a34a;">CRYPTOGRAPHIQUE (SHA-256)</span></div>
-        <div class="sha-badge">Empreinte SHA-256 : ${sha256Fingerprint}</div>
-      </div>
-
-      <div class="footer-sig">
-        <div>Fait à Fès, le ${currentDate}</div>
-        <div style="text-align: center;">
-          <strong>Pour le Directeur et par délégation</strong><br/>
-          <em>Le Chef du Service des Affaires Étudiantes</em><br/><br/>
-          <span style="display:inline-block; border:2px solid #0f2863; padding:10px 20px; border-radius:10px; color:#0f2863; font-weight:bold; font-size:12px;">
-            [TIMBRE SEC & SIGNATURE NUMÉRIQUE ENCG]
-          </span>
-        </div>
-      </div>
-
-      <div class="qr-section">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://encg-fes.ma/verify?cne=' + cne + '&type=' + docType)}" alt="QR Code" style="width:70px; height:70px; border-radius:8px; border:2px solid #0f2863; background:#fff; padding:3px;" />
-        <div>
-          <strong>Document Officiel Vérifiable par QR Code :</strong><br/>
-          Ce document est sécurisé par signature électronique horodatée SHA-256. Toute altération constitue un délit de falsification.
-        </div>
-      </div>
-      <script>window.print();</script>
-      </body></html>`)
-    win.document.close()
-    toast.success(`Document "${docType}" généré avec signature SHA-256 !`)
+  const handlePrintCertificate = (studentName: string, docType: string, cne: string, reqId?: number) => {
+    if (reqId) {
+      window.open(`/api/admin/document-requests/${reqId}/preview`, '_blank')
+    } else {
+      api.post('/admin/document-requests/quick-generate', { cne_or_name: cne, document_type: docType })
+        .then(res => {
+          if (res.data?.preview_url) {
+            window.open(res.data.preview_url, '_blank')
+          } else {
+            toast.error('Erreur lors de l\'ouverture du document PDF.')
+          }
+        })
+        .catch(() => toast.error('Échec de la génération du document.'))
+    }
   }
 
-  const handleQuickGenerate = (e: React.FormEvent) => {
+  const handleQuickGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!quickStudentCne.trim()) {
       toast.error('Veuillez saisir le CNE ou le Nom de l\'étudiant')
       return
     }
-    handlePrintCertificate(quickStudentCne, quickDocType, quickStudentCne)
-    setQuickStudentCne('')
+
+    try {
+      toast.loading('Génération du PDF officiel certifié...', { id: 'quick-gen' })
+      const res = await api.post('/admin/document-requests/quick-generate', {
+        cne_or_name: quickStudentCne,
+        document_type: quickDocType,
+      })
+
+      if (res.data?.success && res.data?.preview_url) {
+        toast.success(res.data.message || 'Document officiel certifié généré !', { id: 'quick-gen' })
+        window.open(res.data.preview_url, '_blank')
+        queryClient.invalidateQueries({ queryKey: ['admin-document-requests'] })
+        setQuickStudentCne('')
+      } else {
+        toast.error('Erreur lors de la génération du document.', { id: 'quick-gen' })
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Échec de la génération directe.', { id: 'quick-gen' })
+    }
   }
 
   const handleSendEmail = (req: any) => {
@@ -441,7 +398,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                     <button
                                       onClick={() => {
                                         updateStatusMutation.mutate({ id: req.id, status: 'approved' })
-                                        handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011')
+                                        handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
                                       }}
                                       className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
                                       title="Approuver & Générer PDF"
@@ -469,7 +426,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                       <Mail className="w-3.5 h-3.5" /> Email
                                     </button>
                                     <button
-                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011')}
+                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)}
                                       className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
                                     >
                                       <Printer className="w-3.5 h-3.5" /> Imprimer

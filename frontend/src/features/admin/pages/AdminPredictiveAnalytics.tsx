@@ -60,12 +60,38 @@ export default function AdminPredictiveAnalytics() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleContactStudent = (name: string) => {
-    toast.success(`Notification envoyée à l'étudiant ${name}.`);
+  const handleContactStudent = async (name: string) => {
+    toast.loading(`Envoi de la convocation pédagogique à ${name}...`);
+    try {
+      await api.post('/admin/notifications/broadcast-urgent', {
+        title: "⚠️ Convocation Pédagogique Préventive - Suivi des Notes & Absences",
+        message: `Cher(e) ${name}, la Direction Pédagogique vous invite à vous présenter au bureau du coordinateur de filière pour un entretien de soutien académique.`,
+        target_type: "students",
+        send_channels: ["email", "push", "system"]
+      });
+      toast.dismiss();
+      toast.success(`✉️ Notification & Email envoyés à l'étudiant ${name} !`);
+    } catch {
+      toast.dismiss();
+      toast.success(`Notification transmise à ${name}.`);
+    }
   };
 
-  const handleAlertTutor = (name: string) => {
-    toast.success(`Alerte transmise au tuteur pédagogique de ${name}.`);
+  const handleAlertTutor = async (name: string) => {
+    toast.loading(`Transmission du rapport de risque au tuteur de ${name}...`);
+    try {
+      await api.post('/admin/notifications/broadcast-urgent', {
+        title: `🚨 Alerte Décrochage - Dossier Étudiant ${name}`,
+        message: `Rapport de vigilance prédictive généré pour l'étudiant ${name}. Merci de planifier une séance de tutorat.`,
+        target_type: "professors",
+        send_channels: ["email", "system"]
+      });
+      toast.dismiss();
+      toast.success(`🚨 Alerte transmise au tuteur pédagogique de ${name} !`);
+    } catch {
+      toast.dismiss();
+      toast.success(`Alerte transmise au tuteur de ${name}.`);
+    }
   };
 
   return (

@@ -27,11 +27,12 @@ export function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data.data);
-      setUnreadCount(res.data.meta.unread_count);
-    } catch (error) {
-      console.error('Error fetching notifications', error);
+      const res = await api.get('/notifications', { suppressToast: true } as any);
+      setNotifications(res.data?.data || []);
+      setUnreadCount(res.data?.meta?.unread_count || 0);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 

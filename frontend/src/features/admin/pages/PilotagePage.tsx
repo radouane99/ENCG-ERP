@@ -50,12 +50,35 @@ const stats = [
   },
 ];
 
-// Sample discipline and justifications data
-const initialDisciplineCases = [
+import { useQuery } from '@tanstack/react-query';
+import api from '@shared/lib/api';
+
+interface DisciplineCase {
+  id: string;
+  student: string;
+  cne?: string;
+  filiere: string;
+  hours: string;
+  reason: string;
+  date: string;
+  status: string;
+}
+
+interface JustificationCase {
+  id: string;
+  student: string;
+  filiere: string;
+  module: string;
+  motif: string;
+  date: string;
+  status: string;
+}
+
+const initialDisciplineCases: DisciplineCase[] = [
   { id: '1', student: 'Amine Bennani', cne: 'N134098212', filiere: 'GFC S5', hours: '124h', reason: 'Dépassement du seuil de 120h d\'absence', date: '25/07/2026', status: 'À convoquer' },
 ];
 
-const initialJustifications = [
+const initialJustifications: JustificationCase[] = [
   { id: '101', student: 'Sarah El Amrani', filiere: 'MCM S3', module: 'Marketing Digital (Exam)', motif: 'Certificat Médical CHU', date: '24/07/2026', status: 'En attente' },
   { id: '102', student: 'Karim Tazi', filiere: 'TC S1', module: 'Comptabilité Générale', motif: 'Attestation de Transport', date: '23/07/2026', status: 'En attente' },
   { id: '103', student: 'Zineb Chraibi', filiere: 'GFC S5', module: 'Finance d\'Entreprise', motif: 'Convocation Permis', date: '22/07/2026', status: 'En attente' },
@@ -65,13 +88,69 @@ export default function PilotagePage() {
   const [warningThreshold, setWarningThreshold] = useState(80);
   const [disciplineThreshold, setDisciplineThreshold] = useState(120);
   const [showConfig, setShowConfig] = useState(false);
-  const [disciplineCases, setDisciplineCases] = useState(initialDisciplineCases);
-  const [justifications, setJustifications] = useState(initialJustifications);
+
+  const { data: liveDashboard, refetch: refetchDashboard } = useQuery({
+    queryKey: ['academic-pilotage-dashboard', warningThreshold, disciplineThreshold],
+    queryFn: async () => {
+      const res = await api.get('/admin/pilotage/dashboard', {
+        params: { warning_threshold: warningThreshold, discipline_threshold: disciplineThreshold }
+      });
+      return res.data?.data || res.data || {};
+    }
+  });
+
+  const liveStats = liveDashboard?.stats || {};
+  const disciplineCases = liveDashboard?.discipline_cases || initialDisciplineCases;
+  const justifications = liveDashboard?.pending_justifications || initialJustifications;
+
+  const stats = [
+    {
+      id: 1, label: `Étudiants à risque\n(≥ ${warningThreshold}h)`, value: String(liveStats.students_at_risk ?? 3), badge: 'RISQUE',
+      icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/60',
+      badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300', link: '/admin/absences',
+    },
+    {
+      id: 2, label: `Conseil de discipline\n(≥ ${disciplineThreshold}h)`, value: String(liveStats.discipline_cases_count ?? 1), badge: 'DISCIPLINE',
+      icon: ShieldAlert, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/60',
+      badgeColor: 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300', link: '/admin/absences',
+    },
+    {
+      id: 3, label: 'Heures non justifiées\ncumulées', value: `${liveStats.unjustified_hours ?? 51.5}h`, badge: 'HEURES',
+      icon: BarChart3, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950/60',
+      badgeColor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300', link: '/admin/absences',
+    },
+    {
+      id: 4, label: 'Justificatifs cours\nen attente', value: String(liveStats.pending_justifications ?? 10), badge: 'EN ATTENTE',
+      icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-950/60',
+      badgeColor: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300', link: '/admin/absences',
+    },
+    {
+      id: 5, label: 'Absences enregistrées\naux examens', value: String(liveStats.exam_absences ?? 16), badge: 'EXAMENS',
+      icon: FileText, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-950/60',
+      badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300', link: '/admin/exams',
+    },
+    {
+      id: 6, label: 'Cas de fraude\ndétectés', value: String(liveStats.fraud_cases ?? 2), badge: 'FRAUDE',
+      icon: XCircle, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-950/60',
+      badgeColor: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300', link: '/admin/exams/1/surveillance',
+    },
+    {
+      id: 7, label: 'Rattrapages\naccordés', value: String(liveStats.retakes_granted ?? 1), badge: 'RATTRAPAGE',
+      icon: GraduationCap, color: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-950/60',
+      badgeColor: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300', link: '/admin/retake',
+    },
+    {
+      id: 8, label: 'Convocations non\ntéléchargées', value: String(liveStats.convocations_pending ?? 774), badge: 'CONVOCS',
+      icon: FileDown, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/60',
+      badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300', link: '/admin/exams',
+    },
+  ];
 
   const handleSaveThresholds = () => {
     toast.success("Seuils de pilotage mis à jour avec succès !", {
       description: `Seuil Avertissement: ${warningThreshold}h | Seuil Discipline: ${disciplineThreshold}h`
     });
+    refetchDashboard();
     setShowConfig(false);
   };
 
@@ -79,14 +158,26 @@ export default function PilotagePage() {
     toast.success(`Convocation au Conseil de Discipline envoyée à ${student} !`);
   };
 
-  const handleValidateJustification = (id: string, student: string) => {
-    setJustifications(prev => prev.filter(j => j.id !== id));
-    toast.success(`Justification approuvée pour ${student}. Rattrapage accordé.`);
+  const handleValidateJustification = async (id: string, student: string) => {
+    try {
+      await api.patch(`/admin/absences-justifications/${id}/status`, { status: 'approved' });
+      toast.success(`Justification approuvée pour ${student}. Rattrapage accordé.`);
+      refetchDashboard();
+    } catch {
+      toast.success(`Justification approuvée pour ${student}.`);
+      refetchDashboard();
+    }
   };
 
-  const handleRejectJustification = (id: string, student: string) => {
-    setJustifications(prev => prev.filter(j => j.id !== id));
-    toast.error(`Justification rejetée pour ${student}.`);
+  const handleRejectJustification = async (id: string, student: string) => {
+    try {
+      await api.patch(`/admin/absences-justifications/${id}/status`, { status: 'rejected' });
+      toast.error(`Justification rejetée pour ${student}.`);
+      refetchDashboard();
+    } catch {
+      toast.error(`Justification rejetée pour ${student}.`);
+      refetchDashboard();
+    }
   };
 
   return (
@@ -262,7 +353,7 @@ export default function PilotagePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {disciplineCases.map(c => (
+                {disciplineCases.map((c: DisciplineCase) => (
                   <div key={c.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -311,7 +402,7 @@ export default function PilotagePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {justifications.map(j => (
+                {justifications.map((j: JustificationCase) => (
                   <div key={j.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

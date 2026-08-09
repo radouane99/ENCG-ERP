@@ -25,9 +25,9 @@ class AdminAlertsController extends Controller
 
         // ── 1. Étudiants à risque (> 10 absences) ──────────────────────
         $studentsAtRisk = Student::whereHas('attendances', function ($q) {
-            $q->selectRaw('student_id, COUNT(*) as total')
+            $q->selectRaw('student_id')
                 ->groupBy('student_id')
-                ->having('total', '>', 10);
+                ->havingRaw('COUNT(*) > ?', [10]);
         })->count();
 
         if ($studentsAtRisk > 0) {

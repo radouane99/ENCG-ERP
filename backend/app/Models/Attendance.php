@@ -32,6 +32,11 @@ class Attendance extends Model
         return $this->belongsTo(AttendanceSession::class, 'attendance_session_id');
     }
 
+    public function attendanceSession(): BelongsTo
+    {
+        return $this->belongsTo(AttendanceSession::class, 'attendance_session_id');
+    }
+
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class, 'student_id');

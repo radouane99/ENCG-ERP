@@ -5,7 +5,7 @@
 @section('content')
     <div style="position: relative; width: 100%;">
 
-        {/* Security Watermark background / Top Header Bar */}
+        {{-- Security Watermark background / Top Header Bar --}}
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-b: 2px solid #0f2863; padding-bottom: 12px;">
             <tr>
                 <td width="70%" style="vertical-align: top;">

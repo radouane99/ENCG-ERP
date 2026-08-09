@@ -178,7 +178,7 @@ const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage
 const AdminGradesEditPage = lazy(() => import('@features/admin/pages/AdminGradesEditPage'))
 const AdminGradesPVPage = lazy(() => import('@features/admin/pages/AdminGradesPVPage'))
 const AdminReservistesPage = lazy(() => import('@features/admin/pages/AdminReservistesPage'))
-const AdminAbsencesPage = lazy(() => import('@features/absences/ui/pages/AdminAbsencesPage'))
+const AdminAbsencesPage = lazy(() => import('@features/admin/pages/AdminAbsencesPage'))
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
 const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
 const AdminInternshipsPage = lazy(() => import('@features/internships/ui/pages/AdminInternshipsPage'))

@@ -581,49 +581,75 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     if (!editMode) return;
     const cne = (user as any)?.cne || '';
     const cin = (user as any)?.cin || '';
-    if (!cne && !cin) return;
-    api.get('/public/track-dossier', { params: { cne, cin } })
+    const email = (user as any)?.email || '';
+
+    api.get('/public/track-dossier', { params: { cne, cin, email } })
       .then(res => {
         const cand = res.data?.candidate;
         if (!cand) return;
+
+        let father_last = cand.father_name || '';
+        let father_first = '';
+        if (father_last.includes(' ')) {
+          const parts = father_last.trim().split(/\s+/);
+          father_last = parts[0];
+          father_first = parts.slice(1).join(' ');
+        }
+
+        let mother_last = cand.mother_name || '';
+        let mother_first = '';
+        if (mother_last.includes(' ')) {
+          const parts = mother_last.trim().split(/\s+/);
+          mother_last = parts[0];
+          mother_first = parts.slice(1).join(' ');
+        }
+
         setFormData(prev => ({
           ...prev,
-          cne: cand.cne || cne,
-          cin: cand.cin || cin,
-          email: cand.email || '',
-          phone: cand.phone || '',
-          last_name_fr: cand.last_name || '',
-          first_name_fr: cand.first_name || '',
-          last_name_ar: cand.last_name_ar || '',
-          first_name_ar: cand.first_name_ar || '',
-          birth_date: cand.birth_date || '',
-          birth_city_fr: cand.birth_city || '',
-          birth_city_ar: cand.birth_city_ar || '',
-          gender: cand.gender || 'female',
-          family_status: cand.family_status || 'Célibataire',
-          nationality: cand.nationality || 'Marocain(e)',
-          address_fr: cand.address || '',
-          region: cand.region || 'Fès-Meknès',
-          province: cand.city || 'Fès',
-          father_last_name_fr: cand.father_name || '',
-          father_cin: cand.father_cin || '',
-          father_phone: cand.father_phone || '',
-          father_job: cand.father_profession || '',
-          mother_last_name_fr: cand.mother_name || '',
-          mother_cin: cand.mother_cin || '',
-          mother_phone: cand.mother_phone || '',
-          parent_phone: cand.parent_phone || '',
-          emergency_contact_name: cand.emergency_contact_name || '',
-          emergency_contact_phone: cand.emergency_contact_phone || '',
-          allergy_type: cand.allergy_type || '',
-          medication_used: cand.medication_used || '',
-          treating_doctor_info: cand.treating_doctor_info || '',
-          has_medical_followup: cand.has_medical_followup || false,
-          has_disability: cand.has_disability || false,
-          disability_details: cand.disability_details || '',
-          filiere: cand.filiere || 'Deux années préparatoires',
-          bac_average: cand.bac_average ? String(cand.bac_average) : '',
-          bac_name: cand.bac_type || 'Bac Sciences Mathématiques B - Option Français',
+          cne: cand.cne || cne || prev.cne,
+          cin: cand.cin || cin || prev.cin,
+          email: cand.email || email || prev.email,
+          phone: cand.phone || prev.phone,
+          last_name_fr: cand.last_name || prev.last_name_fr,
+          first_name_fr: cand.first_name || prev.first_name_fr,
+          last_name_ar: cand.last_name_ar || prev.last_name_ar,
+          first_name_ar: cand.first_name_ar || prev.first_name_ar,
+          birth_date: cand.birth_date ? String(cand.birth_date).split('T')[0] : prev.birth_date,
+          birth_city_fr: cand.birth_city || prev.birth_city_fr,
+          birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
+          gender: cand.gender || prev.gender,
+          family_status: cand.family_status || prev.family_status,
+          nationality: cand.nationality || prev.nationality,
+          address_fr: cand.address || prev.address_fr,
+          address_ar: cand.address_ar || prev.address_ar,
+          region: cand.region || prev.region,
+          province: cand.city || prev.province,
+          father_last_name_fr: father_last || prev.father_last_name_fr,
+          father_first_name_fr: father_first || prev.father_first_name_fr,
+          father_last_name_ar: cand.father_name_ar || prev.father_last_name_ar,
+          father_cin: cand.father_cin || prev.father_cin,
+          father_phone: cand.father_phone || prev.father_phone,
+          father_job: cand.father_profession || prev.father_job,
+          mother_last_name_fr: mother_last || prev.mother_last_name_fr,
+          mother_first_name_fr: mother_first || prev.mother_first_name_fr,
+          mother_last_name_ar: cand.mother_name_ar || prev.mother_last_name_ar,
+          mother_cin: cand.mother_cin || prev.mother_cin,
+          mother_phone: cand.mother_phone || prev.mother_phone,
+          mother_job: cand.mother_profession || prev.mother_job,
+          parent_phone: cand.parent_phone || prev.parent_phone,
+          emergency_contact_name: cand.emergency_contact_name || prev.emergency_contact_name,
+          emergency_contact_phone: cand.emergency_contact_phone || prev.emergency_contact_phone,
+          allergy_type: cand.allergy_type || prev.allergy_type,
+          medication_used: cand.medication_used || prev.medication_used,
+          treating_doctor_info: cand.treating_doctor_info || prev.treating_doctor_info,
+          has_medical_followup: cand.has_medical_followup || prev.has_medical_followup,
+          has_disability: cand.has_disability || prev.has_disability,
+          disability_details: cand.disability_details || prev.disability_details,
+          filiere: cand.filiere || prev.filiere,
+          bac_average: cand.bac_average ? String(cand.bac_average) : prev.bac_average,
+          bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
+          bac_mention: cand.bac_mention || prev.bac_mention,
+          bac_year: cand.bac_year || prev.bac_year,
         }));
       })
       .catch(() => { });
@@ -944,6 +970,27 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         });
 
         toast.success(`✨ Gemini Vision AI : Extraction réussie du fichier ${file.name} !`, { id: toastId });
+
+        // ── Sauvegarde automatique du document dans le storage ──
+        // On re-lit le CNE depuis le résultat OCR ou depuis formData
+        const cneToUse = ocr.cne || ocr.code_massar || formData.cne || (user as any)?.cne || '';
+        const cinToUse = ocr.cin || ocr.cnie || formData.cin || (user as any)?.cin || '';
+        if (cneToUse || cinToUse) {
+          const saveId = toast.loading(`💾 Sauvegarde du document ${file.name} dans le dossier numérique...`);
+          try {
+            const saveData = new FormData();
+            saveData.append('file', file);
+            saveData.append('type', docType === 'cnie' ? 'cnie' : docType);
+            saveData.append('cne', cneToUse);
+            saveData.append('cin', cinToUse);
+            await api.post('/public/upload-candidate-document', saveData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success(`✅ Document "${file.name}" sauvegardé dans le dossier numérique !`, { id: saveId });
+          } catch {
+            toast.warning(`⚠️ Extraction réussie mais sauvegarde différée (sera relancée à la validation).`, { id: saveId });
+          }
+        }
       }
     } catch (err) {
       toast.dismiss(toastId);
@@ -1115,8 +1162,11 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         // EDIT MODE: update existing dossier
         await api.post('/public/update-candidate-dossier', payload);
         setSubmitting(false);
-        toast.success('✅ Votre dossier a été mis à jour avec succès dans PostgreSQL !');
-        setTimeout(() => navigate('/dashboard'), 1500);
+        toast.success('✅ Votre dossier a été mis à jour avec succès dans la base de données !');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+          window.location.reload();
+        }, 1000);
       } else {
         // NEW INSCRIPTION
         const res = await api.post('/v1/auth/register', payload);
@@ -1696,6 +1746,19 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                                   };
                                   reader.readAsDataURL(file);
                                   setShowPhotoModal(true);
+
+                                  const cneToUse = formData.cne || (user as any)?.cne || '';
+                                  const cinToUse = formData.cin || (user as any)?.cin || '';
+                                  if (cneToUse || cinToUse) {
+                                    const saveData = new FormData();
+                                    saveData.append('file', file);
+                                    saveData.append('type', 'photo');
+                                    saveData.append('cne', cneToUse);
+                                    saveData.append('cin', cinToUse);
+                                    api.post('/public/upload-candidate-document', saveData, {
+                                      headers: { 'Content-Type': 'multipart/form-data' }
+                                    }).catch(() => {});
+                                  }
                                 }
                               }}
                               className="hidden"
@@ -1804,9 +1867,9 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     {/* Section 1: Identifiants Principaux */}
                     <SectionCard title={isRTL ? '1. معرفات الترشيح والحساب الرسمية' : '1. Identifiants de Candidature & Compte (Anti-Fraude Check)'} icon={Hash} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={Hash} label={isRTL ? 'رمز مسار (CNE) *' : 'CNE (Code Massar) *'} required type="text" name="cne" value={formData.cne} onChange={handleChange} readOnly={!!ocrExtractedFields.cne} onUnlock={() => toggleFieldLock('cne')} placeholder={isRTL ? "مثال: N123456789" : "Ex: N123456789"} isRtl={isRTL} />
-                        <Field icon={Hash} label={isRTL ? 'بطاقة التعريف الوطنية (CNIE) *' : "CNIE (Carte d'Identité) *"} required type="text" name="cin" value={formData.cin} onChange={handleChange} readOnly={!!ocrExtractedFields.cin} onUnlock={() => toggleFieldLock('cin')} placeholder={isRTL ? "مثال: CD123456" : "Ex: CD123456"} isRtl={isRTL} />
-                        <Field icon={Mail} label={isRTL ? 'البريد الإلكتروني *' : 'Adresse E-mail *'} required type="email" name="email" value={formData.email} onChange={handleChange} placeholder={isRTL ? "مثال: etudiant@gmail.com" : "Ex: etudiant@gmail.com"} isRtl={isRTL} />
+                        <Field icon={Hash} label={isRTL ? 'رمز مسار (CNE) *' : 'CNE (Code Massar) *'} required type="text" name="cne" value={formData.cne} onChange={handleChange} readOnly={editMode || !!ocrExtractedFields.cne} onUnlock={() => toggleFieldLock('cne')} placeholder={isRTL ? "مثال: N123456789" : "Ex: N123456789"} isRtl={isRTL} />
+                        <Field icon={Hash} label={isRTL ? 'بطاقة التعريف الوطنية (CNIE) *' : "CNIE (Carte d'Identité) *"} required type="text" name="cin" value={formData.cin} onChange={handleChange} readOnly={editMode || !!ocrExtractedFields.cin} onUnlock={() => toggleFieldLock('cin')} placeholder={isRTL ? "مثال: CD123456" : "Ex: CD123456"} isRtl={isRTL} />
+                        <Field icon={Mail} label={isRTL ? 'البريد الإلكتروني *' : 'Adresse E-mail *'} required type="email" name="email" value={formData.email} onChange={handleChange} readOnly={editMode} placeholder={isRTL ? "مثال: etudiant@gmail.com" : "Ex: etudiant@gmail.com"} isRtl={isRTL} />
                         <Field icon={Phone} label={isRTL ? 'الهاتف المحمول *' : 'Téléphone Portable *'} required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder={isRTL ? "مثال: 0612345678" : "Ex: 0612345678"} isRtl={isRTL} />
                       </div>
 

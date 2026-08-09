@@ -131,8 +131,7 @@ class AcademicYearRolloverService
 
         // Récupérer les notes en échec
         $studentIds   = $pathways->pluck('student_id')->toArray();
-        $failedCounts = Grade::where('academic_year_id', $oldYear->id)
-            ->whereIn('student_id', $studentIds)
+        $failedCounts = Grade::whereIn('student_id', $studentIds)
             ->where('value', '<', 10)
             ->selectRaw('student_id, count(*) as failed_count')
             ->groupBy('student_id')

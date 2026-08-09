@@ -7,14 +7,17 @@
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px; border-bottom: 2px solid #0f2863; padding-bottom: 10px;">
             <tr>
-                <td width="70%">
+                <td width="65%">
                     <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
                     <div style="font-size: 12px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
                     <div style="font-size: 12px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 3px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                 </td>
-                <td width="30%" style="text-align: right;">
+                <td width="35%" style="text-align: right;">
+                    @if(!empty($photoBase64))
+                        <img src="{{ $photoBase64 }}" style="width: 70px; height: 85px; border: 2px solid #0f2863; object-fit: cover; margin-bottom: 4px; display: inline-block; vertical-align: middle;" alt="Photo Candidat" />
+                    @endif
                     @if(!empty($qrBase64))
-                        <img src="{{ $qrBase64 }}" style="width: 85px; height: 85px; border: 1px solid #cbd5e1; padding: 3px; background: #fff;" alt="QR Code Verification" />
+                        <img src="{{ $qrBase64 }}" style="width: 75px; height: 75px; border: 1px solid #cbd5e1; padding: 2px; background: #fff; display: inline-block; vertical-align: middle; margin-left: 4px;" alt="QR Code Verification" />
                     @endif
                 </td>
             </tr>

@@ -9,6 +9,7 @@ use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentTranscriptController extends Controller
@@ -16,10 +17,17 @@ class StudentTranscriptController extends Controller
     /**
      * Relevé de notes PDF (admin).
      */
-    public function generateForAdmin(Request $request, int $studentId): Response
+    public function generateForAdmin(Request $request, string $studentId)
     {
         $student = Student::with(['user', 'registrations.filiere', 'registrations.academicYear'])
-            ->findOrFail($studentId);
+            ->where(function ($q) use ($studentId) {
+                if (is_numeric($studentId)) {
+                    $q->where('id', (int) $studentId)->orWhere('uuid', $studentId);
+                } else {
+                    $q->where('uuid', $studentId);
+                }
+            })
+            ->firstOrFail();
 
         return $this->generatePdfResponse(
             $student,
@@ -31,7 +39,7 @@ class StudentTranscriptController extends Controller
     /**
      * Relevé de notes PDF (étudiant connecté).
      */
-    public function generateForStudent(Request $request): Response
+    public function generateForStudent(Request $request)
     {
         $student = Student::with(['user', 'registrations.filiere', 'registrations.academicYear'])
             ->where('user_id', $request->user()->id)
@@ -47,12 +55,42 @@ class StudentTranscriptController extends Controller
     /**
      * Génère la réponse PDF.
      */
-    private function generatePdfResponse(Student $student, ?string $academicYearId, string $semester): Response
+    private function generatePdfResponse(Student $student, ?string $academicYearId, string $semester)
     {
-        $pdf = $this->buildPdf($student, $academicYearId, $semester);
-        $filename = 'Releve_Notes_' . strtoupper($student->user->last_name ?? 'Etudiant') . '_' . strtoupper($semester) . '.pdf';
+        $docType = \App\Models\DocumentType::where('code', 'REL_NOTES')->first()
+            ?? \App\Models\DocumentType::firstOrCreate(
+                ['code' => 'REL_NOTES'],
+                ['name' => 'Relevé de Notes', 'view_name' => 'documents.releve_notes', 'is_active' => true]
+            );
 
-        return $pdf->download($filename);
+        $docRequest = \App\Models\DocumentRequest::create([
+            'student_id'       => $student->id,
+            'document_type_id' => $docType->id,
+            'status'           => 'ready',
+            'requested_at'     => now(),
+            'processed_at'     => now(),
+        ]);
+
+        $docService = app(\App\Services\DocumentRequestService::class);
+        $genDoc = $docService->generateDocumentPdf($docRequest);
+
+        $fullPath = null;
+        if (Storage::disk('private')->exists($genDoc->file_path)) {
+            $fullPath = Storage::disk('private')->path($genDoc->file_path);
+        } elseif (Storage::disk('local')->exists($genDoc->file_path)) {
+            $fullPath = Storage::disk('local')->path($genDoc->file_path);
+        } elseif (file_exists(storage_path('app/' . $genDoc->file_path))) {
+            $fullPath = storage_path('app/' . $genDoc->file_path);
+        }
+
+        if ($fullPath && file_exists($fullPath)) {
+            return response()->file($fullPath, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="Releve_Notes_' . strtoupper($student->user?->last_name ?? 'Etudiant') . '.pdf"',
+            ]);
+        }
+
+        return response('Erreur lors de la génération du PDF', 500);
     }
 
     /**

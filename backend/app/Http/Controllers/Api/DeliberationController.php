@@ -275,7 +275,7 @@ class DeliberationController extends Controller
         $student   = Student::find($studentId);
         $filiere   = Filiere::find($filiereId);
 
-        $academicYear = AcademicYear::where('is_active', true)->first()
+        $academicYear = AcademicYear::where('is_current', true)->first()
             ?? AcademicYear::orderByDesc('id')->first();
 
         $viewData = [
@@ -295,7 +295,107 @@ class DeliberationController extends Controller
     }
 
     /**
-     * Exporter le PV en PDF (semestriel ou annuel).
+     * Exporter le PV en PDF via query params uniquement (sans ID de délibération).
+     * Utilisé par le bouton frontend : /deliberations/export-pv-pdf?type=annuel&filiere_id=1
+     */
+    public function exportPvQuery(Request $request)
+    {
+        try {
+            $type           = $request->query('type', 'annuel');
+            $filiereId      = (int) $request->query('filiere_id', 1);
+            $academicYearId = (int) $request->query('academic_year_id', 0);
+            $yearLevel      = (int) $request->query('year_level', 1);
+            $semesterNum    = (int) $request->query('semester_number', 1);
+
+            $filiere = Filiere::find($filiereId) ?? (object) ['name' => 'Tronc Commun ENCG', 'code' => 'ENCG'];
+            $academicYear = $academicYearId
+                ? AcademicYear::find($academicYearId)
+                : (AcademicYear::where('is_current', true)->first()
+                    ?? AcademicYear::orderByDesc('id')->first()
+                    ?? (object) ['name' => date('Y') . '/' . (date('Y') + 1), 'id' => 1]);
+
+            $academicYearId = $academicYear->id ?? 1;
+
+            $logoPath = public_path('logo-encg.png');
+            $logoBase64 = file_exists($logoPath)
+                ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+                : '';
+
+            $verifyUrl = url('/documents/verify/' . \Illuminate\Support\Str::random(12));
+            try {
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            } catch (\Exception $e) {
+                $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyUrl);
+            }
+
+            if ($type === 'annuel') {
+                $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
+                $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, null, 'annuel');
+
+                $viewData = [
+                    'filiere'              => $filiere,
+                    'yearLevel'            => $yearLevel,
+                    'academicYear'         => $academicYear,
+                    'odd_semester_label'   => $annualData['odd_semester_label'] ?? 'S' . (($yearLevel * 2) - 1),
+                    'even_semester_label'  => $annualData['even_semester_label'] ?? 'S' . ($yearLevel * 2),
+                    'modules'              => $annualData['modules'] ?? [],
+                    'students'             => $annualData['students'] ?? [],
+                    'juries'               => $juries,
+                    'logoBase64'           => $logoBase64,
+                    'qrBase64'             => $qrBase64,
+                    'verifyUrl'            => $verifyUrl,
+                    'date'                 => date('d/m/Y H:i'),
+                ];
+
+                $pdfView  = 'pdf.pv_annuel';
+                $paper    = 'a3';
+            } else {
+                $pvResult = $this->deliberationService->getSemesterPVWithReservistes($filiereId, $academicYearId, $semesterNum);
+                $juries   = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $semesterNum, 'semestriel');
+
+                $viewData = [
+                    'filiere'        => $filiere,
+                    'academicYear'   => $academicYear,
+                    'semesterNum'    => $semesterNum,
+                    'type'           => $type,
+                    'modules'        => $pvResult['modules'] ?? [],
+                    'matrix'         => $pvResult['matrix'] ?? [],
+                    'juries'         => $juries,
+                    'logoBase64'     => $logoBase64,
+                    'qrBase64'       => $qrBase64,
+                    'verifyUrl'      => $verifyUrl,
+                    'date'           => date('d/m/Y H:i'),
+                ];
+
+                $pdfView  = 'pdf.pv_semestriel';
+                $paper    = 'a4';
+            }
+
+            if (!view()->exists($pdfView)) {
+                return response()->json(['message' => "Vue PDF '{$pdfView}' introuvable."], 404);
+            }
+
+            $pdf = Pdf::loadView($pdfView, $viewData)->setPaper($paper, 'landscape');
+
+            $filiereSlug = \Illuminate\Support\Str::slug($filiere->name ?? 'Filiere', '_');
+            $yearName    = \Illuminate\Support\Str::slug($academicYear->name ?? date('Y'), '_');
+
+            if ($type === 'annuel') {
+                $fileName = "PV_Annuel_{$filiereSlug}_Annee{$yearLevel}_{$yearName}.pdf";
+            } else {
+                $fileName = "PV_Semestriel_{$filiereSlug}_S{$semesterNum}_{$yearName}.pdf";
+            }
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('exportPvQuery error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'Erreur génération PDF : ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Exporter le PV en PDF (semestriel ou annuel) via l'ID de la délibération.
      */
     public function exportPvPdf(int $id, Request $request)
     {

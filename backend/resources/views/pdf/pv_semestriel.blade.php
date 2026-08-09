@@ -82,8 +82,9 @@
     <table class="table-pv">
         <thead>
             <tr>
-                <th rowspan="2" style="width: 8%;">Apogée</th>
-                <th rowspan="2" style="width: 14%; text-align: left; padding-left: 4px;">Nom & Prénom</th>
+                <th rowspan="2" style="width: 7%;">Apogée / CNE</th>
+                <th rowspan="2" style="width: 6%;">CIN</th>
+                <th rowspan="2" style="width: 13%; text-align: left; padding-left: 4px;">Nom & Prénom</th>
                 @foreach($modules as $m)
                     <th colspan="3" style="font-size: 7.5px; background-color: #0f2863; color: #ffffff; padding: 2px;">
                         {{ $m->name }} <span style="font-size: 6px; opacity: 0.8;">({{ $m->code }})</span>
@@ -104,6 +105,7 @@
             @foreach($matrix as $row)
             <tr>
                 <td style="font-family: monospace; font-weight: bold; font-size: 8px;">{{ $row['cne'] }}</td>
+                <td style="font-family: monospace; font-weight: bold; font-size: 8px; color: #1e293b;">{{ $row['cin'] ?? '-' }}</td>
                 <td style="text-align: left; font-weight: bold; padding-left: 4px; font-size: 8px;">
                     {{ $row['student'] }}
                 </td>

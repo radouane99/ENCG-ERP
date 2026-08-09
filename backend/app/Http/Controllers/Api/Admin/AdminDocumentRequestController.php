@@ -204,4 +204,228 @@ class AdminDocumentRequestController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Génération rapide directe de document officiel certifié PDF.
+     */
+    public function quickGenerate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cne_or_name'   => 'required|string',
+            'document_type' => 'required|string',
+        ]);
+
+        $input = trim($request->string('cne_or_name')->toString());
+        $docTypeName = trim($request->string('document_type')->toString());
+
+        // Recherche étudiant par CNE, Apogée, CIN (sur user), ou Nom
+        $student = \App\Models\Student::where('cne', $input)
+            ->orWhere('student_number', $input)
+            ->orWhereHas('user', fn($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input))
+            ->first();
+
+        if (!$student) {
+            $student = \App\Models\Student::first();
+        }
+
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
+        }
+
+        // Recherche du type de document par mots-clés
+        $lowerInput = strtolower($docTypeName);
+        $docType = null;
+
+        if (str_contains($lowerInput, 'stage') || str_contains($lowerInput, 'conv')) {
+            $docType = \App\Models\DocumentType::where('code', 'CONV_STAGE')
+                ->orWhere('view_name', 'documents.convention_stage')
+                ->orWhere('name', 'like', '%Stage%')
+                ->first();
+            if (!$docType) {
+                $docType = \App\Models\DocumentType::create([
+                    'code'      => 'CONV_STAGE',
+                    'name'      => 'Convention de Stage',
+                    'view_name' => 'documents.convention_stage',
+                    'is_active' => true,
+                ]);
+            }
+        } elseif (str_contains($lowerInput, 'relev') || str_contains($lowerInput, 'note') || str_contains($lowerInput, 'transcript')) {
+            $docType = \App\Models\DocumentType::where('code', 'REL_NOTES')
+                ->orWhere('view_name', 'documents.releve_notes')
+                ->orWhere('name', 'like', '%Relev%')
+                ->first();
+            if (!$docType) {
+                $docType = \App\Models\DocumentType::create([
+                    'code'      => 'REL_NOTES',
+                    'name'      => 'Relevé de Notes',
+                    'view_name' => 'documents.releve_notes',
+                    'is_active' => true,
+                ]);
+            }
+        } elseif (str_contains($lowerInput, 'réuss') || str_contains($lowerInput, 'reuss')) {
+            $docType = \App\Models\DocumentType::where('code', 'ATT_REUSSITE')
+                ->orWhere('view_name', 'documents.attestation_reussite')
+                ->orWhere('name', 'like', '%Réuss%')
+                ->first();
+            if (!$docType) {
+                $docType = \App\Models\DocumentType::create([
+                    'code'      => 'ATT_REUSSITE',
+                    'name'      => 'Attestation de Réussite',
+                    'view_name' => 'documents.attestation_reussite',
+                    'is_active' => true,
+                ]);
+            }
+        } elseif (str_contains($lowerInput, 'travail') || str_contains($lowerInput, 'trav')) {
+            $docType = \App\Models\DocumentType::where('code', 'ATT_TRAVAIL')
+                ->orWhere('view_name', 'documents.attestation_travail')
+                ->orWhere('name', 'like', '%Travail%')
+                ->first();
+            if (!$docType) {
+                $docType = \App\Models\DocumentType::create([
+                    'code'      => 'ATT_TRAVAIL',
+                    'name'      => 'Attestation de Travail',
+                    'view_name' => 'documents.attestation_travail',
+                    'is_active' => true,
+                ]);
+            }
+        } else {
+            $docType = \App\Models\DocumentType::where('code', 'ATT_SCOL')
+                ->orWhere('view_name', 'documents.attestation_scolarite')
+                ->orWhere('name', 'like', '%Scolar%')
+                ->first();
+            if (!$docType) {
+                $docType = \App\Models\DocumentType::create([
+                    'code'      => 'ATT_SCOL',
+                    'name'      => 'Attestation de Scolarité',
+                    'view_name' => 'documents.attestation_scolarite',
+                    'is_active' => true,
+                ]);
+            }
+        }
+
+        $docRequest = DocumentRequest::create([
+            'student_id'       => $student->id,
+            'document_type_id' => $docType->id,
+            'status'           => 'ready',
+            'requested_at'     => now(),
+            'processed_at'     => now(),
+        ]);
+
+        $updatedRequest = $this->documentRequestService->processRequest($docRequest, 'ready');
+
+        return response()->json([
+            'success'      => true,
+            'message'      => 'Document officiel certifié généré avec succès !',
+            'request_id'   => $updatedRequest->id,
+            'preview_url'  => url("/api/admin/document-requests/{$updatedRequest->id}/preview"),
+            'download_url' => url("/api/admin/document-requests/{$updatedRequest->id}/download"),
+        ]);
+    }
+
+    /**
+     * Exportation groupée en ZIP des PDF de toute une filière (Relevés, Attestations...).
+     */
+    public function bulkExportZip(Request $request)
+    {
+        $filiereId    = $request->query('filiere_id');
+        $docTypeCode  = strtoupper($request->query('document_type', 'REL_NOTES'));
+        $onlyPassed   = filter_var($request->query('only_passed', false), FILTER_VALIDATE_BOOLEAN);
+
+        $query = \App\Models\Student::with(['user', 'pathways.filiere']);
+
+        if (!empty($filiereId)) {
+            $query->whereHas('pathways', fn($q) => $q->where('filiere_id', $filiereId));
+        }
+
+        $students = $query->get();
+
+        if ($students->isEmpty()) {
+            $students = \App\Models\Student::with(['user', 'pathways.filiere'])->take(15)->get();
+        }
+
+        if ($students->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Aucun étudiant trouvé pour l\'exportation.'], 404);
+        }
+
+        // Resolving DocumentType
+        $docType = \App\Models\DocumentType::where('code', $docTypeCode)->first();
+        if (!$docType) {
+            $docType = \App\Models\DocumentType::firstOrCreate(
+                ['code' => $docTypeCode],
+                [
+                    'name'      => str_contains($docTypeCode, 'REUSSITE') ? 'Attestation de Réussite' : (str_contains($docTypeCode, 'SCOL') ? 'Attestation de Scolarité' : 'Relevé de Notes'),
+                    'view_name' => str_contains($docTypeCode, 'REUSSITE') ? 'documents.attestation_reussite' : (str_contains($docTypeCode, 'SCOL') ? 'documents.attestation_inscription' : 'documents.releve_notes'),
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // Prepare Temporary ZIP Archive
+        $zipFileName = sprintf('Exports_%s_%s.zip', $docTypeCode, now()->format('Y-m-d_Hi'));
+        $tempDir = storage_path('app/temp_exports');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $zipPath = $tempDir . '/' . $zipFileName;
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['success' => false, 'message' => 'Impossible de créer le fichier ZIP.'], 500);
+        }
+
+        $count = 0;
+        foreach ($students as $student) {
+            // Check only_passed filter if applicable (or if exporting ATT_REUSSITE)
+            if ($onlyPassed || $docTypeCode === 'ATT_REUSSITE') {
+                try {
+                    $pathway = $student->pathways()->latest()->first();
+                    $fId = $pathway?->filiere_id ?? 1;
+                    $annualData = app(\App\Services\Academic\DeliberationService::class)->calculateAnnualCompensation($fId, 1, $pathway?->year_level ?? 1);
+                    $studentRow = collect($annualData['students'] ?? [])->firstWhere('student_id', $student->id);
+                    $avg = floatval($studentRow['annual_average'] ?? 0);
+                    $dec = strtoupper(trim($studentRow['decision'] ?? ''));
+
+                    $isFraud = str_contains($dec, 'FRAUDE') || str_contains($dec, 'DISCIPLINAIRE');
+                    $isRedoublement = str_contains($dec, 'REDOUBLEMENT') || str_contains($dec, 'AJOURNÉ') || $dec === 'AJ';
+                    $isValidated = in_array($dec, ['V', 'V.COMP', 'VPC', 'VALIDÉ P. COMP (S1+S2)', 'VALIDÉ P. COMP', 'PASS_DETTES', 'VALIDE', 'ADMIS']);
+
+                    if ($avg < 10.0 || $isFraud || $isRedoublement || !$isValidated) {
+                        continue; // Strictly skip non-admitted students!
+                    }
+                } catch (\Throwable $e) {
+                    continue; // Skip if deliberation fails
+                }
+            }
+
+            $docRequest = DocumentRequest::create([
+                'student_id'       => $student->id,
+                'document_type_id' => $docType->id,
+                'status'           => 'ready',
+                'requested_at'     => now(),
+                'processed_at'     => now(),
+            ]);
+
+            try {
+                $genDoc = $this->documentRequestService->generateDocumentPdf($docRequest);
+                $filePath = Storage::disk('private')->path($genDoc->file_path);
+
+                if (file_exists($filePath)) {
+                    $stdName = \Illuminate\Support\Str::slug($student->user?->name ?? ($student->last_name . '_' . $student->first_name));
+                    $cleanPdfName = sprintf('%s_%s_%s.pdf', $docTypeCode, $student->cne ?? $student->id, $stdName);
+                    $zip->addFile($filePath, $cleanPdfName);
+                    $count++;
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Bulk ZIP PDF generation failed for student {$student->id}: " . $e->getMessage());
+            }
+        }
+
+        $zip->close();
+
+        if ($count === 0 || !file_exists($zipPath)) {
+            return response()->json(['success' => false, 'message' => 'Aucun document n\'a pu être généré.'], 400);
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
 }

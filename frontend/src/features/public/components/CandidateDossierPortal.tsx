@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   User, CheckCircle2, FileText, Download, Mail, Edit3,
-  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2
+  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2, X
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { cn } from '@shared/lib/utils';
@@ -77,8 +77,8 @@ export default function CandidateDossierPortal() {
             if (d && d.file_path) {
               docMap[type] = {
                 name: d.original_filename || `${type}_scanné.pdf`,
-                url: d.file_path,
-                isPdf: d.file_path.toLowerCase().includes('.pdf')
+                url: `/api/public/serve-document/${type}/${cand.cne || userCne}`,
+                isPdf: true
               };
             }
           });
@@ -331,11 +331,15 @@ export default function CandidateDossierPortal() {
                   <span>Identité & Coordonnées</span>
                 </h3>
                 <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom & Prénom:</span><span className="font-bold">{candidateData?.name || user?.name || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom & Prénom FR:</span><span className="font-bold">{candidateData?.name || (candidateData?.first_name ? `${candidateData.first_name} ${candidateData.last_name}` : user?.name) || 'Non renseigné'}</span></div>
+                  {(candidateData?.first_name_ar || candidateData?.last_name_ar) && (
+                    <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom & Prénom AR:</span><span className="font-bold font-serif">{candidateData.last_name_ar} {candidateData.first_name_ar}</span></div>
+                  )}
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Code MASSAR (CNE):</span><span className="font-mono font-bold text-blue-600">{candidateData?.cne || userCne || 'Non renseigné'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Carte CNIE:</span><span className="font-mono font-bold">{candidateData?.cin || userCin || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Date de Naissance:</span><span className="font-bold">{candidateData?.birth_date || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Date de Naissance:</span><span className="font-bold">{candidateData?.birth_date ? String(candidateData.birth_date).split('T')[0] : 'Non renseignée'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Lieu de Naissance:</span><span className="font-bold">{candidateData?.birth_city || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Adresse:</span><span className="font-bold truncate max-w-[200px]">{candidateData?.address || 'Non renseignée'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Email:</span><span className="font-bold">{candidateData?.email || user?.email || 'Non renseigné'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Téléphone:</span><span className="font-bold">{candidateData?.phone || 'Non renseigné'}</span></div>
                 </div>
@@ -350,43 +354,46 @@ export default function CandidateDossierPortal() {
                 <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Filière Affectée:</span><span className="font-bold text-amber-600">{candidateData?.filiere || 'Non renseignée'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Score de Sélection:</span><span className="font-extrabold text-emerald-600">{candidateData?.selection_score ? `${candidateData.selection_score} pts` : 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Type de Bac:</span><span className="font-bold">{candidateData?.bac_type || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Série du Bac:</span><span className="font-bold">{candidateData?.bac_type || candidateData?.bac_serie || 'Non renseignée'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Moyenne du Bac:</span><span className="font-bold">{candidateData?.bac_average ? `${candidateData.bac_average} / 20` : 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Mention Bac:</span><span className="font-bold">{candidateData?.bac_mention || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Année du Bac:</span><span className="font-bold">{candidateData?.bac_year || 'Non renseignée'}</span></div>
                   <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Statut Dossier:</span><span className={`font-bold ${candidateData?.is_accepted ? 'text-emerald-500' : 'text-amber-500'}`}>{candidateData?.status_label || 'En cours de traitement'}</span></div>
                 </div>
               </div>
 
               {/* Parents Details */}
-              {(candidateData?.father_name || candidateData?.mother_name) && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>Renseignements des Parents</span>
-                  </h3>
-                  <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                    {candidateData?.father_name && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom du Père:</span><span className="font-bold">{candidateData.father_name}</span></div>}
-                    {candidateData?.father_cin && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Père:</span><span className="font-mono font-bold">{candidateData.father_cin}</span></div>}
-                    {candidateData?.father_profession && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Profession Père:</span><span className="font-bold">{candidateData.father_profession}</span></div>}
-                    {candidateData?.mother_name && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom de la Mère:</span><span className="font-bold">{candidateData.mother_name}</span></div>}
-                    {candidateData?.mother_cin && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Mère:</span><span className="font-mono font-bold">{candidateData.mother_cin}</span></div>}
-                    {candidateData?.parent_phone && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Tél. Parent / Tuteur:</span><span className="font-mono font-bold">{candidateData.parent_phone}</span></div>}
-                  </div>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>Renseignements des Parents</span>
+                </h3>
+                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom du Père:</span><span className="font-bold">{candidateData?.father_name || (candidateData?.father_last_name_fr ? `${candidateData.father_last_name_fr} ${candidateData.father_first_name_fr}` : null) || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Père:</span><span className="font-mono font-bold">{candidateData?.father_cin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Profession Père:</span><span className="font-bold">{candidateData?.father_profession || candidateData?.father_job || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom de la Mère:</span><span className="font-bold">{candidateData?.mother_name || (candidateData?.mother_last_name_fr ? `${candidateData.mother_last_name_fr} ${candidateData.mother_first_name_fr}` : null) || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Mère:</span><span className="font-mono font-bold">{candidateData?.mother_cin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Profession Mère:</span><span className="font-bold">{candidateData?.mother_profession || candidateData?.mother_job || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Tél. Parent / Urgence:</span><span className="font-mono font-bold">{candidateData?.parent_phone || candidateData?.father_phone || 'Non renseigné'}</span></div>
                 </div>
-              )}
+              </div>
 
               {/* Medical Details */}
-              {(candidateData?.allergy_type || candidateData?.medication_used) && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-sm font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <span>Fiche Médicale</span>
-                  </h3>
-                  <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                    {candidateData?.allergy_type && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Allergies:</span><span className="font-bold">{candidateData.allergy_type}</span></div>}
-                    {candidateData?.medication_used && <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Traitement médical:</span><span className="font-bold">{candidateData.medication_used}</span></div>}
-                  </div>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span>Fiche Médicale & Prise en Charge</span>
+                </h3>
+                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Allergies:</span><span className="font-bold">{candidateData?.allergy_type || 'Aucune allergie déclarée'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Traitement médical:</span><span className="font-bold">{candidateData?.medication_used || 'Aucun traitement en cours'}</span></div>
+                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Situation d'handicap:</span><span className="font-bold">{candidateData?.has_disability ? 'Oui' : 'Non'}</span></div>
+                  {candidateData?.disability_details && (
+                    <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Détails handicap:</span><span className="font-bold">{candidateData.disability_details}</span></div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
@@ -420,7 +427,7 @@ export default function CandidateDossierPortal() {
                     type="button"
                     onClick={() => setPreviewModal({
                       title: 'Baccalauréat Original (Scanné PDF)',
-                      url: docFiles.bac?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`,
+                      url: docFiles.bac?.url || `/api/public/serve-document/bac/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
                       isPdf: true
                     })}
                     className="flex items-center justify-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
@@ -455,7 +462,9 @@ export default function CandidateDossierPortal() {
                     <FileText className="w-5 h-5 text-indigo-600" />
                     <span className="font-extrabold text-sm">CNIE (PDF, Max 10Mo)</span>
                   </div>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full">Enregistré</span>
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full">
+                    {docFiles.cnie ? 'Enregistré' : 'À téléverser'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-500">Carte d'Identité Nationale scannée recto-verso.</p>
                 <div className="flex items-center gap-2">
@@ -463,7 +472,7 @@ export default function CandidateDossierPortal() {
                     type="button"
                     onClick={() => setPreviewModal({
                       title: 'Carte d\'Identité Nationale (CNIE PDF)',
-                      url: docFiles.cnie?.url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`,
+                      url: docFiles.cnie?.url || `/api/public/serve-document/cnie/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
                       isPdf: true
                     })}
                     className="flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
@@ -482,6 +491,51 @@ export default function CandidateDossierPortal() {
                     <button
                       type="button"
                       onClick={() => handleDeleteFile('cnie')}
+                      className="p-2.5 bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 rounded-xl transition-all cursor-pointer"
+                      title="Supprimer ce document de PostgreSQL"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Relevé de Notes PDF */}
+              <div className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 bg-slate-50/50 dark:bg-slate-800/40">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-emerald-600" />
+                    <span className="font-extrabold text-sm">Relevé de Notes du Bac (PDF, Max 10Mo)</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full">
+                    {docFiles.releve_notes ? 'Enregistré' : 'À téléverser'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">Relevé de notes officiel du Baccalauréat (National et Régional).</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewModal({
+                      title: 'Relevé de Notes du Baccalauréat (PDF)',
+                      url: docFiles.releve_notes?.url || `/api/public/serve-document/releve_notes/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
+                      isPdf: true
+                    })}
+                    className="flex items-center justify-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
+                  >
+                    <Eye className="w-4 h-4 text-emerald-600" />
+                    <span>Voir le document</span>
+                  </button>
+
+                  <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
+                    <Upload className="w-4 h-4 text-emerald-600" />
+                    <span>{uploadingDoc === 'releve_notes' ? 'Téléversement...' : 'Changer le Relevé (PDF)'}</span>
+                    <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('releve_notes', e)} />
+                  </label>
+
+                  {docFiles.releve_notes && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile('releve_notes')}
                       className="p-2.5 bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 rounded-xl transition-all cursor-pointer"
                       title="Supprimer ce document de PostgreSQL"
                     >
@@ -585,56 +639,56 @@ export default function CandidateDossierPortal() {
 
 
 
-        {/* ── PREVIEW MODAL WITH INTERACTIVE PDF/IMAGE VIEWER ── */}
+        {/* ── PREVIEW MODAL WITH INTERACTIVE PDF/IMAGE VIEWER (FULLY RESPONSIVE HIGH-RES) ── */}
         {previewModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-3xl w-full shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-blue-600" />
-                  <span>Aperçu Interactif : {previewModal.title}</span>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-6xl w-[94vw] sm:w-[90vw] lg:w-[85vw] h-[90vh] sm:h-[88vh] shadow-2xl flex flex-col justify-between gap-3 sm:gap-4 my-auto mx-auto overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
+                <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate max-w-[80%]">
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
+                  <span className="truncate">Aperçu Haute-Définition : {previewModal.title}</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setPreviewModal(null)}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
                 >
-                  ✕
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
 
-              <div className="p-2 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-900 overflow-hidden flex flex-col items-center justify-center min-h-[440px]">
+              <div className="p-1.5 sm:p-2 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-950 overflow-hidden flex-1 flex flex-col items-center justify-center w-full min-h-0">
                 {previewModal.url ? (
                   previewModal.isPdf !== false ? (
                     <iframe
                       src={previewModal.url}
-                      className="w-full h-[460px] rounded-xl border-0 bg-white"
+                      className="w-full h-full rounded-xl border-0 bg-white"
                       title={previewModal.title}
                     />
                   ) : (
                     <img
                       src={previewModal.url}
                       alt={previewModal.title}
-                      className="max-h-[420px] max-w-full object-contain rounded-xl shadow-lg"
+                      className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
                     />
                   )
                 ) : (
                   <iframe
                     src={`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`}
-                    className="w-full h-[460px] rounded-xl border-0 bg-white"
+                    className="w-full h-full rounded-xl border-0 bg-white"
                     title="Aperçu Document PDF"
                   />
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                  ✅ Document prêt pour la vérification Scolarité
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 shrink-0">
+                <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" /> Document numérisé — Scolarité
                 </span>
                 <button
                   type="button"
                   onClick={() => setPreviewModal(null)}
-                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-xs px-5 py-2.5 rounded-xl cursor-pointer shadow-md hover:scale-105 transition-all"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-xs px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl cursor-pointer shadow-md hover:scale-105 active:scale-95 transition-all ml-auto"
                 >
                   Fermer l'aperçu
                 </button>

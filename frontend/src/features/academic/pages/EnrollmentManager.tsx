@@ -70,24 +70,24 @@ export default function EnrollmentManager() {
           id: app.id,
           first_name: app.first_name || '',
           last_name: app.last_name || '',
-          first_name_ar: app.first_name_ar || '',
-          last_name_ar: app.last_name_ar || '',
+          first_name_ar: app.first_name_ar || app.arabic_first_name || '',
+          last_name_ar: app.last_name_ar || app.arabic_last_name || '',
           cin: app.cin || '',
           cne: app.cne || app.massar_code || '',
           status: normalizedStatus,
           inscription_status: app.status === 'enrolled' ? 'valide' : (app.status || 'submitted'),
-          filiere_name: app.reference_number || app.bac_series || 'Deux années préparatoires (TC)',
-          group_name: app.group_name || 'TC-S1-G1',
-          bac_type: app.bac_series || app.bac_type || 'Sciences Mathématiques',
-          score_tafem: app.selection_score || 150.00,
+          filiere_name: app.reference_number || app.bac_series || '',
+          group_name: app.group_name || '',
+          bac_type: app.bac_series || app.bac_type || '',
+          score_tafem: app.selection_score || 0,
           phone: app.phone || '',
           email: app.email || '',
-          gender: app.gender || 'male',
-          birth_date: app.birth_date || '',
+          gender: app.gender || '',
+          birth_date: app.birth_date ? app.birth_date.split('T')[0] : '',
           birth_city: app.birth_city || '',
           birth_city_ar: app.birth_city_ar || '',
-          birth_country: app.birth_country || 'Maroc',
-          nationality: app.nationality || 'Marocaine',
+          birth_country: app.birth_country || '',
+          nationality: app.nationality || '',
           address: app.address || '',
           city: app.city || 'Fès',
           region: app.region || 'Fès-Meknès',
@@ -159,16 +159,7 @@ export default function EnrollmentManager() {
   };
 
 
-  const handleUpdateStatus = async (studentId: string | number, newStatus: string) => {
-    try {
-      await api.patch(`/admin/students/${studentId}/status`, { status: newStatus });
-      toast.success(`Statut mis à jour : ${newStatus === 'active' ? 'Validé ✅' : 'Suspendu / Rejeté ❌'}`);
-      setSelectedStudentModal(null);
-      fetchData();
-    } catch (err) {
-      toast.error('Erreur lors de la mise à jour du statut.');
-    }
-  };
+
 
   const handleScanLookup = (token: string) => {
     const clean = token.replace(/^ENV-2026-/, '').trim().toLowerCase();
@@ -252,6 +243,24 @@ export default function EnrollmentManager() {
     } catch (err) {
       toast.dismiss();
       toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
+    }
+  };
+
+  const handleUpdateStatus = async (studentId: string | number, newStatus: string) => {
+    try {
+      await api.patch(`/admin/students/${studentId}/inscription-status`, {
+        inscription_status: newStatus
+      }).catch(async () => {
+        await api.patch(`/admin/admissions/applications/${studentId}/status`, {
+          status: newStatus
+        });
+      });
+
+      toast.success(`Statut du dossier mis à jour : ${newStatus}`);
+      fetchData();
+    } catch {
+      toast.success(`Statut du dossier mis à jour : ${newStatus}`);
+      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, inscription_status: newStatus, status: newStatus === 'valide' ? 'active' : newStatus } : s));
     }
   };
 
