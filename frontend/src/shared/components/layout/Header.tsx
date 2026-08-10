@@ -71,8 +71,17 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
           </div>
         )}
 
-        {/* Command Search Bar Trigger */}
-        <div className="flex-1 max-w-md">
+        {/* Mobile Search Icon Button */}
+        <button
+          onClick={onOpenCommand}
+          className="sm:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          aria-label="Recherche"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+
+        {/* Command Search Bar Trigger (Visible on sm+ screens) */}
+        <div className="hidden sm:block flex-1 max-w-md">
           <div className="relative group">
             <button
               onClick={onOpenCommand}

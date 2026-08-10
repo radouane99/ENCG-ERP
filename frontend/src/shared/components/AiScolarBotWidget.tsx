@@ -76,18 +76,18 @@ export default function AiScolarBotWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div className="fixed bottom-20 sm:bottom-6 end-4 sm:end-6 z-40 font-sans">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="px-5 py-3.5 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#0f2863] text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-2.5 cursor-pointer border border-amber-400/40 group"
+          className="px-4 sm:px-5 py-3 sm:py-3.5 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#0f2863] text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-2 cursor-pointer border border-amber-400/40 group"
         >
           <div className="relative">
-            <Bot className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+            <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
           </div>
-          <span className="font-black text-xs uppercase tracking-wider">ScolarBot IA — الدعم الفوري</span>
+          <span className="font-black text-[11px] sm:text-xs uppercase tracking-wider">ScolarBot IA — الدعم الفوري</span>
         </button>
       )}
 

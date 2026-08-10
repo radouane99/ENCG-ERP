@@ -5,8 +5,8 @@
     <title>@yield('title', 'Document')</title>
     <style>
         @page {
-            size: A4;
-            margin: 10mm; /* Standard margin */
+            size: A4 portrait;
+            margin: 8mm 10mm; /* Clean A4 printable margin */
         }
         tr {
             page-break-inside: avoid;
@@ -22,7 +22,7 @@
         }
         .page-container {
             width: 100%;
-            height: 258mm;
+            height: 278mm;
             border: 4px double #002e5b;
             border-collapse: collapse;
         }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   User, CheckCircle2, FileText, Download, Mail, Edit3,
   Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2, X
@@ -640,7 +641,7 @@ export default function CandidateDossierPortal() {
 
 
         {/* ── PREVIEW MODAL WITH INTERACTIVE PDF/IMAGE VIEWER (FULLY RESPONSIVE HIGH-RES) ── */}
-        {previewModal && (
+        {previewModal && createPortal(
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-6xl w-[94vw] sm:w-[90vw] lg:w-[85vw] h-[90vh] sm:h-[88vh] shadow-2xl flex flex-col justify-between gap-3 sm:gap-4 my-auto mx-auto overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
@@ -694,7 +695,8 @@ export default function CandidateDossierPortal() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
       </div>

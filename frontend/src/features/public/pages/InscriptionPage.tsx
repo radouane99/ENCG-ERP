@@ -604,53 +604,80 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
           mother_first = parts.slice(1).join(' ');
         }
 
-        setFormData(prev => ({
-          ...prev,
-          cne: cand.cne || cne || prev.cne,
-          cin: cand.cin || cin || prev.cin,
-          email: cand.email || email || prev.email,
-          phone: cand.phone || prev.phone,
-          last_name_fr: cand.last_name || prev.last_name_fr,
-          first_name_fr: cand.first_name || prev.first_name_fr,
-          last_name_ar: cand.last_name_ar || prev.last_name_ar,
-          first_name_ar: cand.first_name_ar || prev.first_name_ar,
-          birth_date: cand.birth_date ? String(cand.birth_date).split('T')[0] : prev.birth_date,
-          birth_city_fr: cand.birth_city || prev.birth_city_fr,
-          birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
-          gender: cand.gender || prev.gender,
-          family_status: cand.family_status || prev.family_status,
-          nationality: cand.nationality || prev.nationality,
-          address_fr: cand.address || prev.address_fr,
-          address_ar: cand.address_ar || prev.address_ar,
-          region: cand.region || prev.region,
-          province: cand.city || prev.province,
-          father_last_name_fr: father_last || prev.father_last_name_fr,
-          father_first_name_fr: father_first || prev.father_first_name_fr,
-          father_last_name_ar: cand.father_name_ar || prev.father_last_name_ar,
-          father_cin: cand.father_cin || prev.father_cin,
-          father_phone: cand.father_phone || prev.father_phone,
-          father_job: cand.father_profession || prev.father_job,
-          mother_last_name_fr: mother_last || prev.mother_last_name_fr,
-          mother_first_name_fr: mother_first || prev.mother_first_name_fr,
-          mother_last_name_ar: cand.mother_name_ar || prev.mother_last_name_ar,
-          mother_cin: cand.mother_cin || prev.mother_cin,
-          mother_phone: cand.mother_phone || prev.mother_phone,
-          mother_job: cand.mother_profession || prev.mother_job,
-          parent_phone: cand.parent_phone || prev.parent_phone,
-          emergency_contact_name: cand.emergency_contact_name || prev.emergency_contact_name,
-          emergency_contact_phone: cand.emergency_contact_phone || prev.emergency_contact_phone,
-          allergy_type: cand.allergy_type || prev.allergy_type,
-          medication_used: cand.medication_used || prev.medication_used,
-          treating_doctor_info: cand.treating_doctor_info || prev.treating_doctor_info,
-          has_medical_followup: cand.has_medical_followup || prev.has_medical_followup,
-          has_disability: cand.has_disability || prev.has_disability,
-          disability_details: cand.disability_details || prev.disability_details,
-          filiere: cand.filiere || prev.filiere,
-          bac_average: cand.bac_average ? String(cand.bac_average) : prev.bac_average,
-          bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
-          bac_mention: cand.bac_mention || prev.bac_mention,
-          bac_year: cand.bac_year || prev.bac_year,
-        }));
+        const docs = cand.documents || {};
+        const bacDoc = docs.bac || docs.BAC;
+        const cnieDoc = docs.cnie || docs.cin || docs.CIN || docs.CNIE || docs.cin_recto_verso;
+        const releveDoc = docs.releve_notes || docs.releve || docs.RELEVE;
+
+        const activeCne = cand.cne || cne;
+        const activeCin = cand.cin || cin;
+
+        setFormData(prev => {
+          const finalCne = activeCne || prev.cne;
+          const finalCin = activeCin || prev.cin;
+          return {
+            ...prev,
+            cne: finalCne,
+            cin: finalCin,
+            email: cand.email || email || prev.email,
+            phone: cand.phone || prev.phone,
+            last_name_fr: cand.last_name || prev.last_name_fr,
+            first_name_fr: cand.first_name || prev.first_name_fr,
+            last_name_ar: cand.last_name_ar || prev.last_name_ar,
+            first_name_ar: cand.first_name_ar || prev.first_name_ar,
+            birth_date: cand.birth_date ? String(cand.birth_date).split('T')[0] : prev.birth_date,
+            birth_city_fr: cand.birth_city || prev.birth_city_fr,
+            birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
+            gender: cand.gender || prev.gender,
+            family_status: cand.family_status || prev.family_status,
+            nationality: cand.nationality || prev.nationality,
+            address_fr: cand.address || prev.address_fr,
+            address_ar: cand.address_ar || prev.address_ar,
+            region: cand.region || prev.region,
+            province: cand.city || prev.province,
+            father_last_name_fr: father_last || prev.father_last_name_fr,
+            father_first_name_fr: father_first || prev.father_first_name_fr,
+            father_last_name_ar: cand.father_name_ar || prev.father_last_name_ar,
+            father_cin: cand.father_cin || prev.father_cin,
+            father_phone: cand.father_phone || prev.father_phone,
+            father_job: cand.father_profession || prev.father_job,
+            mother_last_name_fr: mother_last || prev.mother_last_name_fr,
+            mother_first_name_fr: mother_first || prev.mother_first_name_fr,
+            mother_last_name_ar: cand.mother_name_ar || prev.mother_last_name_ar,
+            mother_cin: cand.mother_cin || prev.mother_cin,
+            mother_phone: cand.mother_phone || prev.mother_phone,
+            mother_job: cand.mother_profession || prev.mother_job,
+            parent_phone: cand.parent_phone || prev.parent_phone,
+            emergency_contact_name: cand.emergency_contact_name || prev.emergency_contact_name,
+            emergency_contact_phone: cand.emergency_contact_phone || prev.emergency_contact_phone,
+            allergy_type: cand.allergy_type || prev.allergy_type,
+            medication_used: cand.medication_used || prev.medication_used,
+            treating_doctor_info: cand.treating_doctor_info || prev.treating_doctor_info,
+            has_medical_followup: cand.has_medical_followup || prev.has_medical_followup,
+            has_disability: cand.has_disability || prev.has_disability,
+            disability_details: cand.disability_details || prev.disability_details,
+            filiere: cand.filiere || prev.filiere,
+            bac_average: cand.bac_average ? String(cand.bac_average) : prev.bac_average,
+            bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
+            bac_mention: cand.bac_mention || prev.bac_mention,
+            bac_year: cand.bac_year || prev.bac_year,
+
+            // Documents numérisés pré-existants
+            bac_pdf_name: bacDoc?.original_filename || (bacDoc?.file_path ? `BAC_${finalCne}.pdf` : prev.bac_pdf_name),
+            bac_file_url: bacDoc?.file_path || `/api/public/serve-document/bac/${encodeURIComponent(finalCne || finalCin)}`,
+            bac_has_existing: Boolean(bacDoc?.file_path || cand.documents?.bac),
+
+            cnie_pdf_name: cnieDoc?.original_filename || (cnieDoc?.file_path ? `CNIE_${finalCne}.pdf` : prev.cnie_pdf_name),
+            cnie_file_url: cnieDoc?.file_path || `/api/public/serve-document/cnie/${encodeURIComponent(finalCne || finalCin)}`,
+            cnie_has_existing: Boolean(cnieDoc?.file_path || cand.documents?.cnie),
+
+            releve_notes_pdf_name: releveDoc?.original_filename || (releveDoc?.file_path ? `RELEVE_${finalCne}.pdf` : prev.releve_notes_pdf_name),
+            releve_notes_file_url: releveDoc?.file_path || `/api/public/serve-document/releve_notes/${encodeURIComponent(finalCne || finalCin)}`,
+            releve_notes_has_existing: Boolean(releveDoc?.file_path || cand.documents?.releve_notes),
+
+            photo_url: cand.photo_url || (cand.photo_path ? `/storage/${cand.photo_path.replace(/^\/?storage\//, '')}` : prev.photo_url),
+          };
+        });
       })
       .catch(() => { });
   }, [editMode, user]);
@@ -1308,7 +1335,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
   const pct = ((step - 1) / 4) * 100;
 
-
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen transition-colors duration-500 selection:bg-[#0f2863]/40 text-slate-900 dark:text-white bg-slate-50 dark:bg-[#030711]", t.font)}>
 
@@ -1325,28 +1351,28 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       <div className="relative z-10 min-h-screen flex flex-col">
 
         {/* ── Top Nav ── */}
-        <nav className="flex items-center justify-between px-6 sm:px-12 py-6 border-b border-slate-200 dark:border-white/[0.06]">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg p-1 group-hover:scale-105 transition-transform border border-slate-100 dark:border-none">
+        <nav className="flex flex-wrap sm:flex-nowrap items-center justify-between px-4 sm:px-12 py-3 sm:py-6 border-b border-slate-200 dark:border-white/[0.06] gap-2">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-xl flex items-center justify-center shadow-lg p-1 group-hover:scale-105 transition-transform border border-slate-100 dark:border-none">
               <img src="/logo-encg.png" alt="ENCG Fès" className="w-full h-full object-contain"
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
             </div>
             <div>
-              <p className="font-black text-sm text-slate-900 dark:text-white leading-tight">ENCG Fès</p>
-              <p className="text-[9px] text-slate-500 leading-tight tracking-wider uppercase">École Nationale de Commerce</p>
+              <p className="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">ENCG Fès</p>
+              <p className="text-[8px] sm:text-[9px] text-slate-500 leading-tight tracking-wider uppercase hidden sm:block">École Nationale de Commerce</p>
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Custom Glassmorphism Language Dropdown */}
             <div ref={langRef} className="relative">
               <button
                 type="button"
                 onClick={() => setLangOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer"
               >
                 <span className="text-sm leading-none">{currentLangObj.flag}</span>
-                <span>{currentLangObj.label}</span>
+                <span className="hidden sm:inline">{currentLangObj.label}</span>
                 <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform duration-200", langOpen && "rotate-180")} />
               </button>
 
@@ -1388,7 +1414,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             <button
               type="button"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl text-slate-500 dark:text-slate-400 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shadow-xs cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-500 dark:text-slate-400 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shadow-xs cursor-pointer"
               title="Changer de thème"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
@@ -1396,9 +1422,9 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
             <button
               onClick={() => setShowTrackingModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg font-black text-xs hover:bg-indigo-100 transition-colors cursor-pointer"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg font-black text-xs hover:bg-indigo-100 transition-colors cursor-pointer"
             >
-              <Search className="w-3.5 h-3.5" /> {lang === 'ar' ? 'تتبع ملفي' : 'Suivre mon Dossier'}
+              <Search className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{lang === 'ar' ? 'تتبع ملفي' : 'Suivre mon Dossier'}</span><span className="sm:hidden">Suivi</span>
             </button>
 
             <Link to="/login" className="hidden sm:flex text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors items-center gap-1.5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 hover:border-slate-300 dark:hover:border-white/25 shadow-xs">
@@ -1408,10 +1434,10 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         </nav>
 
         {/* ── Main ── */}
-        <main className="flex-1 flex flex-col items-center py-10 px-4 sm:px-6">
+        <main className="flex-1 flex flex-col items-center py-4 sm:py-10 px-3 sm:px-6 pb-32 sm:pb-12">
 
-          <div className="text-center mb-10 max-w-2xl">
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">
+          <div className="text-center mb-6 sm:mb-10 max-w-2xl">
+            <h1 className="text-2xl sm:text-5xl font-black tracking-tight mb-2 sm:mb-4">
               {editMode ? (
                 isRTL ? (
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d] font-serif">تحديث ملف التسجيل — ENCG Fès</span>
@@ -1424,7 +1450,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                 <>Inscription <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#09193d]">Étudiante</span></>
               )}
             </h1>
-            <p className={cn("text-slate-600 dark:text-slate-400 text-base sm:text-lg leading-relaxed font-medium", isRTL && "font-serif text-lg")}>
+            <p className={cn("text-slate-600 dark:text-slate-400 text-xs sm:text-lg leading-relaxed font-medium", isRTL && "font-serif text-sm sm:text-lg")}>
               {editMode
                 ? (isRTL ? 'جميع بياناتك السابقة محفوظة ومكتوبة أوتوماتيكياً. تصفح الخطوات الـ 5 وعدل ما ترغب فيه قبل الحفظ.' : 'Toutes vos données enregistrées ont été conservées et pré-remplies. Parcourez les 5 étapes, modifiez si besoin, puis enregistrez la mise à jour.')
                 : (isRTL ? 'أكمل الاستمارة في 5 خطوات بسيطة لتقديم ملفك الرسمي لمؤسسة ENCG فاس.' : 'Complétez le formulaire en 5 étapes simples pour soumettre votre dossier officiel à l\'ENCG Fès.')}
@@ -1432,8 +1458,30 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
           </div>
 
 
-          {/* ── Step Indicator ── */}
-          <div className="w-full max-w-3xl mb-10">
+          {/* ── Mobile Step Bar (< sm screens) ── */}
+          <div className="sm:hidden w-full max-w-xl mb-6 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-white">
+              <span className="flex items-center gap-2 truncate">
+                <span className="w-6 h-6 rounded-full bg-[#0f2863] text-white flex items-center justify-center text-[10px] shrink-0">
+                  {step}
+                </span>
+                <span className="truncate">{isRTL ? STEPS[step - 1].labelAr : STEPS[step - 1].labelFr}</span>
+              </span>
+              <span className="text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-[10px] shrink-0 font-bold">
+                Étape {step} / 5
+              </span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#0f2863] via-blue-600 to-indigo-600 rounded-full transition-all duration-500" 
+                style={{ width: `${(step / 5) * 100}%` }} 
+              />
+            </div>
+          </div>
+
+
+          {/* ── Desktop Step Indicator (>= sm screens) ── */}
+          <div className="hidden sm:block w-full max-w-5xl mb-10">
             <div className="relative flex items-start justify-between">
               <div className={cn("absolute top-6 h-[3px] bg-slate-200 dark:bg-white/10 rounded-full", isRTL ? "right-[calc(16%)] left-[calc(16%)]" : "left-[calc(16%)] right-[calc(16%)]")}>
                 <div className={cn("h-full bg-gradient-to-r from-[#0f2863] via-blue-600 to-[#162e74] rounded-full transition-all duration-700 ease-out shadow-xs", isRTL ? "float-right" : "")} style={{ width: `${pct}%` }} />
@@ -1455,10 +1503,10 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     )}
                       onClick={() => {
                         if (ocrExtracting) {
-                          toast.warning(isRTL ? '⏳ يرجى الانتظار حتى الانتهاء من استخراج البيانات بالذكاء الاصطناعي...' : '⏳ Extraction des données en cours... Veuillez patienter.');
+                          toast.warning("⏳ Extraction IA en cours, veuillez patienter...");
                           return;
                         }
-                        if (id < step) {
+                        if (id < step || editMode) {
                           setStep(id);
                         } else if (id > step) {
                           let canAdvance = true;
@@ -1488,18 +1536,18 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
           {/* ── Error Message ── */}
           {errorMsg && (
-            <div className="w-full max-w-2xl mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-2">
+            <div className="w-full max-w-4xl mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-2">
               <Shield className="w-4 h-4" /> {errorMsg}
             </div>
           )}
 
           {/* ── Form Card ── */}
-          <div className="w-full max-w-4xl xl:max-w-5xl">
-            <div className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden transition-colors">
+          <div className="w-full max-w-6xl xl:max-w-7xl">
+            <div className="rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden transition-colors">
 
               <div className="h-1 bg-gradient-to-r from-[#E60028]/0 via-[#E60028] to-[#E60028]/0" />
 
-              <form onSubmit={onSubmit} className="p-6 sm:p-10">
+              <form onSubmit={onSubmit} className="p-4 sm:p-10 space-y-6">
 
                 {/* ═══════════ STEP 1: DOCUMENTS & AI OCR ═══════════ */}
                 {step === 1 && (
@@ -1578,144 +1626,193 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
                     <SectionCard title={isRTL ? '1. شهادة البكالوريا، بيان النقاط والبطاقة الوطنية (PDF/صورة)' : '1. Scans du Baccalauréat, Relevé de Notes & CNIE (PDF / Image Max 10Mo)'} icon={FileText} isRtl={isRtl}>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original (PDF/Image)</span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                        {/* 1. Baccalauréat Card */}
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original</span>
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                            </div>
+
+                            {((formData as any).bac_has_existing || formData.bac_pdf_name) && (
+                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
+                                <span className="flex items-center gap-1 truncate">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">{formData.bac_pdf_name || 'BAC_Enregistre.pdf'}</span>
+                                </span>
+                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = (formData as any).bac_file_url || `/api/public/serve-document/bac/${encodeURIComponent(formData.cne || formData.cin || '')}`;
+                                const isImg = (formData as any).bac_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.bac_pdf_name || '');
+                                setPdfPreviewModal({
+                                  title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Document Scanné Enregistré'}`,
+                                  url,
+                                  isImage: isImg
+                                });
+                              }}
+                              className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                            </button>
                           </div>
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-                                const objectUrl = URL.createObjectURL(file);
-                                setFormData(prev => ({
-                                  ...prev,
-                                  bac_pdf_name: file.name,
-                                  bac_file_url: objectUrl,
-                                  bac_is_image: isImg
-                                }));
-                                handleOcrDocumentUpload('bac', file);
-                              }
-                            }}
-                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                          />
-                          {formData.bac_pdf_name && (
-                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.bac_pdf_name}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const url = (formData as any).bac_file_url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(formData.cne || 'N142088916')}`;
-                              const isImg = (formData as any).bac_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.bac_pdf_name || '');
-                              setPdfPreviewModal({
-                                title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Aperçu Document'}`,
-                                url,
-                                isImage: isImg
-                              });
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-bold text-[#0f2863] dark:text-blue-400 hover:underline pt-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
-                          </button>
+
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500">
+                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
+                            </label>
+                            <input
+                              type="file"
+                              accept=".pdf,image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  const objectUrl = URL.createObjectURL(file);
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    bac_pdf_name: file.name,
+                                    bac_file_url: objectUrl,
+                                    bac_is_image: isImg,
+                                    bac_has_existing: true
+                                  }));
+                                  handleOcrDocumentUpload('bac', file);
+                                }
+                              }}
+                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                            />
+                          </div>
                         </div>
 
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso (PDF/Image)</span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                        {/* 2. CNIE Card */}
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso</span>
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                            </div>
+
+                            {((formData as any).cnie_has_existing || formData.cnie_pdf_name) && (
+                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
+                                <span className="flex items-center gap-1 truncate">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">{formData.cnie_pdf_name || 'CNIE_Enregistree.pdf'}</span>
+                                </span>
+                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = (formData as any).cnie_file_url || `/api/public/serve-document/cnie/${encodeURIComponent(formData.cne || formData.cin || '')}`;
+                                const isImg = (formData as any).cnie_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.cnie_pdf_name || '');
+                                setPdfPreviewModal({
+                                  title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Document Scanné Enregistré'}`,
+                                  url,
+                                  isImage: isImg
+                                });
+                              }}
+                              className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                            </button>
                           </div>
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-                                const objectUrl = URL.createObjectURL(file);
-                                setFormData(prev => ({
-                                  ...prev,
-                                  cnie_pdf_name: file.name,
-                                  cnie_file_url: objectUrl,
-                                  cnie_is_image: isImg
-                                }));
-                                handleOcrDocumentUpload('cnie', file);
-                              }
-                            }}
-                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                          />
-                          {formData.cnie_pdf_name && (
-                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.cnie_pdf_name}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const url = (formData as any).cnie_file_url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(formData.cne || 'N142088916')}`;
-                              const isImg = (formData as any).cnie_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.cnie_pdf_name || '');
-                              setPdfPreviewModal({
-                                title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Aperçu Document'}`,
-                                url,
-                                isImage: isImg
-                              });
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
-                          </button>
+
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500">
+                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
+                            </label>
+                            <input
+                              type="file"
+                              accept=".pdf,image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  const objectUrl = URL.createObjectURL(file);
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    cnie_pdf_name: file.name,
+                                    cnie_file_url: objectUrl,
+                                    cnie_is_image: isImg,
+                                    cnie_has_existing: true
+                                  }));
+                                  handleOcrDocumentUpload('cnie', file);
+                                }
+                              }}
+                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                            />
+                          </div>
                         </div>
 
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">
-                              {isRTL ? 'بيان نقاط البكالوريا (PDF/صورة)' : 'Relevé de Notes du Bac (PDF/Image)'}
-                            </span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                        {/* 3. Relevé de Notes Card */}
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Relevé de Notes du Bac</span>
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                            </div>
+
+                            {((formData as any).releve_notes_has_existing || formData.releve_notes_pdf_name) && (
+                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
+                                <span className="flex items-center gap-1 truncate">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">{formData.releve_notes_pdf_name || 'RELEVE_Enregistre.pdf'}</span>
+                                </span>
+                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = (formData as any).releve_notes_file_url || `/api/public/serve-document/releve_notes/${encodeURIComponent(formData.cne || formData.cin || '')}`;
+                                const isImg = (formData as any).releve_notes_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.releve_notes_pdf_name || '');
+                                setPdfPreviewModal({
+                                  title: `Relevé de Notes du Baccalauréat — ${formData.releve_notes_pdf_name || 'Document Scanné Enregistré'}`,
+                                  url,
+                                  isImage: isImg
+                                });
+                              }}
+                              className="w-full py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                            </button>
                           </div>
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-                                const objectUrl = URL.createObjectURL(file);
-                                setFormData(prev => ({
-                                  ...prev,
-                                  releve_notes_pdf_name: file.name,
-                                  releve_notes_file_url: objectUrl,
-                                  releve_notes_is_image: isImg
-                                }));
-                                handleOcrDocumentUpload('releve_notes', file);
-                              }
-                            }}
-                            className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                          />
-                          {formData.releve_notes_pdf_name && (
-                            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {formData.releve_notes_pdf_name}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const url = (formData as any).releve_notes_file_url || `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(formData.cne || 'N142088916')}`;
-                              const isImg = (formData as any).releve_notes_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.releve_notes_pdf_name || '');
-                              setPdfPreviewModal({
-                                title: `Relevé de Notes du Baccalauréat — ${formData.releve_notes_pdf_name || 'Aperçu Document'}`,
-                                url,
-                                isImage: isImg
-                              });
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline pt-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Voir l'Aperçu Document (PDF/Image)
-                          </button>
+
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500">
+                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
+                            </label>
+                            <input
+                              type="file"
+                              accept=".pdf,image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  const objectUrl = URL.createObjectURL(file);
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    releve_notes_pdf_name: file.name,
+                                    releve_notes_file_url: objectUrl,
+                                    releve_notes_is_image: isImg,
+                                    releve_notes_has_existing: true
+                                  }));
+                                  handleOcrDocumentUpload('releve_notes', file);
+                                }
+                              }}
+                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
+                            />
+                          </div>
                         </div>
                       </div>
                     </SectionCard>
@@ -2495,23 +2592,23 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                 )}
 
                 {/* ── Navigation ── */}
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-white/[0.06]">
+                <div className="flex items-center justify-between gap-2 mt-8 pt-6 border-t border-slate-200 dark:border-white/[0.06]">
                   <button
                     type="button"
                     onClick={goPrev}
                     className={cn(
-                      'flex items-center gap-2 px-5 sm:px-6 py-3 rounded-2xl font-bold text-base border transition-all cursor-pointer shadow-xs',
+                      'flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-base border transition-all cursor-pointer shadow-xs',
                       step === 1
                         ? 'opacity-0 pointer-events-none'
                         : 'border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white',
-                      isRTL && 'font-serif text-lg'
+                      isRTL && 'font-serif text-sm sm:text-lg'
                     )}
                   >
-                    {isRTL ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                    {isRTL ? <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />}
                     <span className="inline">{t.btnPrev}</span>
                   </button>
 
-                  <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2">
                     {([1, 2, 3, 4, 5] as StepId[]).map(i => (
                       <span key={i} className={cn(
                         'rounded-full transition-all duration-300',
@@ -2524,7 +2621,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                     type="submit"
                     disabled={submitting || ocrExtracting}
                     className={cn(
-                      "flex items-center gap-2.5 text-white px-7 sm:px-9 py-3.5 rounded-2xl font-black text-base sm:text-lg tracking-wide transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer",
+                      "flex items-center gap-1.5 sm:gap-2.5 text-white px-4 sm:px-9 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-xs sm:text-lg tracking-wide transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer",
                       ocrExtracting
                         ? "bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 animate-pulse cursor-wait shadow-amber-600/30 ring-4 ring-amber-500/20"
                         : "bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#09193d] hover:opacity-95 shadow-[#0f2863]/25",
@@ -2965,7 +3062,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-\\[fadeIn_0\\.3s_ease\\] { animation: fadeIn 0.3s ease both; }
+        .animate-fadeIn { animation: fadeIn 0.3s ease both; }
       `}</style>
     </div>
   );

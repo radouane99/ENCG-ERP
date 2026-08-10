@@ -435,6 +435,11 @@ class AppServiceProvider extends ServiceProvider
      */
     private function bootBladeDirectives(): void
     {
+        // Directive @ar pour le réagencement et la connexion des lettres arabes dans DomPDF
+        Blade::directive('ar', function ($expression) {
+            return "<?php echo \App\Helpers\ArabicGlyphReshaper::reshape($expression); ?>";
+        });
+
         // Directive @production
         Blade::directive('production', function () {
             return "<?php if (app()->environment('production')): ?>";

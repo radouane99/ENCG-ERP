@@ -835,8 +835,10 @@ class AdmissionController extends Controller
             // C) Mettre à jour la table User liée
             if ($student->user) {
                 $userUpdate = [];
-                if ($firstName) $userUpdate['first_name'] = $firstName;
-                if ($lastName)  $userUpdate['last_name']  = $lastName;
+                if ($firstName)   $userUpdate['first_name']    = $firstName;
+                if ($lastName)    $userUpdate['last_name']     = $lastName;
+                if ($firstNameAr) $userUpdate['first_name_ar'] = $firstNameAr;
+                if ($lastNameAr)  $userUpdate['last_name_ar']  = $lastNameAr;
                 if (isset($input['phone'])) $userUpdate['phone'] = $input['phone'];
                 if (isset($input['email'])) {
                     $emailExists = User::where('email', $input['email'])

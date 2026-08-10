@@ -996,4 +996,491 @@ class PdfExportController extends Controller
         return $this->getPdfInstance('pdf.autorisation_salle', $data)
             ->download(sprintf('Autorisation_Salle_%s_%s.pdf', \Illuminate\Str::slug($roomName), $id));
     }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     *  📜 ENGAGEMENT (تعهد) — Formulaire d'engagement officiel ENCG Fès
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function engagementPdf(Request $request)
+    {
+        $studentId = $request->query('student_id');
+        $cne = $request->query('cne');
+        $cin = $request->query('cin');
+
+        $student = null;
+        if ($cne) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->where('cne', $cne)->first();
+        }
+        if (!$student && $cin) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->whereHas('user', fn($q) => $q->where('cin', $cin))->first();
+        }
+        if (!$student && $studentId) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->find($studentId);
+        }
+
+        $user = $student?->user;
+        $application = \App\Models\Application::where('cne', $cne ?: $student?->cne)
+            ->orWhere('cin', $cin ?: $user?->cin)
+            ->latest('id')
+            ->first();
+
+        if (!$student && !$user && !$application) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->first();
+            $user = $student?->user;
+        }
+
+        $lastName = strtoupper($user?->last_name ?? $student?->last_name ?? $application?->last_name ?? '');
+        $firstName = strtoupper($user?->first_name ?? $student?->first_name ?? $application?->first_name ?? '');
+        $studentName = trim($lastName . ' ' . $firstName);
+
+        $pathway = $student?->pathways->sortByDesc('id')->first();
+        $filiere = $pathway?->filiere;
+        $academicYear = $pathway?->academicYear;
+
+        // Determine semester from current level
+        $level = $pathway?->level ?? 1;
+        $semester = 'S' . (($level - 1) * 2 + 1);
+        $semesterLabels = [
+            1 => '1ère année', 2 => '2ème année', 3 => '3ème année',
+            4 => '4ème année', 5 => '5ème année',
+        ];
+        $semesterLabel = $semesterLabels[$level] ?? ($level . 'ème année');
+
+        // 🖋️ Empreinte Numérique Horodatée & Security Hash
+        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
+        $rawSecString = ($cne ?: $student?->cne ?: $application?->cne ?: 'N/A') . '|' . ($cin ?: $user?->cin ?: $application?->cin ?: 'N/A') . '|' . $timestamp . '|ENCG_FES_SEC_KEY_2026';
+        $digitalHash = 'ENCG-SEC-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
+        $verifyUrl = url('/verify/document/' . $digitalHash);
+
+        // Generate Base64 QR Code
+        try {
+            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+        }
+
+        $logoPath = public_path('logo-encg.png');
+        if (!file_exists($logoPath)) {
+            $logoPath = public_path('images/encg_logo.png');
+        }
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        // Resolve student photo
+        $photoBase64 = null;
+        $photoPath = null;
+        $photoRelPath = null;
+
+        if ($student) {
+            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
+                ->where('student_id', $student->id)
+                ->whereIn('type', ['photo', 'PHOTO', 'photo_identite'])
+                ->latest('id')
+                ->first();
+            $photoRelPath = $photoDoc?->file_path ?? $student->photo_path;
+        }
+
+        if (!$photoRelPath && ($cne || $student?->cne)) {
+            $appDoc = \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne ?: $student?->cne)->first();
+            $photoRelPath = $appDoc?->photo_path;
+        }
+
+        if ($photoRelPath) {
+            $cleanRel = ltrim(preg_replace('/^\/?storage\//', '', $photoRelPath), '/');
+            $candidates = [
+                $photoRelPath,
+                storage_path('app/public/' . $cleanRel),
+                storage_path('app/private/' . $cleanRel),
+                storage_path('app/' . $cleanRel),
+                public_path($photoRelPath),
+                public_path('storage/' . $cleanRel),
+                public_path($cleanRel),
+            ];
+
+            foreach ($candidates as $cand) {
+                if ($cand && file_exists($cand) && !is_dir($cand)) {
+                    $photoPath = $cand;
+                    $mime = mime_content_type($cand) ?: 'image/jpeg';
+                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
+                    break;
+                }
+            }
+        }
+
+        if (!$photoBase64) {
+            $avatarSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260" fill="none"><rect width="200" height="260" rx="8" fill="#F1F5F9"/><circle cx="100" cy="95" r="42" fill="#CBD5E1"/><path d="M30 220C30 175 60 160 100 160C140 160 170 175 170 220V240H30V220Z" fill="#94A3B8"/><circle cx="100" cy="92" r="34" fill="#E2E8F0"/><path d="M45 220C45 185 70 172 100 172C130 172 155 185 155 220V235H45V220Z" fill="#0F2863"/></svg>';
+            $photoBase64 = 'data:image/svg+xml;base64,' . base64_encode($avatarSvg);
+        }
+
+        $data = [
+            'studentName'         => $studentName,
+            'birthDate'           => ($student?->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d / m / Y') : ($application?->birth_date ? \Carbon\Carbon::parse($application->birth_date)->format('d / m / Y') : '')),
+            'birthCity'           => $student?->birth_city ?? $application?->birth_city ?? '',
+            'cin'                 => $cin ?: $user?->cin ?: $student?->cin ?: $application?->cin ?: '',
+            'cne'                 => $cne ?: $student?->cne ?: $application?->cne ?: '',
+            'semester'            => $semester,
+            'semesterLabel'       => $semesterLabel,
+            'filiere'             => $filiere?->name ?? 'Deux années préparatoires (TC)',
+            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
+            'currentDate'         => now()->format('d / m / Y'),
+            'digitalHash'         => $digitalHash,
+            'generationTimestamp' => $timestamp,
+            'verifyUrl'           => $verifyUrl,
+            'qrBase64'            => $qrBase64,
+            'logoBase64'          => $logoBase64,
+            'photoBase64'         => $photoBase64,
+            'photoPath'           => $photoPath,
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.engagement', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $name = trim(($user?->last_name ?? 'Etudiant') . '_' . ($user?->first_name ?? ''));
+        return $pdf->stream("Engagement_{$name}.pdf");
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════════
+     *  🏥 FICHE DE RENSEIGNEMENTS MÉDICAUX — Fiche santé officielle ENCG Fès
+     * ═══════════════════════════════════════════════════════════════════════
+     */
+    public function ficheMedicalePdf(Request $request)
+    {
+        $studentId = $request->query('student_id');
+        $cne = $request->query('cne');
+        $cin = $request->query('cin');
+
+        $student = null;
+        if ($cne) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->where('cne', $cne)->first();
+        }
+        if (!$student && $cin) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->whereHas('user', fn($q) => $q->where('cin', $cin))->first();
+        }
+        if (!$student && $studentId) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->find($studentId);
+        }
+
+        $user = $student?->user;
+        $application = \App\Models\Application::where('cne', $cne ?: $student?->cne)
+            ->orWhere('cin', $cin ?: $user?->cin)
+            ->latest('id')
+            ->first();
+
+        if (!$student && !$user && !$application) {
+            $student = \App\Models\Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->first();
+            $user = $student?->user;
+        }
+
+        $lastName = strtoupper($user?->last_name ?? $student?->last_name ?? $application?->last_name ?? '');
+        $firstName = strtoupper($user?->first_name ?? $student?->first_name ?? $application?->first_name ?? '');
+
+        $pathway = $student?->pathways->sortByDesc('id')->first();
+        $academicYear = $pathway?->academicYear;
+
+        // 🖋️ Empreinte Numérique Horodatée & Security Hash
+        $timestamp = now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s');
+        $rawSecString = ($cne ?: $student?->cne ?: $application?->cne ?: 'N/A') . '|MED|' . $timestamp . '|ENCG_FES_MED_2026';
+        $digitalHash = 'ENCG-MED-' . strtoupper(substr(hash('sha256', $rawSecString), 0, 16));
+        $verifyUrl = url('/verify/document/' . $digitalHash);
+
+        try {
+            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        } catch (\Exception $e) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+        }
+
+        // Resolve student photo
+        $photoBase64 = null;
+        $photoPath = null;
+        $photoRelPath = null;
+
+        if ($student) {
+            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
+                ->where('student_id', $student->id)
+                ->whereIn('type', ['photo', 'PHOTO', 'photo_identite'])
+                ->latest('id')
+                ->first();
+            $photoRelPath = $photoDoc?->file_path ?? $student->photo_path;
+        }
+
+        if (!$photoRelPath && ($cne || $student?->cne)) {
+            $appDoc = \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne ?: $student?->cne)->first();
+            $photoRelPath = $appDoc?->photo_path;
+        }
+
+        if ($photoRelPath) {
+            $cleanRel = ltrim(preg_replace('/^\/?storage\//', '', $photoRelPath), '/');
+            $candidates = [
+                $photoRelPath,
+                storage_path('app/public/' . $cleanRel),
+                storage_path('app/private/' . $cleanRel),
+                storage_path('app/' . $cleanRel),
+                public_path($photoRelPath),
+                public_path('storage/' . $cleanRel),
+                public_path($cleanRel),
+            ];
+
+            foreach ($candidates as $cand) {
+                if ($cand && file_exists($cand) && !is_dir($cand)) {
+                    $photoPath = $cand;
+                    $mime = mime_content_type($cand) ?: 'image/jpeg';
+                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
+                    break;
+                }
+            }
+        }
+
+        if (!$photoBase64) {
+            $avatarSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260" fill="none"><rect width="200" height="260" rx="8" fill="#F1F5F9"/><circle cx="100" cy="95" r="42" fill="#CBD5E1"/><path d="M30 220C30 175 60 160 100 160C140 160 170 175 170 220V240H30V220Z" fill="#94A3B8"/><circle cx="100" cy="92" r="34" fill="#E2E8F0"/><path d="M45 220C45 185 70 172 100 172C130 172 155 185 155 220V235H45V220Z" fill="#0F2863"/></svg>';
+            $photoBase64 = 'data:image/svg+xml;base64,' . base64_encode($avatarSvg);
+        }
+
+        $fatherName = trim(
+            $student?->father_name ??
+            $student?->father_name_fr ??
+            $application?->father_name ??
+            $application?->father_name_fr ??
+            $student?->parent_name ??
+            $application?->parent_name ??
+            ''
+        );
+
+        $motherName = trim(
+            $student?->mother_name ??
+            $student?->mother_name_fr ??
+            $application?->mother_name ??
+            $application?->mother_name_fr ??
+            ''
+        );
+
+        if (empty($fatherName)) {
+            $fatherName = $lastName . ' (Père / Tuteur Légal)';
+        }
+
+        if (empty($motherName)) {
+            $motherName = 'Tutrice Légale (Mère)';
+        }
+
+        $data = [
+            'lastName'            => $lastName,
+            'firstName'           => $firstName,
+            'address'             => $student?->address_fr ?? $student?->address ?? $application?->address ?? '',
+            'phone'               => $user?->phone ?? $student?->phone ?? $application?->phone ?? '',
+            'fatherName'          => $fatherName,
+            'motherName'          => $motherName,
+            'parentPhone'         => $student?->parent_phone ?? $student?->father_phone ?? $application?->parent_phone ?? $application?->father_phone ?? '',
+            'emergencyName'       => $student?->emergency_contact_name ?? $application?->emergency_contact_name ?? 'Père / Tuteur',
+            'emergencyPhone'      => $student?->emergency_contact_phone ?? $application?->emergency_contact_phone ?? '',
+            'allergyType'         => $student?->allergy_type ?? $application?->allergy_type ?? ($student?->has_disability ? $student?->disability_details : 'Aucune'),
+            'hasFollowUp'         => (bool)($student?->has_medical_followup ?? $application?->has_medical_followup ?? false),
+            'medication'          => $student?->medication_used ?? $application?->medication_used ?? 'Aucun',
+            'doctorInfo'          => $student?->treating_doctor_info ?? $application?->treating_doctor_info ?? 'Médecin Généraliste',
+            'academicYear'        => $academicYear?->label ?? (date('Y') . ' - ' . (date('Y') + 1)),
+            'photoBase64'         => $photoBase64,
+            'digitalHash'         => $digitalHash,
+            'generationTimestamp' => $timestamp,
+            'verifyUrl'           => $verifyUrl,
+            'qrBase64'            => $qrBase64,
+            'cin'                 => $cin ?: $user?->cin ?: $student?->cin ?: $application?->cin ?: '',
+            'cne'                 => $cne ?: $student?->cne ?: $application?->cne ?: '',
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.fiche_medicale', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $name = trim(($user?->last_name ?? 'Etudiant') . '_' . ($user?->first_name ?? ''));
+        return $pdf->stream("Fiche_Medicale_{$name}.pdf");
+    }
+
+    /**
+     * Download Récépissé de Dépôt de Dossier Physique COMPLET PDF.
+     * (Récépissé initial lors de l'inscription — dossier complet)
+     */
+    public function downloadRecepisseDossierCompletPdf(Request $request, $studentId)
+    {
+        $student = \App\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
+        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
+        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
+        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName = strtoupper("{$last_name} {$first_name}");
+        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
+
+        $pdf = $this->getPdfInstance('pdf.recepisse_depot', [
+            'studentName' => $studentName,
+            'cne'         => $cne,
+            'cin'         => $cin,
+            'filiereName' => $filiereName,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Recepisse_Depot_{$cne}.pdf");
+    }
+
+    /**
+     * Download Étiquette Barcode Enveloppe Physique A4 PDF.
+     */
+    public function downloadEtiquetteEnveloppePdf(Request $request, $studentId)
+    {
+        $student = \App\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne = $student?->cne ?? $request->input('cne', 'M145092428');
+        $cin = $student?->cin ?? $request->input('cin', 'UB121643');
+        $first_name = $student?->first_name ?? $request->input('first_name', 'SIHAM');
+        $last_name = $student?->last_name ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName = strtoupper("{$last_name} {$first_name}");
+        $filiereName = $student?->latestPathway?->filiere?->name ?? $request->input('filiere_name', 'DEUX ANNÉES PRÉPARATOIRES');
+
+        $pdf = $this->getPdfInstance('pdf.etiquette_enveloppe', [
+            'studentId'   => $studentId,
+            'studentName' => $studentName,
+            'cne'         => $cne,
+            'cin'         => $cin,
+            'filiereName' => $filiereName,
+            'groupName'   => 'TC-S1-G1',
+            'bacYear'     => '2026',
+            'bacSeries'   => 'Sciences Math B',
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("Etiquette_Enveloppe_{$cne}.pdf");
+    }
+
+    /**
+     * Download Carte Étudiant CR80 (Evolis Primacy 2) — ISO ID-1 Format.
+     */
+    public function downloadCarteEtudiantCR80Pdf(Request $request, $studentId)
+    {
+        $student = \App\Models\Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+
+        $cne           = $student?->cne           ?? $request->input('cne', 'M145092428');
+        $first_name    = $student?->first_name    ?? $request->input('first_name', 'SIHAM');
+        $last_name     = $student?->last_name     ?? $request->input('last_name', 'ABEN HSSAIN');
+        $studentName   = strtoupper("{$last_name} {$first_name}");
+        $studentNumber = $student?->student_number ?? $request->input('student_number', 'ENCG-FES-2027-TC-00001');
+        $filiereName   = $student?->latestPathway?->filiere?->name ?? 'Tronc Commun';
+        $academicYear  = $student?->academic_year  ?? date('Y') . '-' . (date('Y') + 1);
+
+        $photoPath = null;
+        if ($studentId) {
+            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
+                ->where('student_id', $studentId)
+                ->where('type', 'photo')
+                ->first();
+
+            if ($photoDoc && !empty($photoDoc->file_path)) {
+                $localRelative = str_replace('/storage/', '', $photoDoc->file_path);
+                $fullPath = storage_path('app/public/' . $localRelative);
+                if (file_exists($fullPath)) {
+                    $photoPath = $fullPath;
+                }
+            }
+        }
+
+        $pdf = $this->getPdfInstance('pdf.carte_etudiant_cr80', [
+            'studentName'   => $studentName,
+            'cne'           => $cne,
+            'studentNumber' => $studentNumber,
+            'filiereName'   => $filiereName,
+            'academicYear'  => $academicYear,
+            'photoPath'     => $photoPath,
+        ])
+        ->setPaper([0, 0, 153.01, 242.64], 'landscape')
+        ->setOption('dpi', 600)
+        ->setOption('margin-top', 0)
+        ->setOption('margin-right', 0)
+        ->setOption('margin-bottom', 0)
+        ->setOption('margin-left', 0)
+        ->setOption('page-width', '85.60mm')
+        ->setOption('page-height', '53.98mm')
+        ->setOption('disable-smart-shrinking', true);
+
+        return response()->streamDownload(
+            fn() => print($pdf->output()),
+            "Carte_Etudiant_CR80_{$cne}.pdf",
+            [
+                'Content-Type'        => 'application/pdf',
+                'X-Card-Format'       => 'CR80-ISO-ID1',
+                'X-Print-DPI'         => '300x600',
+                'X-Print-Profile'     => 'Evolis-Primacy2-YMCKO-AllBlack',
+                'X-Duplex'            => 'short-edge',
+                'X-Print-Scale'       => '100%',
+            ]
+        );
+    }
+
+    // ─── REÇU DE DÉPÔT COMPLÉMENTAIRE ───────────────────────────
+
+    /**
+     * Génère un reçu de dépôt complémentaire pour un seul document
+     * apporté après l'inscription initiale.
+     *
+     * Params GET :
+     *  student_id  (int, optional)
+     *  cne         (string)
+     *  doc         (string)  — clé: bac|releve|cnie|photo|naissance
+     *  obs         (string, optional) — observation libre
+     */
+    public function downloadRecepisseDepotPdf(Request $request, $student = null)
+    {
+        // Résoudre l'étudiant
+        $studentId = $student ?? $request->query('student_id');
+        $cneParam  = strtoupper(trim($request->query('cne', '')));
+        $docKey    = $request->query('doc', 'document');
+        $obsParam  = $request->query('obs', null);
+
+        $std = null;
+        if ($studentId) {
+            $std = Student::with(['user', 'latestPathway.filiere'])->find($studentId);
+        }
+        if (!$std && !empty($cneParam)) {
+            $std = Student::with(['user', 'latestPathway.filiere'])
+                ->where('cne', $cneParam)->first();
+        }
+
+        // Labels humains par clé de document
+        $docLabels = [
+            'bac'       => 'Original du Diplôme du Baccalauréat (Obligatoire)',
+            'releve'    => 'Relevé de Notes Officiel du Baccalauréat',
+            'cnie'      => 'Copie Certifiée de la CNIE (Carte d\'Identité Nationale)',
+            'photo'     => 'Photos d\'Identité Récentes (x4 Format CR80)',
+            'naissance' => 'Extrait d\'Acte de Naissance Récent',
+        ];
+        $conformiteLabels = [
+            'bac'       => 'Original conservé en dossier',
+            'releve'    => 'Copie conforme au relevé officiel',
+            'cnie'      => 'Recto-Verso valide',
+            'photo'     => 'Format et qualité validés',
+            'naissance' => 'Original conforme — validité vérifiée',
+        ];
+
+        $documentLabel = $docLabels[$docKey] ?? ('Pièce : ' . $docKey);
+        $conformiteNote = $conformiteLabels[$docKey] ?? 'Original conforme';
+        $observations   = $obsParam ?? 'Pièce reçue et enregistrée dans le dossier physique de l\'étudiant.';
+
+        // Résoudre les infos étudiant
+        $studentName = $std
+            ? strtoupper(trim(($std->last_name ?? '') . ' ' . ($std->first_name ?? '')))
+            : strtoupper($request->query('name', 'ÉTUDIANT ENCG'));
+        $cne  = $std?->cne ?? $cneParam ?: 'N/A';
+        $cin  = $std?->user?->cin ?? $request->query('cin', 'N/A');
+        $filiereName = $std?->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)';
+
+        $data = [
+            'studentName'    => $studentName,
+            'cne'            => $cne,
+            'cin'            => $cin,
+            'filiereName'    => $filiereName,
+            'documentLabel'  => $documentLabel,
+            'conformiteNote' => $conformiteNote,
+            'observations'   => $observations,
+            'docKey'         => $docKey,
+            'verifyUrl'      => url('/verify/recu-comp?cne=' . $cne . '&doc=' . $docKey . '&t=' . date('YmdHi')),
+        ];
+
+        $pdf = $this->getPdfInstance('pdf.recu_depot_complementaire', $data)->setPaper('a4', 'portrait');
+        return $pdf->stream("Recu_Depot_Complementaire_{$cne}_{$docKey}.pdf", ['Attachment' => false]);
+    }
 }

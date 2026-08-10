@@ -135,6 +135,16 @@ class Student extends Model
         return $this->hasMany(ResitEligibility::class, 'student_id');
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(StudentDocument::class, 'student_id');
+    }
+
+    public function studentDocuments(): HasMany
+    {
+        return $this->hasMany(StudentDocument::class, 'student_id');
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];

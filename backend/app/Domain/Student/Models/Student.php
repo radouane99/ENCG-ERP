@@ -67,7 +67,7 @@ class Student extends Model
 
     public function documents(): HasMany
     {
-        return $this->hasMany(StudentDocument::class);
+        return $this->hasMany(\App\Models\StudentDocument::class, 'student_id');
     }
 
     public function pathways(): HasMany

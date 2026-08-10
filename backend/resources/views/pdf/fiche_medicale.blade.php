@@ -1,252 +1,154 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Fiche Médicale - {{ $studentName ?? 'Étudiant' }}</title>
-    <style>
-        @page { margin: 15mm 12mm 18mm 12mm; size: A4 portrait; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; line-height: 1.5; }
+@extends('pdf.layouts.pdf_master')
 
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .header-table td { vertical-align: top; padding: 0; }
-        .header-left { text-align: left; width: 38%; font-size: 9pt; line-height: 1.5; }
-        .header-center { text-align: center; width: 24%; }
-        .header-right { text-align: right; width: 38%; font-size: 9pt; line-height: 1.5; direction: rtl; font-family: 'Traditional Arabic', 'Arial', serif; }
-        .header-center img { width: 70px; height: auto; }
+@section('title', 'FICHE MÉDICALE ÉTUDIANT — ENCG FÈS')
 
-        .separator { border-top: 2px solid #000; margin: 6px 0 10px 0; }
-
-        .doc-title {
-            text-align: center;
-            font-size: 16pt;
-            font-weight: bold;
-            text-decoration: underline;
-            margin: 10px 0 5px 0;
-            letter-spacing: 1px;
-        }
-        .doc-subtitle {
-            text-align: center;
-            font-size: 11pt;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .section-title {
-            background-color: #f0f0f0;
-            border: 1px solid #000;
-            padding: 4px 10px;
-            font-size: 11pt;
-            font-weight: bold;
-            margin: 12px 0 8px 0;
-        }
-
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        .info-table td { padding: 4px 6px; font-size: 11pt; vertical-align: top; }
-        .info-table .label { font-weight: bold; width: 35%; white-space: nowrap; }
-        .info-table .value { border-bottom: 1px dotted #555; width: 65%; }
-
-        .photo-box {
-            width: 90px;
-            height: 110px;
-            border: 1.5px solid #000;
-            text-align: center;
-            line-height: 110px;
-            font-size: 10pt;
-            color: #888;
-            float: right;
-            margin-left: 10px;
-        }
-
-        .medical-box {
-            border: 1.5px solid #000;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        .medical-box table { width: 100%; border-collapse: collapse; }
-        .medical-box td { padding: 5px 6px; font-size: 11pt; vertical-align: top; }
-        .medical-box .med-label { font-weight: bold; width: 40%; }
-        .medical-box .med-value { border-bottom: 1px dotted #555; }
-
-        .checkbox { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; margin-right: 3px; vertical-align: middle; text-align: center; font-size: 9pt; line-height: 12px; }
-        .checkbox.checked { background-color: #000; color: #fff; }
-
-        .signature-block {
-            margin-top: 25px;
-            text-align: right;
-            padding-right: 20px;
-        }
-        .signature-block .date-line { margin-bottom: 8px; font-size: 11pt; }
-        .signature-block .sig-label { font-size: 11pt; font-weight: bold; }
-
-        .footer-block {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-top: 1.5px solid #000;
-            padding-top: 4px;
-            font-size: 7.5pt;
-            text-align: center;
-            color: #333;
-            line-height: 1.4;
-        }
-    </style>
-</head>
-<body>
-
-    {{-- ═══════════ ENTÊTE OFFICIELLE USMBA / ENCG ═══════════ --}}
-    <table class="header-table">
-        <tr>
-            <td class="header-left">
-                <strong>جامعة سيدي محمد بن عبد الله</strong><br>
-                <strong>UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH</strong><br>
-                <span style="font-size:8pt;">المدرسة الوطنية للتجارة و التسيير بفاس</span><br>
-                <span style="font-size:8pt;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FES</span>
-            </td>
-            <td class="header-center">
-                @if($logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Logo ENCG">
-                @endif
-            </td>
-            <td class="header-right">
-                <span style="font-size:8pt;">ⵜⴰⵙⴷⴰⵡⵉⵜ ⵙⵉⴷⵉ ⵎⵓⵃⴰⵎⴻⴷ ⴱⴻⵏ ⵄⴰⴱⴷⴻⵍⵍⴰⵀ</span><br>
-                <span style="font-size:8pt;">ⵜⵉⵏⵎⴻⵍ ⵜⴰⵏⴰⵎⵓⵔⵜ ⵏ ⵜⵙⴱⴱⴰⴱⵜ ⴷ ⵓⵙⵡⵓⴷⴷⵓ</span><br>
-                <span style="font-size:8pt;">ⵏ ⴼⴰⵙ</span>
-            </td>
-        </tr>
-    </table>
-    <div class="separator"></div>
-
-    {{-- ═══════════ TITRE ═══════════ --}}
-    <div class="doc-title">Fiche des renseignements médicaux</div>
-    <div class="doc-subtitle">Année universitaire : {{ $academicYear ?? '2026 - 2027' }}</div>
-
-    {{-- ═══════════ SECTION 1 : COORDONNÉES DE L'ÉTUDIANT(E) ═══════════ --}}
-    <div class="section-title">✔ Coordonnées de l'étudiant(e)</div>
-
-    <div class="photo-box">
-        @if(!empty($photoBase64))
-            <img src="{{ $photoBase64 }}" style="width:86px;height:106px;object-fit:cover;" alt="Photo">
-        @else
-            PHOTO
-        @endif
-    </div>
-
-    <table class="info-table">
-        <tr>
-            <td class="label">Nom :</td>
-            <td class="value">{{ $lastName ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Prénom :</td>
-            <td class="value">{{ $firstName ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Adresse :</td>
-            <td class="value">{{ $address ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tél. Personnel :</td>
-            <td class="value">{{ $phone ?? '................................................' }}</td>
-        </tr>
-    </table>
-
-    <div style="clear:both;"></div>
-
-    {{-- ═══════════ SECTION 2 : PARENTS ═══════════ --}}
-    <div class="section-title">✔ Coordonnées des parents de l'étudiant(e)</div>
-    <table class="info-table">
-        <tr>
-            <td class="label">Nom et Prénom du père :</td>
-            <td class="value">{{ $fatherName ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Nom et Prénom de la mère :</td>
-            <td class="value">{{ $motherName ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tél :</td>
-            <td class="value">{{ $parentPhone ?? '................................................' }}</td>
-        </tr>
-    </table>
-
-    {{-- ═══════════ SECTION 3 : PERSONNE D'URGENCE ═══════════ --}}
-    <div class="section-title">✔ Coordonnées d'une tierce personne à joindre en cas d'urgence</div>
-    <table class="info-table">
-        <tr>
-            <td class="label">Nom et Prénom :</td>
-            <td class="value">{{ $emergencyName ?? '................................................' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Téléphone :</td>
-            <td class="value">{{ $emergencyPhone ?? '................................................' }}</td>
-        </tr>
-    </table>
-
-    {{-- ═══════════ SECTION 4 : ÉTAT DE SANTÉ ═══════════ --}}
-    <div class="section-title">✔ État de santé (Afin de nous permettre de réagir efficacement en cas de trouble de santé veuillez remplir cette case par votre médecin)</div>
-
-    <div class="medical-box">
-        <table>
+@section('content')
+    <div style="position: relative; width: 100%;">
+        <!-- Header -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px; border-bottom: 2px dashed #0f2863; padding-bottom: 8px;">
             <tr>
-                <td class="med-label">Type d'allergie :</td>
-                <td class="med-value">{{ $allergyType ?? '...............................................................................' }}</td>
-            </tr>
-            <tr>
-                <td class="med-label">Cas nécessitant un suivi :</td>
-                <td>
-                    <span class="checkbox {{ ($hasFollowUp ?? false) ? 'checked' : '' }}">{{ ($hasFollowUp ?? false) ? '✓' : '' }}</span> Oui
-                    &nbsp;&nbsp;&nbsp;&nbsp;
-                    <span class="checkbox {{ !($hasFollowUp ?? false) ? 'checked' : '' }}">{{ !($hasFollowUp ?? false) ? '✓' : '' }}</span> Non
+                <td width="70%">
+                    <div style="font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
+                    <div style="font-size: 11px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
+                    <div style="font-size: 11px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 2px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                 </td>
-            </tr>
-            <tr>
-                <td class="med-label">Médicament utilisé :</td>
-                <td class="med-value">{{ $medication ?? '...............................................................................' }}</td>
-            </tr>
-            <tr>
-                <td class="med-label">Coordonnées du médecin :</td>
-                <td class="med-value">{{ $doctorInfo ?? '...............................................................................' }}</td>
-            </tr>
-            <tr>
-                <td class="med-label">Signature du médecin :</td>
-                <td class="med-value">&nbsp;</td>
+                <td width="30%" style="text-align: right;">
+                    <div style="font-size: 9px; font-family: monospace; font-weight: bold; color: #0f2863;">N° FICHE SANTÉ :</div>
+                    <div style="font-size: 11px; font-family: monospace; font-weight: 900; color: #059669;">
+                        MED-2026-{{ $cin ?? 'ZG195334' }}
+                    </div>
+                </td>
             </tr>
         </table>
-    </div>
 
-    {{-- ═══════════ SIGNATURE ═══════════ --}}
-    <div class="signature-block">
-        <div class="date-line">La date : ............/............/................</div>
-        <div class="sig-label">Signature de l'étudiant(e) :</div>
-        <br><br>
-    </div>
+        <!-- Document Title -->
+        <div style="text-align: center; margin: 10px 0 15px 0; padding: 8px; background-color: #f8fafc; border: 1.5px solid #0f2863; border-radius: 6px;">
+            <h2 style="font-size: 15px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin: 0;">
+                FICHE DE RENSEIGNEMENTS MÉDICAUX & SANTE ÉTUDIANT
+            </h2>
+            <div style="font-size: 9.5px; font-weight: bold; color: #64748b; margin-top: 3px;">
+                Année Universitaire {{ $academicYear ?? '2026/2027' }} • Service de Santé & Médecine Préventive ENCG Fès
+            </div>
+        </div>
 
-    {{-- ═══════════ EMPREINTE NUMÉRIQUE DE SÉCURITÉ (ANTI-FRAUDE) ═══════════ --}}
-    <div style="margin-top: 10px; padding: 5px 8px; border: 1px dashed #666; background-color: #fcfcfc; font-family: monospace; font-size: 7pt; color: #444;">
-        <table style="width: 100%; border-collapse: collapse;">
+        <!-- Section 1 : Student Identification -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
             <tr>
-                <td style="vertical-align: middle;">
-                    <strong>🔒 EMPREINTE NUMÉRIQUE MÉDICALE AUTHENTIFIÉE — ENCG FÈS</strong><br>
-                    <span>Empreinte SHA-256 : <strong>{{ $digitalHash ?? 'ENCG-MED-8F9B2A7C4D1E' }}</strong></span><br>
-                    <span>Horodatage officiel : <strong>{{ $generationTimestamp ?? now()->format('d/m/Y H:i:s') }}</strong></span><br>
-                    <span style="font-size: 6pt; color: #777;">Données médicales confidentielles traitées sous la loi 09-08 (CNDP).</span>
+                <td width="78%" style="vertical-align: top;">
+                    <table width="100%" cellpadding="5" cellspacing="0" style="border-collapse: collapse; background-color: #ffffff; border: 1px solid #cbd5e1; font-size: 10.5px;">
+                        <tr style="background-color: #0f2863; color: #ffffff;">
+                            <td colspan="2" style="font-weight: 900; font-size: 11px; text-transform: uppercase;">
+                                1. COORDONNÉES PERSONNELLES DE L'ÉTUDIANT(E)
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td width="35%" style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Nom & Prénom :</td>
+                            <td width="65%" style="font-weight: 900; color: #0f2863; font-size: 11.5px;">{{ strtoupper($lastName ?? '') }} {{ strtoupper($firstName ?? '') }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">CODE CNE / CNIE :</td>
+                            <td style="font-family: monospace; font-weight: bold; color: #059669;">{{ $cne ?? '' }} &nbsp;|&nbsp; {{ $cin ?? '' }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Adresse de Résidence :</td>
+                            <td style="font-weight: bold;">{{ $address ?? 'Non renseignée' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Téléphone Personnel :</td>
+                            <td style="font-family: monospace; font-weight: bold; color: #059669;">{{ $phone ?? 'N/A' }}</td>
+                        </tr>
+                    </table>
                 </td>
-                <td style="width: 65px; text-align: right; vertical-align: middle;">
-                    @if(!empty($qrBase64))
-                        <img src="{{ $qrBase64 }}" style="width: 55px; height: 55px;" alt="QR Code Sécurité">
-                    @endif
+                <td width="22%" style="text-align: right; vertical-align: top; padding-left: 10px;">
+                    <div style="width: 95px; height: 120px; border: 2px solid #0f2863; border-radius: 6px; padding: 2px; background-color: #ffffff; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        @if(!empty($photoBase64))
+                            <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Photo" />
+                        @elseif(!empty($photoPath) && file_exists($photoPath))
+                            <img src="{{ $photoPath }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Photo" />
+                        @else
+                            <div style="width: 100%; height: 100%; background-color: #f1f5f9; border-radius: 4px; text-align: center; line-height: 120px; font-size: 8.5px; color: #94a3b8; font-weight: bold;">
+                                PHOTO 35×45
+                            </div>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Section 2 : Parent & Contact Details -->
+        <table width="100%" cellpadding="5" cellspacing="0" style="border-collapse: collapse; margin-bottom: 12px; background-color: #ffffff; border: 1px solid #cbd5e1; font-size: 10.5px;">
+            <tr style="background-color: #0f2863; color: #ffffff;">
+                <td colspan="2" style="font-weight: 900; font-size: 11px; text-transform: uppercase;">
+                    2. COORDONNÉES DES PARENTS ET PERSONNE À CONTACTER EN CAS D'URGENCE
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td width="35%" style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Nom et Prénom du Père :</td>
+                <td width="65%" style="font-weight: bold;">{{ $fatherName ?? 'Non renseigné' }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Nom et Prénom de la Mère :</td>
+                <td style="font-weight: bold;">{{ $motherName ?? 'Non renseignée' }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Téléphone des Parents :</td>
+                <td style="font-family: monospace; font-weight: bold;">{{ $parentPhone ?? '0606060606' }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Personne à contacter en cas d'urgence :</td>
+                <td style="font-weight: bold; color: #d97706;">{{ $emergencyName ?? 'Père / Tuteur' }}</td>
+            </tr>
+            <tr>
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Téléphone Urgence 24h/24 :</td>
+                <td style="font-family: monospace; font-weight: 900; color: #dc2626;">{{ $emergencyPhone ?? '0606060606' }}</td>
+            </tr>
+        </table>
+
+        <!-- Section 3 : Health Status & Medical Records -->
+        <table width="100%" cellpadding="5" cellspacing="0" style="border-collapse: collapse; margin-bottom: 15px; background-color: #ffffff; border: 1px solid #cbd5e1; font-size: 10.5px;">
+            <tr style="background-color: #0f2863; color: #ffffff;">
+                <td colspan="2" style="font-weight: 900; font-size: 11px; text-transform: uppercase;">
+                    3. ÉTAT DE SANTÉ ET ATTESTATION DU MÉDECIN TRAITANT
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td width="35%" style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Allergies Déclarées / Intolérances :</td>
+                <td width="65%" style="font-weight: bold;">{{ $allergyType ?? 'Aucune' }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Suivi Médical Particulier :</td>
+                <td style="font-weight: bold; color: {{ $hasFollowUp ? '#dc2626' : '#059669' }};">
+                    {{ $hasFollowUp ? 'Oui (Nécessite une prise en charge spécifique)' : 'Non (Aucun suivi particulier)' }}
+                </td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Médicaments / Traitements en cours :</td>
+                <td style="font-weight: bold;">{{ $medication ?? 'Aucun' }}</td>
+            </tr>
+            <tr>
+                <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Médecin Traitant / Établissement :</td>
+                <td style="font-weight: bold;">{{ $doctorInfo ?? 'Médecin Généraliste' }}</td>
+            </tr>
+        </table>
+
+        <!-- Section 4 : Signatures & Doctor Stamp -->
+        <table width="100%" cellpadding="6" cellspacing="0" style="margin-top: 15px; font-size: 10.5px;">
+            <tr>
+                <td width="50%" style="vertical-align: top; text-align: center;">
+                    <div style="font-weight: 900; color: #0f2863; font-size: 11px; margin-bottom: 35px;">
+                        Signature de l'Étudiant(e)<br>
+                        <span style="font-size: 8.5px; font-weight: normal; color: #64748b;">(précédée de la mention "Certifié exact")</span>
+                    </div>
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 75%; margin: 0 auto;"></div>
+                </td>
+                <td width="50%" style="text-align: center; vertical-align: top;">
+                    <div style="font-weight: 900; color: #0f2863; font-size: 11px; margin-bottom: 35px;">
+                        Cachet & Signature du Médecin Traitant<br>
+                        <span style="font-size: 8.5px; font-weight: normal; color: #64748b;">(avec indication du numéro de matricule)</span>
+                    </div>
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 75%; margin: 0 auto;"></div>
                 </td>
             </tr>
         </table>
     </div>
-
-    {{-- ═══════════ PIED DE PAGE ═══════════ --}}
-    <div class="footer-block">
-        Route d'Imouzzer, &nbsp; BP 81A FES &nbsp; | &nbsp; FAX : 0535622930 &nbsp; | &nbsp; TEL : 0535622930 &nbsp; | &nbsp; فاس &nbsp; A 81 ص.ب &nbsp; | &nbsp; طريق إموزار<br>
-        Site web : www.encgu.usmba.ac.ma &nbsp; | &nbsp; الهاتف : 0535622932
-    </div>
-
-</body>
-</html>
+@endsection

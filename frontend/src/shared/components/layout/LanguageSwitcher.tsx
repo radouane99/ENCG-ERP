@@ -31,7 +31,7 @@ export function LanguageSwitcher() {
         title="Changer la langue"
       >
         <Globe className="w-4 h-4" />
-        <span className="text-xs font-medium uppercase">{currentLang.code}</span>
+        <span className="text-xs font-medium uppercase hidden sm:inline">{currentLang.code}</span>
       </button>
 
       {isOpen && (

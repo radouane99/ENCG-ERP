@@ -274,13 +274,18 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
     Route::get('students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
     Route::get('students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
-    Route::get('students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    Route::get('students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDossierCompletPdf']);
+    Route::get('admin/students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDossierCompletPdf']);
     Route::get('students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);
+    Route::get('admin/students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);
     // ── Carte Étudiant CR80 ISO ID-1 — Evolis Primacy 2 (Recommendation #1)
     Route::get('students/{student}/carte-etudiant-cr80-pdf', [PdfExportController::class, 'downloadCarteEtudiantCR80Pdf']);
+    Route::get('admin/students/{student}/carte-etudiant-cr80-pdf', [PdfExportController::class, 'downloadCarteEtudiantCR80Pdf']);
     // ── 📜 Engagement (تعهد) + 🏥 Fiche Médicale — Documents Dossier Physique
     Route::get('students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+    Route::get('admin/students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
     Route::get('students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    Route::get('admin/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
     // ── Inscription Workflow & AI Gemini Vision Audit (Recommendations #1, #2, #4, #5, #7)
     Route::post('students/{student}/ai-audit', [StudentController::class, 'auditWithGeminiAi']);
     Route::post('students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
@@ -673,6 +678,12 @@ Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'e
 Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
 Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
 
+// ── Reçu de Dépôt Complémentaire (document apporté après inscription initiale)
+Route::get('/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+Route::get('/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+Route::get('/v1/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+Route::get('/v1/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+
 Route::get('/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
 Route::get('/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
 Route::get('/v1/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
@@ -944,6 +955,12 @@ Route::delete('/public/delete-candidate-document', [\App\Http\Controllers\Api\Ad
 Route::post('/public/ocr-extract-documents', [\App\Http\Controllers\Api\AdmissionController::class, 'extractDocumentDataOcr']);
 
 Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
+Route::get('/public/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
+Route::get('/public/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
+Route::get('/admin/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
+Route::get('/admin/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
+Route::get('/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
+Route::get('/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
 Route::get('/public/serve-document/{type}/{cne}', [\App\Http\Controllers\Api\AdmissionController::class, 'serveCandidateDocumentPublic']);
 
 Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
