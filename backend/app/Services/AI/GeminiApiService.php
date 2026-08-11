@@ -20,10 +20,9 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = env('GEMINI_API_KEY', 'AQ.Ab8RN6JF3kpfjK3iYN-JQyQckhl2P91JaiKdX-NczeilSYTA7A');
-        // Updated Groq key - 2026-08-02 v2
-        $this->groqApiKey = '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';
-        Log::info('[GeminiApiService] Groq key prefix: ' . substr($this->groqApiKey, 0, 20));
+        $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
+        $this->groqApiKey   = config('services.groq.key') ?: env('GROQ_API_KEY', '');
+        Log::info('[GeminiApiService] Gemini key active check');
     }
 
     /**
