@@ -42,11 +42,11 @@ return [
     ],
 
     'groq' => [
-        'key' => env('GROQ_API_KEY', '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'),
+        'key' => env('GROQ_API_KEY', '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'),
     ],
 
     'gemini' => [
-        'key' => env('GEMINI_API_KEY', 'AQ.Ab8RN6JNODBBN52ysbfC3WksNXXxzzboiYUtiGzrI2h5nne8DA'),
+        'key' => env('GEMINI_API_KEY', 'AQ.Ab8RN6JL82xhIGAqqT1D6bLwZDGm-4ghRRyzSOaAPgJJIcOh9g'),
     ],
 
 ];

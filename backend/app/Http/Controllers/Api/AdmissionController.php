@@ -475,6 +475,10 @@ class AdmissionController extends Controller
                 $motherName = trim(($student->mother_last_name_fr ?? $application?->mother_last_name_fr ?? '') . ' ' . ($student->mother_first_name_fr ?? $application?->mother_first_name_fr ?? ''));
             }
 
+            $highSchoolVal = !empty($student->high_school) ? $student->high_school : (!empty($student->lycee) ? $student->lycee : (!empty($application?->high_school) ? $application->high_school : null));
+            $academyVal    = !empty($student->academy) ? $student->academy : (!empty($student->region) ? $student->region : (!empty($application?->academy) ? $application->academy : (!empty($application?->region) ? $application->region : null)));
+            $delegationVal = !empty($student->delegation) ? $student->delegation : (!empty($student->province) ? $student->province : (!empty($student->prefecture) ? $student->prefecture : (!empty($application?->delegation) ? $application->delegation : (!empty($application?->province) ? $application->province : null))));
+
             $candidateData = [
                 'id'                    => $student->id,
                 'first_name'            => $fn,
@@ -486,14 +490,14 @@ class AdmissionController extends Controller
                 'cin'                   => $u?->cin ?? $student->cin ?? $application?->cin,
                 'email'                 => $u?->email ?? $student->email ?? $application?->email,
                 'phone'                 => $u?->phone ?? $student->phone ?? $application?->phone,
-                'gender'                => $student->gender ?? $application?->gender ?? 'female',
+                'gender'                => $student->gender ?? $application?->gender ?? null,
                 'birth_date'            => $bdate,
-                'birth_city'            => $student->birth_city ?? $application?->birth_city,
-                'birth_city_ar'         => $student->birth_city_ar ?? $application?->birth_city_ar,
-                'address'               => $student->address ?? $application?->address,
-                'address_ar'            => $student->address_ar ?? $application?->address_ar,
-                'city'                  => $student->city ?? $application?->city,
-                'region'                => $student->region ?? $application?->region,
+                'birth_city'            => !empty($student->birth_city) ? $student->birth_city : ($application?->birth_city ?? null),
+                'birth_city_ar'         => !empty($student->birth_city_ar) ? $student->birth_city_ar : ($application?->birth_city_ar ?? null),
+                'address'               => !empty($student->address) ? $student->address : ($application?->address ?? null),
+                'address_ar'            => !empty($student->address_ar) ? $student->address_ar : ($application?->address_ar ?? null),
+                'city'                  => !empty($student->city) ? $student->city : ($application?->city ?? null),
+                'region'                => $academyVal,
                 'father_name'           => $fatherName ?: null,
                 'father_name_ar'        => $student->father_name_ar ?? $application?->father_name_ar,
                 'father_cin'            => $student->father_cin ?? $application?->father_cin,
@@ -513,15 +517,16 @@ class AdmissionController extends Controller
                 'has_disability'        => (bool) ($student->has_disability ?? $application?->has_disability),
                 'disability_details'    => $student->disability_details ?? $application?->disability_details,
                 'status'                => $student->status ?? $application?->status,
-                'filiere'               => $student->latestPathway?->filiere?->name ?? $application?->reference_number ?? 'Deux années préparatoires (TC)',
-                'bac_type'              => $application?->bac_series ?? $student->bac_type ?? 'Sciences Économiques',
-                'bac_serie'             => $application?->bac_series ?? $student->bac_serie ?? 'Sciences Économiques',
-                'bac_average'           => $application?->bac_average ?? $student->bac_note ?? 15.41,
-                'bac_mention'           => $application?->bac_mention ?? $student->bac_mention ?? 'Bien',
-                'bac_year'              => $application?->bac_year ?? $student->bac_year ?? '2026',
-                'high_school'           => $application?->high_school ?? $student->high_school ?? null,
-                'academy'               => $application?->academy ?? $student->academy ?? null,
-                'selection_score'       => $application?->selection_score ?? 150,
+                'filiere'               => $student->latestPathway?->filiere?->name ?? $application?->filiere ?? $application?->reference_number ?? null,
+                'bac_type'              => !empty($student->bac_type) ? $student->bac_type : (!empty($student->bac_serie) ? $student->bac_serie : ($application?->bac_series ?? null)),
+                'bac_serie'             => !empty($student->bac_type) ? $student->bac_type : (!empty($student->bac_serie) ? $student->bac_serie : ($application?->bac_series ?? null)),
+                'bac_average'           => !empty($student->bac_note) ? $student->bac_note : (!empty($student->bac_average) ? $student->bac_average : ($application?->bac_average ?? null)),
+                'bac_mention'           => !empty($student->bac_mention) ? $student->bac_mention : ($application?->bac_mention ?? null),
+                'bac_year'              => !empty($student->bac_year) ? $student->bac_year : ($application?->bac_year ?? null),
+                'high_school'           => $highSchoolVal,
+                'academy'               => $academyVal,
+                'delegation'            => $delegationVal,
+                'selection_score'       => $application?->selection_score ?? $student->selection_score ?? null,
             ];
         } else if ($application) {
             $fn = $application->first_name ?? '';
@@ -554,7 +559,7 @@ class AdmissionController extends Controller
                 'cin'                   => $application->cin,
                 'email'                 => $application->email,
                 'phone'                 => $application->phone,
-                'gender'                => $application->gender ?? 'female',
+                'gender'                => $application->gender ?? null,
                 'birth_date'            => $bdate,
                 'birth_city'            => $application->birth_city,
                 'birth_city_ar'         => $application->birth_city_ar,
@@ -581,14 +586,15 @@ class AdmissionController extends Controller
                 'has_disability'        => (bool) $application->has_disability,
                 'disability_details'    => $application->disability_details,
                 'status'                => $application->status,
-                'filiere'               => $application->reference_number ?? 'Deux années préparatoires (TC)',
-                'bac_type'              => $application->bac_series ?? 'Sciences Économiques',
-                'bac_serie'             => $application->bac_series ?? 'Sciences Économiques',
+                'filiere'               => $application->filiere ?? $application->reference_number ?? null,
+                'bac_type'              => $application->bac_series ?? $application->bac_type ?? null,
+                'bac_serie'             => $application->bac_series ?? $application->bac_type ?? null,
                 'bac_average'           => $application->bac_average,
                 'bac_mention'           => $application->bac_mention,
-                'bac_year'              => $application->bac_year ?? '2026',
+                'bac_year'              => $application->bac_year,
                 'high_school'           => $application->high_school,
-                'academy'               => $application->academy,
+                'academy'               => $application->academy ?? $application->region ?? null,
+                'delegation'            => $application->delegation ?? $application->province ?? null,
                 'selection_score'       => $application->selection_score,
             ];
         }
@@ -692,18 +698,22 @@ class AdmissionController extends Controller
      */
     public function updateCandidateDossier(Request $request): JsonResponse
     {
+        $userAuth = auth()->user();
         $cne = strtoupper(trim($request->input('cne', '')));
         $cin = strtoupper(trim($request->input('cin', '')));
 
-        if (empty($cne) && empty($cin)) {
-            return response()->json(['success' => false, 'message' => 'CNE ou CIN requis.'], 422);
+        if (empty($cne) && $userAuth?->cne) {
+            $cne = strtoupper(trim($userAuth->cne));
+        }
+        if (empty($cin) && $userAuth?->cin) {
+            $cin = strtoupper(trim($userAuth->cin));
         }
 
         $input = $request->all();
 
         // 1) Normaliser les noms/prénoms & lieux
-        $firstName   = $input['first_name'] ?? $input['first_name_fr'] ?? null;
-        $lastName    = $input['last_name'] ?? $input['last_name_fr'] ?? null;
+        $firstName   = $input['first_name'] ?? $input['first_name_fr'] ?? $userAuth?->first_name ?? null;
+        $lastName    = $input['last_name'] ?? $input['last_name_fr'] ?? $userAuth?->last_name ?? null;
         $firstNameAr = $input['first_name_ar'] ?? null;
         $lastNameAr  = $input['last_name_ar'] ?? null;
         $birthCity   = $input['birth_city'] ?? $input['birth_city_fr'] ?? null;
@@ -729,13 +739,13 @@ class AdmissionController extends Controller
         $bacSerie   = $input['bac_series'] ?? $input['bac_serie'] ?? $input['bac_name'] ?? null;
         $bacAverage = isset($input['bac_average']) && $input['bac_average'] !== '' ? (float)$input['bac_average'] : null;
 
-        // Ensemble des données candidats
+        // Ensemble des données candidats transmises
         $dataMap = [
             'first_name'            => $firstName,
             'last_name'             => $lastName,
             'first_name_ar'         => $firstNameAr,
             'last_name_ar'          => $lastNameAr,
-            'email'                 => $input['email'] ?? null,
+            'email'                 => $input['email'] ?? $userAuth?->email ?? null,
             'phone'                 => $input['phone'] ?? null,
             'gender'                => $input['gender'] ?? null,
             'birth_date'            => $input['birth_date'] ?? null,
@@ -745,7 +755,7 @@ class AdmissionController extends Controller
             'address'               => $address,
             'address_ar'            => $addressAr,
             'city'                  => $input['city'] ?? null,
-            'region'                => $input['region'] ?? null,
+            'region'                => $input['academy'] ?? $input['region'] ?? null,
             'father_name'           => $fatherName ?: null,
             'father_last_name_fr'   => $input['father_last_name_fr'] ?? null,
             'father_first_name_fr'  => $input['father_first_name_fr'] ?? null,
@@ -774,14 +784,18 @@ class AdmissionController extends Controller
             'treating_doctor_info'  => $input['treating_doctor_info'] ?? null,
             'has_disability'        => isset($input['has_disability']) ? (bool)$input['has_disability'] : null,
             'disability_details'    => $input['disability_details'] ?? null,
+            'high_school'           => $input['high_school'] ?? $input['lycee'] ?? null,
+            'academy'               => $input['academy'] ?? $input['region'] ?? null,
+            'delegation'            => $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null,
+            'province'              => $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null,
+            'bac_year'              => $input['bac_year'] ?? null,
+            'blood_type'            => $input['blood_type'] ?? $input['groupe_sanguin'] ?? null,
         ];
 
-        // Nettoyer les valeurs nulles et chaînes vides
+        // Mettre à jour avec toutes les clés fournies (sans null)
         $cleanData = array_filter($dataMap, fn($v) => $v !== null && $v !== '');
 
-        $userAuth = auth()->user();
-
-        // A) Mettre à jour la table Application
+        // A) Mettre à jour ou Créer la table Application
         $application = null;
         if ($cne) {
             $application = Application::where('cne', $cne)->latest('id')->first();
@@ -798,19 +812,28 @@ class AdmissionController extends Controller
         if ($bacAverage !== null) $appData['bac_average'] = $bacAverage;
         if (isset($input['bac_mention'])) $appData['bac_mention'] = $input['bac_mention'];
 
-        if ($application) {
-            try {
-                $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
-                $validAppData = array_intersect_key($appData, array_flip($appColumns));
+        try {
+            $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
+            $validAppData = array_intersect_key($appData, array_flip($appColumns));
+            
+            if ($application) {
                 if (!empty($validAppData)) {
                     $application->update($validAppData);
                 }
-            } catch (\Throwable $e) {
-                \Log::warning("Application update error: " . $e->getMessage());
+            } else if ($cne || $userAuth) {
+                $application = Application::create(array_merge($validAppData, [
+                    'cne'        => $cne ?: ($userAuth?->cne ?? 'CNE_TEMP'),
+                    'cin'        => $cin ?: ($userAuth?->cin ?? 'CIN_TEMP'),
+                    'email'      => $input['email'] ?? $userAuth?->email ?? 'email@temp.com',
+                    'first_name' => $firstName ?: 'Candidat',
+                    'last_name'  => $lastName ?: 'Admis',
+                ]));
             }
+        } catch (\Throwable $e) {
+            \Log::warning("Application update/create error: " . $e->getMessage());
         }
 
-        // B) Mettre à jour la table Student
+        // B) Mettre à jour ou Créer la table Student
         $student = null;
         if ($userAuth) {
             $student = Student::with('user')->where('user_id', $userAuth->id)->first();
@@ -860,7 +883,7 @@ class AdmissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Dossier mis à jour.',
+            'message' => 'Dossier mis à jour avec succès dans PostgreSQL.',
         ]);
     }
 
@@ -869,11 +892,16 @@ class AdmissionController extends Controller
      */
     public function uploadCandidateDocument(Request $request): JsonResponse
     {
+        $typeInput = strtolower($request->input('type', ''));
+        $allowedMimes = ($typeInput === 'photo') ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf';
+
         $request->validate([
-            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png',
+            'file' => "required|file|max:10240|{$allowedMimes}",
             'type' => 'required|string|in:bac,cnie,photo,releve_notes,cin,cin_recto_verso',
             'cne'  => 'nullable|string',
             'cin'  => 'nullable|string',
+        ], [
+            'file.mimes' => ($typeInput === 'photo') ? 'Format de photo invalide (JPG/PNG/WEBP accepté).' : 'Format non autorisé. Seuls les documents au format PDF (.pdf) sont acceptés.',
         ]);
 
         $file = $request->file('file');
@@ -1070,9 +1098,15 @@ class AdmissionController extends Controller
      */
     public function extractDocumentDataOcr(Request $request): JsonResponse
     {
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
         $request->validate([
-            'file'     => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png',
+            'file'     => 'required|file|max:10240|mimes:pdf',
             'doc_type' => 'nullable|string',
+        ], [
+            'file.mimes' => 'Format non autorisé. Seuls les fichiers scannés au format PDF (.pdf) sont acceptés.',
         ]);
 
         $file    = $request->file('file');
@@ -1085,17 +1119,31 @@ class AdmissionController extends Controller
             $docType
         );
 
+        $lastError = $this->geminiService->getLastError();
+
         if (empty($ocrData)) {
             return response()->json([
-                'success' => false,
-                'message' => 'Extraction OCR impossible.',
+                'success'    => false,
+                'message'    => 'Extraction OCR impossible.',
+                'debug_info' => [
+                    'file_name'  => $file->getClientOriginalName(),
+                    'file_size'  => $file->getSize(),
+                    'mime_type'  => $file->getClientMimeType(),
+                    'last_error' => $lastError ?: 'Raison inconnue',
+                ],
             ]);
         }
 
         return response()->json([
-            'success'   => true,
-            'message'   => 'Extraction réussie.',
-            'ocr_data'  => $ocrData,
+            'success'    => true,
+            'message'    => 'Extraction réussie.',
+            'ocr_data'   => $ocrData,
+            'debug_info' => [
+                'file_name'  => $file->getClientOriginalName(),
+                'file_size'  => $file->getSize(),
+                'mime_type'  => $file->getClientMimeType(),
+                'last_error' => $lastError ?: 'Succès - Aucune erreur',
+            ],
         ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }

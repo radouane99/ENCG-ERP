@@ -1068,50 +1068,8 @@ class PdfExportController extends Controller
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
         // Resolve student photo
-        $photoBase64 = null;
         $photoPath = null;
-        $photoRelPath = null;
-
-        if ($student) {
-            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
-                ->where('student_id', $student->id)
-                ->whereIn('type', ['photo', 'PHOTO', 'photo_identite'])
-                ->latest('id')
-                ->first();
-            $photoRelPath = $photoDoc?->file_path ?? $student->photo_path;
-        }
-
-        if (!$photoRelPath && ($cne || $student?->cne)) {
-            $appDoc = \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne ?: $student?->cne)->first();
-            $photoRelPath = $appDoc?->photo_path;
-        }
-
-        if ($photoRelPath) {
-            $cleanRel = ltrim(preg_replace('/^\/?storage\//', '', $photoRelPath), '/');
-            $candidates = [
-                $photoRelPath,
-                storage_path('app/public/' . $cleanRel),
-                storage_path('app/private/' . $cleanRel),
-                storage_path('app/' . $cleanRel),
-                public_path($photoRelPath),
-                public_path('storage/' . $cleanRel),
-                public_path($cleanRel),
-            ];
-
-            foreach ($candidates as $cand) {
-                if ($cand && file_exists($cand) && !is_dir($cand)) {
-                    $photoPath = $cand;
-                    $mime = mime_content_type($cand) ?: 'image/jpeg';
-                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
-                    break;
-                }
-            }
-        }
-
-        if (!$photoBase64) {
-            $avatarSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260" fill="none"><rect width="200" height="260" rx="8" fill="#F1F5F9"/><circle cx="100" cy="95" r="42" fill="#CBD5E1"/><path d="M30 220C30 175 60 160 100 160C140 160 170 175 170 220V240H30V220Z" fill="#94A3B8"/><circle cx="100" cy="92" r="34" fill="#E2E8F0"/><path d="M45 220C45 185 70 172 100 172C130 172 155 185 155 220V235H45V220Z" fill="#0F2863"/></svg>';
-            $photoBase64 = 'data:image/svg+xml;base64,' . base64_encode($avatarSvg);
-        }
+        $photoBase64 = $this->resolveStudentPhotoBase64($student, $cne ?: $student?->cne);
 
         $data = [
             'studentName'         => $studentName,
@@ -1193,50 +1151,8 @@ class PdfExportController extends Controller
         }
 
         // Resolve student photo
-        $photoBase64 = null;
-        $photoPath = null;
-        $photoRelPath = null;
+        $photoBase64 = $this->resolveStudentPhotoBase64($student, $cne ?: $student?->cne);
 
-        if ($student) {
-            $photoDoc = \Illuminate\Support\Facades\DB::table('student_documents')
-                ->where('student_id', $student->id)
-                ->whereIn('type', ['photo', 'PHOTO', 'photo_identite'])
-                ->latest('id')
-                ->first();
-            $photoRelPath = $photoDoc?->file_path ?? $student->photo_path;
-        }
-
-        if (!$photoRelPath && ($cne || $student?->cne)) {
-            $appDoc = \Illuminate\Support\Facades\DB::table('applications')->where('cne', $cne ?: $student?->cne)->first();
-            $photoRelPath = $appDoc?->photo_path;
-        }
-
-        if ($photoRelPath) {
-            $cleanRel = ltrim(preg_replace('/^\/?storage\//', '', $photoRelPath), '/');
-            $candidates = [
-                $photoRelPath,
-                storage_path('app/public/' . $cleanRel),
-                storage_path('app/private/' . $cleanRel),
-                storage_path('app/' . $cleanRel),
-                public_path($photoRelPath),
-                public_path('storage/' . $cleanRel),
-                public_path($cleanRel),
-            ];
-
-            foreach ($candidates as $cand) {
-                if ($cand && file_exists($cand) && !is_dir($cand)) {
-                    $photoPath = $cand;
-                    $mime = mime_content_type($cand) ?: 'image/jpeg';
-                    $photoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
-                    break;
-                }
-            }
-        }
-
-        if (!$photoBase64) {
-            $avatarSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260" fill="none"><rect width="200" height="260" rx="8" fill="#F1F5F9"/><circle cx="100" cy="95" r="42" fill="#CBD5E1"/><path d="M30 220C30 175 60 160 100 160C140 160 170 175 170 220V240H30V220Z" fill="#94A3B8"/><circle cx="100" cy="92" r="34" fill="#E2E8F0"/><path d="M45 220C45 185 70 172 100 172C130 172 155 185 155 220V235H45V220Z" fill="#0F2863"/></svg>';
-            $photoBase64 = 'data:image/svg+xml;base64,' . base64_encode($avatarSvg);
-        }
 
         $fatherName = trim(
             $student?->father_name ??
@@ -1482,5 +1398,122 @@ class PdfExportController extends Controller
 
         $pdf = $this->getPdfInstance('pdf.recu_depot_complementaire', $data)->setPaper('a4', 'portrait');
         return $pdf->stream("Recu_Depot_Complementaire_{$cne}_{$docKey}.pdf", ['Attachment' => false]);
+    }
+    /**
+     * Recherche la vraie photo de l'étudiant à partir de toutes les sources possibles (BDD + Système de fichiers)
+     */
+    private function resolveStudentPhotoBase64($student = null, $cne = null)
+    {
+        $searchCne = $cne ?: $student?->cne;
+        $studentId = $student?->id;
+
+        // If student model wasn't passed directly, try to fetch student by CNE
+        if (!$student && $searchCne) {
+            $student = \App\Models\Student::where('cne', $searchCne)->first();
+            if ($student) {
+                $studentId = $student->id;
+            }
+        }
+
+        $photoRelPaths = [];
+
+        if ($student) {
+            // 1. Photo in student_documents table
+            $photoDocs = \Illuminate\Support\Facades\DB::table('student_documents')
+                ->where('student_id', $student->id)
+                ->where(function ($q) {
+                    $q->whereIn('type', ['photo', 'PHOTO', 'photo_identite', 'avatar'])
+                      ->orWhere('file_path', 'LIKE', '%photo%');
+                })
+                ->latest('id')
+                ->get();
+
+            foreach ($photoDocs as $pDoc) {
+                if ($pDoc->file_path) {
+                    $photoRelPaths[] = $pDoc->file_path;
+                }
+            }
+
+            if ($student->photo_path) {
+                $photoRelPaths[] = $student->photo_path;
+            }
+            if ($student->user?->avatar) {
+                $photoRelPaths[] = $student->user->avatar;
+            }
+            if ($student->user?->profile_photo_path) {
+                $photoRelPaths[] = $student->user->profile_photo_path;
+            }
+        }
+
+        if ($searchCne) {
+            $appDoc = \Illuminate\Support\Facades\DB::table('applications')
+                ->where('cne', $searchCne)
+                ->latest('id')
+                ->first();
+            if ($appDoc?->photo_path) {
+                $photoRelPaths[] = $appDoc->photo_path;
+            }
+        }
+
+        // Search candidate file system locations for explicit paths
+        foreach ($photoRelPaths as $relPath) {
+            if (empty($relPath)) continue;
+
+            if (str_starts_with($relPath, 'data:image')) {
+                return $relPath;
+            }
+
+            $cleanRel = ltrim(preg_replace('/^\/?storage\//', '', $relPath), '/');
+            $candidates = [
+                $relPath,
+                storage_path('app/public/' . $cleanRel),
+                storage_path('app/private/' . $cleanRel),
+                storage_path('app/' . $cleanRel),
+                public_path($relPath),
+                public_path('storage/' . $cleanRel),
+                public_path($cleanRel),
+                public_path('uploads/' . $cleanRel),
+                public_path('uploads/photos/' . $cleanRel),
+            ];
+
+            foreach ($candidates as $cand) {
+                if ($cand && file_exists($cand) && !is_dir($cand)) {
+                    $mime = mime_content_type($cand) ?: 'image/jpeg';
+                    return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
+                }
+            }
+        }
+
+        // Advanced Glob Search on disk for photo files by CNE or student ID
+        $searchKeys = array_filter([$searchCne, $studentId ? 'PHOTO_' . $studentId : null, $studentId ? 'photo_' . $studentId : null]);
+        foreach ($searchKeys as $sKey) {
+            $globPatterns = [
+                storage_path('app/public/candidate_documents/PHOTO_' . $sKey . '*'),
+                storage_path('app/public/candidate_documents/*' . $sKey . '*'),
+                storage_path('app/public/photos/*' . $sKey . '*'),
+                storage_path('app/public/students/*' . $sKey . '*'),
+                storage_path('app/public/documents/*' . $sKey . '*'),
+                storage_path('app/public/*' . $sKey . '*'),
+                public_path('storage/candidate_documents/PHOTO_' . $sKey . '*'),
+                public_path('storage/photos/*' . $sKey . '*'),
+                public_path('storage/*/' . $sKey . '*'),
+            ];
+
+            foreach ($globPatterns as $pattern) {
+                $globResults = glob($pattern);
+                if (!empty($globResults)) {
+                    foreach ($globResults as $cand) {
+                        if ($cand && file_exists($cand) && !is_dir($cand)) {
+                            $mime = mime_content_type($cand) ?: 'image/jpeg';
+                            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($cand));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Default SVG Avatar if no real photo file is found on disk
+        $avatarSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" viewBox="0 0 200 260" fill="none"><rect width="200" height="260" rx="8" fill="#F1F5F9"/><circle cx="100" cy="95" r="42" fill="#CBD5E1"/><path d="M30 220C30 175 60 160 100 160C140 160 170 175 170 220V240H30V220Z" fill="#94A3B8"/><circle cx="100" cy="92" r="34" fill="#E2E8F0"/><path d="M45 220C45 185 70 172 100 172C130 172 155 185 155 220V235H45V220Z" fill="#0F2863"/></svg>';
+        return 'data:image/svg+xml;base64,' . base64_encode($avatarSvg);
     }
 }

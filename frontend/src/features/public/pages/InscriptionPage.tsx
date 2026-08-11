@@ -79,7 +79,118 @@ const dict = {
   }
 };
 
+/* ── OCR Field Normalization Helpers ── */
+
+/**
+ * Normalize an OCR-extracted academy string to match the exact select option value.
+ * OCR may return e.g. "ORIENTAL", "ACADEMIE ORIENTALE", "Oriental", "Fes Meknes", etc.
+ */
+function normalizeAcademy(raw: string): string {
+  const s = raw.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  if (s.includes('ORIENTAL') || s.includes('EST') || s.includes('OUJDA') || s.includes('NADOR') || s.includes('BERKANE') || s.includes('GUERCIF') || s.includes('JERADA') || s.includes('TAOURIRT') || s.includes('DRIOUCH') || s.includes('FIGUIG')) return "ACADEMIE L'Oriental";
+  if (s.includes('FES') || s.includes('FEZ') || s.includes('MEKNES') || s.includes('MEKNAS') || s.includes('SEFROU') || s.includes('TAZA') || s.includes('TAOUNATE') || s.includes('IFRANE') || s.includes('BOULEMANE') || s.includes('HAJEB')) return 'ACADEMIE Fès-Meknès';
+  if (s.includes('RABAT') || s.includes('SALE') || s.includes('KENITRA') || s.includes('KENITRA') || s.includes('SKHIRAT') || s.includes('TEMARA') || s.includes('TIFLET') || s.includes('SIDI KACEM') || s.includes('SIDI SLIMANE')) return 'ACADEMIE Rabat-Salé-Kénitra';
+  if (s.includes('CASABLANCA') || s.includes('SETTAT') || s.includes('BERRECHID') || s.includes('MOHAMMEDIA') || s.includes('BENSLIMANE') || s.includes('KHOURIBGA') || s.includes('EL JADIDA')) return 'ACADEMIE Casablanca-Settat';
+  if (s.includes('TANGER') || s.includes('TETOUAN') || s.includes('HOCEIMA') || s.includes('CHEFCHAOUEN') || s.includes('LARACHE') || s.includes('OUAZZANE') || s.includes('FAHS') || s.includes('MDIQ')) return 'ACADEMIE Tanger-Tétouan-Al Hoceïma';
+  if (s.includes('MARRAKECH') || s.includes('SAFI') || s.includes('CHICHAOUA') || s.includes('ESSAOUIRA') || s.includes('YOUSSOUFIA') || s.includes('RHAMNA') || s.includes('KALAA')) return 'ACADEMIE Marrakech-Safi';
+  if (s.includes('AGADIR') || s.includes('SOUSS') || s.includes('MASSA') || s.includes('TAROUDANT') || s.includes('TIZNIT') || s.includes('CHTOUKA') || s.includes('INEZGANE')) return 'ACADEMIE Souss-Massa';
+  if (s.includes('BENI MELLAL') || s.includes('KHENIFRA') || s.includes('FQUIH') || s.includes('AZILAL') || s.includes('MIDELT')) return 'ACADEMIE Béni Mellal-Khénifra';
+  if (s.includes('DRAA') || s.includes('TAFILALET') || s.includes('ERRACHIDIA') || s.includes('OUARZAZATE') || s.includes('ZAGORA') || s.includes('TINGHIR')) return 'ACADEMIE Drâa-Tafilalet';
+  if (s.includes('GUELMIM') || s.includes('OUED NOUN') || s.includes('SIDI IFNI') || s.includes('TAN TAN') || s.includes('ASSA')) return 'ACADEMIE Guelmim-Oued Noun';
+  if (s.includes('LAAYOUNE') || s.includes('SAKIA') || s.includes('TARFAYA') || s.includes('BOUJDOUR') || s.includes('SMARA')) return 'ACADEMIE Laâyoune-Sakia El Hamra';
+  if (s.includes('DAKHLA') || s.includes('OUED ED-DAHAB') || s.includes('DAHAB') || s.includes('AOUSSERD')) return 'ACADEMIE Dakhla-Oued Ed-Dahab';
+
+  return raw; // return as-is if no match (user can correct manually)
+}
+
+/**
+ * Normalize an OCR-extracted prefecture/delegation string to match the exact select option value.
+ */
+function normalizeDelegation(raw: string): string {
+  const s = raw.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  if (s === 'GUERCIF' || s.includes('GUERCIF')) return 'Guercif';
+  if (s.includes('OUJDA') || s.includes('ANGAD')) return 'Oujda-Angad';
+  if (s.includes('NADOR')) return 'Nador';
+  if (s.includes('BERKANE')) return 'Berkane';
+  if (s.includes('TAOURIRT')) return 'Taourirt';
+  if (s.includes('DRIOUCH')) return 'Driouch';
+  if (s.includes('JERADA')) return 'Jerada';
+  if (s.includes('FIGUIG')) return 'Figuig';
+  if (s === 'FES' || s === 'FEZ' || s.includes('FES') || s.includes('FEZ')) return 'Fès';
+  if (s.includes('MEKNES') || s.includes('MEKNAS')) return 'Meknès';
+  if (s.includes('SEFROU')) return 'Sefrou';
+  if (s.includes('TAOUNATE')) return 'Taounate';
+  if (s.includes('TAZA')) return 'Taza';
+  if (s.includes('IFRANE')) return 'Ifrane';
+  if (s.includes('HAJEB')) return 'El Hajeb';
+  if (s.includes('BOULEMANE')) return 'Boulemane';
+  if (s.includes('RABAT')) return 'Rabat';
+  if (s.includes('SALE') || s.includes('SALA')) return 'Salé';
+  if (s.includes('KENITRA') || s.includes('KENITRA')) return 'Kénitra';
+  if (s.includes('CASABLANCA') || s.includes('DAR EL BEIDA')) return 'Casablanca';
+  if (s.includes('SETTAT')) return 'Settat';
+  if (s.includes('TANGER')) return 'Tanger';
+  if (s.includes('TETOUAN')) return 'Tétouan';
+  if (s.includes('MARRAKECH')) return 'Marrakech';
+  if (s.includes('AGADIR')) return 'Agadir';
+
+  return raw; // return as-is if no match
+}
+
+/**
+ * Normalize an OCR-extracted mention string to the canonical French value.
+ * Handles: "BIEN", "TB", "très bien", "AB", "PASSABLE", "Félicitations", etc.
+ */
+function normalizeMention(raw: string): string {
+  const s = raw.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  if (s === 'TB' || s.includes('TRES BIEN') || s.includes('TRESB') || s === 'TRÈS BIEN') return 'Très Bien';
+  if (s.includes('FELICIT') || s.includes('HONOUR') || s.includes('HONOR')) return 'Très Bien'; // Félicitations → Très Bien
+  if (s === 'B' || s === 'BIEN' || s === 'BI EN') return 'Bien';
+  if (s === 'AB' || s.includes('ASSEZ BIEN') || s.includes('ASSEZ B') || s === 'A BIEN') return 'Assez Bien';
+  if (s.includes('PASSABLE') || s === 'P' || s === 'PASS') return 'Passable';
+  return raw;
+}
+
+/**
+ * Parse and sanitize an OCR-extracted bac average string.
+ * Handles: "15.41", "1541", "154 1", "15,41", "15/20", "15.4", etc.
+ * Returns a string like "15.41" or empty string if invalid.
+ */
+function normalizeAverage(raw: string | number | null | undefined): string {
+  if (raw === null || raw === undefined) return '';
+  let s = String(raw).replace(',', '.').replace('/', '.').replace(/\s+/g, '');
+  // Strip non-numeric except dot
+  s = s.replace(/[^0-9.]/g, '');
+  const n = parseFloat(s);
+  if (isNaN(n) || n < 0) return '';
+  // OCR sometimes omits the decimal point: 1541 → 15.41, 1200 → 12.00
+  if (n > 20 && n <= 2000) {
+    const fixed = n / 100;
+    if (fixed >= 0 && fixed <= 20) return fixed.toFixed(2);
+  }
+  // Clamp to [0, 20]
+  const clamped = Math.min(20, Math.max(0, n));
+  return clamped.toFixed(2);
+}
+
+/**
+ * Derive the correct mention from a numeric bac average.
+ * 10.00-11.99 → Passable, 12.00-13.99 → Assez Bien, 14.00-15.99 → Bien, ≥16.00 → Très Bien
+ */
+function mentionFromAverage(avg: string | number): string {
+  const n = parseFloat(String(avg));
+  if (isNaN(n)) return '';
+  if (n >= 16) return 'Très Bien';
+  if (n >= 14) return 'Bien';
+  if (n >= 12) return 'Assez Bien';
+  if (n >= 10) return 'Passable';
+  return '';
+}
+
 /* ── Sub-components ── */
+
 function CustomSelect({
   icon: Icon,
   value,
@@ -231,7 +342,7 @@ function Field({
     <div className={cn('flex flex-col gap-2.5', className)}>
       <label className={cn('text-sm sm:text-base font-black tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center', isRtl && "justify-start font-serif text-lg font-black")}>
         <span>{cleanLabel}</span>
-        {required && <span className="text-[#E60028] font-black ms-1">*</span>}
+        {required && <span className="text-rose-500 font-black ms-1">*</span>}
       </label>
       <div className="relative group">
         <span className={cn("pointer-events-none absolute inset-y-0 flex items-center text-slate-400 dark:text-slate-500 group-focus-within:text-[#0f2863] dark:group-focus-within:text-blue-400 transition-colors", isRtl ? "right-4" : "left-4")}>
@@ -434,8 +545,15 @@ function VirtualArabicKeyboardModal({
   );
 }
 
-/* ── Main Page ── */
-export default function InscriptionPage({ editMode = false }: { editMode?: boolean }) {
+export default function InscriptionPage({ 
+  editMode = false, 
+  initialData = null, 
+  onSaved = null 
+}: { 
+  editMode?: boolean; 
+  initialData?: any; 
+  onSaved?: (() => void) | null 
+}) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
@@ -519,14 +637,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     father_first_name_ar: '',
     father_cin: '',
     father_phone: '',
-    father_job: 'Militaires et forces de sécurité',
+    father_job: '',
     mother_last_name_fr: '',
     mother_first_name_fr: '',
     mother_last_name_ar: '',
     mother_first_name_ar: '',
     mother_cin: '',
     mother_phone: '',
-    mother_job: 'Sans emploi (Mère au foyer)',
+    mother_job: '',
     parent_phone: '',
 
     // Personne à joindre en cas d'urgence
@@ -540,13 +658,13 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
     treating_doctor_info: '',
 
     // Step 3: Académique
-    bac_name: 'Bac Sciences Mathématiques B - Option Français',
-    bac_mention: 'Très Bien',
+    bac_name: '',
+    bac_mention: '',
     bac_average: '',
-    bac_year: '2026',
+    bac_year: '',
     high_school: '',
-    academy: 'ACADEMIE Fès-Meknès',
-    delegation: 'FES',
+    academy: '',
+    delegation: '',
     cycle: 'Cycle des deux années préparatoires',
     filiere: 'Deux années préparatoires',
 
@@ -661,6 +779,9 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
             bac_mention: cand.bac_mention || prev.bac_mention,
             bac_year: cand.bac_year || prev.bac_year,
+            high_school: cand.high_school || cand.lycee || prev.high_school,
+            academy: cand.academy || cand.region || prev.academy,
+            delegation: cand.delegation || cand.province || cand.prefecture || prev.delegation,
 
             // Documents numérisés pré-existants
             bac_pdf_name: bacDoc?.original_filename || (bacDoc?.file_path ? `BAC_${finalCne}.pdf` : prev.bac_pdf_name),
@@ -788,18 +909,38 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
           if (extractedFirstName && !newData.first_name_fr) newData.first_name_fr = extractedFirstName;
           if (ocr.last_name_ar && ocr.last_name_ar.length >= 2 && !newData.last_name_ar) newData.last_name_ar = ocr.last_name_ar;
           if (ocr.first_name_ar && ocr.first_name_ar.length >= 2 && !newData.first_name_ar) newData.first_name_ar = ocr.first_name_ar;
-          if (ocr.bac_mention) newData.bac_mention = ocr.bac_mention;
+          // Mention: normalize + cross-validate with average
+          if (ocr.bac_mention) newData.bac_mention = normalizeMention(ocr.bac_mention);
           if (ocr.bac_type) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
           if (ocr.high_school) newData.high_school = ocr.high_school;
-          if (ocr.academy) newData.academy = ocr.academy;
-          if (ocr.prefecture || ocr.province) newData.province = ocr.prefecture || ocr.province;
+          if (ocr.academy) newData.academy = normalizeAcademy(ocr.academy);
+          if (ocr.prefecture || ocr.province || ocr.delegation) {
+            const normDel = normalizeDelegation(ocr.prefecture || ocr.province || ocr.delegation);
+            newData.delegation = normDel;
+            newData.province = normDel;
+          }
         }
 
         if (docType === 'releve_notes') {
           if (extractedCne && !newData.cne) newData.cne = extractedCne;
           if (extractedCin && !newData.cin) newData.cin = extractedCin;
-          if (ocr.bac_average) newData.bac_average = ocr.bac_average;
-          if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = ocr.bac_mention;
+          // Average: normalize OCR value
+          if (ocr.bac_average) {
+            const normAvg = normalizeAverage(ocr.bac_average);
+            if (normAvg) {
+              newData.bac_average = normAvg;
+              // Cross-validate mention against the parsed average
+              const derivedMention = mentionFromAverage(normAvg);
+              const currentMention = normalizeMention(ocr.bac_mention || newData.bac_mention || '');
+              // If OCR mention is absent or inconsistent with the average → override
+              if (derivedMention && (!currentMention || currentMention !== derivedMention)) {
+                newData.bac_mention = derivedMention;
+              } else if (currentMention) {
+                newData.bac_mention = currentMention;
+              }
+            }
+          }
+          if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = normalizeMention(ocr.bac_mention);
           if (ocr.bac_type && !newData.bac_name) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
           if (ocr.high_school && !newData.high_school) newData.high_school = ocr.high_school;
         }
@@ -874,6 +1015,8 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
       const fd = new FormData();
       fd.append('file', file);
       fd.append('type', docType);
+      if (formData.cne) fd.append('cne', formData.cne);
+      if (formData.cin) fd.append('cin', formData.cin);
 
       const res = await api.post('/public/ocr-extract-documents', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -929,18 +1072,36 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             if (extFirstName && !newData.first_name_fr) newData.first_name_fr = extFirstName;
             if (ocr.last_name_ar && ocr.last_name_ar.length >= 2 && !newData.last_name_ar) newData.last_name_ar = ocr.last_name_ar;
             if (ocr.first_name_ar && ocr.first_name_ar.length >= 2 && !newData.first_name_ar) newData.first_name_ar = ocr.first_name_ar;
-            if (ocr.bac_mention) newData.bac_mention = ocr.bac_mention;
+            // Mention: normalize + cross-validate with average if present
+            if (ocr.bac_mention) newData.bac_mention = normalizeMention(ocr.bac_mention);
             if (ocr.bac_type) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
             if (ocr.high_school) newData.high_school = ocr.high_school;
-            if (ocr.academy) newData.academy = ocr.academy;
-            if (ocr.prefecture || ocr.province) newData.province = ocr.prefecture || ocr.province;
+            if (ocr.academy) newData.academy = normalizeAcademy(ocr.academy);
+            if (ocr.prefecture || ocr.province || ocr.delegation) {
+              const normDel = normalizeDelegation(ocr.prefecture || ocr.province || ocr.delegation);
+              newData.delegation = normDel;
+              newData.province = normDel;
+            }
           }
 
           if (docType === 'releve_notes') {
             if (extCne && !newData.cne) newData.cne = extCne;
             if (extCin && !newData.cin) newData.cin = extCin;
-            if (ocr.bac_average) newData.bac_average = ocr.bac_average;
-            if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = ocr.bac_mention;
+            // Average: normalize + cross-validate mention
+            if (ocr.bac_average) {
+              const normAvg = normalizeAverage(ocr.bac_average);
+              if (normAvg) {
+                newData.bac_average = normAvg;
+                const derivedMention = mentionFromAverage(normAvg);
+                const currentMention = normalizeMention(ocr.bac_mention || newData.bac_mention || '');
+                if (derivedMention && (!currentMention || currentMention !== derivedMention)) {
+                  newData.bac_mention = derivedMention;
+                } else if (currentMention) {
+                  newData.bac_mention = currentMention;
+                }
+              }
+            }
+            if (ocr.bac_mention && !newData.bac_mention) newData.bac_mention = normalizeMention(ocr.bac_mention);
             if (ocr.bac_type && !newData.bac_name) newData.bac_name = ocr.bac_type.startsWith('Bac ') ? ocr.bac_type : `Bac ${ocr.bac_type}`;
             if (ocr.high_school && !newData.high_school) newData.high_school = ocr.high_school;
           }
@@ -1190,10 +1351,14 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
         await api.post('/public/update-candidate-dossier', payload);
         setSubmitting(false);
         toast.success('✅ Votre dossier a été mis à jour avec succès dans la base de données !');
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-          window.location.reload();
-        }, 1000);
+        if (onSaved) {
+          onSaved();
+        } else {
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+            window.location.reload();
+          }, 800);
+        }
       } else {
         // NEW INSCRIPTION
         const res = await api.post('/v1/auth/register', payload);
@@ -1203,6 +1368,12 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
             user: res.data.data.user ?? null,
             isAuthenticated: !!res.data.data.user,
           });
+        }
+        // Persist full candidate dossier (Academy, Delegation, High School, Parents, Medical) to PostgreSQL
+        try {
+          await api.post('/public/update-candidate-dossier', payload);
+        } catch (e) {
+          console.warn("Dossier details save warning:", e);
         }
         setSubmitting(false);
         setDone(true);
@@ -1545,7 +1716,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
           <div className="w-full max-w-6xl xl:max-w-7xl">
             <div className="rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden transition-colors">
 
-              <div className="h-1 bg-gradient-to-r from-[#E60028]/0 via-[#E60028] to-[#E60028]/0" />
+              <div className="h-1 bg-gradient-to-r from-[#0f2863]/0 via-[#0f2863] to-[#0f2863]/0" />
 
               <form onSubmit={onSubmit} className="p-4 sm:p-10 space-y-6">
 
@@ -1571,21 +1742,6 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                       </span>
                     </div>
 
-                    {/* AI Vision Banner */}
-                    <div className="p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-[#0f2863] rounded-2xl text-white shadow-xl flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20 text-amber-300">
-                        <Sparkles className="w-6 h-6 animate-pulse" />
-                      </div>
-                      <div>
-                        <h4 className="font-black text-sm text-amber-300 uppercase tracking-wide">
-                          🤖 Assistante IA Gemini 1.5 Flash Vision — ENCG Fès
-                        </h4>
-                        <p className="text-xs text-blue-100 leading-relaxed mt-0.5 font-medium">
-                          Choisissez ou glissez vos fichiers (Baccalauréat PDF ou CNIE). L'IA extrait automatiquement votre Nom, Prénom (FR & AR), CNE, CIN, Naissance et Moyenne du Bac en moins de 2s !
-                        </p>
-                      </div>
-                    </div>
-
                     {/* Live Extraction Loading / Ready Status Banner */}
                     {ocrExtracting ? (
                       <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl flex items-center justify-between gap-4 text-amber-900 dark:text-amber-300 animate-pulse">
@@ -1607,7 +1763,7 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </div>
                       </div>
                     ) : (Object.keys(uploadedFiles).length > 0) && (
-                      <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl flex items-center justify-between gap-4 text-emerald-900 dark:text-emerald-300">
+                      <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl flex items-center justify-between gap-4 text-emerald-900 dark:emerald-300">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
                             <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -1624,23 +1780,28 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                       </div>
                     )}
 
-                    <SectionCard title={isRTL ? '1. شهادة البكالوريا، بيان النقاط والبطاقة الوطنية (PDF/صورة)' : '1. Scans du Baccalauréat, Relevé de Notes & CNIE (PDF / Image Max 10Mo)'} icon={FileText} isRtl={isRtl}>
+                    <SectionCard title={isRTL ? '1. شهادة البكالوريا، بيان النقاط والبطاقة الوطنية (PDF/صورة)' : '1. Scans du Baccalauréat, Relevé de Notes & CNIE (PDF / Image Max 10Mo)'} icon={FileText} isRtl={isRTL}>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {/* 1. Baccalauréat Card */}
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
-                          <div className="space-y-2">
+
+                        {/* ─── Card 1: Baccalauréat ─── */}
+                        <div className="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+                          <div className="h-1.5 bg-gradient-to-r from-[#0f2863] via-blue-600 to-indigo-500" />
+                          <div className="flex flex-col flex-1 p-4 space-y-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Baccalauréat Original</span>
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-[#0f2863]/10 dark:bg-blue-500/20 flex items-center justify-center">
+                                  <GraduationCap className="w-4 h-4 text-[#0f2863] dark:text-blue-400" />
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-wide text-slate-800 dark:text-slate-100">Baccalauréat</span>
+                              </div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 px-2 py-0.5 rounded-full">Obligatoire</span>
                             </div>
 
                             {((formData as any).bac_has_existing || formData.bac_pdf_name) && (
-                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
-                                <span className="flex items-center gap-1 truncate">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                  <span className="truncate">{formData.bac_pdf_name || 'BAC_Enregistre.pdf'}</span>
-                                </span>
-                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700/60 rounded-xl">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 truncate flex-1">{formData.bac_pdf_name || 'BAC_Enregistre.pdf'}</span>
+                                <span className="text-[9px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded-md uppercase shrink-0">DÉPOSÉ</span>
                               </div>
                             )}
 
@@ -1649,61 +1810,55 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               onClick={() => {
                                 const url = (formData as any).bac_file_url || `/api/public/serve-document/bac/${encodeURIComponent(formData.cne || formData.cin || '')}`;
                                 const isImg = (formData as any).bac_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.bac_pdf_name || '');
-                                setPdfPreviewModal({
-                                  title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Document Scanné Enregistré'}`,
-                                  url,
-                                  isImage: isImg
-                                });
+                                setPdfPreviewModal({ title: `Baccalauréat Original — ${formData.bac_pdf_name || 'Document Scanné Enregistré'}`, url, isImage: isImg });
                               }}
-                              className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                              className="w-full py-2.5 bg-[#0f2863] hover:bg-[#1a387e] active:scale-[0.98] text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                              <span>{isRTL ? 'معاينة الوثيقة' : "Voir l'Aperçu Document"}</span>
                             </button>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
-                            <label className="block text-[10px] font-bold text-slate-500">
-                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
-                            </label>
-                            <input
-                              type="file"
-                              accept=".pdf,image/*"
-                              onChange={(e) => {
+                          <div className="px-4 pb-4">
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">{isRTL ? 'استبدال الوثيقة (اختياري)' : 'Remplacer le scan (Optionnel)'}</label>
+                            <label className="group/upload flex items-center gap-2.5 w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 hover:border-[#0f2863] dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 rounded-xl transition-all cursor-pointer">
+                              <UploadCloud className="w-4 h-4 text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors shrink-0" />
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors truncate">{isRTL ? 'اختر ملف PDF فقط' : 'Choisir un fichier PDF (.pdf)'}</span>
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  if (!file.name.toLowerCase().endsWith('.pdf')) {
+                                    toast.error('❌ Seuls les fichiers scannés au format PDF (.pdf) sont autorisés.');
+                                    return;
+                                  }
                                   const objectUrl = URL.createObjectURL(file);
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    bac_pdf_name: file.name,
-                                    bac_file_url: objectUrl,
-                                    bac_is_image: isImg,
-                                    bac_has_existing: true
-                                  }));
+                                  setFormData(prev => ({ ...prev, bac_pdf_name: file.name, bac_file_url: objectUrl, bac_is_image: false, bac_has_existing: true }));
                                   handleOcrDocumentUpload('bac', file);
                                 }
-                              }}
-                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                            />
+                              }} />
+                            </label>
                           </div>
                         </div>
 
-                        {/* 2. CNIE Card */}
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
-                          <div className="space-y-2">
+                        {/* ─── Card 2: CNIE ─── */}
+                        <div className="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+                          <div className="h-1.5 bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-600" />
+                          <div className="flex flex-col flex-1 p-4 space-y-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">CNIE Recto-Verso</span>
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center">
+                                  <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-wide text-slate-800 dark:text-slate-100">CNIE Recto-Verso</span>
+                              </div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 px-2 py-0.5 rounded-full">Obligatoire</span>
                             </div>
 
                             {((formData as any).cnie_has_existing || formData.cnie_pdf_name) && (
-                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
-                                <span className="flex items-center gap-1 truncate">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                  <span className="truncate">{formData.cnie_pdf_name || 'CNIE_Enregistree.pdf'}</span>
-                                </span>
-                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700/60 rounded-xl">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 truncate flex-1">{formData.cnie_pdf_name || 'CNIE_Enregistree.pdf'}</span>
+                                <span className="text-[9px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded-md uppercase shrink-0">DÉPOSÉ</span>
                               </div>
                             )}
 
@@ -1712,61 +1867,55 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               onClick={() => {
                                 const url = (formData as any).cnie_file_url || `/api/public/serve-document/cnie/${encodeURIComponent(formData.cne || formData.cin || '')}`;
                                 const isImg = (formData as any).cnie_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.cnie_pdf_name || '');
-                                setPdfPreviewModal({
-                                  title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Document Scanné Enregistré'}`,
-                                  url,
-                                  isImage: isImg
-                                });
+                                setPdfPreviewModal({ title: `Carte d'Identité Nationale (CNIE) — ${formData.cnie_pdf_name || 'Document Scanné Enregistré'}`, url, isImage: isImg });
                               }}
-                              className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                              className="w-full py-2.5 bg-[#0f2863] hover:bg-[#1a387e] active:scale-[0.98] text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                              <span>{isRTL ? 'معاينة الوثيقة' : "Voir l'Aperçu Document"}</span>
                             </button>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
-                            <label className="block text-[10px] font-bold text-slate-500">
-                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
-                            </label>
-                            <input
-                              type="file"
-                              accept=".pdf,image/*"
-                              onChange={(e) => {
+                          <div className="px-4 pb-4">
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">{isRTL ? 'استبدال الوثيقة (اختياري)' : 'Remplacer le scan (Optionnel)'}</label>
+                            <label className="group/upload flex items-center gap-2.5 w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 hover:border-[#0f2863] dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 rounded-xl transition-all cursor-pointer">
+                              <UploadCloud className="w-4 h-4 text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors shrink-0" />
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors truncate">{isRTL ? 'اختر ملف PDF فقط' : 'Choisir un fichier PDF (.pdf)'}</span>
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  if (!file.name.toLowerCase().endsWith('.pdf')) {
+                                    toast.error('❌ Seuls les fichiers scannés au format PDF (.pdf) sont autorisés.');
+                                    return;
+                                  }
                                   const objectUrl = URL.createObjectURL(file);
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    cnie_pdf_name: file.name,
-                                    cnie_file_url: objectUrl,
-                                    cnie_is_image: isImg,
-                                    cnie_has_existing: true
-                                  }));
+                                  setFormData(prev => ({ ...prev, cnie_pdf_name: file.name, cnie_file_url: objectUrl, cnie_is_image: false, cnie_has_existing: true }));
                                   handleOcrDocumentUpload('cnie', file);
                                 }
-                              }}
-                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                            />
+                              }} />
+                            </label>
                           </div>
                         </div>
 
-                        {/* 3. Relevé de Notes Card */}
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 flex flex-col justify-between">
-                          <div className="space-y-2">
+                        {/* ─── Card 3: Relevé de Notes ─── */}
+                        <div className="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+                          <div className="h-1.5 bg-gradient-to-r from-teal-500 via-emerald-500 to-green-500" />
+                          <div className="flex flex-col flex-1 p-4 space-y-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">Relevé de Notes du Bac</span>
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Obligatoire</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-wide text-slate-800 dark:text-slate-100">Relevé de Notes</span>
+                              </div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 px-2 py-0.5 rounded-full">Obligatoire</span>
                             </div>
 
                             {((formData as any).releve_notes_has_existing || formData.releve_notes_pdf_name) && (
-                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-1.5">
-                                <span className="flex items-center gap-1 truncate">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                  <span className="truncate">{formData.releve_notes_pdf_name || 'RELEVE_Enregistre.pdf'}</span>
-                                </span>
-                                <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black uppercase shrink-0">Déposé</span>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700/60 rounded-xl">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 truncate flex-1">{formData.releve_notes_pdf_name || 'RELEVE_Enregistre.pdf'}</span>
+                                <span className="text-[9px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded-md uppercase shrink-0">DÉPOSÉ</span>
                               </div>
                             )}
 
@@ -1775,45 +1924,36 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                               onClick={() => {
                                 const url = (formData as any).releve_notes_file_url || `/api/public/serve-document/releve_notes/${encodeURIComponent(formData.cne || formData.cin || '')}`;
                                 const isImg = (formData as any).releve_notes_is_image || /\.(jpg|jpeg|png|webp|gif)$/i.test(formData.releve_notes_pdf_name || '');
-                                setPdfPreviewModal({
-                                  title: `Relevé de Notes du Baccalauréat — ${formData.releve_notes_pdf_name || 'Document Scanné Enregistré'}`,
-                                  url,
-                                  isImage: isImg
-                                });
+                                setPdfPreviewModal({ title: `Relevé de Notes du Baccalauréat — ${formData.releve_notes_pdf_name || 'Document Scanné Enregistré'}`, url, isImage: isImg });
                               }}
-                              className="w-full py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                              className="w-full py-2.5 bg-[#0f2863] hover:bg-[#1a387e] active:scale-[0.98] text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>{isRTL ? 'معاينة الوثيقة الحالية' : "Voir l'Aperçu Document"}</span>
+                              <span>{isRTL ? 'معاينة الوثيقة' : "Voir l'Aperçu Document"}</span>
                             </button>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
-                            <label className="block text-[10px] font-bold text-slate-500">
-                              {isRTL ? 'تعديل أو تعويض الوثيقة :' : 'Remplacer ce scan (Optionnel) :'}
-                            </label>
-                            <input
-                              type="file"
-                              accept=".pdf,image/*"
-                              onChange={(e) => {
+                          <div className="px-4 pb-4">
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">{isRTL ? 'استبدال الوثيقة (اختياري)' : 'Remplacer le scan (Optionnel)'}</label>
+                            <label className="group/upload flex items-center gap-2.5 w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 hover:border-[#0f2863] dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 rounded-xl transition-all cursor-pointer">
+                              <UploadCloud className="w-4 h-4 text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors shrink-0" />
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/upload:text-[#0f2863] dark:group-hover/upload:text-blue-400 transition-colors truncate">{isRTL ? 'اختر ملف PDF فقط' : 'Choisir un fichier PDF (.pdf)'}</span>
+                              <input type="file" accept=".pdf" className="hidden" onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+                                  if (!file.name.toLowerCase().endsWith('.pdf')) {
+                                    toast.error('❌ Seuls les fichiers scannés au format PDF (.pdf) sont autorisés.');
+                                    return;
+                                  }
                                   const objectUrl = URL.createObjectURL(file);
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    releve_notes_pdf_name: file.name,
-                                    releve_notes_file_url: objectUrl,
-                                    releve_notes_is_image: isImg,
-                                    releve_notes_has_existing: true
-                                  }));
+                                  setFormData(prev => ({ ...prev, releve_notes_pdf_name: file.name, releve_notes_file_url: objectUrl, releve_notes_is_image: false, releve_notes_has_existing: true }));
                                   handleOcrDocumentUpload('releve_notes', file);
                                 }
-                              }}
-                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-[#0f2863] file:text-white hover:file:opacity-90 cursor-pointer"
-                            />
+                              }} />
+                            </label>
                           </div>
                         </div>
+
                       </div>
                     </SectionCard>
 
@@ -2251,18 +2391,18 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         id="cndp_consent"
                         checked={cndpConsent}
                         onChange={(e) => setCndpConsent(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#E60028] focus:ring-[#E60028] accent-[#E60028] mt-0.5 cursor-pointer flex-shrink-0"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#0f2863] focus:ring-[#0f2863] accent-[#0f2863] mt-0.5 cursor-pointer flex-shrink-0"
                       />
                       <label htmlFor="cndp_consent" className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer select-none">
                         {lang === 'ar' ? (
                           <>
                             أوافق على معالجة معطياتي الشخصية من طرف المؤسسة لأغراض إدارية وبيداغوجية، وذلك طبقاً لمقتضيات <strong>القانون رقم 09-08</strong>.
-                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#E60028] hover:underline font-bold ms-1">لمعرفة المزيد</button>
+                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#0f2863] dark:text-blue-400 hover:underline font-bold ms-1">لمعرفة المزيد</button>
                           </>
                         ) : (
                           <>
                             J'accepte le traitement de mes données personnelles par l'ENCG Fès dans le cadre de la gestion administrative et pédagogique de ma scolarité, conformément à la <strong>loi n° 09-08</strong> de la CNDP.
-                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#E60028] hover:underline font-bold ms-1">En savoir plus</button>
+                            <button type="button" onClick={() => setShowCndpModal(true)} className="text-[#0f2863] dark:text-blue-400 hover:underline font-bold ms-1">En savoir plus</button>
                           </>
                         )}
                       </label>
@@ -2456,13 +2596,10 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         </Field>
 
                         <Field icon={Star} label={isRTL ? 'الميزة في البكالوريا *' : 'Mention au Bac *'} required as="select" name="bac_mention" value={formData.bac_mention} onChange={handleChange} isRtl={isRTL}>
-                          <option value="Bien">{isRTL ? 'حسن (14.00 - 15.99)' : 'Bien (14.00 - 15.99)'}</option>
-                          <option value="BIEN">{isRTL ? 'حسن (14.00 - 15.99)' : 'Bien (14.00 - 15.99)'}</option>
-                          <option value="Très Bien">{isRTL ? 'حسن جداً (≥ 16.00)' : 'Très Bien (≥ 16.00)'}</option>
-                          <option value="TRÈS BIEN">{isRTL ? 'حسن جداً (≥ 16.00)' : 'Très Bien (≥ 16.00)'}</option>
-                          <option value="Assez Bien">{isRTL ? 'مستحسن (12.00 - 13.99)' : 'Assez Bien (12.00 - 13.99)'}</option>
-                          <option value="ASSEZ BIEN">{isRTL ? 'مستحسن (12.00 - 13.99)' : 'Assez Bien (12.00 - 13.99)'}</option>
-                          <option value="Passable">{isRTL ? 'مقبول (10.00 - 11.99)' : 'Passable (10.00 - 11.99)'}</option>
+                          <option value="Très Bien">{isRTL ? 'حسن جداً  ≥ 16.00' : 'Très Bien (≥ 16.00)'}</option>
+                          <option value="Bien">{isRTL ? 'حسن  14.00 – 15.99' : 'Bien (14.00 – 15.99)'}</option>
+                          <option value="Assez Bien">{isRTL ? 'مستحسن  12.00 – 13.99' : 'Assez Bien (12.00 – 13.99)'}</option>
+                          <option value="Passable">{isRTL ? 'مقبول  10.00 – 11.99' : 'Passable (10.00 – 11.99)'}</option>
                         </Field>
 
                         <Field icon={Star} label={isRTL ? 'المعدل العام للبكالوريا *' : 'Moyenne générale du Bac *'} required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} readOnly={!!ocrExtractedFields.bac_average} onUnlock={() => toggleFieldLock('bac_average')} placeholder={isRTL ? "مثال: 16.00" : "Ex: 16.00"} isRtl={isRTL} />
@@ -2476,16 +2613,46 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                         <Field icon={Building2} label={isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *'} required type="text" name="high_school" value={formData.high_school} onChange={handleChange} readOnly={!!ocrExtractedFields.high_school} onUnlock={() => toggleFieldLock('high_school')} placeholder={isRTL ? "مثال: ثانوية مولاي إدريس" : "Ex: Lycée Moulay Idriss"} className="sm:col-span-2" isRtl={isRTL} />
 
                         <Field icon={Building2} label={isRTL ? 'الأكاديمية الجهوية *' : 'Académie Régionale *'} required as="select" name="academy" value={formData.academy} onChange={handleChange} isRtl={isRTL}>
+                          <option value="ACADEMIE L'Oriental">{isRTL ? 'أكاديمية الشرق' : "ACADÉMIE L'Oriental"}</option>
                           <option value="ACADEMIE Fès-Meknès">{isRTL ? 'أكاديمية فاس - مكناس' : 'ACADÉMIE Fès-Meknès'}</option>
                           <option value="ACADEMIE Rabat-Salé-Kénitra">{isRTL ? 'أكاديمية الرباط - سلا - القنيطرة' : 'ACADÉMIE Rabat-Salé-Kénitra'}</option>
                           <option value="ACADEMIE Casablanca-Settat">{isRTL ? 'أكاديمية الدار البيضاء - سطات' : 'ACADÉMIE Casablanca-Settat'}</option>
                           <option value="ACADEMIE Tanger-Tétouan-Al Hoceïma">{isRTL ? 'أكاديمية طنجة - تطوان - الحسيمة' : 'ACADÉMIE Tanger-Tétouan-Al Hoceïma'}</option>
+                          <option value="ACADEMIE Marrakech-Safi">{isRTL ? 'أكاديمية مراكش - آسفي' : 'ACADÉMIE Marrakech-Safi'}</option>
+                          <option value="ACADEMIE Souss-Massa">{isRTL ? 'أكاديمية سوس - ماسة' : 'ACADÉMIE Souss-Massa'}</option>
+                          <option value="ACADEMIE Béni Mellal-Khénifra">{isRTL ? 'أكاديمية بني ملال - خنيفرة' : 'ACADÉMIE Béni Mellal-Khénifra'}</option>
+                          <option value="ACADEMIE Drâa-Tafilalet">{isRTL ? 'أكاديمية درعة - تافيلالت' : 'ACADÉMIE Drâa-Tafilalet'}</option>
+                          <option value="ACADEMIE Guelmim-Oued Noun">{isRTL ? 'أكاديمية كلميم - واد نون' : 'ACADÉMIE Guelmim-Oued Noun'}</option>
+                          <option value="ACADEMIE Laâyoune-Sakia El Hamra">{isRTL ? 'أكاديمية العيون - الساقية الحمراء' : 'ACADÉMIE Laâyoune-Sakia El Hamra'}</option>
+                          <option value="ACADEMIE Dakhla-Oued Ed-Dahab">{isRTL ? 'أكاديمية الداخلة - وادي الذهب' : 'ACADÉMIE Dakhla-Oued Ed-Dahab'}</option>
                         </Field>
 
                         <Field icon={MapPin} label={isRTL ? 'المديرية الإقليمية *' : 'Délégation *'} required as="select" name="delegation" value={formData.delegation} onChange={handleChange} isRtl={isRTL}>
-                          <option value="FES">{isRTL ? 'فاس' : 'Fès'}</option>
-                          <option value="MEKNES">{isRTL ? 'مكناس' : 'Meknès'}</option>
-                          <option value="SEFROU">{isRTL ? 'صفرو' : 'Sefrou'}</option>
+                          <option value="Guercif">{isRTL ? 'جرسيف' : 'Guercif'}</option>
+                          <option value="Oujda-Angad">{isRTL ? 'وجدة أنكاد' : 'Oujda-Angad'}</option>
+                          <option value="Nador">{isRTL ? 'الناظور' : 'Nador'}</option>
+                          <option value="Berkane">{isRTL ? 'بركان' : 'Berkane'}</option>
+                          <option value="Taourirt">{isRTL ? 'تاوريرت' : 'Taourirt'}</option>
+                          <option value="Driouch">{isRTL ? 'الدريوش' : 'Driouch'}</option>
+                          <option value="Jerada">{isRTL ? 'جرادة' : 'Jerada'}</option>
+                          <option value="Figuig">{isRTL ? 'فكيك' : 'Figuig'}</option>
+                          <option value="Fès">{isRTL ? 'فاس' : 'Fès'}</option>
+                          <option value="Meknès">{isRTL ? 'مكناس' : 'Meknès'}</option>
+                          <option value="Sefrou">{isRTL ? 'صفرو' : 'Sefrou'}</option>
+                          <option value="Taounate">{isRTL ? 'تاونات' : 'Taounate'}</option>
+                          <option value="Taza">{isRTL ? 'تازة' : 'Taza'}</option>
+                          <option value="Ifrane">{isRTL ? 'إفران' : 'Ifrane'}</option>
+                          <option value="El Hajeb">{isRTL ? 'الحاجب' : 'El Hajeb'}</option>
+                          <option value="Boulemane">{isRTL ? 'بولمان' : 'Boulemane'}</option>
+                          <option value="Rabat">{isRTL ? 'الرباط' : 'Rabat'}</option>
+                          <option value="Salé">{isRTL ? 'سلا' : 'Salé'}</option>
+                          <option value="Kénitra">{isRTL ? 'القنيطرة' : 'Kénitra'}</option>
+                          <option value="Casablanca">{isRTL ? 'الدار البيضاء' : 'Casablanca'}</option>
+                          <option value="Settat">{isRTL ? 'سطات' : 'Settat'}</option>
+                          <option value="Tanger">{isRTL ? 'طنجة' : 'Tanger'}</option>
+                          <option value="Tétouan">{isRTL ? 'تطوان' : 'Tétouan'}</option>
+                          <option value="Marrakech">{isRTL ? 'مراكش' : 'Marrakech'}</option>
+                          <option value="Agadir">{isRTL ? 'أكادير' : 'Agadir'}</option>
                         </Field>
 
                         <Field icon={GraduationCap} label={isRTL ? 'السلك الدراسي *' : 'Cycle *'} required as="select" name="cycle" value={formData.cycle} onChange={handleChange} isRtl={isRTL}>
@@ -2582,11 +2749,20 @@ export default function InscriptionPage({ editMode = false }: { editMode?: boole
                       </div>
                     </div>
 
-                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <p className="text-xs text-emerald-900 dark:text-emerald-200 font-bold leading-relaxed">
-                        En cliquant sur le bouton ci-dessous, vous certifiez sur l'honneur l'exactitude des renseignements fournis. Votre dossier sera immédiatement transmis au service scolarité de l'ENCG Fès.
-                      </p>
+                    {/* ─── Certification Banner ─── */}
+                    <div className="relative overflow-hidden rounded-2xl border border-[#0f2863]/20 dark:border-blue-700/30 bg-gradient-to-br from-[#0f2863]/[0.04] to-blue-50/60 dark:from-[#0f2863]/20 dark:to-blue-950/30">
+                      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2863] to-indigo-500 rounded-l-2xl" />
+                      <div className="px-5 py-4 pl-6 flex items-start gap-4">
+                        <div className="w-9 h-9 rounded-xl bg-[#0f2863]/10 dark:bg-blue-500/20 border border-[#0f2863]/20 dark:border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                          <Shield className="w-4.5 h-4.5 text-[#0f2863] dark:text-blue-400" />
+                        </div>
+                        <p className={cn("text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed", isRTL && "font-serif text-sm text-right")} dir={isRTL ? 'rtl' : 'ltr'}>
+                          {isRTL
+                            ? <> بالنقر على زر الإرسال أدناه، تُقرّ على شرفك بصحة جميع المعلومات المُقدَّمة. سيُحال ملفك فوراً إلى مصلحة الشؤون الطلابية بـ ENCG فاس. </>
+                            : <> En cliquant sur le bouton ci-dessous, vous certifiez sur l'honneur l'exactitude des renseignements fournis. Votre dossier sera immédiatement transmis au service scolarité de l'ENCG Fès. </>
+                          }
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

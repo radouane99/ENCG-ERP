@@ -325,73 +325,102 @@ export default function CandidateDossierPortal() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Identity Details */}
+              {/* 1. Identity & Civil State */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>Identité & Coordonnées</span>
+                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-400 uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span>Identité & Coordonnées</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 font-serif">الهوية والحالة المدنية</span>
                 </h3>
-                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom & Prénom FR:</span><span className="font-bold">{candidateData?.name || (candidateData?.first_name ? `${candidateData.first_name} ${candidateData.last_name}` : user?.name) || 'Non renseigné'}</span></div>
+                <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Nom & Prénom FR:</span><span className="font-extrabold text-slate-900 dark:text-white text-right">{candidateData?.name || (candidateData?.first_name ? `${candidateData.first_name} ${candidateData.last_name}` : user?.name) || 'Non renseigné'}</span></div>
                   {(candidateData?.first_name_ar || candidateData?.last_name_ar) && (
-                    <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom & Prénom AR:</span><span className="font-bold font-serif">{candidateData.last_name_ar} {candidateData.first_name_ar}</span></div>
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Nom & Prénom AR:</span><span className="font-extrabold font-serif text-slate-900 dark:text-white text-right">{candidateData.last_name_ar} {candidateData.first_name_ar}</span></div>
                   )}
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Code MASSAR (CNE):</span><span className="font-mono font-bold text-blue-600">{candidateData?.cne || userCne || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Carte CNIE:</span><span className="font-mono font-bold">{candidateData?.cin || userCin || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Date de Naissance:</span><span className="font-bold">{candidateData?.birth_date ? String(candidateData.birth_date).split('T')[0] : 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Lieu de Naissance:</span><span className="font-bold">{candidateData?.birth_city || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Adresse:</span><span className="font-bold truncate max-w-[200px]">{candidateData?.address || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Email:</span><span className="font-bold">{candidateData?.email || user?.email || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Téléphone:</span><span className="font-bold">{candidateData?.phone || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Code MASSAR (CNE):</span><span className="font-mono font-black text-blue-600 dark:text-blue-400">{candidateData?.cne || userCne || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Carte CNIE:</span><span className="font-mono font-bold text-slate-900 dark:text-white">{candidateData?.cin || userCin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Genre / Sexe:</span><span className="font-bold">{candidateData?.gender === 'female' || candidateData?.gender === 'F' ? 'Féminin (أنثى)' : 'Masculin (ذكر)'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Date de Naissance:</span><span className="font-bold">{candidateData?.birth_date ? String(candidateData.birth_date).split('T')[0] : 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Lieu de Naissance FR:</span><span className="font-bold">{candidateData?.birth_city || candidateData?.birth_city_fr || 'Non renseigné'}</span></div>
+                  {candidateData?.birth_city_ar && (
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Lieu de Naissance AR:</span><span className="font-bold font-serif">{candidateData.birth_city_ar}</span></div>
+                  )}
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Adresse Personnelle:</span><span className="font-bold text-right truncate max-w-[240px]">{candidateData?.address || candidateData?.address_fr || 'Non renseignée'}</span></div>
+                  {candidateData?.address_ar && (
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">العنوان بالعربية:</span><span className="font-bold font-serif text-right truncate max-w-[240px]">{candidateData.address_ar}</span></div>
+                  )}
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Email Officiel:</span><span className="font-bold text-indigo-600 dark:text-indigo-400">{candidateData?.email || user?.email || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">N° Téléphone:</span><span className="font-mono font-bold">{candidateData?.phone || 'Non renseigné'}</span></div>
                 </div>
               </div>
 
-              {/* Academic & Selection Details */}
+              {/* 2. Academic & Selection Details */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Orientation & Sélection TAFEM</span>
+                <h3 className="text-sm font-black text-[#0f2863] dark:text-blue-400 uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Parcours Académique & Sélection</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 font-serif">المسار والتوجيه</span>
                 </h3>
-                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Filière Affectée:</span><span className="font-bold text-amber-600">{candidateData?.filiere || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Score de Sélection:</span><span className="font-extrabold text-emerald-600">{candidateData?.selection_score ? `${candidateData.selection_score} pts` : 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Série du Bac:</span><span className="font-bold">{candidateData?.bac_type || candidateData?.bac_serie || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Moyenne du Bac:</span><span className="font-bold">{candidateData?.bac_average ? `${candidateData.bac_average} / 20` : 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Mention Bac:</span><span className="font-bold">{candidateData?.bac_mention || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Année du Bac:</span><span className="font-bold">{candidateData?.bac_year || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Statut Dossier:</span><span className={`font-bold ${candidateData?.is_accepted ? 'text-emerald-500' : 'text-amber-500'}`}>{candidateData?.status_label || 'En cours de traitement'}</span></div>
+                <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Filière Affectée:</span><span className="font-black text-amber-600 dark:text-amber-400 text-right">{candidateData?.filiere || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Score de Sélection:</span><span className="font-black text-emerald-600 dark:text-emerald-400">{candidateData?.selection_score ? `${candidateData.selection_score} pts` : 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Série du Baccalauréat:</span><span className="font-bold text-right">{candidateData?.bac_type || candidateData?.bac_name || candidateData?.bac_serie || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Moyenne Générale Bac:</span><span className="font-black text-emerald-600 dark:text-emerald-400">{candidateData?.bac_average ? `${candidateData.bac_average} / 20` : 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Mention au Bac:</span><span className="font-bold">{candidateData?.bac_mention || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Année d'Obtention:</span><span className="font-bold">{candidateData?.bac_year || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Lycée / Établissement:</span><span className="font-bold text-right truncate max-w-[220px]">{candidateData?.high_school || candidateData?.lycee || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Académie Régionale:</span><span className="font-bold text-right">{candidateData?.academy || candidateData?.region || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Délégation / Préfecture:</span><span className="font-bold text-right">{candidateData?.delegation || candidateData?.province || candidateData?.prefecture || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Statut du Dossier:</span><span className={`font-black ${candidateData?.is_accepted ? 'text-emerald-600' : 'text-amber-600'}`}>{candidateData?.status_label || 'En cours de traitement'}</span></div>
                 </div>
               </div>
 
-              {/* Parents Details */}
+              {/* 3. Parents & Emergency Details */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>Renseignements des Parents</span>
+                <h3 className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>Renseignements des Parents</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 font-serif">معلومات الوالدين</span>
                 </h3>
-                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom du Père:</span><span className="font-bold">{candidateData?.father_name || (candidateData?.father_last_name_fr ? `${candidateData.father_last_name_fr} ${candidateData.father_first_name_fr}` : null) || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Père:</span><span className="font-mono font-bold">{candidateData?.father_cin || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Profession Père:</span><span className="font-bold">{candidateData?.father_profession || candidateData?.father_job || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Nom de la Mère:</span><span className="font-bold">{candidateData?.mother_name || (candidateData?.mother_last_name_fr ? `${candidateData.mother_last_name_fr} ${candidateData.mother_first_name_fr}` : null) || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">CNIE Mère:</span><span className="font-mono font-bold">{candidateData?.mother_cin || 'Non renseigné'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Profession Mère:</span><span className="font-bold">{candidateData?.mother_profession || candidateData?.mother_job || 'Non renseignée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Tél. Parent / Urgence:</span><span className="font-mono font-bold">{candidateData?.parent_phone || candidateData?.father_phone || 'Non renseigné'}</span></div>
+                <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Père (Nom & Prénom FR):</span><span className="font-bold">{candidateData?.father_name || (candidateData?.father_last_name_fr ? `${candidateData.father_last_name_fr} ${candidateData.father_first_name_fr}` : null) || 'Non renseigné'}</span></div>
+                  {candidateData?.father_first_name_ar && (
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">الأب (بالعربية):</span><span className="font-bold font-serif">{candidateData.father_last_name_ar} {candidateData.father_first_name_ar}</span></div>
+                  )}
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">CNIE Père:</span><span className="font-mono font-bold">{candidateData?.father_cin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Profession du Père:</span><span className="font-bold">{candidateData?.father_profession || candidateData?.father_job || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Mère (Nom & Prénom FR):</span><span className="font-bold">{candidateData?.mother_name || (candidateData?.mother_last_name_fr ? `${candidateData.mother_last_name_fr} ${candidateData.mother_first_name_fr}` : null) || 'Non renseigné'}</span></div>
+                  {candidateData?.mother_first_name_ar && (
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">الأم (بالعربية):</span><span className="font-bold font-serif">{candidateData.mother_last_name_ar} {candidateData.mother_first_name_ar}</span></div>
+                  )}
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">CNIE Mère:</span><span className="font-mono font-bold">{candidateData?.mother_cin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Profession de la Mère:</span><span className="font-bold">{candidateData?.mother_profession || candidateData?.mother_job || 'Non renseignée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Tél. Parent / Urgence 24h:</span><span className="font-mono font-black text-emerald-600 dark:text-emerald-400">{candidateData?.parent_phone || candidateData?.father_phone || 'Non renseigné'}</span></div>
                 </div>
               </div>
 
-              {/* Medical Details */}
+              {/* 4. Medical & Health Form */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  <span>Fiche Médicale & Prise en Charge</span>
+                <h3 className="text-sm font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span>Fiche Médicale & Santé</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 font-serif">الملف الطبي والصحي</span>
                 </h3>
-                <div className="space-y-3 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Allergies:</span><span className="font-bold">{candidateData?.allergy_type || 'Aucune allergie déclarée'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Traitement médical:</span><span className="font-bold">{candidateData?.medication_used || 'Aucun traitement en cours'}</span></div>
-                  <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Situation d'handicap:</span><span className="font-bold">{candidateData?.has_disability ? 'Oui' : 'Non'}</span></div>
+                <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Groupe Sanguin:</span><span className="font-mono font-black text-purple-600 dark:text-purple-400">{candidateData?.blood_type || candidateData?.groupe_sanguin || 'Non renseigné'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Allergies déclarées:</span><span className="font-bold">{candidateData?.allergy_type || candidateData?.allergies || 'Aucune allergie déclarée'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Traitement médical en cours:</span><span className="font-bold">{candidateData?.medication_used || candidateData?.chronic_diseases || 'Aucun traitement médical'}</span></div>
+                  <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Situation d'handicap:</span><span className="font-bold">{candidateData?.has_disability ? 'Oui' : 'Non'}</span></div>
                   {candidateData?.disability_details && (
-                    <div className="pt-2 flex justify-between"><span className="text-slate-500 font-semibold">Détails handicap:</span><span className="font-bold">{candidateData.disability_details}</span></div>
+                    <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Détails handicap:</span><span className="font-bold">{candidateData.disability_details}</span></div>
                   )}
                 </div>
               </div>
@@ -634,7 +663,14 @@ export default function CandidateDossierPortal() {
               </button>
             </div>
 
-            <InscriptionPage editMode={true} />
+            <InscriptionPage 
+              editMode={true} 
+              initialData={candidateData} 
+              onSaved={() => {
+                fetchCandidateDossier();
+                setActiveTab('overview');
+              }} 
+            />
           </div>
         )}
 

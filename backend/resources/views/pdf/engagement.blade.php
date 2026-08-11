@@ -3,78 +3,78 @@
 @section('title', 'ENGAGEMENT DE L\'ÉTUDIANT — ENCG FÈS')
 
 @section('content')
-    <div style="position: relative; width: 100%;">
-        <!-- Header -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px; border-bottom: 2px dashed #0f2863; padding-bottom: 10px;">
-            <tr>
-                <td width="70%">
-                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
-                    <div style="font-size: 12px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
-                    <div style="font-size: 12px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 3px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
-                </td>
-                <td width="30%" style="text-align: right;">
-                    <div style="font-size: 9px; font-family: monospace; font-weight: bold; color: #0f2863;">RÉFÉRENCE DOSSIER :</div>
-                    <div style="font-size: 12px; font-family: monospace; font-weight: 900; color: #059669;">
-                        ENG-2026-{{ $cne ?? 'N142088916' }}
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <div style="position: relative; width: 100%; font-family: 'Helvetica', 'Arial', sans-serif;">
 
-        <!-- Document Title -->
-        <div style="text-align: center; margin: 15px 0 20px 0; padding: 10px; background-color: #f8fafc; border: 1.5px solid #0f2863; border-radius: 6px;">
-            <h2 style="font-size: 16px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin: 0;">
+        <!-- Header Title Banner -->
+        <div style="background-color: #0f2863; color: #ffffff; text-align: center; padding: 6px 12px; border-radius: 5px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(15,40,99,0.15);">
+            <h2 style="font-size: 15px; font-weight: 900; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; margin: 0;">
                 FORMULAIRE D'ENGAGEMENT DE L'ÉTUDIANT(E)
             </h2>
-            <div style="font-size: 10px; font-weight: bold; color: #64748b; margin-top: 4px;">
-                Année Universitaire {{ $academicYear ?? '2026/2027' }} • Engagement Déontologique & Règlement Interne
+            <div style="font-size: 8pt; font-weight: bold; color: #93c5fd; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.8px;">
+                Année Universitaire {{ $academicYear ?? '2026-2027' }} • Engagement Déontologique &amp; Règlement Interne
             </div>
         </div>
 
-        <!-- Candidate Identity Summary -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+        <!-- Student Identity Summary & Photo -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
             <tr>
-                <td width="78%" style="vertical-align: top;">
-                    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; background-color: #ffffff; border: 1px solid #cbd5e1; font-size: 11px;">
-                        <tr style="background-color: #0f2863; color: #ffffff;">
-                            <td colspan="2" style="font-weight: 900; font-size: 12px; text-transform: uppercase;">
-                                1. IDENTIFICATION DE L'ÉTUDIANT(E) INSCRIT(E)
-                            </td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td width="38%" style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Nom & Prénom de l'Étudiant(e) :</td>
-                            <td width="62%" style="font-weight: 900; color: #0f2863; font-size: 12px;">{{ strtoupper($studentName ?? '') }}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Date & Lieu de Naissance :</td>
-                            <td style="font-weight: bold;">{{ $birthDate ?? '' }} &nbsp; à &nbsp; {{ $birthCity ?? '' }}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Carte d'Identité Nationale (CNIE) :</td>
-                            <td style="font-family: monospace; font-weight: bold;">{{ $cin ?? '' }}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Code CNE / MASSAR :</td>
-                            <td style="font-family: monospace; font-weight: bold; color: #059669;">{{ $cne ?? '' }}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Inscrit(e) en Semestre & Niveau :</td>
-                            <td style="font-weight: bold;">{{ $semester ?? 'S1' }} ({{ $semesterLabel ?? '1ère année' }}) — Cycle Diplôme ENCG (Bac+5)</td>
-                        </tr>
-                        <tr>
-                            <td style="background-color: #f8fafc; font-weight: bold; color: #1e293b;">Filière d'Affectation Officielle :</td>
-                            <td style="font-weight: bold; color: #d97706;">{{ $filiere ?? 'Deux années préparatoires (Tronc Commun ENCG)' }}</td>
-                        </tr>
-                    </table>
+                <td width="76%" style="vertical-align: top;">
+                    <div style="border: 1px solid #cbd5e1; border-radius: 5px; overflow: hidden;">
+                        <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8.5pt; text-transform: uppercase; padding: 4px 10px; letter-spacing: 0.5px;">
+                            1. IDENTIFICATION DE L'ÉTUDIANT(E) INSCRIT(E)
+                        </div>
+                        <div style="padding: 6px 10px;">
+                            <table width="100%" cellpadding="3" cellspacing="0" style="border-collapse: collapse; font-size: 9pt;">
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td width="40%" style="font-weight: bold; color: #475569;">Nom &amp; Prénom :</td>
+                                    <td width="60%" style="font-weight: 900; color: #0f2863; font-size: 10.5pt; text-transform: uppercase;">
+                                        {{ strtoupper($studentName ?? 'ENMILI FATIMA-ZAHRA') }}
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="font-weight: bold; color: #475569;">Date &amp; Lieu de Naissance :</td>
+                                    <td style="font-weight: bold; color: #1e293b;">
+                                        {{ $birthDate ?? '25/07/2008' }} &nbsp;à&nbsp; <strong style="color: #0f2863;">{{ strtoupper($birthCity ?? 'OUJDA') }}</strong>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="font-weight: bold; color: #475569;">Carte d'Identité (CNIE) :</td>
+                                    <td style="font-weight: bold; font-family: monospace; color: #1e293b;">
+                                        {{ $cin ?? 'ZG195334' }}
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="font-weight: bold; color: #475569;">Code CNE / MASSAR :</td>
+                                    <td style="font-weight: 900; font-family: monospace; color: #059669;">
+                                        {{ $cne ?? 'H148073298' }}
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="font-weight: bold; color: #475569;">Inscrit(e) en Semestre &amp; Niveau :</td>
+                                    <td style="font-weight: bold; color: #1e293b;">
+                                        {{ $semester ?? 'S1' }} ({{ $semesterLabel ?? '1ère année' }}) — Cycle Diplôme ENCG (Bac+5)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; color: #475569;">Filière d'Affectation :</td>
+                                    <td style="font-weight: 900; color: #0f2863; text-transform: uppercase;">
+                                        {{ $filiere ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)' }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </td>
-                <td width="22%" style="text-align: right; vertical-align: top; padding-left: 10px;">
-                    <div style="width: 100px; height: 130px; border: 2px solid #0f2863; border-radius: 6px; padding: 2px; background-color: #ffffff; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+
+                <!-- Photo Box (35x45mm Ratio) -->
+                <td width="24%" style="text-align: right; vertical-align: top; padding-left: 10px;">
+                    <div style="width: 105px; height: 130px; border: 2px solid #0f2863; border-radius: 5px; padding: 2px; background-color: #ffffff; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         @if(!empty($photoBase64))
-                            <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Photo" />
+                            <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;" alt="Photo Étudiant" />
                         @elseif(!empty($photoPath) && file_exists($photoPath))
-                            <img src="{{ $photoPath }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Photo" />
+                            <img src="{{ $photoPath }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;" alt="Photo Étudiant" />
                         @else
-                            <div style="width: 100%; height: 100%; background-color: #f1f5f9; border-radius: 4px; text-align: center; line-height: 130px; font-size: 9px; color: #94a3b8; font-weight: bold;">
+                            <div style="width: 100%; height: 100%; background-color: #f1f5f9; border-radius: 3px; text-align: center; line-height: 130px; font-size: 8pt; color: #94a3b8; font-weight: bold;">
                                 PHOTO 35×45
                             </div>
                         @endif
@@ -84,56 +84,71 @@
         </table>
 
         <!-- Rules & Ethical Obligations Checklist -->
-        <table width="100%" cellpadding="7" cellspacing="0" style="border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border: 1px solid #cbd5e1;">
-            <tr style="background-color: #0f2863; color: #ffffff;">
-                <td colspan="2" style="font-weight: 900; font-size: 12px; text-transform: uppercase;">
-                    2. ENGAGEMENTS DÉONTOLOGIQUES & OBLIGATIONS ACADÉMIQUES
-                </td>
-            </tr>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td width="6%" style="text-align: center; font-weight: 900; color: #0f2863; background-color: #f1f5f9;">01</td>
-                <td width="94%" style="line-height: 1.4;">
-                    <strong>Assiduité & Présence Obligatoire :</strong> Je m'engage à assister avec régularité et ponctualité à l'ensemble des cours magistraux, travaux dirigés (TD), travaux pratiques (TP) et conférences programmés par l'établissement.
-                </td>
-            </tr>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="text-align: center; font-weight: 900; color: #0f2863; background-color: #f1f5f9;">02</td>
-                <td style="line-height: 1.4;">
-                    <strong>Respect du Règlement Interne :</strong> Déclare avoir pris connaissance du règlement intérieur de l'ENCG Fès et m'engage à respecter les règles de bienséance, le matériel, le campus et le corps enseignant et administratif.
-                </td>
-            </tr>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="text-align: center; font-weight: 900; color: #0f2863; background-color: #f1f5f9;">03</td>
-                <td style="line-height: 1.4;">
-                    <strong>Intégrité Académique :</strong> Je m'engage à respecter la charte de probité intellectuelle, m'interdisant toute forme de fraude, plagiat ou tricherie lors des contrôles continus et examens finaux.
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align: center; font-weight: 900; color: #0f2863; background-color: #f1f5f9;">04</td>
-                <td style="line-height: 1.4;">
-                    <strong>Authenticité des Pièces :</strong> Certifie sur l'honneur l'exactitude absolue de l'ensemble des pièces scannées et documents physiques déposés auprès de la Scolarité ENCG Fès.
-                </td>
-            </tr>
-        </table>
+        <div style="border: 1px solid #cbd5e1; border-radius: 5px; overflow: hidden; margin-bottom: 14px;">
+            <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8.5pt; text-transform: uppercase; padding: 4px 10px; letter-spacing: 0.5px;">
+                2. ENGAGEMENTS DÉONTOLOGIQUES &amp; OBLIGATIONS ACADÉMIQUES
+            </div>
+            <div style="padding: 6px 10px;">
+                <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-size: 8.5pt;">
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td width="6%" style="text-align: center; vertical-align: top; padding-top: 5px;">
+                            <span style="background-color: #0f2863; color: #ffffff; font-size: 7.5pt; font-weight: 900; padding: 2px 6px; border-radius: 3px;">01</span>
+                        </td>
+                        <td width="94%" style="line-height: 1.4; color: #1e293b;">
+                            <strong style="color: #0f2863;">Assiduité &amp; Présence Obligatoire :</strong> Je m'engage à assister avec régularité et ponctualité à l'ensemble des cours magistraux, travaux dirigés (TD), travaux pratiques (TP) et conférences programmés par l'établissement.
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="text-align: center; vertical-align: top; padding-top: 5px;">
+                            <span style="background-color: #0f2863; color: #ffffff; font-size: 7.5pt; font-weight: 900; padding: 2px 6px; border-radius: 3px;">02</span>
+                        </td>
+                        <td style="line-height: 1.4; color: #1e293b;">
+                            <strong style="color: #0f2863;">Respect du Règlement Intérieur :</strong> Déclare avoir pris connaissance du règlement intérieur de l'ENCG Fès et m'engage à respecter les règles de bienséance, le matériel, le campus et le corps enseignant et administratif.
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="text-align: center; vertical-align: top; padding-top: 5px;">
+                            <span style="background-color: #0f2863; color: #ffffff; font-size: 7.5pt; font-weight: 900; padding: 2px 6px; border-radius: 3px;">03</span>
+                        </td>
+                        <td style="line-height: 1.4; color: #1e293b;">
+                            <strong style="color: #0f2863;">Intégrité Académique :</strong> Je m'engage à respecter la charte de probité intellectuelle, m'interdisant toute forme de fraude, plagiat ou tricherie lors des contrôles continus et examens finaux.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; vertical-align: top; padding-top: 5px;">
+                            <span style="background-color: #0f2863; color: #ffffff; font-size: 7.5pt; font-weight: 900; padding: 2px 6px; border-radius: 3px;">04</span>
+                        </td>
+                        <td style="line-height: 1.4; color: #1e293b;">
+                            <strong style="color: #0f2863;">Authenticité des Pièces :</strong> Certifie sur l'honneur l'exactitude absolue de l'ensemble des pièces scannées et documents physiques déposés auprès de la Scolarité ENCG Fès.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
 
         <!-- Declaration & Signatures -->
-        <table width="100%" cellpadding="6" cellspacing="0" style="margin-top: 20px; font-size: 11px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 10px; font-size: 8.5pt;">
             <tr>
-                <td width="50%" style="vertical-align: top;">
-                    <div style="font-size: 10px; color: #64748b;">
-                        Fait à Fès, le : <strong>{{ $currentDate ?? now()->format('d/m/Y') }}</strong>
+                <td width="48%" style="vertical-align: top;">
+                    <div style="font-size: 8pt; color: #475569; font-weight: bold; margin-bottom: 6px;">
+                        Fait à Fès, le : <strong style="color: #0f2863;">{{ $currentDate ?? now()->format('d/m/Y') }}</strong>
                     </div>
-                    <div style="margin-top: 8px; padding: 8px; border: 1px dashed #cbd5e1; background-color: #f8fafc; border-radius: 4px; font-size: 9px; color: #475569;">
-                        <strong>Note de la Scolarité :</strong><br>
-                        Ce document d'engagement est généré automatiquement lors de la pré-inscription et doit être joint au dossier physique.
+                    <div style="padding: 8px 10px; border: 1px dashed #f59e0b; background-color: #fffbeb; border-radius: 5px; font-size: 7.5pt; color: #78350f; line-height: 1.45;">
+                        <strong style="color: #0f2863; font-size: 8pt;">Notice de la Scolarité :</strong><br>
+                        Ce document d'engagement est généré automatiquement lors de l'inscription et doit être signé et joint au dossier physique de l'étudiant.
                     </div>
                 </td>
-                <td width="50%" style="text-align: center; vertical-align: top;">
-                    <div style="font-weight: 900; color: #0f2863; font-size: 12px; margin-bottom: 40px;">
+                <td width="4%"></td>
+                <td width="48%" style="vertical-align: top; text-align: center;">
+                    <strong style="font-size: 8.5pt; color: #0f2863; display: block; margin-bottom: 4px;">
                         Signature de l'Étudiant(e)<br>
-                        <span style="font-size: 9px; font-weight: normal; color: #64748b;">(précédée de la mention "Lu et approuvé")</span>
+                        <span style="font-size: 7pt; font-weight: normal; color: #64748b;">(précédée de la mention manuscrite "Lu et approuvé")</span>
+                    </strong>
+                    <div style="border: 1px solid #cbd5e1; border-radius: 5px; height: 65px; background-color: #f8fafc; position: relative;">
+                        <span style="position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-size: 6.5pt; color: #94a3b8; font-style: italic;">
+                            Lu et approuvé — Signature manuscrite obligatoire
+                        </span>
                     </div>
-                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 0 auto;"></div>
                 </td>
             </tr>
         </table>
