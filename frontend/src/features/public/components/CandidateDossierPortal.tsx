@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   User, CheckCircle2, FileText, Download, Mail, Edit3,
-  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2, X
+  Upload, Eye, Phone, MapPin, Calendar, GraduationCap, Users, Shield, ArrowRight, Clock, Image as ImageIcon, Trash2, X, RefreshCw
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { cn } from '@shared/lib/utils';
@@ -13,8 +13,10 @@ import InscriptionPage from '../pages/InscriptionPage';
 export default function CandidateDossierPortal() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'edit'>('overview');
+  const [editTargetStep, setEditTargetStep] = useState<number>(2);
   const [candidateData, setCandidateData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [previewModal, setPreviewModal] = useState<{ title: string; url?: string; isPdf?: boolean } | null>(null);
@@ -314,14 +316,33 @@ export default function CandidateDossierPortal() {
                   <p className="text-xs text-slate-500 dark:text-slate-400">Cliquez sur "Modifier" pour mettre à jour vos données personnelles, parentales ou médicales.</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab('edit')}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Modifier mes Infos</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setRefreshing(true);
+                    const toastId = toast.loading("Actualisation du dossier depuis PostgreSQL...");
+                    await fetchCandidateDossier();
+                    setRefreshing(false);
+                    toast.success("✅ Dossier actualisé depuis la base de données !", { id: toastId });
+                  }}
+                  disabled={refreshing}
+                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-60"
+                  title="Forcer l'actualisation des données depuis PostgreSQL"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span>{refreshing ? 'Actualisation...' : 'Actualiser le Dossier'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('edit')}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Modifier mes Infos</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -332,7 +353,18 @@ export default function CandidateDossierPortal() {
                     <User className="w-4 h-4" />
                     <span>Identité & Coordonnées</span>
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 font-serif">الهوية والحالة المدنية</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">الهوية والحالة المدنية</span>
+                    <button
+                      type="button"
+                      onClick={() => { setEditTargetStep(2); setActiveTab('edit'); }}
+                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      title="Modifier uniquement les informations d'identité et coordonnées"
+                    >
+                      <Edit3 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                      <span>Modifier</span>
+                    </button>
+                  </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Nom & Prénom FR:</span><span className="font-extrabold text-slate-900 dark:text-white text-right">{candidateData?.name || (candidateData?.first_name ? `${candidateData.first_name} ${candidateData.last_name}` : user?.name) || 'Non renseigné'}</span></div>
@@ -363,7 +395,18 @@ export default function CandidateDossierPortal() {
                     <GraduationCap className="w-4 h-4" />
                     <span>Parcours Académique & Sélection</span>
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 font-serif">المسار والتوجيه</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">المسار والتوجيه</span>
+                    <button
+                      type="button"
+                      onClick={() => { setEditTargetStep(4); setActiveTab('edit'); }}
+                      className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      title="Modifier uniquement le parcours académique et baccalauréat"
+                    >
+                      <Edit3 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                      <span>Modifier</span>
+                    </button>
+                  </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Filière Affectée:</span><span className="font-black text-amber-600 dark:text-amber-400 text-right">{candidateData?.filiere || 'Non renseignée'}</span></div>
@@ -386,7 +429,18 @@ export default function CandidateDossierPortal() {
                     <Users className="w-4 h-4" />
                     <span>Renseignements des Parents</span>
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 font-serif">معلومات الوالدين</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">معلومات الوالدين</span>
+                    <button
+                      type="button"
+                      onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
+                      className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      title="Modifier uniquement les renseignements des parents"
+                    >
+                      <Edit3 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      <span>Modifier</span>
+                    </button>
+                  </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Père (Nom & Prénom FR):</span><span className="font-bold">{candidateData?.father_name || (candidateData?.father_last_name_fr ? `${candidateData.father_last_name_fr} ${candidateData.father_first_name_fr}` : null) || 'Non renseigné'}</span></div>
@@ -412,7 +466,18 @@ export default function CandidateDossierPortal() {
                     <Shield className="w-4 h-4" />
                     <span>Fiche Médicale & Santé</span>
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 font-serif">الملف الطبي والصحي</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">الملف الطبي والصحي</span>
+                    <button
+                      type="button"
+                      onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
+                      className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-800 dark:text-purple-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      title="Modifier uniquement la fiche médicale"
+                    >
+                      <Edit3 className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                      <span>Modifier</span>
+                    </button>
+                  </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="pt-2 flex justify-between gap-2"><span className="text-slate-500 font-semibold shrink-0">Groupe Sanguin:</span><span className="font-mono font-black text-purple-600 dark:text-purple-400">{candidateData?.blood_type || candidateData?.groupe_sanguin || 'Non renseigné'}</span></div>
@@ -666,6 +731,7 @@ export default function CandidateDossierPortal() {
             <InscriptionPage 
               editMode={true} 
               initialData={candidateData} 
+              initialStep={editTargetStep}
               onSaved={() => {
                 fetchCandidateDossier();
                 setActiveTab('overview');

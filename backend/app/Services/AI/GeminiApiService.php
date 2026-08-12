@@ -250,7 +250,7 @@ class GeminiApiService
             }
 
             if (count($userContent) > 1) {
-                $visionModels = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview', 'llama-3.3-70b-versatile'];
+                $visionModels = ['llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview'];
 
                 foreach ($visionModels as $modelName) {
                     try {

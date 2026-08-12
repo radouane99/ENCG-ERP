@@ -453,80 +453,97 @@ class AdmissionController extends Controller
 
         $candidateData = [];
 
-        // Préférer Student s'il existe (données utilisateur et scolaires les plus récentes), sinon Application
-        if ($student) {
-            $u = $student->user;
-            $fn = $u?->first_name ?? $student->first_name ?? $application?->first_name ?? '';
-            $ln = $u?->last_name ?? $student->last_name ?? $application?->last_name ?? '';
+        // Helper pour extraire la première valeur réelle non-vide (depuis Application ou Student)
+        $getVal = function($field, ...$fallbacks) use ($application, $student) {
+            foreach ([$application, $student] as $source) {
+                if (!$source) continue;
+                foreach (array_merge([$field], $fallbacks) as $f) {
+                    $v = $source->{$f} ?? null;
+                    if ($v !== null && $v !== '' && $v !== 'Non renseigné' && $v !== 'Non renseignée') {
+                        return $v;
+                    }
+                }
+            }
+            return null;
+        };
 
-            $bdate = $student->birth_date ?? $application?->birth_date;
+        if ($student || $application) {
+            $u = $student?->user;
+            $fn = $getVal('first_name') ?? $u?->first_name ?? '';
+            $ln = $getVal('last_name') ?? $u?->last_name ?? '';
+
+            $bdate = $student?->birth_date ?? $application?->birth_date;
             if ($bdate instanceof \Carbon\Carbon || $bdate instanceof \DateTimeInterface) {
                 $bdate = $bdate->format('Y-m-d');
             } else if (is_string($bdate) && str_contains($bdate, 'T')) {
                 $bdate = explode('T', $bdate)[0];
             }
 
-            $fatherName = $student->father_name ?? $application?->father_name;
+            $fatherName = $getVal('father_name');
             if (empty($fatherName)) {
-                $fatherName = trim(($student->father_last_name_fr ?? $application?->father_last_name_fr ?? '') . ' ' . ($student->father_first_name_fr ?? $application?->father_first_name_fr ?? ''));
+                $fatherName = trim(($getVal('father_last_name_fr') ?? '') . ' ' . ($getVal('father_first_name_fr') ?? ''));
             }
-            $motherName = $student->mother_name ?? $application?->mother_name;
+            $motherName = $getVal('mother_name');
             if (empty($motherName)) {
-                $motherName = trim(($student->mother_last_name_fr ?? $application?->mother_last_name_fr ?? '') . ' ' . ($student->mother_first_name_fr ?? $application?->mother_first_name_fr ?? ''));
+                $motherName = trim(($getVal('mother_last_name_fr') ?? '') . ' ' . ($getVal('mother_first_name_fr') ?? ''));
             }
 
-            $highSchoolVal = !empty($student->high_school) ? $student->high_school : (!empty($student->lycee) ? $student->lycee : (!empty($application?->high_school) ? $application->high_school : null));
-            $academyVal    = !empty($student->academy) ? $student->academy : (!empty($student->region) ? $student->region : (!empty($application?->academy) ? $application->academy : (!empty($application?->region) ? $application->region : null)));
-            $delegationVal = !empty($student->delegation) ? $student->delegation : (!empty($student->province) ? $student->province : (!empty($student->prefecture) ? $student->prefecture : (!empty($application?->delegation) ? $application->delegation : (!empty($application?->province) ? $application->province : null))));
+            $highSchoolVal = $getVal('high_school', 'lycee');
+            $academyVal    = $getVal('academy', 'region');
+            $delegationVal = $getVal('delegation', 'province', 'prefecture');
+            $bacSerieVal   = $getVal('bac_type', 'bac_serie', 'bac_series', 'bac_name');
+            $bacAvgVal     = $getVal('bac_average', 'bac_note');
+            $bacMentionVal = $getVal('bac_mention');
+            $bacYearVal    = $getVal('bac_year');
 
             $candidateData = [
-                'id'                    => $student->id,
+                'id'                    => $student?->id ?? $application?->id,
                 'first_name'            => $fn,
                 'last_name'             => $ln,
                 'name'                  => trim("{$fn} {$ln}"),
-                'first_name_ar'         => $student->first_name_ar ?? $application?->first_name_ar ?? null,
-                'last_name_ar'          => $student->last_name_ar ?? $application?->last_name_ar ?? null,
-                'cne'                   => $student->cne ?? $application?->cne,
-                'cin'                   => $u?->cin ?? $student->cin ?? $application?->cin,
-                'email'                 => $u?->email ?? $student->email ?? $application?->email,
-                'phone'                 => $u?->phone ?? $student->phone ?? $application?->phone,
-                'gender'                => $student->gender ?? $application?->gender ?? null,
+                'first_name_ar'         => $getVal('first_name_ar'),
+                'last_name_ar'          => $getVal('last_name_ar'),
+                'cne'                   => $getVal('cne'),
+                'cin'                   => $u?->cin ?? $getVal('cin'),
+                'email'                 => $u?->email ?? $getVal('email'),
+                'phone'                 => $u?->phone ?? $getVal('phone'),
+                'gender'                => $getVal('gender'),
                 'birth_date'            => $bdate,
-                'birth_city'            => !empty($student->birth_city) ? $student->birth_city : ($application?->birth_city ?? null),
-                'birth_city_ar'         => !empty($student->birth_city_ar) ? $student->birth_city_ar : ($application?->birth_city_ar ?? null),
-                'address'               => !empty($student->address) ? $student->address : ($application?->address ?? null),
-                'address_ar'            => !empty($student->address_ar) ? $student->address_ar : ($application?->address_ar ?? null),
-                'city'                  => !empty($student->city) ? $student->city : ($application?->city ?? null),
+                'birth_city'            => $getVal('birth_city', 'birth_city_fr'),
+                'birth_city_ar'         => $getVal('birth_city_ar'),
+                'address'               => $getVal('address', 'address_fr'),
+                'address_ar'            => $getVal('address_ar'),
+                'city'                  => $getVal('city'),
                 'region'                => $academyVal,
                 'father_name'           => $fatherName ?: null,
-                'father_name_ar'        => $student->father_name_ar ?? $application?->father_name_ar,
-                'father_cin'            => $student->father_cin ?? $application?->father_cin,
-                'father_profession'     => $student->father_profession ?? $student->father_job ?? $application?->father_profession,
-                'father_phone'          => $student->father_phone ?? $application?->father_phone,
+                'father_name_ar'        => $getVal('father_name_ar'),
+                'father_cin'            => $getVal('father_cin'),
+                'father_profession'     => $getVal('father_profession', 'father_job'),
+                'father_phone'          => $getVal('father_phone'),
                 'mother_name'           => $motherName ?: null,
-                'mother_name_ar'        => $student->mother_name_ar ?? $application?->mother_name_ar,
-                'mother_cin'            => $student->mother_cin ?? $application?->mother_cin,
-                'mother_profession'     => $student->mother_profession ?? $student->mother_job ?? $application?->mother_profession,
-                'mother_phone'          => $student->mother_phone ?? $application?->mother_phone,
-                'parent_phone'          => $student->parent_phone ?? $application?->parent_phone,
-                'emergency_contact_name'  => $student->emergency_contact_name ?? $application?->emergency_contact_name,
-                'emergency_contact_phone' => $student->emergency_contact_phone ?? $application?->emergency_contact_phone,
-                'allergy_type'          => $student->allergy_type ?? $application?->allergy_type,
-                'medication_used'       => $student->medication_used ?? $application?->medication_used,
-                'treating_doctor_info'  => $student->treating_doctor_info ?? $application?->treating_doctor_info,
-                'has_disability'        => (bool) ($student->has_disability ?? $application?->has_disability),
-                'disability_details'    => $student->disability_details ?? $application?->disability_details,
-                'status'                => $student->status ?? $application?->status,
-                'filiere'               => $student->latestPathway?->filiere?->name ?? $application?->filiere ?? $application?->reference_number ?? null,
-                'bac_type'              => !empty($student->bac_type) ? $student->bac_type : (!empty($student->bac_serie) ? $student->bac_serie : ($application?->bac_series ?? null)),
-                'bac_serie'             => !empty($student->bac_type) ? $student->bac_type : (!empty($student->bac_serie) ? $student->bac_serie : ($application?->bac_series ?? null)),
-                'bac_average'           => !empty($student->bac_note) ? $student->bac_note : (!empty($student->bac_average) ? $student->bac_average : ($application?->bac_average ?? null)),
-                'bac_mention'           => !empty($student->bac_mention) ? $student->bac_mention : ($application?->bac_mention ?? null),
-                'bac_year'              => !empty($student->bac_year) ? $student->bac_year : ($application?->bac_year ?? null),
+                'mother_name_ar'        => $getVal('mother_name_ar'),
+                'mother_cin'            => $getVal('mother_cin'),
+                'mother_profession'     => $getVal('mother_profession', 'mother_job'),
+                'mother_phone'          => $getVal('mother_phone'),
+                'parent_phone'          => $getVal('parent_phone'),
+                'emergency_contact_name'  => $getVal('emergency_contact_name'),
+                'emergency_contact_phone' => $getVal('emergency_contact_phone'),
+                'allergy_type'          => $getVal('allergy_type'),
+                'medication_used'       => $getVal('medication_used'),
+                'treating_doctor_info'  => $getVal('treating_doctor_info'),
+                'has_disability'        => (bool) ($getVal('has_disability')),
+                'disability_details'    => $getVal('disability_details'),
+                'status'                => $student?->status ?? $application?->status,
+                'filiere'               => $student?->latestPathway?->filiere?->name ?? $getVal('filiere', 'reference_number'),
+                'bac_type'              => $bacSerieVal,
+                'bac_serie'             => $bacSerieVal,
+                'bac_average'           => $bacAvgVal,
+                'bac_mention'           => $bacMentionVal,
+                'bac_year'              => $bacYearVal,
                 'high_school'           => $highSchoolVal,
                 'academy'               => $academyVal,
                 'delegation'            => $delegationVal,
-                'selection_score'       => $application?->selection_score ?? $student->selection_score ?? null,
+                'selection_score'       => $getVal('selection_score'),
             ];
         } else if ($application) {
             $fn = $application->first_name ?? '';
@@ -720,24 +737,22 @@ class AdmissionController extends Controller
         $birthCityAr = $input['birth_city_ar'] ?? null;
         $address     = $input['address'] ?? $input['address_fr'] ?? null;
         $addressAr   = $input['address_ar'] ?? null;
+        $fatherName  = trim(($input['father_last_name_fr'] ?? '') . ' ' . ($input['father_first_name_fr'] ?? ''));
+        if (empty(trim($fatherName))) $fatherName = $input['father_name'] ?? null;
+        $motherName  = trim(($input['mother_last_name_fr'] ?? '') . ' ' . ($input['mother_first_name_fr'] ?? ''));
+        if (empty(trim($motherName))) $motherName = $input['mother_name'] ?? null;
 
-        // Parents
-        $fatherName = trim(($input['father_last_name_fr'] ?? '') . ' ' . ($input['father_first_name_fr'] ?? ''));
-        if (empty($fatherName) && !empty($input['father_name'])) {
-            $fatherName = trim($input['father_name']);
-        }
+        $fatherJob   = $input['father_profession'] ?? $input['father_job'] ?? null;
+        $motherJob   = $input['mother_profession'] ?? $input['mother_job'] ?? null;
 
-        $motherName = trim(($input['mother_last_name_fr'] ?? '') . ' ' . ($input['mother_first_name_fr'] ?? ''));
-        if (empty($motherName) && !empty($input['mother_name'])) {
-            $motherName = trim($input['mother_name']);
-        }
-
-        $fatherJob = !empty($input['father_profession']) ? $input['father_profession'] : ($input['father_job'] ?? null);
-        $motherJob = !empty($input['mother_profession']) ? $input['mother_profession'] : ($input['mother_job'] ?? null);
-
-        // Bac
-        $bacSerie   = $input['bac_series'] ?? $input['bac_serie'] ?? $input['bac_name'] ?? null;
-        $bacAverage = isset($input['bac_average']) && $input['bac_average'] !== '' ? (float)$input['bac_average'] : null;
+        $highSchool  = $input['high_school'] ?? $input['lycee'] ?? null;
+        $academy     = $input['academy'] ?? $input['region'] ?? null;
+        $delegation  = $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null;
+        $bacSerie    = $input['bac_type'] ?? $input['bac_name'] ?? $input['bac_serie'] ?? null;
+        $bacAverage  = isset($input['bac_average']) && $input['bac_average'] !== '' ? (float)$input['bac_average'] : null;
+        $bacMention  = $input['bac_mention'] ?? null;
+        $bacYear     = $input['bac_year'] ?? null;
+        $filiereVal  = $input['filiere'] ?? null;
 
         // Ensemble des données candidats transmises
         $dataMap = [
@@ -754,8 +769,21 @@ class AdmissionController extends Controller
             'nationality'           => $input['nationality'] ?? null,
             'address'               => $address,
             'address_ar'            => $addressAr,
-            'city'                  => $input['city'] ?? null,
-            'region'                => $input['academy'] ?? $input['region'] ?? null,
+            'city'                  => $input['city'] ?? $input['province'] ?? null,
+            'region'                => $academy,
+            'academy'               => $academy,
+            'delegation'            => $delegation,
+            'province'              => $delegation,
+            'high_school'           => $highSchool,
+            'lycee'                 => $highSchool,
+            'bac_year'              => $bacYear,
+            'bac_type'              => $bacSerie,
+            'bac_serie'             => $bacSerie,
+            'bac_series'            => $bacSerie,
+            'bac_average'           => $bacAverage,
+            'bac_note'              => $bacAverage,
+            'bac_mention'           => $bacMention,
+            'filiere'               => $filiereVal,
             'father_name'           => $fatherName ?: null,
             'father_last_name_fr'   => $input['father_last_name_fr'] ?? null,
             'father_first_name_fr'  => $input['father_first_name_fr'] ?? null,
@@ -784,18 +812,13 @@ class AdmissionController extends Controller
             'treating_doctor_info'  => $input['treating_doctor_info'] ?? null,
             'has_disability'        => isset($input['has_disability']) ? (bool)$input['has_disability'] : null,
             'disability_details'    => $input['disability_details'] ?? null,
-            'high_school'           => $input['high_school'] ?? $input['lycee'] ?? null,
-            'academy'               => $input['academy'] ?? $input['region'] ?? null,
-            'delegation'            => $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null,
-            'province'              => $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null,
-            'bac_year'              => $input['bac_year'] ?? null,
             'blood_type'            => $input['blood_type'] ?? $input['groupe_sanguin'] ?? null,
         ];
 
         // Mettre à jour avec toutes les clés fournies (sans null)
         $cleanData = array_filter($dataMap, fn($v) => $v !== null && $v !== '');
 
-        // A) Mettre à jour ou Créer la table Application
+        // A) Mettre à jour la table Application
         $application = null;
         if ($cne) {
             $application = Application::where('cne', $cne)->latest('id')->first();
@@ -807,14 +830,9 @@ class AdmissionController extends Controller
             $application = Application::where('email', $userAuth->email)->latest('id')->first();
         }
 
-        $appData = $cleanData;
-        if ($bacSerie) $appData['bac_series'] = $bacSerie;
-        if ($bacAverage !== null) $appData['bac_average'] = $bacAverage;
-        if (isset($input['bac_mention'])) $appData['bac_mention'] = $input['bac_mention'];
-
         try {
             $appColumns = \Illuminate\Support\Facades\Schema::getColumnListing('applications');
-            $validAppData = array_intersect_key($appData, array_flip($appColumns));
+            $validAppData = array_intersect_key($cleanData, array_flip($appColumns));
             
             if ($application) {
                 if (!empty($validAppData)) {
@@ -833,7 +851,7 @@ class AdmissionController extends Controller
             \Log::warning("Application update/create error: " . $e->getMessage());
         }
 
-        // B) Mettre à jour ou Créer la table Student
+        // B) Mettre à jour la table Student
         $student = null;
         if ($userAuth) {
             $student = Student::with('user')->where('user_id', $userAuth->id)->first();
@@ -844,6 +862,7 @@ class AdmissionController extends Controller
         if (!$student && $cin) {
             $student = Student::with('user')->whereHas('user', fn($u) => $u->where('cin', $cin))->first();
         }
+
         if ($student) {
             try {
                 $studentColumns = \Illuminate\Support\Facades\Schema::getColumnListing('students');

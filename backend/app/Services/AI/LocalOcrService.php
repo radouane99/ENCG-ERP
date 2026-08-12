@@ -84,6 +84,7 @@ class LocalOcrService
             $engineList = [
                 new PdfTextEngine(),
                 new PdfBinaryEngine(),
+                new \App\OCR\Engines\GroqLlamaEngine(),
                 new TesseractEngine(),
             ];
         }

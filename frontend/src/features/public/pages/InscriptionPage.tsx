@@ -548,11 +548,13 @@ function VirtualArabicKeyboardModal({
 export default function InscriptionPage({ 
   editMode = false, 
   initialData = null, 
-  onSaved = null 
+  onSaved = null,
+  initialStep = 1
 }: { 
   editMode?: boolean; 
   initialData?: any; 
-  onSaved?: (() => void) | null 
+  onSaved?: (() => void) | null;
+  initialStep?: number;
 }) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -581,7 +583,13 @@ export default function InscriptionPage({
     { code: 'en', label: 'EN', flag: '🇬🇧' },
   ];
   const currentLangObj = LANG_OPTIONS.find((l) => l.code === lang) || LANG_OPTIONS[0];
-  const [step, setStep] = useState<StepId>(1);
+  const [step, setStep] = useState<StepId>((initialStep as StepId) || 1);
+
+  useEffect(() => {
+    if (initialStep && initialStep >= 1 && initialStep <= 5) {
+      setStep(initialStep as StepId);
+    }
+  }, [initialStep]);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -663,8 +671,12 @@ export default function InscriptionPage({
     bac_average: '',
     bac_year: '',
     high_school: '',
+    lycee: '',
     academy: '',
     delegation: '',
+    bac_type: '',
+    bac_serie: '',
+    bac_series: '',
     cycle: 'Cycle des deux années préparatoires',
     filiere: 'Deux années préparatoires',
 
@@ -1338,10 +1350,19 @@ export default function InscriptionPage({
       birth_city: formData.birth_city_fr,
       birth_city_ar: formData.birth_city_ar,
       address: formData.address_fr,
-      father_name: `${formData.father_last_name_fr} ${formData.father_first_name_fr}`.trim(),
-      mother_name: `${formData.mother_last_name_fr} ${formData.mother_first_name_fr}`.trim(),
+      father_name: `${formData.father_last_name_fr || ''} ${formData.father_first_name_fr || ''}`.trim(),
+      mother_name: `${formData.mother_last_name_fr || ''} ${formData.mother_first_name_fr || ''}`.trim(),
       father_profession: formData.father_job,
       mother_profession: formData.mother_job,
+      high_school: formData.high_school || formData.lycee || '',
+      lycee: formData.high_school || formData.lycee || '',
+      academy: formData.academy || formData.region || '',
+      region: formData.academy || formData.region || '',
+      delegation: formData.delegation || formData.province || '',
+      province: formData.delegation || formData.province || '',
+      bac_type: formData.bac_name || formData.bac_type || '',
+      bac_serie: formData.bac_name || formData.bac_type || '',
+      bac_series: formData.bac_name || formData.bac_type || '',
       full_name: `${first_name} ${last_name}`.trim(),
     };
 
@@ -1382,6 +1403,53 @@ export default function InscriptionPage({
     } catch (err: any) {
       setSubmitting(false);
       setErrorMsg(err.response?.data?.message || 'Erreur lors de la soumission.');
+    }
+  };
+
+  const saveDirectToDatabase = async () => {
+    setSubmitting(true);
+    setErrorMsg(null);
+
+    const first_name = formData.first_name_fr || '';
+    const last_name = formData.last_name_fr || '';
+
+    const payload = {
+      ...formData,
+      first_name,
+      last_name,
+      first_name_ar: formData.first_name_ar,
+      last_name_ar: formData.last_name_ar,
+      birth_city: formData.birth_city_fr,
+      birth_city_ar: formData.birth_city_ar,
+      address: formData.address_fr,
+      father_name: `${formData.father_last_name_fr || ''} ${formData.father_first_name_fr || ''}`.trim(),
+      mother_name: `${formData.mother_last_name_fr || ''} ${formData.mother_first_name_fr || ''}`.trim(),
+      father_profession: formData.father_job,
+      mother_profession: formData.mother_job,
+      high_school: formData.high_school || formData.lycee || '',
+      lycee: formData.high_school || formData.lycee || '',
+      academy: formData.academy || formData.region || '',
+      region: formData.academy || formData.region || '',
+      delegation: formData.delegation || formData.province || '',
+      province: formData.delegation || formData.province || '',
+      bac_type: formData.bac_name || formData.bac_type || '',
+      bac_serie: formData.bac_name || formData.bac_type || '',
+      bac_series: formData.bac_name || formData.bac_type || '',
+      full_name: `${first_name} ${last_name}`.trim(),
+    };
+
+    try {
+      const res = await api.post('/public/update-candidate-dossier', payload);
+      setSubmitting(false);
+      toast.success('✅ Données enregistrées en direct dans PostgreSQL !');
+      if (onSaved) {
+        onSaved();
+      }
+    } catch (err: any) {
+      setSubmitting(false);
+      const msg = err.response?.data?.message || err.message || 'Erreur lors de la sauvegarde dans PostgreSQL.';
+      setErrorMsg(msg);
+      toast.error(`❌ ${msg}`);
     }
   };
 
@@ -2602,7 +2670,7 @@ export default function InscriptionPage({
                           <option value="Passable">{isRTL ? 'مقبول  10.00 – 11.99' : 'Passable (10.00 – 11.99)'}</option>
                         </Field>
 
-                        <Field icon={Star} label={isRTL ? 'المعدل العام للبكالوريا *' : 'Moyenne générale du Bac *'} required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} readOnly={!!ocrExtractedFields.bac_average} onUnlock={() => toggleFieldLock('bac_average')} placeholder={isRTL ? "مثال: 16.00" : "Ex: 16.00"} isRtl={isRTL} />
+                        <Field icon={Star} label={isRTL ? 'المعدل العام للبكالوريا *' : 'Moyenne générale du Bac *'} required type="number" step="0.01" name="bac_average" value={formData.bac_average} onChange={handleChange} readOnly={editMode ? false : !!ocrExtractedFields.bac_average} onUnlock={() => toggleFieldLock('bac_average')} placeholder={isRTL ? "مثال: 16.00" : "Ex: 16.00"} isRtl={isRTL} />
 
                         <Field icon={Calendar} label={isRTL ? 'سنة الحصول على البكالوريا *' : "Année d'obtention du Bac *"} required as="select" name="bac_year" value={formData.bac_year} onChange={handleChange} isRtl={isRTL}>
                           <option value="2026">2026</option>
@@ -2610,7 +2678,7 @@ export default function InscriptionPage({
                           <option value="2024">2024</option>
                         </Field>
 
-                        <Field icon={Building2} label={isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *'} required type="text" name="high_school" value={formData.high_school} onChange={handleChange} readOnly={!!ocrExtractedFields.high_school} onUnlock={() => toggleFieldLock('high_school')} placeholder={isRTL ? "مثال: ثانوية مولاي إدريس" : "Ex: Lycée Moulay Idriss"} className="sm:col-span-2" isRtl={isRTL} />
+                        <Field icon={Building2} label={isRTL ? 'اسم الثانوية / المؤسسة *' : 'Lycée / Établissement *'} required type="text" name="high_school" value={formData.high_school} onChange={handleChange} readOnly={editMode ? false : !!ocrExtractedFields.high_school} onUnlock={() => toggleFieldLock('high_school')} placeholder={isRTL ? "مثال: ثانوية مولاي إدريس" : "Ex: Lycée Moulay Idriss"} className="sm:col-span-2" isRtl={isRTL} />
 
                         <Field icon={Building2} label={isRTL ? 'الأكاديمية الجهوية *' : 'Académie Régionale *'} required as="select" name="academy" value={formData.academy} onChange={handleChange} isRtl={isRTL}>
                           <option value="ACADEMIE L'Oriental">{isRTL ? 'أكاديمية الشرق' : "ACADÉMIE L'Oriental"}</option>
@@ -2792,6 +2860,19 @@ export default function InscriptionPage({
                       )} />
                     ))}
                   </div>
+
+                  {editMode && (
+                    <button
+                      type="button"
+                      onClick={saveDirectToDatabase}
+                      disabled={submitting || ocrExtracting}
+                      className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-base px-5 py-3.5 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+                      title="Enregistrer directement les modifications dans la base de données PostgreSQL"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+                      <span>Enregistrer les Modifications (PostgreSQL Direct)</span>
+                    </button>
+                  )}
 
                   <button
                     type="submit"
