@@ -30,4 +30,12 @@ class StoreAcademicYearRequest extends FormRequest
             'is_current' => 'boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'end_year.gt' => 'L\'année de fin doit être strictement supérieure à l\'année de début (ex: 2026/2027).',
+            'start_year.min' => 'L\'année de début doit être supérieure ou égale à 2000.',
+        ];
+    }
 }

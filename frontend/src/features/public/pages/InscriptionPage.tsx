@@ -709,111 +709,118 @@ export default function InscriptionPage({
   // In editMode: load existing data from DB and pre-fill form
   useEffect(() => {
     if (!editMode) return;
-    const cne = (user as any)?.cne || '';
-    const cin = (user as any)?.cin || '';
-    const email = (user as any)?.email || '';
+    const cne = (user as any)?.cne || initialData?.cne || '';
+    const cin = (user as any)?.cin || initialData?.cin || '';
+    const email = (user as any)?.email || initialData?.email || '';
+
+    const applyCandData = (cand: any) => {
+      if (!cand) return;
+
+      let father_last = cand.father_last_name_fr || cand.father_name || '';
+      let father_first = cand.father_first_name_fr || '';
+      if (!cand.father_first_name_fr && father_last.includes(' ')) {
+        const parts = father_last.trim().split(/\s+/);
+        father_last = parts[0];
+        father_first = parts.slice(1).join(' ');
+      }
+
+      let mother_last = cand.mother_last_name_fr || cand.mother_name || '';
+      let mother_first = cand.mother_first_name_fr || '';
+      if (!cand.mother_first_name_fr && mother_last.includes(' ')) {
+        const parts = mother_last.trim().split(/\s+/);
+        mother_last = parts[0];
+        mother_first = parts.slice(1).join(' ');
+      }
+
+      const docs = cand.documents || {};
+      const bacDoc = docs.bac || docs.BAC;
+      const cnieDoc = docs.cnie || docs.cin || docs.CIN || docs.CNIE || docs.cin_recto_verso;
+      const releveDoc = docs.releve_notes || docs.releve || docs.RELEVE;
+
+      const activeCne = cand.cne || cne;
+      const activeCin = cand.cin || cin;
+
+      setFormData(prev => {
+        const finalCne = activeCne || prev.cne;
+        const finalCin = activeCin || prev.cin;
+        return {
+          ...prev,
+          cne: finalCne,
+          cin: finalCin,
+          email: cand.email || email || prev.email,
+          phone: cand.phone || prev.phone,
+          last_name_fr: cand.last_name || prev.last_name_fr,
+          first_name_fr: cand.first_name || prev.first_name_fr,
+          last_name_ar: cand.last_name_ar || prev.last_name_ar,
+          first_name_ar: cand.first_name_ar || prev.first_name_ar,
+          birth_date: cand.birth_date ? String(cand.birth_date).split('T')[0] : prev.birth_date,
+          birth_city_fr: cand.birth_city || prev.birth_city_fr,
+          birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
+          gender: cand.gender || prev.gender,
+          family_status: cand.family_status || prev.family_status,
+          nationality: cand.nationality || prev.nationality,
+          address_fr: cand.address || prev.address_fr,
+          address_ar: cand.address_ar || prev.address_ar,
+          region: cand.region || prev.region,
+          province: cand.city || prev.province,
+          father_last_name_fr: father_last || prev.father_last_name_fr,
+          father_first_name_fr: father_first || prev.father_first_name_fr,
+          father_last_name_ar: cand.father_name_ar || prev.father_last_name_ar,
+          father_cin: cand.father_cin || prev.father_cin,
+          father_phone: cand.father_phone || prev.father_phone,
+          father_job: cand.father_profession || prev.father_job,
+          mother_last_name_fr: mother_last || prev.mother_last_name_fr,
+          mother_first_name_fr: mother_first || prev.mother_first_name_fr,
+          mother_last_name_ar: cand.mother_name_ar || prev.mother_last_name_ar,
+          mother_cin: cand.mother_cin || prev.mother_cin,
+          mother_phone: cand.mother_phone || prev.mother_phone,
+          mother_job: cand.mother_profession || prev.mother_job,
+          parent_phone: cand.parent_phone || cand.father_phone || prev.parent_phone,
+          emergency_contact_name: cand.emergency_contact_name || prev.emergency_contact_name,
+          emergency_contact_phone: cand.emergency_contact_phone || prev.emergency_contact_phone,
+          allergy_type: cand.allergy_type || prev.allergy_type,
+          medication_used: cand.medication_used || prev.medication_used,
+          treating_doctor_info: cand.treating_doctor_info || prev.treating_doctor_info,
+          has_medical_followup: cand.has_medical_followup || prev.has_medical_followup,
+          has_disability: cand.has_disability || prev.has_disability,
+          disability_details: cand.disability_details || prev.disability_details,
+          filiere: cand.filiere || prev.filiere,
+          bac_average: cand.bac_average ? String(cand.bac_average) : prev.bac_average,
+          bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
+          bac_mention: cand.bac_mention || prev.bac_mention,
+          bac_year: cand.bac_year || prev.bac_year,
+          high_school: cand.high_school || cand.lycee || prev.high_school,
+          academy: cand.academy || cand.region || prev.academy,
+          delegation: cand.delegation || cand.province || cand.prefecture || prev.delegation,
+
+          // Documents numérisés pré-existants
+          bac_pdf_name: bacDoc?.original_filename || (bacDoc?.file_path ? `BAC_${finalCne}.pdf` : prev.bac_pdf_name),
+          bac_file_url: bacDoc?.file_path || `/api/public/serve-document/bac/${encodeURIComponent(finalCne || finalCin)}`,
+          bac_has_existing: Boolean(bacDoc?.file_path || cand.documents?.bac),
+
+          cnie_pdf_name: cnieDoc?.original_filename || (cnieDoc?.file_path ? `CNIE_${finalCne}.pdf` : prev.cnie_pdf_name),
+          cnie_file_url: cnieDoc?.file_path || `/api/public/serve-document/cnie/${encodeURIComponent(finalCne || finalCin)}`,
+          cnie_has_existing: Boolean(cnieDoc?.file_path || cand.documents?.cnie),
+
+          releve_notes_pdf_name: releveDoc?.original_filename || (releveDoc?.file_path ? `RELEVE_${finalCne}.pdf` : prev.releve_notes_pdf_name),
+          releve_notes_file_url: releveDoc?.file_path || `/api/public/serve-document/releve_notes/${encodeURIComponent(finalCne || finalCin)}`,
+          releve_notes_has_existing: Boolean(releveDoc?.file_path || cand.documents?.releve_notes),
+
+          photo_url: cand.photo_url || (cand.photo_path ? `/storage/${cand.photo_path.replace(/^\/?storage\//, '')}` : prev.photo_url),
+        };
+      });
+    };
+
+    if (initialData) {
+      applyCandData(initialData);
+    }
 
     api.get('/public/track-dossier', { params: { cne, cin, email } })
       .then(res => {
-        const cand = res.data?.candidate;
-        if (!cand) return;
-
-        let father_last = cand.father_name || '';
-        let father_first = '';
-        if (father_last.includes(' ')) {
-          const parts = father_last.trim().split(/\s+/);
-          father_last = parts[0];
-          father_first = parts.slice(1).join(' ');
-        }
-
-        let mother_last = cand.mother_name || '';
-        let mother_first = '';
-        if (mother_last.includes(' ')) {
-          const parts = mother_last.trim().split(/\s+/);
-          mother_last = parts[0];
-          mother_first = parts.slice(1).join(' ');
-        }
-
-        const docs = cand.documents || {};
-        const bacDoc = docs.bac || docs.BAC;
-        const cnieDoc = docs.cnie || docs.cin || docs.CIN || docs.CNIE || docs.cin_recto_verso;
-        const releveDoc = docs.releve_notes || docs.releve || docs.RELEVE;
-
-        const activeCne = cand.cne || cne;
-        const activeCin = cand.cin || cin;
-
-        setFormData(prev => {
-          const finalCne = activeCne || prev.cne;
-          const finalCin = activeCin || prev.cin;
-          return {
-            ...prev,
-            cne: finalCne,
-            cin: finalCin,
-            email: cand.email || email || prev.email,
-            phone: cand.phone || prev.phone,
-            last_name_fr: cand.last_name || prev.last_name_fr,
-            first_name_fr: cand.first_name || prev.first_name_fr,
-            last_name_ar: cand.last_name_ar || prev.last_name_ar,
-            first_name_ar: cand.first_name_ar || prev.first_name_ar,
-            birth_date: cand.birth_date ? String(cand.birth_date).split('T')[0] : prev.birth_date,
-            birth_city_fr: cand.birth_city || prev.birth_city_fr,
-            birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
-            gender: cand.gender || prev.gender,
-            family_status: cand.family_status || prev.family_status,
-            nationality: cand.nationality || prev.nationality,
-            address_fr: cand.address || prev.address_fr,
-            address_ar: cand.address_ar || prev.address_ar,
-            region: cand.region || prev.region,
-            province: cand.city || prev.province,
-            father_last_name_fr: father_last || prev.father_last_name_fr,
-            father_first_name_fr: father_first || prev.father_first_name_fr,
-            father_last_name_ar: cand.father_name_ar || prev.father_last_name_ar,
-            father_cin: cand.father_cin || prev.father_cin,
-            father_phone: cand.father_phone || prev.father_phone,
-            father_job: cand.father_profession || prev.father_job,
-            mother_last_name_fr: mother_last || prev.mother_last_name_fr,
-            mother_first_name_fr: mother_first || prev.mother_first_name_fr,
-            mother_last_name_ar: cand.mother_name_ar || prev.mother_last_name_ar,
-            mother_cin: cand.mother_cin || prev.mother_cin,
-            mother_phone: cand.mother_phone || prev.mother_phone,
-            mother_job: cand.mother_profession || prev.mother_job,
-            parent_phone: cand.parent_phone || prev.parent_phone,
-            emergency_contact_name: cand.emergency_contact_name || prev.emergency_contact_name,
-            emergency_contact_phone: cand.emergency_contact_phone || prev.emergency_contact_phone,
-            allergy_type: cand.allergy_type || prev.allergy_type,
-            medication_used: cand.medication_used || prev.medication_used,
-            treating_doctor_info: cand.treating_doctor_info || prev.treating_doctor_info,
-            has_medical_followup: cand.has_medical_followup || prev.has_medical_followup,
-            has_disability: cand.has_disability || prev.has_disability,
-            disability_details: cand.disability_details || prev.disability_details,
-            filiere: cand.filiere || prev.filiere,
-            bac_average: cand.bac_average ? String(cand.bac_average) : prev.bac_average,
-            bac_name: cand.bac_type || cand.bac_serie || prev.bac_name,
-            bac_mention: cand.bac_mention || prev.bac_mention,
-            bac_year: cand.bac_year || prev.bac_year,
-            high_school: cand.high_school || cand.lycee || prev.high_school,
-            academy: cand.academy || cand.region || prev.academy,
-            delegation: cand.delegation || cand.province || cand.prefecture || prev.delegation,
-
-            // Documents numérisés pré-existants
-            bac_pdf_name: bacDoc?.original_filename || (bacDoc?.file_path ? `BAC_${finalCne}.pdf` : prev.bac_pdf_name),
-            bac_file_url: bacDoc?.file_path || `/api/public/serve-document/bac/${encodeURIComponent(finalCne || finalCin)}`,
-            bac_has_existing: Boolean(bacDoc?.file_path || cand.documents?.bac),
-
-            cnie_pdf_name: cnieDoc?.original_filename || (cnieDoc?.file_path ? `CNIE_${finalCne}.pdf` : prev.cnie_pdf_name),
-            cnie_file_url: cnieDoc?.file_path || `/api/public/serve-document/cnie/${encodeURIComponent(finalCne || finalCin)}`,
-            cnie_has_existing: Boolean(cnieDoc?.file_path || cand.documents?.cnie),
-
-            releve_notes_pdf_name: releveDoc?.original_filename || (releveDoc?.file_path ? `RELEVE_${finalCne}.pdf` : prev.releve_notes_pdf_name),
-            releve_notes_file_url: releveDoc?.file_path || `/api/public/serve-document/releve_notes/${encodeURIComponent(finalCne || finalCin)}`,
-            releve_notes_has_existing: Boolean(releveDoc?.file_path || cand.documents?.releve_notes),
-
-            photo_url: cand.photo_url || (cand.photo_path ? `/storage/${cand.photo_path.replace(/^\/?storage\//, '')}` : prev.photo_url),
-          };
-        });
+        applyCandData(res.data?.candidate);
       })
       .catch(() => { });
-  }, [editMode, user]);
+  }, [editMode, user, initialData]);
 
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
   const [showPhotoModal, setShowPhotoModal] = useState(false);

@@ -1,94 +1,150 @@
 @extends('pdf.layouts.pdf_master')
 
-@section('title', 'Ordre de Service')
-
-@section('meta_info', 'Réf : ' . date('Y') . '/OS-AFF/' . str_pad($profId ?? '101', 4, '0', STR_PAD_LEFT) . ' &nbsp;&nbsp;&nbsp; Émis le : ' . date('d/m/Y'))
+@section('title', 'ORDRE DE SERVICE D\'ENSEIGNEMENT — ENCG FÈS')
 
 @section('content')
-<div style="text-align: center; font-size: 18px; font-weight: bold; color: #002e5b; letter-spacing: 1px; margin: 15px 0 20px 0; text-transform: uppercase; border-bottom: 2px solid #002e5b; padding-bottom: 8px;">
-    ORDRE DE SERVICE & ATTESTATION D'AFFECTATION PÉDAGOGIQUE
-</div>
+    <div style="position: relative; width: 100%; font-family: 'Helvetica', 'Arial', sans-serif;">
 
-<div style="font-size: 10px; color: #64748b; text-align: center; font-weight: bold; margin-bottom: 20px;">
-    Année Académique {{ $academicYear ?? '2026/2027' }} — Décret Ministériel & Réglementation ENCG Fès
-</div>
+        <!-- Header Title Banner -->
+        <div style="background-color: #0f2863; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 6px;">
+            <h2 style="font-size: 13px; font-weight: 900; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; margin: 0;">
+                ORDRE DE SERVICE D'ENSEIGNEMENT OFFICIEL
+            </h2>
+            <div style="font-size: 7.5pt; font-weight: bold; color: #93c5fd; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Année Universitaire {{ $academicYear ?? '2026/2027' }} • Affectations Académiques Certifiées
+            </div>
+        </div>
 
-<p style="margin-bottom: 15px; text-align: justify; line-height: 1.6; font-size: 11px;">
-    Le Directeur de l'<strong>École Nationale de Commerce et de Gestion (ENCG) de Fès</strong> (Université Sidi Mohamed Ben Abdellah) certifie par la présente que l'Enseignant-Chercheur dont les coordonnées suivent est officiellement affecté(e) pour assurer la charge pédagogique détaillée ci-dessous :
-</p>
+        <!-- Order Reference Notice -->
+        <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; margin-bottom: 6px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 8pt;">
+                <tr>
+                    <td width="60%">
+                        <strong>Réf. Ordre :</strong> <code style="font-family: monospace; font-weight: bold; color: #0f2863;">{{ $trackingCode ?? 'ODS-2026-0001' }}</code>
+                    </td>
+                    <td width="40%" style="text-align: right; color: #475569;">
+                        Date d'émission : <strong>{{ $dateIssued ?? date('d/m/Y') }}</strong>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px;">
-    <tr style="background-color: #f8fafc;">
-        <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; color: #002e5b; width: 35%;">ENSEIGNANT RESPONSABLE</th>
-        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #002e5b; text-transform: uppercase;">{{ $profName }}</td>
-    </tr>
-    <tr>
-        <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; color: #002e5b;">STATUT / GRADE</th>
-        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;">Professeur de l'Enseignement Supérieur (PES / PH) — Permanent ENCG Fès</td>
-    </tr>
-    <tr style="background-color: #f8fafc;">
-        <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; color: #002e5b;">DÉPARTEMENT ACADÉMIQUE</th>
-        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;">{{ $departmentName ?? 'Département des Sciences de Gestion & Commerce' }}</td>
-    </tr>
-    <tr>
-        <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; color: #002e5b;">NOMBRE DE CHARGES ATTRIBUÉES</th>
-        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #002e5b;">{{ count($assignments) }} Module(s) / Section(s)</td>
-    </tr>
-</table>
+        <!-- Recipient Professor Identification -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+            <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 10px; letter-spacing: 0.5px;">
+                I. IDENTIFICATION DE L'ENSEIGNANT-CHERCHEUR AFFECTÉ
+            </div>
+            <div style="padding: 5px 10px;">
+                <table width="100%" cellpadding="2" cellspacing="0" style="border-collapse: collapse; font-size: 8.5pt;">
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td width="35%" style="font-weight: bold; color: #475569;">Nom &amp; Prénom :</td>
+                        <td width="65%" style="font-weight: 900; color: #0f2863; font-size: 9.5pt; text-transform: uppercase;">
+                            {{ $profName ?? 'ABDELHAK EL AMRANI' }}
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="font-weight: bold; color: #475569;">Département :</td>
+                        <td style="font-weight: bold; color: #059669;">
+                            {{ $deptName ?? 'Informatique de Gestion' }}
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="font-weight: bold; color: #475569;">Grade &amp; Statut :</td>
+                        <td style="font-weight: bold; color: #1e293b;">
+                            Enseignant-Chercheur (Professeur Habilité / PES Permanent)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; color: #475569;">Email Institutionnel :</td>
+                        <td style="font-weight: bold; font-family: monospace; color: #0f2863;">
+                            {{ $profEmail ?? 'radouane.asri1996@gmail.com' }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
 
-<div style="font-size: 11px; font-weight: bold; color: #002e5b; margin-bottom: 10px; text-transform: uppercase;">
-    Récapitulatif Officiel des Modules & Groupes Attribués :
-</div>
+        <!-- Summary Stats Cards -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 6px; font-size: 8pt;">
+            <tr>
+                <td width="32%" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 4px 6px; text-align: center;">
+                    <div style="font-size: 7pt; font-weight: bold; color: #1e40af; text-transform: uppercase;">Modules Attribués</div>
+                    <div style="font-size: 11pt; font-weight: 900; color: #0f2863;">{{ $totalModulesCount ?? (isset($modulesList) ? count($modulesList) : 11) }} Charges</div>
+                </td>
+                <td width="2%"></td>
+                <td width="32%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 6px; text-align: center;">
+                    <div style="font-size: 7pt; font-weight: bold; color: #166534; text-transform: uppercase;">Volume Horaire Semestriel</div>
+                    <div style="font-size: 11pt; font-weight: 900; color: #15803d;">{{ $totalHours ?? 528 }}h / Semestre</div>
+                </td>
+                <td width="2%"></td>
+                <td width="32%" style="background-color: #fefce8; border: 1px solid #fef08a; border-radius: 4px; padding: 4px 6px; text-align: center;">
+                    <div style="font-size: 7pt; font-weight: bold; color: #854d0e; text-transform: uppercase;">Service Hebdomadaire</div>
+                    <div style="font-size: 11pt; font-weight: 900; color: #a16207;">{{ $weeklyHours ?? 44 }}h / Semaine</div>
+                </td>
+            </tr>
+        </table>
 
-<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px;">
-    <thead>
-        <tr style="background-color: #002e5b; color: #ffffff;">
-            <th style="padding: 8px; border: 1px solid #002e5b; text-align: left; width: 20%;">Code</th>
-            <th style="padding: 8px; border: 1px solid #002e5b; text-align: left;">Intitulé du Module</th>
-            <th style="padding: 8px; border: 1px solid #002e5b; text-align: center; width: 25%;">Groupe / Section</th>
-            <th style="padding: 8px; border: 1px solid #002e5b; text-align: center; width: 20%;">Volume Horaire</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($assignments as $index => $item)
-        <tr style="background-color: {{ $index % 2 == 0 ? '#ffffff' : '#f8fafc' }};">
-            <td style="padding: 8px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #1e293b;">
-                {{ strtok($item['module'] ?? 'MOD01', ' ') }}
-            </td>
-            <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">
-                {{ substr(strstr($item['module'] ?? 'MOD01 Module', ' '), 1) ?: ($item['module'] ?? 'Module Académique') }}
-            </td>
-            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #1e293b;">
-                {{ $item['group'] ?? 'TC-S1' }}
-            </td>
-            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-family: monospace; color: #475569;">
-                48h / Semestre
-            </td>
-        </tr>
-        @endforeach
-        <tr style="background-color: #e2e8f0; font-weight: bold; color: #002e5b;">
-            <td colspan="3" style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; text-transform: uppercase;">
-                Volume Horaire Cumulé Total :
-            </td>
-            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-family: monospace; font-size: 11px;">
-                {{ count($assignments) * 48 }}h / Semestre ({{ count($assignments) * 4 }}h / sem)
-            </td>
-        </tr>
-    </tbody>
-</table>
+        <!-- Academic Assignments Full Table -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+            <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 7.5pt; text-transform: uppercase; padding: 3px 10px; letter-spacing: 0.5px;">
+                II. TABLEAU RÉCAPITULATIF DES MODULES &amp; GROUPES ATTRIBUÉS
+            </div>
+            <table width="100%" cellpadding="3" cellspacing="0" style="border-collapse: collapse; font-size: 7.5pt; text-align: left;">
+                <thead>
+                    <tr style="background-color: #f1f5f9; color: #0f2863; font-weight: 900; text-transform: uppercase; font-size: 7pt; border-bottom: 1.5px solid #cbd5e1;">
+                        <th width="5%" style="text-align: center; padding: 2px 4px;">N°</th>
+                        <th width="20%" style="padding: 2px 4px;">Code</th>
+                        <th width="47%" style="padding: 2px 4px;">Intitulé du Module Académique</th>
+                        <th width="18%" style="padding: 2px 4px;">Groupe / Section</th>
+                        <th width="10%" style="text-align: center; padding: 2px 4px;">Vol. H.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(isset($modulesList) && count($modulesList) > 0)
+                        @foreach($modulesList as $index => $mod)
+                            <tr style="border-bottom: 1px solid #e2e8f0; background-color: {{ $index % 2 == 0 ? '#ffffff' : '#f8fafc' }};">
+                                <td style="text-align: center; font-weight: bold; color: #64748b; padding: 2px 4px;">{{ $index + 1 }}</td>
+                                <td style="font-family: monospace; font-weight: 900; color: #0f2863; padding: 2px 4px;">{{ $mod['code'] }}</td>
+                                <td style="font-weight: bold; color: #1e293b; padding: 2px 4px;">{{ $mod['name'] }}</td>
+                                <td style="font-weight: bold; color: #059669; padding: 2px 4px;">{{ $mod['group'] }}</td>
+                                <td style="text-align: center; font-weight: 900; color: #d97706; padding: 2px 4px;">{{ $mod['hours'] ?? 48 }}h</td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 8px; color: #64748b;">Aucun module enregistré.</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
 
-<p style="margin-top: 15px; text-align: justify; line-height: 1.6; font-size: 9.5px; color: #475569; font-style: italic;">
-    L'enseignant s'engage à respecter le calendrier académique d'évaluation, la remise ponctuelle des feuilles d'émargement et la saisie sécurisée des notes sur la plateforme ENCG ERP conformément aux normes en vigueur.
-</p>
-@endsection
+        <!-- Official Directives & Obligations -->
+        <div style="border: 1px dashed #0f2863; background-color: #f8fafc; border-radius: 4px; padding: 5px 8px; margin-bottom: 6px;">
+            <div style="font-size: 7.5pt; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-bottom: 2px;">
+                III. OBLIGATIONS ACADÉMIQUES DE L'ENSEIGNANT :
+            </div>
+            <div style="font-size: 7pt; color: #334155; line-height: 1.3;">
+                • Assurer la dispense de la totalité des enseignements attribués ci-dessus selon la maquette nationale ENCG.<br>
+                • Effectuer la saisie en temps réel des absences des étudiants sur l'ERP ENCG Fès.<br>
+                • Rendre les PV d'évaluation (CC &amp; Examen) dûment complétés et signés dans les délais réglementaires.
+            </div>
+        </div>
 
-@section('signature_left')
-    AUTHENTICITÉ ET VÉRIFICATION SHA-256
-    <div style="font-size: 9px; font-family: monospace; color: #64748b; margin-top: 4px;">SHA256:ENCG-OS-{{ strtoupper(md5($profName)) }}</div>
-@endsection
-
-@section('signature_right')
-    FAIT À FÈS, LE {{ date('d/m/Y') }}
-    <div style="font-size: 11px; font-weight: bold; color: #002e5b; margin-top: 4px;">LE DIRECTEUR DES AFFAIRES PÉDAGOGIQUES</div>
-    <div style="font-size: 10px; font-weight: bold; color: #475569; margin-top: 2px;">ENCG FÈS — USMBA</div>
+        <!-- Signatures & Official Stamp -->
+        <table width="100%" style="margin-top: 6px;">
+            <tr>
+                <td width="50%" style="text-align: center; vertical-align: top;">
+                    <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">Le Chef du Département</div>
+                    <div style="font-size: 7.5pt; color: #0f2863; font-weight: bold; margin-top: 1px;">{{ $deptName ?? 'Informatique de Gestion' }}</div>
+                    <div style="height: 25px;"></div>
+                </td>
+                <td width="50%" style="text-align: center; vertical-align: top;">
+                    <div style="font-size: 7.5pt; font-weight: bold; color: #0f2863;">Pour le Directeur et par délégation</div>
+                    <div style="font-size: 8pt; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 1px;">LE DIRECTEUR ADJOINT CHARGÉ DES AFFAIRES ACADÉMIQUES</div>
+                    <div style="height: 25px;"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
 @endsection

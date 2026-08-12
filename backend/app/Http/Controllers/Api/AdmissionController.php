@@ -11,6 +11,8 @@ use App\Models\StudentDocument;
 use App\Models\User;
 use App\Services\Academic\AdmissionService;
 use App\Services\AI\GeminiApiService;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -393,11 +395,80 @@ class AdmissionController extends Controller
         ]);
     }
 
+    private function ensureSchemaColumnsExist(): void
+    {
+        try {
+            if (!Schema::hasColumn('applications', 'high_school')) {
+                Schema::table('applications', function (Blueprint $table) {
+                    if (!Schema::hasColumn('applications', 'high_school')) $table->string('high_school')->nullable();
+                    if (!Schema::hasColumn('applications', 'lycee')) $table->string('lycee')->nullable();
+                    if (!Schema::hasColumn('applications', 'academy')) $table->string('academy')->nullable();
+                    if (!Schema::hasColumn('applications', 'delegation')) $table->string('delegation')->nullable();
+                    if (!Schema::hasColumn('applications', 'province')) $table->string('province')->nullable();
+                    if (!Schema::hasColumn('applications', 'bac_year')) $table->string('bac_year')->nullable();
+                    if (!Schema::hasColumn('applications', 'bac_type')) $table->string('bac_type')->nullable();
+                    if (!Schema::hasColumn('applications', 'bac_serie')) $table->string('bac_serie')->nullable();
+                    if (!Schema::hasColumn('applications', 'blood_type')) $table->string('blood_type')->nullable();
+                    if (!Schema::hasColumn('applications', 'filiere')) $table->string('filiere')->nullable();
+                    if (!Schema::hasColumn('applications', 'father_name')) $table->string('father_name')->nullable();
+                    if (!Schema::hasColumn('applications', 'mother_name')) $table->string('mother_name')->nullable();
+                    if (!Schema::hasColumn('applications', 'father_cin')) $table->string('father_cin')->nullable();
+                    if (!Schema::hasColumn('applications', 'mother_cin')) $table->string('mother_cin')->nullable();
+                    if (!Schema::hasColumn('applications', 'father_profession')) $table->string('father_profession')->nullable();
+                    if (!Schema::hasColumn('applications', 'mother_profession')) $table->string('mother_profession')->nullable();
+                    if (!Schema::hasColumn('applications', 'first_name_ar')) $table->string('first_name_ar')->nullable();
+                    if (!Schema::hasColumn('applications', 'last_name_ar')) $table->string('last_name_ar')->nullable();
+                    if (!Schema::hasColumn('applications', 'birth_city')) $table->string('birth_city')->nullable();
+                    if (!Schema::hasColumn('applications', 'birth_city_ar')) $table->string('birth_city_ar')->nullable();
+                    if (!Schema::hasColumn('applications', 'address')) $table->string('address')->nullable();
+                    if (!Schema::hasColumn('applications', 'address_ar')) $table->string('address_ar')->nullable();
+                    if (!Schema::hasColumn('applications', 'city')) $table->string('city')->nullable();
+                    if (!Schema::hasColumn('applications', 'region')) $table->string('region')->nullable();
+                    if (!Schema::hasColumn('applications', 'is_locked')) $table->boolean('is_locked')->default(false);
+                });
+            }
+
+            if (!Schema::hasColumn('students', 'high_school')) {
+                Schema::table('students', function (Blueprint $table) {
+                    if (!Schema::hasColumn('students', 'high_school')) $table->string('high_school')->nullable();
+                    if (!Schema::hasColumn('students', 'lycee')) $table->string('lycee')->nullable();
+                    if (!Schema::hasColumn('students', 'academy')) $table->string('academy')->nullable();
+                    if (!Schema::hasColumn('students', 'delegation')) $table->string('delegation')->nullable();
+                    if (!Schema::hasColumn('students', 'province')) $table->string('province')->nullable();
+                    if (!Schema::hasColumn('students', 'bac_year')) $table->string('bac_year')->nullable();
+                    if (!Schema::hasColumn('students', 'bac_type')) $table->string('bac_type')->nullable();
+                    if (!Schema::hasColumn('students', 'bac_serie')) $table->string('bac_serie')->nullable();
+                    if (!Schema::hasColumn('students', 'blood_type')) $table->string('blood_type')->nullable();
+                    if (!Schema::hasColumn('students', 'father_last_name_fr')) $table->string('father_last_name_fr')->nullable();
+                    if (!Schema::hasColumn('students', 'father_first_name_fr')) $table->string('father_first_name_fr')->nullable();
+                    if (!Schema::hasColumn('students', 'father_last_name_ar')) $table->string('father_last_name_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'father_first_name_ar')) $table->string('father_first_name_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_last_name_fr')) $table->string('mother_last_name_fr')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_first_name_fr')) $table->string('mother_first_name_fr')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_last_name_ar')) $table->string('mother_last_name_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_first_name_ar')) $table->string('mother_first_name_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'father_name')) $table->string('father_name')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_name')) $table->string('mother_name')->nullable();
+                    if (!Schema::hasColumn('students', 'father_cin')) $table->string('father_cin')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_cin')) $table->string('mother_cin')->nullable();
+                    if (!Schema::hasColumn('students', 'father_profession')) $table->string('father_profession')->nullable();
+                    if (!Schema::hasColumn('students', 'mother_profession')) $table->string('mother_profession')->nullable();
+                    if (!Schema::hasColumn('students', 'address_ar')) $table->string('address_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'birth_city_ar')) $table->string('birth_city_ar')->nullable();
+                    if (!Schema::hasColumn('students', 'is_locked')) $table->boolean('is_locked')->default(false);
+                });
+            }
+        } catch (\Throwable $e) {
+            \Log::warning("ensureSchemaColumnsExist warning: " . $e->getMessage());
+        }
+    }
+
     /**
      * Suivi du dossier candidat en temps réel.
      */
     public function trackCandidateDossier(Request $request): JsonResponse
     {
+        $this->ensureSchemaColumnsExist();
         $user  = auth()->user();
         $cne   = strtoupper(trim($request->query('cne', '')));
         $cin   = strtoupper(trim($request->query('cin', '')));
@@ -423,16 +494,21 @@ class AdmissionController extends Controller
         // 1) Chercher d'abord l'étudiant lié à l'utilisateur connecté ou par CNE / CIN / Email
         $student = null;
         if ($user) {
-            $student = Student::with(['user', 'documents'])->where('user_id', $user->id)->first();
+            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])->where('user_id', $user->id)->first();
         }
         if (!$student && $cne) {
-            $student = Student::with(['user', 'documents'])->where('cne', $cne)->first();
+            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])->where('cne', $cne)->first();
         }
         if (!$student && $cin) {
-            $student = Student::with(['user', 'documents'])->whereHas('user', fn($u) => $u->where('cin', $cin))->first();
+            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
+                ->where('cin', $cin)
+                ->orWhereHas('user', fn($u) => $u->where('cin', $cin))
+                ->first();
         }
         if (!$student && $email) {
-            $student = Student::with(['user', 'documents'])->whereHas('user', fn($u) => $u->where('email', $email))->first();
+            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
+                ->whereHas('user', fn($u) => $u->where('email', $email))
+                ->first();
         }
 
         // 2) Chercher la dernière candidature (latest) par CNE, CIN ou Email
@@ -453,9 +529,19 @@ class AdmissionController extends Controller
 
         $candidateData = [];
 
-        // Helper pour extraire la première valeur réelle non-vide (depuis Application ou Student)
-        $getVal = function($field, ...$fallbacks) use ($application, $student) {
-            foreach ([$application, $student] as $source) {
+        // Dynamic ordering: prioritize the most recently updated source (Student vs Application)
+        $sources = [$application, $student];
+        if ($application && $student) {
+            $appTime = $application->updated_at ? \Carbon\Carbon::parse($application->updated_at) : null;
+            $stuTime = $student->updated_at ? \Carbon\Carbon::parse($student->updated_at) : null;
+            if ($stuTime && $appTime && $stuTime->gt($appTime)) {
+                $sources = [$student, $application];
+            }
+        }
+
+        // Helper pour extraire la première valeur réelle non-vide
+        $getVal = function($field, ...$fallbacks) use ($sources) {
+            foreach ($sources as $source) {
                 if (!$source) continue;
                 foreach (array_merge([$field], $fallbacks) as $f) {
                     $v = $source->{$f} ?? null;
@@ -496,16 +582,26 @@ class AdmissionController extends Controller
             $bacMentionVal = $getVal('bac_mention');
             $bacYearVal    = $getVal('bac_year');
 
+            $isLocked = (bool)(
+                ($student?->is_locked) ||
+                ($application?->is_locked) ||
+                ($student?->status === 'active') ||
+                ($student?->inscription_status === 'valide') ||
+                ($application?->status === 'accepted') ||
+                ($application?->status === 'enrolled') ||
+                ($application?->status === 'valide')
+            );
+
             $candidateData = [
                 'id'                    => $student?->id ?? $application?->id,
                 'first_name'            => $fn,
                 'last_name'             => $ln,
                 'name'                  => trim("{$fn} {$ln}"),
-                'first_name_ar'         => $getVal('first_name_ar'),
-                'last_name_ar'          => $getVal('last_name_ar'),
-                'cne'                   => $getVal('cne'),
-                'cin'                   => $u?->cin ?? $getVal('cin'),
-                'email'                 => $u?->email ?? $getVal('email'),
+                'first_name_ar'         => $getVal('first_name_ar') ?? $u?->first_name_ar,
+                'last_name_ar'          => $getVal('last_name_ar') ?? $u?->last_name_ar,
+                'cne'                   => $getVal('cne') ?? $cne,
+                'cin'                   => $u?->cin ?? $getVal('cin') ?? $cin,
+                'email'                 => $u?->email ?? $getVal('email') ?? $email,
                 'phone'                 => $u?->phone ?? $getVal('phone'),
                 'gender'                => $getVal('gender'),
                 'birth_date'            => $bdate,
@@ -525,16 +621,18 @@ class AdmissionController extends Controller
                 'mother_cin'            => $getVal('mother_cin'),
                 'mother_profession'     => $getVal('mother_profession', 'mother_job'),
                 'mother_phone'          => $getVal('mother_phone'),
-                'parent_phone'          => $getVal('parent_phone'),
+                'parent_phone'          => $getVal('parent_phone') ?? $getVal('father_phone'),
                 'emergency_contact_name'  => $getVal('emergency_contact_name'),
                 'emergency_contact_phone' => $getVal('emergency_contact_phone'),
-                'allergy_type'          => $getVal('allergy_type'),
-                'medication_used'       => $getVal('medication_used'),
+                'allergy_type'          => $getVal('allergy_type', 'allergies'),
+                'medication_used'       => $getVal('medication_used', 'chronic_diseases'),
                 'treating_doctor_info'  => $getVal('treating_doctor_info'),
                 'has_disability'        => (bool) ($getVal('has_disability')),
                 'disability_details'    => $getVal('disability_details'),
-                'status'                => $student?->status ?? $application?->status,
-                'filiere'               => $student?->latestPathway?->filiere?->name ?? $getVal('filiere', 'reference_number'),
+                'blood_type'            => $getVal('blood_type', 'groupe_sanguin'),
+                'status'                => $student?->status ?? $application?->status ?? 'submitted',
+                'status_label'          => ($student?->status === 'active' || $application?->status === 'accepted') ? 'Inscrit définitif' : 'En cours de traitement',
+                'filiere'               => $student?->latestPathway?->filiere?->name ?? $getVal('filiere', 'reference_number') ?? 'Deux années préparatoires (TC)',
                 'bac_type'              => $bacSerieVal,
                 'bac_serie'             => $bacSerieVal,
                 'bac_average'           => $bacAvgVal,
@@ -544,75 +642,8 @@ class AdmissionController extends Controller
                 'academy'               => $academyVal,
                 'delegation'            => $delegationVal,
                 'selection_score'       => $getVal('selection_score'),
-            ];
-        } else if ($application) {
-            $fn = $application->first_name ?? '';
-            $ln = $application->last_name ?? '';
-
-            $bdate = $application->birth_date;
-            if ($bdate instanceof \Carbon\Carbon || $bdate instanceof \DateTimeInterface) {
-                $bdate = $bdate->format('Y-m-d');
-            } else if (is_string($bdate) && str_contains($bdate, 'T')) {
-                $bdate = explode('T', $bdate)[0];
-            }
-
-            $fatherName = $application->father_name;
-            if (empty($fatherName)) {
-                $fatherName = trim(($application->father_last_name_fr ?? '') . ' ' . ($application->father_first_name_fr ?? ''));
-            }
-            $motherName = $application->mother_name;
-            if (empty($motherName)) {
-                $motherName = trim(($application->mother_last_name_fr ?? '') . ' ' . ($application->mother_first_name_fr ?? ''));
-            }
-
-            $candidateData = [
-                'id'                    => $application->id,
-                'first_name'            => $fn,
-                'last_name'             => $ln,
-                'name'                  => trim("{$fn} {$ln}"),
-                'first_name_ar'         => $application->first_name_ar ?? $application->arabic_first_name ?? null,
-                'last_name_ar'          => $application->last_name_ar ?? $application->arabic_last_name ?? null,
-                'cne'                   => $application->cne,
-                'cin'                   => $application->cin,
-                'email'                 => $application->email,
-                'phone'                 => $application->phone,
-                'gender'                => $application->gender ?? null,
-                'birth_date'            => $bdate,
-                'birth_city'            => $application->birth_city,
-                'birth_city_ar'         => $application->birth_city_ar,
-                'address'               => $application->address,
-                'address_ar'            => $application->address_ar,
-                'city'                  => $application->city,
-                'region'                => $application->region,
-                'father_name'           => $fatherName ?: null,
-                'father_name_ar'        => $application->father_name_ar,
-                'father_cin'            => $application->father_cin,
-                'father_profession'     => $application->father_profession ?? $application->father_job,
-                'father_phone'          => $application->father_phone,
-                'mother_name'           => $motherName ?: null,
-                'mother_name_ar'        => $application->mother_name_ar,
-                'mother_cin'            => $application->mother_cin,
-                'mother_profession'     => $application->mother_profession ?? $application->mother_job,
-                'mother_phone'          => $application->mother_phone,
-                'parent_phone'          => $application->parent_phone,
-                'emergency_contact_name'  => $application->emergency_contact_name,
-                'emergency_contact_phone' => $application->emergency_contact_phone,
-                'allergy_type'          => $application->allergy_type,
-                'medication_used'       => $application->medication_used,
-                'treating_doctor_info'  => $application->treating_doctor_info,
-                'has_disability'        => (bool) $application->has_disability,
-                'disability_details'    => $application->disability_details,
-                'status'                => $application->status,
-                'filiere'               => $application->filiere ?? $application->reference_number ?? null,
-                'bac_type'              => $application->bac_series ?? $application->bac_type ?? null,
-                'bac_serie'             => $application->bac_series ?? $application->bac_type ?? null,
-                'bac_average'           => $application->bac_average,
-                'bac_mention'           => $application->bac_mention,
-                'bac_year'              => $application->bac_year,
-                'high_school'           => $application->high_school,
-                'academy'               => $application->academy ?? $application->region ?? null,
-                'delegation'            => $application->delegation ?? $application->province ?? null,
-                'selection_score'       => $application->selection_score,
+                'is_locked'             => $isLocked,
+                'is_validated'          => $isLocked,
             ];
         }
 
@@ -626,7 +657,7 @@ class AdmissionController extends Controller
 
         // Fetch candidate documents
         $cneQuery = $candidateData['cne'] ?? $cne;
-        $docs = StudentDocument::where('cne', $cneQuery)->get();
+        $docs = StudentDocument::where('cne', $cneQuery)->orWhere('student_id', $student?->id)->get();
         $docMap = [];
         foreach ($docs as $doc) {
             $docMap[$doc->type] = [
@@ -642,7 +673,7 @@ class AdmissionController extends Controller
         return response()->json([
             'success'   => true,
             'found'     => true,
-            'type'      => $application ? 'application' : 'student',
+            'type'      => $student ? 'student' : 'application',
             'candidate' => $candidateData,
         ]);
     }
@@ -715,9 +746,11 @@ class AdmissionController extends Controller
      */
     public function updateCandidateDossier(Request $request): JsonResponse
     {
+        $this->ensureSchemaColumnsExist();
         $userAuth = auth()->user();
         $cne = strtoupper(trim($request->input('cne', '')));
         $cin = strtoupper(trim($request->input('cin', '')));
+        $emailInput = strtolower(trim($request->input('email', '')));
 
         if (empty($cne) && $userAuth?->cne) {
             $cne = strtoupper(trim($userAuth->cne));
@@ -725,10 +758,50 @@ class AdmissionController extends Controller
         if (empty($cin) && $userAuth?->cin) {
             $cin = strtoupper(trim($userAuth->cin));
         }
+        if (empty($emailInput) && $userAuth?->email) {
+            $emailInput = strtolower(trim($userAuth->email));
+        }
+
+        // Vérifier si le dossier est déjà verrouillé/validé par l'administration
+        $studentCheck = null;
+        if ($userAuth) {
+            $studentCheck = Student::where('user_id', $userAuth->id)->first();
+        }
+        if (!$studentCheck && $cne) {
+            $studentCheck = Student::where('cne', $cne)->first();
+        }
+        if (!$studentCheck && $cin) {
+            $studentCheck = Student::where('cin', $cin)->orWhereHas('user', fn($u) => $u->where('cin', $cin))->first();
+        }
+        $appCheck = null;
+        if ($cne) {
+            $appCheck = Application::where('cne', $cne)->latest('id')->first();
+        }
+        if (!$appCheck && $cin) {
+            $appCheck = Application::where('cin', $cin)->latest('id')->first();
+        }
+
+        $isAlreadyLocked = (bool)(
+            ($studentCheck?->is_locked) ||
+            ($appCheck?->is_locked) ||
+            ($studentCheck?->status === 'active') ||
+            ($studentCheck?->inscription_status === 'valide') ||
+            ($appCheck?->status === 'accepted') ||
+            ($appCheck?->status === 'enrolled') ||
+            ($appCheck?->status === 'valide')
+        );
+
+        if ($isAlreadyLocked) {
+            return response()->json([
+                'success'   => false,
+                'is_locked' => true,
+                'message'   => 'Votre dossier d\'inscription a été officiellement validé par le service scolarité et ne peut plus être modifié (Mode Lecture Seule).',
+            ], 403);
+        }
 
         $input = $request->all();
 
-        // 1) Normaliser les noms/prénoms & lieux
+        // 1) Normaliser les nom/prénom & lieux
         $firstName   = $input['first_name'] ?? $input['first_name_fr'] ?? $userAuth?->first_name ?? null;
         $lastName    = $input['last_name'] ?? $input['last_name_fr'] ?? $userAuth?->last_name ?? null;
         $firstNameAr = $input['first_name_ar'] ?? null;
@@ -748,25 +821,27 @@ class AdmissionController extends Controller
         $highSchool  = $input['high_school'] ?? $input['lycee'] ?? null;
         $academy     = $input['academy'] ?? $input['region'] ?? null;
         $delegation  = $input['delegation'] ?? $input['province'] ?? $input['prefecture'] ?? null;
-        $bacSerie    = $input['bac_type'] ?? $input['bac_name'] ?? $input['bac_serie'] ?? null;
+        $bacSerie    = $input['bac_type'] ?? $input['bac_name'] ?? $input['bac_serie'] ?? $input['bac_series'] ?? null;
         $bacAverage  = isset($input['bac_average']) && $input['bac_average'] !== '' ? (float)$input['bac_average'] : null;
         $bacMention  = $input['bac_mention'] ?? null;
         $bacYear     = $input['bac_year'] ?? null;
         $filiereVal  = $input['filiere'] ?? null;
 
-        // Ensemble des données candidats transmises
+        // Map complet pour synchronisation 100% transparente
         $dataMap = [
             'first_name'            => $firstName,
             'last_name'             => $lastName,
             'first_name_ar'         => $firstNameAr,
             'last_name_ar'          => $lastNameAr,
-            'email'                 => $input['email'] ?? $userAuth?->email ?? null,
+            'cne'                   => $cne ?: null,
+            'cin'                   => $cin ?: null,
+            'email'                 => $emailInput ?: null,
             'phone'                 => $input['phone'] ?? null,
             'gender'                => $input['gender'] ?? null,
             'birth_date'            => $input['birth_date'] ?? null,
             'birth_city'            => $birthCity,
             'birth_city_ar'         => $birthCityAr,
-            'nationality'           => $input['nationality'] ?? null,
+            'nationality'           => $input['nationality'] ?? 'Marocaine',
             'address'               => $address,
             'address_ar'            => $addressAr,
             'city'                  => $input['city'] ?? $input['province'] ?? null,
@@ -804,7 +879,7 @@ class AdmissionController extends Controller
             'mother_phone'          => $input['mother_phone'] ?? null,
             'mother_profession'     => $motherJob ?: null,
             'mother_job'            => $motherJob ?: null,
-            'parent_phone'          => $input['parent_phone'] ?? null,
+            'parent_phone'          => $input['parent_phone'] ?? $input['father_phone'] ?? null,
             'emergency_contact_name'  => $input['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $input['emergency_contact_phone'] ?? null,
             'allergy_type'          => $input['allergy_type'] ?? null,
@@ -815,10 +890,10 @@ class AdmissionController extends Controller
             'blood_type'            => $input['blood_type'] ?? $input['groupe_sanguin'] ?? null,
         ];
 
-        // Mettre à jour avec toutes les clés fournies (sans null)
+        // Mettre à jour avec toutes les clés fournies (sans null ni chaine vide)
         $cleanData = array_filter($dataMap, fn($v) => $v !== null && $v !== '');
 
-        // A) Mettre à jour la table Application
+        // A) Mettre à jour / Créer dans la table Application
         $application = null;
         if ($cne) {
             $application = Application::where('cne', $cne)->latest('id')->first();
@@ -826,8 +901,8 @@ class AdmissionController extends Controller
         if (!$application && $cin) {
             $application = Application::where('cin', $cin)->latest('id')->first();
         }
-        if (!$application && $userAuth?->email) {
-            $application = Application::where('email', $userAuth->email)->latest('id')->first();
+        if (!$application && $emailInput) {
+            $application = Application::where('email', $emailInput)->latest('id')->first();
         }
 
         try {
@@ -837,21 +912,26 @@ class AdmissionController extends Controller
             if ($application) {
                 if (!empty($validAppData)) {
                     $application->update($validAppData);
+                    $application->touch();
                 }
             } else if ($cne || $userAuth) {
+                $refNumber = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5(($cne ?: uniqid()) . microtime()), 0, 6));
                 $application = Application::create(array_merge($validAppData, [
-                    'cne'        => $cne ?: ($userAuth?->cne ?? 'CNE_TEMP'),
-                    'cin'        => $cin ?: ($userAuth?->cin ?? 'CIN_TEMP'),
-                    'email'      => $input['email'] ?? $userAuth?->email ?? 'email@temp.com',
-                    'first_name' => $firstName ?: 'Candidat',
-                    'last_name'  => $lastName ?: 'Admis',
+                    'admission_campaign_id' => 1,
+                    'reference_number'     => $refNumber,
+                    'cne'                  => $cne ?: ($userAuth?->cne ?? 'CNE_TEMP'),
+                    'cin'                  => $cin ?: ($userAuth?->cin ?? 'CIN_TEMP'),
+                    'email'                => $emailInput ?: ($userAuth?->email ?? 'email@temp.com'),
+                    'first_name'           => $firstName ?: 'Candidat',
+                    'last_name'            => $lastName ?: 'Admis',
+                    'status'               => 'submitted',
                 ]));
             }
         } catch (\Throwable $e) {
             \Log::warning("Application update/create error: " . $e->getMessage());
         }
 
-        // B) Mettre à jour la table Student
+        // B) Mettre à jour / Créer dans la table Student
         $student = null;
         if ($userAuth) {
             $student = Student::with('user')->where('user_id', $userAuth->id)->first();
@@ -860,7 +940,7 @@ class AdmissionController extends Controller
             $student = Student::with('user')->where('cne', $cne)->first();
         }
         if (!$student && $cin) {
-            $student = Student::with('user')->whereHas('user', fn($u) => $u->where('cin', $cin))->first();
+            $student = Student::with('user')->whereHas('user', fn($u) => $u->where('cin', $cin))->orWhere('cin', $cin)->first();
         }
 
         if ($student) {
@@ -869,6 +949,7 @@ class AdmissionController extends Controller
                 $validStudentData = array_intersect_key($cleanData, array_flip($studentColumns));
                 if (!empty($validStudentData)) {
                     $student->update($validStudentData);
+                    $student->touch();
                 }
             } catch (\Throwable $e) {
                 \Log::warning("Student update error: " . $e->getMessage());
@@ -881,13 +962,16 @@ class AdmissionController extends Controller
                 if ($lastName)    $userUpdate['last_name']     = $lastName;
                 if ($firstNameAr) $userUpdate['first_name_ar'] = $firstNameAr;
                 if ($lastNameAr)  $userUpdate['last_name_ar']  = $lastNameAr;
+                if ($firstName || $lastName) $userUpdate['name'] = trim(($firstName ?: $student->user->first_name) . ' ' . ($lastName ?: $student->user->last_name));
                 if (isset($input['phone'])) $userUpdate['phone'] = $input['phone'];
-                if (isset($input['email'])) {
-                    $emailExists = User::where('email', $input['email'])
+                if ($cin) $userUpdate['cin'] = $cin;
+                if ($cne) $userUpdate['cne'] = $cne;
+                if (!empty($emailInput)) {
+                    $emailExists = User::where('email', $emailInput)
                         ->where('id', '!=', $student->user_id)
                         ->exists();
                     if (!$emailExists) {
-                        $userUpdate['email'] = $input['email'];
+                        $userUpdate['email'] = $emailInput;
                     }
                 }
                 if (!empty($userUpdate)) {
@@ -898,11 +982,28 @@ class AdmissionController extends Controller
                     }
                 }
             }
+
+            // D) Audit Log
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('student_dossier_audit_logs')) {
+                    \Illuminate\Support\Facades\DB::table('student_dossier_audit_logs')->insert([
+                        'student_id'   => $student->id,
+                        'admin_id'     => $userAuth?->id,
+                        'action'       => 'data_edited',
+                        'comment'      => 'Modification du dossier par le candidat',
+                        'ip_address'   => $request->ip(),
+                        'user_agent'   => $request->header('User-Agent'),
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ]);
+                }
+            } catch (\Throwable $e) {}
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Dossier mis à jour avec succès dans PostgreSQL.',
+            'candidate' => $cleanData,
         ]);
     }
 
@@ -1102,13 +1203,66 @@ class AdmissionController extends Controller
             'type' => 'required|string',
         ]);
 
-        StudentDocument::where('cne', $request->input('cne'))
+        $cne = strtoupper(trim($request->input('cne', '')));
+        $student = Student::where('cne', $cne)->first();
+        $application = Application::where('cne', $cne)->first();
+
+        if ($student?->is_locked || $application?->is_locked || $student?->status === 'active' || $student?->inscription_status === 'valide' || $application?->status === 'accepted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Suppression impossible : Votre dossier d\'inscription a été validé et verrouillé par la scolarité.',
+            ], 403);
+        }
+
+        StudentDocument::where('cne', $cne)
             ->where('type', $request->input('type'))
             ->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Document supprimé.',
+        ]);
+    }
+
+    /**
+     * Verrouiller / Déverrouiller le dossier candidat (Admin / Scolarité).
+     */
+    public function toggleLockCandidateDossier(Request $request): JsonResponse
+    {
+        $cne = strtoupper(trim($request->input('cne', '')));
+        $cin = strtoupper(trim($request->input('cin', '')));
+        $studentId = $request->input('student_id');
+        $lockState = (bool)$request->input('is_locked', true);
+
+        $student = null;
+        if ($studentId) $student = Student::find($studentId);
+        if (!$student && $cne) $student = Student::where('cne', $cne)->first();
+        if (!$student && $cin) $student = Student::whereHas('user', fn($u) => $u->where('cin', $cin))->first();
+
+        $application = null;
+        if ($cne) $application = Application::where('cne', $cne)->first();
+        if (!$application && $cin) $application = Application::where('cin', $cin)->first();
+
+        if ($student) {
+            $student->update([
+                'is_locked' => $lockState,
+                'inscription_status' => $lockState ? 'valide' : 'en_attente',
+            ]);
+            $student->touch();
+        }
+
+        if ($application) {
+            $application->update([
+                'is_locked' => $lockState,
+                'status' => $lockState ? 'accepted' : 'submitted',
+            ]);
+            $application->touch();
+        }
+
+        return response()->json([
+            'success'   => true,
+            'is_locked' => $lockState,
+            'message'   => $lockState ? 'Dossier verrouillé avec succès par la Scolarité.' : 'Dossier déverrouillé avec succès.',
         ]);
     }
 

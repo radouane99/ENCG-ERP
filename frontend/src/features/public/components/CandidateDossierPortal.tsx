@@ -192,6 +192,8 @@ export default function CandidateDossierPortal() {
   };
 
 
+  const isLocked = Boolean(candidateData?.is_locked || candidateData?.is_validated || candidateData?.status === 'active' || candidateData?.status === 'accepted' || candidateData?.status === 'enrolled');
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#030711] text-slate-900 dark:text-slate-100 p-4 sm:p-8 font-sans transition-colors">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -202,15 +204,27 @@ export default function CandidateDossierPortal() {
 
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-widest">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Pré-Inscription Validée — ENCG Fès</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-black uppercase tracking-widest shadow-xs">
+                {isLocked ? (
+                  <>
+                    <Shield className="w-4 h-4 text-emerald-400" />
+                    <span>🔒 Dossier Validé & Verrouillé (Lecture seule)</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Pré-Inscription Enregistrée — ENCG Fès</span>
+                  </>
+                )}
               </div>
               <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
                 Bonjour, <span className="text-amber-400">{user?.name || candidateData?.name || 'Candidat'}</span> 👋
               </h1>
               <p className="text-xs sm:text-sm text-blue-200/90 max-w-2xl leading-relaxed">
-                Votre dossier de pré-inscription pour le concours TAFEM 2026 est bien enregistré dans le registre officiel de l'ENCG Fès.
+                {isLocked
+                  ? "Votre dossier d'inscription a été officiellement vérifié et validé par le service scolarité de l'ENCG Fès. Votre dossier est verrouillé en lecture seule."
+                  : "Votre dossier de pré-inscription pour le concours TAFEM 2026 est bien enregistré dans le registre officiel de l'ENCG Fès."
+                }
               </p>
             </div>
 
@@ -286,19 +300,21 @@ export default function CandidateDossierPortal() {
             <span>Pièces Justificatives & Photo (Upload)</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('edit')}
-            className={cn(
-              "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer",
-              activeTab === 'edit'
-                ? "bg-[#0f2863] text-white shadow-lg shadow-blue-900/20"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-            )}
-          >
-            <Edit3 className="w-4 h-4" />
-            <span>Modifier mes Informations</span>
-          </button>
+          {!isLocked && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('edit')}
+              className={cn(
+                "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer",
+                activeTab === 'edit'
+                  ? "bg-[#0f2863] text-white shadow-lg shadow-blue-900/20"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Modifier mes Informations</span>
+            </button>
+          )}
         </div>
 
         {/* ── TAB 1: OVERVIEW ── */}
@@ -306,14 +322,26 @@ export default function CandidateDossierPortal() {
           <div className="space-y-6 animate-in fade-in">
 
             {/* ── Edit Banner CTA ── */}
-            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-2xl px-5 py-4">
+            <div className={cn(
+              "flex items-center justify-between rounded-2xl px-5 py-4 border transition-colors",
+              isLocked
+                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-100"
+                : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/50"
+            )}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center">
-                  <Edit3 className="w-4 h-4 text-blue-600" />
+                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", isLocked ? "bg-emerald-500/20 text-emerald-600" : "bg-blue-600/10 text-blue-600")}>
+                  {isLocked ? <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <Edit3 className="w-4 h-4 text-blue-600" />}
                 </div>
                 <div>
-                  <p className="text-xs font-black text-slate-800 dark:text-slate-200">Besoin de corriger une information ?</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Cliquez sur "Modifier" pour mettre à jour vos données personnelles, parentales ou médicales.</p>
+                  <p className="text-xs font-black text-slate-800 dark:text-slate-200">
+                    {isLocked ? "🔒 Dossier Validé & Verrouillé (Lecture seule)" : "Besoin de corriger une information ?"}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {isLocked
+                      ? "Votre dossier a été officiellement vérifié et validé par le service scolarité de l'ENCG Fès. Les modifications sont verrouillées."
+                      : "Cliquez sur \"Modifier\" pour mettre à jour vos données personnelles, parentales ou médicales."
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -334,14 +362,16 @@ export default function CandidateDossierPortal() {
                   <span>{refreshing ? 'Actualisation...' : 'Actualiser le Dossier'}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('edit')}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Modifier mes Infos</span>
-                </button>
+                {!isLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('edit')}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Modifier mes Infos</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -355,15 +385,17 @@ export default function CandidateDossierPortal() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">الهوية والحالة المدنية</span>
-                    <button
-                      type="button"
-                      onClick={() => { setEditTargetStep(2); setActiveTab('edit'); }}
-                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                      title="Modifier uniquement les informations d'identité et coordonnées"
-                    >
-                      <Edit3 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                      <span>Modifier</span>
-                    </button>
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditTargetStep(2); setActiveTab('edit'); }}
+                        className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Modifier uniquement les informations d'identité et coordonnées"
+                      >
+                        <Edit3 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        <span>Modifier</span>
+                      </button>
+                    )}
                   </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
@@ -397,15 +429,17 @@ export default function CandidateDossierPortal() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">المسار والتوجيه</span>
-                    <button
-                      type="button"
-                      onClick={() => { setEditTargetStep(4); setActiveTab('edit'); }}
-                      className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                      title="Modifier uniquement le parcours académique et baccalauréat"
-                    >
-                      <Edit3 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                      <span>Modifier</span>
-                    </button>
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditTargetStep(4); setActiveTab('edit'); }}
+                        className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Modifier uniquement le parcours académique et baccalauréat"
+                      >
+                        <Edit3 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                        <span>Modifier</span>
+                      </button>
+                    )}
                   </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
@@ -431,15 +465,17 @@ export default function CandidateDossierPortal() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">معلومات الوالدين</span>
-                    <button
-                      type="button"
-                      onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
-                      className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                      title="Modifier uniquement les renseignements des parents"
-                    >
-                      <Edit3 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      <span>Modifier</span>
-                    </button>
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
+                        className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Modifier uniquement les renseignements des parents"
+                      >
+                        <Edit3 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <span>Modifier</span>
+                      </button>
+                    )}
                   </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
@@ -468,15 +504,17 @@ export default function CandidateDossierPortal() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-slate-400 font-serif hidden sm:inline">الملف الطبي والصحي</span>
-                    <button
-                      type="button"
-                      onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
-                      className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-800 dark:text-purple-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                      title="Modifier uniquement la fiche médicale"
-                    >
-                      <Edit3 className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                      <span>Modifier</span>
-                    </button>
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditTargetStep(3); setActiveTab('edit'); }}
+                        className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-800 dark:text-purple-300 font-extrabold text-[11px] px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Modifier uniquement la fiche médicale"
+                      >
+                        <Edit3 className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                        <span>Modifier</span>
+                      </button>
+                    )}
                   </div>
                 </h3>
                 <div className="space-y-2.5 text-xs sm:text-sm divide-y divide-slate-100 dark:divide-slate-800">
@@ -496,14 +534,25 @@ export default function CandidateDossierPortal() {
         {/* ── TAB 2: DOCUMENTS UPLOAD ── */}
         {activeTab === 'documents' && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-6 animate-in fade-in">
-            <div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <span>Téléchargement des Pièces Justificatives & Photo</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Téléversez vos scannés originaux (PDF/Image) pour la vérification par le service scolarité.
-              </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4 border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <span>Pièces Justificatives & Photo Numérisées</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {isLocked 
+                    ? "Pièces justificatives vérifiées et officiellement validées par la scolarité. Consultation en lecture seule."
+                    : "Téléversez vos scannés originaux (PDF/Image) pour la vérification par le service scolarité."
+                  }
+                </p>
+              </div>
+              {isLocked && (
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs px-4 py-2 rounded-xl shrink-0">
+                  <Shield className="w-4 h-4 text-emerald-500" />
+                  <span>Pièces Numériques Validées</span>
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -525,19 +574,21 @@ export default function CandidateDossierPortal() {
                       url: docFiles.bac?.url || `/api/public/serve-document/bac/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
                       isPdf: true
                     })}
-                    className="flex items-center justify-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
                   >
                     <Eye className="w-4 h-4 text-blue-600" />
                     <span>Voir le document</span>
                   </button>
 
-                  <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
-                    <Upload className="w-4 h-4 text-blue-600" />
-                    <span>{uploadingDoc === 'bac' ? 'Téléversement...' : 'Changer le Bac (PDF)'}</span>
-                    <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('bac', e)} />
-                  </label>
+                  {!isLocked && (
+                    <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-blue-600" />
+                      <span>{uploadingDoc === 'bac' ? 'Téléversement...' : 'Changer le Bac (PDF)'}</span>
+                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('bac', e)} />
+                    </label>
+                  )}
 
-                  {docFiles.bac && (
+                  {!isLocked && docFiles.bac && (
                     <button
                       type="button"
                       onClick={() => handleDeleteFile('bac')}
@@ -570,19 +621,21 @@ export default function CandidateDossierPortal() {
                       url: docFiles.cnie?.url || `/api/public/serve-document/cnie/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
                       isPdf: true
                     })}
-                    className="flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
                   >
                     <Eye className="w-4 h-4 text-indigo-600" />
                     <span>Voir le document</span>
                   </button>
 
-                  <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
-                    <Upload className="w-4 h-4 text-indigo-600" />
-                    <span>{uploadingDoc === 'cnie' ? 'Téléversement...' : 'Changer la CNIE (PDF)'}</span>
-                    <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('cnie', e)} />
-                  </label>
+                  {!isLocked && (
+                    <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-indigo-600" />
+                      <span>{uploadingDoc === 'cnie' ? 'Téléversement...' : 'Changer la CNIE (PDF)'}</span>
+                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('cnie', e)} />
+                    </label>
+                  )}
 
-                  {docFiles.cnie && (
+                  {!isLocked && docFiles.cnie && (
                     <button
                       type="button"
                       onClick={() => handleDeleteFile('cnie')}
@@ -615,19 +668,21 @@ export default function CandidateDossierPortal() {
                       url: docFiles.releve_notes?.url || `/api/public/serve-document/releve_notes/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
                       isPdf: true
                     })}
-                    className="flex items-center justify-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
                   >
                     <Eye className="w-4 h-4 text-emerald-600" />
                     <span>Voir le document</span>
                   </button>
 
-                  <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
-                    <Upload className="w-4 h-4 text-emerald-600" />
-                    <span>{uploadingDoc === 'releve_notes' ? 'Téléversement...' : 'Changer le Relevé (PDF)'}</span>
-                    <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('releve_notes', e)} />
-                  </label>
+                  {!isLocked && (
+                    <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-emerald-600" />
+                      <span>{uploadingDoc === 'releve_notes' ? 'Téléversement...' : 'Changer le Relevé (PDF)'}</span>
+                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('releve_notes', e)} />
+                    </label>
+                  )}
 
-                  {docFiles.releve_notes && (
+                  {!isLocked && docFiles.releve_notes && (
                     <button
                       type="button"
                       onClick={() => handleDeleteFile('releve_notes')}
@@ -673,70 +728,97 @@ export default function CandidateDossierPortal() {
                       <span>Aperçu Photo</span>
                     </button>
 
-                    <label className="flex items-center gap-2 bg-amber-500 text-slate-950 hover:bg-amber-600 text-xs font-extrabold px-5 py-3 rounded-xl cursor-pointer transition-all">
-                      <Upload className="w-4 h-4" />
-                      <span>Téléverser une Photo (35x45mm)</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('photo', e)} />
-                    </label>
+                    {!isLocked && (
+                      <label className="flex items-center gap-2 bg-amber-500 text-slate-950 hover:bg-amber-600 text-xs font-extrabold px-5 py-3 rounded-xl cursor-pointer transition-all">
+                        <Upload className="w-4 h-4" />
+                        <span>Téléverser une Photo (35x45mm)</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('photo', e)} />
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Explicit Save Documents Button */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-xs text-slate-500 font-medium">
-                💡 Cliquez sur le bouton ci-contre pour valider et enregistrer définitivement la modification de vos pièces justificatives.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  const toastId = toast.loading("Enregistrement des modifications de vos documents...");
-                  setTimeout(() => {
-                    toast.success("✅ Pièces justificatives et photo enregistrées avec succès dans votre dossier !", { id: toastId });
-                    setActiveTab('overview');
-                  }, 1000);
-                }}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-6 py-3.5 rounded-2xl shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Enregistrer les Modifications de Documents</span>
-              </button>
-            </div>
+            {!isLocked && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-xs text-slate-500 font-medium">
+                  💡 Cliquez sur le bouton ci-contre pour valider et enregistrer définitivement la modification de vos pièces justificatives.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const toastId = toast.loading("Enregistrement des modifications de vos documents...");
+                    setTimeout(() => {
+                      toast.success("✅ Pièces justificatives et photo enregistrées avec succès dans votre dossier !", { id: toastId });
+                      setActiveTab('overview');
+                    }, 1000);
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-6 py-3.5 rounded-2xl shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Enregistrer les Modifications de Documents</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* ── TAB 3: EDIT INFORMATIONS (FULL MULTI-STEP INSCRIPTION WIZARD IN EDIT MODE) ── */}
         {activeTab === 'edit' && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-4 sm:p-8 shadow-xl animate-in fade-in space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600">
-                  <Edit3 className="w-5 h-5" />
+            {isLocked ? (
+              <div className="py-12 space-y-5 max-w-lg mx-auto text-center">
+                <div className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                  <Shield className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">Modification de votre Dossier d'Inscription</h3>
-                  <p className="text-xs text-slate-500 font-medium">Toutes vos anciennes données ont été pré-remplies. Modifiez les étapes souhaitées puis validez.</p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">🔒 Dossier Validé & Verrouillé</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                    Votre dossier d'inscription a été vérifié et officiellement validé par le service scolarité de l'ENCG Fès. Toutes vos données sont désormais verrouillées en mode lecture seule.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('overview')}
+                  className="px-6 py-3.5 bg-[#0f2863] hover:bg-blue-900 text-white font-extrabold text-xs sm:text-sm rounded-2xl cursor-pointer shadow-lg hover:scale-105 transition-all"
+                >
+                  Consulter mon Dossier Soumis
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl cursor-pointer"
-              >
-                Retour au Dossier
-              </button>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600">
+                      <Edit3 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Modification de votre Dossier d'Inscription</h3>
+                      <p className="text-xs text-slate-500 font-medium">Toutes vos anciennes données ont été pré-remplies. Modifiez les étapes souhaitées puis validez.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('overview')}
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    Retour au Dossier
+                  </button>
+                </div>
 
-            <InscriptionPage 
-              editMode={true} 
-              initialData={candidateData} 
-              initialStep={editTargetStep}
-              onSaved={() => {
-                fetchCandidateDossier();
-                setActiveTab('overview');
-              }} 
-            />
+                <InscriptionPage 
+                  editMode={true} 
+                  initialData={candidateData} 
+                  initialStep={editTargetStep}
+                  onSaved={() => {
+                    fetchCandidateDossier();
+                    setActiveTab('overview');
+                  }} 
+                />
+              </>
+            )}
           </div>
         )}
 

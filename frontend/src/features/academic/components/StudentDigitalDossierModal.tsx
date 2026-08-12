@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   X, User, Mail, Phone, MapPin, Calendar, Award, BookOpen, ShieldCheck, 
@@ -487,6 +487,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   const [selectedDocForSplit, setSelectedDocForSplit] = useState<{ title: string; url: string } | null>(null);
   const [splitZoom, setSplitZoom] = useState(1);
   const [splitRotate, setSplitRotate] = useState(0);
+  const [showGuichetPrintModal, setShowGuichetPrintModal] = useState(false);
 
   // AI OCR Audit statuses — per-document verification
   const [ocrAudit, setOcrAudit] = useState<{
@@ -513,6 +514,13 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   });
   // Tracks which doc keys were just flipped to true (awaiting receipt print)
   const [pendingReceipt, setPendingReceipt] = useState<Record<string, boolean>>({});
+  // Per-document verification status (conforme / signale) with digital certification stamp
+  const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | 'signale'>>({
+    bac: 'conforme',
+    cnie: 'conforme',
+    releve_notes: 'conforme',
+    photo: 'conforme',
+  });
 
   useEffect(() => {
     if (student) {
@@ -521,6 +529,23 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
       fetchAuditLogs(student.id);
     }
   }, [student]);
+
+  // Comprehensive Auto-Print & Validate Handler using Scolarité Print Hub (1-Tab, 0 Popup Blocks)
+  const handleValidateAndPrint = useCallback(() => {
+    if (!student || !onStatusUpdate) return;
+
+    // 1. Mark status as active in backend
+    onStatusUpdate(student.id, 'active');
+
+    // 2. Open 1 SINGLE TAB pointing to Scolarité Print Hub (0 Popup Blocker alerts & Auto-Print!)
+    const hubUrl = `/api/v1/enrollments/scolarite-print-hub?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}&print=1`;
+    window.open(hubUrl, '_blank');
+
+    toast.success(`✅ Dossier de ${student.last_name?.toUpperCase() || ''} ${student.first_name || ''} validé ! HUB d'Impression ouvert.`, { duration: 4000 });
+
+    // 3. Return immediately to the candidate list for fast ERP workflow
+    onClose();
+  }, [student, onStatusUpdate, onClose]);
 
   // Global Admin Keyboard Shortcuts for Batch Verification (Press V to Validate, R to Reject, S to Split View, Esc to Close)
   useEffect(() => {
@@ -534,15 +559,13 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
       if (e.key === 'v' || e.key === 'V') {
         e.preventDefault();
-        if (onStatusUpdate) {
-          onStatusUpdate(student.id, 'active');
-          toast.success(`✅ Dossier de ${student.last_name} ${student.first_name} validé (Raccourci [V]) !`);
-        }
+        handleValidateAndPrint();
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         if (onStatusUpdate) {
           onStatusUpdate(student.id, 'suspended');
           toast.warning(`⚠️ Dossier de ${student.last_name} ${student.first_name} suspendu (Raccourci [R]) !`);
+          onClose();
         }
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
@@ -562,7 +585,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [student, onStatusUpdate, onClose]);
+  }, [student, onStatusUpdate, onClose, handleValidateAndPrint]);
 
   const fetchAuditLogs = async (studentId: string | number) => {
     setLoadingAudit(true);
@@ -882,25 +905,6 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                   <div className="p-3 space-y-3 flex-1">
 
-                    {/* ── Photo + Identité Rapide ── */}
-                    <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/40">
-                      <div className="w-14 h-18 rounded-xl overflow-hidden border-2 border-amber-400/80 shadow-lg shrink-0 bg-slate-200 flex items-center justify-center" style={{ height: '70px' }}>
-                        {student.photo_path ? (
-                          <img src={student.photo_path} alt="Photo" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-6 h-6 text-slate-400" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-black text-sm text-slate-900 dark:text-white uppercase truncate">{student.last_name} {student.first_name}</p>
-                        <p className="font-medium text-xs text-slate-500 dark:text-slate-400 font-serif" dir="rtl">{(student as any).last_name_ar} {(student as any).first_name_ar}</p>
-                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-md">{student.cne}</span>
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 rounded-md">{student.cin || '—'}</span>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* ── Section: État Civil ── */}
                     <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
                       <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/40 flex items-center gap-1.5">
@@ -1031,19 +1035,27 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                           { key: 'releve_notes', title: '📊 Relevé', fullTitle: '📊 Relevé de Notes', url: documents['releve_notes']?.file_path || `/api/public/serve-document/releve_notes/${encodeURIComponent(student.cne || '')}`, isDual: false },
                           { key: 'photo', title: '🖼️ Photo', fullTitle: '🖼️ Photo Carte', url: documents['photo']?.file_path || student.photo_path || '/placeholder-student.png', isDual: false }
                         ].map(doc => {
-                          const isSel = (selectedDocForSplit?.title || '📜 Baccalauréat') === doc.fullTitle || (!selectedDocForSplit && doc.key === 'bac');
+                          const activeKey = (selectedDocForSplit as any)?.key || 'bac';
+                          const isSel = activeKey === doc.key || ((selectedDocForSplit?.title || '📜 Baccalauréat') === doc.fullTitle);
+                          const scanStatus = verifiedScans[doc.key];
                           return (
                             <button
                               key={doc.key}
-                              onClick={() => { setSelectedDocForSplit({ title: doc.fullTitle, url: doc.url, versoUrl: (doc as any).versoUrl, isDual: doc.isDual } as any); setSplitZoom(1); setSplitRotate(0); }}
+                              onClick={() => { setSelectedDocForSplit({ key: doc.key, title: doc.fullTitle, url: doc.url, versoUrl: (doc as any).versoUrl, isDual: doc.isDual } as any); setSplitZoom(1); setSplitRotate(0); }}
                               className={cn(
-                                "px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 border",
+                                "px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border relative",
                                 isSel 
                                   ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md" 
                                   : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
                               )}
                             >
                               <span>{doc.title}</span>
+                              {scanStatus === 'conforme' && (
+                                <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">✓</span>
+                              )}
+                              {scanStatus === 'signale' && (
+                                <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">!</span>
+                              )}
                             </button>
                           );
                         });
@@ -1079,6 +1091,43 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                   {/* Document Render Zone — Full Height */}
                   <div className="flex-1 overflow-hidden relative bg-white dark:bg-slate-950">
+                    {/* 🎖️ Official Animated Digital Certification Wax Stamp Overlay */}
+                    {(() => {
+                      const activeKey = (selectedDocForSplit as any)?.key || 'bac';
+                      const status = verifiedScans[activeKey];
+                      if (!status) return null;
+                      if (status === 'conforme') {
+                        return (
+                          <div className="absolute top-4 right-4 z-40 pointer-events-none animate-in zoom-in-75 fade-in duration-300">
+                            <div className="border-4 border-emerald-500/90 text-emerald-600 dark:text-emerald-400 bg-slate-950/85 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 -rotate-6 transform hover:rotate-0 transition-transform ring-4 ring-emerald-500/20">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-lg shadow-inner shrink-0">
+                                ✓
+                              </div>
+                              <div className="text-left">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-emerald-400 leading-none">CERTIFIÉ CONFORME</p>
+                                <p className="text-[9px] font-bold text-emerald-200/90 mt-1 font-mono">SCEAU GUICHET ENCG FÈS</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (status === 'signale') {
+                        return (
+                          <div className="absolute top-4 right-4 z-40 pointer-events-none animate-in zoom-in-75 fade-in duration-300">
+                            <div className="border-4 border-rose-500/90 text-rose-600 dark:text-rose-400 bg-slate-950/85 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 -rotate-6 transform hover:rotate-0 transition-transform ring-4 ring-rose-500/20">
+                              <div className="w-9 h-9 rounded-xl bg-rose-500 text-white font-black flex items-center justify-center text-lg shadow-inner shrink-0">
+                                ⚠️
+                              </div>
+                              <div className="text-left">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-rose-400 leading-none">DOCUMENT SIGNALÉ</p>
+                                <p className="text-[9px] font-bold text-rose-200/90 mt-1 font-mono">ILLISIBLE / À RE-SCANNER</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     {(() => {
                       const currentUrl = selectedDocForSplit?.url || documents['bac']?.file_path || `/api/public/serve-document/bac/${encodeURIComponent(student.cne || '')}`;
                       const currentTitle = selectedDocForSplit?.title || '';
@@ -1155,6 +1204,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                           { key: 'photo', label: "Photo d'identité", icon: '🖼️', required: true, altKeys: ['photo_identite'] },
                         ].map(doc => {
                           const hasDoc = !!documents[doc.key] || doc.altKeys.some(k => !!documents[k]);
+                          const scanStatus = verifiedScans[doc.key];
                           return (
                             <div key={doc.key} className="flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                               <div className="flex items-center gap-2 min-w-0">
@@ -1162,11 +1212,23 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                                 <span className={cn("font-medium truncate text-[11px]", hasDoc ? "text-slate-800 dark:text-slate-200" : "text-slate-400")}>{doc.label}</span>
                                 {doc.required && !hasDoc && <span className="text-[8px] text-rose-500 font-black uppercase shrink-0">Requis</span>}
                               </div>
-                              <div className={cn(
-                                "w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white font-black text-[10px]",
-                                hasDoc ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"
-                              )}>
-                                {hasDoc ? '✓' : '·'}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {scanStatus === 'conforme' && (
+                                  <span className="text-[8.5px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 rounded-md uppercase">
+                                    Conforme ✓
+                                  </span>
+                                )}
+                                {scanStatus === 'signale' && (
+                                  <span className="text-[8.5px] font-black bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 px-1.5 py-0.5 rounded-md uppercase">
+                                    Signalé ⚠️
+                                  </span>
+                                )}
+                                <div className={cn(
+                                  "w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white font-black text-[10px]",
+                                  hasDoc ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"
+                                )}>
+                                  {hasDoc ? '✓' : '·'}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1259,8 +1321,19 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                     {/* ── Validation Rapide du Document Actif ── */}
                     <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-                      <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/40">
+                      <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/40 flex items-center justify-between">
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">🔍 Scan Actif</span>
+                        {(() => {
+                          const activeKey = (selectedDocForSplit as any)?.key || 'bac';
+                          const status = verifiedScans[activeKey];
+                          if (status === 'conforme') {
+                            return <span className="text-[9px] bg-emerald-500 text-white font-black px-2 py-0.5 rounded-full animate-pulse">✓ CERTIFIÉ</span>;
+                          }
+                          if (status === 'signale') {
+                            return <span className="text-[9px] bg-rose-500 text-white font-black px-2 py-0.5 rounded-full animate-pulse">⚠️ SIGNALÉ</span>;
+                          }
+                          return null;
+                        })()}
                       </div>
                       <div className="p-3 space-y-2">
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
@@ -1268,22 +1341,40 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                           <button
+                            type="button"
                             onClick={() => {
+                              const activeKey = (selectedDocForSplit as any)?.key || 'bac';
                               const title = selectedDocForSplit?.title || 'Baccalauréat';
-                              toast.success(`✅ ${title} certifié conforme par le guichet !`);
+                              setVerifiedScans(prev => ({ ...prev, [activeKey]: 'conforme' }));
+                              toast.success(`✅ ${title} certifié conforme avec sceau numérique !`, { duration: 3000 });
                             }}
-                            className="py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-lg text-xs uppercase cursor-pointer transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5"
+                            className={cn(
+                              "py-2.5 font-black rounded-xl text-xs uppercase cursor-pointer transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5",
+                              (verifiedScans[(selectedDocForSplit as any)?.key || 'bac'] === 'conforme')
+                                ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-emerald-600/30 scale-105"
+                                : "bg-emerald-500 hover:bg-emerald-600 text-white"
+                            )}
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Conforme
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>{(verifiedScans[(selectedDocForSplit as any)?.key || 'bac'] === 'conforme') ? '✓ CONFORME !' : 'CONFORME'}</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
+                              const activeKey = (selectedDocForSplit as any)?.key || 'bac';
                               const title = selectedDocForSplit?.title || 'Document';
+                              setVerifiedScans(prev => ({ ...prev, [activeKey]: 'signale' }));
                               toast.error(`⚠️ ${title} marqué comme illisible / à re-scanner.`);
                             }}
-                            className="py-2 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-lg text-xs uppercase cursor-pointer transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5"
+                            className={cn(
+                              "py-2.5 font-black rounded-xl text-xs uppercase cursor-pointer transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5",
+                              (verifiedScans[(selectedDocForSplit as any)?.key || 'bac'] === 'signale')
+                                ? "bg-rose-600 text-white ring-2 ring-rose-400 shadow-rose-600/30 scale-105"
+                                : "bg-rose-500 hover:bg-rose-600 text-white"
+                            )}
                           >
-                            <AlertTriangle className="w-3.5 h-3.5" /> Signalé
+                            <AlertTriangle className="w-4 h-4" />
+                            <span>{(verifiedScans[(selectedDocForSplit as any)?.key || 'bac'] === 'signale') ? '⚠️ SIGNALÉ !' : 'SIGNALÉ'}</span>
                           </button>
                         </div>
                       </div>
@@ -1298,31 +1389,17 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         {onStatusUpdate && (
                           <>
                             <button
-                              onClick={() => {
-                                // 1. Valider l'inscription
-                                onStatusUpdate(student.id, 'active');
-
-                                // 2. Construire les URLs des 3 documents avec statut des pièces physiques
-                                const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-                                const isNaissanceDepose = (physicalDocs as any).naissance ?? (physicalDocs as any).fiche;
-                                const physParams = `&phys_bac=${physicalDocs.bac ? 1 : 0}&phys_releve=${physicalDocs.releve ? 1 : 0}&phys_cnie=${physicalDocs.cnie ? 1 : 0}&phys_photo=${physicalDocs.photo ? 1 : 0}&phys_naissance=${isNaissanceDepose ? 1 : 0}&phys_fiche=${isNaissanceDepose ? 1 : 0}`;
-                                const attestationUrl = `/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(fullName)}&cne=${encodeURIComponent(student.cne || '')}&cin=${encodeURIComponent(student.cin || (student as any).cnie || '')}&filiere=${encodeURIComponent(student.filiere_name || 'ENCG Fès')}${physParams}`;
-                                const engagementUrl = `/api/admin/students/engagement-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`;
-                                const ficheUrl = `/api/admin/students/fiche-medicale-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`;
-
-                                // 3. Ouvrir les 3 PDFs (délai pour éviter le blocage popup)
-                                setTimeout(() => window.open(attestationUrl, '_blank'), 300);
-                                setTimeout(() => window.open(engagementUrl, '_blank'), 700);
-                                setTimeout(() => window.open(ficheUrl, '_blank'), 1100);
-
-                                toast.success(`✅ ${fullName} validé(e) ! Impression des 3 documents lancée...`, { duration: 4000 });
-                              }}
+                              onClick={handleValidateAndPrint}
                               className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl text-xs uppercase cursor-pointer transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
                             >
                               <CheckCircle2 className="w-4 h-4" /> ✅ Valider + Imprimer [V]
                             </button>
                             <button
-                              onClick={() => onStatusUpdate(student.id, 'rejected')}
+                              onClick={() => {
+                                onStatusUpdate(student.id, 'rejected');
+                                toast.warning(`⚠️ Dossier de ${student.first_name} ${student.last_name} suspendu / rejeté.`);
+                                onClose();
+                              }}
                               className="w-full py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 font-black rounded-xl text-xs uppercase cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                               <X className="w-3.5 h-3.5" /> ❌ Rejeter / Suspendre
@@ -1332,10 +1409,18 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                       </div>
                     </div>
 
-                    {/* ── Impression Manuelle des Documents ── */}
+                    {/* ── Impression des Documents & Récépissés ── */}
                     <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/40 overflow-hidden">
-                      <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-950/40 border-b border-indigo-200 dark:border-indigo-900/30">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">🖨️ Impression Documents</span>
+                      <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-950/40 border-b border-indigo-200 dark:border-indigo-900/30 flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">🖨️ Impression Documents Officiels</span>
+                        <button
+                          type="button"
+                          onClick={() => { toast.success('🖨️ Impression Bundle Unifié...'); window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`, '_blank'); }}
+                          className="text-[9px] font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded-md cursor-pointer shadow-xs transition-all"
+                          title="Imprimer tout le dossier en 1 seul clic"
+                        >
+                          ⚡ Bundle 1-Clic
+                        </button>
                       </div>
                       <div className="p-3 space-y-1.5">
                         {[
@@ -1358,54 +1443,21 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                             color: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60',
                             url: () => `/api/admin/students/fiche-medicale-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`
                           },
+                          {
+                            label: '📄 Récépissé de Dépôt TAFEM',
+                            color: 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+                            url: () => `/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}`
+                          },
                         ].map(doc => (
                           <button
                             key={doc.label}
                             onClick={() => window.open(doc.url(), '_blank')}
-                            className={`w-full py-1.5 px-3 border font-bold rounded-lg text-[11px] cursor-pointer transition-all active:scale-95 flex items-center gap-2 ${doc.color}`}
+                            className={`w-full py-1.5 px-3 border font-bold rounded-lg text-[11px] cursor-pointer transition-all active:scale-95 flex items-center justify-between ${doc.color}`}
                           >
-                            {doc.label}
+                            <span>{doc.label}</span>
+                            <Printer className="w-3 h-3 shrink-0 opacity-70" />
                           </button>
                         ))}
-                      </div>
-                    </div>
-
-                    {/* ── Raccourcis Clavier ── */}
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/40">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">⌨️ Raccourcis Guichet</p>
-                      <div className="space-y-1.5">
-                        {[
-                          { key: '[V]', action: 'Valider', color: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
-                          { key: '[R]', action: 'Rejeter', color: 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300' },
-                          { key: '[S]', action: 'Côte-à-Côte', color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
-                          { key: '[Esc]', action: 'Fermer', color: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' },
-                        ].map(sc => (
-                          <div key={sc.key} className="flex items-center justify-between gap-2">
-                            <kbd className={cn("text-[9px] font-mono font-black px-1.5 py-0.5 rounded-md", sc.color)}>{sc.key}</kbd>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{sc.action}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* ── Actions Impression ── */}
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-                      <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700/40">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">🖨️ Impression Rapide</span>
-                      </div>
-                      <div className="p-3 space-y-2">
-                        <button
-                          onClick={() => window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}`, '_blank')}
-                          className="w-full py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 font-bold rounded-lg text-[11px] cursor-pointer transition-all flex items-center justify-center gap-1.5"
-                        >
-                          <Printer className="w-3.5 h-3.5" /> Récépissé Dépôt
-                        </button>
-                        <button
-                          onClick={() => { toast.success('🖨️ Impression Bundle Unifié...'); window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`, '_blank'); }}
-                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 font-bold rounded-lg text-[11px] cursor-pointer transition-all flex items-center justify-center gap-1.5"
-                        >
-                          <Printer className="w-3.5 h-3.5 text-amber-500" /> Bundle 1-Clic
-                        </button>
                       </div>
                     </div>
 
@@ -2398,6 +2450,118 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                 <img src={url} alt="Scan Preview" className="max-h-full w-auto object-contain shadow-2xl" />
               );
             })()}
+          </div>
+        </div>
+      </div>
+    )}
+    {/* 🖨️ Dedicated Guichet Print Modal Overlay for Original Documents */}
+    {showGuichetPrintModal && (
+      <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95 duration-200">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle2 className="w-9 h-9 text-emerald-500" />
+          </div>
+
+          <div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              ✅ Dossier Validé avec Succès !
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Candidat : <strong className="text-slate-900 dark:text-white">{student.last_name?.toUpperCase()} {student.first_name}</strong> (CNE: <code className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">{student.cne}</code>)
+            </p>
+          </div>
+
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2 text-left">
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              🖨️ Vos Documents Officiels (Modèles Originaux) :
+            </p>
+            {[
+              {
+                title: '📜 Attestation d\'Inscription',
+                desc: 'Attestation de scolarité & récépissé de dépôt',
+                color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
+                url: `/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(`${student.first_name || ''} ${student.last_name || ''}`.trim())}&cne=${encodeURIComponent(student.cne || '')}&cin=${encodeURIComponent(student.cin || '')}&filiere=${encodeURIComponent(student.filiere_name || 'ENCG Fès')}`
+              },
+              {
+                title: '📝 Fiche d\'Engagement (تعهد)',
+                desc: 'Règlement intérieur & charte éthique',
+                color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+                url: `/api/admin/students/engagement-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`
+              },
+              {
+                title: '🩺 Fiche Médicale (الملف الطبي)',
+                desc: 'Dossier de santé & certificat médical',
+                color: 'bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border-teal-200 dark:border-teal-800/60',
+                url: `/api/admin/students/fiche-medicale-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`
+              },
+            ].map(doc => (
+              <div key={doc.title} className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-extrabold text-slate-900 dark:text-white truncate">{doc.title}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{doc.desc}</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => window.open(doc.url, '_blank')}
+                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-lg cursor-pointer transition-all border border-slate-200"
+                    title="Ouvrir dans un nouvel onglet"
+                  >
+                    👁️ Ouvrir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const iframe = document.createElement('iframe');
+                      iframe.style.position = 'fixed';
+                      iframe.style.visibility = 'hidden';
+                      iframe.style.width = '0';
+                      iframe.style.height = '0';
+                      iframe.src = doc.url;
+                      document.body.appendChild(iframe);
+                      iframe.onload = () => {
+                        setTimeout(() => {
+                          try {
+                            iframe.contentWindow?.focus();
+                            iframe.contentWindow?.print();
+                          } catch (e) {}
+                        }, 300);
+                      };
+                      toast.success(`🖨️ Impression de ${doc.title} lancée !`);
+                    }}
+                    className={cn("px-3 py-1.5 rounded-lg border font-bold text-xs cursor-pointer hover:scale-105 transition-all flex items-center gap-1 shrink-0", doc.color)}
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Imprimer</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                const hubUrl = `/api/v1/enrollments/scolarite-print-hub?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}&print=1`;
+                window.open(hubUrl, '_blank');
+                toast.success('⚡ HUB d\'Impression Guichet ouvert dans un nouvel onglet !', { duration: 4000 });
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg cursor-pointer transition-all active:scale-95"
+            >
+              <Printer className="w-4 h-4 text-amber-300" />
+              <span>⚡ Ouvrir HUB d'Impression (3 Documents)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowGuichetPrintModal(false);
+                onClose();
+              }}
+              className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs rounded-xl cursor-pointer transition-all shrink-0 border border-slate-300 dark:border-slate-700"
+            >
+              Passer au Suivant →
+            </button>
           </div>
         </div>
       </div>
