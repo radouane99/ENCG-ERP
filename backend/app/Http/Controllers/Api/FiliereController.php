@@ -24,9 +24,9 @@ class FiliereController extends Controller
     {
         $user = $request->user();
 
-        if ($user && $user->professor && !$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+        if ($user && ($user->professor || $user->hasAnyRole(['professor', 'vacataire'])) && !$user->hasAnyRole(['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
             $filiereIds = $this->accessService->getAuthorizedFiliereIds($user);
-            $filieres = Filiere::whereIn('id', $filiereIds)->get();
+            $filieres = Filiere::with(['department', 'responsable'])->whereIn('id', $filiereIds)->get();
         } else {
             $filieres = $this->filiereService->getAllFilieres();
         }

@@ -2,13 +2,35 @@
 .env
 .env.local
 .env.*.local
+.env.backup
+.env.production
 
 # Node and build artifacts
 node_modules/
 dist/
 build/
 /public/build/
+dev-dist/
+*.tsbuildinfo
 
-# System files
+# Database dumps & SQL backups (except migrations/docker init)
+*.sql
+!docker/postgres/init.sql
+
+# Log files and debug dumps
+*.log
+ocr_debug.txt
+routes.json
+route_list.txt
+
+# Temporary scripts and IDE files
+*.tmp
+*.bak
+*.swp
+*.orig
 .DS_Store
 Thumbs.db
+.vscode/
+!.vscode/extensions.json
+.idea/
+

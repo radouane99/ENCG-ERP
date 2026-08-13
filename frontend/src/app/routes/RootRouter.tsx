@@ -372,6 +372,9 @@ export default function RootRouter() {
           {/* Timetable & Exams */}
           <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/academic/timetable" element={<TimetableAdminView />} />
+          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
+          <Route path="/professor/schedules" element={<InteractiveCalendarPage isAdmin={false} />} />
+          <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
           <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
           <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
           <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
@@ -482,7 +485,6 @@ export default function RootRouter() {
             <Route path="/admin/students" element={<AdminStudentsPage />} />
             <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
             <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
-            <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
             <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
             <Route path="/admin/reservations" element={<ReservationsPage />} />
             <Route path="/admin/reservations/create" element={<ReservationCreatePage />} />
@@ -502,7 +504,6 @@ export default function RootRouter() {
             <Route path="/admin/alerts" element={<AdminAlertsPage />} />
             <Route path="/admin/ministry-report" element={<AdminMinistryReportPage />} />
             <Route path="/admin/pfe-workflow" element={<AdminPFEWorkflowPage />} />
-            <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
             <Route path="/admin/archiving" element={<AdminAcademicArchivingPage />} />
             <Route path="/admin/academic-archiving" element={<AdminAcademicArchivingPage />} />

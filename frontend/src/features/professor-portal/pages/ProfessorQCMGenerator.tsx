@@ -63,43 +63,46 @@ export default function ProfessorQCMGenerator() {
 
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-8 font-sans animate-in fade-in duration-500 pb-24">
       
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <Zap className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black text-[#001A4B] italic">Générateur QCM IA</h1>
-          <p className="text-sm text-white/50">Transformez vos supports de cours en évaluations interactives en quelques secondes.</p>
+      {/* Banner Header */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-3xl p-8 md:p-10 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative overflow-hidden border border-indigo-900/50">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+        <div className="relative z-10 space-y-2">
+          <span className="bg-purple-500/20 text-purple-200 border border-purple-400/30 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest inline-flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-amber-400" /> Copilote IA — Évaluations Interactives
+          </span>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">Générateur QCM & Examens par IA</h1>
+          <p className="text-sm text-slate-300 font-medium max-w-2xl">
+            Transformez vos supports de cours (PDF, DOCX, PPTX) en évaluations sous forme de QCM en quelques secondes.
+          </p>
         </div>
       </div>
 
       {step === 'upload' && (
-        <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center border-dashed border-2 hover:border-purple-300 hover:bg-purple-50/10 transition-colors cursor-pointer group"
+        <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-200/90 flex flex-col items-center justify-center text-center border-dashed border-2 hover:border-purple-400 hover:bg-purple-50/20 transition-all cursor-pointer group"
              onClick={() => {
                setProgress(0);
                setStep('generating');
                generateMutation.mutate();
              }}>
-          <div className="w-24 h-24 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+          <div className="w-20 h-20 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-md shadow-purple-600/10">
             <UploadCloud className="w-10 h-10" />
           </div>
-          <h2 className="text-xl font-black text-white mb-2">Glissez votre support de cours ici</h2>
-          <p className="text-sm text-white/50 mb-6">Formats supportés : PDF, PPTX, DOCX (Max 20MB)</p>
-          <button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-md shadow-purple-500/30 flex items-center gap-2">
-            <FileText className="w-4 h-4" /> Parcourir les fichiers
+          <h2 className="text-xl font-black text-slate-900 mb-2">Glissez votre support de cours ici</h2>
+          <p className="text-xs font-semibold text-slate-500 mb-6">Formats supportés : PDF, PPTX, DOCX (Max 20MB)</p>
+          <button className="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white px-8 py-3.5 rounded-2xl font-extrabold text-xs shadow-lg shadow-purple-950/20 flex items-center gap-2 hover:scale-105 transition-all">
+            <FileText className="w-4 h-4 text-purple-300" /> Parcourir les fichiers ou Démo Directe
           </button>
         </div>
       )}
 
       {step === 'generating' && (
-        <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center min-h-[400px]">
-          <div className="relative w-32 h-32 mb-8">
+        <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-200/90 flex flex-col items-center justify-center text-center min-h-[400px]">
+          <div className="relative w-28 h-28 mb-8">
             <svg className="absolute inset-0 w-full h-full transform -rotate-90 animate-spin-slow">
-              <circle cx="64" cy="64" r="60" fill="transparent" stroke="#f3f4f6" strokeWidth="8" />
-              <circle cx="64" cy="64" r="60" fill="transparent" stroke="url(#gradient)" strokeWidth="8" strokeDasharray="377" strokeDashoffset={377 - (377 * progress) / 100} className="transition-all duration-300" />
+              <circle cx="56" cy="56" r="50" fill="transparent" stroke="#e2e8f0" strokeWidth="8" />
+              <circle cx="56" cy="56" r="50" fill="transparent" stroke="url(#gradient)" strokeWidth="8" strokeDasharray="314" strokeDashoffset={314 - (314 * progress) / 100} className="transition-all duration-300" />
               <defs>
                 <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#6366f1" />
@@ -108,13 +111,13 @@ export default function ProfessorQCMGenerator() {
               </defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Zap className="w-10 h-10 text-purple-600 animate-pulse" />
+              <Zap className="w-9 h-9 text-purple-600 animate-pulse" />
             </div>
           </div>
-          <h2 className="text-xl font-black text-white mb-2">L'Intelligence Artificielle analyse votre cours...</h2>
-          <p className="text-sm text-white/50 mb-4">Génération des questions et réponses en cours ({progress}%)</p>
-          <div className="w-64 bg-white/[0.05] h-2 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
+          <h2 className="text-xl font-black text-slate-900 mb-2">L'Intelligence Artificielle analyse votre cours...</h2>
+          <p className="text-xs font-semibold text-slate-500 mb-4">Génération des questions et réponses en cours ({progress}%)</p>
+          <div className="w-64 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
       )}

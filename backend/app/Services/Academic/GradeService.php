@@ -22,34 +22,28 @@ class GradeService
         }
 
         $query = Student::with('user');
+        $filiereId = $module->filiere_id;
 
         if ($groupId) {
-            $query->whereHas('pathways', function ($pq) use ($groupId) {
-                $pq->where('group_id', $groupId)->where('is_current', true);
+            $query->where(function ($q) use ($groupId) {
+                $q->whereHas('pathways', fn($pq) => $pq->where('group_id', $groupId))
+                  ->orWhereHas('registrations', fn($rq) => $rq->where('group_id', $groupId));
             });
-        } else {
-            $query->whereHas('pathways', function ($q) use ($module) {
-                $q->where('is_current', true);
-                if ($module->filiere_id) {
-                    $q->where('filiere_id', $module->filiere_id);
-                }
-                if ($module->semester_number) {
-                    $q->where('current_semester', $module->semester_number);
-                }
+        } else if ($filiereId) {
+            $query->where(function ($q) use ($filiereId) {
+                $q->whereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
+                  ->orWhereHas('registrations', fn($r) => $r->where('filiere_id', $filiereId));
             });
         }
 
         $students = $query->orderBy('student_number')->get();
 
-        // Fallback de secours si aucun étudiant trouvé via pathway
-        if ($students->isEmpty()) {
-            if ($groupId) {
-                $students = Student::with('user')->whereHas('pathways', function ($pq) use ($groupId) {
-                    $pq->where('group_id', $groupId);
-                })->orderBy('student_number')->get();
-            } else {
-                $students = Student::with('user')->orderBy('student_number')->get();
-            }
+        // Fallback de secours ciblé strictement sur la filière du module
+        if ($students->isEmpty() && $filiereId) {
+            $students = Student::with('user')
+                ->whereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
+                ->orderBy('student_number')
+                ->get();
         }
 
         return $students->sortBy(fn($s) => ($s->last_name ?? '') . ' ' . ($s->first_name ?? ''))->values();

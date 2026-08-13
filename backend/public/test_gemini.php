@@ -1,2 +1,0 @@
-<?php
-// Removed test script

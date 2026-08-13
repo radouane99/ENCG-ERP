@@ -108,7 +108,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'EMPLOIS DU TEMPS & CAMPUS',
     groupTitleAr: 'استعمالات الزمن والحرم',
     items: [
-      { label: 'Emplois du Temps', labelAr: 'استعمالات الزمن', href: '/admin/schedules', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Emplois du Temps', labelAr: 'استعمالات الزمن', href: '/admin/timetable/calendar', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head'] },
       { label: 'Calendrier Académique', labelAr: 'التقويم الأكاديمي', href: '/admin/academic-calendar', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
       { label: 'Salles & Amphithéâtres', labelAr: 'القاعات والمدرجات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Smart Campus & IoT', labelAr: 'الحرم الذكي', href: '/admin/smart-campus', icon: Cpu, roles: ['super-admin', 'institution-admin', 'director'] },
@@ -150,6 +150,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'ESPACE ENSEIGNANT',
     groupTitleAr: 'فضاء الأستاذ',
     items: [
+      { label: 'Mon Emploi du Temps', labelAr: 'جدول أوقاتي', href: '/professor/schedules', icon: CalendarDays, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
       { label: 'Cahier de Texte', labelAr: 'دفتر النصوص', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
       { label: 'Demandes de Recommandation (IA)', labelAr: 'رسائل التوصية الذكية', href: '/professor/recommendations', icon: Sparkles, badge: 'IA', roles: ['professor', 'department-head', 'filiere-head', 'super-admin', 'institution-admin'] },
       { label: 'Encadrement & Jurys PFE', labelAr: 'تأطير التداريب ومناقشات التخرج', href: '/professor/internships', icon: Award, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },

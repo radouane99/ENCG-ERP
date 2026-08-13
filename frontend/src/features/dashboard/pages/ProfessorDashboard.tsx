@@ -300,11 +300,11 @@ const ProfessorDashboard: React.FC = () => {
                 <p className="text-xs text-slate-300 font-semibold">{stats.next_classes[0].group || 'Tronc Commun ENCG'}</p>
               </div>
             ) : (
-              <div className="p-6 text-center bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
-                <Calendar className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs font-bold text-slate-600">Aucun cours planifié prochainement</p>
-                <p className="text-[10px] text-slate-400">Consultez votre emploi du temps académique global.</p>
-              </div>
+              <Link to="/professor/schedules" className="block p-6 text-center bg-slate-50 hover:bg-indigo-50/50 transition-colors rounded-2xl border border-slate-100 space-y-2 group cursor-pointer">
+                <Calendar className="w-8 h-8 text-indigo-500 mx-auto group-hover:scale-110 transition-transform" />
+                <p className="text-xs font-bold text-slate-800 group-hover:text-indigo-600">Consulter Mon Emploi du Temps</p>
+                <p className="text-[10px] text-slate-500 font-semibold">Afficher mon calendrier de cours et mes affectations de groupes.</p>
+              </Link>
             )}
           </div>
 
@@ -367,7 +367,7 @@ const ProfessorDashboard: React.FC = () => {
               </Link>
 
               <Link 
-                to="/professor/juries" 
+                to="/professor/internships" 
                 className="p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-100 transition-all flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
