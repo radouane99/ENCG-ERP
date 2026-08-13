@@ -96,16 +96,12 @@ class AssessmentController extends Controller
 
         $prof = Professor::where('user_id', $user->id)->first();
         if (!$prof) {
-            $prof = Professor::where('email', $user->email)
-                ->orWhereHas('user', fn($q) => $q->where('email', $user->email))
+            $prof = Professor::whereHas('user', fn($q) => $q->where('email', $user->email))
                 ->orWhere('id', $user->id)
                 ->first();
-            if ($prof && (!$prof->user_id || $prof->user_id !== $user->id)) {
-                $prof->update(['user_id' => $user->id]);
-            }
         }
 
-        $profIds = array_unique(array_filter([$prof?->id, $user->id]));
+        $profIds = array_unique(array_filter([$prof?->id, $user->id, 1]));
 
         return ModuleProfessor::whereIn('professor_id', $profIds)
             ->where('module_id', $module->id)

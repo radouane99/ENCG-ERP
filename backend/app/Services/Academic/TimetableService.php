@@ -17,6 +17,7 @@ class TimetableService
             ->join('rooms', 'schedules.room_id', '=', 'rooms.id')
             ->join('groups', 'schedules.group_id', '=', 'groups.id')
             ->join('professors', 'schedules.professor_id', '=', 'professors.id')
+            ->leftJoin('users', 'professors.user_id', '=', 'users.id')
             ->select(
                 'schedules.id',
                 'schedules.day_of_week',
@@ -27,8 +28,8 @@ class TimetableService
                 'rooms.name as room_name',
                 'groups.name as group_name',
                 'schedules.professor_id',
-                'professors.first_name as prof_first_name',
-                'professors.last_name as prof_last_name',
+                DB::raw("COALESCE(users.first_name, 'Professeur') as prof_first_name"),
+                DB::raw("COALESCE(users.last_name, '') as prof_last_name"),
                 'schedules.type' // e.g., 'CM', 'TD', 'TP'
             )
             ->where('schedules.is_active', true);

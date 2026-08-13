@@ -4,5 +4,5 @@ namespace App\Models;
 
 class DisciplineCase extends DisciplinaryCase
 {
-    // Alias model for DisciplinaryCase
+    protected $table = 'disciplinary_cases';
 }

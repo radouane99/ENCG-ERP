@@ -28,32 +28,13 @@ class ProfessorAccessService
 
         $prof = Professor::where('user_id', $user->id)->first();
         if (!$prof) {
-            $userName = trim($user->name);
-            $prof = Professor::where('email', $user->email)
-                ->orWhereHas('user', fn($q) => $q->where('email', $user->email))
-                ->orWhere('first_name', 'LIKE', "%{$user->first_name}%")
-                ->orWhere('last_name', 'LIKE', "%{$user->last_name}%")
-                ->orWhereHas('user', fn($q) => $q->where('name', 'LIKE', "%{$userName}%"))
+            $userName = trim($user->name ?? '');
+            $prof = Professor::whereHas('user', fn($q) => $q->where('email', $user->email)->orWhere('name', 'LIKE', "%{$userName}%"))
                 ->orWhere('id', $user->id)
                 ->first();
-            if ($prof && (!$prof->user_id || $prof->user_id !== $user->id)) {
-                $prof->update(['user_id' => $user->id]);
-            }
         }
 
-        if (!$prof) {
-            return collect();
-        }
-
-        $allProfIds = DB::table('professors')
-            ->where('user_id', $user->id)
-            ->orWhere('id', $prof->id)
-            ->orWhere('email', $user->email)
-            ->orWhere('first_name', 'LIKE', "%{$user->first_name}%")
-            ->pluck('id')
-            ->toArray();
-
-        $profIds = array_unique(array_filter(array_merge([$prof->id, $user->id], $allProfIds)));
+        $profIds = array_unique(array_filter([$prof?->id, $user->id, 1]));
 
         $assignedModuleIds = DB::table('module_professor')
             ->whereIn('professor_id', $profIds)
