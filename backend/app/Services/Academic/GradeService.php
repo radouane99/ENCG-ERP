@@ -137,12 +137,23 @@ class GradeService
     {
         $prof = \App\Models\Professor::where('user_id', $userId)->first();
         if (!$prof) {
-            return true;
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $prof = \App\Models\Professor::where('email', $user->email)
+                    ->orWhereHas('user', fn($q) => $q->where('email', $user->email))
+                    ->orWhere('id', $userId)
+                    ->first();
+                if ($prof && (!$prof->user_id || $prof->user_id !== $userId)) {
+                    $prof->update(['user_id' => $userId]);
+                }
+            }
         }
 
-        return \App\Models\ModuleProfessor::where('professor_id', $prof->id)
+        $profIds = array_unique(array_filter([$prof?->id, $userId]));
+
+        return \App\Models\ModuleProfessor::whereIn('professor_id', $profIds)
             ->where('module_id', $moduleId)
-            ->exists() || Module::where('id', $moduleId)->where('professor_id', $prof->id)->exists();
+            ->exists() || Module::where('id', $moduleId)->whereIn('professor_id', $profIds)->exists();
     }
 
     /**

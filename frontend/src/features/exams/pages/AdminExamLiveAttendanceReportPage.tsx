@@ -30,10 +30,10 @@ export default function AdminExamLiveAttendanceReportPage() {
         {/* Header */}
         <div className="flex justify-between items-center border-b-2 border-emerald-500 pb-6 mb-8">
           <div className="w-1/4">
-            <img src="/logo-encg.png" alt="UPF" className="h-12 object-contain" />
+            <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain" />
           </div>
           <div className="w-2/4 text-center">
-            <h1 className="text-xl font-bold text-emerald-600 uppercase tracking-widest mb-1">UNIVERSITÉ PRIVÉE DE FÈS</h1>
+            <h1 className="text-xl font-bold text-emerald-600 uppercase tracking-widest mb-1">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</h1>
             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Direction des Affaires Académiques & de la Scolarité</p>
           </div>
           <div className="w-1/4 text-right">
@@ -110,7 +110,7 @@ export default function AdminExamLiveAttendanceReportPage() {
         {/* Footer */}
         <div className="flex justify-between items-end border-t border-slate-200 pt-8 mt-auto">
           <div className="space-y-1">
-            <p className="text-[9px] text-slate-400">Université Privée de Fès (UPF)</p>
+            <p className="text-[9px] text-slate-400">École Nationale de Commerce et de Gestion de Fès (ENCG Fès)</p>
             <p className="text-[9px] text-slate-400">Direction des Affaires Académiques</p>
             <p className="text-[10px] font-bold text-emerald-600 mt-2">Signature numérique du système : validée.</p>
           </div>

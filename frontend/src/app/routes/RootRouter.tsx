@@ -222,6 +222,8 @@ const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
 const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminAnalyticsDashboard'))
 const AdminGuichetPage = lazy(() => import('@features/admin/pages/AdminGuichetPage'))
+const DepartmentSubstitutionsPage = lazy(() => import('@features/admin/pages/DepartmentSubstitutionsPage'))
+const AdminRolesPermissionsPage = lazy(() => import('@features/admin/pages/AdminRolesPermissionsPage'))
 
 // ── Route Guard ────────────────────────────────────────────────
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -327,12 +329,12 @@ export default function RootRouter() {
           </Route>
 
           {/* Professor Portal */}
-          <Route element={<ProtectedRoute roles={['professor']} />}>
+          <Route element={<ProtectedRoute roles={['professor', 'vacataire', 'department-head', 'filiere-head', 'super-admin', 'institution-admin', 'director']} />}>
             <Route path="professor/*" element={<ProfessorRouter />} />
           </Route>
 
           {/* Attendance */}
-          <Route element={<ProtectedRoute roles={['professor']} />}>
+          <Route element={<ProtectedRoute roles={['professor', 'vacataire', 'department-head', 'filiere-head', 'super-admin', 'institution-admin', 'director']} />}>
             <Route path="/attendance/manage" element={<ProfessorAttendanceView />} />
           </Route>
           <Route element={<ProtectedRoute roles={['student']} />}>
@@ -349,12 +351,23 @@ export default function RootRouter() {
 
           {/* Academic */}
           <Route path="/academic/years" element={<AcademicYearsPage />} />
+          <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
+          <Route path="/admin/professor-assignments" element={<AcademicYearSettingsPage />} />
+          <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
+          <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
+          <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
           <Route path="/academic/groups" element={<GroupsPage />} />
           <Route path="/academic/filieres" element={<FilieresPage />} />
           <Route path="/academic/departments" element={<DepartmentsPage />} />
           <Route path="/academic/modules" element={<ModulesListPage />} />
           <Route path="/academic/deliberations" element={<DeliberationManager />} />
           <Route path="/professors" element={<ProfessorsListPage />} />
+
+          {/* Grades & PV Routes */}
+          <Route path="/admin/grades" element={<AdminGradesPage />} />
+          <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+          <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
+          <Route path="/professor/grades" element={<AdminGradesPage />} />
 
           {/* Timetable & Exams */}
           <Route path="/timetable" element={<TimetablePage />} />

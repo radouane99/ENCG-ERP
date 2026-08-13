@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -167,7 +167,7 @@ export default function StudentConvocationPdf() {
                   alt="QR Code" 
                   className="w-20 h-20 mb-2 border border-white/10 p-1 bg-white"
                 />
-                <span className="text-[8px] font-bold text-white/90">Vérification Officielle UPF</span>
+                <span className="text-[8px] font-bold text-white/90">Vérification Officielle ENCG Fès</span>
                 <span className="text-[8px] text-white/50">Réf : CONV-2026-000001</span>
               </div>
               

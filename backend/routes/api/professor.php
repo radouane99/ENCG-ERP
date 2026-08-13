@@ -19,6 +19,11 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/prof
         Route::get('class-analytics/{moduleId}', [\App\Http\Controllers\Api\ProfessorAiController::class, 'getClassAnalytics']);
         Route::post('copilot', [\App\Http\Controllers\Api\ProfessorAiController::class, 'copilotQuery']);
     });
+
+    Route::prefix('copilot')->group(function () {
+        Route::post('textbook-outline', [\App\Http\Controllers\Api\ProfessorAiCopilotController::class, 'generateTextbookOutline']);
+        Route::post('generate-exam-paper', [\App\Http\Controllers\Api\ProfessorAiCopilotController::class, 'generateExamPaper']);
+    });
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function () {

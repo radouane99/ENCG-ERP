@@ -31,7 +31,8 @@ class RecommendationLetterController extends Controller
             'delivery_method' => 'nullable|string|in:platform,email,both',
         ]);
 
-        $student   = Student::with('user')->findOrFail(auth()->id());
+        $student = Student::with('user')->where('user_id', auth()->id())->first()
+            ?? Student::with('user')->where('id', auth()->id())->firstOrFail();
         $avgGrade  = Grade::where('student_id', $student->id)->avg('value') ?? 13.5;
         $absences  = \App\Models\Attendance::where('student_id', $student->id)->count();
         $eligibilityScore = min(100, max(50, round(($avgGrade * 5) - ($absences * 2))));
@@ -66,8 +67,11 @@ class RecommendationLetterController extends Controller
      */
     public function getStudentRequests(): JsonResponse
     {
+        $student = Student::where('user_id', auth()->id())->first();
+        $studentId = $student ? $student->id : auth()->id();
+
         $requests = RecommendationRequest::with('professor')
-            ->where('student_id', auth()->id())
+            ->where('student_id', $studentId)
             ->latest()
             ->get()
             ->map(fn($r) => [
@@ -94,9 +98,9 @@ class RecommendationLetterController extends Controller
             ->get()
             ->map(fn($r) => [
                 'id'              => $r->id,
-                'student_name'    => $r->student->user->name ?? 'N/A',
-                'student_email'   => $r->student->user->email ?? 'N/A',
-                'filiere_name'    => $r->student->latestPathway->filiere->name ?? 'N/A',
+                'student_name'    => $r->student?->user?->name ?? 'N/A',
+                'student_email'   => $r->student?->user?->email ?? 'N/A',
+                'filiere_name'    => $r->student?->latestPathway?->filiere?->name ?? 'N/A',
                 'purpose'         => $r->purpose,
                 'status'          => $r->status,
                 'ai_eligibility_score' => $r->ai_eligibility_score,

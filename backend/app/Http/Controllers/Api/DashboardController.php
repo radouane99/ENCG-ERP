@@ -20,7 +20,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'department-head'])) {
+        if ($user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head'])) {
             return response()->json($this->analyticsService->getAdminStats());
         }
 

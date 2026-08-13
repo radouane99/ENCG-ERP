@@ -5,16 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ModuleResource;
 use App\Models\Module;
-use App\Models\ModuleProfessor;
-use App\Models\Professor;
 use App\Services\Academic\ModuleService;
+use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ModuleController extends Controller
 {
     public function __construct(
-        private ModuleService $moduleService
+        private ModuleService $moduleService,
+        private ProfessorAccessService $accessService
     ) {}
 
     /**
@@ -33,12 +33,9 @@ class ModuleController extends Controller
         }
 
         // 🛡️ RBAC : Les professeurs ne voient que leurs modules
-        if ($request->user()?->hasRole(['professor', 'vacataire'])) {
-            $prof = Professor::where('user_id', $request->user()->id)->first();
-            if ($prof) {
-                $moduleIds = ModuleProfessor::where('professor_id', $prof->id)->pluck('module_id');
-                $query->whereIn('id', $moduleIds);
-            }
+        if ($request->user()?->hasAnyRole(['professor', 'vacataire']) && !$request->user()?->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+            $moduleIds = $this->accessService->getAuthorizedModuleIds($request->user());
+            $query->whereIn('id', $moduleIds);
         }
 
         return response()->json([

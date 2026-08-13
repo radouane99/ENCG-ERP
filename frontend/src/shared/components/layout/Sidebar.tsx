@@ -16,7 +16,7 @@ import {
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX, Archive
+  BookMarked, GitFork, FilterX, Archive, Key
 } from 'lucide-react'
 
 interface NavItem {
@@ -86,10 +86,10 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Analytics & Cartographie', labelAr: 'تحليلات الامتحانات', href: '/admin/exams/analytics', icon: AreaChart, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Gestion Convocations', labelAr: 'إدارة الاستدعاءات', href: '/admin/convocations', icon: MailCheck, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Scanner QR en Direct', labelAr: 'ماسح الاستدعاءات المباشر', href: '/admin/exams/scan', icon: ScanLine, badge: 'QR', roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Délibérations & PVs Officiels', labelAr: 'المداولات والمحاضر الرسمية', href: '/admin/grades/pv', icon: Calculator, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
+      { label: 'Délibérations & PVs Officiels', labelAr: 'المداولات والمحاضر الرسمية', href: '/admin/grades/pv', icon: Calculator, roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head'] },
       { label: 'Réservistes & Dérogations', labelAr: 'الطلبة الرواسب والديون', href: '/admin/reservistes', icon: RotateCcw, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Session Rattrapage', labelAr: 'دورة الدعم والتدارك', href: '/admin/retake', icon: Repeat, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Saisie des Notes', labelAr: 'إدخال النقاط', href: '/admin/grades', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire'] },
+      { label: 'Saisie des Notes', labelAr: 'إدخال النقاط', href: '/admin/grades', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head'] },
       { label: 'Verrouillage Épreuves', labelAr: 'قفل الاختبارات', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
@@ -150,15 +150,37 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'ESPACE ENSEIGNANT',
     groupTitleAr: 'فضاء الأستاذ',
     items: [
-      { label: 'Cahier de Texte', labelAr: 'دفتر النصوص', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire'] },
-      { label: 'Demandes de Recommandation (IA)', labelAr: 'رسائل التوصية الذكية', href: '/professor/recommendations', icon: Sparkles, badge: 'IA', roles: ['professor', 'super-admin', 'institution-admin'] },
-      { label: 'Encadrement & Jurys PFE', labelAr: 'تأطير التداريب ومناقشات التخرج', href: '/professor/internships', icon: Award, roles: ['professor', 'vacataire'] },
-      { label: 'Saisie des Absences', labelAr: 'تسجيل الغيابات', href: '/professor/absences', icon: UserX, roles: ['professor', 'vacataire'] },
-      { label: 'Générateur QCM (IA)', labelAr: 'مولد الاختبارات الذكي', href: '/professor/qcm-generator', icon: Zap, badge: 'IA', roles: ['professor'] },
-      { label: 'Analytique Classe', labelAr: 'تحليلات الفصل', href: '/professor/analytics', icon: BarChart3, roles: ['professor'] },
-      { label: 'Mes Surveillances', labelAr: 'جدول حراساتي', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },
-      { label: 'Correction Intelligente', labelAr: 'التصحيح الذكي', href: '/professor/smart-grading', icon: FileSignature, roles: ['professor'] },
-      { label: 'Scanner Présences', labelAr: 'ماسح الحضور', href: '/professor/scanner', icon: ScanLine, roles: ['professor', 'vacataire'] },
+      { label: 'Cahier de Texte', labelAr: 'دفتر النصوص', href: '/professor/textbook', icon: BookOpen, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+      { label: 'Demandes de Recommandation (IA)', labelAr: 'رسائل التوصية الذكية', href: '/professor/recommendations', icon: Sparkles, badge: 'IA', roles: ['professor', 'department-head', 'filiere-head', 'super-admin', 'institution-admin'] },
+      { label: 'Encadrement & Jurys PFE', labelAr: 'تأطير التداريب ومناقشات التخرج', href: '/professor/internships', icon: Award, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+      { label: 'Saisie des Absences', labelAr: 'تسجيل الغيابات', href: '/professor/absences', icon: UserX, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+      { label: 'Générateur QCM (IA)', labelAr: 'مولد الاختبارات الذكي', href: '/professor/qcm-generator', icon: Zap, badge: 'IA', roles: ['professor', 'department-head', 'filiere-head'] },
+      { label: 'Analytique Classe', labelAr: 'تحليلات الفصل', href: '/professor/analytics', icon: BarChart3, roles: ['professor', 'department-head', 'filiere-head'] },
+      { label: 'Mes Surveillances', labelAr: 'جدول حراساتي', href: '/professor/proctoring', icon: Eye, roles: ['professor', 'department-head', 'filiere-head'] },
+      { label: 'Correction Intelligente', labelAr: 'التصحيح الذكي', href: '/professor/smart-grading', icon: FileSignature, roles: ['professor', 'department-head', 'filiere-head'] },
+      { label: 'Copilote IA & Examens', labelAr: 'مساعد الامتحانات الذكي', href: '/professor/ai-copilot', icon: BrainCircuit, badge: 'IA', roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+      { label: 'Scanner Présences', labelAr: 'ماسح الحضور', href: '/professor/scanner', icon: ScanLine, roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+    ]
+  },
+  {
+    groupTitle: 'ESPACE CHEF DE DÉPARTEMENT',
+    groupTitleAr: 'فضاء رئيس القسم',
+    items: [
+      { label: 'Validation Cahiers de Texte', labelAr: 'المصادقة على دفاتر النصوص', href: '/admin/textbooks', icon: Book, badge: 'DPT', roles: ['department-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Affectation des Enseignants', labelAr: 'توزيع الأساتذة على المواد', href: '/admin/professor-assignments', icon: UserCheck, roles: ['department-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Suppléance & Remplacements', labelAr: 'التعويض وتفويض الحراسة', href: '/admin/substitutions', icon: ShieldAlert, badge: 'URG', roles: ['department-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Suivi Vacataires & Paie', labelAr: 'متابعة الأساتذة العرضيين', href: '/vacataires', icon: Briefcase, roles: ['department-head', 'super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'PVs & Notes de Département', labelAr: 'محاضر ونقاط القسم', href: '/admin/grades/pv', icon: Calculator, roles: ['department-head', 'super-admin', 'institution-admin', 'director'] },
+    ]
+  },
+  {
+    groupTitle: 'ESPACE CHEF DE FILIÈRE',
+    groupTitleAr: 'فضاء منسق المسلك',
+    items: [
+      { label: 'Délibérations APOGEE LMD', labelAr: 'مداولات المسلك وتدقيق النقاط', href: '/admin/grades/pv', icon: Calculator, badge: 'LMD', roles: ['filiere-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Dispatching Groupes & Délégués', labelAr: 'توزيع الأفواج وممثلي الطلبة', href: '/academic/groups', icon: Users, roles: ['filiere-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Maquette Pédagogique Filière', labelAr: 'الهيكلة البيدغوجية للمسلك', href: '/academic/filieres', icon: GraduationCap, roles: ['filiere-head', 'super-admin', 'institution-admin', 'director'] },
+      { label: 'Sélection Mobilité S7/S9', labelAr: 'انتقاء الحركية الدولية', href: '/admin/mobility', icon: PlaneTakeoff, badge: 'S7/S9', roles: ['filiere-head', 'super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
@@ -178,6 +200,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'إدارة النظام',
     items: [
       { label: 'Guichet Électronique & Attestations', labelAr: 'الشباك الإلكتروني والوثائق', href: '/admin/guichet', icon: Stamp, roles: ['super-admin', 'institution-admin'] },
+      { label: 'Matrice Rôles & Permissions', labelAr: 'إدارة الأدوار والصلاحيات', href: '/admin/roles-permissions', icon: Key, badge: 'RBAC', roles: ['super-admin', 'institution-admin'] },
       { label: 'Diplômes Blockchain', labelAr: 'دبلومات البلوكشين', href: '/admin/blockchain-diplomas', icon: ShieldCheck, badge: 'BC', roles: ['super-admin', 'institution-admin'] },
       { label: 'Évaluations & Enquêtes', labelAr: 'التقييمات والاستطلاعات', href: '/admin/evaluations', icon: CheckSquare, roles: ['super-admin', 'institution-admin'] },
       { label: 'Workflow Builder', labelAr: 'منشئ مسارات العمل', href: '/admin/workflow-builder', icon: GitFork, roles: ['super-admin', 'institution-admin'] },
@@ -196,7 +219,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const { i18n } = useTranslation('common')
-  const { user, hasAnyRole } = useAuthStore()
+  const { user, hasAnyRole, activeRole } = useAuthStore()
   const isRtl = i18n.language === 'ar'
   const navigate = useNavigate()
   const location = useLocation()
@@ -248,7 +271,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
     return navigation.map(navItem => {
       if ('groupTitle' in navItem) {
         // Role check first
-        const roleFiltered = navItem.items.filter(item => !item.roles || hasAnyRole(item.roles))
+        const roleFiltered = navItem.items.filter(item => {
+          if (!item.roles) return true
+          if (activeRole) {
+            const normalizedActive = activeRole.replace('_', '-').toLowerCase()
+            return item.roles.some(r => r.toLowerCase().replace('_', '-') === normalizedActive)
+          }
+          return hasAnyRole(item.roles)
+        })
         if (roleFiltered.length === 0) return null
 
         if (!query) {

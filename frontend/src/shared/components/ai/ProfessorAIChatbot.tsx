@@ -97,7 +97,7 @@ export default function ProfessorAIChatbot() {
                 🧑‍🏫
               </div>
               <div>
-                <h3 className="font-black text-lg leading-tight">UPF Prof AI</h3>
+                <h3 className="font-black text-lg leading-tight">ENCG Prof AI</h3>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-orange-100">
                   <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></div>
                   Assistant enseignant · Gemini IA

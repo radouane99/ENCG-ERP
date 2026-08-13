@@ -138,7 +138,7 @@ export default function ReservationCreatePage() {
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <h2 className="text-2xl font-bold italic mb-2 relative z-10">Réservation Administrative</h2>
           <p className="text-blue-200 text-xs font-medium relative z-10 mx-auto">
-            Planifiez une séance exceptionnelle pour un professeur dans l'une des salles disponibles de l'UPF.
+            Planifiez une séance exceptionnelle pour un professeur dans l'une des salles disponibles de l'ENCG Fès.
           </p>
         </div>
 

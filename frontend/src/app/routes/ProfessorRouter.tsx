@@ -14,6 +14,8 @@ const ProfessorReservations = lazy(() => import('@features/professor-portal/page
 const ProfessorQCMGenerator = lazy(() => import('@features/professor-portal/pages/ProfessorQCMGenerator'))
 const ProfessorAnalytics = lazy(() => import('@features/professor-portal/pages/ProfessorAnalytics'))
 const ProfessorSmartGrading = lazy(() => import('@features/professor-portal/pages/ProfessorSmartGrading'))
+const ProfessorAiCopilotPage = lazy(() => import('@features/professor-portal/pages/ProfessorAiCopilotPage'))
+const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
 const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pages/ProfessorProjectsKanban'))
 
 const ProfessorInteractiveCalendar = lazy(() => import('@features/calendar/pages/InteractiveCalendarPage'))
@@ -28,7 +30,9 @@ export default function ProfessorRouter() {
       <Route path="schedule" element={<ProfessorInteractiveCalendar />} />
       <Route path="dashboard" element={<ProfessorDashboard />} />
       <Route path="check-in/scanner" element={<ProfessorScanner />} />
+      <Route path="scanner" element={<ProfessorScanner />} />
       <Route path="proctor-convocations" element={<ProfessorProctoring />} />
+      <Route path="proctoring" element={<ProfessorProctoring />} />
       <Route path="availability" element={<ProfessorAvailability />} />
       <Route path="textbook" element={<TextbooksPage />} />
       <Route path="internships" element={<ProfessorInternships />} />
@@ -39,6 +43,9 @@ export default function ProfessorRouter() {
       <Route path="qcm-generator" element={<ProfessorQCMGenerator />} />
       <Route path="analytics" element={<ProfessorAnalytics />} />
       <Route path="grading" element={<ProfessorSmartGrading />} />
+      <Route path="smart-grading" element={<ProfessorSmartGrading />} />
+      <Route path="ai-copilot" element={<ProfessorAiCopilotPage />} />
+      <Route path="grades" element={<AdminGradesPage />} />
       <Route path="projects-kanban" element={<ProfessorProjectsKanban />} />
     </Routes>
   );

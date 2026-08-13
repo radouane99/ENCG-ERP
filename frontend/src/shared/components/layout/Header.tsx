@@ -11,6 +11,7 @@ import { ThemeToggle } from './ThemeToggle'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { NotificationBell } from './NotificationBell'
 import { InstallPWAPrompt } from './InstallPWAPrompt'
+import RoleContextSwitcher from './RoleContextSwitcher'
 
 interface HeaderProps {
   onOpenCommand?: () => void;
@@ -50,22 +51,22 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
   const pageTitle = getPageTitle(location.pathname)
 
   return (
-    <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center px-4 md:px-6 justify-between gap-3 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-xs">
+    <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center px-3 sm:px-4 md:px-6 justify-between gap-2 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-xs">
       
       {/* Left side: Hamburger + Breadcrumb/Page Title + Search */}
-      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
         {/* Mobile Hamburger Menu Toggle */}
         <button 
           onClick={onOpenSidebar}
-          className="lg:hidden p-2 -ms-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer"
+          className="lg:hidden p-2 -ms-1 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shrink-0"
           aria-label="Ouvrir le menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Current Active Page Title (Visible on medium/large screens) */}
+        {/* Current Active Page Title (Visible on extra-large screens) */}
         {pageTitle && (
-          <div className="hidden xl:flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+          <div className="hidden 2xl:flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
             <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]" />
             <span>{pageTitle}</span>
           </div>
@@ -74,14 +75,14 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         {/* Mobile Search Icon Button */}
         <button
           onClick={onOpenCommand}
-          className="sm:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          className="sm:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
           aria-label="Recherche"
         >
           <Search className="w-5 h-5" />
         </button>
 
         {/* Command Search Bar Trigger (Visible on sm+ screens) */}
-        <div className="hidden sm:block flex-1 max-w-md">
+        <div className="hidden sm:block flex-1 max-w-xs md:max-w-sm lg:max-w-md min-w-0">
           <div className="relative group">
             <button
               onClick={onOpenCommand}
@@ -93,10 +94,10 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               )}
             >
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
-              <span className="truncate">
-                {isRtl ? 'ابحث عن صفحة، طالب، نقطة أو محضر...' : 'Rechercher une action, étudiant, PV, module...'}
+              <span className="truncate min-w-0">
+                {isRtl ? 'ابحث عن صفحة، طالب، نقطة...' : 'Rechercher une action, étudiant, PV...'}
               </span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-extrabold uppercase bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 shadow-xs ms-2 shrink-0">
+              <kbd className="hidden xl:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-extrabold uppercase bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 shadow-xs ms-2 shrink-0">
                 <Command className="w-3 h-3" />
                 <span>K</span>
               </kbd>
@@ -106,33 +107,34 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
       </div>
 
       {/* Right side: AI Assistant Shortcut + Utilities + Notifications + User Menu */}
-      <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
         
         {/* Quick AI Assistant Trigger */}
         <button
           onClick={onOpenCommand}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-indigo-500/20 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer"
+          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 lg:px-3 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-indigo-500/20 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
           title="Ouvrir la recherche globale et IA"
         >
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-          <span>Assistant IA</span>
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse shrink-0" />
+          <span className="hidden lg:inline">Assistant IA</span>
         </button>
 
         {/* PWA Prompt */}
-        <div className="hidden lg:block">
+        <div className="hidden xl:block">
           <InstallPWAPrompt />
         </div>
         
         {/* Utilities */}
+        <RoleContextSwitcher />
         <LanguageSwitcher />
         <ThemeToggle />
         <NotificationBell />
 
         {/* User Profile Dropdown Menu */}
-        <div className="relative ms-1 md:ms-2">
+        <div className="relative ms-0.5 md:ms-1">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 p-1 pe-2 md:px-2.5 md:py-1.5 rounded-full md:rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 border border-slate-200/60 dark:border-slate-700/60 transition-all cursor-pointer group"
+            className="flex items-center gap-2 p-1 pe-1.5 lg:px-2.5 lg:py-1.5 rounded-full lg:rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 border border-slate-200/60 dark:border-slate-700/60 transition-all cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-black shadow-inner shrink-0">
               {user?.avatar_path ? (
@@ -146,16 +148,30 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               )}
             </div>
             
-            <div className="hidden md:flex flex-col text-start min-w-0">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 max-w-[110px] truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            <div className="hidden lg:flex flex-col text-start min-w-0">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 max-w-[90px] xl:max-w-[130px] truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 {user?.name}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider truncate">
-                {user?.roles?.[0] || 'Utilisateur'}
+              <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider truncate max-w-[90px] xl:max-w-[130px]">
+                {(() => {
+                  const role = user?.roles?.[0];
+                  if (!role) return 'Utilisateur';
+                  switch (role) {
+                    case 'super-admin': return 'Super Admin';
+                    case 'institution-admin': return 'Admin ENCG';
+                    case 'director': return 'Directeur ENCG';
+                    case 'department-head': return 'Chef de Dép.';
+                    case 'filiere-head': return 'Chef Filière';
+                    case 'professor': return 'Professeur';
+                    case 'vacataire': return 'Vacataire';
+                    case 'student': return 'Étudiant';
+                    default: return role.replace('-', ' ');
+                  }
+                })()}
               </span>
             </div>
 
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200 hidden md:block" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200 hidden lg:block shrink-0" />
           </button>
 
           {/* User Menu Overlay Dropdown */}

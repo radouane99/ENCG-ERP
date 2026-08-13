@@ -146,7 +146,11 @@ export default function AdminGradesPage() {
 
   useEffect(() => {
     api.get('/filieres').then(r => {
-      setFilieres(r.data.data || r.data)
+      const data = r.data.data || r.data
+      setFilieres(data)
+      if (Array.isArray(data) && data.length === 1) {
+        setFiliere(String(data[0].id))
+      }
       setIsLoading(false)
     }).catch(() => setIsLoading(false))
   }, [])
@@ -177,7 +181,9 @@ export default function AdminGradesPage() {
   const [sendingReminderId, setSendingReminderId] = useState<number | null>(null)
 
   const fetchProgressSummary = () => {
-    api.get('/admin/grades/progress-summary').then(r => setProgressSummary(r.data)).catch(console.error)
+    api.get('/admin/grades/progress-summary', { suppressToast: true } as any)
+      .then(r => setProgressSummary(r.data))
+      .catch(() => {})
   }
 
   useEffect(() => {

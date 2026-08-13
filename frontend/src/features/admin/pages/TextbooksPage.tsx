@@ -22,7 +22,7 @@ export default function TextbooksPage() {
         <div className="relative z-10 space-y-2">
           <h2 className="text-3xl font-black italic tracking-tight">Supervision Pédagogique</h2>
           <p className="text-white/80 text-sm">
-            Consultez et filtrez tous les cahiers de textes saisis par l'ensemble des professeurs de l'UPF.
+            Consultez et filtrez tous les cahiers de textes saisis par l'ensemble des professeurs de l'ENCG Fès.
           </p>
         </div>
         {/* Decorative elements can go here if needed */}

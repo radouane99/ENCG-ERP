@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Download, Printer } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@shared/lib/utils';
@@ -52,19 +52,18 @@ export default function ConvocationPDFView() {
           <div className="flex justify-between items-start mb-8">
             <div className="text-[#001A4B] font-bold text-xs leading-tight w-1/3">
               ROYAUME DU MAROC<br/>
-              UNIVERSITÉ PRIVÉE DE FÈS<br/>
-              Ecole Supérieure d'Ingénierie<br/>
-              et de Technologie de Fès
+              UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH<br/>
+              ÉCOLE NATIONALE DE COMMERCE<br/>
+              ET DE GESTION DE FÈS
             </div>
             <div className="flex flex-col items-center justify-center w-1/3">
-              <img src="/logo-encg.png" alt="UPF" className="h-16 object-contain mb-1" />
-              <div className="text-[10px] font-bold text-[#001A4B]">UNIVERSITÉ PRIVÉE DE FÈS</div>
+              <img src="/logo-encg.png" alt="ENCG Fès" className="h-16 object-contain mb-1" />
+              <div className="text-[10px] font-bold text-[#001A4B]">ENCG FÈS</div>
             </div>
-            <div className="text-rose-600 font-bold text-xs leading-tight text-right w-1/3" dir="rtl">
-              Ø§Ù„Ù…Ù…Ù„ÙƒØ© Ø§Ù„Ù…ØºØ±Ø¨ÙŠØ©<br/>
-              Ø§Ù„Ø¬Ø§Ù…Ø¹Ø© Ø§Ù„Ø®Ø§ØµØ© Ù„ÙØ§Ø³<br/>
-              Ø§Ù„Ù…Ø¯Ø±Ø³Ø© Ø§Ù„Ø¹Ù„ÙŠØ§ Ù„Ù„Ù‡Ù†Ø¯Ø³Ø©<br/>
-              ÙˆØ§Ù„ØªÙƒÙ†ÙˆÙ„ÙˆØ¬ÙŠØ§ Ø¨ÙØ§Ø³
+            <div className="text-[#001A4B] font-bold text-xs leading-tight text-right w-1/3" dir="rtl">
+              المملكة المغربية<br/>
+              جامعة سيدي محمد بن عبد الله<br/>
+              المدرسة الوطنية للتجارة والتسيير بفاس
             </div>
           </div>
 

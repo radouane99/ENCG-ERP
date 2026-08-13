@@ -30,14 +30,14 @@ export default function AdminPrintProfessorsConvocationPage() {
         {/* Header */}
         <div className="flex justify-between items-start border-b border-[#0f2863] pb-4 mb-8">
           <div className="w-1/3">
-            <p className="text-[7px] font-bold text-[#0f2863] uppercase leading-tight">ROYAUME DU MAROC<br/>UNIVERSITÉ PRIVÉE DE FÈS<br/>SERVICE DE LA SCOLARITÉ</p>
+            <p className="text-[7px] font-bold text-[#0f2863] uppercase leading-tight">ROYAUME DU MAROC<br/>UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH<br/>ENCG FÈS</p>
           </div>
           <div className="w-1/3 text-center flex flex-col items-center">
-            <img src="/logo-encg.png" alt="UPF" className="h-12 object-contain mb-2" />
-            <h1 className="text-[10px] font-black text-[#0f2863] uppercase">UNIVERSITÉ PRIVÉE DE FÈS</h1>
+            <img src="/logo-encg.png" alt="ENCG Fès" className="h-12 object-contain mb-2" />
+            <h1 className="text-[10px] font-black text-[#0f2863] uppercase">ENCG FÈS</h1>
           </div>
           <div className="w-1/3 text-right">
-            <p className="text-[7px] font-bold text-red-600 uppercase leading-tight">المملكة المغربية<br/>الجامعة الخاصة لفاس<br/>مصلحة الشؤون الطلابية</p>
+            <p className="text-[7px] font-bold text-red-600 uppercase leading-tight">المملكة المغربية<br/>جامعة سيدي محمد بن عبد الله<br/>المدرسة الوطنية للتجارة والتسيير بفاس</p>
           </div>
         </div>
 
@@ -56,12 +56,12 @@ export default function AdminPrintProfessorsConvocationPage() {
             </div>
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">ADRESSE EMAIL</p>
-              <p className="text-sm font-bold text-slate-700">hicham.alaoui@usmba.ac.ma</p>
+              <p className="text-[8px] font-bold text-slate-500">Vérification Officielle Surveillance ENCG Fès</p>
             </div>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">DÉPARTEMENT</p>
-            <p className="text-base font-bold text-slate-800">Marketing</p>
+            <p className="text-[9px] text-slate-400">Pour le Directeur</p>
+            <p className="text-lg font-black text-blue-500">★ ENCG ★</p>
           </div>
         </div>
 
@@ -115,10 +115,10 @@ export default function AdminPrintProfessorsConvocationPage() {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-slate-800 rounded">
                {/* QR Code */}
-               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UPF-SURV-2026-000001`} alt="QR" className="w-full h-full object-cover" />
+               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ENCG-SURV-2026-000001`} alt="QR" className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-[8px] font-bold text-slate-500">Vérification Officielle Surveillance UPF</p>
+              <p className="text-[8px] font-bold text-slate-500">Vérification Officielle Surveillance ENCG Fès</p>
               <p className="text-[7px] text-slate-400">Réf : SURV-2026-000001</p>
             </div>
           </div>
@@ -126,8 +126,8 @@ export default function AdminPrintProfessorsConvocationPage() {
           <div className="text-center">
             <p className="text-[11px] font-bold text-[#0f2863] underline mb-4">La Direction des Études</p>
             <div className="w-24 h-24 rounded-full border-2 border-blue-500 mx-auto flex items-center justify-center flex-col">
-              <p className="text-[6px] text-blue-500 font-bold uppercase mb-1">UNIVERSITÉ PRIVÉE</p>
-              <p className="text-lg font-black text-blue-500">★ UPF ★</p>
+              <p className="text-[6px] text-blue-500 font-bold uppercase mb-1">ENCG FÈS</p>
+              <p className="text-lg font-black text-blue-500">★ ENCG ★</p>
               <p className="text-[6px] text-blue-500 font-bold uppercase mt-1">SCOLARITÉ</p>
             </div>
           </div>

@@ -31,7 +31,7 @@ export default function AdminTextbooksPage() {
       <div className="bg-[#0f2863] p-8 text-white rounded-[1.5rem] shadow-lg relative overflow-hidden max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold italic mb-2 relative z-10">Supervision Pédagogique</h2>
         <p className="text-white/80 text-sm font-medium relative z-10">
-          Consultez et filtrez tous les cahiers de textes saisis par l'ensemble des professeurs de l'UPF.
+          Consultez et filtrez tous les cahiers de textes saisis par l'ensemble des professeurs de l'ENCG Fès.
         </p>
       </div>
 

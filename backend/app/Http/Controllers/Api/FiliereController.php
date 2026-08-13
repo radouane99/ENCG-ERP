@@ -6,21 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\FiliereResource;
 use App\Models\Filiere;
 use App\Services\Academic\FiliereService;
+use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class FiliereController extends Controller
 {
     public function __construct(
-        private FiliereService $filiereService
+        private FiliereService $filiereService,
+        private ProfessorAccessService $accessService
     ) {}
 
     /**
      * Liste des filières.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $filieres = $this->filiereService->getAllFilieres();
+        $user = $request->user();
+
+        if ($user && $user->professor && !$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+            $filiereIds = $this->accessService->getAuthorizedFiliereIds($user);
+            $filieres = Filiere::whereIn('id', $filiereIds)->get();
+        } else {
+            $filieres = $this->filiereService->getAllFilieres();
+        }
 
         return response()->json([
             'success' => true,

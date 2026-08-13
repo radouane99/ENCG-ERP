@@ -72,7 +72,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -906,6 +906,17 @@ Route::get('/admin/students/{id}/progress-report', function ($id) {
 // Correction Automatique de Compte-Rendus (Professeurs) & Analyse de Cours (Étudiants)
 // ──────────────────────────────────────────────────────────────────────────────
 Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
+
+Route::middleware(['auth:sanctum'])->prefix('v1/admin/substitutions')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'store']);
+    Route::post('/{id}/revoke', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'revoke']);
+});
+
+Route::middleware(['auth:sanctum'])->prefix('v1/admin/roles-permissions')->group(function () {
+    Route::get('/data', [\App\Http\Controllers\Api\AdminRolePermissionController::class, 'getData']);
+    Route::post('/users/{user}', [\App\Http\Controllers\Api\AdminRolePermissionController::class, 'updateUserPermissions']);
+});
 Route::post('/student/ai/analyze-course', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'analyzeCourse']);
 
 // ──────────────────────────────────────────────────────────────────────────────

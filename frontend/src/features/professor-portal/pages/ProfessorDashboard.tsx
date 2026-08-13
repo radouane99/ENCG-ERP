@@ -80,20 +80,20 @@ export default function ProfessorDashboard() {
     <div className="space-y-8 p-6 max-w-7xl mx-auto font-sans animate-in fade-in zoom-in duration-500">
 
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl font-black text-[#001A4B] flex items-center gap-2">
-            <Moon className="w-6 h-6 text-amber-400 fill-amber-400" />
+          <h1 className="text-xl sm:text-2xl font-black text-[#001A4B] dark:text-white flex items-center gap-2">
+            <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-400" />
             Bonjour, {user?.name}
           </h1>
-          <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-400 tracking-wider">
-            <Calendar className="w-4 h-4" />
+          <div className="flex items-center gap-2 mt-1 text-[11px] sm:text-xs font-bold text-gray-400 tracking-wider">
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             {currentDate} • TABLEAU DE BORD ENSEIGNANT
           </div>
         </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rôle Académique</span>
-          <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
+        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest sm:mb-1">Rôle Académique</span>
+          <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100 dark:border-emerald-800">
             {stats.has_contract ? 'Vacataire' : 'Permanent'}
           </span>
         </div>
@@ -104,7 +104,7 @@ export default function ProfessorDashboard() {
       ) : (
         <>
           {/* KPIs Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><BookOpen className="w-16 h-16" /></div>
               <div className="text-sm font-bold text-muted-foreground mb-4">Modules Enseignés</div>

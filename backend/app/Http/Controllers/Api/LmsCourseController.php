@@ -19,33 +19,49 @@ class LmsCourseController extends Controller
     {
         $user = $request->user();
 
-        $modules = Module::with(['filiere'])
-            ->when($user?->student, function ($query) use ($user) {
-                $filiereIds = $user->student->registrations()->pluck('filiere_id')->unique()->filter();
-                if ($filiereIds->isNotEmpty()) {
-                    $query->whereIn('filiere_id', $filiereIds);
-                }
-            })
-            ->when($user?->professor, function ($query) use ($user) {
-                $moduleIds = ModuleProfessor::where('professor_id', $user->professor->id)->pluck('module_id');
-                if ($moduleIds->isNotEmpty()) {
-                    $query->whereIn('id', $moduleIds);
-                }
-            })
-            ->take(10)
-            ->get();
+        $query = Module::with(['filiere']);
 
-        $classes = $modules->map(function ($module) {
+        if ($user?->student) {
+            $filiereIds = $user->student->registrations()->pluck('filiere_id')->unique()->filter();
+            if ($filiereIds->isNotEmpty()) {
+                $query->whereIn('filiere_id', $filiereIds);
+            }
+        } elseif ($user?->professor) {
+            $moduleIds = ModuleProfessor::where('professor_id', $user->professor->id)->pluck('module_id');
+            if ($moduleIds->isNotEmpty()) {
+                $query->whereIn('id', $moduleIds);
+            }
+        }
+
+        $modules = $query->take(20)->get();
+
+        // Fallback: Si aucun module spécifique (admin ou utilisateur sans inscription), charger les modules ENCG réels
+        if ($modules->isEmpty()) {
+            $modules = Module::with(['filiere'])->latest()->take(15)->get();
+        }
+
+        $colors = [
+            'from-indigo-600 via-purple-600 to-pink-600',
+            'from-blue-600 via-indigo-600 to-cyan-600',
+            'from-emerald-600 via-teal-600 to-cyan-600',
+            'from-amber-600 via-orange-600 to-red-600',
+            'from-rose-600 via-pink-600 to-purple-600',
+            'from-violet-600 via-indigo-600 to-blue-600',
+        ];
+
+        $classes = $modules->map(function ($module, $index) use ($colors) {
             $pubs     = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
             $supports = LearningMaterial::where('module_id', $module->id)->where('type', 'document')->count();
+            $profAssigned = ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
+            $teacherName = $profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
 
             return [
                 'id'       => $module->id,
                 'title'    => $module->name,
-                'code'     => $module->code,
-                'group'    => $module->filiere->name ?? 'GÉNÉRAL',
-                'color'    => 'from-blue-600 to-indigo-600',
-                'teacher'  => 'Équipe Pédagogique',
+                'code'     => $module->code ?? "MOD-{$module->id}",
+                'group'    => $module->filiere->name ?? 'TRONC COMMUN ENCG',
+                'color'    => $colors[$index % count($colors)],
+                'teacher'  => $teacherName,
                 'pubs'     => $pubs,
                 'supports' => $supports,
             ];

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { QrCode } from 'lucide-react';
 
 export default function ReleveNotesTemplate() {
@@ -8,10 +8,10 @@ export default function ReleveNotesTemplate() {
       {/* Header Section */}
       <div className="flex justify-between items-end border-b-[2px] border-[#002a7a] pb-2 mb-8">
         <div>
-          <div className="font-black text-4xl tracking-tight text-[#002a7a] mb-1 flex items-baseline">
-            UPF<span className="text-[#e6007e]">.</span>
+          <div className="font-black text-3xl tracking-tight text-[#002a7a] mb-1 flex items-baseline">
+            ENCG<span className="text-[#e6007e]">.</span>
           </div>
-          <p className="text-[10px] font-bold text-[#e6007e] uppercase tracking-wider">UNIVERSITÉ PRIVÉE DE FÈS</p>
+          <p className="text-[10px] font-bold text-[#e6007e] uppercase tracking-wider">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</p>
         </div>
         <div className="text-[10px] text-[#002a7a] font-medium text-right leading-relaxed">
           <p><span className="font-bold">Année Académique:</span> 2025/2026</p>
@@ -99,24 +99,24 @@ export default function ReleveNotesTemplate() {
           </div>
           <div className="text-[9px] text-white/50 leading-tight">
             <p className="font-bold text-[#002a7a] mb-1">Document numérique officiel</p>
-            <p>Généré par le portail universitaire de l'UPF.</p>
+            <p>Généré par le portail universitaire de l'ENCG Fès.</p>
             <p>Scannez le code QR ci-dessus pour vérifier l'authenticité de ce</p>
             <p>relevé de notes en ligne.</p>
           </div>
         </div>
         
         <div className="w-1/2 text-right">
-          <p className="text-[10px] text-white/50 mb-1">Fait Ã  Fès, le 31/05/2026</p>
-          <p className="text-xs font-bold text-white uppercase mb-4">Le Doyen de l'Université</p>
+          <p className="text-[10px] text-white/50 mb-1">Fait à Fès, le 31/05/2026</p>
+          <p className="text-xs font-bold text-white uppercase mb-4">Le Directeur de l'ENCG Fès</p>
           <div className="inline-block border border-dashed border-gray-300 rounded p-4 text-[9px] text-gray-400 italic text-center w-40 h-16 flex items-center justify-center">
-            Signé numériquement par le Doyen UPF
+            Signé numériquement par le Directeur ENCG Fès
           </div>
         </div>
       </div>
 
       {/* Bottom Legal Text */}
-      <div className="text-center text-[8px] text-gray-400 mt-6 pt-4 border-t border-white/5">
-        Université Privée de Fès - Route d'Imouzzer, Fès, Maroc - Tél: +212 535 600 800 - Email: contact@upf.ac.ma - www.upf.ac.ma
+      <div className="text-center text-[8px] text-slate-400 mt-6 pt-4 border-t border-slate-200">
+        École Nationale de Commerce et de Gestion de Fès (ENCG Fès) - Université Sidi Mohamed Ben Abdellah - Tél: +212 535 600 242 - Email: contact@encg-fes.ma - www.encg-fes.ma
       </div>
     </div>
   );

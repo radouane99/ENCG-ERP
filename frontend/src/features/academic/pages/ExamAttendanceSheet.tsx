@@ -37,7 +37,7 @@ export default function ExamAttendanceSheet() {
         {/* Header */}
         <div className="flex justify-between items-start mb-8 border-b-2 border-[#1F3A5F] pb-4">
           <div>
-            <h1 className="text-xl font-black text-white tracking-wide uppercase">UNIVERSITÉ PRIVÉE DE FÈS</h1>
+            <h1 className="text-xl font-black text-slate-900 tracking-wide uppercase">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</h1>
             <p className="text-xs text-white/50">Direction des Affaires Académiques</p>
           </div>
           <h2 className="text-lg font-bold text-white uppercase">FICHE D'ÉMARGEMENT DES EXAMENS</h2>

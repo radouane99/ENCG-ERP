@@ -5,19 +5,22 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\Module;
-use App\Models\ModuleProfessor;
-use App\Models\Professor;
+use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AssessmentController extends Controller
 {
+    public function __construct(
+        private ProfessorAccessService $accessService
+    ) {}
+
     /**
      * Récupérer les évaluations d'un module.
      */
     public function getForModule(Module $module, Request $request): JsonResponse
     {
-        if (!$this->isAuthorizedForModule($request->user(), $module)) {
+        if (!$this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 
@@ -29,7 +32,7 @@ class AssessmentController extends Controller
      */
     public function storeForModule(Module $module, Request $request): JsonResponse
     {
-        if (!$this->isAuthorizedForModule($request->user(), $module)) {
+        if (!$this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 
@@ -92,9 +95,19 @@ class AssessmentController extends Controller
         }
 
         $prof = Professor::where('user_id', $user->id)->first();
-        if (!$prof) return false;
+        if (!$prof) {
+            $prof = Professor::where('email', $user->email)
+                ->orWhereHas('user', fn($q) => $q->where('email', $user->email))
+                ->orWhere('id', $user->id)
+                ->first();
+            if ($prof && (!$prof->user_id || $prof->user_id !== $user->id)) {
+                $prof->update(['user_id' => $user->id]);
+            }
+        }
 
-        return ModuleProfessor::where('professor_id', $prof->id)
+        $profIds = array_unique(array_filter([$prof?->id, $user->id]));
+
+        return ModuleProfessor::whereIn('professor_id', $profIds)
             ->where('module_id', $module->id)
             ->exists();
     }

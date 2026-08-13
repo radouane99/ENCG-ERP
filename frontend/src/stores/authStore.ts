@@ -27,6 +27,7 @@ interface AuthState {
   isLoading: boolean
   requiresTwoFactor: boolean
   twoFactorChallengeToken: string | null
+  activeRole: string | null
 
   // Actions
   login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean }>
@@ -35,6 +36,7 @@ interface AuthState {
   fetchUser: () => Promise<void>
   setUser: (user: User) => void
   updateUser: (user: Partial<User>) => void
+  setActiveRole: (role: string | null) => void
   hasRole: (role: string) => boolean
   hasPermission: (permission: string) => boolean
   hasAnyRole: (roles: string[]) => boolean
@@ -49,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
       requiresTwoFactor: false,
       twoFactorChallengeToken: null,
+      activeRole: localStorage.getItem('encg_active_role') || null,
 
       login: async (email, password) => {
         const response = await api.post('/v1/auth/login', { email, password })
@@ -107,6 +110,15 @@ export const useAuthStore = create<AuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : (userData as User),
         }))
+      },
+
+      setActiveRole: (role) => {
+        if (role) {
+          localStorage.setItem('encg_active_role', role)
+        } else {
+          localStorage.removeItem('encg_active_role')
+        }
+        set({ activeRole: role })
       },
 
       hasRole: (role) => {

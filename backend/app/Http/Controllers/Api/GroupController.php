@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Services\Academic\GroupService;
+use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ use Illuminate\Validation\Rule;
 class GroupController extends Controller
 {
     public function __construct(
-        private GroupService $groupService
+        private GroupService $groupService,
+        private ProfessorAccessService $accessService
     ) {}
 
     /**
@@ -25,7 +27,25 @@ class GroupController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $groups = $this->groupService->getFilteredGroups($request->only(['filiere_id', 'semester']));
+        $user = $request->user();
+        $query = Group::with(['filiere', 'academicYear'])->withCount('students');
+
+        if ($request->filled('filiere_id')) {
+            $query->where('filiere_id', (int) $request->filiere_id);
+        }
+
+        if ($request->filled('semester')) {
+            $query->where('semester_number', (int) $request->semester);
+        }
+
+        if ($user && $user->professor && !$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+            $assignedGroupIds = $this->accessService->getAuthorizedGroupIds($user);
+            if ($assignedGroupIds->isNotEmpty()) {
+                $query->whereIn('id', $assignedGroupIds);
+            }
+        }
+
+        $groups = $query->get();
         $mapped = $this->groupService->mapGroupCollection($groups);
 
         return response()->json([
