@@ -493,6 +493,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Rechercher nom, motif, réf..."
                   className="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none"
+                />
               </div>
             </div>
 
