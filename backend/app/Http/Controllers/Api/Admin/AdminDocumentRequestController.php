@@ -216,8 +216,26 @@ class AdminDocumentRequestController extends Controller
     /**
      * Télécharger le document.
      */
-    public function download(DocumentRequest $documentRequest)
+    public function download(string|int $id)
     {
+        if (str_starts_with((string)$id, 'prof_')) {
+            $profId = (int) str_replace('prof_', '', (string)$id);
+            return redirect()->to(url("/api/professor-portal/documents/{$profId}/pdf"));
+        }
+
+        if (!is_numeric($id)) {
+            return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
+        }
+
+        $documentRequest = DocumentRequest::find($id);
+        if (!$documentRequest) {
+            $pDoc = \App\Models\ProfessorDocumentRequest::find($id);
+            if ($pDoc) {
+                return redirect()->to(url("/api/professor-portal/documents/{$pDoc->id}/pdf"));
+            }
+            return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
+        }
+
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
         if (!$generatedDocument || !Storage::disk('private')->exists($generatedDocument->file_path)) {
@@ -235,8 +253,26 @@ class AdminDocumentRequestController extends Controller
     /**
      * Prévisualiser le document.
      */
-    public function preview(DocumentRequest $documentRequest)
+    public function preview(string|int $id)
     {
+        if (str_starts_with((string)$id, 'prof_')) {
+            $profId = (int) str_replace('prof_', '', (string)$id);
+            return redirect()->to(url("/api/professor-portal/documents/{$profId}/pdf"));
+        }
+
+        if (!is_numeric($id)) {
+            return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
+        }
+
+        $documentRequest = DocumentRequest::find($id);
+        if (!$documentRequest) {
+            $pDoc = \App\Models\ProfessorDocumentRequest::find($id);
+            if ($pDoc) {
+                return redirect()->to(url("/api/professor-portal/documents/{$pDoc->id}/pdf"));
+            }
+            return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
+        }
+
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
         if (!$generatedDocument || !Storage::disk('private')->exists($generatedDocument->file_path)) {

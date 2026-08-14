@@ -501,7 +501,7 @@ export default function RootRouter() {
             <Route path="/admin/absences" element={<AdminAbsencesPage />} />
             <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
             <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
-            <Route path="/admin/requests" element={<AdminRequestsPage />} />
+            <Route path="/admin/requests" element={<AdminGuichetPage />} />
             <Route path="/admin/messages" element={<AdminMessagesPage />} />
             <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
             <Route path="/admin/alerts" element={<AdminAlertsPage />} />

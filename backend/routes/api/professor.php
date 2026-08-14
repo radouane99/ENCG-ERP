@@ -78,8 +78,11 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     // Documents & Attestations RH
     Route::get('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDocumentRequests']);
     Route::post('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'storeDocumentRequest']);
-    Route::get('/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);
     
     // Surveillances
     Route::get('/professor/my-surveillances', [\App\Http\Controllers\Api\ConvocationController::class, 'mySurveillances']);
 });
+
+// Public PDF Streaming for Professor Official Documents (window.open compatible)
+Route::get('/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);
+Route::get('/v1/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);

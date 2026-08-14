@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FileSignature, ShieldCheck, Printer, Download, Clock,
   Search, CheckCircle2, XCircle, FileBadge, Sparkles,
   AlertTriangle, User, QrCode, Send, X, Mail, Shield, Zap,
-  Upload, Loader2, FileText, ChevronLeft, ChevronRight
+  Upload, Loader2, FileText, ChevronLeft, ChevronRight,
+  LayoutList, LayoutGrid, UploadCloud, Eye
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
@@ -14,6 +15,7 @@ import { toast } from 'sonner'
 export default function UnifiedGuichetAttestationsPage() {
   const queryClient = useQueryClient()
   const [audience, setAudience] = useState<'all' | 'professors' | 'students'>('all')
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -26,6 +28,11 @@ export default function UnifiedGuichetAttestationsPage() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [verificationResult, setVerificationResult] = useState<any>(null)
   const [verifyTab, setVerifyTab] = useState<'code' | 'file'>('code')
+
+  // Kanban Drag & Drop states
+  const [activeDropColumn, setActiveDropColumn] = useState<string | null>(null)
+  const [draggedRequestId, setDraggedRequestId] = useState<any>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset pagination when filter/search/audience changes
   useEffect(() => {
@@ -123,13 +130,34 @@ export default function UnifiedGuichetAttestationsPage() {
     return matchesAudience && matchesFilter && matchesSearch
   })
 
+  // Independent dataset for Kanban (not constrained by single-status table filter)
+  const kanbanRequests = rawRequests.filter((req: any) => {
+    const matchesAudience =
+      audience === 'all' ||
+      (audience === 'professors' && req.is_professor) ||
+      (audience === 'students' && !req.is_professor)
+
+    const matchesSearch =
+      req.person.toLowerCase().includes(search.toLowerCase()) ||
+      req.type.toLowerCase().includes(search.toLowerCase()) ||
+      (req.student_cne && req.student_cne.toLowerCase().includes(search.toLowerCase())) ||
+      (req.motif && req.motif.toLowerCase().includes(search.toLowerCase()))
+
+    return matchesAudience && matchesSearch
+  })
+
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage) || 1
   const paginatedRequests = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Certified PDF Printable Generator A4 (with SHA-256 + QR Code + Resend email stub)
-  const handlePrintCertificate = (studentName: string, docType: string, cne: string, reqId?: number) => {
+  const handlePrintCertificate = (studentName: string, docType: string, cne: string, reqId?: any, isProfessor?: boolean, realId?: number) => {
     if (reqId) {
-      window.open(`/api/admin/document-requests/${reqId}/preview`, '_blank')
+      if (isProfessor || String(reqId).startsWith('prof_')) {
+        const profId = realId || String(reqId).replace('prof_', '')
+        window.open(`/api/professor-portal/documents/${profId}/pdf`, '_blank')
+      } else {
+        window.open(`/api/admin/document-requests/${reqId}/preview`, '_blank')
+      }
     } else {
       api.post('/admin/document-requests/quick-generate', { cne_or_name: cne, document_type: docType })
         .then(res => {
@@ -207,6 +235,49 @@ export default function UnifiedGuichetAttestationsPage() {
     }
   }
 
+  const handleKanbanDragOver = (e: React.DragEvent, colStatus: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (activeDropColumn !== colStatus) {
+      setActiveDropColumn(colStatus)
+    }
+  }
+
+  const handleKanbanDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setActiveDropColumn(null)
+  }
+
+  const handleKanbanDrop = (e: React.DragEvent, colStatus: 'pending' | 'approved' | 'rejected') => {
+    e.preventDefault()
+    setActiveDropColumn(null)
+    const reqData = draggedRequestId
+    if (!reqData) return
+
+    if (colStatus === 'approved') {
+      updateStatusMutation.mutate({
+        id: reqData.id,
+        status: 'approved',
+        isProfessor: reqData.is_professor,
+        realId: reqData.real_id
+      })
+      if (!reqData.is_professor) {
+        handlePrintCertificate(reqData.person, reqData.type, reqData.student_cne || 'N134892011', reqData.id)
+      }
+    } else if (colStatus === 'rejected') {
+      setRejectingId(reqData.id)
+    } else if (colStatus === 'pending') {
+      updateStatusMutation.mutate({
+        id: reqData.id,
+        status: 'pending',
+        isProfessor: reqData.is_professor,
+        realId: reqData.real_id
+      })
+      toast.success(`Demande de ${reqData.person} remise en attente de traitement.`)
+    }
+    setDraggedRequestId(null)
+  }
+
   return (
     <div className="max-w-[1500px] mx-auto p-3 sm:p-6 md:p-8 space-y-6 sm:space-y-8 font-sans animate-in fade-in pb-24">
 
@@ -224,10 +295,10 @@ export default function UnifiedGuichetAttestationsPage() {
                 <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" /> Guichet Unique & Signature Numérique — ENCG Fès
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-                Guichet Électronique & Documents Officiels
+                Guichet Unique & Demandes Administratives
               </h1>
               <p className="text-blue-100/90 text-xs sm:text-sm font-medium mt-1 max-w-3xl">
-                Traitement centralisé des demandes, signature cryptographique SHA-256, envoi automatique par email et coffre-fort numérique étudiant.
+                Traitement centralisé des demandes, signature cryptographique SHA-256, vue Tableau / Kanban interactif, envoi automatique par email et coffre-fort numérique.
               </p>
             </div>
           </div>
@@ -268,7 +339,7 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Main Two-Column Content Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
-        {/* ── Left Column: Quick PDF Generation & Anti-Fraud ── */}
+        {/* ── Left Column: Quick PDF Generation, Dropzone & Anti-Fraud ── */}
         <div className="space-y-6">
 
           {/* Anti-Fraud Box with SHA-256 Info */}
@@ -291,6 +362,33 @@ export default function UnifiedGuichetAttestationsPage() {
             >
               <QrCode className="w-4 h-4" /> Tester la Vérification PDF
             </button>
+          </div>
+
+          {/* Document Dropzone Area */}
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 rounded-3xl sm:rounded-[2rem] p-5 text-center cursor-pointer transition-all bg-white dark:bg-slate-900 group shadow-xs"
+          >
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              multiple 
+              className="hidden" 
+              accept=".pdf,.doc,.docx,.png,.jpg"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  toast.success(`${e.target.files.length} document(s) importé(s) avec succès !`)
+                }
+              }} 
+            />
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+              <UploadCloud className="w-5 h-5" />
+            </div>
+            <h4 className="text-xs font-black text-slate-800 dark:text-white">Zone de Dépôt de Documents</h4>
+            <p className="text-[10px] text-slate-400 font-bold mt-0.5">Glissez-déposez des scans ou PDF à archiver</p>
+            <span className="inline-block mt-3 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black rounded-full border border-slate-200 dark:border-slate-700">
+              Parcourir les fichiers
+            </span>
           </div>
 
           {/* Quick Issue Form with Target Switcher */}
@@ -395,7 +493,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
         </div>
 
-        {/* ── Right Column: Requests Workflow & Processing Table ── */}
+        {/* ── Right Column: Requests Workflow Board (Table or Kanban) ── */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 shadow-sm space-y-6 min-h-[600px]">
 
@@ -459,50 +557,351 @@ export default function UnifiedGuichetAttestationsPage() {
               </button>
             </div>
 
-            {/* Controls Bar */}
+            {/* Controls Bar with View Switcher (Table vs Kanban) */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-              {/* Filter Tabs */}
-              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl w-full md:w-auto">
-                {[
-                  { id: 'all', label: 'Toutes' },
-                  { id: 'pending', label: `En attente (${filteredRequests.filter((r: any) => r.status === 'pending').length})` },
-                  { id: 'approved', label: 'Traitées & Signées' },
-                  { id: 'rejected', label: 'Rejetées' },
-                ].map((tab) => (
+              {/* Filter Tabs (Displayed only in Table view) */}
+              {viewMode === 'table' ? (
+                <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl w-full md:w-auto">
+                  {[
+                    { id: 'all', label: 'Toutes' },
+                    { id: 'pending', label: `En attente (${filteredRequests.filter((r: any) => r.status === 'pending').length})` },
+                    { id: 'approved', label: 'Traitées & Signées' },
+                    { id: 'rejected', label: 'Rejetées' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFilter(tab.id)}
+                      className={cn(
+                        "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer text-center",
+                        filter === tab.id
+                          ? "bg-[#0f2863] text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs font-black text-slate-500">
+                  <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span>Glissez-déposez les cartes d'une colonne à l'autre pour changer leur statut !</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {/* Search Box */}
+                <div className="relative flex-1 md:w-56">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Rechercher..."
+                    className="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none"
+                  />
+                </div>
+
+                {/* View Switcher: Table vs Kanban */}
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl shrink-0">
                   <button
-                    key={tab.id}
-                    onClick={() => setFilter(tab.id)}
+                    type="button"
+                    onClick={() => setViewMode('table')}
                     className={cn(
-                      "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer text-center",
-                      filter === tab.id
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      viewMode === 'table'
                         ? "bg-[#0f2863] text-white shadow-sm"
                         : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
                     )}
+                    title="Vue Tableau Détaillé"
                   >
-                    {tab.label}
+                    <LayoutList className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Tableau</span>
                   </button>
-                ))}
-              </div>
-
-              {/* Search Box */}
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher nom, motif, réf..."
-                  className="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none"
-                />
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('kanban')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      viewMode === 'kanban'
+                        ? "bg-[#0f2863] text-white shadow-sm"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    )}
+                    title="Vue Tableau Kanban"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Kanban</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Table of Requests */}
+            {/* ── Content View: Table View or Kanban View ── */}
             {isLoading ? (
               <div className="flex justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
               </div>
+            ) : viewMode === 'kanban' ? (
+              /* ── Interactive Kanban View with Full Multi-Directional Drag & Drop ── */
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                {/* 1. En Attente Column (Drop Target) */}
+                <div
+                  onDragOver={(e) => handleKanbanDragOver(e, 'pending')}
+                  onDragLeave={handleKanbanDragLeave}
+                  onDrop={(e) => handleKanbanDrop(e, 'pending')}
+                  className={cn(
+                    "rounded-3xl p-4 flex flex-col min-h-[520px] border transition-all duration-200 shadow-xs",
+                    activeDropColumn === 'pending'
+                      ? "bg-amber-50/90 dark:bg-amber-950/60 border-amber-400 ring-4 ring-amber-200 scale-[1.01]"
+                      : "bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" /> EN ATTENTE
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs font-black shadow-xs">
+                      {kanbanRequests.filter((r: any) => r.status === 'pending').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[620px] pr-1">
+                    {kanbanRequests.filter((r: any) => r.status === 'pending').length === 0 ? (
+                      <div className="text-center text-slate-400 text-xs py-20 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+                        Aucune demande en attente
+                      </div>
+                    ) : (
+                      kanbanRequests.filter((r: any) => r.status === 'pending').map((req: any) => (
+                        <div
+                          key={req.id}
+                          draggable
+                          onDragStart={() => setDraggedRequestId(req)}
+                          className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow-md transition-all group"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className={cn(
+                              "px-2 py-0.5 text-[9px] font-black uppercase rounded-lg",
+                              req.is_professor
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200"
+                            )}>
+                              {req.is_professor ? "👨‍🏫 Enseignant" : "🎓 Étudiant"}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-slate-400">#{req.real_id || req.id}</span>
+                          </div>
+
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">{req.person}</h4>
+                            <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{req.type}</p>
+                            {req.motif && (
+                              <p className="text-[10px] text-slate-400 italic mt-1 line-clamp-2">"{req.motif}"</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <button
+                              onClick={() => {
+                                updateStatusMutation.mutate({
+                                  id: req.id,
+                                  status: 'approved',
+                                  isProfessor: req.is_professor,
+                                  realId: req.real_id
+                                })
+                                if (!req.is_professor) {
+                                  handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                }
+                              }}
+                              className="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                              title="Valider et signer officiellement"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Valider
+                            </button>
+                            <button
+                              onClick={() => setRejectingId(req.id)}
+                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                              title="Rejeter la demande"
+                            >
+                              <XCircle className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Approuvé & Signé Column (Drop Target & Draggable Cards) */}
+                <div
+                  onDragOver={(e) => handleKanbanDragOver(e, 'approved')}
+                  onDragLeave={handleKanbanDragLeave}
+                  onDrop={(e) => handleKanbanDrop(e, 'approved')}
+                  className={cn(
+                    "rounded-3xl p-4 flex flex-col min-h-[520px] border transition-all duration-200 shadow-xs",
+                    activeDropColumn === 'approved'
+                      ? "bg-emerald-50/90 dark:bg-emerald-950/60 border-emerald-400 ring-4 ring-emerald-200 scale-[1.01]"
+                      : "bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" /> APPROUVÉ & SIGNÉ
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-black shadow-xs">
+                      {kanbanRequests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[620px] pr-1">
+                    {kanbanRequests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed').map((req: any) => (
+                      <div
+                        key={req.id}
+                        draggable
+                        onDragStart={() => setDraggedRequestId(req)}
+                        className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 cursor-grab active:cursor-grabbing hover:border-emerald-400 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={cn(
+                            "px-2 py-0.5 text-[9px] font-black uppercase rounded-lg",
+                            req.is_professor
+                              ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200"
+                              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+                          )}>
+                            {req.is_professor ? "👨‍🏫 Enseignant" : "🎓 Étudiant"}
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">SHA-256 ✓</span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">{req.person}</h4>
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-0.5">{req.type}</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <button
+                            onClick={() => handleSendEmail(req)}
+                            className="flex-1 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer"
+                            title="Transmettre par e-mail avec PJ"
+                          >
+                            <Mail className="w-3 h-3" /> Email
+                          </button>
+                          <button
+                            onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id, req.is_professor, req.real_id)}
+                            className="flex-1 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer"
+                            title="Télécharger ou imprimer le PDF certifié"
+                          >
+                            <Printer className="w-3 h-3" /> Imprimer
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateStatusMutation.mutate({
+                                id: req.id,
+                                status: 'pending',
+                                isProfessor: req.is_professor,
+                                realId: req.real_id
+                              })
+                              toast.success(`Demande de ${req.person} remise en attente.`)
+                            }}
+                            className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                            title="Remettre en attente"
+                          >
+                            <Clock className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => setRejectingId(req.id)}
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                            title="Annuler et rejeter"
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Rejeté Column (Drop Target & Draggable Cards) */}
+                <div
+                  onDragOver={(e) => handleKanbanDragOver(e, 'rejected')}
+                  onDragLeave={handleKanbanDragLeave}
+                  onDrop={(e) => handleKanbanDrop(e, 'rejected')}
+                  className={cn(
+                    "rounded-3xl p-4 flex flex-col min-h-[520px] border transition-all duration-200 shadow-xs",
+                    activeDropColumn === 'rejected'
+                      ? "bg-rose-50/90 dark:bg-rose-950/60 border-rose-400 ring-4 ring-rose-200 scale-[1.01]"
+                      : "bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <XCircle className="w-4 h-4" /> REJETÉ
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-black shadow-xs">
+                      {kanbanRequests.filter((r: any) => r.status === 'rejected').length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[620px] pr-1">
+                    {kanbanRequests.filter((r: any) => r.status === 'rejected').length === 0 ? (
+                      <div className="text-center text-slate-400 text-xs py-20 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+                        Aucune demande rejetée
+                      </div>
+                    ) : (
+                      kanbanRequests.filter((r: any) => r.status === 'rejected').map((req: any) => (
+                        <div
+                          key={req.id}
+                          draggable
+                          onDragStart={() => setDraggedRequestId(req)}
+                          className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-rose-100 dark:border-rose-950/60 shadow-sm space-y-2 cursor-grab active:cursor-grabbing hover:border-rose-300 transition-all group"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
+                              {req.is_professor ? "👨‍🏫 Enseignant" : "🎓 Étudiant"}
+                            </span>
+                            <span className="text-[10px] font-mono text-rose-500 font-bold">Rejeté</span>
+                          </div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">{req.person}</h4>
+                          <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">{req.type}</p>
+
+                          <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <button
+                              onClick={() => {
+                                updateStatusMutation.mutate({
+                                  id: req.id,
+                                  status: 'approved',
+                                  isProfessor: req.is_professor,
+                                  realId: req.real_id
+                                })
+                                if (!req.is_professor) {
+                                  handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                }
+                              }}
+                              className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer"
+                              title="Réexaminer et valider directement"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Valider
+                            </button>
+                            <button
+                              onClick={() => {
+                                updateStatusMutation.mutate({
+                                  id: req.id,
+                                  status: 'pending',
+                                  isProfessor: req.is_professor,
+                                  realId: req.real_id
+                                })
+                                toast.success(`Demande de ${req.person} remise en attente.`)
+                              }}
+                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                              title="Remettre en attente"
+                            >
+                              <Clock className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             ) : (
+              /* ── Table View with Pagination ── */
               <div className="overflow-x-auto -mx-2 sm:mx-0">
                 <table className="w-full text-left border-collapse min-w-[680px]">
                   <thead>
@@ -631,7 +1030,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                       <Mail className="w-3.5 h-3.5" /> Email
                                     </button>
                                     <button
-                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)}
+                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id, req.is_professor, req.real_id)}
                                       className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
                                     >
                                       <Printer className="w-3.5 h-3.5" /> Imprimer
@@ -649,8 +1048,8 @@ export default function UnifiedGuichetAttestationsPage() {
               </div>
             )}
 
-            {/* ── Table Pagination Bar with Windowed Pages ── */}
-            {filteredRequests.length > itemsPerPage && (
+            {/* ── Table Pagination Bar with Windowed Pages (Only when Table View) ── */}
+            {viewMode === 'table' && filteredRequests.length > itemsPerPage && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-xs font-bold text-slate-400">
                   Affichage de <span className="text-slate-800 dark:text-white font-black">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredRequests.length)}</span> à <span className="text-slate-800 dark:text-white font-black">{Math.min(currentPage * itemsPerPage, filteredRequests.length)}</span> sur <span className="text-slate-800 dark:text-white font-black">{filteredRequests.length}</span> demandes

@@ -614,8 +614,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::match(['put', 'patch'], '/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
     Route::match(['put', 'patch'], '/admin/professor-document-requests/{id}/status', [AdminDocumentRequestController::class, 'updateProfessorStatus']);
     Route::post('/admin/document-requests/{documentRequest}/generate', [AdminDocumentRequestController::class, 'generate']);
-    Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
-    Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
+    Route::get('/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+    Route::get('/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
     Route::post('/admin/document-requests/{documentRequest}/send-email-notification', [AdminDocumentRequestController::class, 'sendEmailNotification']);
 
     // Admin Absences & Justifications (With and Without /admin prefix)
@@ -643,12 +643,12 @@ Route::get('/v1/admin/students/{student}/transcript', [\App\Http\Controllers\Api
 Route::get('/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
 Route::get('/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
 Route::get('/v1/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
-Route::get('/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
-Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
-Route::get('/v1/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/v1/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
+Route::get('/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+Route::get('/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+Route::get('/v1/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+Route::get('/v1/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
 Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
 Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
 Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);

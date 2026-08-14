@@ -346,7 +346,7 @@ class ProfessorPortalController extends Controller
                 $table->date('start_date')->nullable();
                 $table->date('end_date')->nullable();
                 $table->string('transport_mode')->nullable();
-                $table->string('status')->default('ready');
+                $table->string('status')->default('pending');
                 $table->text('admin_notes')->nullable();
                 $table->string('signed_by')->nullable();
                 $table->timestamp('signed_at')->nullable();

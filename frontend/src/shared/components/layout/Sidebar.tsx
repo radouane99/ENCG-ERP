@@ -73,7 +73,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Suivi des Absences', labelAr: 'تتبع الغيابات', href: '/admin/absences', icon: UserX, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Étudiants à Risque', labelAr: 'الطلبة تحت الملاحظة', href: '/admin/students-risk', icon: ShieldAlert, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Conseil de Discipline', labelAr: 'مجلس التأديب', href: '/discipline', icon: Gavel, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Demandes Administratives', labelAr: 'الطلبات الإدارية', href: '/admin/requests', icon: ClipboardList, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Guichet & Demandes Administratives', labelAr: 'الشباك والطلبات الإدارية', href: '/admin/guichet', icon: ClipboardList, badge: 'SLA', roles: ['super-admin', 'institution-admin', 'director'] },
     ]
   },
   {
@@ -230,7 +230,6 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'ADMINISTRATION SYSTÈME',
     groupTitleAr: 'إدارة النظام',
     items: [
-      { label: 'Guichet Électronique & Attestations', labelAr: 'الشباك الإلكتروني والوثائق', href: '/admin/guichet', icon: Stamp, roles: ['super-admin', 'institution-admin'] },
       { label: 'Matrice Rôles & Permissions', labelAr: 'إدارة الأدوار والصلاحيات', href: '/admin/roles-permissions', icon: Key, badge: 'RBAC', roles: ['super-admin', 'institution-admin'] },
       { label: 'Diplômes Blockchain', labelAr: 'دبلومات البلوكشين', href: '/admin/blockchain-diplomas', icon: ShieldCheck, badge: 'BC', roles: ['super-admin', 'institution-admin'] },
       { label: 'Évaluations & Enquêtes', labelAr: 'التقييمات والاستطلاعات', href: '/admin/evaluations', icon: CheckSquare, roles: ['super-admin', 'institution-admin'] },
