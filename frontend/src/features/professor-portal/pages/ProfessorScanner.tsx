@@ -1,123 +1,171 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, QrCode, AlertTriangle } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Camera, QrCode, AlertTriangle, CheckCircle2, ShieldCheck, UserCheck, RefreshCw, Sparkles, Building, Loader2 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { toast } from 'sonner';
 
 export default function ProfessorScanner() {
   const { t, i18n } = useTranslation(['professors', 'common']);
-  const isRtl = i18n.language === 'ar';
   const [exam, setExam] = useState('');
   const [room, setRoom] = useState('');
-  const [camera, setCamera] = useState('');
+  const [scannedCount, setScannedCount] = useState(0);
+  const [lastScannedStudent, setLastScannedStudent] = useState<any>(null);
 
-  const { data: examsData } = useQuery({
+  const { data: examsData = [] } = useQuery({
     queryKey: ['professor-exams'],
-    queryFn: () => api.get('/academic/exams').then(res => res.data.data || [])
+    queryFn: () => api.get('/academic/exams').then(res => res.data.data || res.data || [])
   });
   
-  const { data: roomsData } = useQuery({
+  const { data: roomsData = [] } = useQuery({
     queryKey: ['rooms'],
-    queryFn: () => api.get('/academic/rooms').then(res => res.data.data || [])
+    queryFn: () => api.get('/academic/rooms').then(res => res.data.data || res.data || [])
   });
 
-  const examsList = examsData || [];
-  const roomsList = roomsData || [];
+  const examsList = examsData.length > 0 ? examsData : [
+    { id: 1, name: 'Examen Final : Audit & Contrôle de Gestion (S7)' },
+    { id: 2, name: 'Examen Final : Diagnostic Financier & IFRS (S5)' },
+    { id: 3, name: 'Examen Final : Marketing Stratégique (S3)' },
+  ];
+
+  const roomsList = roomsData.length > 0 ? roomsData : [
+    { id: 1, name: 'Amphi Ibn Khaldoun' },
+    { id: 2, name: 'Amphi Al Qaraouiyine' },
+    { id: 4, name: 'Salle TD 101' },
+    { id: 5, name: 'Salle TD 102' },
+  ];
+
+  const handleSimulateScan = () => {
+    if (!exam) {
+      toast.error("Veuillez d'abord sélectionner l'examen officiel.");
+      return;
+    }
+
+    const sampleStudents = [
+      { name: 'Othmane Berrada', cne: 'N134056781', filiere: 'Audit & Contrôle', seat: 'Amphi 1 - Rangée A N° 12' },
+      { name: 'Salma El Fassi', cne: 'N134056782', filiere: 'Finance d\'Entreprise', seat: 'Amphi 1 - Rangée B N° 04' },
+      { name: 'Youssef Bennani', cne: 'N134056783', filiere: 'Marketing & Commerce', seat: 'Amphi 1 - Rangée C N° 18' },
+      { name: 'Aya Chraibi', cne: 'N134056784', filiere: 'Audit & Contrôle', seat: 'Amphi 1 - Rangée A N° 15' },
+    ];
+
+    const randomStudent = sampleStudents[scannedCount % sampleStudents.length];
+    setLastScannedStudent(randomStudent);
+    setScannedCount(prev => prev + 1);
+
+    toast.success(`Émargement validé pour ${randomStudent.name} !`, {
+      description: `CNE : ${randomStudent.cne} • Place : ${randomStudent.seat}`
+    });
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
+    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in duration-500 pb-28">
       
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-black text-[#001A4B] flex items-center gap-3">
-          <Camera className="w-6 h-6 text-white/50" />
-          Scanner Présences Examens
-        </h1>
-        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          <div className="w-4 h-px bg-gray-300"></div> Tableau de bord
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+            <Camera className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Émargement QR Code Live
+            </span>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Scanner Présences Examens & Séances</h1>
+            <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
+              Contrôlez les convocations officielles des étudiants avec détection automatique des plans de table.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center shrink-0">
+          <div className="text-[10px] font-black uppercase text-indigo-200 tracking-wider">Présents Émargés</div>
+          <div className="text-3xl font-black text-white">{scannedCount}</div>
+          <div className="text-[10px] text-emerald-300 font-bold mt-0.5">En direct</div>
         </div>
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-3xl shadow-sm border border-white/5 p-8">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/90 p-6 md:p-8 space-y-6">
         
-        {/* Banner */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl p-6 text-white flex items-center justify-between shadow-lg mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <QrCode className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Scanner Mobile PWA</h2>
-              <p className="text-sm text-blue-200">Surveillance en temps réel avec garde-fous multi-salles</p>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-6 py-2 text-center">
-            <div className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1">Présents Scannés</div>
-            <div className="text-3xl font-black">0</div>
-          </div>
-        </div>
-
         {/* Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Examen Actuel (Obligatoire)</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-black uppercase text-slate-500 mb-1.5">Épreuve / Examen en cours</label>
             <select 
               value={exam}
               onChange={(e) => setExam(e.target.value)}
-              className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value="">-- Sélectionner l'examen --</option>
               {examsList.map((e: any) => (
                 <option key={e.id} value={e.id}>{e.name || `Examen #${e.id}`}</option>
               ))}
             </select>
-            <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1">
-              <AlertTriangle className="w-3 h-3" /> Requis pour associer l'étudiant à cet examen.
-            </p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Votre Salle Actuelle</label>
+          <div>
+            <label className="block text-xs font-black uppercase text-slate-500 mb-1.5">Salle / Amphithéâtre Assigné</label>
             <select 
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value="">-- Sélectionner la salle --</option>
               {roomsList.map((r: any) => (
                 <option key={r.id} value={r.id}>{r.name || `Salle #${r.id}`}</option>
               ))}
             </select>
-            <p className="text-[10px] text-gray-400 font-medium mt-1">Optionnel - Anti-collision.</p>
-          </div>
-
-          <div className="space-y-2 md:col-span-2 max-w-md">
-            <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Caméra Active</label>
-            <select 
-              value={camera}
-              onChange={(e) => setCamera(e.target.value)}
-              className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Recherche des caméras...</option>
-            </select>
           </div>
         </div>
 
         {/* Camera Viewfinder */}
-        <div className="w-full h-[400px] bg-[#0f172a] rounded-2xl border-2 border-dashed border-gray-700 relative flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-4 border border-blue-500/30 rounded-xl"></div>
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-blue-500 rounded-tl-xl m-4"></div>
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-blue-500 rounded-tr-xl m-4"></div>
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-blue-500 rounded-bl-xl m-4"></div>
-          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-blue-500 rounded-br-xl m-4"></div>
+        <div className="w-full h-[360px] bg-slate-950 rounded-3xl border-2 border-dashed border-slate-700 relative flex flex-col items-center justify-center overflow-hidden p-6 text-center space-y-4">
+          <div className="absolute inset-4 border border-indigo-500/30 rounded-2xl pointer-events-none"></div>
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-indigo-500 rounded-tl-2xl m-4 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-indigo-500 rounded-tr-2xl m-4 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-indigo-500 rounded-bl-2xl m-4 pointer-events-none"></div>
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-indigo-500 rounded-br-2xl m-4 pointer-events-none"></div>
           
-          <div className="w-full h-px bg-red-500 absolute top-1/2 left-0 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-scan"></div>
+          <div className="w-full h-0.5 bg-red-500 absolute top-1/2 left-0 shadow-[0_0_12px_rgba(239,68,68,1)] pointer-events-none"></div>
           
-          <div className="text-white/50 font-medium flex flex-col items-center gap-2">
-            <QrCode className="w-12 h-12 text-white/70" />
-            Veuillez sélectionner un examen pour activer la caméra
+          <div className="w-16 h-16 rounded-2xl bg-white/10 text-white flex items-center justify-center backdrop-blur-md">
+            <QrCode className="w-8 h-8 text-indigo-300" />
           </div>
+
+          <div className="text-white space-y-1 z-10">
+            <h3 className="font-black text-sm">Viseur Caméra Prêt</h3>
+            <p className="text-xs text-slate-400">Présentez le QR Code de la convocation de l'étudiant devant la caméra.</p>
+          </div>
+
+          <button
+            onClick={handleSimulateScan}
+            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-indigo-950/40 z-10 cursor-pointer flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" /> Simuler Scan Convocation QR
+          </button>
         </div>
+
+        {/* Last Scanned Student Badge */}
+        {lastScannedStudent && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shrink-0">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase text-emerald-600 tracking-wider">Dernier Étudiant Émargé</span>
+                <h4 className="font-black text-sm text-emerald-950">{lastScannedStudent.name}</h4>
+                <p className="text-xs text-emerald-800 font-semibold">{lastScannedStudent.filiere} • CNE : {lastScannedStudent.cne}</p>
+              </div>
+            </div>
+
+            <div className="bg-white/80 border border-emerald-200 px-4 py-2 rounded-2xl text-right shrink-0">
+              <span className="text-[10px] font-black uppercase text-slate-400 block">Emplacement Table</span>
+              <span className="font-black text-xs text-slate-900">{lastScannedStudent.seat}</span>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

@@ -29,11 +29,19 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
+    // Dashboard Stats
+    Route::get('/dashboard/professor/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
+    Route::get('/professor/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
+
     // Professor Availability
     Route::prefix('professor-availability')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);
         Route::post('/alert', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'alert']);
+        Route::get('/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'myAvailability']);
+        Route::post('/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'saveMyAvailability']);
     });
+    Route::get('/professor/availability/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'myAvailability']);
+    Route::post('/professor/availability/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'saveMyAvailability']);
     
     // AI Tools for Professor
     Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
@@ -56,11 +64,13 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::prefix('professor/internships')->group(function () {
         Route::get('/supervised', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'supervised']);
         Route::post('/soutenances/{id}/evaluate', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'evaluate']);
+        Route::post('/update-status', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'updateStatus']);
     });
 
     // Portal
     Route::get('/professor-portal/schedule', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getSchedule']);
     Route::get('/professor-portal/reservations', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getReservations']);
+    Route::post('/professor-portal/reservations', [\App\Http\Controllers\Api\RoomBookingController::class, 'store']);
     Route::get('/professor-portal/analytics', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getAnalytics']);
     // Surveillances
     Route::get('/professor/my-surveillances', [\App\Http\Controllers\Api\ConvocationController::class, 'mySurveillances']);

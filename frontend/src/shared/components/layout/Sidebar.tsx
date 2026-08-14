@@ -108,6 +108,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'EMPLOIS DU TEMPS & CAMPUS',
     groupTitleAr: 'استعمالات الزمن والحرم',
     items: [
+      { label: 'Générateur CSP (IA)', labelAr: 'مولد استعمال الزمن الذكي', href: '/admin/schedules/engine', icon: Cpu, badge: 'CSP', roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
       { label: 'Emplois du Temps', labelAr: 'استعمالات الزمن', href: '/admin/timetable/calendar', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head'] },
       { label: 'Calendrier Académique', labelAr: 'التقويم الأكاديمي', href: '/admin/academic-calendar', icon: CalendarDays, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'student'] },
       { label: 'Salles & Amphithéâtres', labelAr: 'القاعات والمدرجات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director'] },

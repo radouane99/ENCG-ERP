@@ -17,6 +17,7 @@ const ProfessorSmartGrading = lazy(() => import('@features/professor-portal/page
 const ProfessorAiCopilotPage = lazy(() => import('@features/professor-portal/pages/ProfessorAiCopilotPage'))
 const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
 const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pages/ProfessorProjectsKanban'))
+const ProfessorRecommendationsPage = lazy(() => import('@features/professor-portal/pages/ProfessorRecommendationsPage'))
 
 const ProfessorInteractiveCalendar = lazy(() => import('@features/admin/pages/InteractiveCalendarPage'))
 
@@ -48,6 +49,7 @@ export default function ProfessorRouter() {
       <Route path="ai-copilot" element={<ProfessorAiCopilotPage />} />
       <Route path="grades" element={<AdminGradesPage />} />
       <Route path="projects-kanban" element={<ProfessorProjectsKanban />} />
+      <Route path="recommendations" element={<ProfessorRecommendationsPage />} />
     </Routes>
   );
 }

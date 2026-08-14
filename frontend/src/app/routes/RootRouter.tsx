@@ -83,6 +83,7 @@ const ProfessorAttendanceView = lazy(() => import('@features/attendance/pages/Pr
 const QRScannerPage = lazy(() => import('@features/attendance/pages/QRScannerPage'))
 
 const TimetablePage = lazy(() => import('@features/timetable/pages/ModernTimetable'))
+const AdminTimetableEnginePage = lazy(() => import('@features/admin/pages/AdminTimetableEnginePage'))
 const AttendancePage = lazy(() => import('@features/attendance/pages/AttendancePage'))
 
 const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPage'))
@@ -372,6 +373,8 @@ export default function RootRouter() {
           {/* Timetable & Exams */}
           <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/academic/timetable" element={<TimetableAdminView />} />
+          <Route path="/admin/schedules/engine" element={<AdminTimetableEnginePage />} />
+          <Route path="/admin/timetable/engine" element={<AdminTimetableEnginePage />} />
           <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
           <Route path="/professor/schedules" element={<InteractiveCalendarPage isAdmin={false} />} />
           <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />

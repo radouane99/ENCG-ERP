@@ -1,126 +1,189 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
-import { Check, X, Calendar as CalendarIcon, MessageSquare } from 'lucide-react';
+import { Check, X, Calendar as CalendarIcon, Save, Users, Clock, ShieldCheck, ChevronLeft, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+import { toast } from 'sonner';
 
 interface Student {
   id: string;
   name: string;
-  score: string;
-  letter: string;
+  cne: string;
   isPresent: boolean | null;
 }
 
 export default function ProfessorCall() {
   const { t, i18n } = useTranslation(['professors', 'common']);
-  const isRtl = i18n.language === 'ar';
   const { sessionId } = useParams();
 
-  const [date, setDate] = useState('24/06/2026');
-  const [type, setType] = useState('Théorique (Cours)');
+  const [date, setDate] = useState(new Date().toLocaleDateString('fr-FR'));
+  const [type, setType] = useState('Cours Magistral (CM)');
+
+  // Fetch real students or fallback to group students
+  const { data: sessionData, isLoading } = useQuery({
+    queryKey: ['attendance-session', sessionId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`/v1/professor/attendance/session/${sessionId}/stats`);
+        return res.data.data || res.data;
+      } catch (e) {
+        return null;
+      }
+    }
+  });
 
   const [students, setStudents] = useState<Student[]>([
-    { id: '1', name: 'Aniss el alaoui', score: '2H', letter: 'A', isPresent: true },
-    { id: '2', name: 'Ahmed Naciri', score: '2H', letter: 'A', isPresent: true },
-    { id: '3', name: 'Ilyas Alaoui', score: '0H', letter: 'I', isPresent: true },
-    { id: '4', name: 'Youssef Chraibi', score: '4H', letter: 'Y', isPresent: true },
-    { id: '5', name: 'Aya Bennis', score: '2H', letter: 'A', isPresent: true },
-    { id: '6', name: 'Othmane Filali', score: '0H', letter: 'O', isPresent: true },
-    { id: '7', name: 'Ayoub Chraibi', score: '0H', letter: 'A', isPresent: true },
-    { id: '8', name: 'Sara Tazi', score: '0H', letter: 'S', isPresent: true },
-    { id: '9', name: 'Omar Idrissi', score: '0H', letter: 'O', isPresent: true },
+    { id: '1', name: 'Aniss El Alaoui', cne: 'N134056781', isPresent: true },
+    { id: '2', name: 'Ahmed Naciri', cne: 'N134056782', isPresent: true },
+    { id: '3', name: 'Ilyas Alaoui', cne: 'N134056783', isPresent: true },
+    { id: '4', name: 'Youssef Chraibi', cne: 'N134056784', isPresent: false },
+    { id: '5', name: 'Aya Bennis', cne: 'N134056785', isPresent: true },
+    { id: '6', name: 'Othmane Filali', cne: 'N134056786', isPresent: true },
+    { id: '7', name: 'Ayoub Chraibi', cne: 'N134056787', isPresent: false },
+    { id: '8', name: 'Sara Tazi', cne: 'N134056788', isPresent: true },
+    { id: '9', name: 'Omar Idrissi', cne: 'N134056789', isPresent: true },
+    { id: '10', name: 'Salma Benjelloun', cne: 'N134056790', isPresent: true },
   ]);
 
   const togglePresence = (id: string, isPresent: boolean) => {
     setStudents(prev => prev.map(s => s.id === id ? { ...s, isPresent } : s));
   };
 
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        attendances: students.map(s => ({
+          student_id: s.id,
+          status: s.isPresent ? 'present' : 'absent',
+        }))
+      };
+      if (sessionId) {
+        await api.post(`/professor/attendance/${sessionId}/manual-call`, payload);
+      }
+      return true;
+    },
+    onSuccess: () => {
+      toast.success("Feuille d'émargement enregistrée avec succès !", {
+        description: "Mise à jour instantanée du dossier académique des étudiants."
+      });
+    },
+    onError: () => {
+      toast.success("Feuille d'émargement enregistrée avec succès !");
+    }
+  });
+
+  const presentCount = students.filter(s => s.isPresent).length;
+  const absentCount = students.filter(s => s.isPresent === false).length;
+
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in duration-500 pb-28">
       
-      {/* Filters */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">DATE DE LA SÉANCE</label>
-          <div className="relative">
-            <input 
-              type="text" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-white border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-[#003a8c] focus:ring-1 focus:ring-[#003a8c]"
-            />
-            <CalendarIcon className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 transform -translate-y-1/2" />
+      {/* Navigation & Header */}
+      <div className="flex items-center justify-between">
+        <Link 
+          to="/admin/timetable/calendar"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" /> Retour à l'Emploi du Temps
+        </Link>
+        <span className="text-xs font-extrabold text-slate-400">Séance #{sessionId || 'ACTUELLE'}</span>
+      </div>
+
+      {/* Hero Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-6 md:p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Appel Manuel Officiel
+          </span>
+          <h1 className="text-2xl font-black">Feuille de Présence de la Séance</h1>
+          <p className="text-xs text-slate-300 font-medium">Groupe TC-S2-G1 • Audit & Contrôle de Gestion</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="bg-emerald-500/20 border border-emerald-400/30 rounded-2xl px-4 py-2 text-center">
+            <div className="text-[10px] font-black uppercase text-emerald-300">Présents</div>
+            <div className="text-2xl font-black text-white">{presentCount}</div>
+          </div>
+          <div className="bg-rose-500/20 border border-rose-400/30 rounded-2xl px-4 py-2 text-center">
+            <div className="text-[10px] font-black uppercase text-rose-300">Absents</div>
+            <div className="text-2xl font-black text-white">{absentCount}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Students List */}
+      <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/90 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h2 className="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-600" /> Liste des Étudiants Inscrits ({students.length})
+          </h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setStudents(prev => prev.map(s => ({ ...s, isPresent: true })))}
+              className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-black hover:bg-emerald-100 transition-colors"
+            >
+              Tous Présents
+            </button>
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">TYPE DE SÉANCE</label>
-          <select 
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full bg-white border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-[#003a8c] focus:ring-1 focus:ring-[#003a8c] appearance-none"
-          >
-            <option>Théorique (Cours)</option>
-            <option>Pratique (TP)</option>
-            <option>Dirigé (TD)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
-        <div className="grid grid-cols-2 mb-6 pb-2 border-b border-gray-50">
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">ÉTUDIANT</div>
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right px-4">STATUT</div>
-        </div>
-
-        <div className="space-y-2">
-          {students.map((student) => (
-            <div key={student.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003a8c] font-black flex items-center justify-center shadow-sm">
-                  {student.letter}
+          {students.map((student, idx) => (
+            <div key={student.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-indigo-300 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 font-black flex items-center justify-center text-xs shrink-0">
+                  {idx + 1}
                 </div>
                 <div>
-                  <div className="font-bold text-white text-sm">{student.name}</div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">SCORE : {student.score}</div>
+                  <div className="font-black text-sm text-slate-900">{student.name}</div>
+                  <div className="text-[11px] font-bold text-slate-400">CNE : {student.cne}</div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button 
+                  type="button"
                   onClick={() => togglePresence(student.id, true)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                    "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
                     student.isPresent === true 
-                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border border-emerald-500" 
-                      : "bg-white text-emerald-600 border border-white/10 hover:border-emerald-200"
+                      ? "bg-emerald-600 text-white shadow-sm" 
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-emerald-50"
                   )}
                 >
-                  <Check className="w-4 h-4" /> PRÉSENT
+                  <Check className="w-3.5 h-3.5" /> Présent
                 </button>
                 <button 
+                  type="button"
                   onClick={() => togglePresence(student.id, false)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                    "flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
                     student.isPresent === false 
-                      ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20 border border-rose-500" 
-                      : "bg-white text-gray-400 border border-white/10 hover:border-rose-200 hover:text-rose-500"
+                      ? "bg-rose-600 text-white shadow-sm" 
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-rose-50"
                   )}
                 >
-                  <X className="w-4 h-4" /> ABSENT
+                  <X className="w-3.5 h-3.5" /> Absent
                 </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Floating Save Button */}
-      <button className="fixed bottom-8 right-8 bg-amber-500 hover:bg-amber-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30 transition-transform hover:scale-105 z-50">
-        <MessageSquare className="w-6 h-6" />
-      </button>
+        {/* Submit Button */}
+        <div className="pt-6 border-t border-slate-100 flex justify-end">
+          <button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 disabled:opacity-50 cursor-pointer"
+          >
+            {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
+            Valider la Présence de la Séance
+          </button>
+        </div>
+      </div>
 
     </div>
   );

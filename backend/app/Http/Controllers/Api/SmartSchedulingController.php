@@ -3,31 +3,69 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\Academic\SmartSchedulingService;
+use App\Services\Academic\SmartSchedulingEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SmartSchedulingController extends Controller
 {
     public function __construct(
-        private SmartSchedulingService $schedulingService
+        private SmartSchedulingEngine $engine
     ) {}
 
     /**
-     * Génération automatique de l'emploi du temps.
+     * Simulation CSP en mémoire (Dry Run) avec rapport statistique et détection de conflits.
      */
-    public function autoGenerate(Request $request): JsonResponse
+    public function simulate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'semester_id' => 'required|integer|exists:semesters,id',
-            'filiere_id'  => 'required|integer|exists:filieres,id',
+            'filiere_id'        => 'nullable|integer|exists:filieres,id',
+            'semester_id'       => 'nullable|integer|exists:semesters,id',
+            'energy_weight'     => 'nullable|numeric|min:0|max:100',
+            'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
+            'max_daily_hours'   => 'nullable|integer|min:4|max:10',
         ]);
 
-        $result = $this->schedulingService->generate(
-            $validated['semester_id'],
-            $validated['filiere_id']
-        );
+        $result = $this->engine->simulate($validated);
 
-        return response()->json($result, $result['success'] ? 200 : 400);
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
+        ]);
+    }
+
+    /**
+     * Génération CSP & Publication officielle dans la base de données.
+     */
+    public function generate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id'        => 'nullable|integer|exists:filieres,id',
+            'semester_id'       => 'nullable|integer|exists:semesters,id',
+            'academic_year_id'  => 'nullable|integer',
+            'energy_weight'     => 'nullable|numeric|min:0|max:100',
+            'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
+            'overwrite'         => 'nullable|boolean',
+        ]);
+
+        $result = $this->engine->generateAndPublish($validated);
+
+        return response()->json([
+            'success' => $result['success'] ?? false,
+            'data'    => $result,
+        ], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    /**
+     * Statistiques globales de performance et d'occupation des salles.
+     */
+    public function stats(): JsonResponse
+    {
+        $stats = $this->engine->getGlobalStats();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $stats,
+        ]);
     }
 }

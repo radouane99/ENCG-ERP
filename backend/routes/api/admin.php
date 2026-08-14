@@ -118,6 +118,18 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
     Route::get('/admin/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
 
+    // Automated Timetable Engine — CSP Solver & Energy Optimizer
+    Route::prefix('smart-scheduling')->group(function () {
+        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
+        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+    });
+    Route::prefix('admin/smart-scheduling')->group(function () {
+        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
+        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+    });
+
     // AI Predictive Analytics
     Route::get('/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
     Route::post('/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);

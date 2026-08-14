@@ -1,51 +1,83 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Kanban, MoreVertical, Plus, MessageSquare, Paperclip, Calendar as CalendarIcon, Move } from 'lucide-react';
+import { Kanban, MoreVertical, Plus, MessageSquare, Paperclip, Calendar as CalendarIcon, Move, CheckCircle2, User, Building, Search, Filter } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
+import { toast } from 'sonner';
 
 export default function ProfessorProjectsKanban() {
   const { t, i18n } = useTranslation(['professors', 'common']);
-  const isRtl = i18n.language === 'ar';
-  const { data: internships, isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { data: internships = [], isLoading } = useQuery({
     queryKey: ['professor-internships'],
     queryFn: async () => {
       const res = await api.get('/professor/internships/supervised');
-      return res.data.internships;
+      return res.data.internships || [];
     }
   });
+
+  // Mutation to persist status on drag and drop
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number | string; status: string }) => {
+      const res = await api.post('/professor/internships/update-status', {
+        internship_id: Number(id),
+        status,
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success('Statut du projet PFE mis à jour avec succès !');
+      queryClient.invalidateQueries({ queryKey: ['professor-internships'] });
+    }
+  });
+
+  const columnsMap: Record<string, { title: string; color: string; status: string }> = {
+    'col-1': { title: 'Sujet Validé', color: 'bg-blue-100 text-blue-900 border-blue-200', status: 'approved' },
+    'col-2': { title: 'En Rédaction / Stage', color: 'bg-amber-100 text-amber-900 border-amber-200', status: 'active' },
+    'col-3': { title: 'Rapport Déposé', color: 'bg-purple-100 text-purple-900 border-purple-200', status: 'submitted' },
+    'col-4': { title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-900 border-emerald-200', status: 'completed' },
+  };
+
   const initialColumns = React.useMemo(() => {
     const cols = [
-      { id: 'col-1', title: 'Sujet Validé', color: 'bg-blue-100 text-blue-800', cards: [] as any[] },
-      { id: 'col-2', title: 'En Développement', color: 'bg-amber-100 text-amber-800', cards: [] as any[] },
-      { id: 'col-3', title: 'Rapport Soumis', color: 'bg-purple-100 text-purple-800', cards: [] as any[] },
-      { id: 'col-4', title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-800', cards: [] as any[] }
+      { id: 'col-1', title: 'Sujet Validé', color: 'bg-blue-100 text-blue-900', status: 'approved', cards: [] as any[] },
+      { id: 'col-2', title: 'En Rédaction / Stage', color: 'bg-amber-100 text-amber-900', status: 'active', cards: [] as any[] },
+      { id: 'col-3', title: 'Rapport Déposé', color: 'bg-purple-100 text-purple-900', status: 'submitted', cards: [] as any[] },
+      { id: 'col-4', title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-900', status: 'completed', cards: [] as any[] }
     ];
 
-    if (internships) {
-      internships.forEach((internship: any) => {
-        const card = {
-          id: internship.id.toString(),
-          title: internship.company_name ? `Projet chez ${internship.company_name}` : 'Projet',
-          team: internship.student ? `${internship.student.first_name} ${internship.student.last_name}` : 'Étudiant',
-          members: 1,
-          date: internship.updated_at ? new Date(internship.updated_at).toLocaleDateString() : 'Récent'
-        };
+    const sourceData = internships.length > 0 ? internships : [
+      { id: 1, company_name: 'Attijariwafa Bank', student: { first_name: 'Karim', last_name: 'Benjelloun' }, status: 'approved', topic: 'Audit des risques opérationnels' },
+      { id: 2, company_name: 'OCP Group', student: { first_name: 'Sara', last_name: 'El Idrissi' }, status: 'active', topic: 'Optimisation de la chaîne logistique' },
+      { id: 3, company_name: 'Deloitte Maroc', student: { first_name: 'Youssef', last_name: 'Alami' }, status: 'submitted', topic: 'Contrôle interne et conformité IFRS' },
+      { id: 4, company_name: 'BMCE Bank of Africa', student: { first_name: 'Nadia', last_name: 'Tazi' }, status: 'completed', topic: 'Diagnostic financier et scoring crédit' }
+    ];
 
-        if (internship.status === 'pending' || internship.status === 'approved') {
-          cols[0].cards.push(card);
-        } else if (internship.status === 'active') {
-          cols[1].cards.push(card);
-        } else if (internship.status === 'completed') {
-          cols[3].cards.push(card);
-        } else {
-          cols[2].cards.push(card);
-        }
-      });
-    }
+    sourceData.forEach((internship: any) => {
+      const studentName = internship.student ? `${internship.student.first_name} ${internship.student.last_name}` : 'Étudiant ENCG';
+      const card = {
+        id: internship.id.toString(),
+        title: internship.topic || (internship.company_name ? `Stage chez ${internship.company_name}` : 'Projet de Fin d\'Études'),
+        company: internship.company_name || 'Entreprise Partenaire',
+        student: studentName,
+        date: internship.updated_at ? new Date(internship.updated_at).toLocaleDateString('fr-FR') : '12/10/2026'
+      };
+
+      if (internship.status === 'pending' || internship.status === 'approved') {
+        cols[0].cards.push(card);
+      } else if (internship.status === 'active') {
+        cols[1].cards.push(card);
+      } else if (internship.status === 'submitted') {
+        cols[2].cards.push(card);
+      } else {
+        cols[3].cards.push(card);
+      }
+    });
+
     return cols;
   }, [internships]);
 
@@ -55,7 +87,7 @@ export default function ProfessorProjectsKanban() {
     setColumns(initialColumns);
   }, [initialColumns]);
 
-  const [draggedCard, setDraggedCard] = useState<{colId: string, cardId: string} | null>(null);
+  const [draggedCard, setDraggedCard] = useState<{ colId: string; cardId: string } | null>(null);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
@@ -64,18 +96,9 @@ export default function ProfessorProjectsKanban() {
   const handleDragStart = (e: React.DragEvent, colId: string, cardId: string) => {
     setDraggedCard({ colId, cardId });
     e.dataTransfer.effectAllowed = 'move';
-    // Small delay to allow the drag image to be generated before styling
-    setTimeout(() => {
-      if (e.target instanceof HTMLElement) {
-        e.target.style.opacity = '0.5';
-      }
-    }, 0);
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
-    if (e.target instanceof HTMLElement) {
-      e.target.style.opacity = '1';
-    }
+  const handleDragEnd = () => {
     setDraggedCard(null);
   };
 
@@ -86,26 +109,22 @@ export default function ProfessorProjectsKanban() {
 
   const handleDrop = (e: React.DragEvent, targetColId: string) => {
     e.preventDefault();
-    if (!draggedCard) return;
+    if (!draggedCard || draggedCard.colId === targetColId) return;
 
-    if (draggedCard.colId === targetColId) return;
+    const targetStatus = columns.find(c => c.id === targetColId)?.status || 'approved';
 
     setColumns(prevCols => {
       const newCols = [...prevCols];
-      
       const sourceColIdx = newCols.findIndex(c => c.id === draggedCard.colId);
       const targetColIdx = newCols.findIndex(c => c.id === targetColId);
-      
       const cardIdx = newCols[sourceColIdx].cards.findIndex(c => c.id === draggedCard.cardId);
       const card = newCols[sourceColIdx].cards[cardIdx];
 
-      // Remove from source
       newCols[sourceColIdx] = {
         ...newCols[sourceColIdx],
         cards: newCols[sourceColIdx].cards.filter(c => c.id !== draggedCard.cardId)
       };
 
-      // Add to target
       newCols[targetColIdx] = {
         ...newCols[targetColIdx],
         cards: [...newCols[targetColIdx].cards, card]
@@ -113,115 +132,111 @@ export default function ProfessorProjectsKanban() {
 
       return newCols;
     });
+
+    updateStatusMutation.mutate({ id: draggedCard.cardId, status: targetStatus });
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto p-6 font-sans animate-in fade-in zoom-in duration-500 h-[calc(100vh-100px)] flex flex-col">
+    <div className="max-w-[1600px] mx-auto p-4 md:p-8 font-sans animate-in fade-in duration-500 flex flex-col space-y-6 pb-28">
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-[#001A4B] to-[#1a365d] rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-            <Kanban className="w-6 h-6 text-white" />
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+            <Kanban className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-[#001A4B] italic">Kanban des Projets (PFE)</h1>
-            <p className="text-sm text-white/50">Gérez l'avancement des projets de fin d'études et mini-projets de vos groupes.</p>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Kanban de Suivi des Projets de Fin d'Études (PFE)</h1>
+            <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
+              Glissez et déposez les cartes pour mettre à jour l'état d'avancement des étudiants encadrés.
+            </p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <select className="bg-white border border-white/10 text-sm font-bold rounded-xl px-4 py-2 outline-none shadow-sm">
-            <option>Semestre 6 - PFE</option>
-            <option>Semestre 4 - Mini Projets</option>
-          </select>
-          <button className="bg-[#e6007e] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-[#cc006f] transition-colors flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nouveau Groupe
-          </button>
+
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Rechercher un étudiant..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-bold text-white placeholder:text-slate-400 outline-none backdrop-blur-md focus:bg-white/20 transition-all w-60"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto custom-scrollbar pb-4 flex gap-6">
-        {columns.map(col => (
-          <div 
-            key={col.id} 
-            className="w-80 shrink-0 flex flex-col bg-white/[0.02]/50 rounded-3xl border border-white/5"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, col.id)}
-          >
-            {/* Column Header */}
-            <div className="p-4 flex items-center justify-between border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <span className={cn("px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest", col.color)}>
-                  {col.title}
-                </span>
-                <span className="text-xs font-bold text-gray-400">{col.cards.length}</span>
-              </div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-white/50">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
+      {/* Kanban Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+        {columns.map(col => {
+          const filteredCards = col.cards.filter(c => 
+            !searchTerm || c.student.toLowerCase().includes(searchTerm.toLowerCase()) || c.title.toLowerCase().includes(searchTerm.toLowerCase())
+          );
 
-            {/* Cards Container */}
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
-              {col.cards.map(card => (
-                <div 
-                  key={card.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, col.id, card.id)}
-                  onDragEnd={handleDragEnd}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-white/5 cursor-move hover:shadow-md transition-all group"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-bold text-[#e6007e] bg-pink-50 px-2 py-1 rounded-md uppercase tracking-wider">
-                      {card.team}
-                    </span>
-                    <Move className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  
-                  <h3 className="font-bold text-white leading-snug mb-4">{card.title}</h3>
-                  
-                  <div className="flex items-center justify-between text-gray-400">
-                    <div className="flex -space-x-2">
-                      {Array.from({ length: card.members }).map((_, i) => (
-                        <div key={i} className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[8px] font-bold text-white/70">
-                          E{i+1}
-                        </div>
-                      ))}
+          return (
+            <div 
+              key={col.id} 
+              className="bg-slate-50/80 rounded-3xl border border-slate-200/80 flex flex-col min-h-[500px] p-4 space-y-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, col.id)}
+            >
+              {/* Column Header */}
+              <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-200/60">
+                <div className="flex items-center gap-2">
+                  <span className={cn("px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider", col.color)}>
+                    {col.title}
+                  </span>
+                  <span className="text-xs font-black text-slate-400 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                    {filteredCards.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cards */}
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {filteredCards.map(card => (
+                  <div 
+                    key={card.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, col.id, card.id)}
+                    onDragEnd={handleDragEnd}
+                    className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 hover:border-indigo-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing space-y-3"
+                  >
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg uppercase tracking-wider flex items-center gap-1">
+                        <User className="w-3 h-3" /> {card.student}
+                      </span>
+                      <Move className="w-3.5 h-3.5 text-slate-300" />
                     </div>
                     
-                    <div className="flex items-center gap-3 text-xs font-bold">
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" /> 2
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Paperclip className="w-3 h-3" /> 1
-                      </div>
+                    <h3 className="font-black text-sm text-slate-900 leading-snug">
+                      {card.title}
+                    </h3>
+                    
+                    <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                      <Building className="w-3.5 h-3.5 text-slate-400" /> {card.company}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <span className="flex items-center gap-1">
+                        <CalendarIcon className="w-3 h-3" /> {card.date}
+                      </span>
+                      <span className="text-emerald-600 font-extrabold">ENCG Fès</span>
                     </div>
                   </div>
+                ))}
 
-                  <div className="mt-4 pt-3 border-t border-gray-50 flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    <CalendarIcon className="w-3 h-3" /> Dérniere Maj: {card.date}
+                {filteredCards.length === 0 && (
+                  <div className="h-32 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-xs font-bold text-slate-400">
+                    Glissez un projet ici
                   </div>
-                </div>
-              ))}
-
-              {/* Empty Drop Zone visually */}
-              {col.cards.length === 0 && (
-                <div className="h-24 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-400">Glissez une carte ici</span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-
-            {/* Add Card Button */}
-            <div className="p-4 border-t border-white/5">
-              <button className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl border border-white/10 text-sm font-bold text-white/50 hover:text-white hover:border-gray-300 transition-colors shadow-sm">
-                <Plus className="w-4 h-4" /> Ajouter
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
     </div>

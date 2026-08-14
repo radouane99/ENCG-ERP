@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Sparkles, Plus, Grid, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react'
+import { Sparkles, Plus, Grid, ChevronLeft, ChevronRight, X, Loader2, Cpu } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -539,8 +539,11 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
             >
               <Plus className="w-4 h-4" /> Nouvelle Séance
             </Link>
-            <Link to="/admin/schedules/engine" className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors text-xs uppercase tracking-wide">
-              <Grid className="w-4 h-4" /> Vue Grille
+            <Link 
+              to="/admin/schedules/engine" 
+              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-950 hover:bg-indigo-900 text-white font-black rounded-xl transition-all text-xs uppercase tracking-wide shadow-md border border-indigo-800"
+            >
+              <Cpu className="w-4 h-4 text-indigo-400 animate-pulse" /> Générateur CSP (IA)
             </Link>
           </div>
         </div>

@@ -98,9 +98,87 @@ class ProfessorAvailabilityController extends Controller
             );
         }
 
+    /**
+     * Obtenir la disponibilité de l'enseignant connecté.
+     */
+    public function myAvailability(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $profId = $user->professor?->id ?? $user->id;
+        $academicYear = AcademicYear::where('is_current', true)->first();
+        $academicYearId = $academicYear?->id ?? 1;
+
+        $avail = ProfessorAvailability::where('professor_id', $profId)
+            ->where('academic_year_id', $academicYearId)
+            ->first();
+
+        $slots = [
+            'Lundi' => ['matin' => true, 'apresMidi' => true],
+            'Mardi' => ['matin' => true, 'apresMidi' => true],
+            'Mercredi' => ['matin' => true, 'apresMidi' => false],
+            'Jeudi' => ['matin' => true, 'apresMidi' => true],
+            'Vendredi' => ['matin' => false, 'apresMidi' => true],
+            'Samedi' => ['matin' => false, 'apresMidi' => false],
+        ];
+
+        if ($avail && $avail->availability_data) {
+            $decoded = json_decode($avail->availability_data, true);
+            if (is_array($decoded)) {
+                $slots = array_merge($slots, $decoded);
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'message' => count($validated['professor_ids']) . ' professeurs alertés avec succès.',
+            'data' => [
+                'availability' => $slots,
+                'status'       => $avail?->status ?? 'Soumis',
+                'notes'        => $avail?->notes ?? '',
+                'updated_at'   => $avail?->updated_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                'session_name' => 'Session d\'Automne ' . ($academicYear?->label ?? '2026/2027'),
+            ]
+        ]);
+    }
+
+    /**
+     * Enregistrer la disponibilité de l'enseignant connecté.
+     */
+    public function saveMyAvailability(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $profId = $user->professor?->id ?? $user->id;
+        $academicYear = AcademicYear::where('is_current', true)->first();
+        $academicYearId = $academicYear?->id ?? 1;
+
+        $validated = $request->validate([
+            'availability' => 'required|array',
+            'notes'        => 'nullable|string|max:1000',
+        ]);
+
+        $slotsCount = 0;
+        foreach ($validated['availability'] as $day => $s) {
+            if (!empty($s['matin'])) $slotsCount++;
+            if (!empty($s['apresMidi'])) $slotsCount++;
+        }
+
+        $avail = ProfessorAvailability::updateOrCreate(
+            [
+                'professor_id'     => $profId,
+                'academic_year_id' => $academicYearId,
+            ],
+            [
+                'availability_data'     => json_encode($validated['availability']),
+                'available_slots_count' => $slotsCount,
+                'notes'                 => $validated['notes'] ?? null,
+                'status'                => 'Soumis',
+                'updated_at'            => now(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Disponibilités enregistrées avec succès !',
+            'data'    => $avail,
         ]);
     }
 }
