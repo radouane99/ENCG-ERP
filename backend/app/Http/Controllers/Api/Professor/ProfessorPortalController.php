@@ -462,7 +462,7 @@ class ProfessorPortalController extends Controller
             default                => ucwords(str_replace('_', ' ', $validated['document_type']))
         };
 
-        // Create Real Database Record
+        // Create Real Database Record with pending status
         $doc = \App\Models\ProfessorDocumentRequest::create([
             'user_id'        => $user->id,
             'professor_id'   => $prof?->id,
@@ -473,24 +473,23 @@ class ProfessorPortalController extends Controller
             'start_date'     => !empty($validated['start_date']) ? $validated['start_date'] : null,
             'end_date'       => !empty($validated['end_date']) ? $validated['end_date'] : null,
             'transport_mode' => $validated['transport_mode'] ?? null,
-            'status'         => 'ready',
-            'signed_by'      => 'Secrétaire Général ENCG Fès',
-            'signed_at'      => now(),
+            'status'         => 'pending',
+            'signed_by'      => null,
+            'signed_at'      => null,
         ]);
 
         // 1. Dispatch In-App Database Notification for the Professor
         try {
             \Illuminate\Support\Facades\DB::table('notifications')->insert([
                 'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                'type'            => 'App\Notifications\ProfessorDocumentReady',
+                'type'            => 'App\Notifications\ProfessorDocumentSubmitted',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $user->id,
                 'data'            => json_encode([
-                    'title'         => '✅ Document Validé & Prêt au Téléchargement',
-                    'message'       => "Votre {$typeLabel} (Réf: {$trackingCode}) a été validée par le Secrétariat Général. Le PDF signé est disponible sur votre portail.",
-                    'type'          => 'document_approved',
+                    'title'         => '⏳ Demande de Document Transmise',
+                    'message'       => "Votre demande de {$typeLabel} (Réf: {$trackingCode}) a été transmise au Secrétariat Général. Elle est en attente de validation.",
+                    'type'          => 'document_pending',
                     'tracking_code' => $trackingCode,
-                    'pdf_url'       => "/api/professor-portal/documents/{$doc->id}/pdf",
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
@@ -499,26 +498,9 @@ class ProfessorPortalController extends Controller
             \Illuminate\Support\Facades\Log::warning("Notification DB Error: " . $e->getMessage());
         }
 
-        // 2. Dispatch Email via Resend Transport
-        if (!empty($user->email)) {
-            try {
-                $profName = "{$user->first_name} {$user->last_name}";
-                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
-                    'professor_name' => $profName,
-                    'document_title' => $typeLabel,
-                    'tracking_code'  => $trackingCode,
-                    'purpose'        => $validated['purpose'],
-                    'signer'         => 'Secrétaire Général ENCG Fès',
-                    'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
-                ]));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("Email Resend Error: " . $e->getMessage());
-            }
-        }
-
         return response()->json([
             'success' => true,
-            'message' => 'Votre demande a été enregistrée avec succès en base de données. Le document est prêt au téléchargement.',
+            'message' => 'Votre demande a été enregistrée avec succès. Elle est désormais en attente de validation par le Secrétariat Général.',
             'data' => [
                 'id'             => $doc->id,
                 'tracking_code'  => $doc->tracking_code,
@@ -527,10 +509,10 @@ class ProfessorPortalController extends Controller
                 'purpose'        => $doc->purpose,
                 'destination'    => $doc->destination,
                 'dates'          => $doc->start_date && $doc->end_date ? 'Du ' . $doc->start_date->format('d/m/Y') . ' au ' . $doc->end_date->format('d/m/Y') : null,
-                'status'         => $doc->status,
+                'status'         => 'pending',
                 'created_at'     => $doc->created_at->format('d/m/Y H:i'),
-                'signer'         => $doc->signed_by,
-                'download_ready' => true,
+                'signer'         => 'En attente de signature',
+                'download_ready' => false,
             ]
         ], 201);
     }

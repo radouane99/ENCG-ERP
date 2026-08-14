@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   FileSignature, ShieldCheck, Printer, Download, Clock,
   Search, CheckCircle2, XCircle, FileBadge, Sparkles,
-  AlertTriangle, User, QrCode, Send, X, Mail, Shield, Zap
+  AlertTriangle, User, QrCode, Send, X, Mail, Shield, Zap,
+  Upload, Loader2, FileText, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
@@ -12,13 +13,39 @@ import { toast } from 'sonner'
 
 export default function UnifiedGuichetAttestationsPage() {
   const queryClient = useQueryClient()
+  const [audience, setAudience] = useState<'all' | 'professors' | 'students'>('all')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
   const [rejectingId, setRejectingId] = useState<number | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [showQrVerificationModal, setShowQrVerificationModal] = useState(false)
+  const [verifyCode, setVerifyCode] = useState('')
+  const [verifyFile, setVerifyFile] = useState<File | null>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [verificationResult, setVerificationResult] = useState<any>(null)
+  const [verifyTab, setVerifyTab] = useState<'code' | 'file'>('code')
+
+  // Reset pagination when filter/search/audience changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [audience, filter, search])
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (showQrVerificationModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showQrVerificationModal])
 
   // Quick generation state
+  const [quickTarget, setQuickTarget] = useState<'student' | 'professor'>('student')
   const [quickStudentCne, setQuickStudentCne] = useState('')
   const [quickDocType, setQuickDocType] = useState('Attestation de Scolarité')
 
@@ -39,8 +66,11 @@ export default function UnifiedGuichetAttestationsPage() {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, reason }: { id: number; status: string; reason?: string }) => {
-      const res = await api.patch(`/admin/document-requests/${id}/status`, {
+    mutationFn: async ({ id, status, reason, isProfessor, realId }: { id: any; status: string; reason?: string; isProfessor?: boolean; realId?: number }) => {
+      const endpoint = isProfessor
+        ? `/admin/professor-document-requests/${realId || id}/status`
+        : `/admin/document-requests/${id}/status`
+      const res = await api.patch(endpoint, {
         status,
         rejection_reason: reason
       })
@@ -48,10 +78,10 @@ export default function UnifiedGuichetAttestationsPage() {
     },
     onSuccess: (data, variables) => {
       if (variables.status === 'approved') {
-        toast.success('Demande approuvée & document certifié généré !')
-        toast.info('Copie envoyée automatiquement par email à l\'étudiant (Mailable Resend).')
+        toast.success('Demande approuvée & document certifié signé !')
+        toast.info('Notification transmise et copie envoyée par email (Resend).')
       } else {
-        toast.success('Demande rejetée avec motif transmis à l\'étudiant.')
+        toast.success('Demande mise à jour.')
       }
       setRejectingId(null)
       setRejectionReason('')
@@ -63,6 +93,9 @@ export default function UnifiedGuichetAttestationsPage() {
   })
 
   const rawRequests = fetchRes?.data || []
+  const profPendingCount = rawRequests.filter((r: any) => r.is_professor && r.status === 'pending').length
+  const studentPendingCount = rawRequests.filter((r: any) => !r.is_professor && r.status === 'pending').length
+
   const stats = fetchRes?.stats || {
     pending: rawRequests.filter((r: any) => r.status === 'pending').length,
     approved: rawRequests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed').length,
@@ -70,6 +103,11 @@ export default function UnifiedGuichetAttestationsPage() {
   }
 
   const filteredRequests = rawRequests.filter((req: any) => {
+    const matchesAudience =
+      audience === 'all' ||
+      (audience === 'professors' && req.is_professor) ||
+      (audience === 'students' && !req.is_professor)
+
     const matchesFilter =
       filter === 'all' ||
       (filter === 'pending' && req.status === 'pending') ||
@@ -79,10 +117,14 @@ export default function UnifiedGuichetAttestationsPage() {
     const matchesSearch =
       req.person.toLowerCase().includes(search.toLowerCase()) ||
       req.type.toLowerCase().includes(search.toLowerCase()) ||
-      (req.student_cne && req.student_cne.toLowerCase().includes(search.toLowerCase()))
+      (req.student_cne && req.student_cne.toLowerCase().includes(search.toLowerCase())) ||
+      (req.motif && req.motif.toLowerCase().includes(search.toLowerCase()))
 
-    return matchesFilter && matchesSearch
+    return matchesAudience && matchesFilter && matchesSearch
   })
+
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage) || 1
+  const paginatedRequests = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Certified PDF Printable Generator A4 (with SHA-256 + QR Code + Resend email stub)
   const handlePrintCertificate = (studentName: string, docType: string, cne: string, reqId?: number) => {
@@ -104,7 +146,7 @@ export default function UnifiedGuichetAttestationsPage() {
   const handleQuickGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!quickStudentCne.trim()) {
-      toast.error('Veuillez saisir le CNE ou le Nom de l\'étudiant')
+      toast.error(quickTarget === 'professor' ? 'Veuillez saisir le Nom, Email ou CIN du Professeur' : 'Veuillez saisir le CNE ou le Nom de l\'étudiant')
       return
     }
 
@@ -113,6 +155,7 @@ export default function UnifiedGuichetAttestationsPage() {
       const res = await api.post('/admin/document-requests/quick-generate', {
         cne_or_name: quickStudentCne,
         document_type: quickDocType,
+        target_type: quickTarget,
       })
 
       if (res.data?.success && res.data?.preview_url) {
@@ -132,70 +175,104 @@ export default function UnifiedGuichetAttestationsPage() {
     toast.success(`Email certifié avec PDF transmis à ${req.person} (no-reply@benadadarentcar.com) !`)
   }
 
+  const handlePerformVerification = async (customCode?: string, fileToUpload?: File | null) => {
+    setIsVerifying(true)
+    setVerificationResult(null)
+    try {
+      const formData = new FormData()
+      const effectiveFile = fileToUpload !== undefined ? fileToUpload : verifyFile
+      const effectiveCode = customCode !== undefined ? customCode : verifyCode
+
+      if (effectiveFile) {
+        formData.append('pdf_file', effectiveFile)
+      }
+      if (effectiveCode) {
+        formData.append('code', effectiveCode)
+      }
+
+      const res = await api.post('/documents/universal-verify', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      if (res.data?.success && res.data?.data) {
+        setVerificationResult(res.data.data)
+        toast.success(res.data.is_demo_test ? 'Test d\'authenticité réussi sur le dernier document réel !' : 'Document authentifié avec succès en base de données !')
+      } else {
+        toast.error(res.data?.message || 'Document non reconnu ou invalide.')
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Document introuvable ou non certifié.')
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
   return (
-    <div className="max-w-[1500px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1500px] mx-auto p-3 sm:p-6 md:p-8 space-y-6 sm:space-y-8 font-sans animate-in fade-in pb-24">
 
       {/* ── Deep Navy Hero Banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
-              <FileSignature className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+              <FileSignature className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Guichet Unique & Signature Numérique — ENCG Fès
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-3 sm:px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" /> Guichet Unique & Signature Numérique — ENCG Fès
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
                 Guichet Électronique & Documents Officiels
               </h1>
-              <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-3xl">
+              <p className="text-blue-100/90 text-xs sm:text-sm font-medium mt-1 max-w-3xl">
                 Traitement centralisé des demandes, signature cryptographique SHA-256, envoi automatique par email et coffre-fort numérique étudiant.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
             <button
               onClick={() => setShowQrVerificationModal(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-black rounded-2xl transition-all text-xs border border-emerald-400/30 cursor-pointer shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-black rounded-2xl transition-all text-xs border border-emerald-400/30 cursor-pointer shadow-lg"
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" /> Scanner & Vérifier QR
             </button>
           </div>
         </div>
 
-        {/* KPI Cards Row with SLA Metric */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
+        {/* 100% Real Dynamic KPI Cards Row (Responsive Grid) */}
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE DE TRAITEMENT</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">{stats.pending} Demandes</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-300 font-mono mt-1 block">{stats.pending} Demandes</span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">TRAITÉES & SIGNÉES SHA-256</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">{stats.approved} Documents</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono mt-1 block">{stats.approved} Documents</span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">DELAI MOYEN SLA</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">2h 45m (98% SLA)</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL DOSSIERS EN BASE</span>
+            <span className="text-xl sm:text-2xl font-black text-white font-mono mt-1 block">{rawRequests.length} Dossiers</span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">COFFRE-FORT NUMÉRIQUE</span>
-            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">100% Intégré</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">TAUX D'ACCOMPLISSEMENT</span>
+            <span className="text-xl sm:text-2xl font-black text-purple-300 font-mono mt-1 block">
+              {rawRequests.length > 0 ? Math.round((stats.approved / rawRequests.length) * 100) : 100}% Réalisé
+            </span>
           </div>
         </div>
       </div>
 
       {/* ── Main Two-Column Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
         {/* ── Left Column: Quick PDF Generation & Anti-Fraud ── */}
         <div className="space-y-6">
 
           {/* Anti-Fraud Box with SHA-256 Info */}
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-[2.5rem] p-6 shadow-sm relative overflow-hidden space-y-4">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-6 shadow-sm relative overflow-hidden space-y-4">
             <div className="flex items-center gap-3 text-emerald-800 dark:text-emerald-300">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -216,8 +293,8 @@ export default function UnifiedGuichetAttestationsPage() {
             </button>
           </div>
 
-          {/* Quick Issue Form */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm space-y-5">
+          {/* Quick Issue Form with Target Switcher */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 flex items-center justify-center shrink-0">
                 <Printer className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -228,10 +305,44 @@ export default function UnifiedGuichetAttestationsPage() {
               </div>
             </div>
 
+            {/* Target Switcher: Étudiant vs Enseignant */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickTarget('student')
+                  setQuickDocType('Attestation de Scolarité')
+                }}
+                className={cn(
+                  "py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                  quickTarget === 'student'
+                    ? "bg-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                )}
+              >
+                <span>🎓 Étudiant</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickTarget('professor')
+                  setQuickDocType('Ordre de Mission Officiel')
+                }}
+                className={cn(
+                  "py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                  quickTarget === 'professor'
+                    ? "bg-gradient-to-r from-indigo-700 to-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                )}
+              >
+                <span>👨‍🏫 Enseignant</span>
+              </button>
+            </div>
+
             <form onSubmit={handleQuickGenerate} className="space-y-4">
               <div>
                 <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                  Nom ou CNE de l'Étudiant *
+                  {quickTarget === 'professor' ? "Nom, Email ou CIN de l'Enseignant *" : "Nom ou CNE de l'Étudiant *"}
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -239,7 +350,7 @@ export default function UnifiedGuichetAttestationsPage() {
                     type="text"
                     value={quickStudentCne}
                     onChange={(e) => setQuickStudentCne(e.target.value)}
-                    placeholder="Ex: N134892011 ou Zineb Alaoui"
+                    placeholder={quickTarget === 'professor' ? "Ex: Abdelhak El Amrani ou elamrani@encg-fes.ma" : "Ex: N134892011 ou Zineb Alaoui"}
                     className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all"
                   />
                 </div>
@@ -254,10 +365,22 @@ export default function UnifiedGuichetAttestationsPage() {
                   onChange={(e) => setQuickDocType(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none cursor-pointer"
                 >
-                  <option value="Attestation de Scolarité">Attestation de Scolarité</option>
-                  <option value="Relevé de Notes (Global)">Relevé de Notes Global</option>
-                  <option value="Attestation de Réussite">Attestation de Réussite</option>
-                  <option value="Convention de Stage PFE">Convention de Stage PFE</option>
+                  {quickTarget === 'professor' ? (
+                    <>
+                      <option value="Ordre de Mission Officiel">Ordre de Mission Officiel (أمر بمهمة)</option>
+                      <option value="Attestation de Travail">Attestation de Travail (شهادة العمل)</option>
+                      <option value="Attestation de Salaire">Attestation de Salaire / Émoluments (شهادة الأجرة)</option>
+                      <option value="Autorisation d'Absence">Autorisation d'Absence (رخصة التغيب)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Attestation de Scolarité">Attestation de Scolarité</option>
+                      <option value="Attestation d'Inscription">Attestation d'Inscription</option>
+                      <option value="Relevé de Notes (Global)">Relevé de Notes Global</option>
+                      <option value="Attestation de Réussite">Attestation de Réussite</option>
+                      <option value="Convention de Stage PFE">Convention de Stage PFE</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -265,7 +388,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="submit"
                 className="w-full py-3 bg-[#0f2863] hover:bg-blue-900 text-white font-black text-xs rounded-2xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2"
               >
-                <Printer className="w-4 h-4" /> Générer & Imprimer PDF (SHA-256)
+                <Printer className="w-4 h-4" /> Générer & Imprimer PDF ({quickTarget === 'professor' ? 'Signé SG' : 'SHA-256'})
               </button>
             </form>
           </div>
@@ -274,25 +397,85 @@ export default function UnifiedGuichetAttestationsPage() {
 
         {/* ── Right Column: Requests Workflow & Processing Table ── */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm space-y-6 min-h-[600px]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 shadow-sm space-y-6 min-h-[600px]">
+
+            {/* ── Primary Audience Separation Tabs (Enseignants vs Étudiants) ── */}
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+              <button
+                onClick={() => setAudience('all')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-between sm:justify-start gap-2",
+                  audience === 'all'
+                    ? "bg-[#0f2863] text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                )}
+              >
+                <span>🏛️ Toutes les Demandes</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-mono font-bold">
+                  {rawRequests.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setAudience('professors')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-between sm:justify-start gap-2",
+                  audience === 'professors'
+                    ? "bg-gradient-to-r from-indigo-700 to-[#0f2863] text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                )}
+              >
+                <span>👨‍🏫 Enseignants & Ordres de Mission (RH / SG)</span>
+                {profPendingCount > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-400 text-slate-950 font-black animate-pulse">
+                    {profPendingCount} En attente
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold">
+                    {rawRequests.filter((r: any) => r.is_professor).length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setAudience('students')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-between sm:justify-start gap-2",
+                  audience === 'students'
+                    ? "bg-[#0f2863] text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                )}
+              >
+                <span>🎓 Étudiants (Scolarité)</span>
+                {studentPendingCount > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-400 text-slate-950 font-black">
+                    {studentPendingCount} En attente
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold">
+                    {rawRequests.filter((r: any) => !r.is_professor).length}
+                  </span>
+                )}
+              </button>
+            </div>
 
             {/* Controls Bar */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl w-full md:w-auto">
                 {[
                   { id: 'all', label: 'Toutes' },
-                  { id: 'pending', label: `En attente (${stats.pending})` },
-                  { id: 'approved', label: 'Traitées' },
+                  { id: 'pending', label: `En attente (${filteredRequests.filter((r: any) => r.status === 'pending').length})` },
+                  { id: 'approved', label: 'Traitées & Signées' },
                   { id: 'rejected', label: 'Rejetées' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setFilter(tab.id)}
                     className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer",
+                      "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer text-center",
                       filter === tab.id
-                        ? "bg-[#0f2863] text-white shadow-md"
+                        ? "bg-[#0f2863] text-white shadow-sm"
                         : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
                     )}
                   >
@@ -308,9 +491,8 @@ export default function UnifiedGuichetAttestationsPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher étudiant, CNE..."
+                  placeholder="Rechercher nom, motif, réf..."
                   className="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none"
-                />
               </div>
             </div>
 
@@ -320,13 +502,13 @@ export default function UnifiedGuichetAttestationsPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full text-left border-collapse min-w-[680px]">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      <th className="py-3 px-4">Étudiant</th>
-                      <th className="py-3 px-4">Document Demandé</th>
-                      <th className="py-3 px-4">Empreinte Cryptographique</th>
+                      <th className="py-3 px-4">Demandeur / Rôle</th>
+                      <th className="py-3 px-4">Document & Objet</th>
+                      <th className="py-3 px-4">Réf / Empreinte SHA-256</th>
                       <th className="py-3 px-4">Statut SLA</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
@@ -335,11 +517,11 @@ export default function UnifiedGuichetAttestationsPage() {
                     {filteredRequests.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-16 text-center text-slate-400 font-bold text-xs">
-                          Aucune demande de document trouvée.
+                          Aucune demande trouvée pour cette sélection.
                         </td>
                       </tr>
                     ) : (
-                      filteredRequests.map((req: any) => {
+                      paginatedRequests.map((req: any) => {
                         const isPending = req.status === 'pending'
                         const isApproved = req.status === 'approved' || req.status === 'ready' || req.status === 'processed'
                         const isRejected = req.status === 'rejected'
@@ -348,12 +530,27 @@ export default function UnifiedGuichetAttestationsPage() {
                           <tr key={req.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 font-black text-sm shrink-0">
-                                  {req.person.charAt(0)}
+                                <div className={cn(
+                                  "w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0",
+                                  req.is_professor 
+                                    ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                                    : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60"
+                                )}>
+                                  {req.is_professor ? "👨‍🏫" : req.person.charAt(0)}
                                 </div>
                                 <div>
-                                  <p className="font-black text-xs text-slate-900 dark:text-white leading-tight">{req.person}</p>
-                                  <p className="text-[10px] font-bold text-slate-400 mt-0.5">{req.student_cne || `Réf #${req.id}`}</p>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="font-black text-xs text-slate-900 dark:text-white leading-tight">{req.person}</p>
+                                    <span className={cn(
+                                      "px-1.5 py-0.2 text-[9px] font-black uppercase rounded",
+                                      req.is_professor 
+                                        ? "bg-purple-100 text-purple-800 border border-purple-200" 
+                                        : "bg-slate-100 text-slate-600"
+                                    )}>
+                                      {req.role || (req.is_professor ? 'Enseignant' : 'Étudiant')}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] font-bold text-slate-400 mt-0.5">{req.student_cne || `Réf #${req.real_id || req.id}`}</p>
                                 </div>
                               </div>
                             </td>
@@ -397,11 +594,18 @@ export default function UnifiedGuichetAttestationsPage() {
                                   <>
                                     <button
                                       onClick={() => {
-                                        updateStatusMutation.mutate({ id: req.id, status: 'approved' })
-                                        handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                        updateStatusMutation.mutate({ 
+                                          id: req.id, 
+                                          status: 'approved',
+                                          isProfessor: req.is_professor,
+                                          realId: req.real_id
+                                        })
+                                        if (!req.is_professor) {
+                                          handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                        }
                                       }}
                                       className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
-                                      title="Approuver & Générer PDF"
+                                      title="Approuver & Signer le Document"
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" /> Valider
                                     </button>
@@ -441,6 +645,73 @@ export default function UnifiedGuichetAttestationsPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* ── Table Pagination Bar with Windowed Pages ── */}
+            {filteredRequests.length > itemsPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-bold text-slate-400">
+                  Affichage de <span className="text-slate-800 dark:text-white font-black">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredRequests.length)}</span> à <span className="text-slate-800 dark:text-white font-black">{Math.min(currentPage * itemsPerPage, filteredRequests.length)}</span> sur <span className="text-slate-800 dark:text-white font-black">{filteredRequests.length}</span> demandes
+                </p>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Précédent
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const pages: (number | string)[] = []
+                      if (totalPages <= 7) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i)
+                      } else if (currentPage <= 3) {
+                        pages.push(1, 2, 3, 4, '...', totalPages)
+                      } else if (currentPage >= totalPages - 2) {
+                        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+                      } else {
+                        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
+                      }
+
+                      return pages.map((page, idx) => {
+                        if (page === '...') {
+                          return (
+                            <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-400">
+                              ...
+                            </span>
+                          )
+                        }
+                        const pNum = Number(page)
+                        return (
+                          <button
+                            key={`page-${pNum}`}
+                            onClick={() => setCurrentPage(pNum)}
+                            className={cn(
+                              "w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer",
+                              currentPage === pNum
+                                ? "bg-[#0f2863] text-white shadow-md"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            )}
+                          >
+                            {pNum}
+                          </button>
+                        )
+                      })
+                    })()}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    Suivant <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -485,36 +756,193 @@ export default function UnifiedGuichetAttestationsPage() {
         </div>
       )}
 
-      {/* ── QR Verification Modal ── */}
+      {/* ── Real Interactive Cryptographic Verification Modal ── */}
       {showQrVerificationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-lg shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-emerald-600">
-                <ShieldCheck className="w-6 h-6" />
-                <h3 className="font-black text-base text-slate-900 dark:text-white">Vérification QR Code SHA-256</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-xl shadow-2xl p-6 md:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3 text-emerald-600">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base md:text-lg text-slate-900 dark:text-white">
+                    Console de Vérification d'Authenticité PDF & QR
+                  </h3>
+                  <p className="text-[11px] font-bold text-slate-400">
+                    Contrôle d'intégrité en temps réel conforme à la Loi 53-05
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowQrVerificationModal(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 cursor-pointer">
-                <X className="w-4 h-4" />
+              <button 
+                onClick={() => {
+                  setShowQrVerificationModal(false)
+                  setVerificationResult(null)
+                }} 
+                className="w-9 h-9 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 bg-emerald-50 dark:bg-emerald-950/40 rounded-3xl border border-emerald-200 text-center space-y-3">
-              <div className="w-24 h-24 mx-auto bg-[#0f2863] text-amber-400 font-mono font-black text-xs rounded-2xl flex flex-col items-center justify-center border-4 border-emerald-400 shadow-xl p-2">
-                <QrCode className="w-8 h-8 text-amber-400 mb-1" />
-                <span>SHA-256<br />VALIDE ✅</span>
-              </div>
-              <h4 className="font-black text-sm text-emerald-900 dark:text-emerald-300">Document Authentique Certifié ENCG Fès</h4>
-              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                Signature SHA-256 : <span className="font-mono font-bold text-[10px]">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
-              </p>
+            {/* Input Selection Tabs */}
+            <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setVerifyTab('code')}
+                className={cn(
+                  "py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  verifyTab === 'code'
+                    ? "bg-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                )}
+              >
+                <Search className="w-3.5 h-3.5" /> Référence / Hash SHA-256
+              </button>
+              <button
+                type="button"
+                onClick={() => setVerifyTab('file')}
+                className={cn(
+                  "py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  verifyTab === 'file'
+                    ? "bg-[#0f2863] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                )}
+              >
+                <Upload className="w-3.5 h-3.5" /> Téléverser Fichier PDF
+              </button>
             </div>
 
+            {/* Verification Form */}
+            {verifyTab === 'code' ? (
+              <div className="space-y-3">
+                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">
+                  Code de Suivi, Réf ou Empreinte Hash SHA-256
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    placeholder="Ex: DOC-PROF-2026-9898 ou Token QR..."
+                    className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-emerald-500/15 outline-none font-mono"
+                  />
+                  <button
+                    onClick={() => handlePerformVerification(verifyCode)}
+                    disabled={isVerifying || !verifyCode.trim()}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-2xl shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                  >
+                    {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Vérifier
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">
+                  Fichier PDF Officiel à Vérifier
+                </label>
+                <div className="border-2 border-dashed border-emerald-300 dark:border-emerald-800 rounded-2xl p-6 text-center hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null
+                      setVerifyFile(f)
+                      if (f) handlePerformVerification(undefined, f)
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                  <FileText className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {verifyFile ? verifyFile.name : "Cliquez ou glissez un fichier PDF officiel ici"}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">Calcul instantané du SHA-256 et validation cryptographique</p>
+                </div>
+              </div>
+            )}
+
+            {/* Quick 1-Click Demo Test Button */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                  Tester directement sur le dernier document émis en base
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handlePerformVerification('')}
+                disabled={isVerifying}
+                className="px-3.5 py-1.5 bg-[#0f2863] hover:bg-blue-900 text-white rounded-xl text-[11px] font-black cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+              >
+                {isVerifying ? 'Vérification...' : 'Lancer le Test Réel ⚡'}
+              </button>
+            </div>
+
+            {/* Verification Result Display Card */}
+            {verificationResult && (
+              <div className="p-6 bg-emerald-50 dark:bg-emerald-950/50 rounded-3xl border-2 border-emerald-400/80 shadow-inner space-y-4 animate-in zoom-in-95">
+                <div className="flex items-center gap-3 text-emerald-900 dark:text-emerald-200">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <ShieldCheck className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <span className="px-2.5 py-0.5 bg-emerald-200 dark:bg-emerald-800 text-emerald-950 dark:text-emerald-100 text-[10px] font-black uppercase rounded-full tracking-wider">
+                      CERTIFICAT AUTHENTIFIÉ (LOI 53-05)
+                    </span>
+                    <h4 className="text-base font-black text-emerald-950 dark:text-white mt-1">
+                      {verificationResult.document_type}
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2 border-t border-emerald-200 dark:border-emerald-900">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-emerald-700/80 dark:text-emerald-400 block">Titulaire / Bénéficiaire</span>
+                    <strong className="text-slate-900 dark:text-white text-sm">{verificationResult.beneficiary}</strong>
+                    <p className="text-[10px] text-slate-500">{verificationResult.role}</p>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-emerald-700/80 dark:text-emerald-400 block">Signataire Officiel</span>
+                    <strong className="text-slate-900 dark:text-white">{verificationResult.signer}</strong>
+                    <p className="text-[10px] text-slate-500">Délivré le : {verificationResult.issued_at}</p>
+                  </div>
+
+                  {verificationResult.destination && (
+                    <div className="md:col-span-2">
+                      <span className="text-[10px] font-black uppercase text-emerald-700/80 dark:text-emerald-400 block">Détails de la Mission</span>
+                      <p className="text-slate-800 dark:text-slate-200 font-medium">
+                        Destination : <strong>{verificationResult.destination}</strong> • Objet : {verificationResult.purpose}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="md:col-span-2 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-emerald-200 dark:border-emerald-800/80 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-slate-400 block">Empreinte Cryptographique Inaltérable SHA-256</span>
+                    <p className="font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 break-all select-all">
+                      {verificationResult.sha256_hash}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-[10px] font-bold text-emerald-700/90 dark:text-emerald-400/90 text-center flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Document officiel enregistré dans le registre central de l'ENCG Fès (USMBA).
+                </div>
+              </div>
+            )}
+
+            {/* Footer Close */}
             <button
-              onClick={() => setShowQrVerificationModal(false)}
-              className="w-full py-3 bg-[#0f2863] text-white font-black text-xs rounded-2xl shadow-md cursor-pointer"
+              onClick={() => {
+                setShowQrVerificationModal(false)
+                setVerificationResult(null)
+              }}
+              className="w-full py-3 bg-[#0f2863] hover:bg-[#001A4B] text-white font-black text-xs rounded-2xl shadow-md cursor-pointer transition-all uppercase tracking-wider"
             >
-              Fermer le Démonstrateur
+              Fermer la Console de Vérification
             </button>
           </div>
         </div>

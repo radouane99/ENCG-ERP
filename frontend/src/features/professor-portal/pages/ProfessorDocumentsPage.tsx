@@ -265,9 +265,19 @@ export default function ProfessorDocumentsPage() {
                         {req.tracking_code}
                       </span>
                       <h4 className="font-black text-sm text-slate-900">{req.type_label}</h4>
-                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Prêt & Signé
-                      </span>
+                      {req.status === 'pending' ? (
+                        <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-700" /> En Attente de Validation SG
+                        </span>
+                      ) : req.status === 'rejected' ? (
+                        <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                          <X className="w-3 h-3 text-rose-600" /> Demande Non Accordée
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Prêt & Signé
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-slate-600 font-medium">
@@ -284,12 +294,18 @@ export default function ProfessorDocumentsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    onClick={() => handleDownloadPdf(req)}
-                    className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#001A4B] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
-                  >
-                    <Download className="w-4 h-4 text-amber-400" /> Télécharger PDF Certifié
-                  </button>
+                  {req.download_ready ? (
+                    <button
+                      onClick={() => handleDownloadPdf(req)}
+                      className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#001A4B] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    >
+                      <Download className="w-4 h-4 text-amber-400" /> Télécharger PDF Certifié
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-bold border border-amber-200 flex items-center gap-2 select-none" title="Le document sera téléchargeable dès validation par le Secrétariat Général">
+                      <Clock className="w-4 h-4 text-amber-600" /> En Attente de Signature
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

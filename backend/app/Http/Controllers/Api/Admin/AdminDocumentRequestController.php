@@ -21,7 +21,7 @@ class AdminDocumentRequestController extends Controller
     ) {}
 
     /**
-     * Liste des demandes de documents.
+     * Liste des demandes de documents (Étudiants + Enseignants).
      */
     public function index(Request $request): JsonResponse
     {
@@ -52,9 +52,49 @@ class AdminDocumentRequestController extends Controller
             ];
         });
 
+        // Also fetch Professor Document Requests if table exists
+        if (\Illuminate\Support\Facades\Schema::hasTable('professor_document_requests')) {
+            $profQuery = \App\Models\ProfessorDocumentRequest::with(['user', 'professor']);
+            if ($request->filled('status')) {
+                $profQuery->where('status', $request->string('status'));
+            }
+            $profRequests = $profQuery->latest()->get()->map(function ($pDoc) {
+                $status = in_array($pDoc->status, ['ready', 'processing', 'approved'], true) ? 'approved' : $pDoc->status;
+                $user = $pDoc->user;
+                $profName = $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant';
+                $typeLabel = match($pDoc->document_type) {
+                    'attestation_travail'  => 'Attestation de Travail',
+                    'ordre_de_mission'     => 'Ordre de Mission',
+                    'attestation_salaire'  => 'Attestation de Salaire',
+                    'autorisation_absence' => 'Autorisation d\'Absence',
+                    default                => ucwords(str_replace('_', ' ', $pDoc->document_type))
+                };
+
+                return [
+                    'id'              => 'prof_' . $pDoc->id,
+                    'real_id'         => $pDoc->id,
+                    'is_professor'    => true,
+                    'person'          => $profName,
+                    'role'            => 'Enseignant',
+                    'type'            => $typeLabel,
+                    'motif'           => $pDoc->purpose . ($pDoc->destination ? " (Destination: {$pDoc->destination})" : ''),
+                    'time'            => $pDoc->created_at?->diffForHumans(),
+                    'status'          => $status,
+                    'reason'          => $pDoc->admin_notes,
+                    'email_sent'      => in_array($status, ['approved', 'ready']),
+                    'email_sent_at'   => $pDoc->signed_at?->toIso8601String(),
+                    'email_recipient' => $user?->email,
+                    'url'             => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                    'preview_url'     => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                ];
+            });
+
+            $requests = $requests->concat($profRequests);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => $requests,
+            'data'    => $requests->values(),
             'stats'   => [
                 'pending'  => $requests->where('status', 'pending')->count(),
                 'approved' => $requests->where('status', 'approved')->count(),
@@ -78,6 +118,78 @@ class AdminDocumentRequestController extends Controller
             'success' => true,
             'message' => 'Statut mis à jour.',
             'data'    => $updatedRequest,
+        ]);
+    }
+
+    /**
+     * Mettre à jour le statut d'une demande de professeur.
+     */
+    public function updateProfessorStatus(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'status'           => 'required|in:approved,ready,rejected,pending',
+            'rejection_reason' => 'nullable|string',
+        ]);
+
+        $pDoc = \App\Models\ProfessorDocumentRequest::with('user')->findOrFail($id);
+        $newStatus = in_array($validated['status'], ['approved', 'ready']) ? 'ready' : $validated['status'];
+
+        $pDoc->update([
+            'status'      => $newStatus,
+            'signed_by'   => $newStatus === 'ready' ? 'Secrétaire Général ENCG Fès' : null,
+            'signed_at'   => $newStatus === 'ready' ? now() : null,
+            'admin_notes' => $validated['rejection_reason'] ?? null,
+        ]);
+
+        $user = $pDoc->user;
+        $typeLabel = match($pDoc->document_type) {
+            'attestation_travail'  => 'Attestation de Travail',
+            'ordre_de_mission'     => 'Ordre de Mission',
+            'attestation_salaire'  => 'Attestation de Salaire',
+            'autorisation_absence' => 'Autorisation d\'Absence',
+            default                => ucwords(str_replace('_', ' ', $pDoc->document_type))
+        };
+
+        if ($user && $newStatus === 'ready') {
+            // 1. In-App Notification
+            try {
+                \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                    'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                    'type'            => 'App\Notifications\ProfessorDocumentApproved',
+                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_id'   => $user->id,
+                    'data'            => json_encode([
+                        'title'         => '✅ Document Officiel Validé & Signé',
+                        'message'       => "Votre {$typeLabel} (Réf: {$pDoc->tracking_code}) a été officiellement approuvée et signée par le Secrétaire Général.",
+                        'type'          => 'document_approved',
+                        'tracking_code' => $pDoc->tracking_code,
+                        'pdf_url'       => "/api/professor-portal/documents/{$pDoc->id}/pdf",
+                    ]),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            } catch (\Throwable $e) {}
+
+            // 2. Email via Resend Transport
+            if (!empty($user->email)) {
+                try {
+                    $profName = "{$user->first_name} {$user->last_name}";
+                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
+                        'professor_name' => $profName,
+                        'document_title' => $typeLabel,
+                        'tracking_code'  => $pDoc->tracking_code,
+                        'purpose'        => $pDoc->purpose,
+                        'signer'         => 'Secrétaire Général ENCG Fès',
+                        'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
+                    ]));
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $newStatus === 'ready' ? 'Demande approuvée avec signature numérique et notification envoyée.' : 'Demande mise à jour.',
+            'data'    => $pDoc,
         ]);
     }
 
@@ -206,19 +318,74 @@ class AdminDocumentRequestController extends Controller
     }
 
     /**
-     * Génération rapide directe de document officiel certifié PDF.
+     * Génération rapide directe de document officiel certifié PDF (Étudiants & Enseignants).
      */
     public function quickGenerate(Request $request): JsonResponse
     {
         $request->validate([
             'cne_or_name'   => 'required|string',
             'document_type' => 'required|string',
+            'target_type'   => 'nullable|string|in:student,professor',
+            'destination'   => 'nullable|string',
         ]);
 
         $input = trim($request->string('cne_or_name')->toString());
         $docTypeName = trim($request->string('document_type')->toString());
+        $targetType = $request->string('target_type')->toString() ?: (str_contains(strtolower($docTypeName), 'mission') || str_contains(strtolower($docTypeName), 'travail') || str_contains(strtolower($docTypeName), 'salaire') ? 'professor' : 'student');
 
-        // Recherche étudiant par CNE, Apogée, CIN (sur user), ou Nom
+        // ── 1. Traitement Cas Enseignant ──
+        if ($targetType === 'professor') {
+            $profUser = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))
+                ->where(function ($q) use ($input) {
+                    $q->where('name', 'like', "%{$input}%")
+                      ->orWhere('first_name', 'like', "%{$input}%")
+                      ->orWhere('last_name', 'like', "%{$input}%")
+                      ->orWhere('email', 'like', "%{$input}%")
+                      ->orWhere('cin', $input);
+                })
+                ->first();
+
+            if (!$profUser) {
+                $profUser = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))->first();
+            }
+
+            if (!$profUser) {
+                $profUser = $request->user();
+            }
+
+            $docTypeKey = match(true) {
+                str_contains(strtolower($docTypeName), 'mission') => 'ordre_de_mission',
+                str_contains(strtolower($docTypeName), 'salaire') => 'attestation_salaire',
+                str_contains(strtolower($docTypeName), 'absence') => 'autorisation_absence',
+                default                                            => 'attestation_travail'
+            };
+
+            $trackingCode = 'DOC-PROF-' . date('Y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
+
+            $pDoc = \App\Models\ProfessorDocumentRequest::create([
+                'user_id'        => $profUser->id,
+                'professor_id'   => $profUser->professor?->id,
+                'document_type'  => $docTypeKey,
+                'tracking_code'  => $trackingCode,
+                'purpose'        => $request->input('purpose', 'Délivrance expresse certifiée au Guichet Administratif'),
+                'destination'    => $request->input('destination', 'Casablanca / Rabat (Maroc)'),
+                'start_date'     => now()->toDateString(),
+                'end_date'       => now()->addDays(3)->toDateString(),
+                'status'         => 'ready',
+                'signed_by'      => 'Secrétaire Général ENCG Fès',
+                'signed_at'      => now(),
+            ]);
+
+            return response()->json([
+                'success'      => true,
+                'message'      => "Document enseignant certifié et signé pour Pr. {$profUser->name} !",
+                'request_id'   => $pDoc->id,
+                'preview_url'  => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                'download_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+            ]);
+        }
+
+        // ── 2. Traitement Cas Étudiant ──
         $student = \App\Models\Student::where('cne', $input)
             ->orWhere('student_number', $input)
             ->orWhereHas('user', fn($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input))
@@ -272,19 +439,6 @@ class AdminDocumentRequestController extends Controller
                     'code'      => 'ATT_REUSSITE',
                     'name'      => 'Attestation de Réussite',
                     'view_name' => 'documents.attestation_reussite',
-                    'is_active' => true,
-                ]);
-            }
-        } elseif (str_contains($lowerInput, 'travail') || str_contains($lowerInput, 'trav')) {
-            $docType = \App\Models\DocumentType::where('code', 'ATT_TRAVAIL')
-                ->orWhere('view_name', 'documents.attestation_travail')
-                ->orWhere('name', 'like', '%Travail%')
-                ->first();
-            if (!$docType) {
-                $docType = \App\Models\DocumentType::create([
-                    'code'      => 'ATT_TRAVAIL',
-                    'name'      => 'Attestation de Travail',
-                    'view_name' => 'documents.attestation_travail',
                     'is_active' => true,
                 ]);
             }

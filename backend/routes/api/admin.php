@@ -612,6 +612,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/document-requests', [AdminDocumentRequestController::class, 'index']);
     Route::post('/admin/document-requests/quick-generate', [AdminDocumentRequestController::class, 'quickGenerate']);
     Route::match(['put', 'patch'], '/admin/document-requests/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
+    Route::match(['put', 'patch'], '/admin/professor-document-requests/{id}/status', [AdminDocumentRequestController::class, 'updateProfessorStatus']);
     Route::post('/admin/document-requests/{documentRequest}/generate', [AdminDocumentRequestController::class, 'generate']);
     Route::get('/admin/document-requests/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
     Route::get('/admin/document-requests/{documentRequest}/preview', [AdminDocumentRequestController::class, 'preview']);
