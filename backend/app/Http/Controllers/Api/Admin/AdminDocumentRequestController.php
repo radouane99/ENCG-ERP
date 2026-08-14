@@ -78,6 +78,10 @@ class AdminDocumentRequestController extends Controller
                     'role'            => 'Enseignant',
                     'type'            => $typeLabel,
                     'motif'           => $pDoc->purpose . ($pDoc->destination ? " (Destination: {$pDoc->destination})" : ''),
+                    'destination'     => $pDoc->destination,
+                    'start_date'      => $pDoc->start_date?->format('Y-m-d'),
+                    'end_date'        => $pDoc->end_date?->format('Y-m-d'),
+                    'has_date_anomaly'=> ($pDoc->start_date && $pDoc->end_date && $pDoc->start_date->gt($pDoc->end_date)),
                     'time'            => $pDoc->created_at?->diffForHumans(),
                     'status'          => $status,
                     'reason'          => $pDoc->admin_notes,
@@ -100,6 +104,29 @@ class AdminDocumentRequestController extends Controller
                 'approved' => $requests->where('status', 'approved')->count(),
                 'rejected' => $requests->where('status', 'rejected')->count(),
             ],
+        ]);
+    }
+
+    /**
+     * Corriger les dates d'une demande de professeur (Anomalie Dates Déplacement).
+     */
+    public function correctDates(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $pDoc = \App\Models\ProfessorDocumentRequest::findOrFail($id);
+        $pDoc->update([
+            'start_date' => $validated['start_date'],
+            'end_date'   => $validated['end_date'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dates de mission corrigées et validées avec succès.',
+            'data'    => $pDoc,
         ]);
     }
 

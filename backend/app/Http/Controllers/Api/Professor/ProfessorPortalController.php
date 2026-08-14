@@ -438,13 +438,14 @@ class ProfessorPortalController extends Controller
     public function storeDocumentRequest(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'document_type'  => 'required|string',
-            'purpose'        => 'required|string',
-            'destination'    => 'nullable|string',
-            'start_date'     => 'nullable|string',
-            'end_date'       => 'nullable|string',
-            'transport_mode' => 'nullable|string',
-            'notes'          => 'nullable|string',
+            'document_type'        => 'required|string',
+            'purpose'              => 'required|string',
+            'destination'          => 'nullable|string',
+            'start_date'           => 'nullable|date',
+            'end_date'             => 'nullable|date|after_or_equal:start_date',
+            'transport_mode'       => 'nullable|string',
+            'vehicle_registration' => 'nullable|string',
+            'notes'                => 'nullable|string',
         ]);
 
         $user = $request->user();
@@ -462,6 +463,19 @@ class ProfessorPortalController extends Controller
             default                => ucwords(str_replace('_', ' ', $validated['document_type']))
         };
 
+        // Format transport mode
+        $transportMode = $validated['transport_mode'] ?? 'voiture_personnelle';
+        if ($transportMode === 'voiture_personnelle' || str_contains(strtolower($transportMode), 'voiture')) {
+            $immat = !empty($validated['vehicle_registration']) ? strtoupper($validated['vehicle_registration']) : 'Non spécifiée';
+            $finalTransport = "Voiture Personnelle (Immatriculation : {$immat})";
+        } elseif ($transportMode === 'train') {
+            $finalTransport = "Train ONCF (Al Boraq / Al Atlas)";
+        } elseif ($transportMode === 'avion') {
+            $finalTransport = "Transport Aérien (Vol Régulier)";
+        } else {
+            $finalTransport = $validated['transport_mode'] ?? 'Voiture Personnelle / Train ONCF / Aérien';
+        }
+
         // Create Real Database Record with pending status
         $doc = \App\Models\ProfessorDocumentRequest::create([
             'user_id'        => $user->id,
@@ -472,7 +486,7 @@ class ProfessorPortalController extends Controller
             'destination'    => $validated['destination'] ?? null,
             'start_date'     => !empty($validated['start_date']) ? $validated['start_date'] : null,
             'end_date'       => !empty($validated['end_date']) ? $validated['end_date'] : null,
-            'transport_mode' => $validated['transport_mode'] ?? null,
+            'transport_mode' => $finalTransport,
             'status'         => 'pending',
             'signed_by'      => null,
             'signed_at'      => null,
@@ -522,32 +536,45 @@ class ProfessorPortalController extends Controller
      */
     public function downloadDocumentPdf(Request $request, int $id)
     {
-        $user = $request->user();
+        // Retrieve real DB record if exists with user and department
+        $doc = \App\Models\ProfessorDocumentRequest::with(['user.professor.department'])->find($id);
+
+        $user = $doc?->user ?? $request->user();
         $prof = $user?->professor;
         $profLastName = $user ? strtoupper($user->last_name ?? '') : 'EL AMRANI';
         $profFirstName = $user ? ucfirst($user->first_name ?? '') : 'Abdelhak';
         $deptName = $prof?->department?->name ?? 'Sciences de Gestion';
 
-        // Retrieve real DB record if exists
-        $doc = \App\Models\ProfessorDocumentRequest::find($id);
-
         $trackingCode = $doc?->tracking_code ?? ("DOC-PROF-" . date('Y') . "-" . str_pad($id, 4, '0', STR_PAD_LEFT));
         $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
 
+        // Real Vector SVG QR Code (compatible with DomPDF and fully offline without external API)
         $qrBase64 = '';
         if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
             try {
-                $qrRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(100)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/png;base64,' . base64_encode($qrRaw);
-            } catch (\Throwable $e) {}
-        }
-        if (empty($qrBase64)) {
-            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("QR Code Error: " . $e->getMessage());
+            }
         }
 
         $logoPath = public_path('logo-encg.png');
         if (!file_exists($logoPath)) $logoPath = public_path('images/encg_logo.png');
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $startDate = $doc?->start_date;
+        $endDate = $doc?->end_date;
+
+        // Auto-fix inverted dates if start > end
+        if ($startDate && $endDate && $startDate->gt($endDate)) {
+            $temp = $startDate;
+            $startDate = $endDate;
+            $endDate = $temp;
+        }
+
+        $startDateStr = $startDate ? $startDate->format('d/m/Y') : now()->format('d/m/Y');
+        $endDateStr = $endDate ? $endDate->format('d/m/Y') : ($startDate ? $startDate->copy()->addDays(3)->format('d/m/Y') : now()->addDays(3)->format('d/m/Y'));
 
         // If Attestation de Travail
         if ($doc?->document_type === 'attestation_travail') {
@@ -570,17 +597,22 @@ class ProfessorPortalController extends Controller
 
         // Default: Ordre de Mission
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.ordre_mission', [
+            'trackingCode'   => $trackingCode,
+            'signatoryTitle' => $doc?->signed_by ?? 'LE SECRÉTAIRE GÉNÉRAL',
             'professor' => (object)[
                 'id'         => $prof?->id ?? 1,
                 'first_name' => $profFirstName,
                 'last_name'  => $profLastName,
+                'cin'        => $prof?->cin ?? ($user?->cin ?? 'CD542190'),
                 'department' => (object)['name' => $deptName],
+                'specialty'  => 'Finance d\'Entreprise & Gouvernance',
             ],
             'mission' => [
-                'destination' => $doc?->destination ?? 'Casablanca / Rabat (Maroc)',
-                'start_date'  => $doc?->start_date ? $doc->start_date->format('d/m/Y') : now()->format('d/m/Y'),
-                'end_date'    => $doc?->end_date ? $doc->end_date->format('d/m/Y') : now()->addDays(3)->format('d/m/Y'),
-                'motif'       => $doc?->purpose ?? 'Participation au Colloque International de Finance & Jury de Thèse de Doctorat',
+                'destination'    => $doc?->destination ?? 'Casablanca / Rabat (Maroc)',
+                'start_date'     => $startDateStr,
+                'end_date'       => $endDateStr,
+                'motif'          => $doc?->purpose ?? 'Participation au Colloque International de Finance & Jury de Thèse de Doctorat',
+                'transport_mode' => $doc?->transport_mode ?? 'Voiture Personnelle / Train ONCF (Al Boraq / Al Atlas) / Aérien',
             ],
             'date'       => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
             'logoBase64' => $logoBase64,

@@ -87,6 +87,11 @@ export default function ProfessorDocumentsPage() {
       return;
     }
 
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      toast.error('La date de fin ne peut pas être antérieure à la date de début.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await api.post('/professor-portal/documents', {
