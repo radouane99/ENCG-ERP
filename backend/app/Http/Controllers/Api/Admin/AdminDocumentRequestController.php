@@ -168,7 +168,7 @@ class AdminDocumentRequestController extends Controller
             'admin_notes' => $validated['rejection_reason'] ?? null,
         ]);
 
-        $user = $pDoc->user;
+        $user = $pDoc->user ?? \App\Models\User::find($pDoc->user_id);
         $typeLabel = match($pDoc->document_type) {
             'attestation_travail'  => 'Attestation de Travail',
             'ordre_de_mission'     => 'Ordre de Mission',
@@ -177,45 +177,92 @@ class AdminDocumentRequestController extends Controller
             default                => ucwords(str_replace('_', ' ', $pDoc->document_type))
         };
 
-        if ($user && $newStatus === 'ready') {
-            // 1. In-App Notification
-            try {
-                \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                    'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                    'type'            => 'App\Notifications\ProfessorDocumentApproved',
-                    'notifiable_type' => 'App\Models\User',
-                    'notifiable_id'   => $user->id,
-                    'data'            => json_encode([
-                        'title'         => '✅ Document Officiel Validé & Signé',
-                        'message'       => "Votre {$typeLabel} (Réf: {$pDoc->tracking_code}) a été officiellement approuvée et signée par le Secrétaire Général.",
-                        'type'          => 'document_approved',
-                        'tracking_code' => $pDoc->tracking_code,
-                        'pdf_url'       => "/api/professor-portal/documents/{$pDoc->id}/pdf",
-                    ]),
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
-                ]);
-            } catch (\Throwable $e) {}
-
-            // 2. Email via Resend Transport
-            if (!empty($user->email)) {
+        if ($user) {
+            if ($newStatus === 'ready') {
+                // 1. In-App Notification (Approved & Signed)
                 try {
-                    $profName = "{$user->first_name} {$user->last_name}";
-                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
-                        'professor_name' => $profName,
-                        'document_title' => $typeLabel,
-                        'tracking_code'  => $pDoc->tracking_code,
-                        'purpose'        => $pDoc->purpose,
-                        'signer'         => 'Secrétaire Général ENCG Fès',
-                        'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
-                    ]));
-                } catch (\Throwable $e) {}
+                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                        'type'            => 'App\Notifications\SystemNotification',
+                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_id'   => $user->id,
+                        'data'            => json_encode([
+                            'title'         => "✅ {$typeLabel} Validée & Signée",
+                            'message'       => "Votre {$typeLabel} (Réf: {$pDoc->tracking_code}) a été officiellement validée et signée par le Secrétaire Général. Elle est prête au téléchargement.",
+                            'type'          => 'document_approved',
+                            'action_url'    => '/professor/documents',
+                            'tracking_code' => $pDoc->tracking_code,
+                        ]),
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Professor Notification Approved Error: " . $e->getMessage());
+                }
+
+                // 2. Email via Resend Transport
+                if (!empty($user->email)) {
+                    try {
+                        $profName = "{$user->first_name} {$user->last_name}";
+                        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
+                            'professor_name' => $profName,
+                            'document_title' => $typeLabel,
+                            'tracking_code'  => $pDoc->tracking_code,
+                            'purpose'        => $pDoc->purpose,
+                            'signer'         => 'Secrétaire Général ENCG Fès',
+                            'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
+                        ]));
+                    } catch (\Throwable $e) {}
+                }
+            } elseif ($newStatus === 'rejected') {
+                // In-App Notification (Rejected)
+                try {
+                    $reason = !empty($validated['rejection_reason']) ? $validated['rejection_reason'] : 'Motif non précisé.';
+                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                        'type'            => 'App\Notifications\SystemNotification',
+                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_id'   => $user->id,
+                        'data'            => json_encode([
+                            'title'         => "❌ Demande {$typeLabel} Rejetée",
+                            'message'       => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été rejetée. Motif : {$reason}",
+                            'type'          => 'system',
+                            'action_url'    => '/professor/documents',
+                            'tracking_code' => $pDoc->tracking_code,
+                        ]),
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Professor Notification Rejected Error: " . $e->getMessage());
+                }
+            } elseif ($newStatus === 'pending') {
+                // In-App Notification (Reset to Pending)
+                try {
+                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                        'type'            => 'App\Notifications\SystemNotification',
+                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_id'   => $user->id,
+                        'data'            => json_encode([
+                            'title'         => "🔄 Demande {$typeLabel} Remise en Attente",
+                            'message'       => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été remise en attente d'instruction.",
+                            'type'          => 'system',
+                            'action_url'    => '/professor/documents',
+                            'tracking_code' => $pDoc->tracking_code,
+                        ]),
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Professor Notification Pending Error: " . $e->getMessage());
+                }
             }
         }
 
         return response()->json([
             'success' => true,
-            'message' => $newStatus === 'ready' ? 'Demande approuvée avec signature numérique et notification envoyée.' : 'Demande mise à jour.',
+            'message' => $newStatus === 'ready' ? 'Demande approuvée avec signature numérique et notification envoyée.' : 'Demande mise à jour et notification envoyée.',
             'data'    => $pDoc,
         ]);
     }

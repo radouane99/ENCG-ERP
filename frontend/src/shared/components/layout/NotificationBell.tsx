@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bell, User, BookOpen, CreditCard, ExternalLink, Calendar as CalendarIcon, Check, CheckCircle2 } from 'lucide-react';
+import { Bell, User, BookOpen, CreditCard, ExternalLink, Calendar as CalendarIcon, Check, CheckCircle2, FileText } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
+import { toast } from 'sonner';
 
 interface Notification {
   id: string;
@@ -13,6 +14,7 @@ interface Notification {
     message: string;
     type?: string;
     action_url?: string;
+    tracking_code?: string;
   };
   read_at: string | null;
   created_at: string;
@@ -24,12 +26,31 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadCountRef = useRef<number | null>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isBackgroundPoll = false) => {
     try {
       const res = await api.get('/notifications', { suppressToast: true } as any);
-      setNotifications(res.data?.data || []);
-      setUnreadCount(res.data?.meta?.unread_count || 0);
+      const data: Notification[] = res.data?.data || [];
+      const newUnreadCount: number = res.data?.meta?.unread_count || 0;
+
+      // If background poll detected new notification arrival, trigger toast alert
+      if (isBackgroundPoll && prevUnreadCountRef.current !== null && newUnreadCount > prevUnreadCountRef.current) {
+        const latestUnread = data.find(n => n.read_at === null);
+        if (latestUnread) {
+          toast.info(latestUnread.data.title || 'Nouvelle Notification Reçue', {
+            description: latestUnread.data.message,
+            action: latestUnread.data.action_url ? {
+              label: 'Consulter',
+              onClick: () => navigate(latestUnread.data.action_url!)
+            } : undefined
+          });
+        }
+      }
+
+      prevUnreadCountRef.current = newUnreadCount;
+      setNotifications(data);
+      setUnreadCount(newUnreadCount);
     } catch {
       setNotifications([]);
       setUnreadCount(0);
@@ -37,10 +58,12 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    fetchNotifications();
-    // In a real app, you might want to poll or use WebSockets (Laravel Reverb)
-    // const interval = setInterval(fetchNotifications, 60000);
-    // return () => clearInterval(interval);
+    fetchNotifications(false);
+    // Real-Time Polling every 5 seconds
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const getIcon = (type: string) => {
@@ -48,6 +71,9 @@ export function NotificationBell() {
       case 'academic': return <BookOpen className="w-4 h-4 text-blue-500" />;
       case 'financial': return <CreditCard className="w-4 h-4 text-emerald-500" />;
       case 'system': return <Bell className="w-4 h-4 text-amber-500" />;
+      case 'document_request':
+      case 'document_pending':
+      case 'document_approved': return <FileText className="w-4 h-4 text-indigo-500" />;
       default: return <User className="w-4 h-4 text-purple-500" />;
     }
   };
@@ -76,11 +102,14 @@ export function NotificationBell() {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="relative p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+        title="Centre de notifications"
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-card animate-pulse" />
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full ring-2 ring-card flex items-center justify-center animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
         )}
       </button>
 

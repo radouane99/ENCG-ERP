@@ -50,11 +50,12 @@ export default function ProfessorDocumentsPage() {
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [transportMode, setTransportMode] = useState('Voiture Personnelle');
+  const [transportMode, setTransportMode] = useState<'voiture_personnelle' | 'train' | 'avion' | 'autre'>('voiture_personnelle');
+  const [vehicleRegistration, setVehicleRegistration] = useState('');
 
-  const fetchDocumentsData = async () => {
+  const fetchDocumentsData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.get('/professor-portal/documents');
       if (res.data?.data) {
         setAvailableTypes(res.data.data.available_types || []);
@@ -63,12 +64,17 @@ export default function ProfessorDocumentsPage() {
     } catch (err) {
       console.error('Error fetching documents:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDocumentsData();
+    fetchDocumentsData(false);
+    // Background polling every 6 seconds to update status in real-time
+    const interval = setInterval(() => {
+      fetchDocumentsData(true);
+    }, 6000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOpenRequestModal = (typeId: string) => {
@@ -77,6 +83,8 @@ export default function ProfessorDocumentsPage() {
     setDestination('');
     setStartDate('');
     setEndDate('');
+    setTransportMode('voiture_personnelle');
+    setVehicleRegistration('');
     setShowModal(true);
   };
 
@@ -92,6 +100,13 @@ export default function ProfessorDocumentsPage() {
       return;
     }
 
+    if (selectedType === 'ordre_de_mission' && transportMode === 'voiture_personnelle') {
+      if (!vehicleRegistration.trim()) {
+        toast.error('Veuillez obligatoirement renseigner le numéro d\'immatriculation du véhicule personnel.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const res = await api.post('/professor-portal/documents', {
@@ -101,6 +116,7 @@ export default function ProfessorDocumentsPage() {
         start_date: startDate || null,
         end_date: endDate || null,
         transport_mode: selectedType === 'ordre_de_mission' ? transportMode : null,
+        vehicle_registration: selectedType === 'ordre_de_mission' ? vehicleRegistration : null,
       });
 
       if (res.data?.data) {
@@ -108,11 +124,12 @@ export default function ProfessorDocumentsPage() {
       }
 
       toast.success("✅ Demande de document transmise avec succès !", {
-        description: "Votre document officiel est validé et prêt au téléchargement."
+        description: "Votre demande est en cours de traitement par l'administration."
       });
       setShowModal(false);
       setPurpose('');
       setDestination('');
+      setVehicleRegistration('');
     } catch (err) {
       toast.error('Erreur lors de la soumission de la demande.');
     } finally {
@@ -397,6 +414,40 @@ export default function ProfessorDocumentsPage() {
                         className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Moyen de Transport *
+                      </label>
+                      <select
+                        value={transportMode}
+                        onChange={(e) => setTransportMode(e.target.value as any)}
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                      >
+                        <option value="voiture_personnelle">🚗 Voiture Personnelle</option>
+                        <option value="train">🚆 Train ONCF (Al Boraq / Al Atlas)</option>
+                        <option value="avion">✈️ Transport Aérien (Avion)</option>
+                        <option value="autre">🚌 Transport Public / Autre</option>
+                      </select>
+                    </div>
+
+                    {transportMode === 'voiture_personnelle' && (
+                      <div className="animate-in fade-in zoom-in-95">
+                        <label className="block text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-2">
+                          Immatriculation du Véhicule *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={vehicleRegistration}
+                          onChange={(e) => setVehicleRegistration(e.target.value)}
+                          placeholder="Ex : 12345-A-15 ou 67890 | B | 26"
+                          className="w-full px-4 py-2.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-sm font-mono font-bold text-indigo-900 focus:outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                        />
+                      </div>
+                    )}
                   </div>
                 </>
               )}

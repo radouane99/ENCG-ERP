@@ -3,18 +3,16 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SystemNotification extends Notification implements ShouldQueue
+class SystemNotification extends Notification
 {
     use Queueable;
 
-    public $title;
-    public $message;
-    public $type;
-    public $actionUrl;
+    public string $title;
+    public string $message;
+    public string $type;
+    public ?string $actionUrl;
 
     /**
      * Create a new notification instance.
@@ -34,24 +32,7 @@ class SystemNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        $mail = (new MailMessage)
-            ->subject($this->title)
-            ->greeting('Bonjour ' . ($notifiable->name ?? ''))
-            ->line($this->message);
-
-        if ($this->actionUrl) {
-            $mail->action('Consulter', url($this->actionUrl));
-        }
-
-        return $mail->line('Merci d\'utiliser le Portail ENCG.');
+        return ['database'];
     }
 
     /**
@@ -62,9 +43,9 @@ class SystemNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => $this->title,
-            'message' => $this->message,
-            'type' => $this->type,
+            'title'      => $this->title,
+            'message'    => $this->message,
+            'type'       => $this->type,
             'action_url' => $this->actionUrl,
         ];
     }

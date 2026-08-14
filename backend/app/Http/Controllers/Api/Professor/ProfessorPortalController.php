@@ -496,20 +496,57 @@ class ProfessorPortalController extends Controller
         try {
             \Illuminate\Support\Facades\DB::table('notifications')->insert([
                 'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                'type'            => 'App\Notifications\ProfessorDocumentSubmitted',
+                'type'            => 'App\Notifications\SystemNotification',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $user->id,
                 'data'            => json_encode([
                     'title'         => '⏳ Demande de Document Transmise',
                     'message'       => "Votre demande de {$typeLabel} (Réf: {$trackingCode}) a été transmise au Secrétariat Général. Elle est en attente de validation.",
-                    'type'          => 'document_pending',
+                    'type'          => 'system',
+                    'action_url'    => '/professor/documents',
                     'tracking_code' => $trackingCode,
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Notification DB Error: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning("Professor Notification DB Error: " . $e->getMessage());
+        }
+
+        // 2. Dispatch In-App Real-Time Notification for all Admins & Secrétaire Général
+        try {
+            $profFullName = "Pr. " . strtoupper($user->last_name ?? '') . " " . ucfirst($user->first_name ?? '');
+            
+            // Find all admin / SG / Scolarité users
+            $admins = \App\Models\User::where(function($query) {
+                $query->whereHas('roles', function($q) {
+                    $q->whereIn('name', ['admin', 'super-admin', 'secretaire-general', 'service-scolarite', 'rh', 'direction']);
+                })->orWhere('email', 'like', '%admin%');
+            })->get();
+
+            if ($admins->isEmpty()) {
+                $admins = \App\Models\User::where('is_active', true)->where('id', '!=', $user->id)->take(5)->get();
+            }
+
+            foreach ($admins as $adminUser) {
+                \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                    'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                    'type'            => 'App\Notifications\SystemNotification',
+                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_id'   => $adminUser->id,
+                    'data'            => json_encode([
+                        'title'       => "📑 Demande Enseignant : {$typeLabel}",
+                        'message'     => "{$profFullName} a soumis une demande ({$typeLabel}) — Réf: {$trackingCode}. En attente de signature.",
+                        'type'        => 'system',
+                        'action_url'  => '/admin/guichet',
+                        'tracking_code' => $trackingCode,
+                    ]),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Admin Notification DB Error: " . $e->getMessage());
         }
 
         return response()->json([
@@ -579,15 +616,17 @@ class ProfessorPortalController extends Controller
         // If Attestation de Travail
         if ($doc?->document_type === 'attestation_travail') {
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.attestation_travail', [
+                'trackingCode'   => $trackingCode,
+                'signatoryTitle' => $doc?->signed_by ?? 'LE SECRÉTAIRE GÉNÉRAL DE L\'ENCG FÈS',
                 'professor' => (object)[
                     'id'         => $prof?->id ?? 1,
                     'first_name' => $profFirstName,
                     'last_name'  => $profLastName,
-                    'cin'        => $prof?->cin ?? ($user?->cin ?? 'CD542190'),
+                    'cin'        => $user?->cin ?? ($prof?->cin ?? ($user?->cne ?? 'Non renseigné')),
                     'department' => (object)['name' => $deptName],
                     'specialty'  => 'Finance d\'Entreprise & Gouvernance',
                 ],
-                'year'       => '2026/2027',
+                'year'       => '2025/2026',
                 'date'       => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
                 'logoBase64' => $logoBase64,
                 'qrBase64'   => $qrBase64,
@@ -598,12 +637,12 @@ class ProfessorPortalController extends Controller
         // Default: Ordre de Mission
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.ordre_mission', [
             'trackingCode'   => $trackingCode,
-            'signatoryTitle' => $doc?->signed_by ?? 'LE SECRÉTAIRE GÉNÉRAL',
+            'signatoryTitle' => $doc?->signed_by ?? 'LE SECRÉTAIRE GÉNÉRAL DE L\'ENCG FÈS',
             'professor' => (object)[
                 'id'         => $prof?->id ?? 1,
                 'first_name' => $profFirstName,
                 'last_name'  => $profLastName,
-                'cin'        => $prof?->cin ?? ($user?->cin ?? 'CD542190'),
+                'cin'        => $user?->cin ?? ($prof?->cin ?? ($user?->cne ?? 'Non renseigné')),
                 'department' => (object)['name' => $deptName],
                 'specialty'  => 'Finance d\'Entreprise & Gouvernance',
             ],
