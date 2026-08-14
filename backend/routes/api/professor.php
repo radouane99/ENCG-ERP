@@ -75,7 +75,10 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/workload', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getWorkloadSummary']);
     Route::get('/professor-portal/research', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getResearchDashboard']);
     Route::get('/professor-portal/double-grading', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDoubleGrading']);
-    Route::post('/professor/ai/voice-textbook', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'voiceTextbookStructure']);
+    // Documents & Attestations RH
+    Route::get('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDocumentRequests']);
+    Route::post('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'storeDocumentRequest']);
+    Route::get('/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);
     
     // Surveillances
     Route::get('/professor/my-surveillances', [\App\Http\Controllers\Api\ConvocationController::class, 'mySurveillances']);

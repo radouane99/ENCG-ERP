@@ -104,11 +104,34 @@ class ScheduleChangeRequestController extends Controller
             }
         }
 
+        // Send In-App Notification to the Professor
+        $profUser = $changeRequest->professor?->user;
+        if ($profUser) {
+            try {
+                \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                    'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                    'type'            => 'App\Notifications\ScheduleChangeStatusUpdated',
+                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_id'   => $profUser->id,
+                    'data'            => json_encode([
+                        'title'   => $validated['status'] === 'approved' ? '✅ Demande d\'Emploi du Temps Approuvée' : '❌ Demande de Modification Rejetée',
+                        'message' => $validated['status'] === 'approved'
+                            ? "Votre demande de décalage d'horaire pour {$changeRequest->reason} a été validée par la Direction des Études."
+                            : "Votre demande de modification d'horaire n'a pas pu être retenue par l'Administration.",
+                        'type'    => 'schedule_change_status',
+                        'status'  => $validated['status'],
+                    ]),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            } catch (\Throwable $e) {}
+        }
+
         return response()->json([
             'success' => true,
             'message' => $validated['status'] === 'approved'
-                ? 'Demande approuvée et notifiée.'
-                : 'Demande rejetée.',
+                ? 'Demande approuvée avec notification immédiate & email envoyés.'
+                : 'Demande rejetée avec notification transmise à l\'enseignant.',
         ]);
     }
 

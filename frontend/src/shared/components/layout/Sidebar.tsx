@@ -189,6 +189,7 @@ const navigation: (NavItem | NavGroup)[] = [
     items: [
       { label: 'Recherche & Thèses CEDOC', labelAr: 'البحث العلمي وأطروحات الدكتوراه', href: '/professor/research', icon: GraduationCap, badge: 'CEDOC', roles: ['professor', 'department-head', 'filiere-head'] },
       { label: 'Charge Statutaire & Vacations', labelAr: 'الحصص النظامية ومستحقات الساعات', href: '/professor/workload', icon: Clock, badge: 'RH', roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
+      { label: 'Guichet Documents RH & Ordres de Mission', labelAr: 'شباك الوثائق الإدارية وأوامر المهمة', href: '/professor/documents', icon: Stamp, badge: 'RH', roles: ['professor', 'vacataire', 'department-head', 'filiere-head'] },
     ]
   },
   {

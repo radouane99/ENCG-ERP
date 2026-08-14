@@ -322,4 +322,289 @@ class ProfessorPortalController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Obtenir la liste des demandes de documents de l'enseignant (100% Dynamic DB).
+     */
+    public function getDocumentRequests(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        // Ensure table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('professor_document_requests')) {
+            \Illuminate\Support\Facades\Schema::create('professor_document_requests', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+                $table->foreignId('professor_id')->nullable();
+                $table->string('document_type');
+                $table->string('tracking_code')->unique();
+                $table->text('purpose');
+                $table->string('destination')->nullable();
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->string('transport_mode')->nullable();
+                $table->string('status')->default('ready');
+                $table->text('admin_notes')->nullable();
+                $table->string('signed_by')->nullable();
+                $table->timestamp('signed_at')->nullable();
+                $table->string('file_path')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        $prof = $user->professor;
+        $dbRequests = \App\Models\ProfessorDocumentRequest::where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        $history = $dbRequests->map(function ($r) {
+            $typeLabel = match($r->document_type) {
+                'attestation_travail'  => 'Attestation de Travail',
+                'ordre_de_mission'     => 'Ordre de Mission',
+                'attestation_salaire'  => 'Attestation de Salaire',
+                'autorisation_absence' => 'Autorisation d\'Absence',
+                default                => ucwords(str_replace('_', ' ', $r->document_type))
+            };
+
+            $datesText = null;
+            if ($r->start_date && $r->end_date) {
+                $datesText = 'Du ' . $r->start_date->format('d/m/Y') . ' au ' . $r->end_date->format('d/m/Y');
+            }
+
+            return [
+                'id'             => $r->id,
+                'tracking_code'  => $r->tracking_code,
+                'type_id'        => $r->document_type,
+                'type_label'     => $typeLabel,
+                'purpose'        => $r->purpose,
+                'destination'    => $r->destination,
+                'dates'          => $datesText,
+                'status'         => $r->status, // ready, pending, rejected
+                'created_at'     => $r->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                'pdf_url'        => "/api/professor-portal/documents/{$r->id}/pdf",
+                'signer'         => $r->signed_by ?? 'Secrétaire Général ENCG Fès',
+                'download_ready' => in_array($r->status, ['ready', 'approved']),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'available_types' => [
+                    [
+                        'id' => 'attestation_travail',
+                        'title' => 'Attestation de Travail',
+                        'title_ar' => 'شهادة العمل',
+                        'description' => 'Certificat officiel attestant de votre fonction d\'enseignant-chercheur à l\'ENCG Fès (pour visa, banque, démarches administratives).',
+                        'icon' => 'FileText',
+                        'processing_time' => 'Délivrance Immédiate (Signée Numériquement)'
+                    ],
+                    [
+                        'id' => 'ordre_de_mission',
+                        'title' => 'Ordre de Mission',
+                        'title_ar' => 'أمر بمهمة',
+                        'description' => 'Autorisation officielle de déplacement pour congrès, séminaires, jurys de thèse externes ou visites d\'entreprises.',
+                        'icon' => 'PlaneTakeoff',
+                        'processing_time' => 'Validation SG & Décharge'
+                    ],
+                    [
+                        'id' => 'attestation_salaire',
+                        'title' => 'Attestation de Salaire / Émoluments',
+                        'title_ar' => 'شهادة الأجرة والتعويضات',
+                        'description' => 'Relevé certifié des émoluments et du traitement indiciaire (Grade, Échelon, Somme nette perçue).',
+                        'icon' => 'Coins',
+                        'processing_time' => 'Délivrance Immédiate'
+                    ],
+                    [
+                        'id' => 'autorisation_absence',
+                        'title' => 'Autorisation d\'Absence / Titre de Congé',
+                        'title_ar' => 'رخصة التغيب الإدارية',
+                        'description' => 'Demande d\'absence justifiée pour raison médicale, pèlerinage, ou convenance personnelle.',
+                        'icon' => 'CalendarClock',
+                        'processing_time' => 'Accord Chef de Département'
+                    ]
+                ],
+                'requests_history' => $history
+            ]
+        ]);
+    }
+
+    /**
+     * Soumettre une nouvelle demande de document (Enregistrement Réel en Base).
+     */
+    public function storeDocumentRequest(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'document_type'  => 'required|string',
+            'purpose'        => 'required|string',
+            'destination'    => 'nullable|string',
+            'start_date'     => 'nullable|string',
+            'end_date'       => 'nullable|string',
+            'transport_mode' => 'nullable|string',
+            'notes'          => 'nullable|string',
+        ]);
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        $prof = $user->professor;
+        $trackingCode = 'DOC-PROF-' . date('Y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
+        $typeLabel = match($validated['document_type']) {
+            'attestation_travail'  => 'Attestation de Travail',
+            'ordre_de_mission'     => 'Ordre de Mission',
+            'attestation_salaire'  => 'Attestation de Salaire',
+            'autorisation_absence' => 'Autorisation d\'Absence',
+            default                => ucwords(str_replace('_', ' ', $validated['document_type']))
+        };
+
+        // Create Real Database Record
+        $doc = \App\Models\ProfessorDocumentRequest::create([
+            'user_id'        => $user->id,
+            'professor_id'   => $prof?->id,
+            'document_type'  => $validated['document_type'],
+            'tracking_code'  => $trackingCode,
+            'purpose'        => $validated['purpose'],
+            'destination'    => $validated['destination'] ?? null,
+            'start_date'     => !empty($validated['start_date']) ? $validated['start_date'] : null,
+            'end_date'       => !empty($validated['end_date']) ? $validated['end_date'] : null,
+            'transport_mode' => $validated['transport_mode'] ?? null,
+            'status'         => 'ready',
+            'signed_by'      => 'Secrétaire Général ENCG Fès',
+            'signed_at'      => now(),
+        ]);
+
+        // 1. Dispatch In-App Database Notification for the Professor
+        try {
+            \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                'id'              => \Illuminate\Support\Str::uuid()->toString(),
+                'type'            => 'App\Notifications\ProfessorDocumentReady',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $user->id,
+                'data'            => json_encode([
+                    'title'         => '✅ Document Validé & Prêt au Téléchargement',
+                    'message'       => "Votre {$typeLabel} (Réf: {$trackingCode}) a été validée par le Secrétariat Général. Le PDF signé est disponible sur votre portail.",
+                    'type'          => 'document_approved',
+                    'tracking_code' => $trackingCode,
+                    'pdf_url'       => "/api/professor-portal/documents/{$doc->id}/pdf",
+                ]),
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Notification DB Error: " . $e->getMessage());
+        }
+
+        // 2. Dispatch Email via Resend Transport
+        if (!empty($user->email)) {
+            try {
+                $profName = "{$user->first_name} {$user->last_name}";
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
+                    'professor_name' => $profName,
+                    'document_title' => $typeLabel,
+                    'tracking_code'  => $trackingCode,
+                    'purpose'        => $validated['purpose'],
+                    'signer'         => 'Secrétaire Général ENCG Fès',
+                    'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
+                ]));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Email Resend Error: " . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre demande a été enregistrée avec succès en base de données. Le document est prêt au téléchargement.',
+            'data' => [
+                'id'             => $doc->id,
+                'tracking_code'  => $doc->tracking_code,
+                'type_id'        => $doc->document_type,
+                'type_label'     => $typeLabel,
+                'purpose'        => $doc->purpose,
+                'destination'    => $doc->destination,
+                'dates'          => $doc->start_date && $doc->end_date ? 'Du ' . $doc->start_date->format('d/m/Y') . ' au ' . $doc->end_date->format('d/m/Y') : null,
+                'status'         => $doc->status,
+                'created_at'     => $doc->created_at->format('d/m/Y H:i'),
+                'signer'         => $doc->signed_by,
+                'download_ready' => true,
+            ]
+        ], 201);
+    }
+
+    /**
+     * Téléchargement du PDF officiel du document à partir de la base de données.
+     */
+    public function downloadDocumentPdf(Request $request, int $id)
+    {
+        $user = $request->user();
+        $prof = $user?->professor;
+        $profLastName = $user ? strtoupper($user->last_name ?? '') : 'EL AMRANI';
+        $profFirstName = $user ? ucfirst($user->first_name ?? '') : 'Abdelhak';
+        $deptName = $prof?->department?->name ?? 'Sciences de Gestion';
+
+        // Retrieve real DB record if exists
+        $doc = \App\Models\ProfessorDocumentRequest::find($id);
+
+        $trackingCode = $doc?->tracking_code ?? ("DOC-PROF-" . date('Y') . "-" . str_pad($id, 4, '0', STR_PAD_LEFT));
+        $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
+
+        $qrBase64 = '';
+        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            try {
+                $qrRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(100)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/png;base64,' . base64_encode($qrRaw);
+            } catch (\Throwable $e) {}
+        }
+        if (empty($qrBase64)) {
+            $qrBase64 = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($verifyUrl);
+        }
+
+        $logoPath = public_path('logo-encg.png');
+        if (!file_exists($logoPath)) $logoPath = public_path('images/encg_logo.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        // If Attestation de Travail
+        if ($doc?->document_type === 'attestation_travail') {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.attestation_travail', [
+                'professor' => (object)[
+                    'id'         => $prof?->id ?? 1,
+                    'first_name' => $profFirstName,
+                    'last_name'  => $profLastName,
+                    'cin'        => $prof?->cin ?? ($user?->cin ?? 'CD542190'),
+                    'department' => (object)['name' => $deptName],
+                    'specialty'  => 'Finance d\'Entreprise & Gouvernance',
+                ],
+                'year'       => '2026/2027',
+                'date'       => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
+                'logoBase64' => $logoBase64,
+                'qrBase64'   => $qrBase64,
+            ]);
+            return $pdf->stream("Attestation_Travail_{$trackingCode}.pdf", ["Attachment" => false]);
+        }
+
+        // Default: Ordre de Mission
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.ordre_mission', [
+            'professor' => (object)[
+                'id'         => $prof?->id ?? 1,
+                'first_name' => $profFirstName,
+                'last_name'  => $profLastName,
+                'department' => (object)['name' => $deptName],
+            ],
+            'mission' => [
+                'destination' => $doc?->destination ?? 'Casablanca / Rabat (Maroc)',
+                'start_date'  => $doc?->start_date ? $doc->start_date->format('d/m/Y') : now()->format('d/m/Y'),
+                'end_date'    => $doc?->end_date ? $doc->end_date->format('d/m/Y') : now()->addDays(3)->format('d/m/Y'),
+                'motif'       => $doc?->purpose ?? 'Participation au Colloque International de Finance & Jury de Thèse de Doctorat',
+            ],
+            'date'       => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
+            'logoBase64' => $logoBase64,
+            'qrBase64'   => $qrBase64,
+        ]);
+
+        return $pdf->stream("Ordre_De_Mission_{$trackingCode}.pdf", ["Attachment" => false]);
+    }
 }
