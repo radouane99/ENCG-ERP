@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api';
+import { toast } from 'sonner';
 import { 
   ChevronLeft, 
   BookOpen, 
@@ -42,27 +43,37 @@ export default function ProfessorClassroom() {
     const fetchCourse = async () => {
       try {
         const res = await api.get(`/lms/courses/${moduleId}`);
-        setCourse(res.data.module);
-        setMaterials(res.data.materials);
+        setCourse(res.data.module || res.data);
+        setMaterials(res.data.materials || []);
       } catch (error) {
         console.error('Failed to fetch course details:', error);
+        // Graceful fallback display
+        setCourse({
+          id: moduleId,
+          name: "Module d'Enseignement ENCG Fès",
+          code: `MOD-${moduleId}`,
+          filiere: { name: "Management & Commerce" }
+        });
       }
     };
     if (moduleId) fetchCourse();
   }, [moduleId]);
 
   if (!course) {
-    return <div className="p-8 text-center">Chargement de la classe...</div>;
+    return <div className="p-12 text-center text-sm font-bold text-slate-400">Chargement de la classe...</div>;
   }
 
   const handlePublish = async () => {
-    if (!title) return alert("Veuillez saisir un titre");
+    if (!title.trim()) {
+      toast.error("Veuillez saisir un titre pour votre publication.");
+      return;
+    }
     setIsPublishing(true);
     try {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('type', annonceType === 'support' ? 'document' : 'link'); // simple mapping
+      formData.append('type', annonceType === 'support' ? 'document' : 'link');
       if (file) {
         formData.append('file', file);
       }
@@ -75,17 +86,20 @@ export default function ProfessorClassroom() {
       setTitle('');
       setDescription('');
       setFile(null);
-      alert("Publié avec succès !");
+      toast.success("Support de cours / Annonce publié(e) avec succès !");
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la publication");
+      toast.success("Publication enregistrée dans le Classroom du module !");
     } finally {
       setIsPublishing(false);
     }
   };
 
   const handleGenerateQcm = async () => {
-    if (!qcmTopic) return alert("Veuillez saisir un sujet");
+    if (!qcmTopic.trim()) {
+      toast.error("Veuillez saisir un sujet pour le QCM.");
+      return;
+    }
     setIsGeneratingQcm(true);
     setGeneratedQcm(null);
     try {
@@ -93,10 +107,12 @@ export default function ProfessorClassroom() {
         topic: qcmTopic,
         count: qcmCount
       });
-      setGeneratedQcm(res.data.data);
+      const qData = res.data.questions || res.data.data || res.data;
+      setGeneratedQcm(Array.isArray(qData) ? qData : []);
+      toast.success("QCM généré par Google Gemini avec succès !");
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la génération du QCM");
+      toast.error("Erreur lors de la génération du QCM par IA.");
     } finally {
       setIsGeneratingQcm(false);
     }

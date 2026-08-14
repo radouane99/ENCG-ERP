@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Professor API
-Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/professor')->group(function () {
+// Professor API — Accessible to Professors, Vacataires, and Academic Coordinators/Admins
+Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->prefix('v1/professor')->group(function () {
     Route::post('/attendance/session', [\App\Http\Controllers\Api\AttendanceController::class, 'createSession']);
     Route::get('/attendance/session/{id}/stats', [\App\Http\Controllers\Api\AttendanceController::class, 'sessionStats']);
     
@@ -13,11 +13,13 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/prof
 
     // Apogée Deliberation Engine - Grade Entry
     Route::post('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
+    
     // Professor AI Suite
     Route::prefix('ai')->group(function () {
         Route::post('generate-exam', [\App\Http\Controllers\Api\ProfessorAiController::class, 'generateExam']);
         Route::get('class-analytics/{moduleId}', [\App\Http\Controllers\Api\ProfessorAiController::class, 'getClassAnalytics']);
         Route::post('copilot', [\App\Http\Controllers\Api\ProfessorAiController::class, 'copilotQuery']);
+        Route::post('grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
     });
 
     Route::prefix('copilot')->group(function () {
@@ -26,7 +28,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->prefix('v1/prof
     });
 });
 
-Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
     // Professor Availability
     Route::prefix('professor-availability')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);
@@ -35,6 +37,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire'])->group(function 
     
     // AI Tools for Professor
     Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
+    Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
     Route::post('/professor/smart-grading/process', [\App\Http\Controllers\Api\Professor\SmartGradingController::class, 'process']);
     Route::post('/professor/smart-grading/export', [\App\Http\Controllers\Api\Professor\SmartGradingController::class, 'export']);
     

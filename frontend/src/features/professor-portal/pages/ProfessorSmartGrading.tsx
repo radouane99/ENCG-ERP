@@ -81,9 +81,34 @@ export default function ProfessorSmartGrading() {
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-slate-400 mb-1.5">Contenu du Devoir / Rapport à Corriger</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-black uppercase text-slate-400">Contenu du Devoir / Rapport à Corriger</label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-400">Modèles rapides :</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRubric("Barème ENCG Fès (20 pts) : 5 pts Rigueur méthodologique, 10 pts Diagnostic financier, 5 pts Recommandations");
+                    setReportContent("Étude de cas : Diagnostic de la structure financière de la société OCP Distribution.\n\n1. Analyse du Bilan Fonctionnel :\nLe Fonds de Roulement Net Global (FRNG) s'établit à 4.2 M MAD, couvrant largement le Besoin en Fonds de Roulement (BFR) de 2.8 M MAD. La Trésorerie Nette est donc excédentaire (+1.4 M MAD).\n\n2. Rentabilité et Ratios :\nLa rentabilité financière (ROE) atteint 16.4%, supérieure à la moyenne sectorielle (12.1%). Cependant, le délai moyen de recouvrement des créances clients (DSO) est de 85 jours, ce qui immobilise des liquidités.\n\n3. Recommandations Managériales :\n- Mettre en place un système de relance automatisé des créances clients pour ramener le DSO à 60 jours.\n- Placer les excédents de trésorerie sur des comptes à terme rémunérés.");
+                  }}
+                  className="px-2 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-[10px] font-extrabold transition-colors"
+                >
+                  Finance / Audit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRubric("Barème ENCG Fès (20 pts) : 6 pts Diagnostic SWOT, 8 pts Stratégie Marketing Mix, 6 pts KPIs & ROI");
+                    setReportContent("Projet Marketing : Lancement de la gamme de produits cosmétiques Bio au Maroc.\n\n1. Diagnostic Stratégique (SWOT) :\nForces : Produits certifiés 100% naturels, production locale à base d'huile d'argan.\nFaiblesses : Notoriété de marque encore faible face aux multinationales.\nOpportunités : Croissance de 22% par an du marché des cosmétiques éco-responsables au Maroc.\nMenaces : Risque de contrefaçon et volatilité des coûts de packaging.\n\n2. Plan d'Action 4P :\n- Produit : Packaging recyclable en verre ambré.\n- Prix : Écrémage maîtrisé (250 MAD / flacon).\n- Place : E-commerce direct + réseau de parapharmacies sélectives.\n- Promotion : Campagne d'influenceurs micro-ciblés sur Instagram et TikTok.");
+                  }}
+                  className="px-2 py-0.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-md text-[10px] font-extrabold transition-colors"
+                >
+                  Marketing
+                </button>
+              </div>
+            </div>
             <textarea
-              rows={12}
+              rows={10}
               value={reportContent}
               onChange={e => setReportContent(e.target.value)}
               placeholder="Collez ou saisissez ici le texte du compte-rendu de l'étudiant à évaluer..."

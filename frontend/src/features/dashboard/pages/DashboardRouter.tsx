@@ -4,7 +4,7 @@ import LoadingScreen from '@/shared/components/ui/LoadingScreen';
 
 const AdminDashboard = lazy(() => import('./AdminDashboard'));
 const StudentDashboard = lazy(() => import('./StudentDashboard'));
-const ProfessorDashboard = lazy(() => import('./ProfessorDashboard'));
+const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'));
 const ExecutiveDashboard = lazy(() => import('./ExecutiveDashboard'));
 const CandidateDossierPortal = lazy(() => import('@features/public/components/CandidateDossierPortal'));
 

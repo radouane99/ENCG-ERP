@@ -92,22 +92,51 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     }
   }
 
+  const handleExportIcs = () => {
+    const profId = u?.professor?.id || u?.id || 1
+    const url = `/api/timetable/export/professor/${profId}/ics`
+    window.open(url, '_blank')
+    toast.success("📅 Synchronisation du calendrier smartphone (.ics) générée !")
+  }
+
+  const handleExportPdf = () => {
+    const profId = u?.professor?.id || u?.id || 1
+    const url = `/api/timetable/export/professor/${profId}/pdf`
+    window.open(url, '_blank')
+    toast.success("📄 Téléchargement de l'Emploi du Temps Officiel PDF !")
+  }
+
   // Load filter data & auto-fetch schedule
   useEffect(() => {
-    api.get('/filieres').then(async (r) => {
+    api.get('/filieres').then((r) => {
       const list = r.data.data || r.data || []
       setFilieres(list)
-      
-      if (!isAdmin) {
-        setLoading(true)
-        const combined = await fetchAllFilieresSchedules(list)
-        setTimetableItems(combined)
-        setLoading(false)
-      }
     }).catch(console.error)
     
     api.get('/professors').then(r => setProfessors(r.data.data || r.data)).catch(console.error)
-  }, [isAdmin])
+
+    if (!isAdmin) {
+      setLoading(true)
+      const profId = u?.professor?.id || u?.id
+      if (profId) {
+        api.get(`/timetable/export/professor/${profId}`)
+          .then(res => {
+            const data = res.data.data || res.data || []
+            if (data.length > 0) {
+              setTimetableItems(data)
+            } else {
+              fetchAllFilieresSchedules([]).then(setTimetableItems)
+            }
+          })
+          .catch(() => {
+            fetchAllFilieresSchedules([]).then(setTimetableItems)
+          })
+          .finally(() => setLoading(false))
+      } else {
+        fetchAllFilieresSchedules([]).then(setTimetableItems).finally(() => setLoading(false))
+      }
+    }
+  }, [isAdmin, u?.professor?.id, u?.id])
 
   useEffect(() => {
     if (selectedFiliere) {
@@ -463,18 +492,26 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
               Votre planning hebdomadaire complet s'affiche automatiquement avec tous vos cours, amphis, travaux dirigés et groupes attribués.
             </p>
           </div>
-          <div className="relative z-10 flex items-center gap-3">
+          <div className="relative z-10 flex flex-wrap items-center gap-3">
             <button 
-              onClick={() => setShowRattrapageModal(true)}
-              className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md"
+              onClick={handleExportIcs}
+              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black flex items-center gap-2 transition-all shadow-md"
+              title="Exporter vers Apple Calendar, Google Calendar, Outlook"
             >
-              <Sparkles className="w-4 h-4" /> Signaler Conflit / Demander Modification
+              <span>📱</span> Sync Smartphone (.ics)
             </button>
             <button 
-              onClick={() => window.print()}
-              className="px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-extrabold flex items-center gap-2 transition-all shadow-sm"
+              onClick={handleExportPdf}
+              className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-extrabold flex items-center gap-2 transition-all shadow-sm"
+              title="Télécharger l'Emploi officiel PDF"
             >
-              Imprimer Mon Emploi du Temps
+              <span>📄</span> Export PDF
+            </button>
+            <button 
+              onClick={() => setShowRattrapageModal(true)}
+              className="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md"
+            >
+              <Sparkles className="w-4 h-4" /> Signaler Conflit / Rattrapage
             </button>
           </div>
         </div>
