@@ -5,7 +5,7 @@ const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/P
 const ProfessorScanner = lazy(() => import('@features/professor-portal/pages/ProfessorScanner'))
 const ProfessorProctoring = lazy(() => import('@features/professor-portal/pages/ProfessorProctoring'))
 const ProfessorAvailability = lazy(() => import('@features/professor-portal/pages/ProfessorAvailability'))
-const TextbooksPage = lazy(() => import('@features/admin/pages/TextbooksPage')) // used in professor/textbook
+const TextbooksPage = lazy(() => import('@features/admin/pages/TextbooksPage'))
 const ProfessorInternships = lazy(() => import('@features/internships/ui/pages/ProfessorSupervisionPage'))
 const ProfessorAbsences = lazy(() => import('@features/absences/ui/pages/ProfessorAbsencesView'))
 const ProfessorCall = lazy(() => import('@features/professor-portal/pages/ProfessorCall'))
@@ -18,6 +18,13 @@ const ProfessorAiCopilotPage = lazy(() => import('@features/professor-portal/pag
 const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
 const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pages/ProfessorProjectsKanban'))
 const ProfessorRecommendationsPage = lazy(() => import('@features/professor-portal/pages/ProfessorRecommendationsPage'))
+
+// 🌟 New Excellence Suite Pages
+const ProfessorVoiceTextbook = lazy(() => import('@features/professor-portal/pages/ProfessorVoiceTextbook'))
+const ProfessorPfeEvaluationPage = lazy(() => import('@features/professor-portal/pages/ProfessorPfeEvaluationPage'))
+const ProfessorDoubleGradingPage = lazy(() => import('@features/professor-portal/pages/ProfessorDoubleGradingPage'))
+const ProfessorResearchPage = lazy(() => import('@features/professor-portal/pages/ProfessorResearchPage'))
+const ProfessorWorkloadPage = lazy(() => import('@features/professor-portal/pages/ProfessorWorkloadPage'))
 
 const ProfessorInteractiveCalendar = lazy(() => import('@features/admin/pages/InteractiveCalendarPage'))
 
@@ -37,6 +44,7 @@ export default function ProfessorRouter() {
       <Route path="proctoring" element={<ProfessorProctoring />} />
       <Route path="availability" element={<ProfessorAvailability />} />
       <Route path="textbook" element={<TextbooksPage />} />
+      <Route path="voice-textbook" element={<ProfessorVoiceTextbook />} />
       <Route path="internships" element={<ProfessorInternships />} />
       <Route path="absences" element={<ProfessorAbsences />} />
       <Route path="absences/call/:sessionId" element={<ProfessorCall />} />
@@ -46,6 +54,10 @@ export default function ProfessorRouter() {
       <Route path="analytics" element={<ProfessorAnalytics />} />
       <Route path="grading" element={<ProfessorSmartGrading />} />
       <Route path="smart-grading" element={<ProfessorSmartGrading />} />
+      <Route path="double-grading" element={<ProfessorDoubleGradingPage />} />
+      <Route path="pfe-evaluation" element={<ProfessorPfeEvaluationPage />} />
+      <Route path="research" element={<ProfessorResearchPage />} />
+      <Route path="workload" element={<ProfessorWorkloadPage />} />
       <Route path="ai-copilot" element={<ProfessorAiCopilotPage />} />
       <Route path="grades" element={<AdminGradesPage />} />
       <Route path="projects-kanban" element={<ProfessorProjectsKanban />} />

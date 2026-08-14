@@ -72,6 +72,11 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/reservations', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getReservations']);
     Route::post('/professor-portal/reservations', [\App\Http\Controllers\Api\RoomBookingController::class, 'store']);
     Route::get('/professor-portal/analytics', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getAnalytics']);
+    Route::get('/professor-portal/workload', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getWorkloadSummary']);
+    Route::get('/professor-portal/research', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getResearchDashboard']);
+    Route::get('/professor-portal/double-grading', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDoubleGrading']);
+    Route::post('/professor/ai/voice-textbook', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'voiceTextbookStructure']);
+    
     // Surveillances
     Route::get('/professor/my-surveillances', [\App\Http\Controllers\Api\ConvocationController::class, 'mySurveillances']);
 });

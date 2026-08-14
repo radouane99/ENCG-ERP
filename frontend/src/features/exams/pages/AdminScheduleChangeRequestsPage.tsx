@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Hourglass, CheckSquare, XCircle, List, Mailbox, Loader2, Check, X, CalendarDays, Sparkles, Clock, AlertTriangle, ShieldCheck, User, Building2, Download, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Hourglass, CheckSquare, XCircle, List, Mailbox, Loader2, Check, X, CalendarDays, Sparkles, Clock, AlertTriangle, ShieldCheck, User, Building2, Download, Users, Cpu } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
 import { toast } from 'sonner'
@@ -134,6 +135,13 @@ export default function AdminScheduleChangeRequestsPage() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <Link
+              to="/admin/schedules/engine"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-95 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+            >
+              <Cpu className="w-4 h-4 text-amber-300" /> ⚡ Solveur CSP (IA)
+            </Link>
+
             <button
               onClick={handleExportAuditPdf}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"

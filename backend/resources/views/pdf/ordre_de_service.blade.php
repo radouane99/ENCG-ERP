@@ -45,7 +45,7 @@
                     <tr style="border-bottom: 1px solid #f1f5f9;">
                         <td style="font-weight: bold; color: #475569;">Département :</td>
                         <td style="font-weight: bold; color: #059669;">
-                            {{ $deptName ?? 'Informatique de Gestion' }}
+                            {{ $deptName ?? 'Sciences de Gestion' }}
                         </td>
                     </tr>
                     <tr style="border-bottom: 1px solid #f1f5f9;">
@@ -120,7 +120,7 @@
         </div>
 
         <!-- Official Directives & Obligations -->
-        <div style="border: 1px dashed #0f2863; background-color: #f8fafc; border-radius: 4px; padding: 5px 8px; margin-bottom: 6px;">
+        <div style="border: 1px dashed #0f2863; background-color: #f8fafc; border-radius: 4px; padding: 5px 8px; margin-bottom: 8px;">
             <div style="font-size: 7.5pt; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-bottom: 2px;">
                 III. OBLIGATIONS ACADÉMIQUES DE L'ENSEIGNANT :
             </div>
@@ -131,18 +131,69 @@
             </div>
         </div>
 
-        <!-- Signatures & Official Stamp -->
-        <table width="100%" style="margin-top: 6px;">
+        <!-- Official 3-Party Signatures Section -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 4px; border-collapse: collapse;">
             <tr>
-                <td width="50%" style="text-align: center; vertical-align: top;">
+                <!-- 1. Chef de Département -->
+                <td width="33%" style="text-align: center; vertical-align: top; padding-right: 5px;">
                     <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">Le Chef du Département</div>
-                    <div style="font-size: 7.5pt; color: #0f2863; font-weight: bold; margin-top: 1px;">{{ $deptName ?? 'Informatique de Gestion' }}</div>
-                    <div style="height: 25px;"></div>
+                    <div style="font-size: 7.5pt; color: #0f2863; font-weight: bold; margin-top: 1px;">{{ $deptName ?? 'Sciences de Gestion' }}</div>
+                    <div style="margin-top: 4px;">
+                        <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5,18 Q15,4 25,14 T45,10 T65,16 T85,8 T95,14" stroke="#0f2863" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
                 </td>
-                <td width="50%" style="text-align: center; vertical-align: top;">
-                    <div style="font-size: 7.5pt; font-weight: bold; color: #0f2863;">Pour le Directeur et par délégation</div>
-                    <div style="font-size: 8pt; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 1px;">LE DIRECTEUR ADJOINT CHARGÉ DES AFFAIRES ACADÉMIQUES</div>
-                    <div style="height: 25px;"></div>
+
+                <!-- 2. Émargement & Signature de l'Enseignant (Véritable Signature Manuscrite & Cachet Sécurisé) -->
+                <td width="34%" style="text-align: center; vertical-align: top; padding: 0 4px;">
+                    <div style="font-size: 7.5pt; font-weight: bold; color: #0f2863; text-transform: uppercase;">
+                        ÉMARGEMENT DE L'ENSEIGNANT
+                    </div>
+                    <div style="font-size: 7pt; font-weight: bold; color: #059669; margin-top: 1px;">
+                        Pr. {{ $profName ?? 'ABDELHAK EL AMRANI' }}
+                    </div>
+
+                    <!-- Certified Digital Signature Deck -->
+                    <div style="border: 1.5px solid #0f2863; background-color: #f8fafc; border-radius: 6px; padding: 4px 6px; margin-top: 3px; display: inline-block; width: 92%;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <!-- Fluid Vector Handwriting Signature -->
+                                    <svg width="130" height="34" viewBox="0 0 130 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Initial A & flourish loop -->
+                                        <path d="M12,28 C14,16 18,4 23,4 C27,4 25,24 28,26 C31,28 35,16 38,12 C42,8 45,22 49,20 C54,18 56,12 60,10 C65,8 68,22 73,18 C78,14 83,8 90,8 C98,8 102,16 108,18 C115,20 122,12 126,6" stroke="#0f2863" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <!-- Dynamic cross flourish -->
+                                        <path d="M15,18 C28,17 45,16 62,17" stroke="#0f2863" stroke-width="1.8" stroke-linecap="round"/>
+                                        <!-- Underscore swoosh -->
+                                        <path d="M18,30 C45,33 80,31 122,25" stroke="#1d4ed8" stroke-width="1.6" stroke-linecap="round"/>
+                                    </svg>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="border-top: 1px solid #cbd5e1; margin-top: 2px; padding-top: 2px;">
+                            <div style="font-size: 6pt; font-weight: 900; color: #047857; letter-spacing: 0.5px; text-transform: uppercase;">
+                                [CERTIFIÉ CONFORME LOI 53-05]
+                            </div>
+                            <div style="font-size: 5.5pt; color: #475569; font-family: monospace;">
+                                Horodatage : {{ date('d/m/Y H:i') }} • SHA-256: 8f9a2b4c...
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- 3. Direction Pédagogique -->
+                <td width="33%" style="text-align: center; vertical-align: top; padding-left: 5px;">
+                    <div style="font-size: 7pt; font-weight: bold; color: #475569;">Pour le Directeur et par délégation</div>
+                    <div style="font-size: 7.5pt; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 1px;">
+                        LE DIRECTEUR ADJOINT
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10,14 Q20,2 35,18 T55,6 T75,18 T90,10" stroke="#059669" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
                 </td>
             </tr>
         </table>

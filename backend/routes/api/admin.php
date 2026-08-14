@@ -520,6 +520,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Schedule Change Requests
     Route::prefix('schedule-change-requests')->group(function () {
         Route::get('/', [ScheduleChangeRequestController::class, 'index']);
+        Route::post('/batch-report', [ScheduleChangeRequestController::class, 'storeBatchReport']);
         Route::patch('/{id}/status', [ScheduleChangeRequestController::class, 'updateStatus']);
     });
 

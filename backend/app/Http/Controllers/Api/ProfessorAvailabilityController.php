@@ -98,6 +98,12 @@ class ProfessorAvailabilityController extends Controller
             );
         }
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Sondage de disponibilité envoyé aux professeurs sélectionnés.',
+        ]);
+    }
+
     /**
      * Obtenir la disponibilité de l'enseignant connecté.
      */

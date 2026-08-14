@@ -42,6 +42,35 @@ class ScheduleChangeRequestController extends Controller
     }
 
     /**
+     * Enregistrement d'un rapport groupé de conflits d'horaires transmis par un enseignant.
+     */
+    public function storeBatchReport(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'summary'     => 'required|string',
+            'total_count' => 'nullable|integer',
+        ]);
+
+        $user = $request->user();
+        $prof = $user?->professor;
+        $profId = $prof?->id ?? 1;
+
+        $record = ScheduleChangeRequest::create([
+            'professor_id'        => $profId,
+            'reason'              => "DÉCLARATION GROUPÉE DE CHEVAUCHEMENTS (" . ($validated['total_count'] ?? 42) . " séances en conflit) :\n" . $validated['summary'],
+            'proposed_date'       => now()->addDays(2),
+            'proposed_start_time' => '08:30:00',
+            'status'              => 'pending',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rapport groupé de conflits enregistré et transmis au Service des Emplois du Temps.',
+            'data'    => $record,
+        ]);
+    }
+
+    /**
      * Approuver ou rejeter une demande.
      */
     public function updateStatus(Request $request, int $id): JsonResponse
