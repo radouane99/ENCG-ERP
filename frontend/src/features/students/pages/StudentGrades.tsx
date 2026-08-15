@@ -45,9 +45,9 @@ export default function StudentGrades() {
         <div className="relative z-10">
           <h1 className="text-3xl font-black text-white mb-2">Performance Académique</h1>
           <p className="text-teal-100">Suivez vos notes validées et vos résultats finaux par semestre.</p>
-          <div className="flex gap-3 mt-6">
-            <button className="bg-white text-teal-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 hover:bg-teal-50 transition-colors">
-              <FlaskConical className="w-4 h-4" /> ACTIVER LE SIMULATEUR
+          <div className="flex flex-wrap gap-3 mt-6">
+            <button className="bg-white text-teal-800 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-teal-50 transition-colors">
+              <FlaskConical className="w-4 h-4" /> SIMULATEUR
             </button>
             <button 
               onClick={() => {
@@ -69,9 +69,57 @@ export default function StudentGrades() {
                   })
                 })
               }}
-              className="bg-teal-800 text-teal-50 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 hover:bg-teal-900 border border-teal-700 transition-colors"
+              className="bg-teal-800 text-teal-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-teal-900 border border-teal-700 transition-colors"
             >
-              <Download className="w-4 h-4" /> RELEVÉ OFFICIEL (PDF)
+              <Download className="w-4 h-4" /> RELEVÉ (PDF)
+            </button>
+            <button 
+              onClick={() => {
+                import('@shared/lib/api').then(({ default: api }) => {
+                  import('sonner').then(({ toast }) => {
+                    const tid = toast.loading("Génération de l'attestation de réussite...")
+                    api.get('/student-portal/attestation-reussite/pdf', { responseType: 'blob' })
+                      .then(res => {
+                        const url = window.URL.createObjectURL(new Blob([res.data]))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', 'Attestation_Reussite_ENCG.pdf')
+                        document.body.appendChild(link)
+                        link.click()
+                        link.remove()
+                        toast.success('Attestation de réussite téléchargée !', { id: tid })
+                      })
+                      .catch(() => toast.error("Impossible de générer l'attestation. Vérifiez la validation de votre année.", { id: tid }))
+                  })
+                })
+              }}
+              className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-emerald-700 border border-emerald-500 transition-colors"
+            >
+              <Download className="w-4 h-4" /> ATTESTATION DE RÉUSSITE (PDF)
+            </button>
+            <button 
+              onClick={() => {
+                import('@shared/lib/api').then(({ default: api }) => {
+                  import('sonner').then(({ toast }) => {
+                    const tid = toast.loading('Édition du Diplôme d\'État ENCG...')
+                    api.get('/student-portal/diplome-officiel/pdf', { responseType: 'blob' })
+                      .then(res => {
+                        const url = window.URL.createObjectURL(new Blob([res.data]))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', 'Diplome_Etat_ENCG_Fes.pdf')
+                        document.body.appendChild(link)
+                        link.click()
+                        link.remove()
+                        toast.success('Diplôme officiel téléchargé !', { id: tid })
+                      })
+                      .catch(() => toast.error('Diplôme accessible uniquement aux lauréats ayant validé le cursus.', { id: tid }))
+                  })
+                })
+              }}
+              className="bg-amber-400 text-slate-950 px-4 py-2.5 rounded-xl font-black text-xs shadow-md flex items-center gap-2 hover:bg-amber-300 border border-amber-300 transition-colors"
+            >
+              <Download className="w-4 h-4 text-slate-950" /> DIPLÔME ENCG (BAC+5)
             </button>
           </div>
         </div>

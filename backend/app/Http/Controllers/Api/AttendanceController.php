@@ -174,13 +174,13 @@ class AttendanceController extends Controller
     /**
      * Supprimer une session de présence.
      */
-    public function destroy(AttendanceSession $attendanceSession): JsonResponse
+    public function destroy(AttendanceSession $attendance): JsonResponse
     {
-        $attendanceSession->delete();
+        $attendance->delete();
 
         activity()
             ->causedBy(auth()->user())
-            ->performedOn($attendanceSession)
+            ->performedOn($attendance)
             ->log('Session de présence supprimée');
 
         return response()->json([

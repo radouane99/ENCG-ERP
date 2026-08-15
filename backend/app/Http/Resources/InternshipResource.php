@@ -22,19 +22,19 @@ class InternshipResource extends JsonResource
             'description'      => $this->description,
             'title'            => $this->title,
 
-            'student'   => $this->whenLoaded('student', fn() => [
+            'student'   => $this->whenLoaded('student', fn() => $this->student ? [
                 'id'             => $this->student->id,
                 'student_number' => $this->student->student_number,
                 'first_name'     => $this->student->first_name,
                 'last_name'      => $this->student->last_name,
-            ]),
+            ] : null),
 
-            'supervisor' => $this->whenLoaded('supervisor', fn() => [
+            'supervisor' => $this->whenLoaded('supervisor', fn() => $this->supervisor ? [
                 'id'              => $this->supervisor->id,
-                'employee_number' => $this->supervisor->employee_number,
+                'employee_number' => $this->supervisor->employee_number ?? null,
                 'first_name'      => $this->supervisor->first_name,
                 'last_name'       => $this->supervisor->last_name,
-            ]),
+            ] : null),
 
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),

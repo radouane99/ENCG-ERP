@@ -327,19 +327,52 @@ class PdfExportController extends Controller
         return $pdf->stream("PV_Examen_{$examId}.pdf", ["Attachment" => false]);
     }
 
-    // ─── ATTESTATIONS & DOCUMENTS ───────────────────────────────
+    // ─── ATTESTATIONS & DOCUMENTS OFFICIELS ───────────────────────────────
 
     public function attestationReussite(int $studentId, string $year)
     {
-        $student = Student::with(['latestPathway.filiere'])->findOrFail($studentId);
+        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
 
-        $pdf = $this->getPdfInstance('pdf.attestation', [
-            'student'   => $student,
-            'year'      => $year,
-            'verifyUrl' => url('/verify/document/' . ($student->student_number ?? '000')),
+        $verifyUrl = url('/verify-document/' . ($student->cne ?? $student->student_number ?? '000'));
+        $qrBase64 = $this->generateQrBase64($verifyUrl);
+
+        $pdf = $this->getPdfInstance('pdf.attestation_reussite', [
+            'student'     => $student,
+            'year'        => $year,
+            'mention'     => 'BIEN',
+            'verifyUrl'   => $verifyUrl,
+            'qrBase64'    => $qrBase64,
+            'date'        => date('d/m/Y'),
         ]);
 
-        return $pdf->download("attestation_{$studentId}_{$year}.pdf");
+        return $pdf->download("Attestation_Reussite_{$student->cne}_{$year}.pdf");
+    }
+
+    public function downloadDiplomeOfficielPdf(Request $request, int $studentId)
+    {
+        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
+
+        $verifyUrl = url('/verify-document/' . ($student->cne ?? $student->student_number ?? '000'));
+        $qrBase64 = $this->generateQrBase64($verifyUrl);
+
+        $logoPath = public_path('logo-encg.png');
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
+        $hashSignature = strtoupper(hash('sha256', "DIPLOMA|ENCG_FES|{$student->cne}|{$student->id}|" . date('Y')));
+
+        $pdf = $this->getPdfInstance('pdf.diplome_officiel_encg', [
+            'student'          => $student,
+            'filiereName'      => $student->latestPathway?->filiere?->name ?? 'Gestion Financière et Comptable',
+            'academicYear'     => '2025-2026',
+            'mention'          => $request->query('mention', 'TRÈS BIEN'),
+            'deliberationDate' => date('d/m/Y'),
+            'verifyUrl'        => $verifyUrl,
+            'qrBase64'         => $qrBase64,
+            'logoBase64'       => $logoBase64,
+            'hashSignature'    => $hashSignature,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download("Diplome_Etat_ENCG_{$student->cne}.pdf");
     }
 
     public function downloadAttestationInscriptionPdf(Request $request, int $studentId)

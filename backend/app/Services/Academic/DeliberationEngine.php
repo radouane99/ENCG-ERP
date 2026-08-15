@@ -76,7 +76,15 @@ class DeliberationEngine
             default         => 'V',
         };
 
-        return compact('average', 'status', 'hasEliminatory', 'missingGrades') + ['disciplinary_mention' => null];
+        return [
+            'average'              => $average,
+            'status'               => $status,
+            'has_eliminatory'      => $hasEliminatory,
+            'hasEliminatory'       => $hasEliminatory,
+            'missing_grades'       => $missingGrades,
+            'missingGrades'        => $missingGrades,
+            'disciplinary_mention' => null,
+        ];
     }
 
     /**

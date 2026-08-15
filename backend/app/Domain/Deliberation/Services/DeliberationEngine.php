@@ -91,50 +91,39 @@ class DeliberationEngine
 
     private function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
     {
-        // To handle MAX(Normale, Rattrapage), we group by grade_component_id and max the score
-        // Then we sum up (max_score * weight / 100) per module.
-        // If it's NOT a Rattrapage deliberation, we ONLY fetch NORMALE grades.
-        
-        $gradesQuery = DB::table('grades')
-            ->join('exam_sessions', 'grades.exam_session_id', '=', 'exam_sessions.id')
+        return DB::table('grades')
+            ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
+            ->join('modules', 'assessments.module_id', '=', 'modules.id')
             ->where('grades.student_id', $studentId)
-            ->select('grades.grade_component_id', 'grades.score', 'exam_sessions.id as session_id');
-
-        if (!$includeRattrapage) {
-            $gradesQuery->where('exam_sessions.type', 'NORMALE');
-        }
-
-        // Subquery: Get the highest score per component (merges Normale and Rattrapage)
-        $bestScores = DB::table(DB::raw("({$gradesQuery->toSql()}) as raw_grades"))
-            ->mergeBindings($gradesQuery)
-            ->select('grade_component_id', DB::raw('MAX(score) as best_score'), DB::raw('MAX(session_id) as session_id'))
-            ->groupBy('grade_component_id');
-
-        // Sum the best scores per module
-        return DB::table(DB::raw("({$bestScores->toSql()}) as best_components"))
-            ->mergeBindings($bestScores)
-            ->join('grade_components', 'best_components.grade_component_id', '=', 'grade_components.id')
-            ->join('modules', 'grade_components.module_id', '=', 'modules.id')
             ->where('modules.semester_number', $semesterNumber)
             ->select(
                 'modules.id as module_id',
-                'best_components.session_id as session_id',
-                DB::raw('SUM(best_components.best_score * (grade_components.weight / 100)) as final_module_score')
+                DB::raw('SUM(grades.value * (assessments.weight / 100.0)) as final_module_score')
             )
-            ->groupBy('modules.id', 'best_components.session_id')
+            ->groupBy('modules.id')
             ->get();
     }
 
     private function grantResitEligibility(int $studentId, Collection $moduleAverages, Deliberation $deliberation): void
     {
+        $session = $deliberation->semester?->examSessions()->where('type', 'normale')->orWhere('type', 'NORMALE')->first()
+            ?? $deliberation->semester?->examSessions()->first()
+            ?? \App\Models\ExamSession::first();
+
+        $examSessionId = $session?->id;
+
+        if (!$examSessionId) {
+            return;
+        }
+
         // Standard rule: < 10 grants rattrapage eligibility
         foreach ($moduleAverages as $module) {
             if ($module->final_module_score < 10.0) {
                 ResitEligibility::updateOrCreate(
                     [
-                        'student_id' => $studentId,
-                        'module_id' => $module->module_id,
-                        'exam_session_id' => $module->session_id ?? $deliberation->semester->examSessions()->where('type', 'NORMALE')->first()->id ?? 0,
+                        'student_id'      => $studentId,
+                        'module_id'       => $module->module_id,
+                        'exam_session_id' => $examSessionId,
                     ],
                     [
                         'is_eligible' => true

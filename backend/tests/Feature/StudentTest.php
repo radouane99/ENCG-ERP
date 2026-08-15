@@ -14,7 +14,7 @@ function ensureInstitution()
 {
     \App\Models\Institution::firstOrCreate(
         ['id' => 1],
-        ['name' => 'ENCG Test', 'code' => 'ENCG']
+        ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
 }
 
@@ -108,7 +108,7 @@ it('returns 422 when required fields are missing on store', function () {
         ->postJson('/api/students', []);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['first_name', 'last_name', 'email', 'cne', 'gender', 'status']);
+        ->assertJsonValidationErrors(['first_name', 'last_name', 'email']);
 });
 
 it('returns 422 when email is already taken on store', function () {

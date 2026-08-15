@@ -87,8 +87,14 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     // Clubs & Vie associative
     Route::get('/clubs', [\App\Http\Controllers\Api\Student\ClubController::class, 'index']);
 
-    // Official Transcript (Relevé de Notes) PDF
+    // Official Documents PDF (Relevé, Attestation de Réussite, Diplôme d'État ENCG)
     Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);
+    Route::get('/attestation-reussite/pdf', [StudentTranscriptController::class, 'generateAttestationReussiteForStudent']);
+    Route::get('/diplome-officiel/pdf', [StudentTranscriptController::class, 'generateDiplomeForStudent']);
+
+    // Re-inscription en ligne (Confirmation pour l'année supérieure)
+    Route::get('/reinscription/status', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getStatus']);
+    Route::post('/reinscription/confirm', [\App\Http\Controllers\Api\ReinscriptionController::class, 'confirm']);
 
     // AI Course Tutor (RAG anchored on ENCG handouts)
     Route::post('/ai-tutor/chat', [\App\Http\Controllers\Api\AiCourseTutorController::class, 'chat']);

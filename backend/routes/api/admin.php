@@ -141,6 +141,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
     Route::post('/admin/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
 
+    // Campagne de Réinscription des Étudiants Admis
+    Route::get('/admin/reinscriptions/stats', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getAdminStats']);
+    Route::post('/admin/reinscriptions/send-reminders', [\App\Http\Controllers\Api\ReinscriptionController::class, 'sendReminders']);
+
     // Official APOGEE Ministerial Export (MESRSFC)
     Route::get('/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
     Route::get('/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
@@ -291,6 +295,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
     Route::get('students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
     Route::get('students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
+    Route::get('students/{student}/attestation-reussite-pdf', [PdfExportController::class, 'attestationReussite']);
+    Route::get('students/{student}/diplome-officiel-pdf', [PdfExportController::class, 'downloadDiplomeOfficielPdf']);
     Route::get('students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDossierCompletPdf']);
     Route::get('admin/students/{student}/recepisse-depot-pdf', [PdfExportController::class, 'downloadRecepisseDossierCompletPdf']);
     Route::get('students/{student}/etiquette-enveloppe-pdf', [PdfExportController::class, 'downloadEtiquetteEnveloppePdf']);

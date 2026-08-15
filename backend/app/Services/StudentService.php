@@ -137,4 +137,31 @@ class StudentService
             return $student;
         });
     }
+
+    /**
+     * Mettre à jour un étudiant.
+     */
+    public function updateStudent(Student $student, array $data): Student
+    {
+        return DB::transaction(function () use ($student, $data) {
+            $userFields = array_intersect_key($data, array_flip(['first_name', 'last_name', 'email', 'phone', 'cin']));
+            if (!empty($userFields)) {
+                if (isset($userFields['first_name']) || isset($userFields['last_name'])) {
+                    $fn = $userFields['first_name'] ?? $student->user->first_name;
+                    $ln = $userFields['last_name'] ?? $student->user->last_name;
+                    $userFields['name'] = trim("{$fn} {$ln}");
+                }
+                $student->user->update($userFields);
+            }
+
+            unset($data['first_name'], $data['last_name'], $data['email'], $data['phone'], $data['cin']);
+            unset($data['current_filiere'], $data['current_semester']);
+
+            if (!empty($data)) {
+                $student->update($data);
+            }
+
+            return $student->fresh(['user', 'latestPathway.filiere']);
+        });
+    }
 }

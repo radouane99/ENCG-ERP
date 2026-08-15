@@ -7,6 +7,7 @@ use App\Models\Grade;
 use App\Models\Group;
 use App\Models\ModuleProfessor;
 use App\Models\Semester;
+use App\Models\Student;
 use App\Models\StudentPathway;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -140,8 +141,12 @@ class AcademicYearRolloverService
         $newGroups  = Group::where('academic_year_id', $newYear->id)->get();
         $passed     = 0;
         $repeated   = 0;
+        $graduated  = 0;
 
         foreach ($pathways as $pathway) {
+            $student = Student::find($pathway->student_id);
+            if (!$student) continue;
+
             $failedCount       = $failedCounts->get($pathway->student_id, 0);
             $decision          = $this->deliberationEngine->evaluateProgression($failedCount);
             $newSemesterNumber = $pathway->current_semester;
@@ -153,9 +158,42 @@ class AcademicYearRolloverService
                 $repeated++;
             }
 
+            // Gestion des diplômés (Fin de la 5ème année : S9/S10 validés)
+            if ($newSemesterNumber > 10) {
+                $student->update(['status' => 'graduated']);
+                $graduated++;
+
+                StudentPathway::create([
+                    'student_id'       => $pathway->student_id,
+                    'filiere_id'       => $pathway->filiere_id,
+                    'speciality_id'    => $pathway->speciality_id,
+                    'academic_year_id' => $newYear->id,
+                    'group_id'         => null,
+                    'current_semester' => 10,
+                    'is_current'       => true,
+                ]);
+                continue;
+            }
+
+            // Trouver ou créer le groupe cible pour le nouveau semestre dans la nouvelle année
             $newGroup = $newGroups->where('filiere_id', $pathway->filiere_id)
                 ->where('semester_number', $newSemesterNumber)
                 ->first();
+
+            if (!$newGroup) {
+                $newGroup = Group::firstOrCreate(
+                    [
+                        'academic_year_id' => $newYear->id,
+                        'filiere_id'       => $pathway->filiere_id,
+                        'semester_number'  => $newSemesterNumber,
+                        'name'             => "Groupe 1 (S{$newSemesterNumber})",
+                    ],
+                    [
+                        'capacity'         => 60,
+                        'speciality_id'    => $pathway->speciality_id,
+                    ]
+                );
+            }
 
             StudentPathway::create([
                 'student_id'       => $pathway->student_id,
@@ -168,10 +206,33 @@ class AcademicYearRolloverService
             ]);
         }
 
+        // Audit Trail du Rollover
+        if (class_exists(\App\Models\AuditLog::class)) {
+            \App\Models\AuditLog::record([
+                'user_id'     => null,
+                'user_name'   => 'Système Automatique de Bascule',
+                'user_email'  => 'direction.academique@encg-fes.ac.ma',
+                'user_role'   => 'Direction Académique',
+                'action'      => 'Bascule Année Universitaire (Rollover)',
+                'action_type' => 'YEAR_ROLLOVER',
+                'description' => "Bascule vers {$newYear->label} : {$passed} étudiants admis en année supérieure, {$repeated} ajournés/redoublants, {$graduated} nouveaux diplômés (Lauréats).",
+                'method'      => 'POST',
+                'severity'    => 'warning',
+                'payload'     => [
+                    'old_year'   => $oldYear->label,
+                    'new_year'   => $newYear->label,
+                    'passed'     => $passed,
+                    'repeated'   => $repeated,
+                    'graduated'  => $graduated,
+                ],
+            ]);
+        }
+
         return [
             'total_processed' => $pathways->count(),
             'passed'          => $passed,
             'repeated'        => $repeated,
+            'graduated'       => $graduated,
         ];
     }
 }

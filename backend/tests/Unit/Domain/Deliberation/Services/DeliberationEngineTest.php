@@ -70,36 +70,43 @@ it('identifies eliminatory marks based on the 7.0 threshold', function () {
 it('processes a full deliberation and correctly applies compensation (rachat)', function () {
     // 1. Setup Database State (Respecting the 99-table architecture)
     
-    $institution = Institution::forceCreate([
-        'name' => 'ENCG Fes',
-        'code' => 'ENCGF',
-        'slug' => 'encg-fes',
-        'type' => 'grande_ecole'
-    ]);
+    $institution = Institution::firstOrCreate(
+        ['slug' => 'encg-fes'],
+        [
+            'name' => 'ENCG Fes',
+            'code' => 'ENCGF',
+            'type' => 'grande_ecole'
+        ]
+    );
 
-    $academicYear = AcademicYear::forceCreate([
-        'institution_id' => $institution->id,
-        'label' => '2025-2026',
-        'start_year' => 2025,
-        'end_year' => 2026,
-        'start_date' => '2025-09-01',
-        'end_date' => '2026-07-31'
-    ]);
+    $academicYear = AcademicYear::firstOrCreate(
+        ['label' => '2025-2026'],
+        [
+            'institution_id' => $institution->id,
+            'start_year' => 2025,
+            'end_year' => 2026,
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-07-31'
+        ]
+    );
 
-    $semester = Semester::forceCreate([
-        'academic_year_id' => $academicYear->id,
-        'name' => 'Semester 1',
-        'number' => 1,
-        'start_date' => '2025-09-01',
-        'end_date' => '2026-01-31'
-    ]);
+    $semester = Semester::firstOrCreate(
+        ['academic_year_id' => $academicYear->id, 'number' => 1],
+        [
+            'name' => 'Semester 1',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-01-31'
+        ]
+    );
 
-    $filiere = Filiere::forceCreate([
-        'institution_id' => $institution->id,
-        'name' => 'Commerce',
-        'code' => 'COM',
-        'type' => 'initial'
-    ]);
+    $filiere = Filiere::firstOrCreate(
+        ['code' => 'COM'],
+        [
+            'institution_id' => $institution->id,
+            'name' => 'Commerce',
+            'type' => 'initial'
+        ]
+    );
 
     $deliberation = Deliberation::forceCreate([
         'institution_id' => $institution->id,
@@ -147,21 +154,17 @@ it('processes a full deliberation and correctly applies compensation (rachat)', 
         'end_date' => '2026-01-15'
     ]);
 
-    $gradeComponent = GradeComponent::forceCreate([
+    $assessment = \App\Models\Assessment::forceCreate([
         'module_id' => $module->id,
-        'exam_session_id' => $examSession->id,
-        'name' => 'Exam',
-        'code' => 'EX',
+        'type' => 'Exam',
         'weight' => 100 // 100% of the module
     ]);
 
     // Scenario: Student gets exactly 9.6 which qualifies for system Rachat (Compensation)
     Grade::forceCreate([
-        'grade_component_id' => $gradeComponent->id,
-        'student_id' => $student->id,
-        'exam_session_id' => $examSession->id,
-        'score' => 9.6,
-        'final_score' => 9.6
+        'assessment_id' => $assessment->id,
+        'student_id'    => $student->id,
+        'value'         => 9.6,
     ]);
 
     // 2. Process Deliberation

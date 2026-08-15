@@ -286,10 +286,35 @@ class GradeController extends Controller
                 'signed_by'      => $user->id,
                 'signed_at'      => now(),
                 'signature_data' => $validated['signature_data'] ?? null,
-                'ip_address'     => $request->ip(),
+                'ip_address'     => $request->ip() ?: '127.0.0.1',
                 'digital_seal'   => $digitalSeal,
             ]
         );
+
+        // Audit Trail Log
+        if (class_exists(\App\Models\AuditLog::class)) {
+            \App\Models\AuditLog::record([
+                'user_id'     => $user->id,
+                'user_name'   => $user->name ?? $user->email,
+                'user_email'  => $user->email,
+                'user_role'   => $user->role ?? ($user->roles?->first()?->name ?? 'Enseignant'),
+                'action'      => 'Signature Électronique PV Module',
+                'action_type' => 'PV_SIGNATURE',
+                'description' => "Le Procès-Verbal ({$session}) du module '{$module->name}' ({$module->code}) a été signé électroniquement avec sceau SHA-256 [{$digitalSeal}]",
+                'method'      => 'POST',
+                'url'         => $request->fullUrl(),
+                'ip_address'  => $request->ip() ?: '127.0.0.1',
+                'user_agent'  => substr($request->userAgent() ?? '', 0, 500),
+                'severity'    => 'warning',
+                'payload'     => [
+                    'module_id'    => $moduleId,
+                    'module_name'  => $module->name,
+                    'session'      => $session,
+                    'group_id'     => $groupId,
+                    'digital_seal' => $digitalSeal,
+                ],
+            ]);
+        }
 
         // Génération éligibilités rattrapage
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);

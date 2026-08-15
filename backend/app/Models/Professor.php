@@ -26,35 +26,35 @@ class Professor extends Model
     protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->user->first_name ?? null,
+            get: fn () => $this->user?->first_name,
         );
     }
 
     protected function lastName(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->user->last_name ?? null,
+            get: fn () => $this->user?->last_name,
         );
     }
 
     protected function email(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->user->email ?? null,
+            get: fn () => $this->user?->email,
         );
     }
 
     protected function phone(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->user->phone ?? null,
+            get: fn () => $this->user?->phone,
         );
     }
 
     protected function cin(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->user->cin ?? null,
+            get: fn () => $this->user?->cin,
         );
     }
 

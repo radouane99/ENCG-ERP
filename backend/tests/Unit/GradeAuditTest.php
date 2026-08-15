@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\Student;
 use App\Models\Assessment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 class GradeAuditTest extends TestCase
 {
@@ -15,18 +16,20 @@ class GradeAuditTest extends TestCase
 
     public function test_grade_update_creates_audit_log()
     {
-        $professor = User::factory()->create(['role' => 'professor']);
+        $professor = User::factory()->create();
+        $role = Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'sanctum']);
+        $professor->assignRole($role);
+
         $this->actingAs($professor);
 
         $student = Student::factory()->create();
         $assessment = Assessment::factory()->create();
 
         $grade = Grade::create([
-            'student_id' => $student->id,
+            'student_id'    => $student->id,
             'assessment_id' => $assessment->id,
-            'value' => 12.0,
-            'absent' => false,
-            'status' => 'draft',
+            'value'         => 12.0,
+            'absent'        => false,
         ]);
         
         // Trigger update

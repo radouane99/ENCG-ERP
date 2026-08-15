@@ -12,14 +12,17 @@ function ensureProfInstitution()
 {
     \App\Models\Institution::firstOrCreate(
         ['id' => 1],
-        ['name' => 'ENCG Test', 'code' => 'ENCG']
+        ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
 }
 
 function makeProfAdmin(): User
 {
     ensureProfInstitution();
+    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
+    $user->assignRole($role);
     $permModels = [];
     foreach (['professors.view', 'professors.create', 'professors.edit', 'professors.delete'] as $perm) {
         $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
@@ -134,9 +137,9 @@ it('shows a single professor', function () {
     $professor = Professor::factory()->create();
 
     $this->actingAs($user, 'sanctum')
-        ->getJson("/api/hr/professors/{$professor->id}")
+        ->getJson("/api/hr/professors/{$professor->uuid}")
         ->assertStatus(200)
-        ->assertJsonPath('data.id', $professor->id);
+        ->assertJsonPath('data.id', $professor->uuid);
 });
 
 // ── Update ───────────────────────────────────────────────────────────────────
@@ -146,7 +149,7 @@ it('updates a professor with valid data', function () {
     $professor = Professor::factory()->create();
 
     $this->actingAs($user, 'sanctum')
-        ->putJson("/api/hr/professors/{$professor->id}", [
+        ->putJson("/api/hr/professors/{$professor->uuid}", [
             'grade' => 'Professeur Habilité',
         ])
         ->assertStatus(200)
@@ -158,7 +161,7 @@ it('returns 422 for invalid contract_type on update', function () {
     $professor = Professor::factory()->create();
 
     $this->actingAs($user, 'sanctum')
-        ->putJson("/api/hr/professors/{$professor->id}", [
+        ->putJson("/api/hr/professors/{$professor->uuid}", [
             'contract_type' => 'BAD_VALUE',
         ])
         ->assertStatus(422)
@@ -172,7 +175,7 @@ it('soft-deletes a professor', function () {
     $professor = Professor::factory()->create();
 
     $this->actingAs($user, 'sanctum')
-        ->deleteJson("/api/hr/professors/{$professor->id}")
+        ->deleteJson("/api/hr/professors/{$professor->uuid}")
         ->assertStatus(200)
         ->assertJsonPath('message', 'Professeur supprimé avec succès.');
 
@@ -184,6 +187,6 @@ it('returns 403 when deleting professor without permission', function () {
     $professor = Professor::factory()->create();
 
     $this->actingAs($user, 'sanctum')
-        ->deleteJson("/api/hr/professors/{$professor->id}")
+        ->deleteJson("/api/hr/professors/{$professor->uuid}")
         ->assertStatus(403);
 });

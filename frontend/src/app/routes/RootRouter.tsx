@@ -218,6 +218,7 @@ const StudentRecommendationsPage = lazy(() => import('@features/students/pages/S
 const AdminFinanceDashboard = lazy(() => import('@features/admin/pages/AdminFinanceDashboard'))
 
 const AdminBlockchainDiplomas = lazy(() => import('@features/admin/pages/AdminBlockchainDiplomas'))
+const AdminReinscriptionCockpitPage = lazy(() => import('@features/admin/pages/AdminReinscriptionCockpitPage'))
 const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
@@ -514,6 +515,7 @@ export default function RootRouter() {
             <Route path="/admin/push-notifications" element={<AdminPwaPushHubPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
+            <Route path="/admin/reinscriptions" element={<AdminReinscriptionCockpitPage />} />
             <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
             <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
             <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />

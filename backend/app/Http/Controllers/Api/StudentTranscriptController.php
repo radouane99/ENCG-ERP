@@ -53,6 +53,34 @@ class StudentTranscriptController extends Controller
     }
 
     /**
+     * Attestation de Réussite PDF (étudiant connecté).
+     */
+    public function generateAttestationReussiteForStudent(Request $request)
+    {
+        $student = Student::with(['user', 'latestPathway.filiere'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $pdfController = app(\App\Http\Controllers\Api\PdfExportController::class);
+        $currentYearLabel = \App\Models\AcademicYear::where('is_current', true)->value('label') ?? '2026/2027';
+        $year = $request->query('year', $currentYearLabel);
+        return $pdfController->attestationReussite($student->id, $year);
+    }
+
+    /**
+     * Diplôme Officiel d'État ENCG PDF (étudiant lauréat connecté).
+     */
+    public function generateDiplomeForStudent(Request $request)
+    {
+        $student = Student::with(['user', 'latestPathway.filiere'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $pdfController = app(\App\Http\Controllers\Api\PdfExportController::class);
+        return $pdfController->downloadDiplomeOfficielPdf($request, $student->id);
+    }
+
+    /**
      * Génère la réponse PDF.
      */
     private function generatePdfResponse(Student $student, ?string $academicYearId, string $semester)

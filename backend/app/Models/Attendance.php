@@ -41,4 +41,9 @@ class Attendance extends Model
     {
         return $this->belongsTo(Student::class, 'student_id');
     }
+
+    public function absenceJustification(): BelongsTo
+    {
+        return $this->belongsTo(AbsenceJustification::class, 'absence_justification_id');
+    }
 }

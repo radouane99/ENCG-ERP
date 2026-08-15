@@ -1141,4 +1141,99 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 3. **Puces de Questions Fréquentes (Quick Prompts) :**
    - Accès rapide aux concepts clés des programmes ENCG (*WACC/CMPC, Modèle Modigliani-Miller, Méthode ABC, Déductibilité IS au Maroc, Seuil de Rentabilité*).
 
+---
+
+## 16. ATTESTATIONS DE RÉUSSITE, GRAND DIPLÔME D'ÉTAT ENCG (BAC+5) & RÉINSCRIPTIONS EN LIGNE
+
+### 16.1 Attestations de Réussite & Grand Diplôme d'État (Normes MESRSFC / USMBA)
+1. **Attestation de Réussite Annuelle (A4 Portrait) :**
+   - Délivrée à tout étudiant ayant validé son année (Moyenne $\ge 10.00$ et max 2 modules non validés compensés).
+   - Intègre l'en-tête officiel bilingue, l'identité (CNE, CIN, N° Apogée), l'année académique, la filière, la mention (*Très Bien, Bien, Assez Bien*) et le code QR de vérification.
+2. **Grand Diplôme National d'État ENCG (A4 Paysage Prestige) :**
+   - Format d'apparat officiel avec double cadre ornemental doré & bleu roi, textes légaux d'État (Loi 01-00, Décret 2-04-89), sceau royal, filigrane et signatures tripartites :
+     1. Émargement du Lauréat
+     2. Directeur de l'ENCG Fès (*Pr. Abderrazak EL HIRI*)
+     3. Président de l'Université Sidi Mohamed Ben Abdellah (*Pr. Mustapha IJJAALI*)
+   - Empreinte cryptographique SHA-256 inaltérable et code QR vectoriel.
+
+### 16.2 Système de Réinscription Annuelle en Ligne (Étudiants 2A à 5A)
+1. **Distinction Canonique Fondamentale :**
+   - **Nouvelle Inscription (`/inscription` & `/admin/tafem`) :** Exclusivement réservée aux nouveaux bacheliers admis au Concours TAFEM et passerelles en 1ère Année. Dépôt de Bac original, OCR Gemini Vision AI, récépissé de dépôt, création de compte et délivrance de carte d'étudiant PVC.
+   - **Réinscription Annuelle (`/student/reinscription` & `/admin/reinscriptions`) :** Pour tous les étudiants existants répertoriés dans la base ENCG pour confirmer leur passage en année supérieure (2A, 3A, 4A, 5A) ou leur maintien (redoublement).
+2. **Tunnel de Réinscription Étudiant (4 Étapes) :**
+   - *Étape 1 : Décision du Jury* (Notification de promotion ou redoublement calculée depuis la base PostgreSQL).
+   - *Étape 2 : Mise à Jour Coordonnées* (GSM/WhatsApp, adresse de résidence à Fès).
+   - *Étape 3 : Choix de Filière & Assurance* (Choix Gestion vs Commerce en 3A, spécialités GFC/ACG/MAC/MRH/MCI en 4A, assurance obligatoire).
+   - *Étape 4 : Récépissé Officiel A4 Horodaté* (`REC-REINSC-2026-XXXX`) avec code QR de vérification.
+3. **Cockpit de Pilotage Direction & Scolarité (`/admin/reinscriptions`) :**
+   - Tableau de bord en temps réel des effectifs admis, réinscrits confirmés et retardataires par promotion (2A, 3A, 4A, 5A).
+   - Bouton de relance massive 1-clic par email et notification PWA.
+   - Affectation automatique des étudiants confirmés dans leurs nouveaux groupes de TD/TP (`Groupe 1 S3`, `Groupe 1 S5`, etc.).
+   - Journalisation de chaque confirmation dans `audit_logs` pour la conformité CNDP (Loi 09-08).
+
+### 16.3 Système d'Archivage & Historisation Immuable (Loi 69-99 & CNDP)
+1. **Bascule d'Année & Gel des Données (`AcademicYearRolloverService.php`) :**
+   - Clôture automatique de l'année précédente (`is_current: false`, `is_locked: true`).
+   - Historisation des parcours antérieurs dans `student_pathways` avec conservation de l'historique complet des notes.
+   - Incrémentation dynamique des semestres (+2 Semestres : S1➔S3, S3➔S5, S5➔S7, S7➔S9, S9➔Diplômé).
+   - Maintien du statut `active` avec répétition du semestre pour les redoublants (Ajournés).
+2. **Archives Numériques des PV d'Examens & Délibérations (`AdminExamPvArchivePage.tsx`) :**
+   - Coffre-fort numérique des PVs signés (Module, Semestre 7 modules, Annuel 14 modules).
+   - Verrouillage inviolable dès signature tactile et calcul de l'empreinte SHA-256 scellée.
+   - Export ZIP massif structuré par filière et semestre.
+3. **Archives Physiques de la Scolarité :**
+   - Génération d'étiquettes de boîtes et d'enveloppes physiques avec code-barres et QR Code (`etiquette_enveloppe.blade.php`).
+   - Récépissés de dépôt définitif à double volet (Volet Étudiant / Volet interne Archive Scolarité).
+
+### 16.4 Architecture 100% Données Réelles & Dynamiques (Zéro Mock)
+1. **Élimination Totale des Données Statiques :**
+   - Toutes les métriques (décisions d'admission, moyennes, effectifs, listes d'étudiants, filières et groupes) sont calculées et requêtées en temps réel sur la base de données PostgreSQL via Laravel Eloquent.
+2. **Transactions Atomiques ACID & Journalisation Forensique :**
+   - Toutes les opérations sensibles (réinscriptions, signatures de PVs, bascules d'années) sont encapsulées dans des transactions `DB::transaction()` et auditées dans `audit_logs` avec adresse IP, User-Agent, horodatage et chaîne de hachage SHA-256.
+
+### 16.5 Nouvelles Routes API Déployées
+* **Étudiant :**
+  * `GET /api/v1/student-portal/reinscription/status` : Éligibilité réelle et statut de réinscription.
+  * `POST /api/v1/student-portal/reinscription/confirm` : Confirmation et affectation automatique de groupe.
+  * `GET /api/v1/student-portal/transcript/pdf` : Téléchargement du relevé de notes officiel.
+  * `GET /api/v1/student-portal/attestation-reussite/pdf` : Téléchargement de l'attestation de réussite.
+  * `GET /api/v1/student-portal/diplome-officiel/pdf` : Téléchargement du Grand Diplôme d'État ENCG (Bac+5).
+* **Administration :**
+  * `GET /api/v1/admin/reinscriptions/stats` : Dashboard temps réel des effectifs confirmés et retardataires.
+  * `POST /api/v1/admin/reinscriptions/send-reminders` : Relances massives par email et notifications.
+  * `GET /api/v1/admin/students/{id}/attestation-reussite-pdf` : Génération admin de l'attestation de réussite.
+  * `GET /api/v1/admin/students/{id}/diplome-officiel-pdf` : Génération admin du diplôme d'État.
+
+---
+
+## 17. SUITE DE TESTS AUTOMATISÉS & NON-RÉGRESSION (PHPUNIT / PEST / E2E)
+
+### 17.1 Couverture Intégrale des 21 Suites de Tests Feature & Unitaires (`backend/tests/Feature/`)
+1. **`FiliereModuleStructureTest.php` :** Structure Départements, Filières, Semestres (S1-S10), Modules (48h), Groupes.
+2. **`ProfessorAndAssignmentTest.php` :** Professeurs Permanents (PES/PH/PA), Vacataires, Affectations de charges.
+3. **`StudentLifecycleAndDossierTest.php` :** Inscription, Matricule Massar/CNE, N° Apogée, Parcours académiques (`StudentPathway`).
+4. **`AbsenceAndAttendanceTest.php` :** Émargement par scan QR Code, détection des absences, certificats médicaux.
+5. **`GradeCalculationAndPvDeliberationTest.php` :** Notes CC/Exam (50/50), formule de rattrapage $\max(M_N, M_R)$, PVs signés & sceau SHA-256.
+6. **`AcademicYearRolloverAndProgressionTest.php` :** Bascule annuelle (+2 semestres : 1A➔2A, 2A➔3A, 3A➔4A, 4A➔5A) et passage au statut `graduated`.
+7. **`ReinscriptionWorkflowTest.php` :** Tunnel de réinscription 2A-5A, calcul décision jury, choix filière S5/S7, récépissé `REC-REINSC-2026-XXXX`.
+8. **`AttestationAndOfficialDiplomaTest.php` :** Génération PDF Attestation Réussite A4 Portrait et Grand Diplôme National d'État Bac+5 A4 Paysage.
+9. **`AuditLogAndSecurityRegressionTest.php` :** Conformité CNDP Loi 09-08, traçabilité forensique des modifications de notes et transactions atomiques ACID.
+10. **`ExamPlanningAndIncidentTest.php` :** Planification des sessions d'examens, assignation amphis et PV d'incident/fraude.
+11. **`PfeAndInternshipWorkflowTest.php` :** Conventions de stages tripartites (PwC, Big 4), encadrement PFE et gestion des soutenances.
+12. **`StudentGuichetAndDocumentRequestTest.php` :** Guichet numérique étudiant, demandes d'attestations de scolarité et traitement administratif.
+13. **`TafemAdmissionAndEnrollmentTest.php` :** Concours national TAFEM, vérification CNE, dépôt de dossier et prise de RDV scolarité.
+14. **`SmartCampusAndRoomBookingTest.php` :** Bâtiments, amphithéâtres, laboratoires informatiques et réservation de salles sans conflit.
+15. **`DisciplineAndComplaintsTest.php` :** Conseils de discipline, réclamations et sanctions académiques.
+16. **`StudentSmartCardAndNfcTest.php` :** Cartes Étudiant PVC Smart Card avec UID NFC et QR token certifié.
+17. **`AiTutorAndCourseHandoutRAGTest.php` :** Tuteur Pédagogique IA ancré sur polycopiés, citations précises et QCM d'examen.
+18. **`StudentEvaluationsAndQualityBarometerTest.php` :** Baromètre d'évaluation des cours, anonymat cryptographique SHA-256 et déblocage des notes.
+19. **`AlumniNetworkAndJobBoardTest.php` :** Annuaire des lauréats, insertion professionnelle (salaires, délais) et offres d'emploi exclusives.
+20. **`StudentMobilityAndExchangeTest.php` :** Candidatures aux programmes d'échange internationaux (Erasmus+, KEDGE, etc.).
+21. **`StudentClubsAndAssociationHubTest.php` & `DigitalLibraryAndKohaLoansTest.php` & `SmartTimetableGenerationAndAntiConflictTest.php` :** Vie associative (BDE, Junior Entreprise), emprunts de bibliothèque et emplois du temps sans conflit.
+
+
+
+
+
+
 

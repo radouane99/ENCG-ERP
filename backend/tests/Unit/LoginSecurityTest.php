@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\SuspiciousLoginAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Request;
+use Spatie\Permission\Models\Role;
 
 class LoginSecurityTest extends TestCase
 {
@@ -20,12 +20,12 @@ class LoginSecurityTest extends TestCase
         Notification::fake();
         
         $admin = User::factory()->create([
-            'role' => 'admin',
             'last_login_ip' => '192.168.1.1'
         ]);
+        $role = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $admin->assignRole($role);
 
-        // Mock the Request facade to return a specific IP
-        Request::shouldReceive('ip')->andReturn('10.0.0.5');
+        request()->server->set('REMOTE_ADDR', '10.0.0.5');
         
         event(new Login('web', $admin, false));
 
@@ -40,11 +40,12 @@ class LoginSecurityTest extends TestCase
         Notification::fake();
         
         $admin = User::factory()->create([
-            'role' => 'admin',
             'last_login_ip' => '192.168.1.1'
         ]);
+        $role = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $admin->assignRole($role);
 
-        Request::shouldReceive('ip')->andReturn('192.168.1.1');
+        request()->server->set('REMOTE_ADDR', '192.168.1.1');
         
         event(new Login('web', $admin, false));
 

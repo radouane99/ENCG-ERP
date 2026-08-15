@@ -23,15 +23,21 @@ class UnifiedStudentRecordController extends Controller
     /**
      * Dossier d'un étudiant spécifique (admin/professeur).
      */
-    public function show(Request $request, Student $student): JsonResponse
+    public function show(Request $request, Student|string|int $student): JsonResponse
     {
         $user = $request->user();
 
-        $isAuthorized = $user->hasRole(['admin', 'professor']) || in_array($user->role, ['admin', 'professor']);
+        $isAuthorized = ($user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'super-admin', 'institution-admin', 'professor']))
+            || ($user && method_exists($user, 'hasRole') && ($user->hasRole('admin') || $user->hasRole('professor')))
+            || in_array($user?->role, ['admin', 'professor']);
 
         abort_unless($isAuthorized, 403, 'Accès non autorisé.');
 
-        return $this->buildDossierResponse($student, $request, $user->hasRole('professor'));
+        $studentModel = $student instanceof Student
+            ? $student
+            : Student::where('id', is_numeric($student) ? (int) $student : 0)->orWhere('uuid', (string) $student)->firstOrFail();
+
+        return $this->buildDossierResponse($studentModel, $request, $user && method_exists($user, 'hasRole') && $user->hasRole('professor'));
     }
 
     /**

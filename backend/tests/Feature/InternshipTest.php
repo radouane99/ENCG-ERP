@@ -13,14 +13,31 @@ function ensureInternshipInstitution()
 {
     \App\Models\Institution::firstOrCreate(
         ['id' => 1],
-        ['name' => 'ENCG Test', 'code' => 'ENCG']
+        ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
+    );
+
+    \App\Models\AcademicYear::firstOrCreate(
+        ['id' => 1],
+        [
+            'institution_id' => 1,
+            'label'          => '2026/2027',
+            'start_year'     => 2026,
+            'end_year'       => 2027,
+            'start_date'     => '2026-09-01',
+            'end_date'       => '2027-06-30',
+            'is_current'     => true,
+            'is_locked'      => false,
+        ]
     );
 }
 
 function makeInternshipAdmin(): User
 {
     ensureInternshipInstitution();
+    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
+    $user->assignRole($role);
     $permModels = [];
     foreach (['internships.view', 'internships.edit'] as $perm) {
         $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);

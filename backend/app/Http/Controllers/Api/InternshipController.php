@@ -46,7 +46,7 @@ class InternshipController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Stage mis à jour avec succès.',
-                'data'    => new InternshipResource($updated->load(['student', 'supervisor'])),
+                'data'    => new InternshipResource($updated->load(['student.user', 'supervisor.user'])),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);

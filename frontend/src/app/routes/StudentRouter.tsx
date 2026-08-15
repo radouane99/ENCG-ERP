@@ -19,12 +19,15 @@ const StudentGamification = lazy(() => import('@features/students/pages/StudentG
 const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/StudentAbsencesPage'))
 const StudentGuichetPage = lazy(() => import('@features/students/pages/StudentGuichetPage'))
 const StudentAiTutorPage = lazy(() => import('@features/students/pages/StudentAiTutorPage'))
+const StudentReinscriptionPage = lazy(() => import('@features/students/pages/StudentReinscriptionPage'))
 
 export default function StudentRouter() {
   return (
     <Routes>
       <Route path="dashboard" element={<StudentDashboard />} />
       <Route path="grades" element={<StudentGrades />} />
+      <Route path="reinscription" element={<StudentReinscriptionPage />} />
+      <Route path="re-inscription" element={<StudentReinscriptionPage />} />
       <Route path="exams" element={<StudentExams />} />
       <Route path="convocations" element={<StudentConvocations />} />
       <Route path="mobility" element={<StudentMobility />} />

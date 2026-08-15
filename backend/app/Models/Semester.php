@@ -27,4 +27,9 @@ class Semester extends Model
     {
         return $this->belongsTo(AcademicYear::class);
     }
+
+    public function examSessions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ExamSession::class);
+    }
 }

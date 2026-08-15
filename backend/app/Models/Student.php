@@ -33,7 +33,7 @@ class Student extends Model
         ];
     }
 
-    protected function getUserAttributeSafely(string $attribute)
+    public function getUserAttributeSafely(string $attribute)
     {
         if ($this->relationLoaded('user')) {
             return $this->user?->{$attribute};
@@ -140,6 +140,11 @@ class Student extends Model
         return $this->hasMany(StudentDocument::class, 'student_id');
     }
 
+    public function documentRequests(): HasMany
+    {
+        return $this->hasMany(DocumentRequest::class, 'student_id');
+    }
+
     public function studentDocuments(): HasMany
     {
         return $this->hasMany(StudentDocument::class, 'student_id');
@@ -153,5 +158,12 @@ class Student extends Model
     public function getRouteKeyName()
     {
         return 'uuid';
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('uuid', $value)
+            ->orWhere('id', is_numeric($value) ? (int) $value : 0)
+            ->first();
     }
 }

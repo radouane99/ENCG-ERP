@@ -23,19 +23,21 @@ class AcademicCalendarServiceTest extends TestCase
 
     private function createAcademicYear()
     {
-        // Simple manual creation to avoid factory dependency issues
-        $institution = Institution::create([
+        $institution = Institution::first() ?? Institution::create([
             'name' => 'ENCG Test',
             'code' => 'ENCG-T',
-            'type' => 'public',
+            'slug' => 'encg-test-' . uniqid(),
+            'type' => 'grande_ecole',
         ]);
 
-        return AcademicYear::create([
+        return AcademicYear::where('is_current', true)->first() ?? AcademicYear::create([
             'institution_id' => $institution->id,
-            'name' => '2026-2027',
-            'start_date' => now()->subMonths(1),
-            'end_date' => now()->addMonths(11),
-            'is_current' => true,
+            'label'          => '2026/2027',
+            'start_year'     => 2026,
+            'end_year'       => 2027,
+            'start_date'     => now()->subMonths(1)->toDateString(),
+            'end_date'       => now()->addMonths(11)->toDateString(),
+            'is_current'     => true,
         ]);
     }
 
