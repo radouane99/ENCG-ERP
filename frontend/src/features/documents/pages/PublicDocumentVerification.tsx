@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShieldCheck, ShieldAlert, FileText, CheckCircle } from 'lucide-react';
 import api from '@/shared/lib/api';
@@ -38,10 +38,12 @@ export default function PublicDocumentVerification() {
     <div className="min-h-screen bg-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="bg-[#1F3A5F] p-6 text-center text-white">
-          <FileText className="w-12 h-12 mx-auto mb-3 opacity-90" />
-          <h1 className="text-2xl font-bold">Portail de Vérification</h1>
-          <p className="text-white/80 text-sm mt-1">Université Mohammed Premier</p>
+        <div className="bg-[#0f2863] p-6 text-center text-white">
+          <FileText className="w-12 h-12 mx-auto mb-3 text-amber-400" />
+          <h1 className="text-2xl font-black">Portail de Vérification Officielle</h1>
+          <p className="text-blue-200 text-xs font-bold mt-1">
+            École Nationale de Commerce et de Gestion — Université Sidi Mohamed Ben Abdellah (Fès)
+          </p>
         </div>
 
         <div className="p-8">

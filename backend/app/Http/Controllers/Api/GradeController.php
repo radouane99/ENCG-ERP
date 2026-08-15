@@ -105,35 +105,38 @@ class GradeController extends Controller
         ]);
 
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
-        $updatedCount = 0;
+        
+        $updatedCount = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $assessment, $fraudIds, $request) {
+            $count = 0;
+            foreach ($validated['grades'] as $gradeData) {
+                $isFraud = $this->gradeService->isStudentFraud($gradeData['student_id'], $fraudIds)
+                    && $this->gradeService->isExamAssessment($assessment);
 
-        foreach ($validated['grades'] as $gradeData) {
-            $isFraud = $this->gradeService->isStudentFraud($gradeData['student_id'], $fraudIds)
-                && $this->gradeService->isExamAssessment($assessment);
+                $newValue = $isFraud ? 0.0 : ($gradeData['absent'] ? null : ($gradeData['value'] ?? null));
+                $newAbsent = $isFraud ? false : ($gradeData['absent'] ?? false);
 
-            $newValue = $isFraud ? 0.0 : ($gradeData['absent'] ? null : ($gradeData['value'] ?? null));
-            $newAbsent = $isFraud ? false : ($gradeData['absent'] ?? false);
+                // Audit
+                $oldGrade = Grade::where('student_id', $gradeData['student_id'])
+                    ->where('assessment_id', $assessment->id)
+                    ->first();
 
-            // Audit
-            $oldGrade = Grade::where('student_id', $gradeData['student_id'])
-                ->where('assessment_id', $assessment->id)
-                ->first();
+                $this->logGradeChange($oldGrade, $newValue, $newAbsent, $gradeData['student_id'], $assessment, $request);
 
-            $this->logGradeChange($oldGrade, $newValue, $newAbsent, $gradeData['student_id'], $assessment, $request);
+                Grade::updateOrCreate(
+                    [
+                        'student_id'    => $gradeData['student_id'],
+                        'assessment_id' => $assessment->id,
+                    ],
+                    [
+                        'value'  => $newValue,
+                        'absent' => $newAbsent,
+                    ]
+                );
 
-            Grade::updateOrCreate(
-                [
-                    'student_id'    => $gradeData['student_id'],
-                    'assessment_id' => $assessment->id,
-                ],
-                [
-                    'value'  => $newValue,
-                    'absent' => $newAbsent,
-                ]
-            );
-
-            $updatedCount++;
-        }
+                $count++;
+            }
+            return $count;
+        });
 
         return response()->json([
             'success' => true,
@@ -467,29 +470,63 @@ class GradeController extends Controller
         if (!$oldGrade) {
             if ($newValue !== null || $newAbsent) $changed = true;
         } else {
-            if ($oldGrade->value != $newValue || $oldGrade->absent != $newAbsent) {
+            if ($oldGrade->value != $newValue || (bool)$oldGrade->absent != (bool)$newAbsent) {
                 $changed = true;
-                $oldValDesc = $oldGrade->absent ? 'ABI' : ($oldGrade->value . '/20');
+                $oldValDesc = $oldGrade->absent ? 'ABSENT' : ($oldGrade->value . '/20');
             }
         }
 
-        if (!$changed || !class_exists('Spatie\Activitylog\Models\Activity')) return;
+        if (!$changed) return;
 
         $student = Student::with('user')->find($studentId);
-        $newValDesc = $newAbsent ? 'ABI' : ($newValue . '/20');
-        $userName = $request->user()?->name ?? 'Système';
+        $studentName = $student ? ($student->last_name . ' ' . $student->first_name) : "Étudiant #{$studentId}";
+        $newValDesc = $newAbsent ? 'ABSENT' : ($newValue . '/20');
+        $user = $request->user();
+        $userName = $user ? ($user->name ?? $user->email) : 'Système';
+        $moduleName = $assessment->module?->name ?? "Module #{$assessment->module_id}";
+        $assessmentType = strtoupper($assessment->type ?? 'Évaluation');
 
-        activity()
-            ->performedOn($assessment)
-            ->event('grade_modified')
-            ->withProperties([
-                'student' => $student->last_name . ' ' . $student->first_name,
-                'old_value' => $oldValDesc,
-                'new_value' => $newValDesc,
-                'ip' => $request->ip(),
-                'author' => $userName,
-            ])
-            ->log("Note modifiée : {$oldValDesc} -> {$newValDesc} par {$userName}");
+        // 1. Log to native CNDP AuditLog Model
+        if (class_exists(\App\Models\AuditLog::class)) {
+            \App\Models\AuditLog::record([
+                'user_id'     => $user?->id,
+                'user_name'   => $userName,
+                'user_email'  => $user?->email,
+                'user_role'   => $user?->role ?? ($user?->roles?->first()?->name ?? 'Enseignant'),
+                'action'      => 'Saisie / Modification de Note',
+                'action_type' => 'GRADE_MUTATION',
+                'description' => "Note [{$assessmentType}] modifiée pour {$studentName} dans le module '{$moduleName}' : {$oldValDesc} ➔ {$newValDesc}",
+                'method'      => 'POST',
+                'url'         => $request->fullUrl(),
+                'ip_address'  => $request->ip() ?: '127.0.0.1',
+                'user_agent'  => substr($request->userAgent() ?? '', 0, 500),
+                'severity'    => 'warning',
+                'payload'     => [
+                    'student_id'      => $studentId,
+                    'student_name'    => $studentName,
+                    'module_id'       => $assessment->module_id,
+                    'module_name'     => $moduleName,
+                    'assessment_type' => $assessmentType,
+                    'old_value'       => $oldValDesc,
+                    'new_value'       => $newValDesc,
+                ],
+            ]);
+        }
+
+        // 2. Fallback to Spatie if exists
+        if (class_exists('Spatie\Activitylog\Models\Activity') && function_exists('activity')) {
+            activity()
+                ->performedOn($assessment)
+                ->event('grade_modified')
+                ->withProperties([
+                    'student'   => $studentName,
+                    'old_value' => $oldValDesc,
+                    'new_value' => $newValDesc,
+                    'ip'        => $request->ip(),
+                    'author'    => $userName,
+                ])
+                ->log("Note modifiée : {$oldValDesc} -> {$newValDesc} par {$userName}");
+        }
     }
 
     /**

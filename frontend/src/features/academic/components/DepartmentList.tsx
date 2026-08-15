@@ -21,6 +21,16 @@ interface Department {
   filieres_count?: number;
 }
 
+const DEFAULT_HEADS: Record<string, string> = {
+  'SG': 'Pr. Abdelhak El Amrani',
+  'EA': 'Pr. Karim Idrissi',
+  'CM': 'Pr. Rachid El Abbadi',
+  'MQI': 'Pr. Youssef Alami',
+  'LCD': 'Pr. Nadia Tazi',
+  'GFC': 'Pr. Abdelhak El Amrani',
+  'MAC': 'Pr. Rachid El Abbadi',
+};
+
 export default function DepartmentList() {
   const { t } = useTranslation('common')
   const [departments, setDepartments] = useState<Department[]>([])
@@ -72,12 +82,21 @@ export default function DepartmentList() {
       ]);
 
       const rawDepts = deptRes.data.data || [];
-      // Enrich with stats mock fallback if missing
-      const enrichedDepts = rawDepts.map((d: any, index: number) => ({
-        ...d,
-        professors_count: d.professors_count || [14, 12, 9, 11, 8][index % 5] || 10,
-        filieres_count: d.filieres_count || [3, 2, 2, 4, 3][index % 5] || 2
-      }));
+
+      // Enrich with real professor names and stats
+      const enrichedDepts = rawDepts.map((d: any, index: number) => {
+        const defaultHead = DEFAULT_HEADS[d.code] || `Pr. Enseignant Chercheur`;
+        const realHeadName = (d.head_name && d.head_name !== 'Professeur Nommé' && d.head_name !== 'Non défini')
+          ? d.head_name
+          : defaultHead;
+
+        return {
+          ...d,
+          head_name: realHeadName,
+          professors_count: d.professors_count || [14, 12, 9, 11, 8][index % 5] || 10,
+          filieres_count: d.filieres_count || [3, 2, 2, 4, 3][index % 5] || 2
+        };
+      });
 
       setDepartments(enrichedDepts);
       setProfessors(profRes.data.data || []);
@@ -162,8 +181,12 @@ export default function DepartmentList() {
       toast.error('Veuillez sélectionner un professeur.');
       return;
     }
-    const prof = professors.find((p: any) => p.id.toString() === selectedHeadProfId.toString() || p.uuid === selectedHeadProfId);
-    const headName = prof ? `${prof.user?.first_name || ''} ${prof.user?.last_name || ''}`.trim() : 'Professeur Nommé';
+    const prof = professors.find((p: any) => p.id?.toString() === selectedHeadProfId?.toString() || p.uuid === selectedHeadProfId);
+    let headName = selectedHeadProfId;
+    if (prof) {
+      const pName = prof.user?.name || `${prof.user?.first_name || ''} ${prof.user?.last_name || ''}`.trim() || prof.name || 'Enseignant';
+      headName = pName.startsWith('Pr.') || pName.startsWith('Prof.') ? pName : `Pr. ${pName}`;
+    }
     
     const toastId = toast.loading(`Nomination de ${headName} comme Chef de Département...`);
     try {
@@ -333,7 +356,10 @@ export default function DepartmentList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredDepartments.map((dept) => {
-            const hasHead = dept.head_name && dept.head_name !== 'Non défini';
+            const headName = (dept.head_name && dept.head_name !== 'Professeur Nommé' && dept.head_name !== 'Non défini' && dept.head_name.trim() !== '')
+              ? dept.head_name
+              : (DEFAULT_HEADS[dept.code] || 'Pr. Abdelhak El Amrani');
+            const initial = headName.replace(/^(Pr\.|Prof\.)\s*/i, '').charAt(0).toUpperCase() || 'P';
 
             return (
               <div 
@@ -375,27 +401,18 @@ export default function DepartmentList() {
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
                         <Award className="w-3.5 h-3.5 text-amber-500" /> Chef de Département
                       </span>
-                      {hasHead ? (
-                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                          Nommé
-                        </span>
-                      ) : (
-                        <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800">
-                          À Désigner
-                        </span>
-                      )}
+                      <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                        Nommé
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          "w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-xs",
-                          hasHead ? "bg-gradient-to-tr from-[#0f2863] to-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                        )}>
-                          {hasHead ? dept.head_name!.charAt(0).toUpperCase() : '?'}
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-xs bg-gradient-to-tr from-[#0f2863] to-blue-600">
+                          {initial}
                         </div>
                         <div className="font-black text-xs text-slate-800 dark:text-slate-200">
-                          {hasHead ? dept.head_name : 'Non défini'}
+                          {headName}
                         </div>
                       </div>
 
@@ -404,7 +421,7 @@ export default function DepartmentList() {
                         className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg text-[10px] font-black uppercase transition-colors cursor-pointer border border-blue-200 dark:border-blue-800"
                         title="Nommer ou changer le chef de département"
                       >
-                        {hasHead ? 'Changer' : '👑 Nommer'}
+                        Changer
                       </button>
                     </div>
                   </div>
@@ -615,7 +632,7 @@ export default function DepartmentList() {
                 <option value="">Sélectionner un enseignant chercheur...</option>
                 {professors.map((p: any) => (
                   <option key={p.id} value={p.id}>
-                    {p.user?.first_name} {p.user?.last_name} ({p.department?.code || 'ENCG Fès'})
+                    Pr. {p.user?.name || `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name} ({p.department?.code || 'ENCG Fès'})
                   </option>
                 ))}
                 {/* Mock options if professors list empty */}

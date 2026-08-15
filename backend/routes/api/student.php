@@ -89,4 +89,9 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
 
     // Official Transcript (Relevé de Notes) PDF
     Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);
+
+    // AI Course Tutor (RAG anchored on ENCG handouts)
+    Route::post('/ai-tutor/chat', [\App\Http\Controllers\Api\AiCourseTutorController::class, 'chat']);
+    Route::get('/ai-tutor/quiz', [\App\Http\Controllers\Api\AiCourseTutorController::class, 'getQuiz']);
 });
+

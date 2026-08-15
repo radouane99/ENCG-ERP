@@ -138,9 +138,14 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Academic Years Rollover & Archiving
     Route::get('/admin/archiving-stats', [AcademicYearController::class, 'getArchivingDashboard']);
-    Route::get('/academic-years/archiving', [AcademicYearController::class, 'getArchivingDashboard']);
     Route::post('/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
     Route::post('/admin/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
+
+    // Official APOGEE Ministerial Export (MESRSFC)
+    Route::get('/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
+    Route::get('/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
+    Route::get('/admin/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
+    Route::get('/admin/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
 
     Route::prefix('discipline')->group(function () {
         Route::get('/', [DisciplineController::class, 'index']);

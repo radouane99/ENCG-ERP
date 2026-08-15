@@ -40,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->api(append: [
             \App\Http\Middleware\XssSanitizer::class,
+            \App\Http\Middleware\AuditTrailMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

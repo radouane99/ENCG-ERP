@@ -17,12 +17,58 @@ use App\Services\Academic\GradeLockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use App\Services\Apogee\ApogeeExportService;
+
 class ApogeeEngineController extends Controller
 {
     public function __construct(
         private GradeLockService $gradeLockService,
-        private ApogeeDeliberationEngine $deliberationEngine
+        private ApogeeDeliberationEngine $deliberationEngine,
+        private ApogeeExportService $exportService
     ) {}
+
+    /**
+     * Export officiel APOGEE (Format CSV / Texte ministériel MESRSFC).
+     */
+    public function exportApogeeCsv(Request $request)
+    {
+        $filiereId      = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
+        $semesterId     = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
+        $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;
+
+        $records = $this->exportService->generateExportData($filiereId, $semesterId, $academicYearId);
+        $csvContent = $this->exportService->generateCsv($records);
+
+        $filename = 'EXPORT_APOGEE_ENCG_FES_' . date('Ymd_His') . '.csv';
+
+        return response($csvContent, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Obtenir les données prévisualisées de l'export APOGEE.
+     */
+    public function getApogeePreview(Request $request): JsonResponse
+    {
+        $filiereId      = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
+        $semesterId     = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
+        $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;
+
+        $records = $this->exportService->generateExportData($filiereId, $semesterId, $academicYearId);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'establishment_code' => '040',
+                'establishment_name' => 'ENCG Fès — USMBA',
+                'total_records'      => count($records),
+                'generated_at'       => now()->toIso8601String(),
+                'records'            => array_slice($records, 0, 50),
+            ],
+        ]);
+    }
 
     /**
      * Ouvrir une période de saisie des notes.

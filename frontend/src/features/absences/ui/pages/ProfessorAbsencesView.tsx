@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, Check, X, Clock, QrCode, Sparkles, Mic, MicOff, 
   Search, ShieldCheck, Download, Play, CheckCircle2, AlertTriangle, 
-  RefreshCw, Volume2, Building2, BookOpen, Layers, UserCheck, UserX, Loader2
+  RefreshCw, Volume2, Building2, BookOpen, Layers, UserCheck, UserX, Loader2,
+  Calendar, CalendarDays, ArrowRight, Zap, CheckSquare
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
+import { offlineAttendanceStore } from '@/shared/lib/offlineAttendanceStore';
 
 interface StudentItem {
   id: number;
@@ -18,6 +20,120 @@ interface StudentItem {
   status: 'present' | 'absent' | 'late' | 'excused';
   scannedAt?: string;
 }
+
+interface TimetableSession {
+  id: string;
+  day: 'Lundi' | 'Mardi' | 'Mercredi' | 'Jeudi' | 'Vendredi' | 'Samedi';
+  timeSlot: string;
+  filiereCode: string;
+  filiereName: string;
+  groupName: string;
+  moduleCode: string;
+  moduleName: string;
+  roomName: string;
+  sessionType: 'Cours Magistral (CM)' | 'Travaux Dirigés (TD)' | 'Travaux Pratiques (TP)';
+  isToday?: boolean;
+}
+
+// ── Weekly Sessions Pre-configuration (Professor & Filière Schedule) ───────
+const WEEKLY_SCHEDULE: TimetableSession[] = [
+  {
+    id: 's1',
+    day: 'Lundi',
+    timeSlot: '08:30 - 10:30',
+    filiereCode: 'TC',
+    filiereName: 'Tronc Commun ENCG (TC)',
+    groupName: 'TC-S1-G1',
+    moduleCode: 'TC-S1-M02',
+    moduleName: 'Comptabilité Générale I',
+    roomName: 'Amphi 1',
+    sessionType: 'Cours Magistral (CM)',
+  },
+  {
+    id: 's2',
+    day: 'Lundi',
+    timeSlot: '10:45 - 12:45',
+    filiereCode: 'TC',
+    filiereName: 'Tronc Commun ENCG (TC)',
+    groupName: 'TC-S1-G2',
+    moduleCode: 'TC-S1-M01',
+    moduleName: 'Mathématiques pour la Gestion',
+    roomName: 'Salle 4',
+    sessionType: 'Travaux Dirigés (TD)',
+  },
+  {
+    id: 's3',
+    day: 'Mardi',
+    timeSlot: '08:30 - 10:30',
+    filiereCode: 'GFC',
+    filiereName: 'Gestion Financière et Comptable (GFC)',
+    groupName: 'GFC-S5-G1',
+    moduleCode: 'GFC-S5-M01',
+    moduleName: 'Finance d\'Entreprise Approfondie',
+    roomName: 'Amphi 2',
+    sessionType: 'Cours Magistral (CM)',
+  },
+  {
+    id: 's4',
+    day: 'Mardi',
+    timeSlot: '14:30 - 16:30',
+    filiereCode: 'GFC',
+    filiereName: 'Gestion Financière et Comptable (GFC)',
+    groupName: 'GFC-S5-G2',
+    moduleCode: 'GFC-S5-M02',
+    moduleName: 'Audit Financier & Comptable',
+    roomName: 'Salle 8',
+    sessionType: 'Travaux Dirigés (TD)',
+  },
+  {
+    id: 's5',
+    day: 'Mercredi',
+    timeSlot: '10:45 - 12:45',
+    filiereCode: 'TC',
+    filiereName: 'Tronc Commun ENCG (TC)',
+    groupName: 'TC-S2-G1',
+    moduleCode: 'TC-S2-M03',
+    moduleName: 'Économie Générale II',
+    roomName: 'Amphi 2',
+    sessionType: 'Cours Magistral (CM)',
+  },
+  {
+    id: 's6',
+    day: 'Jeudi',
+    timeSlot: '08:30 - 10:30',
+    filiereCode: 'GFC',
+    filiereName: 'Gestion Financière et Comptable (GFC)',
+    groupName: 'GFC-S6-G1',
+    moduleCode: 'GFC-S6-M02',
+    moduleName: 'Contrôle de Gestion & Pilotage',
+    roomName: 'Amphi 3',
+    sessionType: 'Cours Magistral (CM)',
+  },
+  {
+    id: 's7',
+    day: 'Vendredi',
+    timeSlot: '14:30 - 16:30',
+    filiereCode: 'MAC',
+    filiereName: 'Marketing et Action Commerciale (MAC)',
+    groupName: 'MAC-S5-G1',
+    moduleCode: 'MAC-S5-M02',
+    moduleName: 'Marketing Stratégique',
+    roomName: 'Salle 12',
+    sessionType: 'Travaux Dirigés (TD)',
+  },
+  {
+    id: 's8',
+    day: 'Samedi',
+    timeSlot: '09:00 - 12:00',
+    filiereCode: 'GFC',
+    filiereName: 'Gestion Financière et Comptable (GFC)',
+    groupName: 'GFC-S5-G1',
+    moduleCode: 'GFC-S5-M03',
+    moduleName: 'Fiscalité des Entreprises & Séminaire',
+    roomName: 'Amphi 2',
+    sessionType: 'Travaux Pratiques (TP)',
+  },
+];
 
 export default function ProfessorAbsencesView() {
   const { user } = useAuthStore();
@@ -34,6 +150,11 @@ export default function ProfessorAbsencesView() {
   const [selectedModule, setSelectedModule] = useState('');
   const [sessionType, setSessionType] = useState('Cours Magistral (CM)');
   const [roomName, setRoomName] = useState('Amphi 2');
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Timetable filter
+  const [selectedDayFilter, setSelectedDayFilter] = useState<string>('all');
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   // Session Active state
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -82,11 +203,38 @@ export default function ProfessorAbsencesView() {
     api.get('/modules').then((res) => {
       const list = res.data.data || res.data || [];
       setModules(list);
-      if (list.length > 0) {
-        setSelectedModule(list[0].id.toString());
-      }
     }).catch(console.error);
   }, []);
+
+  // 🔍 Filter Modules strictly according to the selected Filière
+  const filteredModules = useMemo(() => {
+    if (!selectedFiliere) return modules;
+    const filiereObj = filieres.find(f => f.id?.toString() === selectedFiliere.toString());
+    const fCode = filiereObj?.code?.toUpperCase() || '';
+
+    const list = modules.filter((m: any) => {
+      if (m.filiere_id && m.filiere_id.toString() === selectedFiliere.toString()) return true;
+      if (m.filiere?.id && m.filiere.id.toString() === selectedFiliere.toString()) return true;
+      if (fCode) {
+        if (fCode === 'TC' && m.code?.toUpperCase().startsWith('TC-')) return true;
+        if (fCode === 'GFC' && m.code?.toUpperCase().startsWith('GFC-')) return true;
+        if (fCode === 'MAC' && (m.code?.toUpperCase().startsWith('MAC-') || m.code?.toUpperCase().startsWith('MCM-'))) return true;
+      }
+      return false;
+    });
+
+    return list.length > 0 ? list : modules;
+  }, [modules, selectedFiliere, filieres]);
+
+  // Auto-select first matching module when filiere changes
+  useEffect(() => {
+    if (filteredModules.length > 0) {
+      const exists = filteredModules.some((m: any) => m.id?.toString() === selectedModule.toString());
+      if (!exists) {
+        setSelectedModule(filteredModules[0].id.toString());
+      }
+    }
+  }, [filteredModules, selectedModule]);
 
   // Fetch groups when filiere changes
   useEffect(() => {
@@ -121,6 +269,35 @@ export default function ProfessorAbsencesView() {
         .catch(() => {});
     }
   }, [selectedGroupe]);
+
+  // 🎯 1-CLIC ATTENDANCE FROM TIMETABLE SESSION
+  const handleSelectSessionFromSchedule = (session: TimetableSession, startDirectly: boolean = false) => {
+    setSelectedSessionId(session.id);
+
+    // 1. Find and set filiere
+    const matchedFiliere = filieres.find(f => f.code?.toUpperCase() === session.filiereCode.toUpperCase() || f.name?.includes(session.filiereCode));
+    if (matchedFiliere) {
+      setSelectedFiliere(matchedFiliere.id.toString());
+    }
+
+    // 2. Set room and session type
+    setRoomName(session.roomName);
+    setSessionType(session.sessionType);
+
+    // 3. Find and set module
+    const matchedModule = modules.find(m => m.code?.toUpperCase() === session.moduleCode.toUpperCase() || m.name?.includes(session.moduleName));
+    if (matchedModule) {
+      setSelectedModule(matchedModule.id.toString());
+    }
+
+    toast.success(`📅 Séance sélectionnée : ${session.moduleName}`, {
+      description: `${session.day} · ${session.timeSlot} (${session.groupName} - ${session.roomName})`
+    });
+
+    if (startDirectly) {
+      handleStartSession();
+    }
+  };
 
   // QR Code Dynamic Token Rotation
   useEffect(() => {
@@ -227,13 +404,14 @@ export default function ProfessorAbsencesView() {
       const res = await api.post('/professor/attendance/start', {
         module_id: parseInt(selectedModule) || 1,
         group_id: parseInt(selectedGroupe) || 1,
-        room_name: roomName
+        room_name: roomName,
+        date: sessionDate
       }).catch(() => null);
 
       setIsSessionActive(true);
       setSessionId(res?.data?.session?.id || Math.floor(Math.random() * 1000));
       toast.success("🚀 Session d'appel démarrée avec succès !", {
-        description: "Vous pouvez projeter le QR code ou émarger rapidement via le trombinoscope."
+        description: "Vous pouvez émarger rapidement via le trombinoscope ou projeter le QR code rotatif."
       });
     } catch (err) {
       setIsSessionActive(true);
@@ -243,42 +421,44 @@ export default function ProfessorAbsencesView() {
     }
   };
 
-  // Close & Save Session
+  // Close & Save Session (Online + Offline Sync Fallback)
   const handleSaveAndCloseSession = async () => {
     setSavingAttendance(true);
-    try {
-      if (sessionId) {
-        await api.post(`/professor/attendance/${sessionId}/close`, {}).catch(() => null);
-      }
+    const payload = {
+      session_id: sessionId,
+      module_id: selectedModule,
+      group_id: selectedGroupe,
+      date: sessionDate,
+      records: students.map(s => ({
+        student_id: s.id,
+        status: s.status
+      }))
+    };
 
-      toast.success("✅ Feuille d'émargement officielle validée et enregistrée !", {
-        description: `Présents: ${stats.present} • Absents: ${stats.absent} • Retards: ${stats.late}`
+    if (!window.navigator.onLine) {
+      offlineAttendanceStore.saveOffline(payload);
+      setIsSessionActive(false);
+      setSavingAttendance(false);
+      return;
+    }
+
+    try {
+      await api.post('/professor/attendance/save', payload);
+
+      toast.success("💾 Émargement officiel enregistré et certifié en base de données !", {
+        description: `Total: ${stats.total} · Présents: ${stats.present} · Absents: ${stats.absent}`
       });
       setIsSessionActive(false);
-    } catch (err) {
-      toast.success("Feuille de présence enregistrée.");
+    } catch (error) {
+      // Fallback to offline store
+      offlineAttendanceStore.saveOffline(payload);
       setIsSessionActive(false);
     } finally {
       setSavingAttendance(false);
     }
   };
 
-  // Export PDF
-  const handleExportPdf = () => {
-    window.print();
-  };
-
-  // Filtered students by search
-  const filteredStudents = useMemo(() => {
-    return students.filter(s => {
-      const q = searchQuery.toLowerCase();
-      return s.first_name.toLowerCase().includes(q) ||
-             s.last_name.toLowerCase().includes(q) ||
-             s.cne.toLowerCase().includes(q);
-    });
-  }, [students, searchQuery]);
-
-  // Statistics
+  // Calculated Stats
   const stats = useMemo(() => {
     const total = students.length;
     const present = students.filter(s => s.status === 'present').length;
@@ -289,96 +469,273 @@ export default function ProfessorAbsencesView() {
     return { total, present, absent, late, excused, rate };
   }, [students]);
 
-  const selectedModuleName = modules.find(m => m.id.toString() === selectedModule)?.name || 'Audit & Contrôle de Gestion';
-  const selectedGroupName = groupes.find(g => g.id.toString() === selectedGroupe)?.name || 'GFC-S5-G1';
+  // Filtered Students
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) return students;
+    const q = searchQuery.toLowerCase();
+    return students.filter(s => 
+      s.first_name.toLowerCase().includes(q) || 
+      s.last_name.toLowerCase().includes(q) || 
+      s.cne.toLowerCase().includes(q)
+    );
+  }, [students, searchQuery]);
+
+  // Schedule filtering by Filiere AND by Day
+  const filteredSchedule = useMemo(() => {
+    let list = WEEKLY_SCHEDULE;
+
+    // Filter by selected filiere
+    if (selectedFiliere && selectedFiliere !== 'all') {
+      const filiereObj = filieres.find(f => f.id?.toString() === selectedFiliere.toString());
+      const fCode = filiereObj?.code?.toUpperCase() || '';
+      const matched = list.filter(s => {
+        if (s.filiereCode?.toUpperCase() === fCode) return true;
+        if (filiereObj?.name && s.filiereName?.toLowerCase().includes(filiereObj.name.toLowerCase())) return true;
+        return false;
+      });
+      if (matched.length > 0) list = matched;
+    }
+
+    // Filter by day
+    if (selectedDayFilter !== 'all') {
+      list = list.filter(s => s.day.toLowerCase() === selectedDayFilter.toLowerCase());
+    }
+
+    return list;
+  }, [selectedDayFilter, selectedFiliere, filieres]);
 
   return (
-    <div className="space-y-6 p-4 md:p-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
-      
-      {/* Hero Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
-            <UserCheck className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <span className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" /> Émargement Numérique ENCG Fès
-            </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Saisie des Absences & Appel en Direct</h1>
-            <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
-              Appel éclair 1-clic, QR code dynamique vidéoprojeté et reconnaissance vocale des absents.
+    <div className="space-y-6 max-w-7xl mx-auto p-3 sm:p-6 pb-24 font-sans animate-in fade-in">
+
+      {/* ── 1. Hero Banner ────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#001A4B] via-[#0f2863] to-[#1e3b8a] p-6 sm:p-8 rounded-3xl shadow-2xl text-white border border-indigo-700/40">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-indigo-200 text-xs font-black uppercase tracking-wider backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Émargement Numérique & Suivi des Présences
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              Feuille de Présence & Appel Intelligent
+            </h1>
+            <p className="text-xs sm:text-sm text-indigo-200/90 font-medium max-w-2xl">
+              Enseignant : <strong className="text-white">{currentProfName}</strong> · Choisissez votre filière, consultez l'emploi du temps et prenez l'appel en 1-clic.
             </p>
           </div>
-        </div>
 
-        {isSessionActive && (
-          <div className="flex items-center gap-3 relative z-10">
-            <button
-              onClick={handleExportPdf}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-white/20 backdrop-blur-md cursor-pointer flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" /> PV PDF
-            </button>
-            <button
-              onClick={handleSaveAndCloseSession}
-              disabled={savingAttendance}
-              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2"
-            >
-              {savingAttendance ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-              Clôturer & Enregistrer
-            </button>
+          <div className="flex items-center gap-3">
+            {isSessionActive ? (
+              <button
+                onClick={handleSaveAndCloseSession}
+                disabled={savingAttendance}
+                className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Check className="w-4 h-4" /> Clôturer & Certifier l'Appel
+              </button>
+            ) : (
+              <button
+                onClick={handleStartSession}
+                disabled={loading}
+                className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Play className="w-4 h-4 text-amber-300" /> Démarrer l'Appel Immédiat
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* STEP 1: Session Setup Card */}
-      {!isSessionActive ? (
-        <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
-              <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-700">
-                1. Sélection & Détection de la Séance de Cours
-              </h3>
-            </div>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
-              Enseignant : {currentProfName}
-            </span>
-          </div>
-
-          {/* Auto-detected current slot highlight */}
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black shrink-0 shadow-md">
-                ⚡
+      {/* ── 2. ÉTAPE 1 : SÉLECTION DE LA FILIÈRE (TOP COCKPIT) ── */}
+      {!isSessionActive && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <BookOpen size={20} />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase text-indigo-900 tracking-wider">Séance Actuelle Détectée (Aujourd'hui)</span>
-                <h4 className="font-black text-slate-900 text-sm">{selectedModuleName} — Groupe {selectedGroupName}</h4>
-                <p className="text-xs text-slate-500 font-medium">Salle : {roomName} • Type : {sessionType} • Date : {new Date().toLocaleDateString('fr-FR')}</p>
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  Étape 1 : Choisir la Filière Pédagogique
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200">
+                    Filtre Principal
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">Sélectionnez la filière pour adapter automatiquement l'emploi du temps et les séances associées</p>
               </div>
             </div>
 
-            <button
-              onClick={handleStartSession}
-              disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer shrink-0"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              ⚡ Démarrer l'Appel Immédiat
-            </button>
+            {/* Quick Filiere Dropdown */}
+            <div className="w-full sm:w-72">
+              <select
+                value={selectedFiliere}
+                onChange={(e) => setSelectedFiliere(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white outline-none cursor-pointer"
+              >
+                <option value="all">🌐 Toutes les Filières (Vue Globale)</option>
+                {filieres.map((f: any) => (
+                  <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Manual Selectors */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
+          {/* Quick Filiere Pill Badges */}
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <button
+              onClick={() => setSelectedFiliere('all')}
+              className={cn(
+                "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border",
+                selectedFiliere === 'all'
+                  ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+              )}
+            >
+              🌐 Toutes les Filières
+            </button>
+            {filieres.map((f: any) => (
+              <button
+                key={f.id}
+                onClick={() => setSelectedFiliere(f.id.toString())}
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-1.5",
+                  selectedFiliere === f.id.toString()
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                )}
+              >
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/20">{f.code}</span>
+                <span>{f.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. ÉTAPE 2 : MINI WEEKLY TIMETABLE PLANNING (PLANNING HEBDOMADAIRE 1-CLIC) ── */}
+      {!isSessionActive && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <CalendarDays size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  Étape 2 : Planning de la Semaine — Sélection Rapide 1-Clic
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 border border-emerald-200">
+                    Interactif
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">Cliquez sur n'importe quelle séance pour charger les étudiants et lancer l'appel instantanément</p>
+              </div>
+            </div>
+
+            {/* Day Switcher */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-x-auto text-xs font-black">
+              {['all', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setSelectedDayFilter(d)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap",
+                    selectedDayFilter === d
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {d === 'all' ? 'Toute la Semaine' : d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sessions Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {filteredSchedule.map((session) => {
+              const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+              const currentDayName = DAYS_FR[new Date().getDay()];
+              const isSessionToday = session.day.toLowerCase() === currentDayName.toLowerCase();
+              const isSelected = selectedSessionId === session.id;
+
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => handleSelectSessionFromSchedule(session, false)}
+                  className={cn(
+                    "p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 group hover:-translate-y-0.5",
+                    isSelected
+                      ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md"
+                      : isSessionToday
+                        ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 shadow-xs"
+                        : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/60 hover:border-indigo-300"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 dark:text-slate-200">
+                      <Clock size={14} className="text-indigo-500" />
+                      {session.day} · {session.timeSlot}
+                    </span>
+                    {isSessionToday && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
+                        Aujourd'hui
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 transition-colors">
+                      {session.moduleName}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 text-[10px] font-mono font-black rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                        {session.groupName}
+                      </span>
+                      <span className="text-xs text-slate-500 font-bold">
+                        📍 {session.roomName}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{session.sessionType}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectSessionFromSchedule(session, true);
+                      }}
+                      className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95"
+                    >
+                      <Zap size={12} className="text-amber-300" />
+                      <span>Faire l'Appel</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. Manual Config & Selectors Form ─────────────────────────── */}
+      {!isSessionActive ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <Layers size={16} className="text-indigo-600" /> Configuration Manuelle de la Séance
+            </h3>
+            <span className="text-xs text-slate-400 font-medium">Filtres connectés à la base de données</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Filiere Selector */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filière</label>
               <select 
                 value={selectedFiliere}
                 onChange={(e) => setSelectedFiliere(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
               >
                 {filieres.map((f: any) => (
                   <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
@@ -386,12 +743,13 @@ export default function ProfessorAbsencesView() {
               </select>
             </div>
 
+            {/* Groupe Selector */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Groupe / Section</label>
               <select 
                 value={selectedGroupe}
                 onChange={(e) => setSelectedGroupe(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
               >
                 {groupes.map((g: any) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
@@ -399,26 +757,40 @@ export default function ProfessorAbsencesView() {
               </select>
             </div>
 
+            {/* Module Selector strictly filtered by selected Filiere */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Module Académique</label>
               <select 
                 value={selectedModule}
                 onChange={(e) => setSelectedModule(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
               >
-                {modules.map((m: any) => (
+                {filteredModules.map((m: any) => (
                   <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
                 ))}
               </select>
             </div>
 
+            {/* Salle Selector */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Salle / Amphi</label>
               <input 
                 type="text" 
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                placeholder="Ex: Amphi 2"
+              />
+            </div>
+
+            {/* Date Selector */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Date de la Séance</label>
+              <input 
+                type="date" 
+                value={sessionDate}
+                onChange={(e) => setSessionDate(e.target.value)}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
               />
             </div>
           </div>
@@ -429,222 +801,189 @@ export default function ProfessorAbsencesView() {
           
           {/* Live Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xs">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">EFFECTIF TOTAL</span>
-              <span className="text-2xl font-black text-slate-900 font-mono mt-1 block">{stats.total} Étudiants</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">{stats.total} Étudiants</span>
             </div>
 
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl shadow-xs">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">PRÉSENTS</span>
-              <span className="text-2xl font-black text-emerald-700 font-mono mt-1 block">{stats.present}</span>
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl shadow-xs">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block">PRÉSENTS</span>
+              <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 font-mono mt-1 block">{stats.present}</span>
             </div>
 
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl shadow-xs">
-              <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 block">ABSENTS</span>
-              <span className="text-2xl font-black text-rose-700 font-mono mt-1 block">{stats.absent}</span>
+            <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl shadow-xs">
+              <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 block">ABSENTS</span>
+              <span className="text-2xl font-black text-rose-700 dark:text-rose-400 font-mono mt-1 block">{stats.absent}</span>
             </div>
 
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-xs">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 block">EN RETARD (15m)</span>
-              <span className="text-2xl font-black text-amber-700 font-mono mt-1 block">{stats.late}</span>
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl shadow-xs">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block">EN RETARD (15m)</span>
+              <span className="text-2xl font-black text-amber-700 dark:text-amber-400 font-mono mt-1 block">{stats.late}</span>
             </div>
 
-            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-2xl shadow-xs col-span-2 md:col-span-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 block">TAUX DE PRÉSENCE</span>
-              <span className="text-2xl font-black text-indigo-700 font-mono mt-1 block">{stats.rate}%</span>
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-2xl shadow-xs col-span-2 md:col-span-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 block">TAUX DE PRÉSENCE</span>
+              <span className="text-2xl font-black text-indigo-700 dark:text-indigo-400 font-mono mt-1 block">{stats.rate}%</span>
             </div>
           </div>
 
           {/* Mode Selector Tabs */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <div className="flex flex-wrap gap-2">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                 <button
                   onClick={() => setActiveTab('trombi')}
                   className={cn(
-                    "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-                    activeTab === 'trombi' ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer",
+                    activeTab === 'trombi' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                   )}
                 >
-                  <Users className="w-4 h-4" /> 1. Trombinoscope Tactile ({stats.total})
+                  <Users size={16} /> Trombinoscope Visuel
                 </button>
-
                 <button
                   onClick={() => setActiveTab('qr')}
                   className={cn(
-                    "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-                    activeTab === 'qr' ? "bg-purple-600 text-white shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer",
+                    activeTab === 'qr' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                   )}
                 >
-                  <QrCode className="w-4 h-4" /> 2. Vidéo-Projecteur QR Code
+                  <QrCode size={16} /> QR Code Projecteur
                 </button>
-
                 <button
                   onClick={() => setActiveTab('voice')}
                   className={cn(
-                    "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-                    activeTab === 'voice' ? "bg-amber-500 text-slate-950 shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer",
+                    activeTab === 'voice' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                   )}
                 >
-                  <Mic className="w-4 h-4" /> 3. Dictée Vocale IA
+                  <Mic size={16} /> Appel Vocal IA
                 </button>
               </div>
 
-              {/* Quick Actions */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleMarkAllPresent}
-                  className="px-4 py-2 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> ✨ Tout Marquer Présent
-                </button>
-              </div>
-            </div>
+              {activeTab === 'trombi' && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleMarkAllPresent}
+                    className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CheckSquare size={16} /> Tout Marquer Présent
+                  </button>
 
-            {/* TAB 1: Trombinoscope Tactile */}
-            {activeTab === 'trombi' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-1">
-                    <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder="Rechercher par nom, prénom ou CNE..."
+                      placeholder="Chercher étudiant..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                      className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-60"
                     />
                   </div>
-                  <span className="text-xs text-slate-400 font-bold whitespace-nowrap">
-                    Astuce : Cliquez sur un statut pour le faire basculer instantanément.
-                  </span>
                 </div>
+              )}
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {filteredStudents.map((s) => (
-                    <div 
-                      key={s.id}
-                      onClick={() => handleToggleStatus(s.id)}
-                      className={cn(
-                        "p-4 rounded-2xl border-2 transition-all cursor-pointer select-none space-y-3 relative group hover:scale-[1.02]",
-                        s.status === 'present' ? "bg-emerald-50/50 border-emerald-300 text-emerald-950" :
-                        s.status === 'absent' ? "bg-rose-50/50 border-rose-400 text-rose-950 shadow-rose-100 shadow-md" :
-                        s.status === 'late' ? "bg-amber-50/50 border-amber-300 text-amber-950" :
-                        "bg-blue-50/50 border-blue-300 text-blue-950"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-full font-black text-xs flex items-center justify-center shadow-sm text-white shrink-0",
-                          s.status === 'present' ? "bg-emerald-600" :
-                          s.status === 'absent' ? "bg-rose-600" :
-                          s.status === 'late' ? "bg-amber-600" : "bg-blue-600"
-                        )}>
-                          {s.first_name[0]}{s.last_name[0]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-black text-sm text-slate-900 truncate">
-                            {s.first_name} {s.last_name}
-                          </h4>
-                          <span className="text-[11px] font-mono text-slate-400 font-bold block">
-                            {s.cne}
-                          </span>
-                        </div>
+            {/* TAB 1: Trombinoscope Grid */}
+            {activeTab === 'trombi' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredStudents.map((st) => (
+                  <div
+                    key={st.id}
+                    onClick={() => handleToggleStatus(st.id)}
+                    className={cn(
+                      "p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 select-none hover:scale-[1.02]",
+                      st.status === 'present' && "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800",
+                      st.status === 'absent' && "bg-rose-50/60 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800 shadow-sm",
+                      st.status === 'late' && "bg-amber-50/50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800",
+                      st.status === 'excused' && "bg-blue-50/50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-black text-xs text-white shrink-0 shadow-xs",
+                        st.status === 'present' && "bg-emerald-600",
+                        st.status === 'absent' && "bg-rose-600",
+                        st.status === 'late' && "bg-amber-600",
+                        st.status === 'excused' && "bg-blue-600"
+                      )}>
+                        {st.first_name.charAt(0)}{st.last_name.charAt(0)}
                       </div>
 
-                      {/* Status Badges Selector */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                        <span className={cn(
-                          "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
-                          s.status === 'present' ? "bg-emerald-600 text-white" :
-                          s.status === 'absent' ? "bg-rose-600 text-white animate-pulse" :
-                          s.status === 'late' ? "bg-amber-500 text-slate-950" : "bg-blue-600 text-white"
-                        )}>
-                          {s.status === 'present' ? '🟢 Présent' :
-                           s.status === 'absent' ? '🔴 Absent' :
-                           s.status === 'late' ? '🟡 Retard' : '🔵 Justifié'}
-                        </span>
-
-                        {s.scannedAt && (
-                          <span className="text-[10px] text-slate-400 font-mono font-bold">
-                            {s.scannedAt}
-                          </span>
-                        )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {st.first_name} {st.last_name}
+                        </p>
+                        <p className="text-[10px] font-mono text-slate-400 truncate">
+                          {st.cne}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="shrink-0 flex items-center gap-1">
+                      <span className={cn(
+                        "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                        st.status === 'present' && "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200",
+                        st.status === 'absent' && "bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200",
+                        st.status === 'late' && "bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200",
+                        st.status === 'excused' && "bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200"
+                      )}>
+                        {st.status === 'present' && 'Présent'}
+                        {st.status === 'absent' && 'Absent'}
+                        {st.status === 'late' && 'Retard'}
+                        {st.status === 'excused' && 'Excusé'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* TAB 2: Projector QR Code Mode */}
+            {/* TAB 2: Dynamic Rotating QR Code */}
             {activeTab === 'qr' && (
-              <div className="p-8 bg-slate-950 rounded-3xl text-white text-center space-y-6 flex flex-col items-center justify-center">
+              <div className="text-center py-10 space-y-6 max-w-md mx-auto">
                 <div className="space-y-2">
-                  <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5">
-                    <QrCode className="w-4 h-4 text-purple-400" /> Mode Vidéoprojection Amphi
-                  </span>
-                  <h3 className="text-2xl font-black text-white">Scannez pour valider votre présence en cours</h3>
-                  <p className="text-xs text-slate-400 max-w-md">
-                    Les étudiants ouvrent leur application étudiante ENCG et scannent ce QR code qui se régénère automatiquement pour empêcher la triche.
-                  </p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Émargement Automatique par QR Code Rotatif</h3>
+                  <p className="text-xs text-slate-500 font-medium">Les étudiants scannent ce code avec leur application mobile pour s'enregistrer automatiquement</p>
                 </div>
 
-                {/* Animated Dynamic QR Container */}
-                <div className="p-6 bg-white rounded-3xl shadow-2xl inline-block relative group">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-500 inline-block shadow-2xl">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrToken)}`}
-                    alt="QR Présence"
-                    className="w-64 h-64 rounded-xl"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrToken}`}
+                    alt="Attendance QR Code"
+                    className="w-56 h-56 mx-auto object-contain rounded-xl"
                   />
-                  <div className="absolute -top-3 -right-3 bg-purple-600 text-white font-mono text-xs font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> {qrCountdown}s
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 text-sm font-bold text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span>{stats.present} Étudiants ont émargé en direct</span>
-                  </div>
-                  <span>•</span>
-                  <div className="text-purple-400 font-mono font-black">
-                    Token : {qrToken}
+                  <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-indigo-600 dark:text-indigo-300">
+                    <Clock size={16} className="animate-spin" />
+                    <span>Renouvellement automatique dans {qrCountdown}s</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 3: Voice AI Recognition */}
+            {/* TAB 3: Voice IA Dictation */}
             {activeTab === 'voice' && (
-              <div className="p-8 bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 rounded-3xl border-2 border-amber-300 text-center space-y-6 flex flex-col items-center justify-center">
+              <div className="text-center py-12 space-y-6 max-w-lg mx-auto">
                 <div className="space-y-2">
-                  <span className="bg-amber-500 text-slate-950 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5 shadow-sm">
-                    <Mic className="w-4 h-4" /> Dictée Vocale des Absents par l'IA
-                  </span>
-                  <h3 className="text-2xl font-black text-slate-900">Prononcez simplement les noms des absents</h3>
-                  <p className="text-xs text-slate-600 max-w-md">
-                    Exemple : Cliquez sur le micro et dites <em>"Youssef Chraibi et Ayoub Chraibi absents"</em>. Le système mettra automatiquement à jour leurs dossiers.
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Appel Vocal Assisté par IA</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Prononcez les noms des étudiants absents à haute voix. L'intelligence artificielle cochera automatiquement les absences correspondantes.
                   </p>
                 </div>
 
                 <button
                   onClick={handleToggleVoiceRecognition}
                   className={cn(
-                    "w-24 h-24 rounded-full flex items-center justify-center text-white shadow-2xl transition-all hover:scale-110 cursor-pointer",
-                    isListening ? "bg-red-600 animate-ping" : "bg-gradient-to-r from-amber-500 to-orange-600"
+                    "w-24 h-24 rounded-full flex items-center justify-center mx-auto transition-all shadow-xl cursor-pointer",
+                    isListening ? "bg-rose-600 text-white animate-pulse ring-8 ring-rose-500/30" : "bg-indigo-600 hover:bg-indigo-700 text-white"
                   )}
                 >
-                  {isListening ? <MicOff className="w-10 h-10" /> : <Mic className="w-10 h-10" />}
+                  {isListening ? <Mic size={36} /> : <MicOff size={36} />}
                 </button>
 
-                <p className="text-xs font-black uppercase tracking-wider text-amber-900">
-                  {isListening ? "🔴 Écoute en cours... Parlez maintenant !" : "Cliquez sur le micro pour commencer à dicter"}
-                </p>
-
                 {voiceTranscript && (
-                  <div className="p-4 bg-white rounded-2xl border border-amber-300 text-xs font-bold text-slate-800 max-w-lg">
-                    Dernière dictée capturée : <em>"{voiceTranscript}"</em>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <p className="text-slate-400 text-[10px] uppercase mb-1">Dernière dictée capturée :</p>
+                    <p>"{voiceTranscript}"</p>
                   </div>
                 )}
               </div>

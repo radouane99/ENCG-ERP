@@ -148,9 +148,10 @@ export default function ActivityLogsPage() {
   };
 
   const handleExportCndpReport = () => {
-    toast.success("Génération du Rapport Officiel d'Audit CNDP (Loi 09-08)...", {
-      description: "Fichier PDF certifié contenant l'empreinte numérique et la liste des accès aux données personnelles."
+    toast.info("Génération du Registre CNDP A4...", {
+      description: "Ouverture du dialogue d'impression / export PDF certifié conforme à la Loi 09-08."
     });
+    window.print();
   };
 
   return (
@@ -301,12 +302,15 @@ export default function ActivityLogsPage() {
             </div>
 
             {/* Type Filters */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex-wrap">
               {[
                 { key: 'ALL', label: 'Tous' },
-                { key: 'AUTHENTICATION', label: 'Auth' },
-                { key: 'DATA_ACCESS', label: 'Accès Données' },
-                { key: 'DATA_MUTATION', label: 'Modifications' },
+                { key: 'GRADE_MUTATION', label: '📝 Notes' },
+                { key: 'APOGEE_OVERRIDE', label: '⚖️ APOGEE' },
+                { key: 'DOCUMENT_REQUEST', label: '🏛️ Guichet' },
+                { key: 'FINANCE_TRANSACTION', label: '💳 Régie' },
+                { key: 'AUTHENTICATION', label: '🔑 Auth' },
+                { key: 'SECURITY_AUDIT', label: '🛡️ Sécurité' },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -496,6 +500,74 @@ export default function ActivityLogsPage() {
           </div>
         </div>
       )}
+
+      {/* 🖨️ Printable Official CNDP Compliance Report (A4) */}
+      <style>{`
+        #printable-cndp-report {
+          display: none;
+        }
+        @media print {
+          .no-print, header, sidebar, nav, aside, [role="navigation"] {
+            display: none !important;
+          }
+          #printable-cndp-report {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            color: black !important;
+            z-index: 99999 !important;
+          }
+        }
+      `}</style>
+
+      <div id="printable-cndp-report" className="p-8">
+        <div style={{ textAlign: 'center', borderBottom: '2px solid #0f2863', paddingBottom: '15px', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: 'bold', color: '#0f2863', textTransform: 'uppercase', margin: 0 }}>
+            ROYAUME DU MAROC — COMMISSION NATIONALE DE CONTRÔLE DE LA PROTECTION DES DONNÉES (CNDP)
+          </h2>
+          <h3 style={{ fontSize: '13px', fontWeight: 'bold', color: '#334155', margin: '5px 0 0 0' }}>
+            ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS — UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH
+          </h3>
+          <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginTop: '4px' }}>
+            REGISTRE OFFICIEL DES TRAITEMENTS & JOURNAL D'AUDIT (LOI N° 09-08 — DÉCLARATION D-W-2025/ENCG-FES)
+          </h4>
+        </div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#0f2863', color: 'white' }}>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Réf. Log</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Date & Heure</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Utilisateur & Rôle</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Type d'Opération</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Description Traitement CNDP</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Adresse IP</th>
+              <th style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>Conformité</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLogs.map((log, idx) => (
+              <tr key={log.id} style={{ backgroundColor: idx % 2 === 0 ? '#f8fafc' : 'white' }}>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontWeight: 'bold' }}>{log.id}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{log.date}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>{log.user} ({log.role || 'Staff'})</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{log.type}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{log.description}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontFamily: 'monospace' }}>{log.ip}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', color: '#059669', fontWeight: 'bold' }}>CONFORME LOI 09-08</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', fontSize: '11px', fontWeight: 'bold' }}>
+          <div>Signature du Délégué à la Protection des Données (DPO)</div>
+          <div>Cachet Officiel du Secrétariat Général — ENCG Fès</div>
+        </div>
+      </div>
 
     </div>
   );

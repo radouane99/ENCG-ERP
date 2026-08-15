@@ -18,6 +18,7 @@ const StudentDigitalLibrary = lazy(() => import('@features/students/pages/Studen
 const StudentGamification = lazy(() => import('@features/students/pages/StudentGamification'))
 const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/StudentAbsencesPage'))
 const StudentGuichetPage = lazy(() => import('@features/students/pages/StudentGuichetPage'))
+const StudentAiTutorPage = lazy(() => import('@features/students/pages/StudentAiTutorPage'))
 
 export default function StudentRouter() {
   return (
@@ -30,6 +31,8 @@ export default function StudentRouter() {
       <Route path="convocations/:id/download" element={<ConvocationPDFView />} />
       <Route path="internships" element={<StudentInternships />} />
       <Route path="evaluations" element={<StudentEvaluations />} />
+      <Route path="ai-tutor" element={<StudentAiTutorPage />} />
+      <Route path="tutor" element={<StudentAiTutorPage />} />
       <Route path="schedule" element={<StudentSchedule />} />
       <Route path="requests" element={<TicketsPage />} />
       <Route path="portfolio" element={<StudentPortfolio />} />

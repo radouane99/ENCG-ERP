@@ -13,6 +13,7 @@ import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { CustomSelect } from '@shared/components/ui/CustomSelect'
 import { toast } from 'sonner'
+import ApogeeExportModal from '../components/ApogeeExportModal'
 
 export default function AdminExamPvArchivePage() {
   const navigate = useNavigate()
@@ -24,8 +25,9 @@ export default function AdminExamPvArchivePage() {
   const [selectedLockStatus, setSelectedLockStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Modal Inspection State
+  // Modal Inspection & Apogee State
   const [inspectedExam, setInspectedExam] = useState<any | null>(null)
+  const [showApogeeModal, setShowApogeeModal] = useState(false)
 
   // 1. Fetch Filieres for Filter Dropdown
   const { data: filieres = [] } = useQuery({
@@ -182,6 +184,13 @@ export default function AdminExamPvArchivePage() {
               className="border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-slate-500" /> Actualiser
+            </Button>
+
+            <Button
+              onClick={() => setShowApogeeModal(true)}
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs font-black shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-amber-300" /> Exporter Fichier APOGEE (MESRSFC)
             </Button>
 
             <Button
@@ -504,7 +513,7 @@ export default function AdminExamPvArchivePage() {
                 </Button>
 
                 <Button
-                  onClick={() => handlePrintExamPdf(inspectedExam.id)}
+                  onClick={() => handlePrintOfficialPvPdf(inspectedExam.id)}
                   className="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl font-black text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Printer className="w-4 h-4 text-amber-300" /> Imprimer PV PDF (A4)
@@ -523,6 +532,13 @@ export default function AdminExamPvArchivePage() {
             </div>
           </div>
         )}
+
+        {/* 📊 APOGEE Official Ministerial Export Modal */}
+        <ApogeeExportModal 
+          isOpen={showApogeeModal} 
+          onClose={() => setShowApogeeModal(false)} 
+          defaultFiliereId={selectedFiliereId}
+        />
       </div>
 
       {/* 🖨️ Clean Printable Section for A4 PDF Output */}

@@ -44,42 +44,18 @@
             </tr>
         </thead>
         <tbody>
+            @forelse($modulesList ?? [] as $idx => $mod)
+            <tr style="background-color: {{ $idx % 2 === 0 ? '#ffffff' : '#f8fafc' }};">
+                <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #0f2863;">{{ $mod['semester'] ?? 'Semestre' }}</td>
+                <td style="border: 1px solid #cbd5e1; font-weight: 500;">{{ $mod['code_title'] ?? 'Module' }}</td>
+                <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #059669;">{{ $mod['hours'] ?? '48 Heures' }}</td>
+                <td style="border: 1px solid #cbd5e1;">{{ $mod['dept'] ?? 'Sciences de Gestion' }}</td>
+            </tr>
+            @empty
             <tr style="background-color: #ffffff;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 1</td>
-                <td style="border: 1px solid #cbd5e1;">TC-S1-M01 Mathématiques pour la Gestion</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">48 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
+                <td colspan="4" style="border: 1px solid #cbd5e1; text-align: center; color: #64748b; padding: 15px;">Aucun module renseigné pour cette filière.</td>
             </tr>
-            <tr style="background-color: #f8fafc;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 1</td>
-                <td style="border: 1px solid #cbd5e1;">TC-S1-M02 Comptabilité Générale I</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">48 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
-            </tr>
-            <tr style="background-color: #ffffff;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 1</td>
-                <td style="border: 1px solid #cbd5e1;">TC-S1-M05 Management de Base</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">48 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
-            </tr>
-            <tr style="background-color: #f8fafc;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 5 (Spécialité)</td>
-                <td style="border: 1px solid #cbd5e1;">GFC-S5-M01 Finance d'Entreprise Approfondie</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">48 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
-            </tr>
-            <tr style="background-color: #ffffff;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 5 (Spécialité)</td>
-                <td style="border: 1px solid #cbd5e1;">GFC-S5-M02 Audit Financier & Comptable</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">48 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
-            </tr>
-            <tr style="background-color: #f8fafc;">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold;">Semestre 10</td>
-                <td style="border: 1px solid #cbd5e1;">GFC-S10-M06 Projet de Fin d'Études (PFE) & Stage</td>
-                <td style="border: 1px solid #cbd5e1; text-align: center;">300 Heures</td>
-                <td style="border: 1px solid #cbd5e1;">Sciences de Gestion</td>
-            </tr>
+            @endforelse
         </tbody>
     </table>
 

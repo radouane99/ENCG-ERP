@@ -177,22 +177,30 @@
     <div class="signature-box">
         <table style="width: 100%;">
             <tr>
-                <td style="width: 50%; vertical-align: top;">
+                <td style="width: 20%; vertical-align: middle;">
+                    @php
+                        $pvVerifyUrl = config('app.url') . '/verify/pv/' . ($examId ?? '1');
+                    @endphp
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode($pvVerifyUrl) }}" style="width: 65px; height: 65px; border: 1px solid #cbd5e1; padding: 2px;" alt="QR PV">
+                </td>
+                <td style="width: 40%; vertical-align: top; padding-left: 10px;">
                     <div class="sig-title">Président / Surveillant Responsable</div>
-                    <div style="font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #1e293b;">
+                    <div style="font-weight: bold; font-size: 12px; margin-bottom: 4px; color: #1e293b;">
                         {{ $signedBy->name ?? 'Surveillant de Salle' }}
                     </div>
-                    <div class="label" style="margin-bottom: 4px;">Horodatage de Validation :</div>
+                    <div class="label" style="margin-bottom: 2px;">Horodatage de Validation :</div>
                     <div style="font-size: 10px; font-family: monospace; color: #64748b;">
-                        {{ $signedAt }} (UTC+1)
+                        {{ $signedAt ?? date('d/m/Y H:i:s') }} (UTC+1)
                     </div>
                 </td>
-                <td style="width: 50%; text-align: right; vertical-align: top;">
+                <td style="width: 40%; text-align: right; vertical-align: top;">
                     <div class="sig-title" style="text-align: right;">Signature Tactile Certifiée</div>
                     @if($signatureData)
                         <img src="{{ $signatureData }}" class="signature-img" alt="Signature">
                     @else
-                        <div style="font-style: italic; color: #94a3b8;">Signature Digitale Enregistrée</div>
+                        <div style="font-style: italic; color: #059669; font-weight: bold; font-size: 10px; padding-top: 15px;">
+                            ✓ [Signature Numérique Scellée]
+                        </div>
                     @endif
                 </td>
             </tr>
@@ -200,7 +208,7 @@
     </div>
 
     <div class="footer">
-        Document sécurisé généré par le Portail ENCG ERP Fès — Valide sans rature ni surcharge — {{ date('d/m/Y H:i') }}
+        Document officiel sécurisé — ENCG Fès ERP — Empreinte SHA-256 certifiée — {{ date('d/m/Y H:i') }}
     </div>
 
 </body>

@@ -201,11 +201,21 @@
   {{-- Footer — table-based for DomPDF --}}
   <table class="footer-table">
     <tr>
-      <td class="footer-seal" style="width:65%;">
-        Document généré le {{ $generated_at }} · Vérification : {{ $verify_url }}
+      <td style="width:15%; vertical-align:middle;">
+        @if(!empty($qrBase64))
+          <img src="{{ $qrBase64 }}" style="width:60px; height:60px; border:1px solid #cbd5e1; padding:2px;">
+        @elseif(!empty($verify_url))
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=70x70&data={{ urlencode($verify_url) }}" style="width:60px; height:60px; border:1px solid #cbd5e1; padding:2px;">
+        @endif
       </td>
-      <td class="footer-right" style="width:35%;">
-        © {{ date('Y') }} ENCG Fès ERP<br>Document officiel — Ne pas modifier
+      <td class="footer-seal" style="width:50%; vertical-align:middle; padding-left:10px;">
+        <strong style="color:#0f2863;">Document Officiel Vérifié ENCG Fès</strong><br>
+        Généré le {{ $generated_at }}<br>
+        <span style="font-size:7pt; color:#64748b;">Vérification d'authenticité : {{ $verify_url }}</span>
+      </td>
+      <td class="footer-right" style="width:35%; vertical-align:middle;">
+        © {{ date('Y') }} ENCG Fès ERP<br>
+        <span style="color:#059669; font-weight:bold;">[Signature Électronique Certifiée]</span>
       </td>
     </tr>
   </table>
