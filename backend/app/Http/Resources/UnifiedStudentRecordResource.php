@@ -40,7 +40,7 @@ class UnifiedStudentRecordResource extends JsonResource
                     'session_date' => $attendance->attendanceSession?->session_date,
                     'module' => $attendance->attendanceSession?->module?->name,
                     'status' => $attendance->status,
-                    'justified' => (bool) $attendance->absenceJustification,
+                    'justified' => (bool) $attendance->is_justified,
                 ];
             });
         });

@@ -57,7 +57,6 @@ class AttestationAndOfficialDiplomaTest extends TestCase
         Sanctum::actingAs($this->studentUser);
 
         $response = $this->get('/api/v1/student-portal/attestation-reussite/pdf');
-
         $response->assertOk();
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type') ?? '');
     }

@@ -76,7 +76,6 @@ class UnifiedStudentRecordTest extends TestCase
         $this->actingAs($admin, 'sanctum');
 
         $response = $this->getJson('/api/students/' . $student->id . '/dossier');
-        
         $response->assertStatus(200);
         
         // Admin should see admin notes

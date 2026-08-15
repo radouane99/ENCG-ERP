@@ -29,14 +29,20 @@ class UpdateInternshipAction
                 throw new InvalidArgumentException("Action not supported.");
             }
 
-            activity()
-                ->causedBy(auth()->user())
-                ->performedOn($internship)
-                ->withProperties($internship->getChanges())
-                ->log($logMessage);
+            try {
+                if (function_exists('activity') && auth()->user()) {
+                    activity()
+                        ->causedBy(auth()->user())
+                        ->performedOn($internship)
+                        ->withProperties($internship->getChanges())
+                        ->log($logMessage);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to log internship activity: ' . $e->getMessage());
+            }
 
             return $internship;
-        } catch (QueryException $e) {
+        } catch (\Throwable $e) {
             throw $e;
         }
     }

@@ -35,13 +35,13 @@ class Student extends Model
 
     public function getUserAttributeSafely(string $attribute)
     {
+        $userVal = null;
         if ($this->relationLoaded('user')) {
-            return $this->user?->{$attribute};
+            $userVal = $this->user?->{$attribute};
+        } elseif (!\Illuminate\Database\Eloquent\Model::preventsLazyLoading()) {
+            $userVal = $this->user?->{$attribute};
         }
-        if (\Illuminate\Database\Eloquent\Model::preventsLazyLoading()) {
-            return null;
-        }
-        return $this->user?->{$attribute};
+        return $userVal ?? $this->attributes[$attribute] ?? null;
     }
 
     protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
@@ -162,8 +162,14 @@ class Student extends Model
 
     public function resolveRouteBinding($value, $field = null)
     {
-        return $this->where('uuid', $value)
-            ->orWhere('id', is_numeric($value) ? (int) $value : 0)
-            ->first();
+        if (is_numeric($value)) {
+            return $this->where('id', (int) $value)->first();
+        }
+
+        if (\Illuminate\Support\Str::isUuid($value)) {
+            return $this->where('uuid', $value)->first();
+        }
+
+        return $this->where('student_number', $value)->first();
     }
 }

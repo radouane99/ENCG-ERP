@@ -345,7 +345,8 @@ class PdfExportController extends Controller
             'date'        => date('d/m/Y'),
         ]);
 
-        return $pdf->download("Attestation_Reussite_{$student->cne}_{$year}.pdf");
+        $safeYear = str_replace(['/', '\\'], '-', $year);
+        return $pdf->download("Attestation_Reussite_{$student->cne}_{$safeYear}.pdf");
     }
 
     public function downloadDiplomeOfficielPdf(Request $request, int $studentId)

@@ -35,7 +35,13 @@ class UnifiedStudentRecordController extends Controller
 
         $studentModel = $student instanceof Student
             ? $student
-            : Student::where('id', is_numeric($student) ? (int) $student : 0)->orWhere('uuid', (string) $student)->firstOrFail();
+            : (is_numeric($student)
+                ? Student::where('id', (int) $student)->firstOrFail()
+                : (\Illuminate\Support\Str::isUuid((string) $student)
+                    ? Student::where('uuid', (string) $student)->firstOrFail()
+                    : Student::where('student_number', (string) $student)->firstOrFail()
+                  )
+              );
 
         return $this->buildDossierResponse($studentModel, $request, $user && method_exists($user, 'hasRole') && $user->hasRole('professor'));
     }
@@ -55,7 +61,7 @@ class UnifiedStudentRecordController extends Controller
                 $q->with('assessment.module');
             },
             'attendances' => function ($q) {
-                $q->with('attendanceSession.module', 'absenceJustification');
+                $q->with('attendanceSession.module');
             },
             'documentRequests' => function ($q) {
                 $q->with('documentType');

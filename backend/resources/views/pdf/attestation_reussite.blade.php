@@ -22,7 +22,7 @@
     a été déclaré(e) définitivement <strong>ADMIS(E)</strong> aux épreuves du Diplôme de l'École Nationale de Commerce et de Gestion de Fès, en filière :<br><br>
     
     <div style="text-align: center; font-size: 18px; font-weight: bold; color: #0f2863; margin: 15px 0; text-transform: uppercase;">
-        {{ $student->latestPathway ? $student->latestPathway->filiere->name : 'Management & Commerce International' }}
+        {{ $student->latestPathway?->filiere?->name ?? 'Management & Commerce International' }}
     </div>
     
     au titre de l'année universitaire <strong>{{ $year }}</strong>
