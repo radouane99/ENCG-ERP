@@ -16,13 +16,11 @@ class InternshipFactory extends Factory
     public function definition(): array
     {
         return [
-            'institution_id'   => 1,
-            'academic_year_id' => 1,
-            'student_id'       => Student::factory(),
-            'company_name'     => fake()->company(),
-            'start_date'       => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
-            'end_date'         => fake()->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
-            'status'           => 'pending',
+            'student_id'   => Student::factory(),
+            'company_name' => fake()->company(),
+            'start_date'   => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
+            'end_date'     => fake()->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
+            'status'       => 'pending',
             'type'             => fake()->randomElement(['initiation', 'application', 'fin_etudes']),
         ];
     }

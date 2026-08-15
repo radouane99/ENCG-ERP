@@ -29,17 +29,7 @@ class Internship extends Model
 
     public function supervisor(): BelongsTo
     {
-        return $this->belongsTo(Professor::class, 'professor_supervisor_id');
-    }
-
-    public function setSupervisorIdAttribute($value)
-    {
-        $this->attributes['professor_supervisor_id'] = $value;
-    }
-
-    public function getSupervisorIdAttribute()
-    {
-        return $this->attributes['professor_supervisor_id'] ?? null;
+        return $this->belongsTo(Professor::class, 'supervisor_id');
     }
 
     public function internshipDocuments(): HasMany

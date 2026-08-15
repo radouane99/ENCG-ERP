@@ -17,6 +17,7 @@ return new class extends Migration
                 $table->date('start_date')->nullable();
                 $table->date('end_date')->nullable();
                 $table->string('status')->default('pending');
+                $table->foreignId('supervisor_id')->nullable()->constrained('professors')->nullOnDelete();
                 $table->timestamps();
             });
         } else {
@@ -26,6 +27,9 @@ return new class extends Migration
                 }
                 if (!Schema::hasColumn('internships', 'status')) {
                     $table->string('status')->default('pending');
+                }
+                if (!Schema::hasColumn('internships', 'supervisor_id')) {
+                    $table->foreignId('supervisor_id')->nullable()->constrained('professors')->nullOnDelete();
                 }
             });
         }

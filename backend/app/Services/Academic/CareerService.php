@@ -39,7 +39,7 @@ class CareerService
     {
         return DB::transaction(function () use ($internshipId, $professorId) {
             $internship = Internship::findOrFail($internshipId);
-            $internship->update(['professor_supervisor_id' => $professorId]);
+            $internship->update(['supervisor_id' => $professorId]);
 
             return $internship;
         });
