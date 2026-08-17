@@ -3,12 +3,27 @@ name: Deploy ENCG-ERP to Production
 on:
   push:
     branches:
-      - docker-v2
       - main
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: encg_erp_test
+          POSTGRES_USER: encg_user
+          POSTGRES_PASSWORD: encg_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -22,17 +37,42 @@ jobs:
 
       - name: Install PHP Dependencies
         working-directory: ./backend
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist --ignore-platform-reqs
+        run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
 
       - name: Generate key for testing
         working-directory: ./backend
         run: |
-          cp .env.example .env
-          php artisan key:generate
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: encg_erp_test
+          DB_USERNAME: encg_user
+          DB_PASSWORD: encg_password
+
+      - name: Run Database Migrations
+        working-directory: ./backend
+        run: php artisan migrate --force --env=testing
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: encg_erp_test
+          DB_USERNAME: encg_user
+          DB_PASSWORD: encg_password
 
       - name: Run PHP Tests
         working-directory: ./backend
-        run: php artisan test
+        run: php artisan test --env=testing
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: encg_erp_test
+          DB_USERNAME: encg_user
+          DB_PASSWORD: encg_password
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -50,7 +90,7 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: false # هذا السطر هو ما يوقف הـ Deploy job مؤقتاً
+    if: false # Deploiement mis en pause
     steps:
       - name: Deployment Skipped
         run: echo "Deployment skipped - No server configured."
