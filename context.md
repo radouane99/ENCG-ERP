@@ -1241,13 +1241,15 @@ Le projet applique rigoureusement la **Pyramide des Tests Logiciels** pour garan
 
 ---
 
-### 17.3 Couverture Exhaustive des Suites de Tests Backend (105 Test Suites — 246 Assertions — 100% Green ✅)
+### 17.3 Couverture Exhaustive des Suites de Tests Backend (115 Test Suites — 331 Assertions — 100% Green ✅)
 
-1. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration de bout en bout (E2E) : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
-2. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
-3. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs de délibération.
-4. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie simultanée des notes.
-5. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Calcul des moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
+1. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle de la base de données PostgreSQL 16 (Vérification des clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades de suppression `cascadeOnDelete`).
+2. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Calculs de moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, détection des notes éliminatoires $< 7/20$, attribution des mentions, et crédits ECTS).
+3. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration de bout en bout (E2E) : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
+4. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
+5. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs de délibération.
+6. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie simultanée des notes.
+7. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Calcul des moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
 6. **`GradeCalculationAndPvDeliberationTest.php` :** Formule de rattrapage $\max(M_N, M_R)$, signature numérique et scellement SHA-256 avec audit log.
 7. **`FiliereModuleStructureTest.php` :** Structure Départements, Filières, Semestres (S1-S10), Modules (45h), Groupes.
 8. **`ProfessorAndAssignmentTest.php` :** Professeurs Permanents (PES/PH/PA), Vacataires, Affectations de charges d'enseignement.
