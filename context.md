@@ -1241,20 +1241,21 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 
 ---
 
-### 17.3 Couverture Exhaustive des Suites de Tests Backend (124 Test Suites — 350 Assertions — 100% Green ✅)
+### 17.3 Couverture Exhaustive des Suites de Tests Backend (128 Test Suites — 361 Assertions — 100% Green ✅)
 
-1. **`AttendanceAndAbsenceJustificationWorkflowTest.php` (Assiduité & Justifications) :** Création de séances d'émargement, enregistrement des absences par séance, soumission et validation administrative des certificats médicaux.
-2. **`CedocDoctoralStudiesAndThesisTest.php` (Études Doctorales CEDOC) :** Suivi des heures de formation doctorale (norme 200h MESRSFC), publications scientifiques et avancement de thèse.
-3. **`AlumniCareerAndJobHubTest.php` (Réseau Lauréats & Insertion) :** Enquêtes d'insertion professionnelle, suivi des délais d'embauche et offres d'emploi.
-4. **`AiTutorAndStudentAssistantTest.php` (Tuteur Pédagogique IA) :** Historique des conversations d'assistance aux cours, réponses contextuelles et interactions étudiantes.
-5. **`AcademicNonRegressionAndBoundaryTest.php` (Non-Régression & BVA) :** Analyse des valeurs limites ($7.00$ vs $6.99$, rachat $9.50$ vs $9.49$, note absent $= 0$, et idempotence de mise à jour).
-6. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle PostgreSQL 16 (Clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades `cascadeOnDelete`).
-7. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, seuils éliminatoires, mentions, et ECTS).
-8. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration E2E : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
-9. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
-10. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs.
-11. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie des notes.
-12. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
+1. **`MultiRoleInteractionAndNotificationTest.php` (Interactions Multi-Rôles & Notifications) :** Interactions Admin $\leftrightarrow$ Professeur $\leftrightarrow$ Étudiant (Demandes de documents, contrats vacataires, alertes urgentes et cycle de vie des notifications `markAsRead`).
+2. **`AttendanceAndAbsenceJustificationWorkflowTest.php` (Assiduité & Justifications) :** Création de séances d'émargement, enregistrement des absences par séance, soumission et validation administrative des certificats médicaux.
+3. **`CedocDoctoralStudiesAndThesisTest.php` (Études Doctorales CEDOC) :** Suivi des heures de formation doctorale (norme 200h MESRSFC), publications scientifiques et avancement de thèse.
+4. **`AlumniCareerAndJobHubTest.php` (Réseau Lauréats & Insertion) :** Enquêtes d'insertion professionnelle, suivi des délais d'embauche et offres d'emploi.
+5. **`AiTutorAndStudentAssistantTest.php` (Tuteur Pédagogique IA) :** Historique des conversations d'assistance aux cours, réponses contextuelles et interactions étudiantes.
+6. **`AcademicNonRegressionAndBoundaryTest.php` (Non-Régression & BVA) :** Analyse des valeurs limites ($7.00$ vs $6.99$, rachat $9.50$ vs $9.49$, note absent $= 0$, et idempotence de mise à jour).
+7. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle PostgreSQL 16 (Clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades `cascadeOnDelete`).
+8. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, seuils éliminatoires, mentions, et ECTS).
+9. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration E2E : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
+10. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
+11. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs.
+12. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie des notes.
+13. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
 6. **`GradeCalculationAndPvDeliberationTest.php` :** Formule de rattrapage $\max(M_N, M_R)$, signature numérique et scellement SHA-256 avec audit log.
 7. **`FiliereModuleStructureTest.php` :** Structure Départements, Filières, Semestres (S1-S10), Modules (45h), Groupes.
 8. **`ProfessorAndAssignmentTest.php` :** Professeurs Permanents (PES/PH/PA), Vacataires, Affectations de charges d'enseignement.
