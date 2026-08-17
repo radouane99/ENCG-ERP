@@ -1,5 +1,5 @@
 import { useState, FormEvent, useRef, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, X, GraduationCap, Users, Briefcase, CheckCircle, ChevronDown, Check, Building2, FileText } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, GraduationCap, Users, Briefcase, ChevronDown, Check, Building2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -8,7 +8,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import ExcelActions from '@shared/components/ui/ExcelActions'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
-import { Badge } from '@shared/components/ui/Badge'
 import { Modal } from '@shared/components/ui/Modal'
 import { Spinner } from '@shared/components/ui/Spinner'
 import type { Department } from '@/types/models'
@@ -134,8 +133,7 @@ const EMPTY_FORM = {
 };
 
 export default function ProfessorsListPage() {
-  const { t, i18n } = useTranslation(['professors', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { t } = useTranslation(['professors', 'common'])
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
@@ -214,12 +212,6 @@ export default function ProfessorsListPage() {
     permanent: t('professors:contracts.permanent', { defaultValue: 'Permanent' }),
     contractual: t('professors:contracts.contractual', { defaultValue: 'Contractuel' }),
     visiting: t('professors:contracts.visiting', { defaultValue: 'Vacataire' }),
-  }
-
-  const CONTRACT_VARIANTS: Record<string, "default" | "warning" | "navy"> = {
-    permanent: 'default',
-    contractual: 'warning',
-    visiting: 'navy',
   }
 
   return (

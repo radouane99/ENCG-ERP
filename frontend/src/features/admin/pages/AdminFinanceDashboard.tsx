@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import {
-  Landmark, TrendingUp, TrendingDown, DollarSign, Send, FileText, AlertCircle, CheckCircle2, Loader2,
-  Filter, Search, Download, ShieldCheck, PieChart, ArrowUpRight, ArrowDownRight, RefreshCcw, Check, X,
-  Printer, Award, Layers, CreditCard, Building2
+  Landmark, TrendingUp, Send, FileText, AlertCircle,
+  Search, ArrowUpRight, ArrowDownRight, RefreshCcw, Check, X,
+  Printer, Award, CreditCard, Building2
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 

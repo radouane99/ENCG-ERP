@@ -1,21 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Calendar as CalendarIcon,
   MapPin,
   FileText,
   Download,
   AlertTriangle,
-  Clock,
   Zap,
   Smartphone,
   Library,
-  Briefcase,
   GraduationCap,
-  MessageSquare,
-  ArrowRight,
   Plus
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';

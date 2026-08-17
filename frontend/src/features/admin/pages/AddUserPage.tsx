@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 export default function AddUserPage() {
   const [formData, setFormData] = useState({

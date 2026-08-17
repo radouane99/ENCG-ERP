@@ -1,5 +1,5 @@
 import React from 'react';
-import { Microscope, BookOpen, FileText, Clock, GraduationCap, CheckCircle2, ChevronRight, Award } from 'lucide-react';
+import { Microscope, BookOpen, FileText, Clock, GraduationCap, CheckCircle2, Award } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
