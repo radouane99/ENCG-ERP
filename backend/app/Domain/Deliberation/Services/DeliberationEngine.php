@@ -4,10 +4,11 @@ namespace App\Domain\Deliberation\Services;
 
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
-use App\Models\Student;
+use App\Models\ExamSession;
 use App\Models\ResitEligibility;
-use Illuminate\Support\Facades\DB;
+use App\Models\Student;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Enterprise Service for processing academic deliberations (Apogée style).
@@ -33,7 +34,7 @@ class DeliberationEngine
                 $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber, $isRattrapage);
 
                 // 3. Grant Rattrapage Eligibility for failed modules (If this is NORMALE deliberation)
-                if (!$isRattrapage) {
+                if (! $isRattrapage) {
                     $this->grantResitEligibility($student->id, $moduleAverages, $deliberation);
                 }
 
@@ -48,9 +49,9 @@ class DeliberationEngine
                 $wasCompensated = false;
                 $compensatedAverage = null;
 
-                if ($semesterAverage >= 10 && !$hasEliminatory) {
+                if ($semesterAverage >= 10 && ! $hasEliminatory) {
                     $decision = 'admitted';
-                } elseif ($semesterAverage >= 9.5 && $semesterAverage < 10 && !$hasEliminatory) {
+                } elseif ($semesterAverage >= 9.5 && $semesterAverage < 10 && ! $hasEliminatory) {
                     // System Rachat (Jury Compensation)
                     $decision = 'admitted';
                     $wasCompensated = true;
@@ -81,8 +82,8 @@ class DeliberationEngine
     {
         return Student::whereHas('registrations', function ($query) use ($deliberation) {
             $query->where('academic_year_id', $deliberation->academic_year_id)
-                  ->where('filiere_id', $deliberation->filiere_id);
-            
+                ->where('filiere_id', $deliberation->filiere_id);
+
             if ($deliberation->group_id) {
                 $query->where('group_id', $deliberation->group_id);
             }
@@ -108,11 +109,11 @@ class DeliberationEngine
     {
         $session = $deliberation->semester?->examSessions()->where('type', 'normale')->orWhere('type', 'NORMALE')->first()
             ?? $deliberation->semester?->examSessions()->first()
-            ?? \App\Models\ExamSession::first();
+            ?? ExamSession::first();
 
         $examSessionId = $session?->id;
 
-        if (!$examSessionId) {
+        if (! $examSessionId) {
             return;
         }
 
@@ -121,12 +122,12 @@ class DeliberationEngine
             if ($module->final_module_score < 10.0) {
                 ResitEligibility::updateOrCreate(
                     [
-                        'student_id'      => $studentId,
-                        'module_id'       => $module->module_id,
+                        'student_id' => $studentId,
+                        'module_id' => $module->module_id,
                         'exam_session_id' => $examSessionId,
                     ],
                     [
-                        'is_eligible' => true
+                        'is_eligible' => true,
                     ]
                 );
             }
@@ -136,23 +137,32 @@ class DeliberationEngine
     private function checkEliminatoryMarks(Collection $moduleAverages): bool
     {
         // Moroccan university standard: < 7/20 is often eliminatory for the whole semester
-        $threshold = 7.0; 
-        
+        $threshold = 7.0;
+
         foreach ($moduleAverages as $module) {
             if ($module->final_module_score < $threshold) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     private function calculateMention(float $average): ?string
     {
-        if ($average < 10) return null;
-        if ($average < 12) return 'Passable';
-        if ($average < 14) return 'Assez Bien';
-        if ($average < 16) return 'Bien';
+        if ($average < 10) {
+            return null;
+        }
+        if ($average < 12) {
+            return 'Passable';
+        }
+        if ($average < 14) {
+            return 'Assez Bien';
+        }
+        if ($average < 16) {
+            return 'Bien';
+        }
+
         return 'Très Bien';
     }
 }

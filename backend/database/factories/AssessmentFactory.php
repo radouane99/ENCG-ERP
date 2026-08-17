@@ -17,9 +17,9 @@ class AssessmentFactory extends Factory
     {
         return [
             'module_id' => Module::factory(),
-            'type'      => fake()->randomElement(['CC', 'Exam', 'TP']),
-            'weight'    => 50.0,
-            'date'      => now()->toDateString(),
+            'type' => fake()->randomElement(['CC', 'Exam', 'TP']),
+            'weight' => 50.0,
+            'date' => now()->toDateString(),
         ];
     }
 }

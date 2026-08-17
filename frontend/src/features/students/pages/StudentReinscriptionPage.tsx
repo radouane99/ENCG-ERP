@@ -45,15 +45,6 @@ export default function StudentReinscriptionPage() {
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-slate-500 font-bold text-sm">Vérification de votre dossier de délibération...</p>
-      </div>
-    );
-  }
-
   const s = statusRes || {};
 
   // Prefill when data loads
@@ -62,7 +53,16 @@ export default function StudentReinscriptionPage() {
     if (s.address && !address) setAddress(s.address);
     if (s.city && !city) setCity(s.city);
     if (s.is_confirmed) setStep(4);
-  }, [s]);
+  }, [s, phone, address, city]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+        <p className="text-slate-500 font-bold text-sm">Vérification de votre dossier de délibération...</p>
+      </div>
+    );
+  }
 
   const handleConfirmSubmit = () => {
     if (!phone || !address || !city) {

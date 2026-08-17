@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InternshipStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Internship extends Model
 {
-    use HasFactory, \App\Traits\HasValidationWorkflow;
+    use \App\Traits\HasValidationWorkflow, HasFactory;
 
     protected $guarded = ['id'];
 
@@ -18,7 +19,7 @@ class Internship extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
-            'status' => \App\Enums\InternshipStatus::class,
+            'status' => InternshipStatus::class,
         ];
     }
 

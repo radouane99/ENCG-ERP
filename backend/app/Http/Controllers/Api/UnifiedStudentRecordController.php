@@ -7,6 +7,7 @@ use App\Http\Resources\UnifiedStudentRecordResource;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class UnifiedStudentRecordController extends Controller
 {
@@ -37,11 +38,11 @@ class UnifiedStudentRecordController extends Controller
             ? $student
             : (is_numeric($student)
                 ? Student::where('id', (int) $student)->firstOrFail()
-                : (\Illuminate\Support\Str::isUuid((string) $student)
+                : (Str::isUuid((string) $student)
                     ? Student::where('uuid', (string) $student)->firstOrFail()
                     : Student::where('student_number', (string) $student)->firstOrFail()
-                  )
-              );
+                )
+            );
 
         return $this->buildDossierResponse($studentModel, $request, $user && method_exists($user, 'hasRole') && $user->hasRole('professor'));
     }
@@ -73,7 +74,7 @@ class UnifiedStudentRecordController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new UnifiedStudentRecordResource($loadedStudent),
+            'data' => new UnifiedStudentRecordResource($loadedStudent),
         ]);
     }
 }

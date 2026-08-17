@@ -64,8 +64,8 @@ class CareerService
             $project = FinalProject::findOrFail($projectId);
             $project->update([
                 'defense_date' => $data['defense_date'],
-                'room_id'      => $data['room_id'] ?? null,
-                'status'       => 'scheduled',
+                'room_id' => $data['room_id'] ?? null,
+                'status' => 'scheduled',
             ]);
 
             return $project;

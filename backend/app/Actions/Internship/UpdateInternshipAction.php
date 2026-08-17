@@ -4,7 +4,7 @@ namespace App\Actions\Internship;
 
 use App\Models\Internship;
 use App\Services\Academic\CareerService;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class UpdateInternshipAction
@@ -26,7 +26,7 @@ class UpdateInternshipAction
                 $internship = $this->careerService->assignSupervisor($internship->id, $data['supervisor_id']);
                 $logMessage = 'Internship supervisor assigned';
             } else {
-                throw new InvalidArgumentException("Action not supported.");
+                throw new InvalidArgumentException('Action not supported.');
             }
 
             try {
@@ -38,7 +38,7 @@ class UpdateInternshipAction
                         ->log($logMessage);
                 }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Failed to log internship activity: ' . $e->getMessage());
+                Log::warning('Failed to log internship activity: '.$e->getMessage());
             }
 
             return $internship;

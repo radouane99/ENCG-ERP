@@ -3,7 +3,7 @@ name: Deploy ENCG-ERP to Production
 on:
   push:
     branches:
-      - main
+      - docker-v2
 
 jobs:
   test-and-build:

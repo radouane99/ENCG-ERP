@@ -54,12 +54,12 @@ class UnifiedStudentRecordResource extends JsonResource
                     'requested_at' => $doc->requested_at?->toIso8601String(),
                     'processed_at' => $doc->processed_at?->toIso8601String(),
                 ];
-                
+
                 // Expose admin_notes only for admins
                 if ($isAdmin) {
                     $docData['admin_notes'] = $doc->admin_notes;
                 }
-                
+
                 return $docData;
             });
         });

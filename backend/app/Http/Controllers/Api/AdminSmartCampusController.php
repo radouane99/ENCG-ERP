@@ -39,18 +39,26 @@ class AdminSmartCampusController extends Controller
 
                 $equipmentStatus = $room->equipment_status ?? [];
                 $brokenEquipments = [];
-                if (($equipmentStatus['projector'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Projecteur';
-                if (($equipmentStatus['ac'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Climatisation';
-                if (($equipmentStatus['sound'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Sonorisation';
-                if (($equipmentStatus['pc_lab'] ?? 'ok') !== 'ok') $brokenEquipments[] = 'Postes PC';
+                if (($equipmentStatus['projector'] ?? 'ok') !== 'ok') {
+                    $brokenEquipments[] = 'Projecteur';
+                }
+                if (($equipmentStatus['ac'] ?? 'ok') !== 'ok') {
+                    $brokenEquipments[] = 'Climatisation';
+                }
+                if (($equipmentStatus['sound'] ?? 'ok') !== 'ok') {
+                    $brokenEquipments[] = 'Sonorisation';
+                }
+                if (($equipmentStatus['pc_lab'] ?? 'ok') !== 'ok') {
+                    $brokenEquipments[] = 'Postes PC';
+                }
 
-                $alertText = !empty($brokenEquipments) ? 'Maintenance: ' . implode(', ', $brokenEquipments) . ' en panne' : null;
+                $alertText = ! empty($brokenEquipments) ? 'Maintenance: '.implode(', ', $brokenEquipments).' en panne' : null;
 
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
                     'type' => $room->type ?? 'Salle',
-                    'occupancy' => $estimatedOccupancy . '%',
+                    'occupancy' => $estimatedOccupancy.'%',
                     'status' => $occupied ? 'occupied' : 'empty',
                     'temp' => '21°C',
                     'energy' => $occupied ? 'Medium' : 'Low',
@@ -66,7 +74,7 @@ class AdminSmartCampusController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'energy' => $rooms->where('status', 'occupied')->count() . ' salles actives',
+                'energy' => $rooms->where('status', 'occupied')->count().' salles actives',
                 'occupants' => $occupants,
                 'rooms' => $rooms->values(),
             ],
