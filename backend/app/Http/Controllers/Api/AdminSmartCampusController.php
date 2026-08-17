@@ -35,8 +35,7 @@ class AdminSmartCampusController extends Controller
                     ->first();
 
                 $occupied = $activeSchedule || $activeBooking;
-                $capacity = (int) ($room->capacity ?? 0);
-                $estimatedOccupancy = $occupied ? min(100, max(10, (int) round(($capacity > 0 ? min($capacity, max(1, (int) floor($capacity * 0.7))) : 1) / max($capacity, 1)) * 100))) : 0;
+                $estimatedOccupancy = $occupied ? 70 : 0;
 
                 $equipmentStatus = $room->equipment_status ?? [];
                 $brokenEquipments = [];

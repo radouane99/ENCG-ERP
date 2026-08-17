@@ -81,6 +81,10 @@ class PublicVerificationController extends Controller
                 'signed_by'     => $signature->signer->name ?? $signature->signer->email,
                 'signed_at'     => $signature->signed_at->toIso8601String(),
                 'ip_address'    => $signature->ip_address,
+            ],
+        ]);
+    }
+
     /**
      * Vérification Universelle de Document (PDF / Code / QR Token / SHA-256).
      */
