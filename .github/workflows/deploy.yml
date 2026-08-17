@@ -3,6 +3,7 @@ name: Deploy ENCG-ERP to Production
 on:
   push:
     branches:
+      - docker-v2
       - main
 
 jobs:
@@ -16,7 +17,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, dom, fileinfo, mysql
+          extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl
           coverage: none
 
       - name: Install PHP Dependencies
