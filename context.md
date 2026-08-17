@@ -1208,22 +1208,22 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 
 ## 17. STRATÉGIE DE TESTS LOGICIELS, ASSURANCE QUALITÉ & PIPELINE CI/CD (PRODUCTION GRADE)
 
-### 17.1 Pyramide des Tests Logiciels Implémentée (Software Testing Pyramid)
-Le projet applique rigoureusement la **Pyramide des Tests Logiciels** pour garantir zéro régression, une robustesse absolue et une conformité totale aux exigences académiques marocaines (MESRSFC / APOGEE) :
+### 17.1 Respect Strict des 7 Principes Fondamentaux du Test Logiciel (Norme ISTQB)
 
-```text
-               / \
-              / E2E \             <-- Tests de Bout en Bout (Cycle Académique Complet)
-             /-------\
-            / Feature \           <-- Tests Fonctionnels (Endpoints REST API, RBAC, Validation)
-           /-----------\
-          / Integration \         <-- Tests d'Intégration (PostgreSQL 16, Redis 7, Optimistic Locking)
-         /---------------\
-        /      Unit       \       <-- Tests Unitaires (Formules LMD, Zustand Stores, Utilitaires)
-       /-------------------\
-      / Security & Quality  \     <-- Tests de Sécurité, Audit Linter & Pipeline CI/CD
-     /-----------------------\
-```
+1. **Le test montre la présence de défauts, non leur absence :**
+   - Les suites prouvent que les cas d'erreur (absences non justifiées = 0/20, notes éliminatoires $< 7/20$, falsification de tokens QR) sont interceptés avec certitude.
+2. **Les tests exhaustifs sont impossibles (Analyse des Valeurs Limites - BVA) :**
+   - Utilisation de classes d'équivalence autour des frontières critiques LMD ($6.99/20$ éliminatoire vs $7.00/20$ éligible, $9.49/20$ non repêchable vs $9.50/20$ rachat).
+3. **Tester tôt (Shift-Left Testing) :**
+   - Validation unitaire des modèles et formules LMD dès le dev local avant tout push.
+4. **Regroupement des défauts (Loi de Pareto 80/20) :**
+   - Concentration des tests sur les 4 pôles critiques : **Délibérations APOGEE**, **Saisie concurrente des notes**, **Conflits d'emplois du temps**, et **Sécurité des documents officiels**.
+5. **Le paradoxe du pesticide :**
+   - Renouvellement continu des scénarios de test avec des données variées via `fake()`.
+6. **Le test dépend du contexte :**
+   - Règles académiques sur mesure pour l'enseignement supérieur marocain (Semestres S1-S10, 30 ECTS/semestre, Loi CNDP 09-08).
+7. **L'illusion de l'absence d'erreurs :**
+   - Validation de parcours utilisateurs réels de bout en bout (TAFEM $\rightarrow$ Délibération $\rightarrow$ Diplôme).
 
 ---
 
@@ -1241,15 +1241,16 @@ Le projet applique rigoureusement la **Pyramide des Tests Logiciels** pour garan
 
 ---
 
-### 17.3 Couverture Exhaustive des Suites de Tests Backend (115 Test Suites — 331 Assertions — 100% Green ✅)
+### 17.3 Couverture Exhaustive des Suites de Tests Backend (119 Test Suites — 339 Assertions — 100% Green ✅)
 
-1. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle de la base de données PostgreSQL 16 (Vérification des clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades de suppression `cascadeOnDelete`).
-2. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Calculs de moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, détection des notes éliminatoires $< 7/20$, attribution des mentions, et crédits ECTS).
-3. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration de bout en bout (E2E) : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
-4. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
-5. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs de délibération.
-6. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie simultanée des notes.
-7. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Calcul des moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
+1. **`AcademicNonRegressionAndBoundaryTest.php` (Non-Régression & BVA) :** Analyse des valeurs limites ($7.00$ vs $6.99$, rachat $9.50$ vs $9.49$, note absent $= 0$, et idempotence de mise à jour).
+2. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle PostgreSQL 16 (Clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades `cascadeOnDelete`).
+3. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, seuils éliminatoires, mentions, et ECTS).
+4. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration E2E : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
+5. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
+6. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs.
+7. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie des notes.
+8. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).
 6. **`GradeCalculationAndPvDeliberationTest.php` :** Formule de rattrapage $\max(M_N, M_R)$, signature numérique et scellement SHA-256 avec audit log.
 7. **`FiliereModuleStructureTest.php` :** Structure Départements, Filières, Semestres (S1-S10), Modules (45h), Groupes.
 8. **`ProfessorAndAssignmentTest.php` :** Professeurs Permanents (PES/PH/PA), Vacataires, Affectations de charges d'enseignement.
