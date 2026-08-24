@@ -46,32 +46,32 @@ class AuditLog extends Model
         $previousHash = $lastLog ? $lastLog->sha256_hash : 'GENESIS-CHAIN-ENCG-FES-2026';
 
         $payloadString = json_encode($data['payload'] ?? []);
-        $rawHashData = ($data['user_id'] ?? '0') . '|' . 
-                       ($data['action'] ?? '') . '|' . 
-                       ($data['ip_address'] ?? '') . '|' . 
-                       $payloadString . '|' . 
-                       now()->toIso8601String() . '|' . 
+        $rawHashData = ($data['user_id'] ?? '0').'|'.
+                       ($data['action'] ?? '').'|'.
+                       ($data['ip_address'] ?? '').'|'.
+                       $payloadString.'|'.
+                       now()->toIso8601String().'|'.
                        $previousHash;
 
         $hash = hash('sha256', $rawHashData);
 
         return self::create([
-            'user_id'         => $data['user_id'] ?? null,
-            'user_name'       => $data['user_name'] ?? 'Utilisateur Authentifié',
-            'user_email'      => $data['user_email'] ?? null,
-            'user_role'       => $data['user_role'] ?? 'Staff',
-            'action'          => $data['action'] ?? 'Opération Système',
-            'action_type'     => $data['action_type'] ?? 'DATA_MUTATION',
-            'description'     => $data['description'] ?? '',
-            'method'          => $data['method'] ?? 'POST',
-            'url'             => $data['url'] ?? null,
-            'ip_address'      => $data['ip_address'] ?? '127.0.0.1',
-            'user_agent'      => $data['user_agent'] ?? null,
-            'payload'         => $data['payload'] ?? null,
+            'user_id' => $data['user_id'] ?? null,
+            'user_name' => $data['user_name'] ?? 'Utilisateur Authentifié',
+            'user_email' => $data['user_email'] ?? null,
+            'user_role' => $data['user_role'] ?? 'Staff',
+            'action' => $data['action'] ?? 'Opération Système',
+            'action_type' => $data['action_type'] ?? 'DATA_MUTATION',
+            'description' => $data['description'] ?? '',
+            'method' => $data['method'] ?? 'POST',
+            'url' => $data['url'] ?? null,
+            'ip_address' => $data['ip_address'] ?? '127.0.0.1',
+            'user_agent' => $data['user_agent'] ?? null,
+            'payload' => $data['payload'] ?? null,
             'response_status' => $data['response_status'] ?? 200,
-            'severity'        => $data['severity'] ?? 'info',
-            'sha256_hash'     => $hash,
-            'cndp_reference'  => 'D-W-2025/ENCG-FES',
+            'severity' => $data['severity'] ?? 'info',
+            'sha256_hash' => $hash,
+            'cndp_reference' => 'D-W-2025/ENCG-FES',
         ]);
     }
 }

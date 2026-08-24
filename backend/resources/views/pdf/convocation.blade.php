@@ -43,17 +43,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo-container" style="border-bottom: 1.5px solid #000; padding-bottom: 5px;">
-                @php
-                    $logoPath = public_path('logo-encg.png');
-                    $pdfLogoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
-                @endphp
-                @if(!empty($pdfLogoBase64))
-                    <img src="{{ $pdfLogoBase64 }}" alt="Logo ENCG" class="logo" style="max-height: 55px;">
-                @else
-                    <img src="{{ public_path('logo-encg.png') }}" alt="Logo ENCG" class="logo" style="max-height: 55px;" onerror="this.style.display='none'">
-                @endif
-            </div>
+            @include('pdf.encg-header')
         </div>
 
         <div class="title-block">

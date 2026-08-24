@@ -16,31 +16,35 @@ class AiDocumentEnhancerService
 {
     public function enhanceDocumentScan(string $filePath): array
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return ['enhanced' => false, 'message' => 'Fichier introuvable.'];
         }
 
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
         // Skip non-image files for GD processing
-        if (!in_array($extension, ['jpg', 'jpeg', 'png'])) {
+        if (! in_array($extension, ['jpg', 'jpeg', 'png'])) {
             return [
                 'enhanced' => true,
-                'message'  => 'Document PDF pris en charge — Optimisation du contraste appliquée.',
+                'message' => 'Document PDF pris en charge — Optimisation du contraste appliquée.',
             ];
         }
 
         try {
             $info = @getimagesize($filePath);
-            if (!$info) return ['enhanced' => false, 'message' => 'Format image non lisible.'];
+            if (! $info) {
+                return ['enhanced' => false, 'message' => 'Format image non lisible.'];
+            }
 
             $img = match ($info['mime']) {
                 'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($filePath),
-                'image/png'               => @imagecreatefrompng($filePath),
-                default                   => null,
+                'image/png' => @imagecreatefrompng($filePath),
+                default => null,
             };
 
-            if (!$img) return ['enhanced' => false, 'message' => 'Impossible de charger l\'image.'];
+            if (! $img) {
+                return ['enhanced' => false, 'message' => 'Impossible de charger l\'image.'];
+            }
 
             // Apply contrast boost & sharpness filters
             if (function_exists('imagefilter')) {
@@ -52,17 +56,18 @@ class AiDocumentEnhancerService
             // Save enhanced image over original
             match ($info['mime']) {
                 'image/jpeg', 'image/jpg' => imagejpeg($img, $filePath, 92),
-                'image/png'               => imagepng($img, $filePath, 8),
+                'image/png' => imagepng($img, $filePath, 8),
             };
 
             imagedestroy($img);
 
             return [
                 'enhanced' => true,
-                'message'  => '✨ Document optimisé par IA (Contraste + Redressement automatique appliqué).',
+                'message' => '✨ Document optimisé par IA (Contraste + Redressement automatique appliqué).',
             ];
         } catch (\Exception $e) {
-            Log::warning("Document enhancement failed: " . $e->getMessage());
+            Log::warning('Document enhancement failed: '.$e->getMessage());
+
             return ['enhanced' => false, 'message' => $e->getMessage()];
         }
     }

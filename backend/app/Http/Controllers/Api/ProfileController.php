@@ -18,15 +18,15 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'name_ar'  => 'nullable|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'phone'    => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $user->name  = $validated['name'];
+        $user->name = $validated['name'];
         $user->email = $validated['email'];
 
         if (isset($validated['name_ar'])) {
@@ -37,7 +37,7 @@ class ProfileController extends Controller
             $user->phone = $validated['phone'];
         }
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
@@ -54,9 +54,9 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Profil mis à jour avec succès.',
-            'user'    => [
+            'user' => [
                 ...$user->toArray(),
-                'roles'       => $user->roles->pluck('name')->toArray(),
+                'roles' => $user->roles->pluck('name')->toArray(),
                 'permissions' => $user->permissions->pluck('name')->toArray(),
             ],
         ]);

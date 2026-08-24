@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use App\Services\Academic\ScheduleService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Exception;
 
 class ScheduleController extends Controller
 {
@@ -39,14 +39,14 @@ class ScheduleController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'module_id'    => 'required|exists:modules,id',
+            'module_id' => 'required|exists:modules,id',
             'professor_id' => 'required|exists:professors,id',
-            'room_id'      => 'required|exists:rooms,id',
-            'group_id'     => 'nullable|exists:groups,id',
-            'date'         => 'required|date',
-            'start_time'   => 'required|date_format:H:i',
-            'end_time'     => 'required|date_format:H:i|after:start_time',
-            'type'         => 'nullable|string',
+            'room_id' => 'required|exists:rooms,id',
+            'group_id' => 'nullable|exists:groups,id',
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'type' => 'nullable|string',
         ]);
 
         try {
@@ -55,7 +55,7 @@ class ScheduleController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Séance planifiée avec succès.',
-                'data'    => $schedule->load(['module', 'professor.user', 'room', 'group']),
+                'data' => $schedule->load(['module', 'professor.user', 'room', 'group']),
             ], 201);
         } catch (Exception $e) {
             return response()->json([
@@ -84,7 +84,7 @@ class ScheduleController extends Controller
     public function generateAiSimulation(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id'      => 'required|integer',
+            'filiere_id' => 'required|integer',
             'semester_number' => 'nullable|integer',
         ]);
 

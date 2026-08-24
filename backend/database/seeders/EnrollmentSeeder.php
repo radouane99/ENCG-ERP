@@ -5,9 +5,9 @@ namespace Database\Seeders;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
 use App\Models\Group;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentRegistration;
-use App\Models\Semester;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -16,24 +16,26 @@ class EnrollmentSeeder extends Seeder
     public function run(): void
     {
         $academicYear = AcademicYear::where('is_current', true)->first();
-        if (!$academicYear) {
+        if (! $academicYear) {
             $academicYear = AcademicYear::first();
         }
-        
+
         $filieres = Filiere::all();
         $semesters = Semester::where('academic_year_id', $academicYear->id)->get();
         $currentSemester = $semesters->where('is_current', true)->first() ?? $semesters->first();
 
         // Get existing groups or create new ones
         $groups = Group::where('academic_year_id', $academicYear->id)->get();
-        
+
         if ($groups->isEmpty()) {
             $groupNames = ['A', 'B', 'C', 'D'];
             $groups = collect();
             foreach ($filieres as $index => $filiere) {
                 for ($i = 0; $i < 2; $i++) {
-                    if ($groups->count() >= 10) break;
-                    
+                    if ($groups->count() >= 10) {
+                        break;
+                    }
+
                     $groups->push(Group::create([
                         'filiere_id' => $filiere->id,
                         'academic_year_id' => $academicYear->id,
@@ -49,9 +51,9 @@ class EnrollmentSeeder extends Seeder
         $alreadyRegistered = StudentRegistration::where('academic_year_id', $academicYear->id)
             ->pluck('student_id')
             ->toArray();
-        
+
         $students = Student::whereNotIn('id', $alreadyRegistered)->get();
-        
+
         if ($students->isEmpty()) {
             return; // All students already enrolled
         }
@@ -61,8 +63,10 @@ class EnrollmentSeeder extends Seeder
 
         DB::transaction(function () use ($studentChunks, $groups, $academicYear) {
             foreach ($groups as $index => $group) {
-                if (!isset($studentChunks[$index])) continue;
-                
+                if (! isset($studentChunks[$index])) {
+                    continue;
+                }
+
                 foreach ($studentChunks[$index] as $student) {
                     StudentRegistration::firstOrCreate([
                         'student_id' => $student->id,

@@ -2,6 +2,7 @@
 
 namespace App\Services\Core;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppNotificationService
@@ -33,12 +34,12 @@ class WhatsAppNotificationService
     {
         // Sanitize phone number
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-        
+
         Log::info(" [WhatsApp & SMS Gateway Dispatch] Destination: {$cleanPhone} | Message: {$message}");
 
         // Store dispatch log in system_notifications or session cache for UI feedback
         try {
-            \Illuminate\Support\Facades\DB::table('system_notifications')->insert([
+            DB::table('system_notifications')->insert([
                 'type' => 'whatsapp_sms',
                 'recipient' => $cleanPhone,
                 'message' => $message,

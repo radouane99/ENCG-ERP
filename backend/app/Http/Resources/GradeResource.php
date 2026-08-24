@@ -19,7 +19,7 @@ class GradeResource extends JsonResource
                 'id' => $this->assessment->id ?? null,
                 'type' => $this->assessment->type ?? null,
                 'weight' => (float) ($this->assessment->weight ?? 0),
-            ]
+            ],
         ];
     }
 }

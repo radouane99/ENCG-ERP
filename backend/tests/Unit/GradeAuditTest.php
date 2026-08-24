@@ -2,13 +2,13 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
+use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Student;
-use App\Models\Assessment;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class GradeAuditTest extends TestCase
 {
@@ -26,12 +26,12 @@ class GradeAuditTest extends TestCase
         $assessment = Assessment::factory()->create();
 
         $grade = Grade::create([
-            'student_id'    => $student->id,
+            'student_id' => $student->id,
             'assessment_id' => $assessment->id,
-            'value'         => 12.0,
-            'absent'        => false,
+            'value' => 12.0,
+            'absent' => false,
         ]);
-        
+
         // Trigger update
         $grade->update(['value' => 15.5]);
 

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\Filiere;
-use App\Models\Group;
 use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Student;
@@ -23,11 +22,17 @@ class ComprehensivePdfGenerationAndSecurityTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected AcademicYear $academicYear;
+
     protected Filiere $filiere;
+
     protected Module $module;
+
     protected Student $student;
+
     protected User $studentUser;
+
     protected User $adminUser;
 
     protected function setUp(): void
@@ -46,23 +51,23 @@ class ComprehensivePdfGenerationAndSecurityTest extends TestCase
         $this->filiere = Filiere::firstOrCreate(
             ['code' => 'GFC-PDF'],
             [
-                'name'           => 'Gestion Financière et Comptable',
-                'type'           => 'grande_ecole',
+                'name' => 'Gestion Financière et Comptable',
+                'type' => 'grande_ecole',
                 'duration_years' => 5,
                 'institution_id' => $this->institution->id,
-                'is_active'      => true,
+                'is_active' => true,
             ]
         );
 
         $this->module = Module::firstOrCreate(
             ['code' => 'M501-PDF', 'filiere_id' => $this->filiere->id],
             [
-                'name'            => 'Contrôle de Gestion Avancé',
+                'name' => 'Contrôle de Gestion Avancé',
                 'semester_number' => 5,
-                'coefficient'     => 1.5,
-                'credit_hours'    => 45,
-                'institution_id'  => $this->institution->id,
-                'is_active'       => true,
+                'coefficient' => 1.5,
+                'credit_hours' => 45,
+                'institution_id' => $this->institution->id,
+                'is_active' => true,
             ]
         );
 
@@ -70,34 +75,34 @@ class ComprehensivePdfGenerationAndSecurityTest extends TestCase
         $adminRole = Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
 
         $this->studentUser = User::factory()->create([
-            'email'          => 'salma.benkirane@encg-fes.ac.ma',
-            'first_name'     => 'Salma',
-            'last_name'      => 'Benkirane',
+            'email' => 'salma.benkirane@encg-fes.ac.ma',
+            'first_name' => 'Salma',
+            'last_name' => 'Benkirane',
             'institution_id' => $this->institution->id,
         ]);
         $this->studentUser->assignRole($studentRole);
 
         $this->adminUser = User::factory()->create([
-            'email'          => 'admin.scolarite@encg-fes.ac.ma',
+            'email' => 'admin.scolarite@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->adminUser->assignRole($adminRole);
 
         $this->student = Student::create([
-            'user_id'        => $this->studentUser->id,
+            'user_id' => $this->studentUser->id,
             'student_number' => 'ENCG-2026-PDF01',
-            'cne'            => 'N130005544',
-            'gender'         => 'female',
-            'status'         => 'active',
+            'cne' => 'N130005544',
+            'gender' => 'female',
+            'status' => 'active',
             'institution_id' => $this->institution->id,
         ]);
 
         StudentPathway::create([
-            'student_id'       => $this->student->id,
-            'filiere_id'       => $this->filiere->id,
+            'student_id' => $this->student->id,
+            'filiere_id' => $this->filiere->id,
             'academic_year_id' => $this->academicYear->id,
             'current_semester' => 5,
-            'is_current'       => true,
+            'is_current' => true,
         ]);
     }
 

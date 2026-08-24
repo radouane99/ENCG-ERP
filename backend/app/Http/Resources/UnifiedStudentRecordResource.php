@@ -77,6 +77,11 @@ class UnifiedStudentRecordResource extends JsonResource
             });
         });
 
+        $data['massar_code'] = $this->massar_code;
+        $data['cin'] = $this->cin ?? $this->user?->cin;
+        $data['photo_url'] = $this->photo_url ?? $this->photo_path;
+        $data['pathway_semesters'] = range(1, 10);
+
         return $data;
     }
 }

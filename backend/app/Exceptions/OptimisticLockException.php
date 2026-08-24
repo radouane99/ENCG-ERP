@@ -13,7 +13,7 @@ class OptimisticLockException extends Exception
     {
         return response()->json([
             'message' => 'The resource was modified by another user. Please refresh and try again.',
-            'error' => 'Conflict'
+            'error' => 'Conflict',
         ], 409);
     }
 }

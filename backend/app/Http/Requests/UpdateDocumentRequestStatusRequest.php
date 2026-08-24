@@ -14,7 +14,7 @@ class UpdateDocumentRequestStatusRequest extends FormRequest
     public function rules()
     {
         return [
-            'status' => 'required|string|in:pending,processing,ready,rejected',
+            'status' => 'required|string|in:pending,processing,ready,rejected,collected',
             'rejection_reason' => 'nullable|string|required_if:status,rejected',
         ];
     }

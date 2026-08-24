@@ -20,7 +20,6 @@ export interface OfflineAttendanceRecord {
 const STORAGE_KEY = 'encg_offline_attendance_queue';
 
 export const offlineAttendanceStore = {
-  // Get all pending offline attendance records
   getQueue(): OfflineAttendanceRecord[] {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
@@ -30,7 +29,6 @@ export const offlineAttendanceStore = {
     }
   },
 
-  // Save a record offline
   saveOffline(record: Omit<OfflineAttendanceRecord, 'id' | 'createdAt'>): void {
     const queue = this.getQueue();
     const newEntry: OfflineAttendanceRecord = {
@@ -40,13 +38,12 @@ export const offlineAttendanceStore = {
     };
     queue.push(newEntry);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-    toast.warning('📡 Mode Hors-Ligne Détecté', {
-      description: "L'appel a été sauvegardé en mémoire locale. Il sera synchronisé automatiquement dès le retour du réseau Wi-Fi.",
+    toast.warning('📡 Mode hors-ligne', {
+      description: `${newEntry.records.length} présences enregistrées. Synchronisation automatique au retour du réseau.`,
       duration: 6000,
     });
   },
 
-  // Sync all pending offline records with backend
   async syncPendingRecords(): Promise<{ success: number; failed: number }> {
     const queue = this.getQueue();
     if (queue.length === 0) return { success: 0, failed: 0 };
@@ -54,8 +51,7 @@ export const offlineAttendanceStore = {
     let successCount = 0;
     let failedCount = 0;
     const remainingQueue: OfflineAttendanceRecord[] = [];
-
-    const toastId = toast.loading(`Synchronisation de ${queue.length} feuille(s) d'émargement hors-ligne...`);
+    const toastId = toast.loading(`Synchronisation de ${queue.length} feuille(s) d'émargement…`);
 
     for (const record of queue) {
       try {
@@ -67,8 +63,7 @@ export const offlineAttendanceStore = {
           records: record.records,
         });
         successCount++;
-      } catch (err) {
-        console.error('Failed to sync offline attendance record:', record.id, err);
+      } catch {
         failedCount++;
         remainingQueue.push(record);
       }
@@ -77,26 +72,21 @@ export const offlineAttendanceStore = {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(remainingQueue));
 
     if (successCount > 0) {
-      toast.success(`✨ ${successCount} émargement(s) hors-ligne synchronisé(s) avec succès !`, { id: toastId });
+      toast.success(`${successCount} émargement(s) synchronisé(s).`, { id: toastId });
     } else if (failedCount > 0) {
-      toast.error(`Échec de la synchronisation de ${failedCount} émargement(s). Nouvelle tentative ultérieure.`, { id: toastId });
+      toast.error(`Échec de la synchronisation (${failedCount}).`, { id: toastId });
     }
 
     return { success: successCount, failed: failedCount };
   },
 
-  // Initialize online sync listener
   initNetworkListener() {
     window.addEventListener('online', () => {
-      toast.info('🌐 Connexion Internet rétablie', {
-        description: 'Vérification et synchronisation des données hors-ligne en cours...',
-      });
-      this.syncPendingRecords();
+      void this.syncPendingRecords();
     });
   },
 };
 
-// Initialize listener on import
 if (typeof window !== 'undefined') {
   offlineAttendanceStore.initNetworkListener();
 }

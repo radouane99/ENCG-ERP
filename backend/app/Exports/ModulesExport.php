@@ -4,14 +4,14 @@ namespace App\Exports;
 
 use App\Models\Module;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
+class ModulesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected bool $isTemplate;
 
@@ -20,13 +20,17 @@ class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithSt
         $this->isTemplate = $isTemplate;
     }
 
-    public function title(): string { return 'Modules'; }
+    public function title(): string
+    {
+        return 'Modules';
+    }
 
     public function collection()
     {
         if ($this->isTemplate) {
             return collect([]);
         }
+
         return Module::with('filiere')->get();
     }
 
@@ -39,7 +43,7 @@ class ModulesExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'Numero Semestre',
             'Coefficient',
             'Heures de Credit',
-            'Actif (1 ou 0)'
+            'Actif (1 ou 0)',
         ];
     }
 

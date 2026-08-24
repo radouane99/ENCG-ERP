@@ -15,9 +15,9 @@ class Soutenance extends Model
     protected function casts(): array
     {
         return [
-        'date_time' => 'datetime',
-        'grade' => 'decimal:2',
-    ];
+            'date_time' => 'datetime',
+            'grade' => 'decimal:2',
+        ];
     }
 
     public function internship(): BelongsTo

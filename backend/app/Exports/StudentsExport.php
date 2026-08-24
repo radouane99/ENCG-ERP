@@ -4,16 +4,19 @@ namespace App\Exports;
 
 use App\Models\Student;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
+class StudentsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
-    public function title(): string { return 'Étudiants'; }
+    public function title(): string
+    {
+        return 'Étudiants';
+    }
 
     public function collection()
     {
@@ -27,7 +30,7 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping, WithS
             'CIN', 'CNE', 'Code MASSAR', 'Genre',
             'Date de Naissance', 'Ville', 'Adresse',
             'Filière (ID)', 'Année Bac', 'Série Bac', 'Mention Bac',
-            'Année Inscription', 'Statut', 'N° Étudiant'
+            'Année Inscription', 'Statut', 'N° Étudiant',
         ];
     }
 

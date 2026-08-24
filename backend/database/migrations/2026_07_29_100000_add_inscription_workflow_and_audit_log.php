@@ -22,28 +22,28 @@ return new class extends Migration
         Schema::table('students', function (Blueprint $table) {
             // Multi-step inscription workflow status
             // Values: submitted | dossier_incomplet | dossier_complet | valide | inscrit | reinscrit
-            if (!Schema::hasColumn('students', 'inscription_status')) {
+            if (! Schema::hasColumn('students', 'inscription_status')) {
                 $table->string('inscription_status')->default('submitted')->after('status');
             }
             // Timestamps for workflow tracking
-            if (!Schema::hasColumn('students', 'inscription_submitted_at')) {
+            if (! Schema::hasColumn('students', 'inscription_submitted_at')) {
                 $table->timestamp('inscription_submitted_at')->nullable()->after('inscription_status');
             }
-            if (!Schema::hasColumn('students', 'inscription_validated_at')) {
+            if (! Schema::hasColumn('students', 'inscription_validated_at')) {
                 $table->timestamp('inscription_validated_at')->nullable()->after('inscription_submitted_at');
             }
-            if (!Schema::hasColumn('students', 'inscription_notes')) {
+            if (! Schema::hasColumn('students', 'inscription_notes')) {
                 $table->text('inscription_notes')->nullable()->after('inscription_validated_at');
             }
             // RGPD Consent — Loi 09-08 Maroc
-            if (!Schema::hasColumn('students', 'rgpd_consent_at')) {
+            if (! Schema::hasColumn('students', 'rgpd_consent_at')) {
                 $table->timestamp('rgpd_consent_at')->nullable()->after('inscription_notes');
             }
-            if (!Schema::hasColumn('students', 'reglement_interieur_consent_at')) {
+            if (! Schema::hasColumn('students', 'reglement_interieur_consent_at')) {
                 $table->timestamp('reglement_interieur_consent_at')->nullable()->after('rgpd_consent_at');
             }
             // Academic year tracking
-            if (!Schema::hasColumn('students', 'academic_year')) {
+            if (! Schema::hasColumn('students', 'academic_year')) {
                 $table->string('academic_year', 9)->nullable()->after('reglement_interieur_consent_at'); // e.g. 2026-2027
             }
 

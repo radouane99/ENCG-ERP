@@ -2,10 +2,8 @@
 
 namespace App\Services\AI;
 
-use App\Models\Module;
 use App\Models\Grade;
-use App\Models\AttendanceRecord;
-use App\Services\AI\GeminiApiService;
+use App\Models\Module;
 
 class ProfAiService
 {
@@ -28,7 +26,7 @@ class ProfAiService
         $prompt = "Génère un sujet d'examen universitaire complet et sa grille de correction pour le module '{$moduleName}' (Code {$moduleCode}) de niveau ENCG Fès.";
         $system = [
             "Tu es un professeur titulaire de l'ENCG Fès expert en élaboration d'épreuves d'examen.",
-            "Formate l'épreuve avec une Partie Théorique (5 pts), une Étude de Cas Pratique d'Entreprise (10 pts) et une Question de Réflexion (5 pts)."
+            "Formate l'épreuve avec une Partie Théorique (5 pts), une Étude de Cas Pratique d'Entreprise (10 pts) et une Question de Réflexion (5 pts).",
         ];
 
         $aiExamContent = $this->geminiApi->generateContent($prompt, $system);
@@ -44,8 +42,8 @@ class ProfAiService
             'marking_rubric' => [
                 'Rigueur conceptuelle et terminologie : 30%',
                 'Qualité de la démonstration et structuration : 40%',
-                'Pertinence des recommandations pratiques : 30%'
-            ]
+                'Pertinence des recommandations pratiques : 30%',
+            ],
         ];
     }
 
@@ -55,7 +53,7 @@ class ProfAiService
     public function getClassAnalytics(int $moduleId): array
     {
         $module = Module::with('assessments')->find($moduleId);
-        $grades = Grade::whereHas('assessment', fn($q) => $q->where('module_id', $moduleId))->get();
+        $grades = Grade::whereHas('assessment', fn ($q) => $q->where('module_id', $moduleId))->get();
 
         $average = $grades->isNotEmpty() ? round($grades->avg('value'), 2) : 12.4;
         $passCount = $grades->where('value', '>=', 10.0)->count();
@@ -70,12 +68,12 @@ class ProfAiService
             'total_students_graded' => $totalCount,
             'struggling_topics' => [
                 'Cas pratiques d\'application sur la fiscalité et le calcul des ratios',
-                'Questionnaire de contrôle interne et diagnostic des risques'
+                'Questionnaire de contrôle interne et diagnostic des risques',
             ],
             'ai_recommendations' => [
                 'Prévoir 1h de séance de révision ciblée sur les exercices pratiques avant l\'examen final.',
-                'Le taux de réussite actuel est très satisfaisant (au-dessus de la moyenne de l\'établissement).'
-            ]
+                'Le taux de réussite actuel est très satisfaisant (au-dessus de la moyenne de l\'établissement).',
+            ],
         ];
     }
 
@@ -86,14 +84,14 @@ class ProfAiService
     {
         $system = [
             "Tu es le Copilote Enseignant IA de l'ENCG Fès.",
-            "Aide le professeur sur ses sujets d'examen, le suivi des notes de sa classe et l'assiduité."
+            "Aide le professeur sur ses sujets d'examen, le suivi des notes de sa classe et l'assiduité.",
         ];
 
         $aiResponse = $this->geminiApi->generateContent($query, $system);
 
         return [
             'answer' => $aiResponse ?? "Je suis votre Copilote Enseignant IA (Gemini 1.5 Flash). Vous pouvez me demander de générer un sujet d'examen ou d'analyser vos résultats.",
-            'action' => 'Consulter le rapport de la classe.'
+            'action' => 'Consulter le rapport de la classe.',
         ];
     }
 
@@ -105,8 +103,8 @@ class ProfAiService
         $system = [
             "Tu es un correcteur agrégé de l'ENCG Fès.",
             "Analyse le compte-rendu/devoir téléversé par l'étudiant selon le barème fourni.",
-            "Retourne ta réponse au format JSON strictement valide sans aucun texte ni bloc markdown autour.",
-            "Format JSON attendu: {\"estimated_grade\":\"15.5/20\",\"strengths\":[\"...\"],\"improvements\":[\"...\"],\"detailed_feedback\":\"...\",\"plagiarism_risk\":\"Faible (0-10%)\"}"
+            'Retourne ta réponse au format JSON strictement valide sans aucun texte ni bloc markdown autour.',
+            'Format JSON attendu: {"estimated_grade":"15.5/20","strengths":["..."],"improvements":["..."],"detailed_feedback":"...","plagiarism_risk":"Faible (0-10%)"}',
         ];
 
         $prompt = "Voici le devoir/compte-rendu à corriger :\n\n{$reportContent}\n\nBarème exigé : {$rubric}";
@@ -128,7 +126,7 @@ class ProfAiService
             'strengths' => ['Bonne structuration des idées', 'Vocabulaire académique adapté'],
             'improvements' => ['Approfondir l\'analyse financière', 'Fournir des exemples concrets'],
             'detailed_feedback' => 'Travail satisfaisant avec une bonne rigueur conceptuelle.',
-            'plagiarism_risk' => 'Faible (< 10%)'
+            'plagiarism_risk' => 'Faible (< 10%)',
         ];
     }
 }

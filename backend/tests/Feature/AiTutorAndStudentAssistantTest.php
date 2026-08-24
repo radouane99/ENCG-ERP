@@ -15,6 +15,7 @@ class AiTutorAndStudentAssistantTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected User $studentUser;
 
     protected function setUp(): void
@@ -28,7 +29,7 @@ class AiTutorAndStudentAssistantTest extends TestCase
 
         $studentRole = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
         $this->studentUser = User::factory()->create([
-            'email'          => 'student.ai@encg-fes.ac.ma',
+            'email' => 'student.ai@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->studentUser->assignRole($studentRole);
@@ -40,13 +41,13 @@ class AiTutorAndStudentAssistantTest extends TestCase
 
         $userMsg = AiChatMessage::create([
             'user_id' => $this->studentUser->id,
-            'role'    => 'user',
+            'role' => 'user',
             'content' => 'Comment comptabiliser un droit d\'utilisation selon IFRS 16 ?',
         ]);
 
         $aiMsg = AiChatMessage::create([
             'user_id' => $this->studentUser->id,
-            'role'    => 'assistant',
+            'role' => 'assistant',
             'content' => 'Selon IFRS 16, à la date de mise à disposition, le preneur comptabilise un actif au titre du droit d\'utilisation et une dette de loyer au passif.',
         ]);
 

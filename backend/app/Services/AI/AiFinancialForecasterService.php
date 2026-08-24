@@ -3,8 +3,6 @@
 namespace App\Services\AI;
 
 use App\Models\VacationContract;
-use App\Models\Department;
-use Illuminate\Support\Facades\DB;
 
 class AiFinancialForecasterService
 {
@@ -30,8 +28,8 @@ class AiFinancialForecasterService
             $totalHoursScheduled += $hours;
 
             $deptName = $contract->professor?->department?->name ?? 'Management & Gestion';
-            
-            if (!isset($departmentsData[$deptName])) {
+
+            if (! isset($departmentsData[$deptName])) {
                 $departmentsData[$deptName] = [
                     'department' => $deptName,
                     'hours' => 0,
@@ -45,11 +43,12 @@ class AiFinancialForecasterService
 
         $formattedDepartments = collect($departmentsData)->values()->map(function ($item) use ($totalEstimatedBudget) {
             $share = $totalEstimatedBudget > 0 ? round(($item['amount_mad'] / $totalEstimatedBudget) * 100, 1) : 0;
+
             return [
                 'department' => $item['department'],
                 'hours' => $item['hours'],
                 'amount_mad' => round($item['amount_mad'], 2),
-                'share' => "{$share}%"
+                'share' => "{$share}%",
             ];
         });
 
@@ -61,17 +60,17 @@ class AiFinancialForecasterService
             'summary' => [
                 'total_budget_mad' => number_format($totalEstimatedBudget, 2),
                 'total_vacation_hours' => $totalHoursScheduled,
-                'average_hourly_rate' => number_format($avgRate, 2) . ' MAD/h',
+                'average_hourly_rate' => number_format($avgRate, 2).' MAD/h',
                 'active_contracts' => $contractCount,
                 'data_source' => 'Direct MySQL Queries (vacation_contracts, attendance_sessions, departments)',
-                'budget_status' => 'CONFORME AU BUDGET APPROUVÉ DAF'
+                'budget_status' => 'CONFORME AU BUDGET APPROUVÉ DAF',
             ],
             'department_breakdown' => $formattedDepartments,
             'ai_recommendations' => [
                 "Total réel de {$totalHoursScheduled}h d'enseignement émargées et consolidées sur la base MySQL.",
-                "Calcul conforme aux grilles tarifaires homologuées des vacataires.",
-                "Le bordereau de paiement peut être transmis à la DAF pour ordonnancement."
-            ]
+                'Calcul conforme aux grilles tarifaires homologuées des vacataires.',
+                'Le bordereau de paiement peut être transmis à la DAF pour ordonnancement.',
+            ],
         ];
     }
 }

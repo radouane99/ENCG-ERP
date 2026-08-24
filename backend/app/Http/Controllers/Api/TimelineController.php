@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
 
 class TimelineController extends Controller
@@ -14,7 +15,7 @@ class TimelineController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        if (!class_exists('Spatie\Activitylog\Models\Activity')) {
+        if (! class_exists('Spatie\Activitylog\Models\Activity')) {
             return response()->json(['success' => false, 'message' => 'Module d’activité introuvable.'], 500);
         }
 
@@ -22,7 +23,7 @@ class TimelineController extends Controller
             $query = Activity::with(['causer', 'subject'])->latest();
 
             if ($request->has('role') && $request->role !== 'all') {
-                $query->whereHasMorph('causer', [\App\Models\User::class], function($q) use ($request) {
+                $query->whereHasMorph('causer', [User::class], function ($q) use ($request) {
                     $q->role($request->role);
                 });
             }
@@ -31,10 +32,10 @@ class TimelineController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $activities
+                'data' => $activities,
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Activity log unavailable: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Activity log unavailable: '.$e->getMessage()], 500);
         }
     }
 }

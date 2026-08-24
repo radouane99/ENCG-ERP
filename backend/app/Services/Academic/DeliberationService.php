@@ -2,8 +2,10 @@
 
 namespace App\Services\Academic;
 
-use App\Models\Assessment;
+use App\Domain\Deliberation\LmdRules;
+use App\Models\AcademicYear;
 use App\Models\DeliberationJury;
+use App\Models\ExamIncident;
 use App\Models\ExamSession;
 use App\Models\Filiere;
 use App\Models\Grade;
@@ -17,7 +19,6 @@ use App\Models\StudentModuleRetake;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class DeliberationService
 {
@@ -32,33 +33,33 @@ class DeliberationService
             return ['status' => 'error', 'message' => 'Ce module n\'a aucune évaluation.'];
         }
 
-        $normalAssessments = $module->assessments->filter(fn($a) => !str_contains(strtolower($a->type), 'rattrapage'));
-        $assessmentIds     = $normalAssessments->pluck('id')->toArray();
+        $normalAssessments = $module->assessments->filter(fn ($a) => ! str_contains(strtolower($a->type), 'rattrapage'));
+        $assessmentIds = $normalAssessments->pluck('id')->toArray();
 
         if (empty($assessmentIds)) {
             return ['status' => 'error', 'message' => 'Aucune évaluation de session normale trouvée.'];
         }
 
-        $grades        = Grade::whereIn('assessment_id', $assessmentIds)->get();
+        $grades = Grade::whereIn('assessment_id', $assessmentIds)->get();
         $studentGrades = $grades->groupBy('student_id');
 
         $sessionId = $examSessionId ?? ExamSession::where('is_active', true)->value('id');
-        if (!$sessionId) {
+        if (! $sessionId) {
             throw new \InvalidArgumentException('Session d\'examen active requise.');
         }
 
-        $validated  = 0;
+        $validated = 0;
         $rattrapage = 0;
-        $failed     = 0;
+        $failed = 0;
 
         foreach ($studentGrades as $studentId => $records) {
             $finalScore = 0;
-            $hasAbsent  = false;
+            $hasAbsent = false;
 
             foreach ($normalAssessments as $assessment) {
                 $record = $records->firstWhere('assessment_id', $assessment->id);
 
-                if (!$record || $record->absent) {
+                if (! $record || $record->absent) {
                     $hasAbsent = true;
                 } else {
                     $finalScore += ($record->value * ($assessment->weight / 100));
@@ -76,9 +77,9 @@ class DeliberationService
                 ModuleValidation::updateOrCreate(
                     ['student_id' => $studentId, 'module_id' => $moduleId],
                     [
-                        'final_grade'              => round($finalScore, 2),
-                        'validated_at_session_id'  => $sessionId,
-                        'status'                   => 'validated',
+                        'final_grade' => round($finalScore, 2),
+                        'validated_at_session_id' => $sessionId,
+                        'status' => 'validated',
                     ]
                 );
                 StudentModuleRetake::where('student_id', $studentId)
@@ -95,10 +96,10 @@ class DeliberationService
         }
 
         return [
-            'status'          => 'success',
-            'validated'       => $validated,
-            'rattrapage'      => $rattrapage,
-            'failed'          => $failed,
+            'status' => 'success',
+            'validated' => $validated,
+            'rattrapage' => $rattrapage,
+            'failed' => $failed,
             'total_processed' => $studentGrades->count(),
         ];
     }
@@ -135,41 +136,41 @@ class DeliberationService
             ->get()
             ->keyBy('module_id');
 
-        $pv        = [];
+        $pv = [];
         $totalScore = 0;
-        $totalCoef  = 0;
+        $totalCoef = 0;
 
         foreach ($modulesToAssess->unique('id') as $module) {
             $record = [
-                'module_id'     => $module->id,
-                'module_name'   => $module->name,
-                'semester'      => $module->semester_number,
-                'coefficient'   => $module->coefficient ?? 1,
-                'grade'         => null,
-                'status'        => 'pending',
-                'is_retake'     => $retakeModuleIds->contains($module->id),
+                'module_id' => $module->id,
+                'module_name' => $module->name,
+                'semester' => $module->semester_number,
+                'coefficient' => $module->coefficient ?? 1,
+                'grade' => null,
+                'status' => 'pending',
+                'is_retake' => $retakeModuleIds->contains($module->id),
                 'is_historical' => false,
             ];
 
-            if ($historicalValidations->has($module->id) && !$record['is_retake']) {
-                $record['grade']         = $historicalValidations->get($module->id)->final_grade;
-                $record['status']        = 'validated';
+            if ($historicalValidations->has($module->id) && ! $record['is_retake']) {
+                $record['grade'] = $historicalValidations->get($module->id)->final_grade;
+                $record['status'] = 'validated';
                 $record['is_historical'] = true;
             } else {
                 $currentGradeRaw = Grade::where('student_id', $studentId)
-                    ->whereHas('assessment', fn($q) => $q->where('module_id', $module->id))
+                    ->whereHas('assessment', fn ($q) => $q->where('module_id', $module->id))
                     ->selectRaw('SUM(value * (SELECT weight FROM assessments WHERE id = grades.assessment_id) / 100) as final_score')
                     ->value('final_score');
 
                 if ($currentGradeRaw !== null) {
-                    $record['grade']  = round($currentGradeRaw, 2);
+                    $record['grade'] = round($currentGradeRaw, 2);
                     $record['status'] = $record['grade'] >= 10 ? 'validated' : 'failed';
                 }
             }
 
             if ($record['grade'] !== null) {
                 $totalScore += ($record['grade'] * $record['coefficient']);
-                $totalCoef  += $record['coefficient'];
+                $totalCoef += $record['coefficient'];
             }
 
             $pv[] = $record;
@@ -178,11 +179,11 @@ class DeliberationService
         $globalAverage = $totalCoef > 0 ? round($totalScore / $totalCoef, 2) : null;
 
         return [
-            'student_id'       => $studentId,
+            'student_id' => $studentId,
             'academic_year_id' => $academicYearId,
-            'modules'          => $pv,
-            'global_average'   => $globalAverage,
-            'global_status'    => $globalAverage >= 10 ? 'passed' : 'failed',
+            'modules' => $pv,
+            'global_average' => $globalAverage,
+            'global_status' => $globalAverage >= 10 ? 'passed' : 'failed',
         ];
     }
 
@@ -191,7 +192,7 @@ class DeliberationService
      */
     public function getSemesterPVWithReservistes(int $filiereId, int $academicYearId, int $semesterNumber): array
     {
-        $modules   = Module::with('assessments')->where('filiere_id', $filiereId)->where('semester_number', $semesterNumber)->get();
+        $modules = Module::with('assessments')->where('filiere_id', $filiereId)->where('semester_number', $semesterNumber)->get();
         $moduleIds = $modules->pluck('id')->toArray();
 
         $regularStudentIds = StudentRegistration::where('filiere_id', $filiereId)
@@ -209,26 +210,26 @@ class DeliberationService
 
         $students = Student::with('user')->whereIn('id', $allStudentIds)->orderBy('last_name')->get();
 
-        $historical  = ModuleValidation::whereIn('module_id', $moduleIds)->whereIn('student_id', $allStudentIds)->get()->keyBy(fn($v) => $v->student_id . '_' . $v->module_id);
+        $historical = ModuleValidation::whereIn('module_id', $moduleIds)->whereIn('student_id', $allStudentIds)->get()->keyBy(fn ($v) => $v->student_id.'_'.$v->module_id);
         $currentGrades = Grade::with('assessment')->whereIn('student_id', $allStudentIds)
-            ->whereHas('assessment', fn($q) => $q->whereIn('module_id', $moduleIds))
+            ->whereHas('assessment', fn ($q) => $q->whereIn('module_id', $moduleIds))
             ->get()
             ->groupBy('student_id')
-            ->map(fn($grades) => $grades->groupBy(fn($g) => $g->assessment->module_id));
+            ->map(fn ($grades) => $grades->groupBy(fn ($g) => $g->assessment->module_id));
 
         $matrix = [];
 
         foreach ($students as $student) {
-            $isReserviste = !in_array($student->id, $regularStudentIds);
+            $isReserviste = ! in_array($student->id, $regularStudentIds);
             $moduleResults = [];
-            $totalScore    = 0;
-            $totalCoef     = 0;
+            $totalScore = 0;
+            $totalCoef = 0;
             $hasEliminatory = false;
 
             foreach ($modules as $module) {
                 $coef = $module->coefficient ?? 1.0;
                 $totalCoef += $coef;
-                $key = $student->id . '_' . $module->id;
+                $key = $student->id.'_'.$module->id;
 
                 if ($historical->has($key)) {
                     $histVal = $historical->get($key);
@@ -239,8 +240,10 @@ class DeliberationService
                     $mGrades = $currentGrades->get($student->id)->get($module->id);
                     $score = $this->calculateModuleScore($mGrades);
                     $score = round($score, 2);
-                    if ($score < 5.0) $hasEliminatory = true;
-                    $status = $score >= 10.0 ? 'V' : ($score >= 5.0 ? 'RAT' : 'NV');
+                    if (LmdRules::isEliminatory($score)) {
+                        $hasEliminatory = true;
+                    }
+                    $status = $score >= LmdRules::VALIDATION_THRESHOLD ? 'V' : ($score >= LmdRules::ELIMINATORY_THRESHOLD ? 'RAT' : 'NV');
                     $moduleResults[$module->id] = ['grade' => $score, 'status' => $status, 'is_historical' => false];
                     $totalScore += ($score * $coef);
                 } else {
@@ -250,20 +253,20 @@ class DeliberationService
 
             $semesterAvg = $totalCoef > 0 ? round($totalScore / $totalCoef, 2) : 0;
             $decision = match (true) {
-                $semesterAvg >= 10.0 && !$hasEliminatory => 'V',
+                $semesterAvg >= 10.0 && ! $hasEliminatory => 'V',
                 $semesterAvg >= 5.0 => 'RAT',
                 default => 'AJ',
             };
 
             $matrix[] = [
-                'student_id'       => $student->id,
-                'student'          => mb_strtoupper($student->last_name) . ' ' . $student->first_name,
-                'cne'              => $student->cne ?? $student->student_number,
-                'cin'              => $student->cin ?? $student->user?->cin ?? '',
-                'is_reserviste'    => $isReserviste,
+                'student_id' => $student->id,
+                'student' => mb_strtoupper($student->last_name).' '.$student->first_name,
+                'cne' => $student->cne ?? $student->student_number,
+                'cin' => $student->cin ?? $student->user?->cin ?? '',
+                'is_reserviste' => $isReserviste,
                 'semester_average' => $semesterAvg,
-                'decision'         => $decision,
-                'modules'          => $moduleResults,
+                'decision' => $decision,
+                'modules' => $moduleResults,
             ];
         }
 
@@ -277,7 +280,7 @@ class DeliberationService
     {
         $modules = Module::with('assessments')
             ->where('filiere_id', $filiereId)
-            ->when($type === 'semestriel' && $semesterNumber, fn($q) => $q->where('semester_number', $semesterNumber))
+            ->when($type === 'semestriel' && $semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber))
             ->get();
 
         $juryMembers = [];
@@ -290,87 +293,87 @@ class DeliberationService
             // Check if there is an existing Module PV signature recorded for this module
             $modSig = ModulePvSignature::where('module_id', $module->id)->with('signer')->latest()->first();
 
-            $userId   = $modSig?->signed_by ?? $profRecord?->professor?->user?->id;
+            $userId = $modSig?->signed_by ?? $profRecord?->professor?->user?->id;
             $userName = $modSig?->signer?->name ?? $profRecord?->professor?->user?->name ?? "Enseignant ({$module->code})";
 
             $isAlreadySigned = $modSig !== null;
 
             $jury = DeliberationJury::firstOrCreate(
                 [
-                    'filiere_id'       => $filiereId,
+                    'filiere_id' => $filiereId,
                     'academic_year_id' => $academicYearId,
-                    'type'             => $type,
-                    'module_id'        => $module->id,
-                    'semester_number'  => $semesterNumber,
+                    'type' => $type,
+                    'module_id' => $module->id,
+                    'semester_number' => $semesterNumber,
                 ],
                 [
-                    'user_id'         => $userId,
-                    'user_name'       => $userName,
-                    'role'            => 'professeur',
-                    'status'          => $isAlreadySigned ? 'signed' : 'pending',
-                    'signed_at'       => $modSig?->signed_at ?? ($isAlreadySigned ? now() : null),
-                    'digital_seal'    => $modSig?->seal_hash ?? ($isAlreadySigned ? 'SIG-MODULE-OK' : null),
-                    'signature_data'  => $modSig?->signature_data,
+                    'user_id' => $userId,
+                    'user_name' => $userName,
+                    'role' => 'professeur',
+                    'status' => $isAlreadySigned ? 'signed' : 'pending',
+                    'signed_at' => $modSig?->signed_at ?? ($isAlreadySigned ? now() : null),
+                    'digital_seal' => $modSig?->seal_hash ?? ($isAlreadySigned ? 'SIG-MODULE-OK' : null),
+                    'signature_data' => $modSig?->signature_data,
                 ]
             );
 
             // Sync if signed in module_pv_signatures after jury record creation
             if ($modSig && $jury->status !== 'signed') {
                 $jury->update([
-                    'status'         => 'signed',
-                    'signed_at'      => $modSig->signed_at ?? now(),
-                    'digital_seal'   => $modSig->seal_hash ?? 'SIG-MODULE-OK',
+                    'status' => 'signed',
+                    'signed_at' => $modSig->signed_at ?? now(),
+                    'digital_seal' => $modSig->seal_hash ?? 'SIG-MODULE-OK',
                     'signature_data' => $modSig->signature_data,
                 ]);
             }
 
             $juryMembers[] = [
-                'id'              => $jury->id,
-                'module_id'       => $module->id,
-                'module_name'     => $module->name,
-                'module_code'     => $module->code,
-                'user_id'         => $userId,
-                'user_name'       => $userName,
-                'role'            => 'professeur',
-                'status'          => $jury->status,
-                'signed_at'       => $jury->signed_at,
-                'digital_seal'    => $jury->digital_seal,
+                'id' => $jury->id,
+                'module_id' => $module->id,
+                'module_name' => $module->name,
+                'module_code' => $module->code,
+                'user_id' => $userId,
+                'user_name' => $userName,
+                'role' => 'professeur',
+                'status' => $jury->status,
+                'signed_at' => $jury->signed_at,
+                'digital_seal' => $jury->digital_seal,
                 'signature_image' => $jury->signature_data,
-                'source'          => $modSig ? 'module_pv' : 'manual',
+                'source' => $modSig ? 'module_pv' : 'manual',
             ];
         }
 
         // Chef de filière
-        $filiere    = Filiere::with('responsable')->find($filiereId);
+        $filiere = Filiere::with('responsable')->find($filiereId);
         $chefUserId = $filiere?->responsable?->id ?? User::first()?->id;
-        $chefName   = $filiere?->responsable?->name ?? 'Chef de Filière';
+        $chefName = $filiere?->responsable?->name ?? 'Chef de Filière';
 
         $chefJury = DeliberationJury::firstOrCreate(
             [
-                'filiere_id'       => $filiereId,
+                'filiere_id' => $filiereId,
                 'academic_year_id' => $academicYearId,
-                'type'             => $type,
-                'role'             => 'chef_filiere',
-                'semester_number'  => $semesterNumber,
+                'type' => $type,
+                'role' => 'chef_filiere',
+                'semester_number' => $semesterNumber,
             ],
             [
-                'user_id'   => $chefUserId,
+                'user_id' => $chefUserId,
                 'user_name' => $chefName,
-                'status'    => 'pending',
+                'status' => 'pending',
             ]
         );
 
         $juryMembers[] = [
-            'id'              => $chefJury->id,
-            'module_id'       => null,
-            'module_name'     => 'Coordination Globale & Présidence du Jury',
-            'module_code'     => 'CHEF',
-            'user_id'         => $chefUserId,
-            'user_name'       => $chefName,
-            'role'            => 'chef_filiere',
-            'status'          => $chefJury->status,
-            'signed_at'       => $chefJury->signed_at,
-            'digital_seal'    => $chefJury->digital_seal,
+            'id' => $chefJury->id,
+            'module_id' => null,
+            'module_name' => 'Coordination Globale & Présidence du Jury',
+            'module_code' => 'CHEF',
+            'user_id' => $chefUserId,
+            'user_name' => $chefName,
+            'role' => 'chef_filiere',
+            'status' => $chefJury->status,
+            'signed_at' => $chefJury->signed_at,
+            'digital_seal' => $chefJury->digital_seal,
             'signature_image' => $chefJury->signature_data,
         ];
 
@@ -383,30 +386,30 @@ class DeliberationService
     public function signJuryPv(int $juryId, int $userId, string $signatureData, string $ipAddress): array
     {
         $jury = DeliberationJury::find($juryId);
-        if (!$jury) {
+        if (! $jury) {
             return ['status' => 'error', 'message' => 'Membre du jury introuvable.'];
         }
 
         $digitalSeal = hash('sha256', json_encode([
-            'jury_id'    => $juryId,
-            'user_id'    => $userId,
+            'jury_id' => $juryId,
+            'user_id' => $userId,
             'filiere_id' => $jury->filiere_id,
-            'signed_at'  => now()->toIso8601String(),
-            'ip'         => $ipAddress,
+            'signed_at' => now()->toIso8601String(),
+            'ip' => $ipAddress,
         ]));
 
         $jury->update([
-            'status'         => 'signed',
-            'signed_at'      => now(),
+            'status' => 'signed',
+            'signed_at' => now(),
             'signature_data' => $signatureData,
-            'digital_seal'   => $digitalSeal,
-            'ip_address'     => $ipAddress,
+            'digital_seal' => $digitalSeal,
+            'ip_address' => $ipAddress,
         ]);
 
         return [
-            'status'       => 'success',
+            'status' => 'success',
             'digital_seal' => $digitalSeal,
-            'signed_at'    => now()->toDateTimeString(),
+            'signed_at' => now()->toDateTimeString(),
         ];
     }
 
@@ -432,7 +435,7 @@ class DeliberationService
 
         if ($students->isEmpty() && $filiereId) {
             $students = Student::with('user')
-                ->whereHas('registrations', fn($q) => $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]))
+                ->whereHas('registrations', fn ($q) => $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]))
                 ->get();
         }
 
@@ -444,7 +447,7 @@ class DeliberationService
             $students = Student::with('user')->take(50)->get();
         }
 
-        $academicYear = \App\Models\AcademicYear::find($academicYearId) ?? \App\Models\AcademicYear::where('is_current', true)->first();
+        $academicYear = AcademicYear::find($academicYearId) ?? AcademicYear::where('is_current', true)->first();
         $academicYearName = $academicYear?->name ?? '2026/2027';
 
         $filiereModules = Module::where('filiere_id', $filiereId)
@@ -487,7 +490,7 @@ class DeliberationService
 
             foreach ($filiereModules as $mod) {
                 // Check if student has a historical validation for this module from previous years
-                $histVal = \App\Models\ModuleValidation::where('student_id', $student->id)
+                $histVal = ModuleValidation::where('student_id', $student->id)
                     ->where('module_id', $mod->id)
                     ->first();
 
@@ -505,8 +508,8 @@ class DeliberationService
                         ->whereIn('assessment_id', $mod->assessments->pluck('id'))
                         ->get();
 
-                    $normaleAssessments = $mod->assessments->filter(fn($a) => !str_contains(strtolower($a->type), 'rattrapage'));
-                    $rattrapageAssessment = $mod->assessments->first(fn($a) => str_contains(strtolower($a->type), 'rattrapage'));
+                    $normaleAssessments = $mod->assessments->filter(fn ($a) => ! str_contains(strtolower($a->type), 'rattrapage'));
+                    $rattrapageAssessment = $mod->assessments->first(fn ($a) => str_contains(strtolower($a->type), 'rattrapage'));
 
                     $weightedSum = 0;
                     $totalWeight = 0;
@@ -525,7 +528,7 @@ class DeliberationService
                     $finalNote = $moyNormale;
 
                     $rGrade = $rattrapageAssessment ? $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id) : null;
-                    if ($rGrade && !$rGrade->absent && $rGrade->value !== null) {
+                    if ($rGrade && ! $rGrade->absent && $rGrade->value !== null) {
                         $rVal = floatval($rGrade->value);
                         $finalNote = max($moyNormale, min(12.00, $rVal));
                     }
@@ -533,45 +536,45 @@ class DeliberationService
                     $modDecision = $finalNote >= 10.0 ? ($moyNormale >= 10.0 ? 'V' : 'VAR') : ($finalNote < 6.0 ? 'NV' : 'R');
                 }
 
-                if ($finalNote < 5.0) {
+                if (LmdRules::isEliminatory($finalNote)) {
                     $hasEliminatory = true;
                 }
 
                 $modObj = [
-                    'module_id'       => $mod->id,
-                    'code'            => $mod->code,
-                    'name'            => $mod->name,
+                    'module_id' => $mod->id,
+                    'code' => $mod->code,
+                    'name' => $mod->name,
                     'semester_number' => $mod->semester_number,
-                    'moy_normale'     => $moyNormale,
-                    'final_grade'     => $finalNote,
-                    'decision'        => $modDecision,
+                    'moy_normale' => $moyNormale,
+                    'final_grade' => $finalNote,
+                    'decision' => $modDecision,
                     'validation_year' => $validationYear,
-                    'is_historical'   => $isHistorical,
+                    'is_historical' => $isHistorical,
                 ];
 
                 $allModuleDetails[] = $modObj;
                 $modulesDetailMap[$mod->id] = $modObj;
             }
 
-            $oddModuleList = collect($allModuleDetails)->filter(fn($m) => $m['semester_number'] == $oddSemNumber);
-            $evenModuleList = collect($allModuleDetails)->filter(fn($m) => $m['semester_number'] == $evenSemNumber);
+            $oddModuleList = collect($allModuleDetails)->filter(fn ($m) => $m['semester_number'] == $oddSemNumber);
+            $evenModuleList = collect($allModuleDetails)->filter(fn ($m) => $m['semester_number'] == $evenSemNumber);
 
             if ($oddModuleList->isEmpty()) {
-                $oddModuleList = collect($allModuleDetails)->filter(fn($m) => $m['semester_number'] % 2 !== 0);
+                $oddModuleList = collect($allModuleDetails)->filter(fn ($m) => $m['semester_number'] % 2 !== 0);
             }
             if ($evenModuleList->isEmpty()) {
-                $evenModuleList = collect($allModuleDetails)->filter(fn($m) => $m['semester_number'] % 2 === 0);
+                $evenModuleList = collect($allModuleDetails)->filter(fn ($m) => $m['semester_number'] % 2 === 0);
             }
 
             $hasFraud = false;
             $fraudModules = [];
 
             // Check if student has any recorded fraud incidents in ExamIncident table
-            $fraudIncidents = \App\Models\ExamIncident::where('student_id', $student->id)
-                ->where(function($q) {
+            $fraudIncidents = ExamIncident::where('student_id', $student->id)
+                ->where(function ($q) {
                     $q->where('type', 'fraude')
-                      ->orWhere('type', 'like', '%fraude%')
-                      ->orWhere('description', 'like', '%fraude%');
+                        ->orWhere('type', 'like', '%fraude%')
+                        ->orWhere('description', 'like', '%fraude%');
                 })
                 ->with('exam.module')
                 ->get();
@@ -594,24 +597,24 @@ class DeliberationService
 
             $fraudModules = array_unique($fraudModules);
 
-            $failedOdd = $oddModuleList->filter(fn($m) => $m['final_grade'] < 10.00)->values();
-            $failedEven = $evenModuleList->filter(fn($m) => $m['final_grade'] < 10.00)->values();
-            $eliminatoryMods = collect($allModuleDetails)->filter(fn($m) => $m['final_grade'] < 5.00)->map(fn($m) => "{$m['code']} ({$m['final_grade']}/20)")->values()->toArray();
+            $failedOdd = $oddModuleList->filter(fn ($m) => $m['final_grade'] < 10.00)->values();
+            $failedEven = $evenModuleList->filter(fn ($m) => $m['final_grade'] < 10.00)->values();
+            $eliminatoryMods = collect($allModuleDetails)->filter(fn ($m) => LmdRules::isEliminatory((float) $m['final_grade']))->map(fn ($m) => "{$m['code']} ({$m['final_grade']}/20)")->values()->toArray();
 
-            $oddAvg   = $oddModuleList->isNotEmpty() ? round($oddModuleList->avg('final_grade'), 2) : 0;
-            $evenAvg  = $evenModuleList->isNotEmpty() ? round($evenModuleList->avg('final_grade'), 2) : 0;
+            $oddAvg = $oddModuleList->isNotEmpty() ? round($oddModuleList->avg('final_grade'), 2) : 0;
+            $evenAvg = $evenModuleList->isNotEmpty() ? round($evenModuleList->avg('final_grade'), 2) : 0;
             $annualAvg = round(($oddAvg + $evenAvg) / 2, 2);
 
             $failedOddCount = $failedOdd->count();
             $failedEvenCount = $failedEven->count();
 
-            $hasEliminatoryOdd  = $oddModuleList->contains(fn($m) => $m['final_grade'] < 5.00);
-            $hasEliminatoryEven = $evenModuleList->contains(fn($m) => $m['final_grade'] < 5.00);
-            $hasEliminatory     = $hasEliminatoryOdd || $hasEliminatoryEven;
+            $hasEliminatoryOdd = $oddModuleList->contains(fn ($m) => LmdRules::isEliminatory((float) $m['final_grade']));
+            $hasEliminatoryEven = $evenModuleList->contains(fn ($m) => LmdRules::isEliminatory((float) $m['final_grade']));
+            $hasEliminatory = $hasEliminatoryOdd || $hasEliminatoryEven;
 
             // 1. Semester Compensation S1 (Moyenne S1 >= 10.00 & pas de note < 5.0)
             $isOddCompensated = false;
-            if ($oddAvg >= 10.00 && !$hasEliminatoryOdd && !$hasFraud) {
+            if ($oddAvg >= 10.00 && ! $hasEliminatoryOdd && ! $hasFraud) {
                 $isOddCompensated = true;
                 foreach ($allModuleDetails as &$md) {
                     if (($md['semester_number'] == $oddSemNumber || $md['semester_number'] % 2 !== 0) && $md['final_grade'] < 10.00) {
@@ -623,7 +626,7 @@ class DeliberationService
 
             // 2. Semester Compensation S2 (Moyenne S2 >= 10.00 & pas de note < 5.0)
             $isEvenCompensated = false;
-            if ($evenAvg >= 10.00 && !$hasEliminatoryEven && !$hasFraud) {
+            if ($evenAvg >= 10.00 && ! $hasEliminatoryEven && ! $hasFraud) {
                 $isEvenCompensated = true;
                 foreach ($allModuleDetails as &$md) {
                     if (($md['semester_number'] == $evenSemNumber || $md['semester_number'] % 2 === 0) && $md['final_grade'] < 10.00) {
@@ -637,7 +640,7 @@ class DeliberationService
 
             // 3. Annual Compensation S1+S2 (Moyenne Annuelle >= 10.00 & aucune note < 5.0 dans tout le bilan)
             $isAnnualCompensated = false;
-            if ($annualAvg >= 10.00 && !$hasEliminatory && !$hasFraud && $failedTotal <= 2) {
+            if ($annualAvg >= 10.00 && ! $hasEliminatory && ! $hasFraud && $failedTotal <= 2) {
                 $isAnnualCompensated = true;
                 foreach ($allModuleDetails as &$md) {
                     if ($md['final_grade'] < 10.00) {
@@ -649,7 +652,7 @@ class DeliberationService
 
             $oddDecision = match (true) {
                 $hasFraud => 'FRAUDE',
-                $oddAvg >= 10.00 && !$hasEliminatoryOdd => ($oddModuleList->every(fn($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
+                $oddAvg >= 10.00 && ! $hasEliminatoryOdd => ($oddModuleList->every(fn ($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
                 $isAnnualCompensated => 'V.Comp',
                 $failedOddCount <= 1 => 'PASS_DETTES',
                 default => 'NV',
@@ -657,7 +660,7 @@ class DeliberationService
 
             $evenDecision = match (true) {
                 $hasFraud => 'FRAUDE',
-                $evenAvg >= 10.00 && !$hasEliminatoryEven => ($evenModuleList->every(fn($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
+                $evenAvg >= 10.00 && ! $hasEliminatoryEven => ($evenModuleList->every(fn ($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
                 $isAnnualCompensated => 'V.Comp',
                 $failedEvenCount <= 1 => 'PASS_DETTES',
                 default => 'NV',
@@ -666,67 +669,71 @@ class DeliberationService
             // Nouvelle Règle ENCG : Passage avec dettes (Réserviste) autorisé uniquement si au maximum 1 SEUL module non validé sur TOUTE L'ANNÉE.
             $decision = match (true) {
                 $hasFraud => 'FRAUDE',
-                ($oddAvg >= 10.00 && $evenAvg >= 10.00 && !$hasEliminatoryOdd && !$hasEliminatoryEven) || $isAnnualCompensated => ($annualAvg >= 10.0 && !$isOddCompensated && !$isEvenCompensated && !$isAnnualCompensated ? 'V' : 'V.Comp'),
+                ($oddAvg >= 10.00 && $evenAvg >= 10.00 && ! $hasEliminatoryOdd && ! $hasEliminatoryEven) || $isAnnualCompensated => ($annualAvg >= 10.0 && ! $isOddCompensated && ! $isEvenCompensated && ! $isAnnualCompensated ? 'V' : 'V.Comp'),
                 $failedTotal <= 1 && $annualAvg >= 5.0 => 'PASS_DETTES',
                 default => 'AJ',
             };
 
             $reasonParts = [];
             if ($hasFraud) {
-                $modListStr = !empty($fraudModules) ? implode(', ', $fraudModules) : 'Examen';
+                $modListStr = ! empty($fraudModules) ? implode(', ', $fraudModules) : 'Examen';
                 $decisionReason = "Sanction Disciplinaire pour Fraude ({$modListStr}) — Non Compensable";
             } elseif ($decision === 'V') {
                 $decisionReason = "Validation Directe du Bloc ({$oddSemNumber} & {$evenSemNumber})";
             } elseif ($decision === 'V.Comp') {
-                $decisionReason = "Validation par Compensation Annuelle (Pas de note < 5.0)";
+                $decisionReason = 'Validation par Compensation Annuelle (Pas de note < 5.0)';
             } elseif ($decision === 'PASS_DETTES') {
-                $failedNames = collect($allModuleDetails)->filter(fn($m) => $m['final_grade'] < 10.00)->pluck('code')->toArray();
-                $modStr = !empty($failedNames) ? implode(', ', $failedNames) : '';
+                $failedNames = collect($allModuleDetails)->filter(fn ($m) => $m['final_grade'] < 10.00)->pluck('code')->toArray();
+                $modStr = ! empty($failedNames) ? implode(', ', $failedNames) : '';
                 $decisionReason = "Passage avec Dettes (1 seul module NV dans l'année : {$modStr})";
             } else {
                 if ($failedTotal > 1) {
                     $details = [];
-                    if ($failedOddCount > 0) $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
-                    if ($failedEvenCount > 0) $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
-                    $decisionReason = "Redoublement (Plus de 1 module non validé dans l'année [{$failedTotal} mod. NV] : " . implode(', ', $details) . ")";
+                    if ($failedOddCount > 0) {
+                        $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
+                    }
+                    if ($failedEvenCount > 0) {
+                        $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
+                    }
+                    $decisionReason = "Redoublement (Plus de 1 module non validé dans l'année [{$failedTotal} mod. NV] : ".implode(', ', $details).')';
                 } else {
                     $decisionReason = "Redoublement (Moyenne Annuelle < 5.00 : {$annualAvg}/20)";
                 }
             }
 
             $results[] = [
-                'student_id'            => $student->id,
-                'student_name'          => $student->user->name ?? $student->first_name . ' ' . $student->last_name,
-                'cne'                   => $student->cne ?? $student->student_number,
-                'cin'                   => $student->cin ?? $student->user?->cin ?? '',
-                'year_level'            => $yearLevel,
-                'odd_semester_label'    => "S{$oddSemNumber}",
-                'even_semester_label'   => "S{$evenSemNumber}",
-                'odd_semester_avg'      => round($oddAvg, 2),
-                'even_semester_avg'     => round($evenAvg, 2),
+                'student_id' => $student->id,
+                'student_name' => $student->user->name ?? $student->first_name.' '.$student->last_name,
+                'cne' => $student->cne ?? $student->student_number,
+                'cin' => $student->cin ?? $student->user?->cin ?? '',
+                'year_level' => $yearLevel,
+                'odd_semester_label' => "S{$oddSemNumber}",
+                'even_semester_label' => "S{$evenSemNumber}",
+                'odd_semester_avg' => round($oddAvg, 2),
+                'even_semester_avg' => round($evenAvg, 2),
                 'odd_semester_decision' => $hasFraud ? 'FRAUDE' : $oddDecision,
-                'even_semester_decision'=> $hasFraud ? 'FRAUDE' : $evenDecision,
-                'annual_average'        => $annualAvg,
-                'has_eliminatory'       => $hasEliminatory,
-                'has_fraud'             => $hasFraud,
-                'failed_count_s1'       => $failedOddCount,
-                'failed_count_s2'       => $failedEvenCount,
-                'failed_total'          => $failedOddCount + $failedEvenCount,
-                'eliminatory_modules'   => $eliminatoryMods,
-                'decision_reason'       => $decisionReason,
-                'decision'              => $decision,
-                'modules_detail'        => $allModuleDetails,
-                'modules_map'           => $modulesDetailMap,
+                'even_semester_decision' => $hasFraud ? 'FRAUDE' : $evenDecision,
+                'annual_average' => $annualAvg,
+                'has_eliminatory' => $hasEliminatory,
+                'has_fraud' => $hasFraud,
+                'failed_count_s1' => $failedOddCount,
+                'failed_count_s2' => $failedEvenCount,
+                'failed_total' => $failedOddCount + $failedEvenCount,
+                'eliminatory_modules' => $eliminatoryMods,
+                'decision_reason' => $decisionReason,
+                'decision' => $decision,
+                'modules_detail' => $allModuleDetails,
+                'modules_map' => $modulesDetailMap,
             ];
         }
 
         return [
-            'odd_semester_label'  => "S{$oddSemNumber}",
+            'odd_semester_label' => "S{$oddSemNumber}",
             'even_semester_label' => "S{$evenSemNumber}",
-            'modules'             => $filiereModules->map(fn($m) => [
-                'id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'semester_number' => $m->semester_number
+            'modules' => $filiereModules->map(fn ($m) => [
+                'id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'semester_number' => $m->semester_number,
             ])->values()->toArray(),
-            'students'            => $results,
+            'students' => $results,
         ];
     }
 
@@ -735,17 +742,17 @@ class DeliberationService
      */
     private function calculateModuleScore($moduleGrades): float
     {
-        $normalGrades = $moduleGrades->filter(fn($g) => !str_contains(strtolower($g->type ?? ''), 'rattrapage'));
-        $rattrapageGrade = $moduleGrades->first(fn($g) => str_contains(strtolower($g->type ?? ''), 'rattrapage'));
+        $normalGrades = $moduleGrades->filter(fn ($g) => ! str_contains(strtolower($g->type ?? ''), 'rattrapage'));
+        $rattrapageGrade = $moduleGrades->first(fn ($g) => str_contains(strtolower($g->type ?? ''), 'rattrapage'));
 
         $score = 0;
         foreach ($normalGrades as $g) {
-            if (!$g->absent && $g->value !== null) {
+            if (! $g->absent && $g->value !== null) {
                 $score += ($g->value * ($g->weight / 100));
             }
         }
 
-        if ($rattrapageGrade && !$rattrapageGrade->absent && $rattrapageGrade->value !== null && $rattrapageGrade->value > $score) {
+        if ($rattrapageGrade && ! $rattrapageGrade->absent && $rattrapageGrade->value !== null && $rattrapageGrade->value > $score) {
             $score = $rattrapageGrade->value;
         }
 

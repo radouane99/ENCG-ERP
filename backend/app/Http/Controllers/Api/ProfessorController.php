@@ -33,7 +33,7 @@ class ProfessorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => ProfessorResource::collection($professors),
+            'data' => ProfessorResource::collection($professors),
         ]);
     }
 
@@ -48,13 +48,13 @@ class ProfessorController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Professeur créé avec succès.',
-                'data'    => new ProfessorResource($professor->load(['department', 'user'])),
+                'data' => new ProfessorResource($professor->load(['department', 'user'])),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la création du professeur.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -68,7 +68,7 @@ class ProfessorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new ProfessorResource($professor->load(['department', 'user'])),
+            'data' => new ProfessorResource($professor->load(['department', 'user'])),
         ]);
     }
 
@@ -83,13 +83,13 @@ class ProfessorController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Professeur mis à jour avec succès.',
-                'data'    => new ProfessorResource($updated->load(['department', 'user'])),
+                'data' => new ProfessorResource($updated->load(['department', 'user'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour du professeur.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -112,7 +112,7 @@ class ProfessorController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression du professeur.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

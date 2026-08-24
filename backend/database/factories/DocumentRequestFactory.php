@@ -19,19 +19,19 @@ class DocumentRequestFactory extends Factory
         $docType = DocumentType::firstOrCreate(
             ['code' => 'ATTESTATION_SCO'],
             [
-                'name'      => 'Attestation de Scolarité',
+                'name' => 'Attestation de Scolarité',
                 'view_name' => 'documents.attestation_scolarite',
                 'is_active' => true,
             ]
         );
 
         return [
-            'student_id'       => Student::factory(),
+            'student_id' => Student::factory(),
             'document_type_id' => $docType->id,
-            'status'           => 'pending',
-            'requested_at'     => now(),
-            'processed_at'     => null,
-            'admin_notes'      => null,
+            'status' => 'pending',
+            'requested_at' => now(),
+            'processed_at' => null,
+            'admin_notes' => null,
         ];
     }
 }

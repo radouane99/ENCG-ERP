@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Core\ExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ExcelController extends Controller
 {
@@ -20,7 +21,7 @@ class ExcelController extends Controller
     {
         $result = $this->exportService->exportToExcel($model, $request->all());
 
-        if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+        if ($result instanceof Response) {
             return $result;
         }
 
@@ -34,7 +35,7 @@ class ExcelController extends Controller
     {
         $result = $this->exportService->templateToExcel($model);
 
-        if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+        if ($result instanceof Response) {
             return $result;
         }
 

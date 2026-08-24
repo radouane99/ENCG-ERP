@@ -22,7 +22,7 @@ class DisciplineController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $cases,
+            'data' => $cases,
         ]);
     }
 
@@ -32,15 +32,15 @@ class DisciplineController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'student_id'    => 'required|integer|exists:students,id',
+            'student_id' => 'required|integer|exists:students,id',
             'incident_date' => 'required|date',
-            'type'          => 'required|string',
-            'description'   => 'required|string',
-            'severity'      => 'nullable|string|in:low,medium,high',
+            'type' => 'required|string',
+            'description' => 'required|string',
+            'severity' => 'nullable|string|in:low,medium,high',
         ]);
 
         $reporterId = auth()->id();
-        if (!$reporterId) {
+        if (! $reporterId) {
             return response()->json(['success' => false, 'message' => 'Utilisateur non authentifié.'], 403);
         }
 
@@ -49,7 +49,7 @@ class DisciplineController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Incident signalé avec succès.',
-            'data'    => $case,
+            'data' => $case,
         ], 201);
     }
 
@@ -60,7 +60,7 @@ class DisciplineController extends Controller
     {
         $validated = $request->validate([
             'decision' => 'required|string|in:warning,blame,annulation_module,annulation_semestre,exclusion,dismissed',
-            'notes'    => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         try {
@@ -69,7 +69,7 @@ class DisciplineController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Décision disciplinaire enregistrée.',
-                'data'    => $case,
+                'data' => $case,
             ]);
         } catch (\Exception $e) {
             return response()->json([

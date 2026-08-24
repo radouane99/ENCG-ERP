@@ -5,20 +5,28 @@ import {
   FileText,
   Download,
   AlertTriangle,
-  Zap,
-  Smartphone,
-  Library,
   GraduationCap,
-  Plus
+  Plus,
+  BookOpen,
+  Stamp,
+  UserX,
+  MailCheck
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
+import { documentStatusLabel } from '@shared/lib/lmd';
+import { useCreateDocumentRequest, useDocumentTypes, useStudentRequests } from '@features/guichet/api/guichetApi';
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
   const currentDate = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const { data: documentTypes } = useDocumentTypes();
+  const { data: documentRequests } = useStudentRequests();
+  const createRequest = useCreateDocumentRequest();
 
   // Fetch real stats
   const { data: statsData, isLoading } = useQuery({
@@ -38,6 +46,26 @@ export default function StudentDashboard() {
     recent_documents: []
   };
 
+  const requestDocument = async (kind: 'attestation' | 'releve') => {
+    const types = documentTypes || []
+    const match = types.find((t) => {
+      const hay = `${t.name} ${t.code}`.toLowerCase()
+      return kind === 'releve'
+        ? hay.includes('relev') || hay.includes('transcript')
+        : hay.includes('attestation') || hay.includes('scolar')
+    }) || types[0]
+    if (!match) {
+      toast.error('Aucun type de document n’est configuré. Ouvrez le guichet.')
+      return
+    }
+    try {
+      await createRequest.mutateAsync(match.id)
+      toast.success(`Demande envoyée — ${match.name} (en attente)`)
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Impossible de créer la demande.')
+    }
+  }
+
   const getMention = (note: number) => {
     if (note >= 16) return 'TRES BIEN';
     if (note >= 14) return 'BIEN';
@@ -54,7 +82,7 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div data-testid="student-dashboard" className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       {/* Top Navigation / Quick Links */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
@@ -62,17 +90,15 @@ export default function StudentDashboard() {
           <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
-            <Smartphone className="w-4 h-4 text-indigo-500" /> Carte Numérique
-          </button>
-          <button className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-white/[0.02] transition-colors shadow-sm">
-            <Library className="w-4 h-4 text-rose-500" /> Clubs & Événements
-          </button>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md shadow-purple-500/20 hover:scale-105 transition-transform">
-            <Zap className="w-4 h-4" /> PLANIFICATEUR IA
-          </button>
-        </div>
+        <RoleQuickActions
+          actions={[
+            { to: '/student/grades', label: 'Mes notes', icon: BookOpen, testId: 'cta-student-grades', variant: 'primary' },
+            { to: '/student/schedule', label: 'EDT', icon: CalendarIcon, testId: 'cta-student-schedule' },
+            { to: '/student/documents', label: 'Guichet', icon: Stamp, testId: 'cta-student-documents' },
+            { to: '/student/absences', label: 'Justificatif', icon: UserX, testId: 'cta-student-absences' },
+            { to: '/student/convocations', label: 'Convocations', icon: MailCheck, testId: 'cta-student-convocations' },
+          ]}
+        />
       </div>
 
       {isLoading ? (
@@ -161,13 +187,35 @@ export default function StudentDashboard() {
                     ))}
                   </div>
                 </div>
-                <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] hover:border-gray-300 transition-colors">
+                <div className="border-2 border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center">
                   <Plus className="w-8 h-8 text-[#e6007e] mb-2" />
-                  <h3 className="font-bold text-[#001A4B] mb-1">Autre Document ?</h3>
-                  <p className="text-[10px] text-muted-foreground mb-4 px-4">Faites une demande auprès du guichet unique.</p>
-                  <button className="bg-[#001A4B] text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">
-                    NOUVELLE DEMANDE
-                  </button>
+                  <h3 className="font-bold text-[#001A4B] mb-1">Attestation / relevé 1 clic</h3>
+                  <p className="text-[10px] text-muted-foreground mb-4 px-4">Demande envoyée au guichet unique.</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="cta-request-attestation"
+                      disabled={createRequest.isPending}
+                      onClick={() => requestDocument('attestation')}
+                      className="bg-[#001A4B] text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      Attestation
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="cta-request-transcript"
+                      disabled={createRequest.isPending}
+                      onClick={() => requestDocument('releve')}
+                      className="bg-white border border-[#001A4B] text-[#001A4B] px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      Relevé
+                    </button>
+                  </div>
+                  {(documentRequests || []).slice(0, 3).map((req) => (
+                    <p key={req.id} className="text-[10px] mt-2 text-slate-500">
+                      {req.document_type?.name || (typeof req.document_type === 'string' ? req.document_type : 'Document')} — {documentStatusLabel(req.status)}
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>
@@ -227,9 +275,12 @@ export default function StudentDashboard() {
                   <AlertTriangle className="w-4 h-4 shrink-0" /> Action requise : Justifiez vos absences
                 </div>
               )}
-              <button className="w-full bg-[#001A4B] text-white font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest hover:bg-[#000d26] transition-colors">
+              <Link
+                to="/student/absences"
+                className="block w-full text-center bg-[#001A4B] text-white font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest hover:bg-[#000d26] transition-colors"
+              >
                 DÉPOSER UN JUSTIFICATIF →
-              </button>
+              </Link>
             </div>
 
           </div>

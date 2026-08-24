@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStudentAbsences, useJustifyAbsence } from '../../api/absencesApi';
 import { Attendance } from '../../model/types';
+import { offlineJustificatifStore } from '@shared/lib/offlineJustificatifStore';
 
 export default function StudentAbsencesPage() {
   const { data: absences, isLoading } = useStudentAbsences();
@@ -19,6 +20,18 @@ export default function StudentAbsencesPage() {
     formData.append('reason', reason);
     formData.append('description', description);
     formData.append('document', file);
+
+    if (!navigator.onLine) {
+      void offlineJustificatifStore.saveOffline({
+        attendanceId: selectedAttendance,
+        reason,
+        description,
+        fileName: file.name,
+        file,
+      });
+      setSelectedAttendance(null);
+      return;
+    }
 
     justifyAbsence({ attendanceId: selectedAttendance, formData }, {
       onSuccess: () => {

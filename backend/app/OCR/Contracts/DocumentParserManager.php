@@ -6,6 +6,7 @@ use App\OCR\OcrResult;
 use App\OCR\Parsers\BacParser;
 use App\OCR\Parsers\CnieParser;
 use App\OCR\Parsers\ReleveParser;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Manager for document parsers with fallback mechanism
@@ -14,7 +15,9 @@ use App\OCR\Parsers\ReleveParser;
 class DocumentParserManager
 {
     private array $parsers = [];
+
     private array $parserCache = [];
+
     private array $config;
 
     public function __construct(array $config = [])
@@ -34,9 +37,9 @@ class DocumentParserManager
      */
     private function registerDefaultParsers(): void
     {
-        $this->registerParser(new ReleveParser());
-        $this->registerParser(new BacParser());
-        $this->registerParser(new CnieParser());
+        $this->registerParser(new ReleveParser);
+        $this->registerParser(new BacParser);
+        $this->registerParser(new CnieParser);
     }
 
     /**
@@ -60,6 +63,7 @@ class DocumentParserManager
         foreach ($this->parsers as $parser) {
             if ($parser->supports($docType)) {
                 $this->parserCache[$docType] = $parser;
+
                 return $parser;
             }
         }
@@ -74,13 +78,13 @@ class DocumentParserManager
     {
         $parser = $this->getParser($docType);
 
-        if (!$parser) {
+        if (! $parser) {
             // Fallback: try all parsers
             return $this->parseWithFallback($text);
         }
 
         $result = $parser->parse($text);
-        
+
         // Validate result
         if ($this->config['enable_validation']) {
             $this->validateResult($result, $docType);
@@ -94,7 +98,7 @@ class DocumentParserManager
      */
     private function parseWithFallback(string $text): OcrResult
     {
-        if (!$this->config['enable_fallback']) {
+        if (! $this->config['enable_fallback']) {
             return new OcrResult($text);
         }
 
@@ -105,7 +109,7 @@ class DocumentParserManager
             try {
                 $result = $parser->parse($text);
                 $score = $this->scoreResult($result);
-                
+
                 if ($score > $bestScore) {
                     $bestScore = $score;
                     $bestResult = $result;
@@ -113,8 +117,9 @@ class DocumentParserManager
                 }
             } catch (\Throwable $e) {
                 if ($this->config['log_parsing_errors']) {
-                    \Illuminate\Support\Facades\Log::warning("Fallback parser failed: " . $e->getMessage());
+                    Log::warning('Fallback parser failed: '.$e->getMessage());
                 }
+
                 continue;
             }
         }
@@ -135,19 +140,19 @@ class DocumentParserManager
         $secondaryFields = ['birth_date', 'bac_type', 'mention', 'academy'];
 
         foreach ($importantFields as $field) {
-            if (!empty($fields[$field])) {
+            if (! empty($fields[$field])) {
                 $score += 10;
             }
         }
 
         foreach ($secondaryFields as $field) {
-            if (!empty($fields[$field])) {
+            if (! empty($fields[$field])) {
                 $score += 5;
             }
         }
 
         // Bonus for having both French and Arabic names
-        if (!empty($fields['last_name_fr']) && !empty($fields['last_name_ar'])) {
+        if (! empty($fields['last_name_fr']) && ! empty($fields['last_name_ar'])) {
             $score += 5;
         }
 
@@ -164,7 +169,7 @@ class DocumentParserManager
 
         // Check for required fields based on document type
         $requiredFields = $this->getRequiredFields($docType);
-        
+
         foreach ($requiredFields as $field) {
             if (empty($fields[$field])) {
                 $warnings[] = "Missing required field: {$field}";
@@ -172,20 +177,20 @@ class DocumentParserManager
         }
 
         // Validate specific fields
-        if (!empty($fields['cin']) && !preg_match('/^[A-Z]{1,2}\d{5,6}$/', $fields['cin'])) {
+        if (! empty($fields['cin']) && ! preg_match('/^[A-Z]{1,2}\d{5,6}$/', $fields['cin'])) {
             $warnings[] = "Invalid CIN format: {$fields['cin']}";
         }
 
-        if (!empty($fields['cne']) && !preg_match('/^[A-Z]\d{8,9}$/', $fields['cne'])) {
+        if (! empty($fields['cne']) && ! preg_match('/^[A-Z]\d{8,9}$/', $fields['cne'])) {
             $warnings[] = "Invalid CNE format: {$fields['cne']}";
         }
 
-        if (!empty($fields['moyenne_bac']) && ($fields['moyenne_bac'] < 0 || $fields['moyenne_bac'] > 20)) {
+        if (! empty($fields['moyenne_bac']) && ($fields['moyenne_bac'] < 0 || $fields['moyenne_bac'] > 20)) {
             $warnings[] = "Invalid average: {$fields['moyenne_bac']}";
         }
 
         // Store warnings in result metadata
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $result->setParsedField('_validation_warnings', $warnings);
             $result->setParsedField('_validation_passed', false);
         } else {
@@ -198,7 +203,7 @@ class DocumentParserManager
      */
     private function getRequiredFields(string $docType): array
     {
-        return match(strtolower($docType)) {
+        return match (strtolower($docType)) {
             'releve', 'releve_notes', 'notes', 'transcript' => ['last_name_fr', 'first_name_fr'],
             'bac', 'baccalaureat', 'attestation_bac' => ['last_name_fr', 'first_name_fr', 'bac_type'],
             'cnie', 'cin', 'id_card' => ['last_name_fr', 'first_name_fr', 'cin'],
@@ -217,6 +222,7 @@ class DocumentParserManager
             $className = $reflection->getShortName();
             $types[$className] = $this->getParserTypes($parser);
         }
+
         return $types;
     }
 
@@ -228,7 +234,7 @@ class DocumentParserManager
         $reflection = new \ReflectionClass($parser);
         $property = $reflection->getProperty('supportedTypes');
         $property->setAccessible(true);
-        
+
         try {
             return $property->getValue($parser);
         } catch (\ReflectionException $e) {

@@ -14,7 +14,9 @@ use Throwable;
 class DocumentProcessingService
 {
     private OcrPipeline $pipeline;
+
     private DocumentParserManager $parserManager;
+
     private array $config;
 
     public function __construct(
@@ -48,7 +50,7 @@ class DocumentProcessingService
         try {
             // Step 1: Perform OCR
             $ocrResult = $this->pipeline->process($filePath, $docType);
-            
+
             if (empty($ocrResult->text)) {
                 return $this->createErrorResult('No text extracted from document', $filePath);
             }
@@ -60,7 +62,7 @@ class DocumentProcessingService
 
             // Step 3: Parse document
             $parsedResult = $this->parserManager->parse($docType, $ocrResult->text);
-            
+
             // Step 4: Merge results
             $parsedResult->text = $ocrResult->text;
             $parsedResult->setParsedField('_source_file', basename($filePath));
@@ -70,10 +72,10 @@ class DocumentProcessingService
             return $parsedResult;
 
         } catch (Throwable $e) {
-            Log::error("Document processing failed: " . $e->getMessage(), [
+            Log::error('Document processing failed: '.$e->getMessage(), [
                 'file' => $filePath,
                 'doc_type' => $docType,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return $this->createErrorResult($e->getMessage(), $filePath);
@@ -99,24 +101,24 @@ class DocumentProcessingService
      */
     private function validateFile(string $filePath): void
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             throw new \InvalidArgumentException("File does not exist: {$filePath}");
         }
 
         $fileSize = filesize($filePath);
         if ($fileSize > $this->config['max_file_size']) {
             throw new \InvalidArgumentException(
-                sprintf("File size (%d bytes) exceeds limit (%d bytes)", 
-                    $fileSize, 
+                sprintf('File size (%d bytes) exceeds limit (%d bytes)',
+                    $fileSize,
                     $this->config['max_file_size']
                 )
             );
         }
 
         $mimeType = mime_content_type($filePath) ?: '';
-        if (!in_array($mimeType, $this->config['allowed_mime_types'])) {
+        if (! in_array($mimeType, $this->config['allowed_mime_types'])) {
             throw new \InvalidArgumentException(
-                "Unsupported mime type: {$mimeType}. Allowed: " . 
+                "Unsupported mime type: {$mimeType}. Allowed: ".
                 implode(', ', $this->config['allowed_mime_types'])
             );
         }
@@ -180,6 +182,7 @@ class DocumentProcessingService
         $result->setParsedField('_error', $error);
         $result->setParsedField('_source_file', basename($filePath));
         $result->setParsedField('_success', false);
+
         return $result;
     }
 

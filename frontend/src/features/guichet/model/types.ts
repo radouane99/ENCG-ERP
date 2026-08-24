@@ -6,7 +6,7 @@ export interface DocumentType {
   is_active: boolean;
 }
 
-export type DocumentRequestStatus = 'pending' | 'processing' | 'ready' | 'rejected';
+export type DocumentRequestStatus = 'pending' | 'processing' | 'ready' | 'rejected' | 'collected';
 
 export interface AdminNotes {
   reason?: string;

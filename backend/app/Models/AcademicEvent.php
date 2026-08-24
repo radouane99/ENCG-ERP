@@ -18,6 +18,7 @@ class AcademicEvent extends Model
             'start_date' => 'datetime',
             'end_date' => 'datetime',
             'is_active' => 'boolean',
+            'meta' => 'array',
         ];
     }
 
@@ -39,8 +40,9 @@ class AcademicEvent extends Model
     public function scopeCurrentlyActive($query)
     {
         $now = now();
+
         return $query->where('is_active', true)
-                     ->where('start_date', '<=', $now)
-                     ->where('end_date', '>=', $now);
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now);
     }
 }

@@ -26,6 +26,14 @@ test.describe('P2 — 8 parcours critiques', () => {
     await expect(page.getByText('Performance Académique')).toBeVisible()
   })
 
+  test('2b. dashboard étudiant — CTA métier', async ({ page }) => {
+    await seedSession(page, 'student')
+    await open(page, '/dashboard')
+    await expect(page.getByTestId('role-quick-actions')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('cta-student-grades')).toBeVisible()
+    await expect(page.getByTestId('cta-student-documents')).toBeVisible()
+  })
+
   test('3. PV public — vérification QR', async ({ page }) => {
     await open(page, '/verify/pv/1/1')
     await expect(page.getByTestId('verify-pv-page')).toBeVisible()

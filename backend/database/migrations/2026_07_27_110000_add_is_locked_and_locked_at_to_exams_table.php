@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('exams', function (Blueprint $table) {
-            if (!Schema::hasColumn('exams', 'is_locked')) {
+            if (! Schema::hasColumn('exams', 'is_locked')) {
                 $table->boolean('is_locked')->default(false);
             }
-            if (!Schema::hasColumn('exams', 'locked_at')) {
+            if (! Schema::hasColumn('exams', 'locked_at')) {
                 $table->timestamp('locked_at')->nullable();
             }
         });

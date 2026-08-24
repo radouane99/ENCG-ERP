@@ -18,8 +18,8 @@ return new class extends Migration
 
             // Re-add a FK that allows NULL
             $table->foreign('exam_session_id')
-                  ->references('id')->on('exam_sessions')
-                  ->nullOnDelete();
+                ->references('id')->on('exam_sessions')
+                ->nullOnDelete();
 
             // New unique constraint that handles NULL (student+module only)
             $table->unique(['student_id', 'module_id'], 'resit_eligibility_student_module_unique');

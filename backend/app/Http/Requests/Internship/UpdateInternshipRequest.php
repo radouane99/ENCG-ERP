@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Internship;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateInternshipRequest extends FormRequest
@@ -17,12 +18,12 @@ class UpdateInternshipRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'action'        => 'required|in:validate,assign_supervisor',
+            'action' => 'required|in:validate,assign_supervisor',
             'supervisor_id' => 'required_if:action,assign_supervisor|exists:professors,id',
         ];
     }

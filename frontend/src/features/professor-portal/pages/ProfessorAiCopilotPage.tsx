@@ -25,6 +25,7 @@ export default function ProfessorAiCopilotPage() {
   const [examType, setExamType] = useState<'case_study' | 'qcm' | 'mixed' | 'reflection'>('case_study')
   const [difficulty, setDifficulty] = useState<'standard' | 'advanced' | 'master'>('standard')
   const [instructions, setInstructions] = useState('Épreuve officielle de fin de semestre ENCG Fès')
+  const [localeFes, setLocaleFes] = useState(true)
 
   // Results
   const [textbookResult, setTextbookResult] = useState<any[] | null>(null)
@@ -78,7 +79,8 @@ export default function ProfessorAiCopilotPage() {
       module_id: Number(selectedModuleExam),
       exam_type: examType,
       difficulty: difficulty,
-      instructions: instructions
+      instructions: instructions,
+      locale_context: localeFes ? 'fes' : 'generic',
     })
   }
 
@@ -296,6 +298,10 @@ export default function ProfessorAiCopilotPage() {
                   rows={2}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold"
                 />
+                <label className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-600">
+                  <input type="checkbox" checked={localeFes} onChange={(e) => setLocaleFes(e.target.checked)} />
+                  Cas Fès (agro, textile, logistique, artisanat) + barème LMD ≥ 6
+                </label>
               </div>
 
               <button

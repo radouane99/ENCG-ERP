@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - docker-v2
+  workflow_dispatch:
 
 jobs:
   test-and-build:
@@ -90,7 +91,33 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: false # Deploiement mis en pause
+    if: github.event_name == 'workflow_dispatch'
     steps:
-      - name: Deployment Skipped
-        run: echo "Deployment skipped - No server configured."
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect VPS secrets
+        id: vps
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "DEPLOY_HOST secret is empty — skip SSH."
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: SSH deploy docker-v2
+        if: steps.vps.outputs.ok == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ~/ENCG-ERP-V1 || cd /opt/encg-erp || exit 1
+            git fetch origin docker-v2
+            git checkout docker-v2
+            git pull --ff-only origin docker-v2
+            ./deploy.sh docker-v2

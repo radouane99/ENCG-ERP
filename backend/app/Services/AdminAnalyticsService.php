@@ -7,7 +7,6 @@ use App\Models\DocumentRequest;
 use App\Models\Filiere;
 use App\Models\Internship;
 use App\Models\Student;
-use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 
 class AdminAnalyticsService
@@ -22,7 +21,7 @@ class AdminAnalyticsService
         $statusBreakdown = DocumentRequest::selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->get()
-            ->map(fn($item) => ['name' => ucfirst($item->status), 'value' => (int) $item->count])
+            ->map(fn ($item) => ['name' => ucfirst($item->status), 'value' => (int) $item->count])
             ->toArray();
 
         $monthlyTrend = DocumentRequest::selectRaw("DATE_FORMAT(COALESCE(requested_at, created_at), '%Y-%m') as month, count(*) as count")
@@ -31,7 +30,7 @@ class AdminAnalyticsService
             ->orderBy('month')
             ->limit(12)
             ->get()
-            ->map(fn($item) => ['month' => $item->month, 'count' => (int) $item->count])
+            ->map(fn ($item) => ['month' => $item->month, 'count' => (int) $item->count])
             ->toArray();
 
         $pendingCount = DocumentRequest::whereIn('status', ['pending', 'en_attente', 'submitted', 'draft'])->count();
@@ -49,8 +48,8 @@ class AdminAnalyticsService
         $typeDistribution = AcademicProject::selectRaw('type, count(*) as count')
             ->groupBy('type')
             ->get()
-            ->map(fn($item) => [
-                'name'  => $item->type === 'internship' ? 'Stage' : ($item->type === 'final_project' ? 'PFE' : ucfirst($item->type)),
+            ->map(fn ($item) => [
+                'name' => $item->type === 'internship' ? 'Stage' : ($item->type === 'final_project' ? 'PFE' : ucfirst($item->type)),
                 'value' => (int) $item->count,
             ])
             ->toArray();
@@ -59,7 +58,7 @@ class AdminAnalyticsService
             $typeDistribution = Internship::selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->get()
-                ->map(fn($item) => ['name' => ucfirst($item->type), 'value' => (int) $item->count])
+                ->map(fn ($item) => ['name' => ucfirst($item->type), 'value' => (int) $item->count])
                 ->toArray();
         }
 
@@ -86,7 +85,7 @@ class AdminAnalyticsService
             ->groupBy('filieres.id', 'filieres.name')
             ->orderByDesc('student_count')
             ->get()
-            ->map(fn($item) => ['name' => $item->filiere_name, 'value' => (int) $item->student_count])
+            ->map(fn ($item) => ['name' => $item->filiere_name, 'value' => (int) $item->student_count])
             ->toArray();
 
         if (empty($filiereBreakdown)) {
@@ -95,12 +94,12 @@ class AdminAnalyticsService
                 ->groupBy('filieres.id', 'filieres.name')
                 ->orderByDesc('student_count')
                 ->get()
-                ->map(fn($item) => ['name' => $item->filiere_name, 'value' => (int) $item->student_count])
+                ->map(fn ($item) => ['name' => $item->filiere_name, 'value' => (int) $item->student_count])
                 ->toArray();
         }
 
         return [
-            'total_active'      => $totalActiveStudents,
+            'total_active' => $totalActiveStudents,
             'filiere_breakdown' => $filiereBreakdown,
         ];
     }

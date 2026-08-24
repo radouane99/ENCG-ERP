@@ -6,6 +6,7 @@ import {
   FileQuestion, Lightbulb, GraduationCap, Copy, CheckCircle2,
   Mic, MicOff, Volume2, Square
 } from 'lucide-react'
+import api from '@shared/lib/api'
 import { aiApi } from '@shared/api/ai'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
@@ -96,6 +97,15 @@ export default function AiAssistantPage() {
       toast.success(isRtl ? 'تم إنشاء الاختبار' : 'QCM généré avec succès')
     },
     onError: () => toast.error(isRtl ? 'فشل التوليد' : 'Échec de la génération')
+  })
+
+  const pfeOralMutation = useMutation({
+    mutationFn: (transcript: string) => api.post('/v1/student-portal/ai/pfe-oral', { transcript }),
+    onSuccess: (res) => {
+      const text = res.data.text_fr || 'Grille orale PFE générée.'
+      setMessages(prev => [...prev, { role: 'assistant', content: text }])
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Oral PFE réservé aux 5A'),
   })
 
   const handleSend = (e: React.FormEvent) => {
@@ -198,6 +208,21 @@ export default function AiAssistantPage() {
                 </p>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-xs"
+              onClick={() => {
+                const last = [...messages].reverse().find((m) => m.role === 'user')
+                if (!last) {
+                  toast.error('Dictez d’abord votre oral via le micro.')
+                  return
+                }
+                pfeOralMutation.mutate(last.content.padEnd(20, '.'))
+              }}
+            >
+              Oral PFE 5A
+            </Button>
             {isRecording && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-500 rounded-full animate-pulse">
                 <Mic size={14} />

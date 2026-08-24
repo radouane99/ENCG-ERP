@@ -7,9 +7,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-
-use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
 
 // Automated Daily Backups (Pilier 3)
 Schedule::command('backup:clean')->dailyAt('02:00');
@@ -24,21 +23,27 @@ Schedule::call(function () {
 
     $connection = DB::connection();
     if ($connection->transactionLevel() > 0) {
-        \Illuminate\Support\Facades\Log::warning('PostgreSQL VACUUM ANALYZE skipped: connection is inside a transaction.');
+        Log::warning('PostgreSQL VACUUM ANALYZE skipped: connection is inside a transaction.');
 
         return;
     }
 
     try {
         $connection->unprepared('VACUUM (ANALYZE)');
-        \Illuminate\Support\Facades\Log::info('PostgreSQL VACUUM ANALYZE completed successfully.');
-    } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::warning('PostgreSQL VACUUM ANALYZE skipped: '.$e->getMessage());
+        Log::info('PostgreSQL VACUUM ANALYZE completed successfully.');
+    } catch (Throwable $e) {
+        Log::warning('PostgreSQL VACUUM ANALYZE skipped: '.$e->getMessage());
     }
 })->weeklyOn(0, '04:00')->description('Weekly PostgreSQL Vacuum & Statistics Optimization');
 
-use App\Models\GradeEntryPeriod;
+use App\Domain\Student\Models\Student;
+use App\Events\GradeDeadlineWarning;
 use App\Mail\GradeDeadlineReminder;
+use App\Mail\ReinscriptionOuverteMail;
+use App\Models\GradeEntryPeriod;
+use App\Models\Institution;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 Schedule::call(function () {
@@ -50,7 +55,7 @@ Schedule::call(function () {
     foreach ($expiredPeriods as $period) {
         $period->update([
             'is_open' => false,
-            'closed_by' => null // Automatically closed by system
+            'closed_by' => null, // Automatically closed by system
         ]);
 
         if (class_exists('Spatie\Activitylog\Models\Activity')) {
@@ -65,7 +70,7 @@ Schedule::call(function () {
         // If all periods are closed, set institution phase to locked
         $openCount = GradeEntryPeriod::where('is_open', true)->count();
         if ($openCount === 0) {
-            $institution = \App\Models\Institution::first();
+            $institution = Institution::first();
             if ($institution) {
                 $settings = $institution->settings ?? [];
                 $settings['exam_lock_phase'] = 'Verrouillage Total';
@@ -86,43 +91,43 @@ Schedule::call(function () {
         $sessionLabel = $deadline->session_type ?? 'Saisie des Notes';
 
         // Get all professors (users with professor role via Spatie)
-        $professors = \App\Models\User::role('professor')->get();
+        $professors = User::role('professor')->get();
 
         foreach ($professors as $prof) {
             try {
                 Mail::to($prof->email)->queue(
                     new GradeDeadlineReminder(
-                        professorName: $prof->name ?? ($prof->first_name . ' ' . $prof->last_name),
+                        professorName: $prof->name ?? ($prof->first_name.' '.$prof->last_name),
                         endDate: $deadline->end_date,
                         sessionLabel: $sessionLabel,
                     )
                 );
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Grade deadline reminder failed for ' . $prof->email . ': ' . $e->getMessage());
+            } catch (Exception $e) {
+                Log::warning('Grade deadline reminder failed for '.$prof->email.': '.$e->getMessage());
             }
         }
-        
+
         // Broadcast the warning via Reverb
-        event(new \App\Events\GradeDeadlineWarning($deadline->end_date, $sessionLabel));
+        event(new GradeDeadlineWarning($deadline->end_date, $sessionLabel));
     }
 })->dailyAt('09:00');
 
 // ── Réinscription Annuelle — 1er Juillet à 08:00 (Recommendation #4) ───────
 // Usage manual: php artisan reinscription:ouvrir --annee=2027
-Schedule::command('reinscription:ouvrir --annee=' . (date('Y') + 1))
+Schedule::command('reinscription:ouvrir --annee='.(date('Y') + 1))
     ->yearlyOn(7, 1, '08:00')
     ->description('Ouverture automatique de la réinscription annuelle ENCG Fès');
 
-Schedule::command('cndp:enforce-retention')->weeklyOn(1, '01:30')
-    ->description('Anonymisation CNDP des comptes inactifs');
+Schedule::command('encg:ai-risk-digest')->weeklyOn(1, '08:00')
+    ->description('Digest hebdomadaire des alertes pédagogiques direction');
 
 // ── Rappel Réinscription — J-7 avant fermeture (1er Août à 09:00) ───────────
 Schedule::call(function () {
     $annee = date('Y') + 1;
-    $academicYear = date('Y') . '-' . $annee;
+    $academicYear = date('Y').'-'.$annee;
 
     // Find all "reinscrit" students who have NOT yet completed their reinscription docs
-    $studentsNeedingReminder = \App\Domain\Student\Models\Student::where('inscription_status', 'reinscrit')
+    $studentsNeedingReminder = Student::where('inscription_status', 'reinscrit')
         ->where('academic_year', $academicYear)
         ->with(['user'])
         ->get();
@@ -131,11 +136,11 @@ Schedule::call(function () {
         $email = $student->user?->email ?? $student->email;
         if ($email) {
             try {
-                \Illuminate\Support\Facades\Mail::to($email)->queue(
-                    new \App\Mail\ReinscriptionOuverteMail($student, $academicYear, isReminder: true)
+                Mail::to($email)->queue(
+                    new ReinscriptionOuverteMail($student, $academicYear, isReminder: true)
                 );
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning("Rappel réinscription failed for {$student->cne}: " . $e->getMessage());
+            } catch (Exception $e) {
+                Log::warning("Rappel réinscription failed for {$student->cne}: ".$e->getMessage());
             }
         }
     }

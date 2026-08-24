@@ -20,7 +20,8 @@ import {
   PenTool,
   ShieldCheck,
   Download,
-  X
+  X,
+  UserX
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -421,37 +422,38 @@ export default function ProfessorDashboard() {
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 space-y-4">
                 <h2 className="text-sm font-black text-[#001A4B] uppercase tracking-wider">Actions Rapides</h2>
                 
-                <div className="space-y-2.5">
+                <div className="space-y-2.5" data-testid="role-quick-actions">
                   <Link
-                    to="/professor/voice-textbook"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-50/70 text-indigo-900 font-black text-xs hover:bg-indigo-100 transition-all border border-indigo-100"
+                    to="/professor/absences"
+                    data-testid="cta-prof-attendance"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#001A4B] text-white font-black text-xs hover:bg-[#000d26] transition-all"
                   >
-                    <PenTool className="w-4 h-4 text-indigo-600" />
-                    <span>Dictée Vocale Cahier de Texte (IA)</span>
-                  </Link>
-
-                  <Link
-                    to="/professor/pfe-evaluation"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-50/70 text-amber-950 font-black text-xs hover:bg-amber-100 transition-all border border-amber-200"
-                  >
-                    <FileSignature className="w-4 h-4 text-amber-600" />
-                    <span>Grille Évaluation Soutenance PFE</span>
-                  </Link>
-
-                  <Link
-                    to="/professor/scanner"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
-                  >
-                    <QrCode className="w-4 h-4 text-indigo-600" />
-                    <span>Scanner QR Présences Examens</span>
+                    <UserX className="w-4 h-4" />
+                    <span>Émarger la séance du jour</span>
                   </Link>
 
                   <Link
                     to="/admin/grades"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-50 text-emerald-950 font-black text-xs hover:bg-emerald-100 transition-all border border-emerald-200"
                   >
                     <Zap className="w-4 h-4 text-emerald-600" />
-                    <span>Saisie des Notes APOGEE</span>
+                    <span>Saisir CC / Exam</span>
+                  </Link>
+
+                  <Link
+                    to="/professor/schedules"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
+                  >
+                    <Calendar className="w-4 h-4 text-indigo-600" />
+                    <span>Mon emploi du temps</span>
+                  </Link>
+
+                  <Link
+                    to="/professor/proctoring"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
+                  >
+                    <Eye className="w-4 h-4 text-indigo-600" />
+                    <span>Convocations surveillance</span>
                   </Link>
                 </div>
               </div>

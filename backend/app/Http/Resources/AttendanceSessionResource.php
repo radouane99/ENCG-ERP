@@ -10,30 +10,30 @@ class AttendanceSessionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'             => $this->id,
-            'professor_id'   => $this->professor_id,
-            'module_name'    => $this->module_name,
-            'group_name'     => $this->group_name,
-            'room_name'      => $this->room_name,
-            'status'         => $this->status,
-            'session_type'   => $this->session_type,
-            'started_at'     => $this->started_at?->toDateTimeString(),
-            'qr_token'       => $this->qr_token,
-            'qr_expires_at'  => $this->qr_expires_at?->toDateTimeString(),
-            'created_at'     => $this->created_at?->toDateTimeString(),
-            'updated_at'     => $this->updated_at?->toDateTimeString(),
+            'id' => $this->id,
+            'professor_id' => $this->professor_id,
+            'module_name' => $this->module_name,
+            'group_name' => $this->group_name,
+            'room_name' => $this->room_name,
+            'status' => $this->status,
+            'session_type' => $this->session_type,
+            'started_at' => $this->started_at?->toDateTimeString(),
+            'qr_token' => $this->qr_token,
+            'qr_expires_at' => $this->qr_expires_at?->toDateTimeString(),
+            'created_at' => $this->created_at?->toDateTimeString(),
+            'updated_at' => $this->updated_at?->toDateTimeString(),
 
-            'records_count'  => $this->records_count ?? $this->whenCounted('attendanceRecords', null, 0),
+            'records_count' => $this->records_count ?? $this->whenCounted('attendanceRecords', null, 0),
 
             'professor_name' => $this->professor?->user
-                ? trim($this->professor->user->first_name . ' ' . $this->professor->user->last_name)
+                ? trim($this->professor->user->first_name.' '.$this->professor->user->last_name)
                 : '—',
 
-            'professor' => $this->whenLoaded('professor', fn() => [
-                'id'              => $this->professor->id,
+            'professor' => $this->whenLoaded('professor', fn () => [
+                'id' => $this->professor->id,
                 'employee_number' => $this->professor->employee_number,
-                'first_name'      => $this->professor->first_name,
-                'last_name'       => $this->professor->last_name,
+                'first_name' => $this->professor->first_name,
+                'last_name' => $this->professor->last_name,
             ]),
         ];
     }

@@ -20,12 +20,12 @@ class MobileStudentController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('student')) {
+        if (! $user->hasRole('student')) {
             return response()->json(['success' => false, 'message' => 'Accès non autorisé.'], 403);
         }
 
         $student = $user->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 404);
         }
 
@@ -33,7 +33,7 @@ class MobileStudentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $stats,
+            'data' => $stats,
         ]);
     }
 
@@ -43,7 +43,7 @@ class MobileStudentController extends Controller
     public function schedule(Request $request): JsonResponse
     {
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
@@ -51,7 +51,7 @@ class MobileStudentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $schedule,
+            'data' => $schedule,
         ]);
     }
 
@@ -61,7 +61,7 @@ class MobileStudentController extends Controller
     public function grades(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user->hasRole('student') || !$user->student) {
+        if (! $user->hasRole('student') || ! $user->student) {
             return response()->json(['success' => false, 'message' => 'Non autorisé.'], 403);
         }
 
@@ -69,7 +69,7 @@ class MobileStudentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $grades,
+            'data' => $grades,
         ]);
     }
 }

@@ -22,7 +22,7 @@ class DocumentRequestCreatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Nouvelle demande de document administratif - ENCG Portail",
+            subject: 'Nouvelle demande de document administratif - ENCG Portail',
         );
     }
 

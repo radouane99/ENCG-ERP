@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\AttendanceStatus;
+use App\Traits\OptimisticLocking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\OptimisticLocking;
 
 class Attendance extends Model
 {
@@ -23,7 +24,7 @@ class Attendance extends Model
             'scanned_longitude' => 'decimal:8',
             'is_valid' => 'boolean',
             'is_justified' => 'boolean',
-            'status' => \App\Enums\AttendanceStatus::class,
+            'status' => AttendanceStatus::class,
         ];
     }
 

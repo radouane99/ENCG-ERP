@@ -4,9 +4,9 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 
 class StudentRegistrationSuccessMail extends Mailable
@@ -14,10 +14,15 @@ class StudentRegistrationSuccessMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $studentName;
+
     public string $cne;
+
     public string $cin;
+
     public string $filiere;
+
     public ?string $pdfPath;
+
     public string $academicYear;
 
     public function __construct(
@@ -39,7 +44,7 @@ class StudentRegistrationSuccessMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '🎉 Confirmation de Pré-Inscription — ENCG Fès (' . $this->academicYear . ')',
+            subject: '🎉 Confirmation de Pré-Inscription — ENCG Fès ('.$this->academicYear.')',
         );
     }
 
@@ -49,10 +54,10 @@ class StudentRegistrationSuccessMail extends Mailable
             view: 'emails.student_registration_success',
             with: [
                 'studentName' => $this->studentName,
-                'cne'         => $this->cne,
-                'cin'         => $this->cin,
-                'filiere'     => $this->filiere,
-                'academicYear'=> $this->academicYear,
+                'cne' => $this->cne,
+                'cin' => $this->cin,
+                'filiere' => $this->filiere,
+                'academicYear' => $this->academicYear,
             ],
         );
     }
@@ -62,7 +67,7 @@ class StudentRegistrationSuccessMail extends Mailable
         if ($this->pdfPath && file_exists($this->pdfPath)) {
             return [
                 Attachment::fromPath($this->pdfPath)
-                    ->as('Attestation_Inscription_ENCG_' . $this->cne . '.pdf')
+                    ->as('Attestation_Inscription_ENCG_'.$this->cne.'.pdf')
                     ->withMime('application/pdf'),
             ];
         }

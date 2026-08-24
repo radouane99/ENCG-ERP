@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class ExamSession extends Model
 {
@@ -25,11 +25,11 @@ class ExamSession extends Model
     protected function casts(): array
     {
         return [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'is_active' => 'boolean',
-        'is_locked' => 'boolean',
-    ];
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'is_active' => 'boolean',
+            'is_locked' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo

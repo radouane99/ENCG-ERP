@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Semester extends Model
 {
@@ -15,12 +16,12 @@ class Semester extends Model
     protected function casts(): array
     {
         return [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'exam_start_date' => 'date',
-        'exam_end_date' => 'date',
-        'is_current' => 'boolean',
-    ];
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'exam_start_date' => 'date',
+            'exam_end_date' => 'date',
+            'is_current' => 'boolean',
+        ];
     }
 
     public function academicYear(): BelongsTo
@@ -28,7 +29,7 @@ class Semester extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function examSessions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function examSessions(): HasMany
     {
         return $this->hasMany(ExamSession::class);
     }

@@ -2,8 +2,10 @@
 
 namespace App\Traits;
 
-use App\Models\ValidationAudit;
 use App\Enums\ValidationStatus;
+use App\Models\User;
+use App\Models\ValidationAudit;
+use App\Notifications\ValidationStatusUpdated;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +19,7 @@ trait HasValidationWorkflow
     public function transitionTo(ValidationStatus $newStatus, ?string $comment = null): void
     {
         $oldStatus = $this->status ?? null;
-        
+
         if ($oldStatus === $newStatus->value) {
             return;
         }
@@ -41,10 +43,10 @@ trait HasValidationWorkflow
 
         if (method_exists($this, 'student') && $this->student) {
             // Retrieve User object from Student relation
-            $user = $this->student->user ?? $this->student->getUserAttributeSafely('id') ? \App\Models\User::find($this->student->getUserAttributeSafely('id')) : null;
+            $user = $this->student->user ?? $this->student->getUserAttributeSafely('id') ? User::find($this->student->getUserAttributeSafely('id')) : null;
             // Since Student might delegate user properties, let's just use student->user relation or fallback.
             // Assuming student->user is a valid relation based on typical Eloquent models.
-            if (!$user && method_exists($this->student, 'user')) {
+            if (! $user && method_exists($this->student, 'user')) {
                 $user = $this->student->user;
             }
         } elseif (method_exists($this, 'user') && $this->user) {
@@ -52,7 +54,7 @@ trait HasValidationWorkflow
         }
 
         if ($user) {
-            $user->notify(new \App\Notifications\ValidationStatusUpdated($this, $newStatus->value));
+            $user->notify(new ValidationStatusUpdated($this, $newStatus->value));
         }
     }
 

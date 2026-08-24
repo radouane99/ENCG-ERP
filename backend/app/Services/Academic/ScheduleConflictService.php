@@ -2,13 +2,14 @@
 
 namespace App\Services\Academic;
 
+use App\Models\Room;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleConflictService
 {
     /**
      * Checks if a specific time slot is free regarding all Hard Constraints.
-     * 
+     *
      * @return array [ 'isValid' => bool, 'reason' => string|null ]
      */
     public function validateSlot(int $academicYearId, int $day, string $start, string $end, int $roomId, int $profId, int $groupId): array
@@ -17,9 +18,9 @@ class ScheduleConflictService
             ->where('academic_year_id', $academicYearId)
             ->where('day_of_week', $day)
             ->where('is_active', true)
-            ->where(function($q) use ($start, $end) {
+            ->where(function ($q) use ($start, $end) {
                 // Time overlap check
-                $q->where(function($sub) use ($start, $end) {
+                $q->where(function ($sub) use ($start, $end) {
                     $sub->where('start_time', '<', $end)
                         ->where('end_time', '>', $start);
                 });
@@ -38,6 +39,11 @@ class ScheduleConflictService
         // Check Professor Conflict
         if ((clone $query)->where('professor_id', $profId)->exists()) {
             return ['isValid' => false, 'reason' => 'Professor is already teaching another class during this time slot.'];
+        }
+
+        $room = Room::find($roomId);
+        if ($room && (($room->is_out_of_service ?? false) || ($room->status ?? null) === 'out_of_service')) {
+            return ['isValid' => false, 'reason' => 'Salle hors service.'];
         }
 
         // Check Professor Availability Preference

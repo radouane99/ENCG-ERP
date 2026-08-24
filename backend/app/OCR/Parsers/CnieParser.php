@@ -63,6 +63,7 @@ class CnieParser implements DocumentParserInterface
 
         if (empty(trim($text))) {
             $result->fields = $this->emptyFields;
+
             return $result;
         }
 
@@ -72,6 +73,7 @@ class CnieParser implements DocumentParserInterface
 
         if (empty($lines)) {
             $result->fields = $this->emptyFields;
+
             return $result;
         }
 
@@ -81,7 +83,7 @@ class CnieParser implements DocumentParserInterface
         $sections = $this->splitSections($lines);
 
         // ── Stage 2: Extraction MRZ (priorité maximale)
-        if (!empty($sections['mrz'])) {
+        if (! empty($sections['mrz'])) {
             $this->parseMrzBlock($sections['mrz'], $fields);
         }
 
@@ -94,12 +96,12 @@ class CnieParser implements DocumentParserInterface
         }
 
         // ── Stage 5: Extraction Verso
-        if (!empty($sections['verso'])) {
+        if (! empty($sections['verso'])) {
             $this->parseVersoBlock($sections['verso'], $fields);
         }
 
         // ── Stage 6: Fallbacks via Helpers
-        $this->applyFallbacks($sections['recto'] . "\n" . $sections['verso'], $fields);
+        $this->applyFallbacks($sections['recto']."\n".$sections['verso'], $fields);
 
         // ── Stage 7: Validation et normalisation (Hadi fin zedna la logique dyal ben/bent)
         $this->validateAndNormalizeFields($fields);
@@ -108,6 +110,7 @@ class CnieParser implements DocumentParserInterface
         $this->mapOutputFields($fields);
 
         $result->fields = $fields;
+
         return $result;
     }
 
@@ -118,16 +121,16 @@ class CnieParser implements DocumentParserInterface
     {
         // Standardisation des sauts de ligne
         $text = preg_replace('/\r\n|\r/', "\n", $text);
-        
+
         // Correction des erreurs OCR communes
         $text = str_replace(['ﬁ', 'ﬂ', 'œ', 'æ'], ['fi', 'fl', 'oe', 'ae'], $text);
-        
+
         // Nettoyer les caractères inutiles
         $text = preg_replace('/[^\x{0600}-\x{06FF}A-Za-z0-9\s\.\,\-\/\:\n<]/u', ' ', $text);
-        
+
         // Supprimer les espaces multiples
         $text = preg_replace('/\s+/', ' ', $text);
-        
+
         return trim($text);
     }
 
@@ -154,6 +157,7 @@ class CnieParser implements DocumentParserInterface
             // Détection MRZ
             if ($this->isMRZLine($line)) {
                 $mrzLines[] = $line;
+
                 continue;
             }
 
@@ -184,7 +188,7 @@ class CnieParser implements DocumentParserInterface
         }
 
         return [
-            'mrz'   => implode("\n", $mrzLines),
+            'mrz' => implode("\n", $mrzLines),
             'recto' => implode("\n", $rectoLines ?: $lines),
             'verso' => implode("\n", $versoLines),
         ];
@@ -200,6 +204,7 @@ class CnieParser implements DocumentParserInterface
                 return true;
             }
         }
+
         return false;
     }
 
@@ -213,6 +218,7 @@ class CnieParser implements DocumentParserInterface
                 return true;
             }
         }
+
         return false;
     }
 
@@ -226,6 +232,7 @@ class CnieParser implements DocumentParserInterface
                 return true;
             }
         }
+
         return false;
     }
 
@@ -262,12 +269,12 @@ class CnieParser implements DocumentParserInterface
      */
     private function parseMrzName(string $line, array &$fields): void
     {
-        if (strpos($line, '<<') !== false && !preg_match('/^(IDMARO|IDMAR|MAR|CAN|FRA|CARD)/i', $line)) {
+        if (strpos($line, '<<') !== false && ! preg_match('/^(IDMARO|IDMAR|MAR|CAN|FRA|CARD)/i', $line)) {
             if (preg_match('/([A-Z]{2,30})<<([A-Z<\s]{2,60})/i', $line, $match)) {
                 $last = trim(str_replace('<', '', $match[1]));
                 $first = rtrim($match[2], '<');
 
-                if (!in_array($last, ['IDMARO', 'IDMAR', 'MAR', 'CAN', 'FRA', 'CARD'], true)) {
+                if (! in_array($last, ['IDMARO', 'IDMAR', 'MAR', 'CAN', 'FRA', 'CARD'], true)) {
                     $first = strtoupper(trim(str_replace('<', '-', $first), '-'));
                     $first = preg_replace('/\-+/', '-', $first);
 
@@ -291,8 +298,8 @@ class CnieParser implements DocumentParserInterface
             if (preg_match('/([A-Z]{1,2}\d{5,6})</i', $line, $match)) {
                 $candidate = strtoupper($match[1]);
                 $exclude = ['IDMARO', 'IDMAR', 'MAR', 'CAN', 'FRA', 'CARD', 'CNIE', 'CIN'];
-                
-                if (!in_array($candidate, $exclude) && $this->validateCIN($candidate)) {
+
+                if (! in_array($candidate, $exclude) && $this->validateCIN($candidate)) {
                     $fields['cin'] = $candidate;
                 }
             }
@@ -306,10 +313,10 @@ class CnieParser implements DocumentParserInterface
     {
         if (empty($fields['birth_date'])) {
             if (preg_match('/^(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{1}[FM]/i', $line, $match)) {
-                $yy = (int)$match[1];
+                $yy = (int) $match[1];
                 $fullYear = $yy > 35 ? "19{$match[1]}" : "20{$match[1]}";
                 $date = "{$fullYear}-{$match[2]}-{$match[3]}";
-                
+
                 if ($this->validateDate($date)) {
                     $fields['birth_date'] = $date;
                 }
@@ -337,10 +344,10 @@ class CnieParser implements DocumentParserInterface
     {
         if (empty($fields['expiry_date'])) {
             if (preg_match('/^(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{1}[FM]/', $line, $match)) {
-                $yy = (int)$match[1];
+                $yy = (int) $match[1];
                 $fullYear = $yy > 35 ? "19{$match[1]}" : "20{$match[1]}";
                 $date = "{$fullYear}-{$match[2]}-{$match[3]}";
-                
+
                 if ($this->validateDate($date)) {
                     $fields['expiry_date'] = $date;
                 }
@@ -441,7 +448,7 @@ class CnieParser implements DocumentParserInterface
                 if (preg_match($pattern, $rectoText, $match)) {
                     $city = trim($match[1]);
                     $exclude = ['la', 'le', 'les', 'carte', 'nationale', 'royaume', 'maroc'];
-                    if (!in_array(strtolower($city), $exclude) && strlen($city) > 2) {
+                    if (! in_array(strtolower($city), $exclude) && strlen($city) > 2) {
                         $fields['birth_city_fr'] = $this->normalizeFrenchName($city);
                         break;
                     }
@@ -479,7 +486,7 @@ class CnieParser implements DocumentParserInterface
                 foreach ($matches[1] as $candidate) {
                     $candidate = strtoupper(trim($candidate));
                     $exclude = ['MAROC', 'ROYAUME', 'CAN', 'FRA', 'CARD', 'CNIE', 'CIN', 'IDMAR'];
-                    
+
                     if (in_array($candidate, $exclude)) {
                         continue;
                     }
@@ -493,6 +500,7 @@ class CnieParser implements DocumentParserInterface
 
                     if ($this->validateCIN($candidate)) {
                         $fields['cin'] = $candidate;
+
                         return;
                     }
                 }
@@ -627,35 +635,35 @@ class CnieParser implements DocumentParserInterface
     private function validateAndNormalizeFields(array &$fields): void
     {
         // Normaliser les noms
-        if (!empty($fields['last_name_fr'])) {
+        if (! empty($fields['last_name_fr'])) {
             $fields['last_name_fr'] = $this->normalizeFrenchName($fields['last_name_fr']);
         }
-        if (!empty($fields['first_name_fr'])) {
+        if (! empty($fields['first_name_fr'])) {
             $fields['first_name_fr'] = $this->normalizeFrenchName($fields['first_name_fr']);
         }
-        if (!empty($fields['father_name_fr'])) {
+        if (! empty($fields['father_name_fr'])) {
             $fields['father_name_fr'] = $this->normalizeFrenchName($fields['father_name_fr']);
         }
-        if (!empty($fields['mother_name_fr'])) {
+        if (! empty($fields['mother_name_fr'])) {
             $fields['mother_name_fr'] = $this->normalizeFrenchName($fields['mother_name_fr']);
         }
 
-        if (!empty($fields['last_name_ar'])) {
+        if (! empty($fields['last_name_ar'])) {
             $fields['last_name_ar'] = $this->normalizeArabicName($fields['last_name_ar']);
         }
-        if (!empty($fields['first_name_ar'])) {
+        if (! empty($fields['first_name_ar'])) {
             $fields['first_name_ar'] = $this->normalizeArabicName($fields['first_name_ar']);
         }
-        if (!empty($fields['father_name_ar'])) {
+        if (! empty($fields['father_name_ar'])) {
             $fields['father_name_ar'] = $this->normalizeArabicName($fields['father_name_ar']);
         }
-        if (!empty($fields['mother_name_ar'])) {
+        if (! empty($fields['mother_name_ar'])) {
             $fields['mother_name_ar'] = $this->normalizeArabicName($fields['mother_name_ar']);
         }
-        if (!empty($fields['address_ar'])) {
+        if (! empty($fields['address_ar'])) {
             $fields['address_ar'] = $this->normalizeArabicName($fields['address_ar']);
         }
-        if (!empty($fields['birth_city_ar'])) {
+        if (! empty($fields['birth_city_ar'])) {
             $fields['birth_city_ar'] = $this->normalizeArabicName($fields['birth_city_ar']);
         }
 
@@ -668,7 +676,7 @@ class CnieParser implements DocumentParserInterface
         // ─────────────────────────────────────
 
         // Valider le CIN
-        if (!empty($fields['cin']) && !$this->validateCIN($fields['cin'])) {
+        if (! empty($fields['cin']) && ! $this->validateCIN($fields['cin'])) {
             unset($fields['cin']);
         }
 
@@ -686,16 +694,16 @@ class CnieParser implements DocumentParserInterface
     private function mapOutputFields(array &$fields): void
     {
         // Standardisation
-        if (!empty($fields['last_name_fr'])) {
+        if (! empty($fields['last_name_fr'])) {
             $fields['nom'] = $fields['last_name_fr'];
         }
-        if (!empty($fields['first_name_fr'])) {
+        if (! empty($fields['first_name_fr'])) {
             $fields['prenom'] = $fields['first_name_fr'];
         }
-        if (!empty($fields['cin'])) {
+        if (! empty($fields['cin'])) {
             $fields['numero_cin'] = $fields['cin'];
         }
-        if (!empty($fields['gender'])) {
+        if (! empty($fields['gender'])) {
             $fields['sexe'] = $fields['gender'];
         }
     }
@@ -709,6 +717,7 @@ class CnieParser implements DocumentParserInterface
         if (count($parts) === 3) {
             return "{$parts[2]}-{$parts[1]}-{$parts[0]}";
         }
+
         return null;
     }
 
@@ -722,10 +731,10 @@ class CnieParser implements DocumentParserInterface
             return false;
         }
 
-        list($year, $month, $day) = $parts;
-        $year = (int)$year;
-        $month = (int)$month;
-        $day = (int)$day;
+        [$year, $month, $day] = $parts;
+        $year = (int) $year;
+        $month = (int) $month;
+        $day = (int) $day;
 
         if ($year < 1900 || $year > date('Y')) {
             return false;
@@ -761,10 +770,10 @@ class CnieParser implements DocumentParserInterface
             ['E', 'E', 'E', 'E', 'A', 'A', 'U', 'O', 'I', 'I', 'C'],
             $name
         );
-        
+
         $name = preg_replace('/\s+/', ' ', $name);
         $name = preg_replace('/[^A-Za-z\s\-]/', '', $name);
-        
+
         return strtoupper(trim($name));
     }
 
@@ -774,7 +783,7 @@ class CnieParser implements DocumentParserInterface
     private function normalizeArabicName(string $name): string
     {
         $name = preg_replace('/\s+/', ' ', $name);
-        
+
         $replacements = [
             'آ' => 'ا',
             'أ' => 'ا',
@@ -784,14 +793,14 @@ class CnieParser implements DocumentParserInterface
             'ؤ' => 'و',
             'ئ' => 'ي',
         ];
-        
+
         return str_replace(array_keys($replacements), array_values($replacements), trim($name));
     }
 
     // =========================================================
     // ██████  LOGIQUE AJOUTÉE POUR NETTOYER LES NOMS  ██████
     // =========================================================
-    
+
     /**
      * Clean Parent Name: Supprime "ben", "bent", "بن", "بنت" et garde uniquement le premier mot.
      * Exemple: "JAWAD ben HMIDA" devient "JAWAD".
@@ -802,7 +811,7 @@ class CnieParser implements DocumentParserInterface
             return $fullName;
         }
 
-        // L'expression régulière: 
+        // L'expression régulière:
         // ^(.*?)              => Capture le premier mot (ou groupe de mots jusqu'au séparateur)
         // \s+                 => Suivi d'un ou plusieurs espaces
         // (?:ben|bent|بن|بنت) => Suivi de l'un de ces mots-clés (non capturant)
@@ -821,33 +830,33 @@ class CnieParser implements DocumentParserInterface
     private function emptyResultArray(): array
     {
         return [
-            'first_name_fr'  => '',
-            'last_name_fr'   => '',
-            'first_name_ar'  => '',
-            'last_name_ar'   => '',
-            'cne'            => '',
-            'cin'            => '',
-            'birth_date'     => '',
-            'birth_city_fr'  => '',
-            'birth_city_ar'  => '',
+            'first_name_fr' => '',
+            'last_name_fr' => '',
+            'first_name_ar' => '',
+            'last_name_ar' => '',
+            'cne' => '',
+            'cin' => '',
+            'birth_date' => '',
+            'birth_city_fr' => '',
+            'birth_city_ar' => '',
             'father_name_fr' => '',
             'father_name_ar' => '',
             'mother_name_fr' => '',
             'mother_name_ar' => '',
-            'address_fr'     => '',
-            'address_ar'     => '',
-            'gender'         => '',
-            'sexe'           => '',
-            'expiry_date'    => '',
-            'bac_average'    => '',
-            'bac_mention'    => '',
-            'bac_type'       => '',
-            'high_school'    => '',
-            'academy'        => '',
-            'prefecture'     => '',
-            'nom'            => '',
-            'prenom'         => '',
-            'numero_cin'     => '',
+            'address_fr' => '',
+            'address_ar' => '',
+            'gender' => '',
+            'sexe' => '',
+            'expiry_date' => '',
+            'bac_average' => '',
+            'bac_mention' => '',
+            'bac_type' => '',
+            'high_school' => '',
+            'academy' => '',
+            'prefecture' => '',
+            'nom' => '',
+            'prenom' => '',
+            'numero_cin' => '',
         ];
     }
 }

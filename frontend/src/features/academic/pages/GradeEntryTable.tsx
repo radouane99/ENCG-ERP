@@ -7,6 +7,7 @@ import { gradeEntrySchema } from '../../../schemas/grade.schema'
 import { ZodError } from 'zod'
 
 import { Badge } from '@shared/components/ui/Badge'
+import LmdLegend from '@shared/components/academic/LmdLegend'
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -76,7 +77,8 @@ export default function GradeEntryTable() {
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-4">
-          <CardTitle>Saisie des Notes (CC - Management)</CardTitle>
+          <CardTitle>Saisie des Notes (CC / Exam / RAT)</CardTitle>
+          <LmdLegend />
           <select
             value={sessionType}
             onChange={(e) => setSessionType(e.target.value as any)}

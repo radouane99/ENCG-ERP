@@ -10,8 +10,9 @@ This skill defines standard domain patterns, business logic constraints, and arc
 ## 1. Moroccan LMD & ENCG Academic Standards
 - **Semester Structure**: S1 to S10 across 5 years (Grande École Management & Commerce).
 - **Evaluation System**: Continuous Assessment (CC1, CC2, TP, Examen Final, Rattrapage).
-- **Eliminatory Grade Rule**: Any grade below 6.0/20 in an exam requires retake (Rattrapage).
+- **Eliminatory Grade Rule**: Any grade below 6.0/20 requires retake (Rattrapage). Source unique : `App\Domain\Deliberation\LmdRules` (`ELIMINATORY_THRESHOLD = 6.0`, `VALIDATION_THRESHOLD = 10.0`).
 - **Validation Threshold**: Semester average >= 10.0/20 with compensation rules (VC / V / RAT).
+- **Tuition**: Grande École (`filieres.type = grande_ecole`) is free. Payment applies only to `licence`, `master_specialise`, `formation_continue`.
 
 ## 2. Assessment Types & Schema Rules
 - Do NOT use hardcoded database `enum` constraints for assessment types in the `assessments` table.

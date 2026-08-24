@@ -16,11 +16,11 @@ class GradeComponent extends Model
     protected function casts(): array
     {
         return [
-        'weight' => 'float',
-        'max_grade' => 'float',
-        'is_eliminatory' => 'boolean',
-        'eliminatory_threshold' => 'float',
-    ];
+            'weight' => 'float',
+            'max_grade' => 'float',
+            'is_eliminatory' => 'boolean',
+            'eliminatory_threshold' => 'float',
+        ];
     }
 
     public function module(): BelongsTo

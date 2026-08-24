@@ -12,6 +12,12 @@ class ExamIncident extends Model
 
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'exam_id', 'student_id', 'reported_by', 'type', 'incident_type',
+        'description', 'confiscated_items', 'status', 'hearing_date',
+        'hearing_room', 'decision', 'sanction_scope',
+    ];
+
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);

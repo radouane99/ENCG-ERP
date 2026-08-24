@@ -2,15 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Models\Institution;
 use App\Models\Professor;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function ensureProfInstitution()
 {
-    \App\Models\Institution::firstOrCreate(
+    Institution::firstOrCreate(
         ['id' => 1],
         ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
@@ -19,21 +22,23 @@ function ensureProfInstitution()
 function makeProfAdmin(): User
 {
     ensureProfInstitution();
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
+    $role = Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
     $user->assignRole($role);
     $permModels = [];
     foreach (['professors.view', 'professors.create', 'professors.edit', 'professors.delete'] as $perm) {
         $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
     $user->givePermissionTo($permModels);
+
     return $user;
 }
 
 function makeProfRestricted(): User
 {
     ensureProfInstitution();
+
     return User::factory()->create();
 }
 
@@ -69,9 +74,9 @@ it('creates a professor with valid data', function () {
 
     $response = $this->actingAs($user, 'sanctum')
         ->postJson('/api/hr/professors', [
-            'first_name'    => 'Mohamed',
-            'last_name'     => 'Alami',
-            'email'         => 'prof.alami@encg-test.ma',
+            'first_name' => 'Mohamed',
+            'last_name' => 'Alami',
+            'email' => 'prof.alami@encg-test.ma',
             'contract_type' => 'permanent',
         ]);
 
@@ -94,9 +99,9 @@ it('returns 422 when email is already taken for professor', function () {
 
     $this->actingAs($user, 'sanctum')
         ->postJson('/api/hr/professors', [
-            'first_name'    => 'Karim',
-            'last_name'     => 'Benali',
-            'email'         => 'taken.prof@test.ma',
+            'first_name' => 'Karim',
+            'last_name' => 'Benali',
+            'email' => 'taken.prof@test.ma',
             'contract_type' => 'contractual',
         ])
         ->assertStatus(422)
@@ -108,9 +113,9 @@ it('returns 422 for invalid contract_type', function () {
 
     $this->actingAs($user, 'sanctum')
         ->postJson('/api/hr/professors', [
-            'first_name'    => 'Test',
-            'last_name'     => 'Prof',
-            'email'         => 'testprof@encg-test.ma',
+            'first_name' => 'Test',
+            'last_name' => 'Prof',
+            'email' => 'testprof@encg-test.ma',
             'contract_type' => 'INVALID_TYPE',
         ])
         ->assertStatus(422)
@@ -122,9 +127,9 @@ it('returns 403 when creating professor without permission', function () {
 
     $this->actingAs($user, 'sanctum')
         ->postJson('/api/hr/professors', [
-            'first_name'    => 'Amine',
-            'last_name'     => 'Test',
-            'email'         => 'test@test.ma',
+            'first_name' => 'Amine',
+            'last_name' => 'Test',
+            'email' => 'test@test.ma',
             'contract_type' => 'permanent',
         ])
         ->assertStatus(403);

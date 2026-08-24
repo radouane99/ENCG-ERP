@@ -2,9 +2,10 @@
 
 namespace App\Listeners;
 
-use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\Request;
 use App\Notifications\SuspiciousLoginAlert;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class LogSuccessfulLogin
 {
@@ -27,7 +28,7 @@ class LogSuccessfulLogin
                 try {
                     $user->notify(new SuspiciousLoginAlert($currentIp));
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Failed to send suspicious login alert: ' . $e->getMessage());
+                    Log::warning('Failed to send suspicious login alert: '.$e->getMessage());
                 }
             }
         }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('applications')) {
             Schema::table('applications', function (Blueprint $table) {
-                if (!Schema::hasColumn('applications', 'list_type')) {
+                if (! Schema::hasColumn('applications', 'list_type')) {
                     $table->string('list_type')->nullable()->default('liste_principale');
                 }
             });
@@ -21,7 +21,7 @@ return new class extends Migration
 
         if (Schema::hasTable('students')) {
             Schema::table('students', function (Blueprint $table) {
-                if (!Schema::hasColumn('students', 'list_type')) {
+                if (! Schema::hasColumn('students', 'list_type')) {
                     $table->string('list_type')->nullable()->default('liste_principale');
                 }
             });

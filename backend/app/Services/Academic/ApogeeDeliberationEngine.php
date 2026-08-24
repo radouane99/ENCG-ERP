@@ -18,9 +18,9 @@ class ApogeeDeliberationEngine
         $finalGrade = round((($ccGrade ?? 0.0) * 0.5) + (($examGrade ?? 0.0) * 0.5), 2);
 
         return [
-            'grade'     => $finalGrade,
+            'grade' => $finalGrade,
             'validated' => $finalGrade >= 10.0,
-            'absent'    => false,
+            'absent' => false,
         ];
     }
 
@@ -40,9 +40,9 @@ class ApogeeDeliberationEngine
         $finalGrade = round(min($maxCap, max($ccGrade ?? 0.0, $resitExamGrade ?? 0.0)), 2);
 
         return [
-            'grade'     => $finalGrade,
+            'grade' => $finalGrade,
             'validated' => $finalGrade >= 10.0,
-            'absent'    => false,
+            'absent' => false,
         ];
     }
 
@@ -57,8 +57,8 @@ class ApogeeDeliberationEngine
         }
 
         $semesterAverage = round(array_sum(array_column($moduleGrades, 'grade')) / $count, 2);
-        $isValidated     = $semesterAverage >= 10.0;
-        $compensated     = [];
+        $isValidated = $semesterAverage >= 10.0;
+        $compensated = [];
 
         if ($isValidated) {
             foreach ($moduleGrades as $mg) {
@@ -69,8 +69,8 @@ class ApogeeDeliberationEngine
         }
 
         return [
-            'average'             => $semesterAverage,
-            'is_validated'        => $isValidated,
+            'average' => $semesterAverage,
+            'is_validated' => $isValidated,
             'compensated_modules' => $compensated,
         ];
     }

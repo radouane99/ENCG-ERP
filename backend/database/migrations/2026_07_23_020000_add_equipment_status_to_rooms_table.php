@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,7 +14,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('rooms')) {
             Schema::table('rooms', function (Blueprint $table) {
-                if (!Schema::hasColumn('rooms', 'equipment_status')) {
+                if (! Schema::hasColumn('rooms', 'equipment_status')) {
                     $table->json('equipment_status')->nullable()->after('is_available');
                 }
             });
@@ -24,7 +24,7 @@ return new class extends Migration
                 'projector' => 'ok',
                 'ac' => 'ok',
                 'sound' => 'ok',
-                'pc_lab' => 'ok'
+                'pc_lab' => 'ok',
             ]);
             DB::statement("UPDATE rooms SET equipment_status = '$defaultStatus' WHERE equipment_status IS NULL");
         }

@@ -19,26 +19,26 @@ class AuditLogAndSecurityRegressionTest extends TestCase
         $admin = User::factory()->create(['email' => 'admin.audit@encg-fes.ac.ma']);
 
         $audit = AuditLog::record([
-            'user_id'     => $admin->id,
-            'user_name'   => 'Directeur des Études',
-            'user_email'  => 'admin.audit@encg-fes.ac.ma',
-            'user_role'   => 'Direction',
-            'action'      => 'Modification Sécurisée de Note',
+            'user_id' => $admin->id,
+            'user_name' => 'Directeur des Études',
+            'user_email' => 'admin.audit@encg-fes.ac.ma',
+            'user_role' => 'Direction',
+            'action' => 'Modification Sécurisée de Note',
             'action_type' => 'GRADE_CHANGE',
             'description' => 'Changement note CC M101 : 12.00 -> 14.50 suite à réclamation vérifiée',
-            'method'      => 'POST',
-            'severity'    => 'warning',
-            'payload'     => [
+            'method' => 'POST',
+            'severity' => 'warning',
+            'payload' => [
                 'old_grade' => 12.00,
                 'new_grade' => 14.50,
-                'module'    => 'Comptabilité Générale',
+                'module' => 'Comptabilité Générale',
             ],
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
             'action_type' => 'GRADE_CHANGE',
-            'user_email'  => 'admin.audit@encg-fes.ac.ma',
-            'severity'    => 'warning',
+            'user_email' => 'admin.audit@encg-fes.ac.ma',
+            'severity' => 'warning',
         ]);
 
         $this->assertNotNull($audit->id);

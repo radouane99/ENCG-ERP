@@ -9,6 +9,7 @@ import {
   QrCode, Award, History, Layers3, Sparkles, AlertCircle, DollarSign, Unlock, CalendarRange
 } from 'lucide-react';
 import SecurityOtpModal from '@shared/components/ui/SecurityOtpModal';
+import { cn } from '@shared/lib/utils';
 
 type AcademicYear = {
   id: number;

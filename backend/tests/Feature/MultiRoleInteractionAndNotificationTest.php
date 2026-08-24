@@ -24,10 +24,15 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected User $adminUser;
+
     protected User $profUser;
+
     protected User $studentUser;
+
     protected Student $student;
+
     protected Professor $professor;
 
     protected function setUp(): void
@@ -44,19 +49,19 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $studentRole = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
 
         $this->adminUser = User::factory()->create([
-            'email'          => 'admin.directeur@encg-fes.ac.ma',
+            'email' => 'admin.directeur@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->adminUser->assignRole($adminRole);
 
         $this->profUser = User::factory()->create([
-            'email'          => 'prof.responsable@encg-fes.ac.ma',
+            'email' => 'prof.responsable@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->profUser->assignRole($profRole);
 
         $this->studentUser = User::factory()->create([
-            'email'          => 'etudiant.delegue@encg-fes.ac.ma',
+            'email' => 'etudiant.delegue@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->studentUser->assignRole($studentRole);
@@ -67,20 +72,20 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         );
 
         $this->professor = Professor::create([
-            'user_id'        => $this->profUser->id,
-            'department_id'  => $department->id,
-            'specialty'      => 'Audit & Contrôle de Gestion',
-            'contract_type'  => 'permanent',
-            'is_active'      => true,
+            'user_id' => $this->profUser->id,
+            'department_id' => $department->id,
+            'specialty' => 'Audit & Contrôle de Gestion',
+            'contract_type' => 'permanent',
+            'is_active' => true,
             'institution_id' => $this->institution->id,
         ]);
 
         $this->student = Student::create([
-            'user_id'        => $this->studentUser->id,
+            'user_id' => $this->studentUser->id,
             'student_number' => 'ENCG-2026-DELEGUE',
-            'cne'            => 'M139988776',
-            'gender'         => 'female',
-            'status'         => 'active',
+            'cne' => 'M139988776',
+            'gender' => 'female',
+            'status' => 'active',
             'institution_id' => $this->institution->id,
         ]);
     }
@@ -97,9 +102,9 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
 
         // Student submits request
         $request = DocumentRequest::create([
-            'student_id'       => $this->student->id,
+            'student_id' => $this->student->id,
             'document_type_id' => $docType->id,
-            'status'           => 'pending',
+            'status' => 'pending',
         ]);
 
         $this->assertEquals('pending', $request->status);
@@ -107,9 +112,9 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         // Admin approves request
         Sanctum::actingAs($this->adminUser);
         $request->update([
-            'status'       => 'ready',
+            'status' => 'ready',
             'processed_at' => now(),
-            'admin_notes'  => ['note' => 'Validé et prêt pour retrait au guichet.'],
+            'admin_notes' => ['note' => 'Validé et prêt pour retrait au guichet.'],
         ]);
 
         $this->assertEquals('ready', $request->fresh()->status);
@@ -130,40 +135,40 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $filiere = Filiere::firstOrCreate(
             ['code' => 'AUDIT'],
             [
-                'name'           => 'Audit et Contrôle de Gestion',
-                'type'           => 'grande_ecole',
+                'name' => 'Audit et Contrôle de Gestion',
+                'type' => 'grande_ecole',
                 'duration_years' => 5,
                 'institution_id' => $this->institution->id,
-                'is_active'      => true,
+                'is_active' => true,
             ]
         );
 
         $module = Module::firstOrCreate(
             ['code' => 'AUD701', 'filiere_id' => $filiere->id],
             [
-                'name'            => 'Audit Financier Avancé',
+                'name' => 'Audit Financier Avancé',
                 'semester_number' => 7,
-                'coefficient'     => 1.5,
-                'credit_hours'    => 45,
-                'institution_id'  => $this->institution->id,
-                'is_active'       => true,
+                'coefficient' => 1.5,
+                'credit_hours' => 45,
+                'institution_id' => $this->institution->id,
+                'is_active' => true,
             ]
         );
 
         $contract = VacationContract::create([
-            'institution_id'   => $this->institution->id,
-            'user_id'          => $this->profUser->id,
-            'first_name'       => 'Tarik',
-            'last_name'        => 'Berrada',
-            'email'            => 'prof.responsable@encg-fes.ac.ma',
+            'institution_id' => $this->institution->id,
+            'user_id' => $this->profUser->id,
+            'first_name' => 'Tarik',
+            'last_name' => 'Berrada',
+            'email' => 'prof.responsable@encg-fes.ac.ma',
             'academic_year_id' => $academicYear->id,
-            'module_id'        => $module->id,
-            'session_type'     => 'cm',
-            'agreed_hours'     => 45,
-            'hourly_rate'      => 350.00,
-            'status'           => 'active',
-            'contract_start'   => '2026-09-15',
-            'contract_end'     => '2027-01-31',
+            'module_id' => $module->id,
+            'session_type' => 'cm',
+            'agreed_hours' => 45,
+            'hourly_rate' => 350.00,
+            'status' => 'active',
+            'contract_start' => '2026-09-15',
+            'contract_end' => '2027-01-31',
         ]);
 
         $this->assertEquals(45, $contract->agreed_hours);
@@ -178,21 +183,21 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
     {
         // Dispatch 2 database notifications to the student
         $notif1 = DatabaseNotification::create([
-            'id'              => (string) Str::uuid(),
-            'type'            => 'App\Notifications\GradePublishedNotification',
+            'id' => (string) Str::uuid(),
+            'type' => 'App\Notifications\GradePublishedNotification',
             'notifiable_type' => User::class,
-            'notifiable_id'   => $this->studentUser->id,
-            'data'            => ['message' => 'Votre note du module Contrôle de Gestion est disponible.'],
-            'read_at'         => null,
+            'notifiable_id' => $this->studentUser->id,
+            'data' => ['message' => 'Votre note du module Contrôle de Gestion est disponible.'],
+            'read_at' => null,
         ]);
 
         $notif2 = DatabaseNotification::create([
-            'id'              => (string) Str::uuid(),
-            'type'            => 'App\Notifications\DocumentReadyNotification',
+            'id' => (string) Str::uuid(),
+            'type' => 'App\Notifications\DocumentReadyNotification',
             'notifiable_type' => User::class,
-            'notifiable_id'   => $this->studentUser->id,
-            'data'            => ['message' => 'Votre attestation de scolarité est prête.'],
-            'read_at'         => null,
+            'notifiable_id' => $this->studentUser->id,
+            'data' => ['message' => 'Votre attestation de scolarité est prête.'],
+            'read_at' => null,
         ]);
 
         // Student fetches notifications
@@ -216,7 +221,7 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         Sanctum::actingAs($this->studentUser);
 
         $response = $this->postJson('/api/admin/notifications/broadcast-urgent', [
-            'title'   => 'Fermeture exceptionnelle du campus',
+            'title' => 'Fermeture exceptionnelle du campus',
             'message' => 'Les cours sont suspendus.',
         ]);
 

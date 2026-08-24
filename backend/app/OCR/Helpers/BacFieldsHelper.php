@@ -23,52 +23,52 @@ class BacFieldsHelper
      */
     private array $bacTypePatterns = [
         // Sciences Économiques & Gestion
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Économiques?\s+et\s+de\s+Gestion/iu'   => 'Sciences Économiques et de Gestion',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Economiques?\s+et\s+de\s+Gestion/iu'   => 'Sciences Économiques et de Gestion',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+de\s+Gestion\s+Comptable/iu'          => 'Sciences de Gestion Comptable',
-        '/\bSGC\b/'                                                                           => 'Sciences de Gestion Comptable',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Économiques?/iu'                       => 'Sciences Économiques',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Economiques?/iu'                       => 'Sciences Économiques',
-        '/مسلك\s+العلوم?\s+الاقتصادية/u'                                                     => 'Sciences Économiques',
-        '/مسلك\s+علوم?\s+التبدير\s+المحاسباتي/u'                                              => 'Sciences de Gestion Comptable',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Économiques?\s+et\s+de\s+Gestion/iu' => 'Sciences Économiques et de Gestion',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Economiques?\s+et\s+de\s+Gestion/iu' => 'Sciences Économiques et de Gestion',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+de\s+Gestion\s+Comptable/iu' => 'Sciences de Gestion Comptable',
+        '/\bSGC\b/' => 'Sciences de Gestion Comptable',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Économiques?/iu' => 'Sciences Économiques',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Economiques?/iu' => 'Sciences Économiques',
+        '/مسلك\s+العلوم?\s+الاقتصادية/u' => 'Sciences Économiques',
+        '/مسلك\s+علوم?\s+التبدير\s+المحاسباتي/u' => 'Sciences de Gestion Comptable',
 
         // Sciences Mathématiques
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Mathématiques?\s*[AB]?/iu'             => 'Sciences Mathématiques',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Mathematiques?\s*[AB]?/iu'             => 'Sciences Mathématiques',
-        '/\bSM\s*[-_\s]*[AB]\b|\bSMA\b|\bSMB\b/'                                             => 'Sciences Mathématiques',
-        '/مسلك\s+العلوم?\s+الرياضية\s*[أب]?/u'                                                => 'Sciences Mathématiques',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Mathématiques?\s*[AB]?/iu' => 'Sciences Mathématiques',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Mathematiques?\s*[AB]?/iu' => 'Sciences Mathématiques',
+        '/\bSM\s*[-_\s]*[AB]\b|\bSMA\b|\bSMB\b/' => 'Sciences Mathématiques',
+        '/مسلك\s+العلوم?\s+الرياضية\s*[أب]?/u' => 'Sciences Mathématiques',
 
         // Sciences Expérimentales / Physiques / SVT
         '/(?:filière|série|option)?\s*:?\s*Sciences?\s+de\s+la\s+Vie\s+et\s+de\s+la\s+Terre/iu' => 'Sciences de la Vie et de la Terre',
-        '/\bSVT\b/'                                                                             => 'Sciences de la Vie et de la Terre',
-        '/مسلك\s+علوم?\s+الحياة\s+والأرض/u'                                                     => 'Sciences de la Vie et de la Terre',
-        '/مسلك\s+علوم?\s+الحياة\s+والارض/u'                                                     => 'Sciences de la Vie et de la Terre',
+        '/\bSVT\b/' => 'Sciences de la Vie et de la Terre',
+        '/مسلك\s+علوم?\s+الحياة\s+والأرض/u' => 'Sciences de la Vie et de la Terre',
+        '/مسلك\s+علوم?\s+الحياة\s+والارض/u' => 'Sciences de la Vie et de la Terre',
 
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Physiques?\s*(?:et\s+Chimie)?/iu'       => 'Sciences Physiques',
-        '/\bPC\b|\bSPC\b/'                                                                      => 'Sciences Physiques',
-        '/مسلك\s+العلوم?\s+الفيزيائية/u'                                                        => 'Sciences Physiques',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Physiques?\s*(?:et\s+Chimie)?/iu' => 'Sciences Physiques',
+        '/\bPC\b|\bSPC\b/' => 'Sciences Physiques',
+        '/مسلك\s+العلوم?\s+الفيزيائية/u' => 'Sciences Physiques',
 
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Expérimentales?/iu'                     => 'Sciences Expérimentales',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Experimentales?/iu'                     => 'Sciences Expérimentales',
-        '/مسلك\s+العلوم?\s+التجريبية/u'                                                         => 'Sciences Expérimentales',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Expérimentales?/iu' => 'Sciences Expérimentales',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+Experimentales?/iu' => 'Sciences Expérimentales',
+        '/مسلك\s+العلوم?\s+التجريبية/u' => 'Sciences Expérimentales',
 
         // Technical & Professional
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+et\s+Technologies?\s+Électriques?/iu'   => 'Sciences et Technologies Électriques',
-        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+et\s+Technologies?\s+Mécaniques?/iu'    => 'Sciences et Technologies Mécaniques',
-        '/\bSTE\b/'                                                                             => 'Sciences et Technologies Électriques',
-        '/\bSTM\b/'                                                                             => 'Sciences et Technologies Mécaniques',
-        '/\bBAC\s*PRO(?:FESSIONNEL)?\b/i'                                                       => 'Baccalauréat Professionnel',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+et\s+Technologies?\s+Électriques?/iu' => 'Sciences et Technologies Électriques',
+        '/(?:filière|série|option)?\s*:?\s*Sciences?\s+et\s+Technologies?\s+Mécaniques?/iu' => 'Sciences et Technologies Mécaniques',
+        '/\bSTE\b/' => 'Sciences et Technologies Électriques',
+        '/\bSTM\b/' => 'Sciences et Technologies Mécaniques',
+        '/\bBAC\s*PRO(?:FESSIONNEL)?\b/i' => 'Baccalauréat Professionnel',
 
         // Letters & Human Sciences
         '/(?:filière|série|option)?\s*:?\s*Lettres?\s+(?:et\s+)?(?:Sciences?\s+Humaines?)?/iu' => 'Lettres et Sciences Humaines',
-        '/مسلك\s+الآداب\s+(?:والعلوم\s+الإنسانية)?/u'                                           => 'Lettres et Sciences Humaines',
-        '/مسلك\s+الاداب/u'                                                                      => 'Lettres et Sciences Humaines',
-        '/مسلك\s+اللغات/u'                                                                      => 'Langues',
+        '/مسلك\s+الآداب\s+(?:والعلوم\s+الإنسانية)?/u' => 'Lettres et Sciences Humaines',
+        '/مسلك\s+الاداب/u' => 'Lettres et Sciences Humaines',
+        '/مسلك\s+اللغات/u' => 'Langues',
 
         // Arabic & Islamic Studies
-        '/(?:filière|série|option)?\s*:?\s*(?:Études|Etudes)\s+Islamiques?/iu'                 => 'Études Islamiques',
-        '/الدراسات\s+الإسلامية/u'                                                               => 'Études Islamiques',
-        '/التعليم\s+الأصيل/u'                                                                   => 'Enseignement Originel',
+        '/(?:filière|série|option)?\s*:?\s*(?:Études|Etudes)\s+Islamiques?/iu' => 'Études Islamiques',
+        '/الدراسات\s+الإسلامية/u' => 'Études Islamiques',
+        '/التعليم\s+الأصيل/u' => 'Enseignement Originel',
     ];
 
     /**
@@ -81,7 +81,7 @@ class BacFieldsHelper
         'ASSEZ BIEN',
         'PASSABLE',
         'MOYEN',
-        'EXCELLENT'
+        'EXCELLENT',
     ];
 
     /**
@@ -111,7 +111,7 @@ class BacFieldsHelper
         ];
 
         foreach ($acronyms as $acronym => $label) {
-            if (preg_match('/\b' . preg_quote($acronym, '/') . '\b/i', $cleanText)) {
+            if (preg_match('/\b'.preg_quote($acronym, '/').'\b/i', $cleanText)) {
                 return $label;
             }
         }
@@ -144,7 +144,7 @@ class BacFieldsHelper
         ];
 
         foreach ($arabicMentions as $arabic => $french) {
-            if (preg_match('/(?:بميزة|ميزة)\s*[:\-]?\s*' . preg_quote($arabic, '/') . '/u', $cleanText)) {
+            if (preg_match('/(?:بميزة|ميزة)\s*[:\-]?\s*'.preg_quote($arabic, '/').'/u', $cleanText)) {
                 return $french;
             }
         }
@@ -175,7 +175,7 @@ class BacFieldsHelper
 
         // Strategy 2: Arabic High School extraction
         $arWord = '[\x{0600}-\x{06FF}]+';
-        if (preg_match('/(?:مؤسسة|ثانوية|الثانوية)\s*[:\-]?\s*(ثانوية\s+' . $arWord . '(?:\s+' . $arWord . '){0,4})/u', $text, $m)) {
+        if (preg_match('/(?:مؤسسة|ثانوية|الثانوية)\s*[:\-]?\s*(ثانوية\s+'.$arWord.'(?:\s+'.$arWord.'){0,4})/u', $text, $m)) {
             $school = trim(preg_replace('/\s+/u', ' ', $m[1]));
             if (mb_strlen($school, 'UTF-8') >= 5) {
                 return $school;
@@ -204,7 +204,7 @@ class BacFieldsHelper
         foreach ($patterns as $pattern) {
             if (preg_match_all($pattern, $text, $matches)) {
                 foreach ($matches[1] as $year) {
-                    $year = (int)$year;
+                    $year = (int) $year;
                     if ($year >= 2000 && $year <= date('Y') + 2) {
                         return $year;
                     }
@@ -244,6 +244,7 @@ class BacFieldsHelper
                 if (isset($sessionMap[$session])) {
                     return $sessionMap[$session];
                 }
+
                 return strtoupper($session);
             }
         }
@@ -281,24 +282,24 @@ class BacFieldsHelper
     private function normalizeMention(string $mention): string
     {
         $mention = mb_strtoupper(trim($mention), 'UTF-8');
-        
+
         // Normalize "TRES" to "TRÈS"
-        if (str_contains($mention, 'TRES') && !str_contains($mention, 'TRÈS')) {
+        if (str_contains($mention, 'TRES') && ! str_contains($mention, 'TRÈS')) {
             $mention = str_replace('TRES', 'TRÈS', $mention);
         }
-        
+
         // Validate mention
         if (in_array($mention, $this->validMentions)) {
             return $mention;
         }
-        
+
         // Try to find closest match
         foreach ($this->validMentions as $valid) {
             if (str_contains($mention, str_replace(' ', '', $valid))) {
                 return $valid;
             }
         }
-        
+
         return $mention;
     }
 

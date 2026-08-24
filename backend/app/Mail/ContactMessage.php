@@ -22,7 +22,7 @@ class ContactMessage extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[ENCG ERP] Nouveau Message : ' . ($this->data['subject'] ?? 'Contact'),
+            subject: '[ENCG ERP] Nouveau Message : '.($this->data['subject'] ?? 'Contact'),
         );
     }
 

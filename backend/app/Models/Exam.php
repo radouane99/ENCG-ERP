@@ -19,6 +19,8 @@ class Exam extends Model
             'exam_date' => 'date',
             'duration_minutes' => 'integer',
             'grades_published' => 'boolean',
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 
@@ -66,5 +68,16 @@ class Exam extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(ExamIncident::class);
+    }
+
+    /**
+     * Stable verification seal for official PVs. Never uses wall-clock time:
+     * unlocked exams fingerprint created_at; locked exams fingerprint locked_at.
+     */
+    public function documentSeal(): string
+    {
+        $fingerprint = $this->locked_at ?? $this->created_at ?? $this->getKey();
+
+        return 'SHA256:ENCG-FES-'.$this->getKey().'-'.strtoupper(substr(md5($this->getKey().(string) $fingerprint), 0, 16));
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 class GradeEntryPeriod extends Model
 {
@@ -16,10 +16,10 @@ class GradeEntryPeriod extends Model
     protected function casts(): array
     {
         return [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'is_open' => 'boolean',
-    ];
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'is_open' => 'boolean',
+        ];
     }
 
     public function academicYear(): BelongsTo
@@ -42,11 +42,12 @@ class GradeEntryPeriod extends Model
      */
     public function isActive(): bool
     {
-        if (!$this->is_open) {
+        if (! $this->is_open) {
             return false;
         }
 
         $now = Carbon::now();
+
         return $now->between($this->start_date->startOfDay(), $this->end_date->endOfDay());
     }
 }

@@ -17,7 +17,8 @@ use RuntimeException;
 class GeminiAiDriver implements AiServiceInterface
 {
     private const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-    private const SYSTEM_PROMPT = <<<PROMPT
+
+    private const SYSTEM_PROMPT = <<<'PROMPT'
         Tu es un assistant universitaire expert pour l'ENCG Fès (École Nationale de Commerce et de Gestion de Fès).
         Tu aides les étudiants, enseignants et personnel administratif avec des questions académiques,
         pédagogiques et administratives. Tu réponds en français ou en arabe selon la langue de l'utilisateur.
@@ -38,16 +39,16 @@ class GeminiAiDriver implements AiServiceInterface
         // Add conversation history
         foreach ($history as $message) {
             $contents[] = [
-                'role'  => $message['role'] === 'assistant' ? 'model' : 'user',
+                'role' => $message['role'] === 'assistant' ? 'model' : 'user',
                 'parts' => [['text' => $message['content']]],
             ];
         }
 
         // Add current prompt with optional context
         $fullPrompt = $prompt;
-        if (!empty($context)) {
+        if (! empty($context)) {
             $contextStr = implode("\n", array_map(
-                fn($k, $v) => "{$k}: {$v}",
+                fn ($k, $v) => "{$k}: {$v}",
                 array_keys($context),
                 $context
             ));
@@ -58,16 +59,16 @@ class GeminiAiDriver implements AiServiceInterface
 
         $response = $this->client()->post("/{$this->model}:generateContent?key={$this->apiKey}", [
             'system_instruction' => ['parts' => [['text' => self::SYSTEM_PROMPT]]],
-            'contents'           => $contents,
-            'generationConfig'   => [
-                'temperature'     => $this->temperature,
+            'contents' => $contents,
+            'generationConfig' => [
+                'temperature' => $this->temperature,
                 'maxOutputTokens' => $this->maxTokens,
             ],
         ]);
 
         if ($response->failed()) {
             Log::error('Gemini API error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gemini API request failed: ' . $response->status());
+            throw new RuntimeException('Gemini API request failed: '.$response->status());
         }
 
         return $response->json('candidates.0.content.parts.0.text', '');
@@ -107,6 +108,7 @@ class GeminiAiDriver implements AiServiceInterface
     {
         $langInstruction = $language === 'ar' ? 'en arabe' : 'en français';
         $prompt = "Résume le texte suivant {$langInstruction} en 3-5 points essentiels :\n\n{$content}";
+
         return $this->chat($prompt);
     }
 
@@ -128,6 +130,7 @@ class GeminiAiDriver implements AiServiceInterface
 
         $response = $this->chat($prompt);
         preg_match('/\{.*\}/s', $response, $matches);
+
         return json_decode($matches[0] ?? '{}', true) ?? [];
     }
 
@@ -150,23 +153,23 @@ class GeminiAiDriver implements AiServiceInterface
             $parts[] = [
                 'inline_data' => [
                     'mime_type' => $mime,
-                    'data'      => $base64Data,
-                ]
+                    'data' => $base64Data,
+                ],
             ];
         }
 
         $response = $this->client()->post("/{$this->model}:generateContent?key={$this->apiKey}", [
             'system_instruction' => ['parts' => [['text' => self::SYSTEM_PROMPT]]],
-            'contents'           => [['role' => 'user', 'parts' => $parts]],
-            'generationConfig'   => [
-                'temperature'     => 0.2,
+            'contents' => [['role' => 'user', 'parts' => $parts]],
+            'generationConfig' => [
+                'temperature' => 0.2,
                 'maxOutputTokens' => 1024,
             ],
         ]);
 
         if ($response->failed()) {
             Log::error('Gemini Multimodal API error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gemini Multimodal request failed: ' . $response->status());
+            throw new RuntimeException('Gemini Multimodal request failed: '.$response->status());
         }
 
         return $response->json('candidates.0.content.parts.0.text', '');

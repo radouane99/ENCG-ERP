@@ -2,68 +2,82 @@
 
 namespace App\Services\Apogee;
 
-use App\Models\Grade;
-use App\Models\Student;
-use App\Models\Module;
+use App\Domain\Deliberation\LmdRules;
 use App\Models\AcademicYear;
-use Illuminate\Support\Collection;
+use App\Models\Grade;
 
 class ApogeeExportService
 {
-    public const ESTABLISHMENT_CODE = '040'; // ENCG Fès — USMBA
+    public const ESTABLISHMENT_CODE = '040';
 
     /**
-     * Generate structured Apogée records for export.
+     * @return list<array<string, mixed>>
      */
-    public function generateExportData(?int $filiereId = null, ?int $semesterId = null, ?int $academicYearId = null): array
-    {
-        $year = $academicYearId 
-            ? AcademicYear::find($academicYearId) 
+    public function generateExportData(
+        ?int $filiereId = null,
+        ?int $semesterId = null,
+        ?int $academicYearId = null,
+        ?int $groupId = null,
+        ?string $session = null
+    ): array {
+        $year = $academicYearId
+            ? AcademicYear::find($academicYearId)
             : AcademicYear::where('is_current', true)->first();
-            
+
         $yearLabel = $year ? ($year->label ?? $year->name ?? '2025/2026') : '2025/2026';
 
         $gradesQuery = Grade::with(['student.user', 'assessment.module.filiere']);
 
         if ($filiereId) {
-            $gradesQuery->whereHas('assessment.module', function ($q) use ($filiereId) {
-                $q->where('filiere_id', $filiereId);
+            $gradesQuery->whereHas('assessment.module', fn ($q) => $q->where('filiere_id', $filiereId));
+        }
+
+        if ($semesterId) {
+            $gradesQuery->whereHas('assessment.module', function ($q) use ($semesterId) {
+                $q->where('semester_id', $semesterId)
+                    ->orWhere('semester_number', $semesterId);
             });
         }
 
-        $grades = $gradesQuery->get();
+        if ($groupId) {
+            $gradesQuery->whereHas('student.registrations', fn ($q) => $q->where('group_id', $groupId));
+        }
 
-        if ($grades->isEmpty()) {
-            // Seed realistic Moroccan ENCG grades if empty
-            return $this->getSampleApogeeRecords($yearLabel);
+        if ($session) {
+            $isResit = in_array(strtolower($session), ['r', 'rattrapage', 'resit'], true);
+            $gradesQuery->whereHas('assessment', function ($q) use ($isResit) {
+                if ($isResit) {
+                    $q->whereRaw('LOWER(type) in (?, ?, ?, ?)', ['rattrapage', 'r', 'resit', 'rat']);
+                } else {
+                    $q->whereRaw('LOWER(type) not in (?, ?, ?, ?)', ['rattrapage', 'r', 'resit', 'rat']);
+                }
+            });
         }
 
         $records = [];
-        foreach ($grades as $g) {
+        foreach ($gradesQuery->get() as $g) {
             $student = $g->student;
-            $module  = $g->assessment?->module;
-            $val     = (float) $g->value;
-
-            // Apogée Decision Rule
-            $decision = 'NV';
-            if ($val >= 10.0) {
-                $decision = 'V';
-            } elseif ($val >= 7.0) {
-                $decision = 'RAT'; // Rattrapage
-            }
+            $module = $g->assessment?->module;
+            $val = (float) ($g->value ?? 0);
+            $type = strtolower((string) $g->assessment?->type);
+            $sessionCode = in_array($type, ['rattrapage', 'r', 'resit', 'rat'], true) ? 'R' : 'N';
 
             $records[] = [
                 'COD_ETB' => self::ESTABLISHMENT_CODE,
                 'COD_ANU' => $yearLabel,
-                'COD_IND' => $student?->student_number ?? ('2600' . ($student?->id ?? 100)),
-                'COD_ETU' => $student?->cne ?? ('K' . (10000000 + ($student?->id ?? 100))),
-                'NOM_ETU' => strtoupper($student?->user?->last_name ?? $student?->last_name ?? 'ALAOUI'),
-                'PRE_ETU' => ucfirst(strtolower($student?->user?->first_name ?? $student?->first_name ?? 'Aniss')),
-                'COD_ELP' => $module?->code ?? 'GFC-S5-M01',
-                'LIB_ELP' => $module?->name ?? 'Finance d\'Entreprise',
+                'COD_IND' => $student?->student_number ?? '',
+                'COD_ETU' => $student?->cne ?? '',
+                'COD_MAS' => $student?->massar_code ?? '',
+                'COD_CIN' => $student?->cin ?? $student?->user?->cin ?? '',
+                'NOM_ETU' => strtoupper((string) ($student?->user?->last_name ?? $student?->last_name ?? '')),
+                'PRE_ETU' => ucfirst(strtolower((string) ($student?->user?->first_name ?? $student?->first_name ?? ''))),
+                'COD_FIL' => $module?->filiere?->code ?? '',
+                'COD_ELP' => $module?->code ?? '',
+                'LIB_ELP' => $module?->name ?? '',
+                'COD_SES' => $sessionCode,
                 'NOT_ELP' => number_format($val, 2, '.', ''),
                 'COD_BAR' => '20.00',
-                'COD_TRE' => $decision,
+                'COD_TRE' => LmdRules::decisionFromScore($val),
                 'DAT_CRE' => now()->format('Y-m-d H:i:s'),
             ];
         }
@@ -71,33 +85,15 @@ class ApogeeExportService
         return $records;
     }
 
-    /**
-     * Generate CSV string conforming to MESRSFC Ministry specification.
-     */
     public function generateCsv(array $records): string
     {
-        $headers = ['COD_ETB', 'COD_ANU', 'COD_IND', 'COD_ETU', 'NOM_ETU', 'PRE_ETU', 'COD_ELP', 'LIB_ELP', 'NOT_ELP', 'COD_BAR', 'COD_TRE', 'DAT_CRE'];
+        $headers = ['COD_ETB', 'COD_ANU', 'COD_IND', 'COD_ETU', 'COD_MAS', 'COD_CIN', 'NOM_ETU', 'PRE_ETU', 'COD_FIL', 'COD_ELP', 'LIB_ELP', 'COD_SES', 'NOT_ELP', 'COD_BAR', 'COD_TRE', 'DAT_CRE'];
         $output = fopen('php://temp', 'r+');
-
-        // Write UTF-8 BOM for Excel compatibility
-        fputs($output, "\xEF\xBB\xBF");
+        fwrite($output, "\xEF\xBB\xBF");
         fputcsv($output, $headers, ';');
 
         foreach ($records as $r) {
-            fputcsv($output, [
-                $r['COD_ETB'],
-                $r['COD_ANU'],
-                $r['COD_IND'],
-                $r['COD_ETU'],
-                $r['NOM_ETU'],
-                $r['PRE_ETU'],
-                $r['COD_ELP'],
-                $r['LIB_ELP'],
-                $r['NOT_ELP'],
-                $r['COD_BAR'],
-                $r['COD_TRE'],
-                $r['DAT_CRE'],
-            ], ';');
+            fputcsv($output, array_map(fn ($h) => $r[$h] ?? '', $headers), ';');
         }
 
         rewind($output);
@@ -105,37 +101,5 @@ class ApogeeExportService
         fclose($output);
 
         return $csvContent;
-    }
-
-    /**
-     * Generate sample APOGEE records.
-     */
-    private function getSampleApogeeRecords(string $yearLabel): array
-    {
-        $samples = [
-            ['ind' => '26000101', 'cne' => 'N134056781', 'nom' => 'EL ALAOUI', 'pre' => 'Aniss', 'elp' => 'GFC-S5-M01', 'lib' => 'Finance d\'Entreprise Approfondie', 'note' => 15.50, 'tre' => 'V'],
-            ['ind' => '26000102', 'cne' => 'N134056782', 'nom' => 'NACIRI', 'pre' => 'Ahmed', 'elp' => 'GFC-S5-M01', 'lib' => 'Finance d\'Entreprise Approfondie', 'note' => 14.00, 'tre' => 'V'],
-            ['ind' => '26000103', 'cne' => 'N134056783', 'nom' => 'BENJELLOUN', 'pre' => 'Salma', 'elp' => 'GFC-S5-M02', 'lib' => 'Comptabilité des Sociétés', 'note' => 16.75, 'tre' => 'V'],
-            ['ind' => '26000104', 'cne' => 'N134056784', 'nom' => 'CHRAIBI', 'pre' => 'Youssef', 'elp' => 'GFC-S5-M03', 'lib' => 'Fiscalité des Entreprises', 'note' => 8.50, 'tre' => 'RAT'],
-            ['ind' => '26000105', 'cne' => 'N134056785', 'nom' => 'BENNIS', 'pre' => 'Aya', 'elp' => 'TC-S1-M01', 'lib' => 'Mathématiques pour la Gestion', 'note' => 13.25, 'tre' => 'V'],
-            ['ind' => '26000106', 'cne' => 'N134056786', 'nom' => 'FILALI', 'pre' => 'Othmane', 'elp' => 'TC-S1-M02', 'lib' => 'Comptabilité Générale I', 'note' => 11.00, 'tre' => 'V'],
-            ['ind' => '26000107', 'cne' => 'N134056787', 'nom' => 'IDRISSI', 'pre' => 'Omar', 'elp' => 'MAC-S5-M01', 'lib' => 'Comportement du Consommateur', 'note' => 14.25, 'tre' => 'V'],
-            ['ind' => '26000108', 'cne' => 'N134056788', 'nom' => 'TAZI', 'pre' => 'Sara', 'elp' => 'MAC-S5-M02', 'lib' => 'Marketing Stratégique', 'note' => 17.00, 'tre' => 'V'],
-        ];
-
-        return array_map(fn($s) => [
-            'COD_ETB' => self::ESTABLISHMENT_CODE,
-            'COD_ANU' => $yearLabel,
-            'COD_IND' => $s['ind'],
-            'COD_ETU' => $s['cne'],
-            'NOM_ETU' => $s['nom'],
-            'PRE_ETU' => $s['pre'],
-            'COD_ELP' => $s['elp'],
-            'LIB_ELP' => $s['lib'],
-            'NOT_ELP' => number_format($s['note'], 2, '.', ''),
-            'COD_BAR' => '20.00',
-            'COD_TRE' => $s['tre'],
-            'DAT_CRE' => now()->format('Y-m-d H:i:s'),
-        ], $samples);
     }
 }

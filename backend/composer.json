@@ -25,6 +25,7 @@
     "pragmarx/google2fa-qrcode": "^3.0",
     "predis/predis": "^3.5",
     "resend/resend-laravel": "^1.4",
+    "sentry/sentry-laravel": "^4.15",
     "simplesoftwareio/simple-qrcode": "^4.2",
     "smalot/pdfparser": "^2.12",
     "spatie/laravel-activitylog": "^4.10",

@@ -9,7 +9,9 @@ namespace App\OCR;
 class OcrResult
 {
     public string $text;
+
     public array $fields = [];
+
     public array $metadata = [];
 
     public function __construct(string $text)
@@ -30,9 +32,9 @@ class OcrResult
         if (strpos($key, '.') !== false) {
             $keys = explode('.', $key);
             $current = &$this->fields;
-            
+
             foreach ($keys as $k) {
-                if (!isset($current[$k]) || !is_array($current[$k])) {
+                if (! isset($current[$k]) || ! is_array($current[$k])) {
                     $current[$k] = [];
                 }
                 $current = &$current[$k];
@@ -54,13 +56,14 @@ class OcrResult
         if (strpos($key, '.') !== false) {
             $keys = explode('.', $key);
             $current = $this->fields;
-            
+
             foreach ($keys as $k) {
-                if (!isset($current[$k])) {
+                if (! isset($current[$k])) {
                     return $default;
                 }
                 $current = $current[$k];
             }
+
             return $current;
         }
 
@@ -97,17 +100,19 @@ class OcrResult
     public function setMetadata(string $key, $value): self
     {
         $this->metadata[$key] = $value;
+
         return $this;
     }
 
     /**
      * Get metadata
      */
-    public function getMetadata(string $key = null, $default = null)
+    public function getMetadata(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->metadata;
         }
+
         return $this->metadata[$key] ?? $default;
     }
 
@@ -118,15 +123,15 @@ class OcrResult
     {
         // Check if we have at least some fields extracted
         $importantFields = ['last_name_fr', 'first_name_fr', 'cin', 'cne'];
-        
+
         foreach ($importantFields as $field) {
-            if (!empty($this->getParsedField($field))) {
+            if (! empty($this->getParsedField($field))) {
                 return true;
             }
         }
 
         // Or if we have text
-        return !empty(trim($this->text));
+        return ! empty(trim($this->text));
     }
 
     /**
@@ -183,12 +188,12 @@ class OcrResult
     {
         $this->fields = array_merge($this->fields, $other->fields);
         $this->metadata = array_merge($this->metadata, $other->metadata);
-        
+
         // Keep longer text
         if (strlen($other->text) > strlen($this->text)) {
             $this->text = $other->text;
         }
-        
+
         return $this;
     }
 }

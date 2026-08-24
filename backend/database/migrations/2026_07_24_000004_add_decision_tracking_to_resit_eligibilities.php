@@ -10,21 +10,21 @@ return new class extends Migration
     {
         Schema::table('resit_eligibilities', function (Blueprint $table) {
             // #8 — Decision tracking: who decided + when
-            if (!Schema::hasColumn('resit_eligibilities', 'decided_by')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'decided_by')) {
                 $table->unsignedBigInteger('decided_by')->nullable()->after('status');
                 $table->foreign('decided_by')->references('id')->on('users')->onDelete('set null');
             }
-            if (!Schema::hasColumn('resit_eligibilities', 'decided_at')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'decided_at')) {
                 $table->timestamp('decided_at')->nullable()->after('decided_by');
             }
 
             // #6 — Justification document path (uploaded by student)
-            if (!Schema::hasColumn('resit_eligibilities', 'justification_document')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'justification_document')) {
                 $table->string('justification_document')->nullable()->after('decided_at');
             }
 
             // #5 — Admin note / reason for refusal
-            if (!Schema::hasColumn('resit_eligibilities', 'admin_note')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'admin_note')) {
                 $table->text('admin_note')->nullable()->after('justification_document');
             }
         });

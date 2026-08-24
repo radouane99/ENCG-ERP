@@ -412,7 +412,7 @@ export default function AdminExamScanPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {amphiList.map((amphi) => {
+              {amphiList.map((amphi: { name: string; count: number; cap: number; icon: string; gate: string }) => {
                 const isActive = currentAmphiFilter === amphi.name;
                 const fillPercent = Math.round((amphi.count / amphi.cap) * 100);
                 const isSaturated = fillPercent >= 90;

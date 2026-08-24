@@ -4,10 +4,10 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
@@ -16,6 +16,7 @@ class ProfessorAssignmentNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     public array $profData;
+
     public ?string $pdfContent;
 
     public function __construct(array $profData, ?string $pdfContent = null)
@@ -54,11 +55,13 @@ class ProfessorAssignmentNotificationMail extends Mailable
         if ($this->pdfContent) {
             $profName = $this->profData['profName'] ?? 'Enseignant';
             $safeName = Str::slug($profName);
+
             return [
                 Attachment::fromData(fn () => $this->pdfContent, "Ordre_De_Service_A4_{$safeName}.pdf")
-                    ->withMime('application/pdf')
+                    ->withMime('application/pdf'),
             ];
         }
+
         return [];
     }
 }

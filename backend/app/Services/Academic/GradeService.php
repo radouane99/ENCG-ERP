@@ -3,11 +3,17 @@
 namespace App\Services\Academic;
 
 use App\Models\Assessment;
+use App\Models\DisciplinaryCase;
+use App\Models\ExamIncident;
 use App\Models\Grade;
+use App\Models\Institution;
 use App\Models\Module;
+use App\Models\ModuleProfessor;
+use App\Models\ModulePvSignature;
+use App\Models\Professor;
 use App\Models\ResitEligibility;
 use App\Models\Student;
-use Illuminate\Database\Eloquent\Collection;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class GradeService
@@ -26,13 +32,13 @@ class GradeService
 
         if ($groupId) {
             $query->where(function ($q) use ($groupId) {
-                $q->whereHas('pathways', fn($pq) => $pq->where('group_id', $groupId))
-                  ->orWhereHas('registrations', fn($rq) => $rq->where('group_id', $groupId));
+                $q->whereHas('pathways', fn ($pq) => $pq->where('group_id', $groupId))
+                    ->orWhereHas('registrations', fn ($rq) => $rq->where('group_id', $groupId));
             });
-        } else if ($filiereId) {
+        } elseif ($filiereId) {
             $query->where(function ($q) use ($filiereId) {
-                $q->whereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
-                  ->orWhereHas('registrations', fn($r) => $r->where('filiere_id', $filiereId));
+                $q->whereHas('pathways', fn ($p) => $p->where('filiere_id', $filiereId))
+                    ->orWhereHas('registrations', fn ($r) => $r->where('filiere_id', $filiereId));
             });
         }
 
@@ -41,12 +47,12 @@ class GradeService
         // Fallback de secours ciblé strictement sur la filière du module
         if ($students->isEmpty() && $filiereId) {
             $students = Student::with('user')
-                ->whereHas('pathways', fn($p) => $p->where('filiere_id', $filiereId))
+                ->whereHas('pathways', fn ($p) => $p->where('filiere_id', $filiereId))
                 ->orderBy('student_number')
                 ->get();
         }
 
-        return $students->sortBy(fn($s) => ($s->last_name ?? '') . ' ' . ($s->first_name ?? ''))->values();
+        return $students->sortBy(fn ($s) => ($s->last_name ?? '').' '.($s->first_name ?? ''))->values();
     }
 
     /**
@@ -54,11 +60,11 @@ class GradeService
      */
     public function getFraudStudentIds(Module $module): array
     {
-        $incidents = \App\Models\ExamIncident::whereHas('exam', function ($q) use ($module) {
+        $incidents = ExamIncident::whereHas('exam', function ($q) use ($module) {
             $q->where('module_id', $module->id);
         })->whereIn('type', ['fraude', 'fraud', 'tricherie', 'cheating'])->pluck('student_id')->toArray();
 
-        $cases = \App\Models\DisciplinaryCase::whereIn('infraction_type', ['fraude', 'fraud', 'tricherie', 'cheating'])
+        $cases = DisciplinaryCase::whereIn('infraction_type', ['fraude', 'fraud', 'tricherie', 'cheating'])
             ->pluck('student_id')->toArray();
 
         return array_values(array_unique(array_merge($incidents, $cases)));
@@ -79,10 +85,11 @@ class GradeService
      */
     public function isPvSigned(int $moduleId, ?string $session = null): bool
     {
-        $query = \App\Models\ModulePvSignature::where('module_id', $moduleId);
+        $query = ModulePvSignature::where('module_id', $moduleId);
         if ($session) {
             $query->where('session', $session);
         }
+
         return $query->exists();
     }
 
@@ -109,7 +116,7 @@ class GradeService
      */
     public function isExamLocked(Assessment $assessment): ?string
     {
-        $institution = \App\Models\Institution::first();
+        $institution = Institution::first();
         if ($institution) {
             $settings = is_array($institution->settings)
                 ? $institution->settings
@@ -129,11 +136,11 @@ class GradeService
      */
     public function isProfessorAssignedToModule(int $userId, int $moduleId): bool
     {
-        $prof = \App\Models\Professor::where('user_id', $userId)->first();
-        if (!$prof) {
-            $user = \App\Models\User::find($userId);
+        $prof = Professor::where('user_id', $userId)->first();
+        if (! $prof) {
+            $user = User::find($userId);
             if ($user) {
-                $prof = \App\Models\Professor::whereHas('user', fn($q) => $q->where('email', $user->email))
+                $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email))
                     ->orWhere('id', $userId)
                     ->first();
             }
@@ -141,7 +148,7 @@ class GradeService
 
         $profIds = array_unique(array_filter([$prof?->id, $userId, 1]));
 
-        return \App\Models\ModuleProfessor::whereIn('professor_id', $profIds)
+        return ModuleProfessor::whereIn('professor_id', $profIds)
             ->where('module_id', $moduleId)
             ->exists() || Module::where('id', $moduleId)->whereIn('professor_id', $profIds)->exists();
     }
@@ -167,14 +174,14 @@ class GradeService
 
             if ($grade) {
                 $hasGrades = true;
-                if (!$grade->absent && $grade->value !== null) {
+                if (! $grade->absent && $grade->value !== null) {
                     $weightedSum += ((float) $grade->value) * $weight;
                 }
             }
             $totalWeight += $weight;
         }
 
-        if (!$hasGrades || $totalWeight == 0) {
+        if (! $hasGrades || $totalWeight == 0) {
             return null;
         }
 
@@ -186,9 +193,15 @@ class GradeService
      */
     public function determineDecision(?float $moyenne): string
     {
-        if ($moyenne === null) return 'DEF';
-        if ($moyenne >= 10.0) return 'V';
-        if ($moyenne >= 7.0) return 'R';
+        if ($moyenne === null) {
+            return 'DEF';
+        }
+        if ($moyenne >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD) {
+            return 'V';
+        }
+        if ($moyenne >= \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD) {
+            return 'R';
+        }
 
         return 'NV';
     }
@@ -202,7 +215,7 @@ class GradeService
             ->where('assessment_id', $rattrapageAssessment->id)
             ->first();
 
-        if (!$rGrade || $rGrade->absent || $rGrade->value === null) {
+        if (! $rGrade || $rGrade->absent || $rGrade->value === null) {
             return null;
         }
 
@@ -223,7 +236,7 @@ class GradeService
                 $g = Grade::where('student_id', $student->id)
                     ->where('assessment_id', $assessment->id)
                     ->first();
-                if ($g && !$g->absent && $g->value !== null) {
+                if ($g && ! $g->absent && $g->value !== null) {
                     $weightedSum += ((float) $g->value) * $weight;
                 }
             }
@@ -259,7 +272,7 @@ class GradeService
     {
         if ($moyenneRattrapage === null) {
             return [
-                'moyenne_finale'  => $moyenneNormale,
+                'moyenne_finale' => $moyenneNormale,
                 'decision_finale' => $this->determineDecision($moyenneNormale),
             ];
         }
@@ -271,19 +284,19 @@ class GradeService
             if ($isValidatedViaRattrapage) {
                 // Plafonnement à 12.00/20 pour la validation après rattrapage (VAR)
                 return [
-                    'moyenne_finale'  => min(12.00, round($rawAverage, 2)),
+                    'moyenne_finale' => min(12.00, round($rawAverage, 2)),
                     'decision_finale' => 'VAR',
                 ];
             }
 
             return [
-                'moyenne_finale'  => round($rawAverage, 2),
+                'moyenne_finale' => round($rawAverage, 2),
                 'decision_finale' => 'V',
             ];
         }
 
         return [
-            'moyenne_finale'  => round($rawAverage, 2),
+            'moyenne_finale' => round($rawAverage, 2),
             'decision_finale' => 'NV',
         ];
     }
@@ -303,13 +316,13 @@ class GradeService
             if (in_array($decision, ['R', 'NV'])) {
                 $record = ResitEligibility::updateOrCreate(
                     [
-                        'module_id'  => $module->id,
+                        'module_id' => $module->id,
                         'student_id' => $student->id,
                     ],
                     [
                         'is_eligible' => true,
-                        'status'      => 'eligible',
-                        'reason'      => "Moyenne initiale: {$moyenne}/20 ({$decision})",
+                        'status' => 'eligible',
+                        'reason' => "Moyenne initiale: {$moyenne}/20 ({$decision})",
                     ]
                 );
 
@@ -332,26 +345,26 @@ class GradeService
         $collection = collect($data);
         if ($collection->isEmpty()) {
             return [
-                'avg'          => 0,
-                'median'       => 0,
-                'pass_rate'    => 0,
-                'min'          => 0,
-                'max'          => 0,
-                'total'        => 0,
-                'admis'        => 0,
-                'rattrapage'   => 0,
-                'elimines'     => 0,
+                'avg' => 0,
+                'median' => 0,
+                'pass_rate' => 0,
+                'min' => 0,
+                'max' => 0,
+                'total' => 0,
+                'admis' => 0,
+                'rattrapage' => 0,
+                'elimines' => 0,
                 'distribution' => [],
             ];
         }
 
         $validGrades = $collection->map(function ($item) {
             return $item['moyenne_finale'] ?? $item['moyenne_normale'] ?? null;
-        })->filter(fn($v) => $v !== null)->map(fn($v) => (float) $v)->values();
+        })->filter(fn ($v) => $v !== null)->map(fn ($v) => (float) $v)->values();
 
         $total = $collection->count();
-        $admis = $collection->filter(fn($item) => in_array($item['decision_finale'] ?? $item['decision_normale'] ?? '', ['V', 'VAR']))->count();
-        $rattrapage = $collection->filter(fn($item) => ($item['decision_normale'] ?? '') === 'R' || ($item['decision_finale'] ?? '') === 'R')->count();
+        $admis = $collection->filter(fn ($item) => in_array($item['decision_finale'] ?? $item['decision_normale'] ?? '', ['V', 'VAR']))->count();
+        $rattrapage = $collection->filter(fn ($item) => ($item['decision_normale'] ?? '') === 'R' || ($item['decision_finale'] ?? '') === 'R')->count();
         $elimines = max(0, $total - $admis - $rattrapage);
 
         // Compute median
@@ -382,28 +395,39 @@ class GradeService
         ];
 
         foreach ($validGrades as $g) {
-            if ($g < 2) $distribution[0]['count']++;
-            else if ($g < 4) $distribution[1]['count']++;
-            else if ($g < 6) $distribution[2]['count']++;
-            else if ($g < 8) $distribution[3]['count']++;
-            else if ($g < 10) $distribution[4]['count']++;
-            else if ($g < 12) $distribution[5]['count']++;
-            else if ($g < 14) $distribution[6]['count']++;
-            else if ($g < 16) $distribution[7]['count']++;
-            else if ($g < 18) $distribution[8]['count']++;
-            else $distribution[9]['count']++;
+            if ($g < 2) {
+                $distribution[0]['count']++;
+            } elseif ($g < 4) {
+                $distribution[1]['count']++;
+            } elseif ($g < 6) {
+                $distribution[2]['count']++;
+            } elseif ($g < 8) {
+                $distribution[3]['count']++;
+            } elseif ($g < 10) {
+                $distribution[4]['count']++;
+            } elseif ($g < 12) {
+                $distribution[5]['count']++;
+            } elseif ($g < 14) {
+                $distribution[6]['count']++;
+            } elseif ($g < 16) {
+                $distribution[7]['count']++;
+            } elseif ($g < 18) {
+                $distribution[8]['count']++;
+            } else {
+                $distribution[9]['count']++;
+            }
         }
 
         return [
-            'avg'          => $validGrades->isNotEmpty() ? round($validGrades->avg(), 2) : 0,
-            'median'       => round($median, 2),
-            'pass_rate'    => $total > 0 ? round(($admis / $total) * 100, 1) : 0,
-            'min'          => $validGrades->isNotEmpty() ? round($validGrades->min(), 2) : 0,
-            'max'          => $validGrades->isNotEmpty() ? round($validGrades->max(), 2) : 0,
-            'total'        => $total,
-            'admis'        => $admis,
-            'rattrapage'   => $rattrapage,
-            'elimines'     => $elimines,
+            'avg' => $validGrades->isNotEmpty() ? round($validGrades->avg(), 2) : 0,
+            'median' => round($median, 2),
+            'pass_rate' => $total > 0 ? round(($admis / $total) * 100, 1) : 0,
+            'min' => $validGrades->isNotEmpty() ? round($validGrades->min(), 2) : 0,
+            'max' => $validGrades->isNotEmpty() ? round($validGrades->max(), 2) : 0,
+            'total' => $total,
+            'admis' => $admis,
+            'rattrapage' => $rattrapage,
+            'elimines' => $elimines,
             'distribution' => $distribution,
         ];
     }
@@ -419,11 +443,11 @@ class GradeService
             foreach ($gradesData as $gradeData) {
                 Grade::updateOrCreate(
                     [
-                        'student_id'    => $gradeData['student_id'],
+                        'student_id' => $gradeData['student_id'],
                         'assessment_id' => $gradeData['assessment_id'],
                     ],
                     [
-                        'value'  => $gradeData['value'] ?? null,
+                        'value' => $gradeData['value'] ?? null,
                         'absent' => $gradeData['absent'] ?? false,
                     ]
                 );
@@ -439,7 +463,7 @@ class GradeService
      */
     public function validateGrades(int $moduleId): int
     {
-        return Grade::whereHas('assessment', fn($q) => $q->where('module_id', $moduleId))
+        return Grade::whereHas('assessment', fn ($q) => $q->where('module_id', $moduleId))
             ->update(['version' => DB::raw('version + 1')]);
     }
 }

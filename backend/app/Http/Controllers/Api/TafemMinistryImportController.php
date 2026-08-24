@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Domain\AI\Services\GroundedAiService;
 use App\Models\AcademicYear;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
@@ -11,11 +12,12 @@ use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\Admissions\TafemQualityReportService;
+use App\Support\TemporaryPassword;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TafemMinistryImportController extends Controller
 {
@@ -25,7 +27,7 @@ class TafemMinistryImportController extends Controller
     public function importMinistryList(Request $request): JsonResponse
     {
         $request->validate([
-            'file'                  => 'required|file|max:10240',
+            'file' => 'required|file|max:10240',
             'admission_campaign_id' => 'nullable|exists:admission_campaigns,id',
         ]);
 
@@ -38,7 +40,7 @@ class TafemMinistryImportController extends Controller
 
         // Nettoyage UTF-8
         $content = $this->cleanUtf8Content($rawContent);
-        $lines = array_values(array_filter(explode("\n", trim($content)), fn($l) => trim($l) !== ''));
+        $lines = array_values(array_filter(explode("\n", trim($content)), fn ($l) => trim($l) !== ''));
 
         if (empty($lines)) {
             return response()->json(['success' => false, 'message' => 'Aucune donnée dans le fichier.'], 422);
@@ -68,15 +70,18 @@ class TafemMinistryImportController extends Controller
         $errors = [];
         $rowNum = 1;
 
-        DB::transaction(function () use ($lines, $header, $delimiter, $campaign, $tcFiliere, $institutionId, &$importedCount, &$updatedCount, &$errors, &$rowNum) {
+        DB::transaction(function () use ($lines, $header, $delimiter, $campaign, $institutionId, &$importedCount, &$updatedCount, &$errors, &$rowNum) {
             foreach ($lines as $lineStr) {
                 $rowNum++;
                 $lineStr = trim($lineStr);
-                if (empty($lineStr)) continue;
+                if (empty($lineStr)) {
+                    continue;
+                }
 
                 $row = $this->parseCsvLine($lineStr, $delimiter);
                 if (empty($row) || count($row) < 2) {
                     $errors[] = "Ligne {$rowNum} : colonnes insuffisantes.";
+
                     continue;
                 }
 
@@ -91,6 +96,7 @@ class TafemMinistryImportController extends Controller
 
                 if (empty($cne) || empty($firstName) || empty($lastName)) {
                     $errors[] = "Ligne {$rowNum} : CNE, Nom ou Prénom manquant.";
+
                     continue;
                 }
 
@@ -100,21 +106,21 @@ class TafemMinistryImportController extends Controller
                 $app = Application::where('cne', $cne)->first();
                 $appData = [
                     'admission_campaign_id' => $campaign->id,
-                    'cin'                  => $cin ?: $app?->cin,
-                    'first_name'           => $firstName,
-                    'last_name'            => $lastName,
-                    'bac_average'          => $bacAverage,
-                    'selection_score'      => $tafemScore,
-                    'status'               => $appStatus,
+                    'cin' => $cin ?: $app?->cin,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'bac_average' => $bacAverage,
+                    'selection_score' => $tafemScore,
+                    'status' => $appStatus,
                 ];
 
                 if ($app) {
                     $app->update($appData);
                     $updatedCount++;
                 } else {
-                    $appData['reference_number'] = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5($cne), 0, 6));
+                    $appData['reference_number'] = 'TAFEM-'.date('Y').'-'.strtoupper(substr(md5($cne), 0, 6));
                     $appData['cne'] = $cne;
-                    $appData['email'] = strtolower($cne) . '@candidat.tafem.ma';
+                    $appData['email'] = strtolower($cne).'@candidat.tafem.ma';
                     $appData['phone'] = '0600000000';
                     $appData['birth_date'] = '2006-01-01';
                     $appData['bac_year'] = (int) date('Y');
@@ -125,39 +131,53 @@ class TafemMinistryImportController extends Controller
 
                 // Créer ou mettre à jour User + Student
                 $user = User::firstOrCreate(
-                    ['email' => strtolower($cne) . '@candidat.tafem.ma'],
+                    ['email' => strtolower($cne).'@candidat.tafem.ma'],
                     [
-                        'name'           => $firstName . ' ' . $lastName,
-                        'first_name'     => $firstName,
-                        'last_name'      => $lastName,
-                        'cin'            => $cin,
-                        'password'       => \App\Support\TemporaryPassword::hash(),
+                        'name' => $firstName.' '.$lastName,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'cin' => $cin,
+                        'password' => TemporaryPassword::hash(),
                         'must_change_password' => true,
                         'institution_id' => $institutionId,
-                        'is_active'      => true,
+                        'is_active' => true,
                     ]
                 );
 
-                Student::updateOrCreate(
+                $student = \App\Models\Student::updateOrCreate(
                     ['cne' => $cne],
                     [
-                        'institution_id'    => $institutionId,
-                        'user_id'           => $user->id,
-                        'student_number'    => $cne,
-                        'first_name'        => $firstName,
-                        'last_name'         => $lastName,
-                        'cin'               => $cin,
-                        'gender'            => $data['gender'] ?? 'M',
-                        'birth_date'        => '2006-01-01',
-                        'nationality'       => 'Marocaine',
-                        'status'            => 'pending',
+                        'institution_id' => $institutionId,
+                        'user_id' => $user->id,
+                        'student_number' => $cne,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'cin' => $cin,
+                        'massar_code' => $data['code_massar'] ?? $data['massar'] ?? $cne,
+                        'gender' => $data['gender'] ?? 'M',
+                        'birth_date' => '2006-01-01',
+                        'nationality' => 'Marocaine',
+                        'status' => 'pending',
                         'inscription_status' => $appStatus,
                     ]
                 );
+
+                if (class_exists(\App\Domain\Student\Models\StudentDossierAuditLog::class)) {
+                    \App\Domain\Student\Models\StudentDossierAuditLog::log(
+                        $student->id,
+                        \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_DATA_EDITED,
+                        'tafem_import',
+                        null,
+                        ['cne' => $cne, 'cin' => $cin],
+                        'Import TAFEM (upsert CNE/Massar)'
+                    );
+                }
             }
         });
 
         $totalProcessed = $importedCount + $updatedCount;
+
+        $report = app(TafemQualityReportService::class)->build();
 
         return response()->json([
             'success' => $totalProcessed > 0,
@@ -166,27 +186,41 @@ class TafemMinistryImportController extends Controller
                 : 'Aucun candidat importé.',
             'summary' => [
                 'imported_candidates' => $importedCount,
-                'updated_candidates'  => $updatedCount,
-                'total_processed'     => $totalProcessed,
-                'errors'              => $errors,
+                'updated_candidates' => $updatedCount,
+                'total_processed' => $totalProcessed,
+                'errors' => $errors,
             ],
+            'quality_report' => $report,
+        ]);
+    }
+
+    public function aiReview(GroundedAiService $groundedAi, TafemQualityReportService $quality): JsonResponse
+    {
+        $report = $quality->build(false);
+        $copy = $groundedAi->explain($report, 'tafem_review');
+
+        return response()->json([
+            'success' => true,
+            'report' => $report,
+            'text_fr' => $copy['text_fr'],
+            'text_ar' => $copy['text_ar'],
         ]);
     }
 
     /**
      * Télécharger le template CSV.
      */
-    public function downloadTemplate(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadTemplate(): StreamedResponse
     {
         return response()->stream(function () {
             $file = fopen('php://output', 'w');
-            fputs($file, "\xEF\xBB\xBF");
+            fwrite($file, "\xEF\xBB\xBF");
             fputcsv($file, ['cne', 'cin', 'last_name', 'first_name', 'bac_average', 'tafem_score', 'list_type', 'filiere_code']);
             fputcsv($file, ['N140091375', 'CD729102', 'El Attahri', 'Hiba', '16.63', '174.50', 'liste_principale', 'TC-S1']);
             fputcsv($file, ['M130089124', 'UB102938', 'Maazouzi', 'Ismaïl', '17.25', '182.00', 'liste_principale', 'TC-S1']);
             fclose($file);
         }, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="modele_import_admis_ministere_tafem.csv"',
         ]);
     }
@@ -199,6 +233,7 @@ class TafemMinistryImportController extends Controller
             $content = substr($content, 3);
         }
         $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+
         return str_replace(["\r\n", "\r"], ["\n", "\n"], $content);
     }
 
@@ -218,23 +253,30 @@ class TafemMinistryImportController extends Controller
     private function parseHeader(string $line, string $delimiter): array
     {
         $raw = $this->parseCsvLine($line, $delimiter);
-        return array_map(fn($h) => strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', $h))), $raw);
+
+        return array_map(fn ($h) => strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', $h))), $raw);
     }
 
     private function parseCsvLine(string $line, string $delimiter): array
     {
         $line = trim($line);
-        if (empty($line)) return [];
+        if (empty($line)) {
+            return [];
+        }
 
         // Cas : ligne entière entre guillemets (Excel)
         if (strlen($line) >= 2 && $line[0] === '"' && $line[-1] === '"') {
             $unwrapped = str_replace('""', '"', substr($line, 1, -1));
             $res = str_getcsv($unwrapped, $delimiter);
-            if (count($res) >= 2) return array_map('trim', $res);
+            if (count($res) >= 2) {
+                return array_map('trim', $res);
+            }
         }
 
         $res = str_getcsv($line, $delimiter);
-        if (count($res) >= 2) return array_map('trim', $res);
+        if (count($res) >= 2) {
+            return array_map('trim', $res);
+        }
 
         return array_map('trim', explode($delimiter, $line));
     }
@@ -245,6 +287,7 @@ class TafemMinistryImportController extends Controller
         foreach ($header as $idx => $key) {
             $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
         }
+
         return $data;
     }
 
@@ -253,6 +296,7 @@ class TafemMinistryImportController extends Controller
         if ($value > $max) {
             $value = $value >= 10000 ? round($value / 100, 2) : round($value / 10, 2);
         }
+
         return min($value, $max);
     }
 
@@ -263,14 +307,14 @@ class TafemMinistryImportController extends Controller
             ->orWhere('name', 'like', '%Tronc Commun%')
             ->first();
 
-        if (!$tc) {
+        if (! $tc) {
             $tc = Filiere::create([
                 'institution_id' => $institutionId,
-                'department_id'  => Department::first()?->id ?? 1,
-                'code'           => 'TC-S1',
-                'name'           => 'Tronc Commun ENCG',
+                'department_id' => Department::first()?->id ?? 1,
+                'code' => 'TC-S1',
+                'name' => 'Tronc Commun ENCG',
                 'duration_years' => 2,
-                'is_active'      => true,
+                'is_active' => true,
             ]);
         }
 
@@ -282,27 +326,27 @@ class TafemMinistryImportController extends Controller
         $campaign = AdmissionCampaign::where('status', 'open')->first()
             ?? AdmissionCampaign::first();
 
-        if (!$campaign) {
+        if (! $campaign) {
             $academicYear = AcademicYear::where('is_current', true)->first()
                 ?? AcademicYear::create([
                     'institution_id' => $institutionId,
-                    'label'          => date('Y') . '-' . (date('Y') + 1),
-                    'start_date'     => '2026-09-01',
-                    'end_date'       => '2027-06-30',
-                    'is_current'     => true,
-                    'start_year'     => (int) date('Y'),
-                    'end_year'       => (int) date('Y') + 1,
+                    'label' => date('Y').'-'.(date('Y') + 1),
+                    'start_date' => '2026-09-01',
+                    'end_date' => '2027-06-30',
+                    'is_current' => true,
+                    'start_year' => (int) date('Y'),
+                    'end_year' => (int) date('Y') + 1,
                 ]);
 
             $campaign = AdmissionCampaign::create([
-                'institution_id'   => $institutionId,
-                'filiere_id'       => $filiere->id,
+                'institution_id' => $institutionId,
+                'filiere_id' => $filiere->id,
                 'academic_year_id' => $academicYear->id,
-                'name'             => 'Concours TAFEM ' . date('Y'),
-                'status'           => 'open',
-                'open_date'        => now()->startOfYear(),
-                'close_date'       => now()->endOfYear(),
-                'target_capacity'  => 500,
+                'name' => 'Concours TAFEM '.date('Y'),
+                'status' => 'open',
+                'open_date' => now()->startOfYear(),
+                'close_date' => now()->endOfYear(),
+                'target_capacity' => 500,
             ]);
         }
 

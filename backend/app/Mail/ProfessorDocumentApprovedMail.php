@@ -22,6 +22,7 @@ class ProfessorDocumentApprovedMail extends Mailable
     public function envelope(): Envelope
     {
         $docTitle = $this->data['document_title'] ?? 'Document Officiel';
+
         return new Envelope(
             subject: "🎓 Votre {$docTitle} a été validé et signé électroniquement — ENCG Fès",
         );

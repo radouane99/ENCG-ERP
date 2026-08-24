@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\Academic\SlotSuggestionService;
 use App\Services\Academic\SmartSchedulingEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,8 @@ use Illuminate\Http\Request;
 class SmartSchedulingController extends Controller
 {
     public function __construct(
-        private SmartSchedulingEngine $engine
+        private SmartSchedulingEngine $engine,
+        private SlotSuggestionService $slotSuggestions
     ) {}
 
     /**
@@ -19,18 +21,18 @@ class SmartSchedulingController extends Controller
     public function simulate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id'        => 'nullable|integer|exists:filieres,id',
-            'semester_id'       => 'nullable|integer|exists:semesters,id',
-            'energy_weight'     => 'nullable|numeric|min:0|max:100',
+            'filiere_id' => 'nullable|integer|exists:filieres,id',
+            'semester_id' => 'nullable|integer|exists:semesters,id',
+            'energy_weight' => 'nullable|numeric|min:0|max:100',
             'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
-            'max_daily_hours'   => 'nullable|integer|min:4|max:10',
+            'max_daily_hours' => 'nullable|integer|min:4|max:10',
         ]);
 
         $result = $this->engine->simulate($validated);
 
         return response()->json([
             'success' => true,
-            'data'    => $result,
+            'data' => $result,
         ]);
     }
 
@@ -40,19 +42,19 @@ class SmartSchedulingController extends Controller
     public function generate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id'        => 'nullable|integer|exists:filieres,id',
-            'semester_id'       => 'nullable|integer|exists:semesters,id',
-            'academic_year_id'  => 'nullable|integer',
-            'energy_weight'     => 'nullable|numeric|min:0|max:100',
+            'filiere_id' => 'nullable|integer|exists:filieres,id',
+            'semester_id' => 'nullable|integer|exists:semesters,id',
+            'academic_year_id' => 'nullable|integer',
+            'energy_weight' => 'nullable|numeric|min:0|max:100',
             'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
-            'overwrite'         => 'nullable|boolean',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         $result = $this->engine->generateAndPublish($validated);
 
         return response()->json([
             'success' => $result['success'] ?? false,
-            'data'    => $result,
+            'data' => $result,
         ], ($result['success'] ?? false) ? 200 : 422);
     }
 
@@ -65,7 +67,24 @@ class SmartSchedulingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $stats,
+            'data' => $stats,
+        ]);
+    }
+
+    public function suggestSlots(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'academic_year_id' => 'nullable|integer',
+            'group_id' => 'nullable|integer',
+            'professor_id' => 'nullable|integer',
+            'date' => 'nullable|date',
+        ]);
+
+        $slots = $this->slotSuggestions->suggest($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $slots,
         ]);
     }
 }

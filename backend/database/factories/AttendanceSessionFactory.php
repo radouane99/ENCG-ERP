@@ -25,10 +25,10 @@ class AttendanceSessionFactory extends Factory
         $academicYear = AcademicYear::query()->firstOrCreate(
             ['institution_id' => 1, 'start_year' => 2026],
             [
-                'label'      => '2026/2027',
-                'end_year'   => 2027,
+                'label' => '2026/2027',
+                'end_year' => 2027,
                 'start_date' => '2026-09-01',
-                'end_date'   => '2027-06-30',
+                'end_date' => '2027-06-30',
                 'is_current' => true,
             ]
         );
@@ -36,46 +36,46 @@ class AttendanceSessionFactory extends Factory
             ['code' => 'MGT'],
             [
                 'institution_id' => 1,
-                'name'           => 'Management',
-                'type'           => 'grande_ecole',
+                'name' => 'Management',
+                'type' => 'grande_ecole',
                 'duration_years' => 5,
             ]
         );
         $module = Module::firstOrCreate(
             ['code' => 'M101'],
             [
-                'institution_id'  => 1,
-                'filiere_id'      => $filiere->id,
-                'name'            => 'Marketing Digital',
+                'institution_id' => 1,
+                'filiere_id' => $filiere->id,
+                'name' => 'Marketing Digital',
                 'semester_number' => 1,
-                'coefficient'     => 1,
-                'credit_hours'    => 45,
+                'coefficient' => 1,
+                'credit_hours' => 45,
             ]
         );
         $group = Group::query()->first()
             ?? Group::create([
                 'academic_year_id' => $academicYear->id,
-                'filiere_id'       => $filiere->id,
-                'semester_number'  => 1,
-                'name'             => 'Groupe 1',
-                'capacity'         => 60,
+                'filiere_id' => $filiere->id,
+                'semester_number' => 1,
+                'name' => 'Groupe 1',
+                'capacity' => 60,
             ]);
 
         return [
-            'module_id'        => $module->id,
-            'group_id'         => $group->id,
+            'module_id' => $module->id,
+            'group_id' => $group->id,
             'academic_year_id' => $academicYear->id,
-            'professor_id'     => $professor->id,
-            'professor_type'   => Professor::class,
-            'session_date'     => now()->toDateString(),
-            'start_time'       => '08:30:00',
-            'end_time'         => '10:30:00',
-            'session_type'     => fake()->randomElement(['cm', 'td', 'tp']),
-            'created_by'       => $user->id,
-            'module_name'      => fake()->randomElement(['Marketing Digital', 'Finance d\'Entreprise', 'Management Stratégique', 'Informatique de Gestion']),
-            'group_name'       => 'G' . fake()->numberBetween(1, 6),
-            'room_name'        => fake()->optional()->randomElement(['Salle A', 'Salle B', 'Amphi 1']),
-            'status'           => 'active',
+            'professor_id' => $professor->id,
+            'professor_type' => Professor::class,
+            'session_date' => now()->toDateString(),
+            'start_time' => '08:30:00',
+            'end_time' => '10:30:00',
+            'session_type' => fake()->randomElement(['cm', 'td', 'tp']),
+            'created_by' => $user->id,
+            'module_name' => fake()->randomElement(['Marketing Digital', 'Finance d\'Entreprise', 'Management Stratégique', 'Informatique de Gestion']),
+            'group_name' => 'G'.fake()->numberBetween(1, 6),
+            'room_name' => fake()->optional()->randomElement(['Salle A', 'Salle B', 'Amphi 1']),
+            'status' => 'active',
         ];
     }
 

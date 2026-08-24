@@ -2,9 +2,9 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -15,16 +15,16 @@ return new class extends Migration
     {
         // 1. Add columns to users if they don't exist
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'address')) {
+            if (! Schema::hasColumn('users', 'address')) {
                 $table->string('address')->nullable();
             }
-            if (!Schema::hasColumn('users', 'city')) {
+            if (! Schema::hasColumn('users', 'city')) {
                 $table->string('city')->nullable();
             }
-            if (!Schema::hasColumn('users', 'birth_date')) {
+            if (! Schema::hasColumn('users', 'birth_date')) {
                 $table->date('birth_date')->nullable();
             }
-            if (!Schema::hasColumn('users', 'phone')) {
+            if (! Schema::hasColumn('users', 'phone')) {
                 $table->string('phone')->nullable();
             }
         });
@@ -60,17 +60,27 @@ return new class extends Migration
 
         // 3. Drop old redundant columns
         Schema::table('students', function (Blueprint $table) {
-            if (Schema::hasColumn('students', 'address')) $table->dropColumn('address');
-            if (Schema::hasColumn('students', 'city')) $table->dropColumn('city');
-            if (Schema::hasColumn('students', 'birth_date')) $table->dropColumn('birth_date');
+            if (Schema::hasColumn('students', 'address')) {
+                $table->dropColumn('address');
+            }
+            if (Schema::hasColumn('students', 'city')) {
+                $table->dropColumn('city');
+            }
+            if (Schema::hasColumn('students', 'birth_date')) {
+                $table->dropColumn('birth_date');
+            }
         });
 
         Schema::table('professors', function (Blueprint $table) {
-            if (Schema::hasColumn('professors', 'phone')) $table->dropColumn('phone');
+            if (Schema::hasColumn('professors', 'phone')) {
+                $table->dropColumn('phone');
+            }
         });
 
         Schema::table('groups', function (Blueprint $table) {
-            if (Schema::hasColumn('groups', 'current_count')) $table->dropColumn('current_count');
+            if (Schema::hasColumn('groups', 'current_count')) {
+                $table->dropColumn('current_count');
+            }
         });
 
         // 4. Add UNIQUE Business Constraints
@@ -82,7 +92,7 @@ return new class extends Migration
         Schema::table('module_professor', function (Blueprint $table) {
             $table->unique(['module_id', 'professor_id'], 'unique_module_professor');
         });
-        
+
         // MySQL 8 CHECK constraints (skip on sqlite)
         if (DB::getDriverName() !== 'sqlite') {
             DB::statement('ALTER TABLE schedules ADD CONSTRAINT chk_schedule_time CHECK (start_time < end_time)');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAdminRequests, useUpdateDocumentRequestStatus } from '../../api/guichetApi';
 import { DocumentRequest, DocumentRequestStatus } from '../../model/types';
+import { documentStatusLabel } from '@shared/lib/lmd';
 
 export const AdminGuichetDashboard: React.FC = () => {
   const { data: requests, isLoading } = useAdminRequests();
@@ -52,7 +53,7 @@ export const AdminGuichetDashboard: React.FC = () => {
                     ${req.status === 'ready' ? 'bg-green-100 text-green-800' : ''}
                     ${req.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
                   `}>
-                    {req.status}
+                    {documentStatusLabel(req.status)}
                   </span>
                 </td>
                 <td className="p-4 space-x-2">
@@ -78,6 +79,15 @@ export const AdminGuichetDashboard: React.FC = () => {
                       className="px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded text-sm font-medium transition-colors"
                     >
                       Rejeter
+                    </button>
+                  )}
+                  {req.status === 'ready' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(req.id, 'collected')}
+                      className="px-3 py-1 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded text-sm font-medium transition-colors"
+                    >
+                      Marquer à retirer
                     </button>
                   )}
                   {req.status === 'ready' && req.media && req.media.length > 0 && (

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\RecommendationLetterMail;
+use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\RecommendationRequest;
 use App\Models\Student;
@@ -26,15 +27,15 @@ class RecommendationLetterController extends Controller
     public function submitRequest(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'professor_id'    => 'required|integer',
-            'purpose'         => 'required|string',
+            'professor_id' => 'required|integer',
+            'purpose' => 'required|string',
             'delivery_method' => 'nullable|string|in:platform,email,both',
         ]);
 
         $student = Student::with('user')->where('user_id', auth()->id())->first()
             ?? Student::with('user')->where('id', auth()->id())->firstOrFail();
-        $avgGrade  = Grade::where('student_id', $student->id)->avg('value') ?? 13.5;
-        $absences  = \App\Models\Attendance::where('student_id', $student->id)->count();
+        $avgGrade = Grade::where('student_id', $student->id)->avg('value') ?? 13.5;
+        $absences = Attendance::where('student_id', $student->id)->count();
         $eligibilityScore = min(100, max(50, round(($avgGrade * 5) - ($absences * 2))));
 
         $profName = User::find($validated['professor_id'])?->name ?? 'Enseignant Chercheur';
@@ -45,19 +46,19 @@ class RecommendationLetterController extends Controller
         ]) ?? "Nous recommandons vivement {$student->user->name} pour son excellence académique à l'ENCG Fès.";
 
         $requestId = RecommendationRequest::create([
-            'student_id'              => $student->id,
-            'professor_id'            => $validated['professor_id'],
-            'purpose'                 => $validated['purpose'],
-            'status'                  => 'pending',
-            'ai_eligibility_score'    => "{$eligibilityScore}%",
-            'ai_recommendation_text'  => $aiDraft,
-            'delivery_method'         => $validated['delivery_method'] ?? 'both',
+            'student_id' => $student->id,
+            'professor_id' => $validated['professor_id'],
+            'purpose' => $validated['purpose'],
+            'status' => 'pending',
+            'ai_eligibility_score' => "{$eligibilityScore}%",
+            'ai_recommendation_text' => $aiDraft,
+            'delivery_method' => $validated['delivery_method'] ?? 'both',
         ])->id;
 
         return response()->json([
-            'success'           => true,
-            'message'           => 'Demande soumise au professeur.',
-            'request_id'        => $requestId,
+            'success' => true,
+            'message' => 'Demande soumise au professeur.',
+            'request_id' => $requestId,
             'eligibility_score' => "{$eligibilityScore}%",
         ]);
     }
@@ -74,13 +75,13 @@ class RecommendationLetterController extends Controller
             ->where('student_id', $studentId)
             ->latest()
             ->get()
-            ->map(fn($r) => [
-                'id'              => $r->id,
-                'purpose'         => $r->purpose,
-                'status'          => $r->status,
-                'professor_name'  => $r->professor->name ?? 'N/A',
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'purpose' => $r->purpose,
+                'status' => $r->status,
+                'professor_name' => $r->professor->name ?? 'N/A',
                 'ai_eligibility_score' => $r->ai_eligibility_score,
-                'created_at'      => $r->created_at->format('d/m/Y'),
+                'created_at' => $r->created_at->format('d/m/Y'),
             ]);
 
         return response()->json(['success' => true, 'requests' => $requests]);
@@ -96,16 +97,16 @@ class RecommendationLetterController extends Controller
             ->orWhereNull('professor_id')
             ->latest()
             ->get()
-            ->map(fn($r) => [
-                'id'              => $r->id,
-                'student_name'    => $r->student?->user?->name ?? 'N/A',
-                'student_email'   => $r->student?->user?->email ?? 'N/A',
-                'filiere_name'    => $r->student?->latestPathway?->filiere?->name ?? 'N/A',
-                'purpose'         => $r->purpose,
-                'status'          => $r->status,
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'student_name' => $r->student?->user?->name ?? 'N/A',
+                'student_email' => $r->student?->user?->email ?? 'N/A',
+                'filiere_name' => $r->student?->latestPathway?->filiere?->name ?? 'N/A',
+                'purpose' => $r->purpose,
+                'status' => $r->status,
                 'ai_eligibility_score' => $r->ai_eligibility_score,
                 'ai_recommendation_text' => $r->ai_recommendation_text,
-                'created_at'      => $r->created_at->format('d/m/Y'),
+                'created_at' => $r->created_at->format('d/m/Y'),
             ]);
 
         return response()->json(['success' => true, 'requests' => $requests]);
@@ -117,17 +118,17 @@ class RecommendationLetterController extends Controller
     public function approveRequest(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'letter_content'  => 'required|string',
+            'letter_content' => 'required|string',
             'delivery_method' => 'nullable|string|in:platform,email,both',
         ]);
 
         $rec = RecommendationRequest::with(['student.user', 'professor'])->findOrFail($id);
 
         $rec->update([
-            'status'                  => 'approved',
-            'ai_recommendation_text'  => $validated['letter_content'],
-            'delivery_method'         => $validated['delivery_method'] ?? 'both',
-            'signed_at'               => now(),
+            'status' => 'approved',
+            'ai_recommendation_text' => $validated['letter_content'],
+            'delivery_method' => $validated['delivery_method'] ?? 'both',
+            'signed_at' => now(),
         ]);
 
         $method = $validated['delivery_method'] ?? 'both';
@@ -140,7 +141,7 @@ class RecommendationLetterController extends Controller
                     $rec->purpose
                 ));
             } catch (\Exception $e) {
-                Log::warning('Email lettre de recommandation échoué : ' . $e->getMessage());
+                Log::warning('Email lettre de recommandation échoué : '.$e->getMessage());
             }
         }
 

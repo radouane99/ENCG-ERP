@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('groups', 'delegate_student_id')) {
+        if (! Schema::hasColumn('groups', 'delegate_student_id')) {
             Schema::table('groups', function (Blueprint $table) {
                 $table->unsignedBigInteger('delegate_student_id')->nullable()->after('capacity');
                 $table->string('delegate_name')->nullable()->after('delegate_student_id');

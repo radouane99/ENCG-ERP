@@ -21,7 +21,7 @@ class ProfessorAvailabilityController extends Controller
     {
         $professorProfiles = Professor::with(['user', 'department'])->get();
 
-        $academicYear   = AcademicYear::where('is_current', true)->first();
+        $academicYear = AcademicYear::where('is_current', true)->first();
         $academicYearId = $academicYear?->id ?? 1;
 
         $availabilities = ProfessorAvailability::where('academic_year_id', $academicYearId)
@@ -30,9 +30,11 @@ class ProfessorAvailabilityController extends Controller
 
         $data = $professorProfiles->map(function ($profProfile) use ($availabilities) {
             $prof = $profProfile->user;
-            if (!$prof) return null;
+            if (! $prof) {
+                return null;
+            }
 
-            $avail          = $availabilities->get($prof->id);
+            $avail = $availabilities->get($prof->id);
             $departmentName = $profProfile->department->name ?? 'Inconnu';
 
             $days = [];
@@ -40,32 +42,32 @@ class ProfessorAvailabilityController extends Controller
                 $days = json_decode($avail->availability_data, true) ?? [];
             }
 
-            $creneauxText = $avail ? $avail->available_slots_count . ' créneaux' : '-';
-            if (!empty($days)) {
-                $creneauxText = implode(', ', $days) . ' (' . $creneauxText . ')';
+            $creneauxText = $avail ? $avail->available_slots_count.' créneaux' : '-';
+            if (! empty($days)) {
+                $creneauxText = implode(', ', $days).' ('.$creneauxText.')';
             }
 
             $contrat = match ($profProfile->contract_type) {
                 'vacataire' => 'Vacataire',
                 'doctorant' => 'Doctorant',
-                default     => 'Permanent',
+                default => 'Permanent',
             };
 
             return [
-                'id'       => $prof->id,
-                'nom'      => $prof->name,
-                'email'    => $prof->email,
-                'dept'     => $departmentName,
-                'contrat'  => $contrat,
-                'statut'   => $avail?->status ?? 'Non envoyé',
+                'id' => $prof->id,
+                'nom' => $prof->name,
+                'email' => $prof->email,
+                'dept' => $departmentName,
+                'contrat' => $contrat,
+                'statut' => $avail?->status ?? 'Non envoyé',
                 'creneaux' => $creneauxText,
-                'date'     => $avail?->updated_at?->format('d/m/Y H:i') ?? '-',
+                'date' => $avail?->updated_at?->format('d/m/Y H:i') ?? '-',
             ];
         })->filter();
 
         return response()->json([
             'success' => true,
-            'data'    => $data->values(),
+            'data' => $data->values(),
         ]);
     }
 
@@ -75,20 +77,20 @@ class ProfessorAvailabilityController extends Controller
     public function alert(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'professor_ids'   => 'required|array',
+            'professor_ids' => 'required|array',
             'professor_ids.*' => 'integer|exists:users,id',
         ]);
 
         $professors = User::whereIn('id', $validated['professor_ids'])->get();
 
-        $academicYear     = AcademicYear::where('is_current', true)->first();
+        $academicYear = AcademicYear::where('is_current', true)->first();
         $academicYearName = $academicYear?->label ?? '2026/2027';
 
         foreach ($professors as $prof) {
             Mail::to($prof->email)->send(new ProfessorAvailabilitySurveyMail([
-                'name'     => $prof->name,
-                'session'  => 'Session d\'Examens ' . $academicYearName,
-                'link'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/availability-survey',
+                'name' => $prof->name,
+                'session' => 'Session d\'Examens '.$academicYearName,
+                'link' => config('app.frontend_url', 'http://localhost:5173').'/professor/availability-survey',
                 'deadline' => now()->addDays(7)->format('d/m/Y'),
             ]));
 
@@ -138,11 +140,11 @@ class ProfessorAvailabilityController extends Controller
             'success' => true,
             'data' => [
                 'availability' => $slots,
-                'status'       => $avail?->status ?? 'Soumis',
-                'notes'        => $avail?->notes ?? '',
-                'updated_at'   => $avail?->updated_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
-                'session_name' => 'Session d\'Automne ' . ($academicYear?->label ?? '2026/2027'),
-            ]
+                'status' => $avail?->status ?? 'Soumis',
+                'notes' => $avail?->notes ?? '',
+                'updated_at' => $avail?->updated_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                'session_name' => 'Session d\'Automne '.($academicYear?->label ?? '2026/2027'),
+            ],
         ]);
     }
 
@@ -158,33 +160,37 @@ class ProfessorAvailabilityController extends Controller
 
         $validated = $request->validate([
             'availability' => 'required|array',
-            'notes'        => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $slotsCount = 0;
         foreach ($validated['availability'] as $day => $s) {
-            if (!empty($s['matin'])) $slotsCount++;
-            if (!empty($s['apresMidi'])) $slotsCount++;
+            if (! empty($s['matin'])) {
+                $slotsCount++;
+            }
+            if (! empty($s['apresMidi'])) {
+                $slotsCount++;
+            }
         }
 
         $avail = ProfessorAvailability::updateOrCreate(
             [
-                'professor_id'     => $profId,
+                'professor_id' => $profId,
                 'academic_year_id' => $academicYearId,
             ],
             [
-                'availability_data'     => json_encode($validated['availability']),
+                'availability_data' => json_encode($validated['availability']),
                 'available_slots_count' => $slotsCount,
-                'notes'                 => $validated['notes'] ?? null,
-                'status'                => 'Soumis',
-                'updated_at'            => now(),
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'Soumis',
+                'updated_at' => now(),
             ]
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Disponibilités enregistrées avec succès !',
-            'data'    => $avail,
+            'data' => $avail,
         ]);
     }
 }

@@ -44,7 +44,7 @@ class ApplicationResource extends JsonResource
                 'reviewed_at' => $this->reviewed_at,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
-            ]
+            ],
         ];
     }
 }

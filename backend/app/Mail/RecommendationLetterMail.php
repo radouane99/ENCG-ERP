@@ -4,9 +4,9 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
 
 class RecommendationLetterMail extends Mailable
@@ -14,8 +14,11 @@ class RecommendationLetterMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $studentName;
+
     public string $professorName;
+
     public string $letterContent;
+
     public string $purpose;
 
     public function __construct(string $studentName, string $professorName, string $letterContent, string $purpose = 'Master / Mobilité')

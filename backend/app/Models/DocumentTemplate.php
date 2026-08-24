@@ -15,11 +15,11 @@ class DocumentTemplate extends Model
     protected function casts(): array
     {
         return [
-        'has_qr' => 'boolean',
-        'has_signature' => 'boolean',
-        'has_stamp' => 'boolean',
-        'is_active' => 'boolean',
-    ];
+            'has_qr' => 'boolean',
+            'has_signature' => 'boolean',
+            'has_stamp' => 'boolean',
+            'is_active' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo

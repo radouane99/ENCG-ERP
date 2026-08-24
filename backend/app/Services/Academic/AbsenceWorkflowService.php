@@ -21,9 +21,9 @@ class AbsenceWorkflowService
             $justification = AbsenceJustification::findOrFail($justificationId);
 
             $justification->update([
-                'status'           => $status,
-                'reviewed_by'      => $adminId,
-                'reviewed_at'      => now(),
+                'status' => $status,
+                'reviewed_by' => $adminId,
+                'reviewed_at' => now(),
                 'rejection_reason' => $status === 'rejected' ? $rejectionReason : null,
             ]);
 
@@ -31,7 +31,7 @@ class AbsenceWorkflowService
                 Attendance::where('attendance_session_id', $justification->attendance_id)
                     ->where('student_id', $justification->student_id)
                     ->update([
-                        'status'       => 'excused',
+                        'status' => 'excused',
                         'is_justified' => true,
                     ]);
             }
@@ -46,9 +46,9 @@ class AbsenceWorkflowService
     public function getGlobalAbsenceStats(): array
     {
         return [
-            'absent'  => Attendance::where('status', 'absent')->count(),
+            'absent' => Attendance::where('status', 'absent')->count(),
             'excused' => Attendance::where('status', 'excused')->count(),
-            'late'    => Attendance::where('status', 'late')->count(),
+            'late' => Attendance::where('status', 'late')->count(),
             'present' => Attendance::where('status', 'present')->count(),
         ];
     }

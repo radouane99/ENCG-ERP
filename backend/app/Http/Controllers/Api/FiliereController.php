@@ -24,7 +24,7 @@ class FiliereController extends Controller
     {
         $user = $request->user();
 
-        if ($user && ($user->professor || $user->hasAnyRole(['professor', 'vacataire'])) && !$user->hasAnyRole(['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
+        if ($user && ($user->professor || $user->hasAnyRole(['professor', 'vacataire'])) && ! $user->hasAnyRole(['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
             $filiereIds = $this->accessService->getAuthorizedFiliereIds($user);
             $filieres = Filiere::with(['department', 'responsable'])->whereIn('id', $filiereIds)->get();
         } else {
@@ -33,7 +33,7 @@ class FiliereController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => FiliereResource::collection($filieres),
+            'data' => FiliereResource::collection($filieres),
         ]);
     }
 
@@ -43,13 +43,13 @@ class FiliereController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'code'            => 'required|string|max:50|unique:filieres,code',
-            'name'            => 'required|string|max:255',
-            'type'            => 'nullable|string|max:255',
-            'department_id'   => 'nullable|exists:departments,id',
-            'responsable_id'  => 'nullable|exists:users,id',
-            'duration_years'  => 'required|integer|min:1|max:7',
-            'is_active'       => 'boolean',
+            'code' => 'required|string|max:50|unique:filieres,code',
+            'name' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:departments,id',
+            'responsable_id' => 'nullable|exists:users,id',
+            'duration_years' => 'required|integer|min:1|max:7',
+            'is_active' => 'boolean',
         ]);
 
         $filiere = $this->filiereService->createFiliere($validated, 1);
@@ -57,7 +57,7 @@ class FiliereController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Filière créée avec succès.',
-            'data'    => new FiliereResource($filiere->load('responsable')),
+            'data' => new FiliereResource($filiere->load('responsable')),
         ], 201);
     }
 
@@ -68,7 +68,7 @@ class FiliereController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => new FiliereResource($filiere->load(['department', 'responsable'])),
+            'data' => new FiliereResource($filiere->load(['department', 'responsable'])),
         ]);
     }
 
@@ -78,13 +78,13 @@ class FiliereController extends Controller
     public function update(Request $request, Filiere $filiere): JsonResponse
     {
         $validated = $request->validate([
-            'code'            => 'sometimes|required|string|max:50|unique:filieres,code,' . $filiere->id,
-            'name'            => 'sometimes|required|string|max:255',
-            'type'            => 'nullable|string|max:255',
-            'department_id'   => 'nullable|exists:departments,id',
-            'responsable_id'  => 'nullable|exists:users,id',
-            'duration_years'  => 'sometimes|required|integer|min:1|max:7',
-            'is_active'       => 'boolean',
+            'code' => 'sometimes|required|string|max:50|unique:filieres,code,'.$filiere->id,
+            'name' => 'sometimes|required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:departments,id',
+            'responsable_id' => 'nullable|exists:users,id',
+            'duration_years' => 'sometimes|required|integer|min:1|max:7',
+            'is_active' => 'boolean',
         ]);
 
         $filiere = $this->filiereService->updateFiliere($filiere, $validated);
@@ -92,7 +92,7 @@ class FiliereController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Filière mise à jour avec succès.',
-            'data'    => new FiliereResource($filiere->load('responsable')),
+            'data' => new FiliereResource($filiere->load('responsable')),
         ]);
     }
 

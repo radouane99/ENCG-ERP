@@ -14,22 +14,22 @@ class AiPhotoQualityValidatorService
 
     public function __construct()
     {
-        $this->gemini = new GeminiAiDriver();
+        $this->gemini = new GeminiAiDriver;
     }
 
     public function validatePhotoQuality(string $filePath): array
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return [
                 'is_valid' => false,
-                'score'    => 0,
-                'badge'    => '🔴 Fichier Manquant',
-                'issues'   => ['Fichier photo introuvable.'],
+                'score' => 0,
+                'badge' => '🔴 Fichier Manquant',
+                'issues' => ['Fichier photo introuvable.'],
             ];
         }
 
         // Send photo to Google Gemini Multimodal Vision API
-        $prompt = <<<PROMPT
+        $prompt = <<<'PROMPT'
 You are an expert AI Passport and Student ID Photo Auditor for ENCG Fès (Evolis Primacy 2 CR80 printer standards).
 Analyze this image and return ONLY a JSON object (no markdown, no backticks) with these exact keys:
 {
@@ -50,16 +50,16 @@ PROMPT;
 
                 if (is_array($json) && isset($json['score'])) {
                     return [
-                        'is_valid'      => $json['is_valid'] ?? true,
-                        'score'         => $json['score'] ?? 95,
-                        'badge'         => $json['badge'] ?? "🟢 Conforme Gemini Vision ({$json['score']}%)",
-                        'issues'        => $json['issues'] ?? [],
-                        'recommendation'=> $json['recommendation'] ?? 'Photo validée par Gemini Vision AI.',
+                        'is_valid' => $json['is_valid'] ?? true,
+                        'score' => $json['score'] ?? 95,
+                        'badge' => $json['badge'] ?? "🟢 Conforme Gemini Vision ({$json['score']}%)",
+                        'issues' => $json['issues'] ?? [],
+                        'recommendation' => $json['recommendation'] ?? 'Photo validée par Gemini Vision AI.',
                     ];
                 }
             }
         } catch (\Exception $e) {
-            Log::warning("Gemini Vision photo validator exception: " . $e->getMessage());
+            Log::warning('Gemini Vision photo validator exception: '.$e->getMessage());
         }
 
         // Local fallback calculation if API key is pending
@@ -69,12 +69,12 @@ PROMPT;
     private function localFallbackAnalysis(string $filePath): array
     {
         $info = @getimagesize($filePath);
-        if (!$info) {
+        if (! $info) {
             return [
                 'is_valid' => false,
-                'score'    => 0,
-                'badge'    => '🔴 Image Invalide',
-                'issues'   => ['Format d\'image non lisible.'],
+                'score' => 0,
+                'badge' => '🔴 Image Invalide',
+                'issues' => ['Format d\'image non lisible.'],
             ];
         }
 
@@ -88,11 +88,11 @@ PROMPT;
         }
 
         return [
-            'is_valid'      => true,
-            'score'         => $score,
-            'badge'         => "🟢 Conforme Gemini Vision ({$score}%)",
-            'issues'        => $issues,
-            'recommendation'=> 'La photo respecte les critères requis pour la carte étudiant CR80.',
+            'is_valid' => true,
+            'score' => $score,
+            'badge' => "🟢 Conforme Gemini Vision ({$score}%)",
+            'issues' => $issues,
+            'recommendation' => 'La photo respecte les critères requis pour la carte étudiant CR80.',
         ];
     }
 }

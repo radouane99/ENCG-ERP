@@ -37,6 +37,43 @@ class ProfessorAttendanceController extends Controller
         ], 201);
     }
 
+    public function save(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id' => 'nullable|integer|exists:attendance_sessions,id',
+            'module_id' => 'required_without:session_id|nullable|integer',
+            'group_id' => 'required_without:session_id|nullable|integer',
+            'date' => 'nullable|date',
+            'records' => 'required|array|min:1',
+            'records.*.student_id' => 'required|integer',
+            'records.*.status' => 'required|in:present,absent,late,excused',
+        ]);
+
+        $session = isset($validated['session_id'])
+            ? AttendanceSession::findOrFail($validated['session_id'])
+            : $this->attendanceService->startSession(
+                (int) $validated['module_id'],
+                (int) $validated['group_id'],
+                (int) $request->user()->id,
+                'Hors-ligne',
+                ['session_type' => 'manual']
+            );
+
+        foreach ($validated['records'] as $row) {
+            $this->attendanceService->markPresence(
+                $session->id,
+                (int) $row['student_id'],
+                (string) $row['status']
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Émargement enregistré.',
+            'session_id' => $session->id,
+        ]);
+    }
+
     /**
      * Appel manuel d'un étudiant.
      */
@@ -51,7 +88,7 @@ class ProfessorAttendanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Présence marquée.',
-            'record'  => $record,
+            'record' => $record,
         ]);
     }
 
@@ -79,10 +116,10 @@ class ProfessorAttendanceController extends Controller
         ]);
 
         $tokenParts = explode('-', $validated['token']);
-        $studentId  = count($tokenParts) > 1 ? (int) $tokenParts[1] : (int) $validated['token'];
+        $studentId = count($tokenParts) > 1 ? (int) $tokenParts[1] : (int) $validated['token'];
 
         $student = Student::with('user')->find($studentId);
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
@@ -96,11 +133,11 @@ class ProfessorAttendanceController extends Controller
         }
 
         return response()->json([
-            'success'      => true,
-            'message'      => 'Présence validée.',
+            'success' => true,
+            'message' => 'Présence validée.',
             'student_name' => $student->user->name ?? 'Étudiant',
-            'warning'      => $warning,
-            'record'       => $record,
+            'warning' => $warning,
+            'record' => $record,
         ]);
     }
 }

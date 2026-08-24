@@ -2,9 +2,9 @@
 
 namespace App\Policies;
 
-use App\Support\ChecksStaffAccess;
-use App\Models\User;
 use App\Models\Grade;
+use App\Models\User;
+use App\Support\ChecksStaffAccess;
 
 class GradePolicy
 {
@@ -14,7 +14,7 @@ class GradePolicy
     {
         return $this->hasPermissionOrRole($user, 'grades.view', [
             'admin', 'super-admin', 'institution-admin', 'director',
-            'department-head', 'filiere-head', 'professor', 'vacataire', 'student',
+            'department-head', 'filiere-head', 'professor', 'vacataire', 'scolarite', 'student',
         ]);
     }
 
@@ -24,7 +24,7 @@ class GradePolicy
     public function view(User $user, Grade $grade): bool
     {
         if ($user->hasRole('student')) {
-            return $user->student->id === $grade->student_id;
+            return $user->student?->id === $grade->student_id;
         }
 
         return $this->hasPermissionOrRole($user, 'grades.view', [
@@ -40,7 +40,7 @@ class GradePolicy
     {
         return $this->hasPermissionOrRole($user, 'grades.enter', [
             'admin', 'super-admin', 'institution-admin', 'director',
-            'department-head', 'filiere-head', 'professor', 'vacataire',
+            'department-head', 'filiere-head', 'professor', 'vacataire', 'scolarite',
         ]);
     }
 

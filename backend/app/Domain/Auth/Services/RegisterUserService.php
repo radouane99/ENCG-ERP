@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Services;
 
-use App\Models\User;
-use App\Models\AdmissionCampaign;
-use App\Models\Institution;
+use App\Mail\StudentRegistrationSuccessMail;
 use App\Models\AcademicYear;
-use App\Models\Filiere;
+use App\Models\AdmissionCampaign;
 use App\Models\Application;
+use App\Models\Filiere;
+use App\Models\Institution;
 use App\Models\Student;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -23,7 +26,7 @@ class RegisterUserService
      */
     public function registerUser(array $data, ?string $ipAddress = null): User
     {
-        return DB::transaction(function () use ($data, $ipAddress) {
+        return DB::transaction(function () use ($data) {
             // 1. Create or Update User
             $cneClean = strtoupper(trim($data['cne'] ?? ''));
             $cinClean = strtoupper(trim($data['cin'] ?? ''));
@@ -51,8 +54,8 @@ class RegisterUserService
             }
 
             $userAttributes = [
-                'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
-                'email' => $emailClean ?: ($user->email ?? ('candidat_' . strtolower($cneClean ?: uniqid()) . '@encg-fes.ma')),
+                'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+                'email' => $emailClean ?: ($user->email ?? ('candidat_'.strtolower($cneClean ?: uniqid()).'@encg-fes.ma')),
                 'phone' => $data['phone'] ?? $user?->phone,
                 'is_active' => true,
             ];
@@ -76,11 +79,11 @@ class RegisterUserService
 
             // 2. Find an active Admission Campaign or create a default one
             $campaign = AdmissionCampaign::where('status', 'open')->first();
-            
-            if (!$campaign) {
+
+            if (! $campaign) {
                 $institution = Institution::first();
                 $academicYear = AcademicYear::where('is_current', true)->first();
-                $filiereModel = Filiere::where('name', 'like', '%' . ($data['filiere'] ?? '') . '%')->first() 
+                $filiereModel = Filiere::where('name', 'like', '%'.($data['filiere'] ?? '').'%')->first()
                                 ?? Filiere::first();
 
                 if ($institution && $academicYear && $filiereModel) {
@@ -88,7 +91,7 @@ class RegisterUserService
                         'institution_id' => $institution->id,
                         'academic_year_id' => $academicYear->id,
                         'filiere_id' => $filiereModel->id,
-                        'name' => 'Campagne d\'Admission ' . $academicYear->label,
+                        'name' => 'Campagne d\'Admission '.$academicYear->label,
                         'status' => 'open',
                         'open_date' => now(),
                         'close_date' => now()->addMonths(2),
@@ -108,8 +111,8 @@ class RegisterUserService
                 'phone' => $data['phone'] ?? null,
                 'cin' => $cinClean,
                 'cne' => $cneClean,
-                'birth_date' => (!empty($data['birth_date']) && strtotime($data['birth_date']) !== false) ? date('Y-m-d', strtotime($data['birth_date'])) : null,
-                'bac_average' => (!empty($data['bac_average']) && is_numeric($data['bac_average'])) ? (float)$data['bac_average'] : null,
+                'birth_date' => (! empty($data['birth_date']) && strtotime($data['birth_date']) !== false) ? date('Y-m-d', strtotime($data['birth_date'])) : null,
+                'bac_average' => (! empty($data['bac_average']) && is_numeric($data['bac_average'])) ? (float) $data['bac_average'] : null,
                 'bac_year' => $data['bac_year'] ?? date('Y'),
                 'bac_series' => $data['bac_series'] ?? $data['bac_name'] ?? null,
                 'status' => 'enrolled',
@@ -130,19 +133,17 @@ class RegisterUserService
                 'treating_doctor_info' => $data['treating_doctor_info'] ?? null,
             ];
 
-
             if ($app) {
                 $app->update($appFields);
             } else {
-                $appFields['reference_number'] = 'ENCG-APP-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid())), 0, 6));
+                $appFields['reference_number'] = 'ENCG-APP-'.date('Y').'-'.strtoupper(substr(md5(($cneClean ?: uniqid())), 0, 6));
                 Application::create($appFields);
             }
 
-
             // 4. Send Confirmation Notification Email to Candidate Personal Email (e.g. Gmail)
             try {
-                $studentName = strtoupper(($data['last_name_fr'] ?? $data['last_name'] ?? '') . ' ' . ($data['first_name_fr'] ?? $data['first_name'] ?? ''));
-                \Illuminate\Support\Facades\Mail::to($data['email'])->send(new \App\Mail\StudentRegistrationSuccessMail(
+                $studentName = strtoupper(($data['last_name_fr'] ?? $data['last_name'] ?? '').' '.($data['first_name_fr'] ?? $data['first_name'] ?? ''));
+                Mail::to($data['email'])->send(new StudentRegistrationSuccessMail(
                     studentName: trim($studentName) ?: 'CANDIDAT ADMIS',
                     cne: $data['cne'] ?? 'N/A',
                     cin: $data['cin'] ?? 'N/A',
@@ -152,7 +153,7 @@ class RegisterUserService
                 ));
             } catch (\Exception $e) {
                 // Log email error gracefully without rolling back transaction
-                \Illuminate\Support\Facades\Log::warning("Erreur lors de l'envoi de l'email de confirmation à {$data['email']}: " . $e->getMessage());
+                Log::warning("Erreur lors de l'envoi de l'email de confirmation à {$data['email']}: ".$e->getMessage());
             }
 
             return $user;

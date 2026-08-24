@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Academic;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RolloverAcademicYearRequest extends FormRequest
@@ -12,7 +13,7 @@ class RolloverAcademicYearRequest extends FormRequest
     public function authorize(): bool
     {
         // Use generic permission, or update to 'academic.rollover' if created
-        return true; 
+        return true;
         // We will keep the default authorization open or let middleware handle it
         // based on the previous code `abort_unless($request->user()->can('academic.rollover'), 403);`
         // was commented out. We can enable it here.
@@ -21,14 +22,14 @@ class RolloverAcademicYearRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'new_label' => 'required|string|max:50',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date'
+            'end_date' => 'required|date|after:start_date',
         ];
     }
 }

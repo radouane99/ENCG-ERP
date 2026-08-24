@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('exam_locking_audits') && !Schema::hasColumn('exam_locking_audits', 'reason')) {
+        if (Schema::hasTable('exam_locking_audits') && ! Schema::hasColumn('exam_locking_audits', 'reason')) {
             Schema::table('exam_locking_audits', function (Blueprint $table) {
                 $table->string('reason')->nullable()->after('new_phase');
             });

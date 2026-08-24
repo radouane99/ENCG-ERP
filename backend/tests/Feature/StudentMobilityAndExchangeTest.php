@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\MobilityPartner;
 use App\Models\Student;
 use App\Models\StudentMobilityChoice;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +13,7 @@ class StudentMobilityAndExchangeTest extends TestCase
     use RefreshDatabase;
 
     private Student $student;
+
     private MobilityPartner $partner;
 
     protected function setUp(): void
@@ -24,18 +24,18 @@ class StudentMobilityAndExchangeTest extends TestCase
 
         $this->student = $this->makeTestStudent([
             'first_name' => 'Sara',
-            'last_name'  => 'BERRADA',
-            'cne'        => 'N998877665',
+            'last_name' => 'BERRADA',
+            'cne' => 'N998877665',
         ]);
 
         $this->partner = MobilityPartner::create([
-            'name'         => 'KEDGE Business School',
-            'country'      => 'France',
-            'city'         => 'Bordeaux',
+            'name' => 'KEDGE Business School',
+            'country' => 'France',
+            'city' => 'Bordeaux',
             'program_type' => 'double_degree',
-            'slots'        => 5,
+            'slots' => 5,
             'gpa_required' => 14.00,
-            'is_active'    => true,
+            'is_active' => true,
         ]);
     }
 
@@ -45,15 +45,15 @@ class StudentMobilityAndExchangeTest extends TestCase
     public function test_can_apply_for_international_mobility_program(): void
     {
         $choice = StudentMobilityChoice::create([
-            'student_id'          => $this->student->id,
+            'student_id' => $this->student->id,
             'mobility_partner_id' => $this->partner->id,
-            'choice_rank'         => 1,
+            'choice_rank' => 1,
         ]);
 
         $this->assertDatabaseHas('student_mobility_choices', [
-            'student_id'          => $this->student->id,
+            'student_id' => $this->student->id,
             'mobility_partner_id' => $this->partner->id,
-            'choice_rank'         => 1,
+            'choice_rank' => 1,
         ]);
     }
 }

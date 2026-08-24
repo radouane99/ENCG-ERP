@@ -11,8 +11,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Club extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 

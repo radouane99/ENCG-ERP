@@ -99,6 +99,14 @@ export default function PilotagePage() {
     }
   });
 
+  const { data: cockpit } = useQuery({
+    queryKey: ['direction-cockpit'],
+    queryFn: async () => {
+      const res = await api.get('/admin/pilotage/cockpit');
+      return res.data?.data || {};
+    }
+  });
+
   const liveStats = liveDashboard?.stats || {};
   const disciplineCases = liveDashboard?.discipline_cases || initialDisciplineCases;
   const justifications = liveDashboard?.pending_justifications || initialJustifications;
@@ -207,6 +215,48 @@ export default function PilotagePage() {
           <span>Configurer les Seuils</span>
         </button>
       </div>
+
+      <div data-testid="direction-cockpit" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: 'Absentéisme cours', value: cockpit?.course_absenteeism ?? '—' },
+          { label: 'Modules à risque (< 6)', value: cockpit?.modules_at_risk ?? '—' },
+          { label: 'File TAFEM', value: cockpit?.tafem_queue ?? '—' },
+          { label: 'Vacataires suivis', value: Array.isArray(cockpit?.vacataire_load) ? cockpit.vacataire_load.length : '—' },
+        ].map((item) => (
+          <div key={item.label} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{item.label}</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{String(item.value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {Array.isArray(cockpit?.early_warnings) && cockpit.early_warnings.length > 0 && (
+        <div data-testid="early-warnings" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-extrabold">Alertes précoces (notes &lt; 6 + absences cours)</h3>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase text-slate-500 bg-slate-50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-4 py-2 text-left">Étudiant</th>
+                <th className="px-4 py-2 text-left">Module</th>
+                <th className="px-4 py-2 text-left">CC / Exam</th>
+                <th className="px-4 py-2 text-left">Absences cours</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cockpit.early_warnings.map((row: any, idx: number) => (
+                <tr key={`${row.student_id}-${idx}`} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2">#{row.student_id}</td>
+                  <td className="px-4 py-2">{row.module}</td>
+                  <td className="px-4 py-2">{row.exam_or_cc}</td>
+                  <td className="px-4 py-2">{row.course_absences}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* ── Threshold Configuration Panel (Inline Toggle) ──────────────────────── */}
       {showConfig && (

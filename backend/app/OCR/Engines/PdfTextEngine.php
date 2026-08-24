@@ -17,19 +17,19 @@ class PdfTextEngine implements OcrEngineInterface
 
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool
     {
-        return str_contains(strtolower($mimeType), 'pdf') 
+        return str_contains(strtolower($mimeType), 'pdf')
             || str_ends_with(strtolower($filePath), '.pdf');
     }
 
     public function extractText(string $filePath): string
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return '';
         }
 
         $output = [];
         $returnVar = -1;
-        
+
         // Try with UTF-8 encoding
         $command = sprintf('pdftotext -layout -enc UTF-8 %s - 2>/dev/null', escapeshellarg($filePath));
         @exec($command, $output, $returnVar);
@@ -46,7 +46,7 @@ class PdfTextEngine implements OcrEngineInterface
 
         if ($returnVar !== 0 || empty(trim($text))) {
             Log::info("[PdfTextEngine] pdftotext returned empty text for {$filePath}. Requesting fallback.");
-            throw new RuntimeException("pdftotext returned empty string or failed execution.");
+            throw new RuntimeException('pdftotext returned empty string or failed execution.');
         }
 
         return $text;
@@ -56,9 +56,11 @@ class PdfTextEngine implements OcrEngineInterface
     {
         try {
             $text = $this->extractText($filePath);
+
             return new OcrResult(trim($text));
         } catch (Throwable $e) {
-            Log::warning("[PdfTextEngine] Extraction failed: " . $e->getMessage());
+            Log::warning('[PdfTextEngine] Extraction failed: '.$e->getMessage());
+
             return new OcrResult('');
         }
     }

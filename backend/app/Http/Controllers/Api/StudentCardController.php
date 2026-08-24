@@ -126,8 +126,8 @@ class StudentCardController extends Controller
 
         $window = (int) floor(time() / 30);
         $remainingSeconds = 30 - (time() % 30);
-        $totp = substr(hash_hmac('sha256', $card->qr_token . '-' . $window, config('app.key', 'encg-erp-secret')), 0, 8);
-        $dynamicToken = $card->qr_token . '.' . $totp;
+        $totp = substr(hash_hmac('sha256', $card->qr_token.'-'.$window, config('app.key', 'encg-erp-secret')), 0, 8);
+        $dynamicToken = $card->qr_token.'.'.$totp;
 
         return response()->json([
             'success' => true,
@@ -162,7 +162,6 @@ class StudentCardController extends Controller
     {
         $user = $request->user();
         $isAdmin = $user->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty();
-
 
         $rules = [
             'student_id' => $isAdmin ? 'required|exists:users,id' : 'nullable|exists:users,id',
@@ -234,7 +233,6 @@ class StudentCardController extends Controller
     {
         $user = $request->user();
         $isAdmin = $user->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty();
-
 
         $rules = [
             'student_id' => $isAdmin ? 'required|exists:users,id' : 'nullable|exists:users,id',
@@ -469,8 +467,8 @@ class StudentCardController extends Controller
             $windowNow = (int) floor(time() / 30);
             $windowPrev = $windowNow - 1;
 
-            $totpNow = substr(hash_hmac('sha256', $card->qr_token . '-' . $windowNow, config('app.key', 'encg-erp-secret')), 0, 8);
-            $totpPrev = substr(hash_hmac('sha256', $card->qr_token . '-' . $windowPrev, config('app.key', 'encg-erp-secret')), 0, 8);
+            $totpNow = substr(hash_hmac('sha256', $card->qr_token.'-'.$windowNow, config('app.key', 'encg-erp-secret')), 0, 8);
+            $totpPrev = substr(hash_hmac('sha256', $card->qr_token.'-'.$windowPrev, config('app.key', 'encg-erp-secret')), 0, 8);
 
             if (! hash_equals($totpNow, $providedTotp) && ! hash_equals($totpPrev, $providedTotp)) {
                 return response()->json([

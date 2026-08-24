@@ -2,9 +2,9 @@
 
 namespace App\Policies;
 
-use App\Support\ChecksStaffAccess;
-use App\Models\User;
 use App\Models\Student;
+use App\Models\User;
+use App\Support\ChecksStaffAccess;
 
 class StudentPolicy
 {
@@ -28,8 +28,8 @@ class StudentPolicy
             return $user->id === $student->user_id;
         }
 
-        // Must belong to the same institution
-        if ($user->institution_id !== $student->institution_id) {
+        if ($user->institution_id && $student->institution_id
+            && (int) $user->institution_id !== (int) $student->institution_id) {
             return false;
         }
 
@@ -54,7 +54,8 @@ class StudentPolicy
      */
     public function update(User $user, Student $student): bool
     {
-        if ($user->institution_id !== $student->institution_id) {
+        if ($user->institution_id && $student->institution_id
+            && (int) $user->institution_id !== (int) $student->institution_id) {
             return false;
         }
 
@@ -68,7 +69,8 @@ class StudentPolicy
      */
     public function delete(User $user, Student $student): bool
     {
-        if ($user->institution_id !== $student->institution_id) {
+        if ($user->institution_id && $student->institution_id
+            && (int) $user->institution_id !== (int) $student->institution_id) {
             return false;
         }
 

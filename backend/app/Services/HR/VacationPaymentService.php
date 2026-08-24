@@ -5,18 +5,14 @@ namespace App\Services\HR;
 use App\Models\VacationContract;
 use App\Models\VacationPayment;
 use App\Models\VacationSession;
-use Carbon\Carbon;
 use Exception;
 
 class VacationPaymentService
 {
     /**
      * Generate a monthly payment slip for a vacataire contract.
-     * 
-     * @param int $contractId
-     * @param int $year
-     * @param int $month
-     * @param float $taxRate Deductions (e.g. 17% or 30%)
+     *
+     * @param  float  $taxRate  Deductions (e.g. 17% or 30%)
      */
     public function generateMonthlyPayment(int $contractId, int $year, int $month, float $taxRate = 0.0): VacationPayment
     {
@@ -30,16 +26,16 @@ class VacationPaymentService
             ->get();
 
         if ($sessions->isEmpty()) {
-            throw new Exception("Aucune session validée pour ce mois.");
+            throw new Exception('Aucune session validée pour ce mois.');
         }
 
         $totalHours = $sessions->sum('hours');
         $grossAmount = $totalHours * $contract->hourly_rate;
-        
+
         $taxDeduction = $grossAmount * ($taxRate / 100);
         $netAmount = $grossAmount - $taxDeduction;
 
-        $reference = 'VAC-' . $year . '-' . str_pad((string)$month, 2, '0', STR_PAD_LEFT) . '-' . $contractId;
+        $reference = 'VAC-'.$year.'-'.str_pad((string) $month, 2, '0', STR_PAD_LEFT).'-'.$contractId;
 
         return VacationPayment::updateOrCreate(
             [
@@ -55,7 +51,7 @@ class VacationPaymentService
                 'gross_amount' => $grossAmount,
                 'tax_deduction' => $taxDeduction,
                 'net_amount' => $netAmount,
-                'status' => 'pending'
+                'status' => 'pending',
             ]
         );
     }

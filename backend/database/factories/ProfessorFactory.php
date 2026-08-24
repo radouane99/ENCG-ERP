@@ -20,14 +20,14 @@ class ProfessorFactory extends Factory
         $count++;
 
         return [
-            'user_id'         => User::factory(),
-            'employee_number' => 'PROF-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT),
-            'grade'           => fake()->randomElement(['Professeur', 'Maître de Conférences', 'Docteur']),
-            'specialty'       => fake()->optional()->randomElement(['Marketing', 'Finance', 'Informatique', 'Management']),
-            'contract_type'   => fake()->randomElement(['permanent', 'contractual', 'visiting']),
-            'hire_date'       => fake()->dateTimeBetween('-10 years', 'now')->format('Y-m-d'),
-            'is_active'       => true,
-            'institution_id'  => 1,
+            'user_id' => User::factory(),
+            'employee_number' => 'PROF-'.$year.'-'.str_pad($count, 3, '0', STR_PAD_LEFT),
+            'grade' => fake()->randomElement(['Professeur', 'Maître de Conférences', 'Docteur']),
+            'specialty' => fake()->optional()->randomElement(['Marketing', 'Finance', 'Informatique', 'Management']),
+            'contract_type' => fake()->randomElement(['permanent', 'contractual', 'visiting']),
+            'hire_date' => fake()->dateTimeBetween('-10 years', 'now')->format('Y-m-d'),
+            'is_active' => true,
+            'institution_id' => 1,
         ];
     }
 

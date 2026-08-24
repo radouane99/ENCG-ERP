@@ -31,7 +31,7 @@ class VacataireController extends Controller
 
         $mapped = $professors->map(function ($p) {
             $contract = $p->vacationContracts->first();
-            $moduleName = $contract?->module ? $contract->module->code . ' - ' . $contract->module->name : null;
+            $moduleName = $contract?->module ? $contract->module->code.' - '.$contract->module->name : null;
             $hoursCompleted = $contract ? $contract->sessions->sum('hours') : 0;
             $paymentAmount = $contract ? $contract->payments->sum('amount') : 0;
             $totalExpected = ($contract->agreed_hours ?? 0) * ($contract->hourly_rate ?? 0);
@@ -43,30 +43,30 @@ class VacataireController extends Controller
             };
 
             return [
-                'id'               => $p->id,
-                'first_name'       => $p->first_name,
-                'last_name'        => $p->last_name,
-                'email'            => $p->email,
-                'phone'            => $p->phone,
-                'qualification'    => $p->specialty,
-                'department_id'    => $p->department_id,
-                'module'           => $moduleName,
-                'module_id'        => $contract->module_id ?? null,
-                'agreed_hours'     => $contract->agreed_hours ?? 0,
-                'hours_completed'  => $hoursCompleted,
-                'hourly_rate'      => $contract->hourly_rate ?? 0,
-                'status'           => $contract->status ?? 'pending',
-                'contract_start'   => $contract->contract_start ?? null,
-                'contract_end'     => $contract->contract_end ?? null,
-                'payment_status'   => $paymentStatus,
-                'payment_amount'   => $paymentAmount,
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'last_name' => $p->last_name,
+                'email' => $p->email,
+                'phone' => $p->phone,
+                'qualification' => $p->specialty,
+                'department_id' => $p->department_id,
+                'module' => $moduleName,
+                'module_id' => $contract->module_id ?? null,
+                'agreed_hours' => $contract->agreed_hours ?? 0,
+                'hours_completed' => $hoursCompleted,
+                'hourly_rate' => $contract->hourly_rate ?? 0,
+                'status' => $contract->status ?? 'pending',
+                'contract_start' => $contract->contract_start ?? null,
+                'contract_end' => $contract->contract_end ?? null,
+                'payment_status' => $paymentStatus,
+                'payment_amount' => $paymentAmount,
             ];
         });
 
         $stats = [
-            'total'            => $professors->count(),
-            'pending'          => $professors->filter(fn($p) => $p->vacationContracts->first()?->status === 'pending')->count(),
-            'total_hours'      => $mapped->sum('agreed_hours'),
+            'total' => $professors->count(),
+            'pending' => $professors->filter(fn ($p) => $p->vacationContracts->first()?->status === 'pending')->count(),
+            'total_hours' => $mapped->sum('agreed_hours'),
             'unpaid_contracts' => $mapped->whereIn('payment_status', ['unpaid', 'partial'])->count(),
         ];
 
@@ -80,7 +80,7 @@ class VacataireController extends Controller
     {
         $vacataire = $this->vacataireService->getVacataireDetails($id);
 
-        if (!$vacataire) {
+        if (! $vacataire) {
             return response()->json(['success' => false, 'message' => 'Vacataire non trouvé.'], 404);
         }
 
@@ -95,39 +95,39 @@ class VacataireController extends Controller
         abort_unless($request->user()->can('vacataires.create'), 403);
 
         $validated = $request->validate([
-            'first_name'     => 'required|string|max:100',
-            'last_name'      => 'required|string|max:100',
-            'email'          => 'required|email|unique:users,email',
-            'phone'          => 'nullable|string|max:20',
-            'qualification'  => 'nullable|string|max:100',
-            'department_id'  => 'nullable|exists:departments,id',
-            'module_id'      => 'nullable|exists:modules,id',
-            'agreed_hours'   => 'required|numeric|min:1',
-            'hourly_rate'    => 'required|numeric|min:1',
-            'status'         => 'required|in:pending,signed,completed,rejected',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:20',
+            'qualification' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            'module_id' => 'nullable|exists:modules,id',
+            'agreed_hours' => 'required|numeric|min:1',
+            'hourly_rate' => 'required|numeric|min:1',
+            'status' => 'required|in:pending,signed,completed,rejected',
             'contract_start' => 'required|date',
-            'contract_end'   => 'required|date|after_or_equal:contract_start',
+            'contract_end' => 'required|date|after_or_equal:contract_start',
         ]);
 
         $professor = $this->professorService->createProfessor([
-            'first_name'    => $validated['first_name'],
-            'last_name'     => $validated['last_name'],
-            'email'         => $validated['email'],
-            'phone'         => $validated['phone'] ?? null,
-            'specialty'     => $validated['qualification'] ?? null,
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'specialty' => $validated['qualification'] ?? null,
             'department_id' => $validated['department_id'],
             'contract_type' => 'visiting',
-            'is_active'     => true,
+            'is_active' => true,
         ], $request->user()->institution_id ?? 1);
 
         $this->vacataireService->generateContract([
             'professor_id' => $professor->id,
-            'module_id'    => $validated['module_id'] ?? null,
+            'module_id' => $validated['module_id'] ?? null,
             'agreed_hours' => $validated['agreed_hours'],
-            'hourly_rate'  => $validated['hourly_rate'],
-            'status'       => $validated['status'],
-            'start_date'   => $validated['contract_start'],
-            'end_date'     => $validated['contract_end'],
+            'hourly_rate' => $validated['hourly_rate'],
+            'status' => $validated['status'],
+            'start_date' => $validated['contract_start'],
+            'end_date' => $validated['contract_end'],
         ]);
 
         return response()->json(['success' => true, 'message' => 'Vacataire créé avec succès.']);
@@ -143,46 +143,46 @@ class VacataireController extends Controller
         $professor = Professor::findOrFail($id);
 
         $validated = $request->validate([
-            'first_name'     => 'sometimes|required|string|max:100',
-            'last_name'      => 'sometimes|required|string|max:100',
-            'email'          => 'sometimes|required|email|unique:users,email,' . $professor->user_id,
-            'phone'          => 'nullable|string|max:20',
-            'qualification'  => 'nullable|string|max:100',
-            'department_id'  => 'nullable|exists:departments,id',
-            'module_id'      => 'nullable|exists:modules,id',
-            'agreed_hours'   => 'sometimes|required|numeric|min:1',
-            'hourly_rate'    => 'sometimes|required|numeric|min:1',
-            'status'         => 'sometimes|required|in:pending,signed,completed,rejected',
+            'first_name' => 'sometimes|required|string|max:100',
+            'last_name' => 'sometimes|required|string|max:100',
+            'email' => 'sometimes|required|email|unique:users,email,'.$professor->user_id,
+            'phone' => 'nullable|string|max:20',
+            'qualification' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            'module_id' => 'nullable|exists:modules,id',
+            'agreed_hours' => 'sometimes|required|numeric|min:1',
+            'hourly_rate' => 'sometimes|required|numeric|min:1',
+            'status' => 'sometimes|required|in:pending,signed,completed,rejected',
             'contract_start' => 'sometimes|required|date',
-            'contract_end'   => 'sometimes|required|date|after_or_equal:contract_start',
+            'contract_end' => 'sometimes|required|date|after_or_equal:contract_start',
         ]);
 
         $this->professorService->updateProfessor($professor, [
-            'first_name'    => $validated['first_name'] ?? $professor->first_name,
-            'last_name'     => $validated['last_name'] ?? $professor->last_name,
-            'email'         => $validated['email'] ?? $professor->email,
-            'phone'         => $validated['phone'] ?? $professor->phone,
-            'specialty'     => $validated['qualification'] ?? $professor->specialty,
+            'first_name' => $validated['first_name'] ?? $professor->first_name,
+            'last_name' => $validated['last_name'] ?? $professor->last_name,
+            'email' => $validated['email'] ?? $professor->email,
+            'phone' => $validated['phone'] ?? $professor->phone,
+            'specialty' => $validated['qualification'] ?? $professor->specialty,
             'department_id' => $validated['department_id'] ?? $professor->department_id,
         ]);
 
         $contract = $professor->vacationContracts()->latest()->first() ?: new VacationContract([
-            'professor_id'     => $professor->id,
-            'first_name'       => $professor->first_name,
-            'last_name'        => $professor->last_name,
-            'email'            => $professor->email,
-            'phone'            => $professor->phone,
-            'institution_id'   => $professor->institution_id,
+            'professor_id' => $professor->id,
+            'first_name' => $professor->first_name,
+            'last_name' => $professor->last_name,
+            'email' => $professor->email,
+            'phone' => $professor->phone,
+            'institution_id' => $professor->institution_id,
             'academic_year_id' => 1,
         ]);
 
         $contract->fill(array_filter([
-            'module_id'      => $validated['module_id'] ?? null,
-            'agreed_hours'   => $validated['agreed_hours'] ?? null,
-            'hourly_rate'    => $validated['hourly_rate'] ?? null,
-            'status'         => $validated['status'] ?? null,
+            'module_id' => $validated['module_id'] ?? null,
+            'agreed_hours' => $validated['agreed_hours'] ?? null,
+            'hourly_rate' => $validated['hourly_rate'] ?? null,
+            'status' => $validated['status'] ?? null,
             'contract_start' => $validated['contract_start'] ?? null,
-            'contract_end'   => $validated['contract_end'] ?? null,
+            'contract_end' => $validated['contract_end'] ?? null,
         ]))->save();
 
         return response()->json(['success' => true, 'message' => 'Vacataire mis à jour avec succès.']);
@@ -210,8 +210,8 @@ class VacataireController extends Controller
         $validated = $request->validate([
             'professor_id' => 'required|integer|exists:professors,id',
             'agreed_hours' => 'required|numeric|min:1',
-            'start_date'   => 'required|date',
-            'end_date'     => 'required|date|after:start_date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
         ]);
 
         $contract = $this->vacataireService->generateContract($validated);
@@ -219,7 +219,7 @@ class VacataireController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contrat généré avec succès.',
-            'data'    => $contract,
+            'data' => $contract,
         ], 201);
     }
 
@@ -232,12 +232,15 @@ class VacataireController extends Controller
             'hours_declared' => 'required|numeric|min:1',
         ]);
 
+        $contract = VacationContract::findOrFail($contractId);
+        app(\App\Services\HR\VacataireContractWorkflow::class)->assertHoursWithinCap($contract, (float) $validated['hours_declared']);
+
         $payment = $this->vacataireService->calculatePayments($contractId, $validated['hours_declared']);
 
         return response()->json([
             'success' => true,
             'message' => 'Paiement calculé et enregistré.',
-            'data'    => $payment,
+            'data' => $payment,
         ]);
     }
 
@@ -251,7 +254,7 @@ class VacataireController extends Controller
         $professor = Professor::with('vacationContracts.module')->findOrFail($id);
         $contract = $professor->vacationContracts()->latest()->first();
 
-        if (!$contract) {
+        if (! $contract) {
             return response()->json(['success' => false, 'message' => 'Aucun contrat trouvé.'], 404);
         }
 
@@ -260,9 +263,9 @@ class VacataireController extends Controller
 
         $pdf = Pdf::loadView('pdf.vacation_contract', [
             'professor' => $professor,
-            'contract'  => $contract,
-            'qrCode'    => $qrCode,
-            'date'      => now()->format('d/m/Y'),
+            'contract' => $contract,
+            'qrCode' => $qrCode,
+            'date' => now()->format('d/m/Y'),
         ]);
 
         return $pdf->download("Contrat_Vacation_{$professor->last_name}_{$professor->first_name}.pdf");
@@ -283,16 +286,32 @@ class VacataireController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'professor'        => "{$professor->first_name} {$professor->last_name}",
-                'cin'              => $professor->cin ?? 'N/A',
-                'hourly_rate'      => $hourlyRate,
-                'agreed_hours'     => $agreedHours,
-                'completed_hours'  => $completedHours,
+            'data' => [
+                'professor' => "{$professor->first_name} {$professor->last_name}",
+                'cin' => $professor->cin ?? 'N/A',
+                'hourly_rate' => $hourlyRate,
+                'agreed_hours' => $agreedHours,
+                'completed_hours' => $completedHours,
                 'total_amount_mad' => number_format($totalAmount, 2),
-                'generated_at'     => now()->format('d/m/Y H:i'),
-                'status'           => 'PRET_POUR_PAIEMENT',
+                'generated_at' => now()->format('d/m/Y H:i'),
+                'status' => 'PRET_POUR_PAIEMENT',
             ],
         ]);
+    }
+
+    public function approveDepartment(Request $request, int $contractId): JsonResponse
+    {
+        $contract = VacationContract::findOrFail($contractId);
+        app(\App\Services\HR\VacataireContractWorkflow::class)->approveByDepartment($contract, $request->user());
+
+        return response()->json(['success' => true, 'status' => $contract->fresh()->status]);
+    }
+
+    public function approveHr(Request $request, int $contractId): JsonResponse
+    {
+        $contract = VacationContract::findOrFail($contractId);
+        app(\App\Services\HR\VacataireContractWorkflow::class)->approveByHr($contract, $request->user());
+
+        return response()->json(['success' => true, 'status' => $contract->fresh()->status]);
     }
 }

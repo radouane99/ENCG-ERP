@@ -2,8 +2,8 @@
 
 namespace App\Domain\Core\Repositories;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 /**
@@ -41,6 +41,7 @@ abstract class BaseRepository
     public function update(int $id, array $data): bool
     {
         $record = $this->findOrFail($id);
+
         return $record->update($data);
     }
 

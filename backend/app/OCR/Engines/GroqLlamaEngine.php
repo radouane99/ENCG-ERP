@@ -14,11 +14,12 @@ use Illuminate\Support\Facades\Log;
 class GroqLlamaEngine implements OcrEngineInterface
 {
     private string $processId;
+
     private array $config;
 
     public function __construct(array $config = [])
     {
-        $this->processId = getmypid() . '_' . uniqid();
+        $this->processId = getmypid().'_'.uniqid();
         $this->config = array_merge([
             'model' => 'llama-3.2-11b-vision-preview',
             'api_key' => config('services.groq.key'),
@@ -40,7 +41,7 @@ class GroqLlamaEngine implements OcrEngineInterface
         }
 
         $imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        
+
         if (in_array($mimeType, $imageTypes)) {
             return true;
         }
@@ -56,6 +57,7 @@ class GroqLlamaEngine implements OcrEngineInterface
     {
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
         $result = $this->extract($filePath, $mimeType, '');
+
         return $result->text;
     }
 
@@ -74,11 +76,11 @@ class GroqLlamaEngine implements OcrEngineInterface
             // Take the first page only for now to save tokens and time
             $imagePath = $images[0];
             $base64Image = base64_encode(file_get_contents($imagePath));
-            
+
             // Re-detect actual image mime type after conversion
             $imageMimeType = mime_content_type($imagePath) ?: 'image/png';
 
-            $prompt = "Extract all text from this document as accurately as possible. Output only the extracted text, maintaining the original structure and formatting where possible. Do not include any conversational filler.";
+            $prompt = 'Extract all text from this document as accurately as possible. Output only the extracted text, maintaining the original structure and formatting where possible. Do not include any conversational filler.';
 
             $response = Http::withToken($this->config['api_key'])
                 ->timeout($this->config['timeout'])
@@ -90,23 +92,24 @@ class GroqLlamaEngine implements OcrEngineInterface
                             'content' => [
                                 [
                                     'type' => 'text',
-                                    'text' => $prompt
+                                    'text' => $prompt,
                                 ],
                                 [
                                     'type' => 'image_url',
                                     'image_url' => [
                                         'url' => "data:{$imageMimeType};base64,{$base64Image}",
-                                    ]
-                                ]
-                            ]
-                        ]
+                                    ],
+                                ],
+                            ],
+                        ],
                     ],
                     'max_tokens' => $this->config['max_tokens'],
                     'temperature' => 0.1, // Low temperature for factual extraction
                 ]);
 
             if ($response->failed()) {
-                Log::error('[GroqLlamaEngine] API Error: ' . $response->body());
+                Log::error('[GroqLlamaEngine] API Error: '.$response->body());
+
                 return new OcrResult('');
             }
 
@@ -116,7 +119,8 @@ class GroqLlamaEngine implements OcrEngineInterface
             return new OcrResult(trim($text));
 
         } catch (\Throwable $e) {
-            Log::error('[GroqLlamaEngine] Exception: ' . $e->getMessage());
+            Log::error('[GroqLlamaEngine] Exception: '.$e->getMessage());
+
             return new OcrResult('');
         } finally {
             foreach ($createdFiles as $file) {
@@ -130,11 +134,11 @@ class GroqLlamaEngine implements OcrEngineInterface
     private function toImages(string $filePath, string $mimeType, string $tmpDir, array &$createdFiles): array
     {
         if ($this->isPdf($mimeType, $filePath)) {
-            if (!$this->hasCommand('pdftoppm')) {
+            if (! $this->hasCommand('pdftoppm')) {
                 return [];
             }
 
-            $tmpPrefix = $tmpDir . '/groq_pdf_pg_' . $this->processId;
+            $tmpPrefix = $tmpDir.'/groq_pdf_pg_'.$this->processId;
             // -png creates .png files
             $cmd = sprintf('pdftoppm -png -r 150 -l 1 %s %s 2>/dev/null',
                 escapeshellarg($filePath),
@@ -146,13 +150,14 @@ class GroqLlamaEngine implements OcrEngineInterface
             foreach ($pages as $p) {
                 $createdFiles[] = $p;
             }
-            
+
             return array_slice($pages, 0, 1);
         }
 
-        $tmpImg = $tmpDir . '/groq_img_' . $this->processId . '.png';
+        $tmpImg = $tmpDir.'/groq_img_'.$this->processId.'.png';
         if (@copy($filePath, $tmpImg)) {
             $createdFiles[] = $tmpImg;
+
             return [$tmpImg];
         }
 
@@ -166,7 +171,8 @@ class GroqLlamaEngine implements OcrEngineInterface
         }
 
         $raw = @file_get_contents($filePath, false, null, 0, 4);
-        return str_starts_with((string)$raw, '%PDF');
+
+        return str_starts_with((string) $raw, '%PDF');
     }
 
     private function hasCommand(string $cmd): bool
@@ -174,6 +180,7 @@ class GroqLlamaEngine implements OcrEngineInterface
         $returnVar = -1;
         $output = [];
         @exec("which {$cmd} 2>/dev/null", $output, $returnVar);
+
         return $returnVar === 0;
     }
 }

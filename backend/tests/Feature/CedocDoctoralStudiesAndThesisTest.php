@@ -14,6 +14,7 @@ class CedocDoctoralStudiesAndThesisTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected User $doctorantUser;
 
     protected function setUp(): void
@@ -27,7 +28,7 @@ class CedocDoctoralStudiesAndThesisTest extends TestCase
 
         $doctorantRole = Role::firstOrCreate(['name' => 'doctorant', 'guard_name' => 'sanctum']);
         $this->doctorantUser = User::factory()->create([
-            'email'          => 'doctorant.chercheur@encg-fes.ac.ma',
+            'email' => 'doctorant.chercheur@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->doctorantUser->assignRole($doctorantRole);

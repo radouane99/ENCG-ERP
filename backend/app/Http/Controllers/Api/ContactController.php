@@ -16,8 +16,8 @@ class ContactController extends Controller
     public function send(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => 'required|email|max:255',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
             'subject' => 'nullable|string|max:255',
             'message' => 'required|string',
         ]);
@@ -30,7 +30,7 @@ class ContactController extends Controller
                 'message' => 'Message envoyé avec succès.',
             ]);
         } catch (\Exception $e) {
-            Log::error('Erreur contact: ' . $e->getMessage());
+            Log::error('Erreur contact: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,

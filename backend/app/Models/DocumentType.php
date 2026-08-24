@@ -14,8 +14,8 @@ class DocumentType extends Model
     protected function casts(): array
     {
         return [
-        'fee_amount' => 'decimal:2',
-        'is_active' => 'boolean',
-    ];
+            'fee_amount' => 'decimal:2',
+            'is_active' => 'boolean',
+        ];
     }
 }

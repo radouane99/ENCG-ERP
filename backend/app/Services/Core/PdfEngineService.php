@@ -34,7 +34,7 @@ class PdfEngineService
      */
     private function savePdf($pdf, string $directory, string $filename, string $disk): string
     {
-        $path = rtrim($directory, '/') . '/' . ltrim($filename, '/');
+        $path = rtrim($directory, '/').'/'.ltrim($filename, '/');
 
         if (! str_ends_with($path, '.pdf')) {
             $path .= '.pdf';

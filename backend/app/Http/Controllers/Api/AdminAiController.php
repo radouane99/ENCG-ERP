@@ -33,7 +33,7 @@ class AdminAiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $this->copilotService->processQuery($validated['query']),
+            'data' => $this->copilotService->processQuery($validated['query']),
         ]);
     }
 
@@ -59,7 +59,7 @@ class AdminAiController extends Controller
     public function matchPfeSupervisor(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'pfe_title'       => 'required|string',
+            'pfe_title' => 'required|string',
             'pfe_description' => 'nullable|string',
         ]);
 
@@ -68,15 +68,15 @@ class AdminAiController extends Controller
             ->limit(10)
             ->get();
 
-        $profList = $professors->map(fn($p) => "ID: {$p->id}, Nom: {$p->name}")->implode("\n");
+        $profList = $professors->map(fn ($p) => "ID: {$p->id}, Nom: {$p->name}")->implode("\n");
 
         $system = [
             "Tu es le conseiller scientifique de l'ENCG Fès.",
-            "Analyse le sujet de PFE et recommande les 3 enseignants les plus adaptés.",
-            "Retourne un JSON valide : {\"recommended_professors\":[{\"professor_id\":1,\"name\":\"...\",\"match_score\":\"95%\",\"reason\":\"...\"}]}",
+            'Analyse le sujet de PFE et recommande les 3 enseignants les plus adaptés.',
+            'Retourne un JSON valide : {"recommended_professors":[{"professor_id":1,"name":"...","match_score":"95%","reason":"..."}]}',
         ];
 
-        $prompt = "Sujet PFE : {$validated['pfe_title']}\nDescription : " . ($validated['pfe_description'] ?? '') . "\n\nEnseignants :\n" . $profList;
+        $prompt = "Sujet PFE : {$validated['pfe_title']}\nDescription : ".($validated['pfe_description'] ?? '')."\n\nEnseignants :\n".$profList;
 
         $rawJson = $this->geminiService->generateContent($prompt, $system);
 
@@ -92,12 +92,12 @@ class AdminAiController extends Controller
 
         // Fallback
         return response()->json([
-            'success'                 => true,
-            'recommended_professors'  => $professors->take(3)->values()->map(fn($p, $i) => [
+            'success' => true,
+            'recommended_professors' => $professors->take(3)->values()->map(fn ($p, $i) => [
                 'professor_id' => $p->id,
-                'name'         => $p->name,
-                'match_score'  => (95 - $i * 5) . '%',
-                'reason'       => 'Expertise reconnue en gestion et gouvernance.',
+                'name' => $p->name,
+                'match_score' => (95 - $i * 5).'%',
+                'reason' => 'Expertise reconnue en gestion et gouvernance.',
             ]),
         ]);
     }
@@ -119,22 +119,22 @@ class AdminAiController extends Controller
 
             if ($studentAvg && $studentAvg >= 12.0) {
                 $anomalies[] = [
-                    'id'             => $grade->id,
-                    'student_name'   => $grade->student->user->name ?? 'N/A',
-                    'module_name'    => $grade->assessment->module->name ?? 'N/A',
-                    'suspect_grade'  => $grade->value . '/20',
-                    'student_average' => round($studentAvg, 2) . '/20',
-                    'anomaly_type'   => 'Note très basse (< 5/20) pour un bon étudiant',
+                    'id' => $grade->id,
+                    'student_name' => $grade->student->user->name ?? 'N/A',
+                    'module_name' => $grade->assessment->module->name ?? 'N/A',
+                    'suspect_grade' => $grade->value.'/20',
+                    'student_average' => round($studentAvg, 2).'/20',
+                    'anomaly_type' => 'Note très basse (< 5/20) pour un bon étudiant',
                     'recommendation' => 'Vérifier la copie originale.',
                 ];
             }
         }
 
         return response()->json([
-            'success'        => true,
+            'success' => true,
             'anomalies_count' => count($anomalies),
-            'anomalies'      => $anomalies,
-            'scanned_at'     => now()->toIso8601String(),
+            'anomalies' => $anomalies,
+            'scanned_at' => now()->toIso8601String(),
         ]);
     }
 
@@ -145,7 +145,7 @@ class AdminAiController extends Controller
     {
         $student = Student::with(['user', 'latestPathway.filiere'])->find($studentId);
 
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
@@ -154,19 +154,19 @@ class AdminAiController extends Controller
 
         $system = [
             "Tu es le Directeur des Études de l'ENCG Fès.",
-            "Rédige une lettre de recommandation académique officielle pour un étudiant.",
+            'Rédige une lettre de recommandation académique officielle pour un étudiant.',
         ];
 
-        $prompt = "Étudiant : {$student->user->name}\nFilière : " . ($student->latestPathway->filiere->name ?? 'Commerce & Gestion') . "\nMoyenne : {$avg}/20";
+        $prompt = "Étudiant : {$student->user->name}\nFilière : ".($student->latestPathway->filiere->name ?? 'Commerce & Gestion')."\nMoyenne : {$avg}/20";
 
         $letter = $this->geminiService->generateContent($prompt, $system)
             ?? "Nous certifions que {$student->user->name} s'est distingué(e) par son excellence académique à l'ENCG Fès.";
 
         return response()->json([
-            'success'       => true,
-            'student_name'  => $student->user->name,
+            'success' => true,
+            'student_name' => $student->user->name,
             'average_grade' => $avg,
-            'letter'        => $letter,
+            'letter' => $letter,
         ]);
     }
 }

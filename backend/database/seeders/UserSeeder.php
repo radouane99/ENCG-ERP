@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Professor;
-use App\Models\Student;
 use App\Models\Department;
 use App\Models\Institution;
+use App\Models\Professor;
+use App\Models\Student;
+use App\Models\User;
+use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
 {
@@ -143,8 +143,8 @@ class UserSeeder extends Seeder
             Student::create([
                 'user_id' => $u->id,
                 'institution_id' => $institution->id,
-                'cne' => 'N99' . str_pad($uCounter, 7, '0', STR_PAD_LEFT),
-                'student_number' => '99' . str_pad($uCounter, 5, '0', STR_PAD_LEFT),
+                'cne' => 'N99'.str_pad($uCounter, 7, '0', STR_PAD_LEFT),
+                'student_number' => '99'.str_pad($uCounter, 5, '0', STR_PAD_LEFT),
                 'nationality' => 'Marocaine',
                 'gender' => $faker->randomElement(['M', 'F']),
                 'status' => 'active',

@@ -15,13 +15,13 @@ class Application extends Model
     protected function casts(): array
     {
         return [
-        'birth_date' => 'date',
-        'bac_average' => 'float',
-        'entrance_exam_score' => 'float',
-        'selection_score' => 'float',
-        'reviewed_at' => 'datetime',
-        'has_disability' => 'boolean',
-    ];
+            'birth_date' => 'date',
+            'bac_average' => 'float',
+            'entrance_exam_score' => 'float',
+            'selection_score' => 'float',
+            'reviewed_at' => 'datetime',
+            'has_disability' => 'boolean',
+        ];
     }
 
     public function campaign(): BelongsTo

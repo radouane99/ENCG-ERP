@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Collection;
 class AlumniService
 {
     private const FALLBACK_STATS = [
-        'employment_rate'     => 88,
+        'employment_rate' => 88,
         'avg_starting_salary' => 11500,
-        'avg_months_to_hire'  => 2.4,
-        'total_responses'     => 45,
+        'avg_months_to_hire' => 2.4,
+        'total_responses' => 45,
         'status_distribution' => [
             ['name' => 'CDI', 'value' => 32],
             ['name' => 'CDD / Stage Prep', 'value' => 8],
@@ -45,13 +45,13 @@ class AlumniService
         $employedCount = AcademicProject::where('type', 'alumni_survey')->whereNotNull('company_name')->count();
 
         return [
-            'employment_rate'     => $totalResponses > 0 ? (int) round(($employedCount / $totalResponses) * 100) : 88,
+            'employment_rate' => $totalResponses > 0 ? (int) round(($employedCount / $totalResponses) * 100) : 88,
             'avg_starting_salary' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('starting_salary')->avg('starting_salary') ?? 11500),
-            'avg_months_to_hire'  => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 2.4),
-            'total_responses'     => $totalResponses,
+            'avg_months_to_hire' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 2.4),
+            'total_responses' => $totalResponses,
             'status_distribution' => $this->getDistribution('employment_status', [['name' => 'CDI', 'value' => 32]]),
             'sector_distribution' => $this->getDistribution('sector', [['name' => 'Finance & Banque', 'value' => 18]]),
-            'top_companies'       => $this->getTopCompanies([['name' => 'Attijariwafa bank', 'count' => 12]]),
+            'top_companies' => $this->getTopCompanies([['name' => 'Attijariwafa bank', 'count' => 12]]),
         ];
     }
 
@@ -63,7 +63,7 @@ class AlumniService
         $query = AcademicProject::with(['student.user', 'academicYear'])
             ->where('type', 'alumni_survey');
 
-        if (!empty($filters['promotion'])) {
+        if (! empty($filters['promotion'])) {
             $query->where('graduation_year', $filters['promotion']);
         }
 
@@ -81,10 +81,10 @@ class AlumniService
             ->groupBy($column)
             ->orderByDesc('value')
             ->get()
-            ->map(fn($row) => ['name' => $row->name, 'value' => (int) $row->value])
+            ->map(fn ($row) => ['name' => $row->name, 'value' => (int) $row->value])
             ->toArray();
 
-        return !empty($data) ? $data : $fallback;
+        return ! empty($data) ? $data : $fallback;
     }
 
     /**
@@ -101,6 +101,6 @@ class AlumniService
             ->get()
             ->toArray();
 
-        return !empty($data) ? $data : $fallback;
+        return ! empty($data) ? $data : $fallback;
     }
 }

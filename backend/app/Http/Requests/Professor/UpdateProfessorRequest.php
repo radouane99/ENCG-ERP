@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Professor;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProfessorRequest extends FormRequest
@@ -17,7 +18,7 @@ class UpdateProfessorRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -25,17 +26,17 @@ class UpdateProfessorRequest extends FormRequest
         $userId = $professor ? $professor->user_id : null;
 
         return [
-            'first_name'    => 'sometimes|required|string|max:100',
-            'last_name'     => 'sometimes|required|string|max:100',
-            'email'         => 'sometimes|required|email|unique:users,email,' . $userId,
-            'phone'         => 'nullable|string|max:20',
-            'cin'           => 'nullable|string|max:20|unique:users,cin,' . $userId,
-            'grade'         => 'nullable|string|max:100',
-            'specialty'     => 'nullable|string|max:255',
+            'first_name' => 'sometimes|required|string|max:100',
+            'last_name' => 'sometimes|required|string|max:100',
+            'email' => 'sometimes|required|email|unique:users,email,'.$userId,
+            'phone' => 'nullable|string|max:20',
+            'cin' => 'nullable|string|max:20|unique:users,cin,'.$userId,
+            'grade' => 'nullable|string|max:100',
+            'specialty' => 'nullable|string|max:255',
             'contract_type' => 'sometimes|required|in:permanent,contractual,visiting',
-            'hire_date'     => 'nullable|date',
+            'hire_date' => 'nullable|date',
             'department_id' => 'nullable|exists:departments,id',
-            'is_active'     => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 }

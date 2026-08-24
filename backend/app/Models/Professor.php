@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Professor extends Model
 {
-    use HasFactory, SoftDeletes, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -23,37 +24,37 @@ class Professor extends Model
         ];
     }
 
-    protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function firstName(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->user?->first_name,
         );
     }
 
-    protected function lastName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function lastName(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->user?->last_name,
         );
     }
 
-    protected function email(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function email(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->user?->email,
         );
     }
 
-    protected function phone(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function phone(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->user?->phone,
         );
     }
 
-    protected function cin(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function cin(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->user?->cin,
         );
     }
@@ -72,7 +73,6 @@ class Professor extends Model
     {
         return $this->belongsTo(Department::class);
     }
-
 
     public function vacationContracts(): HasMany
     {

@@ -2,15 +2,15 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
         // 1. Attendances
-        if (!Schema::hasTable('attendances')) {
+        if (! Schema::hasTable('attendances')) {
             Schema::create('attendances', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('student_id')->constrained()->cascadeOnDelete();
@@ -26,13 +26,27 @@ return new class extends Migration
             });
         } else {
             Schema::table('attendances', function (Blueprint $table) {
-                if (!Schema::hasColumn('attendances', 'status')) $table->string('status')->default('present');
-                if (!Schema::hasColumn('attendances', 'is_justified')) $table->boolean('is_justified')->default(false);
-                if (!Schema::hasColumn('attendances', 'notes')) $table->text('notes')->nullable();
-                if (!Schema::hasColumn('attendances', 'scanned_at')) $table->timestamp('scanned_at')->nullable();
-                if (!Schema::hasColumn('attendances', 'scanned_latitude')) $table->decimal('scanned_latitude', 10, 8)->nullable();
-                if (!Schema::hasColumn('attendances', 'scanned_longitude')) $table->decimal('scanned_longitude', 11, 8)->nullable();
-                if (!Schema::hasColumn('attendances', 'is_valid')) $table->boolean('is_valid')->default(true);
+                if (! Schema::hasColumn('attendances', 'status')) {
+                    $table->string('status')->default('present');
+                }
+                if (! Schema::hasColumn('attendances', 'is_justified')) {
+                    $table->boolean('is_justified')->default(false);
+                }
+                if (! Schema::hasColumn('attendances', 'notes')) {
+                    $table->text('notes')->nullable();
+                }
+                if (! Schema::hasColumn('attendances', 'scanned_at')) {
+                    $table->timestamp('scanned_at')->nullable();
+                }
+                if (! Schema::hasColumn('attendances', 'scanned_latitude')) {
+                    $table->decimal('scanned_latitude', 10, 8)->nullable();
+                }
+                if (! Schema::hasColumn('attendances', 'scanned_longitude')) {
+                    $table->decimal('scanned_longitude', 11, 8)->nullable();
+                }
+                if (! Schema::hasColumn('attendances', 'is_valid')) {
+                    $table->boolean('is_valid')->default(true);
+                }
             });
         }
 
@@ -44,7 +58,7 @@ return new class extends Migration
                     DB::table('attendances')->updateOrInsert(
                         [
                             'student_id' => $record->student_id,
-                            'attendance_session_id' => $record->attendance_session_id
+                            'attendance_session_id' => $record->attendance_session_id,
                         ],
                         [
                             'status' => $record->status ?? 'present',
@@ -61,7 +75,7 @@ return new class extends Migration
         }
 
         // 2. Professor Availabilities
-        if (!Schema::hasTable('professor_availabilities')) {
+        if (! Schema::hasTable('professor_availabilities')) {
             Schema::create('professor_availabilities', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('professor_id')->constrained()->cascadeOnDelete();
@@ -75,12 +89,24 @@ return new class extends Migration
             });
         } else {
             Schema::table('professor_availabilities', function (Blueprint $table) {
-                if (!Schema::hasColumn('professor_availabilities', 'academic_year_id')) $table->foreignId('academic_year_id')->nullable()->constrained()->cascadeOnDelete();
-                if (!Schema::hasColumn('professor_availabilities', 'semester_id')) $table->foreignId('semester_id')->nullable()->constrained()->cascadeOnDelete();
-                if (!Schema::hasColumn('professor_availabilities', 'day_of_week')) $table->string('day_of_week')->nullable();
-                if (!Schema::hasColumn('professor_availabilities', 'start_time')) $table->time('start_time')->nullable();
-                if (!Schema::hasColumn('professor_availabilities', 'end_time')) $table->time('end_time')->nullable();
-                if (!Schema::hasColumn('professor_availabilities', 'is_available')) $table->boolean('is_available')->default(true);
+                if (! Schema::hasColumn('professor_availabilities', 'academic_year_id')) {
+                    $table->foreignId('academic_year_id')->nullable()->constrained()->cascadeOnDelete();
+                }
+                if (! Schema::hasColumn('professor_availabilities', 'semester_id')) {
+                    $table->foreignId('semester_id')->nullable()->constrained()->cascadeOnDelete();
+                }
+                if (! Schema::hasColumn('professor_availabilities', 'day_of_week')) {
+                    $table->string('day_of_week')->nullable();
+                }
+                if (! Schema::hasColumn('professor_availabilities', 'start_time')) {
+                    $table->time('start_time')->nullable();
+                }
+                if (! Schema::hasColumn('professor_availabilities', 'end_time')) {
+                    $table->time('end_time')->nullable();
+                }
+                if (! Schema::hasColumn('professor_availabilities', 'is_available')) {
+                    $table->boolean('is_available')->default(true);
+                }
             });
         }
 
@@ -104,7 +130,5 @@ return new class extends Migration
         }
     }
 
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

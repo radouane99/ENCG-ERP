@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('evaluation_campaigns')) {
+        if (! Schema::hasTable('evaluation_campaigns')) {
             Schema::create('evaluation_campaigns', function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->default('Campagne d\'Évaluation S5-S6');
@@ -22,7 +22,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('course_evaluations')) {
+        if (! Schema::hasTable('course_evaluations')) {
             Schema::create('course_evaluations', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('campaign_id')->nullable();

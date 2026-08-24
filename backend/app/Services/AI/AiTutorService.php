@@ -3,13 +3,14 @@
 namespace App\Services\AI;
 
 use App\Models\LearningMaterial;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
-use Illuminate\Support\Facades\Log;
 
 class AiTutorService
 {
     protected GeminiApiService $geminiApi;
+
     protected Parser $pdfParser;
 
     public function __construct(GeminiApiService $geminiApi, Parser $pdfParser)
@@ -34,30 +35,32 @@ class AiTutorService
 
         // 2. Parse PDFs up to the character limit
         foreach ($materials as $material) {
-            if (strlen($contextText) >= $charLimit) break;
+            if (strlen($contextText) >= $charLimit) {
+                break;
+            }
 
             $path = Storage::disk('public')->path($material->file_path);
-            
+
             if (file_exists($path) && str_ends_with(strtolower($path), '.pdf')) {
                 try {
                     $pdf = $this->pdfParser->parseFile($path);
                     $text = $pdf->getText();
-                    $contextText .= "\n\n--- Document: {$material->title} ---\n\n" . $text;
+                    $contextText .= "\n\n--- Document: {$material->title} ---\n\n".$text;
                 } catch (\Exception $e) {
-                    Log::warning("Could not parse PDF {$path}: " . $e->getMessage());
+                    Log::warning("Could not parse PDF {$path}: ".$e->getMessage());
                 }
             }
         }
 
         // Limit the context text to prevent sending too much data to the API
         if (strlen($contextText) > $charLimit) {
-            $contextText = substr($contextText, 0, $charLimit) . "...[TRUNCATED]";
+            $contextText = substr($contextText, 0, $charLimit).'...[TRUNCATED]';
         }
 
         if (empty(trim($contextText))) {
             return [
                 'success' => false,
-                'reply' => "Je n'ai trouvé aucun support de cours PDF pour ce module. Je ne peux donc pas répondre à votre question en me basant sur le cours."
+                'reply' => "Je n'ai trouvé aucun support de cours PDF pour ce module. Je ne peux donc pas répondre à votre question en me basant sur le cours.",
             ];
         }
 
@@ -66,7 +69,7 @@ class AiTutorService
 
         return [
             'success' => true,
-            'reply' => $reply
+            'reply' => $reply,
         ];
     }
 }

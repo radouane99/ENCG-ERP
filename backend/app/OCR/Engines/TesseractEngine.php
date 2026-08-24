@@ -4,7 +4,6 @@ namespace App\OCR\Engines;
 
 use App\OCR\Contracts\OcrEngineInterface;
 use App\OCR\OcrResult;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Tesseract Engine - Version Ultra Rapide
@@ -13,11 +12,12 @@ use Illuminate\Support\Facades\Log;
 class TesseractEngine implements OcrEngineInterface
 {
     private string $processId;
+
     private array $config;
 
     public function __construct(array $config = [])
     {
-        $this->processId = getmypid() . '_' . uniqid();
+        $this->processId = getmypid().'_'.uniqid();
         $this->config = array_merge([
             'dpi' => 200, // Réduit pour la vitesse
             'max_pages' => 1, // Une seule page pour la vitesse
@@ -36,7 +36,7 @@ class TesseractEngine implements OcrEngineInterface
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool
     {
         $imageTypes = ['image/jpeg', 'image/png', 'image/tiff', 'image/bmp', 'image/gif', 'image/webp'];
-        
+
         if (in_array($mimeType, $imageTypes)) {
             return true;
         }
@@ -52,6 +52,7 @@ class TesseractEngine implements OcrEngineInterface
     {
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
         $result = $this->extract($filePath, $mimeType, '');
+
         return $result->text;
     }
 
@@ -106,11 +107,11 @@ class TesseractEngine implements OcrEngineInterface
     private function toImages(string $filePath, string $mimeType, string $tmpDir, array &$createdFiles): array
     {
         if ($this->isPdf($mimeType, $filePath)) {
-            if (!$this->hasCommand('pdftoppm')) {
+            if (! $this->hasCommand('pdftoppm')) {
                 return [];
             }
 
-            $tmpPrefix = $tmpDir . '/pdf_pg_' . $this->processId;
+            $tmpPrefix = $tmpDir.'/pdf_pg_'.$this->processId;
             $cmd = sprintf('pdftoppm -png -r 150 -l 1 %s %s 2>/dev/null', // r 150 pour la vitesse
                 escapeshellarg($filePath),
                 escapeshellarg($tmpPrefix)
@@ -121,14 +122,15 @@ class TesseractEngine implements OcrEngineInterface
             foreach ($pages as $p) {
                 $createdFiles[] = $p;
             }
-            
+
             // Limiter à une page
             return array_slice($pages, 0, 1);
         }
 
-        $tmpImg = $tmpDir . '/ocr_img_' . $this->processId . '.png';
+        $tmpImg = $tmpDir.'/ocr_img_'.$this->processId.'.png';
         if (@copy($filePath, $tmpImg)) {
             $createdFiles[] = $tmpImg;
+
             return [$tmpImg];
         }
 
@@ -143,7 +145,7 @@ class TesseractEngine implements OcrEngineInterface
         array &$createdFiles,
         string $extraConfig = ''
     ): string {
-        $outPath = $tmpDir . '/ocr_pass_' . $this->processId . '_' . uniqid();
+        $outPath = $tmpDir.'/ocr_pass_'.$this->processId.'_'.uniqid();
         $txtFile = "{$outPath}.txt";
 
         // Options de vitesse
@@ -160,6 +162,7 @@ class TesseractEngine implements OcrEngineInterface
             $createdFiles[] = $txtFile;
             $text = file_get_contents($txtFile) ?: '';
             @unlink($txtFile);
+
             return $text;
         }
 
@@ -174,7 +177,7 @@ class TesseractEngine implements OcrEngineInterface
         $langs = [];
         foreach ($output as $line) {
             $line = trim($line);
-            if ($line !== '' && !str_contains($line, 'List of available languages') && !str_contains($line, ':')) {
+            if ($line !== '' && ! str_contains($line, 'List of available languages') && ! str_contains($line, ':')) {
                 $langs[] = $line;
             }
         }
@@ -185,12 +188,12 @@ class TesseractEngine implements OcrEngineInterface
     private function getBestLanguage(array $available): string
     {
         $preferred = ['ara+fra+eng', 'fra+eng', 'ara+eng', 'fra', 'eng', 'ara'];
-        
+
         foreach ($preferred as $lang) {
             $parts = explode('+', $lang);
             $allAvailable = true;
             foreach ($parts as $part) {
-                if (!in_array($part, $available)) {
+                if (! in_array($part, $available)) {
                     $allAvailable = false;
                     break;
                 }
@@ -206,10 +209,11 @@ class TesseractEngine implements OcrEngineInterface
     private function getSecondLanguage(array $available, string $currentLang): string
     {
         foreach ($available as $lang) {
-            if (!str_contains($currentLang, $lang)) {
+            if (! str_contains($currentLang, $lang)) {
                 return $lang;
             }
         }
+
         return $available[0] ?? 'eng';
     }
 
@@ -217,6 +221,7 @@ class TesseractEngine implements OcrEngineInterface
     {
         $text = preg_replace('/\s+/', ' ', $text);
         $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
         return trim($text);
     }
 
@@ -227,7 +232,8 @@ class TesseractEngine implements OcrEngineInterface
         }
 
         $raw = @file_get_contents($filePath, false, null, 0, 4);
-        return str_starts_with((string)$raw, '%PDF');
+
+        return str_starts_with((string) $raw, '%PDF');
     }
 
     private function hasCommand(string $cmd): bool
@@ -235,6 +241,7 @@ class TesseractEngine implements OcrEngineInterface
         $returnVar = -1;
         $output = [];
         @exec("which {$cmd} 2>/dev/null", $output, $returnVar);
+
         return $returnVar === 0;
     }
 }

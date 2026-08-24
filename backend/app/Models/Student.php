@@ -2,20 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\StudentPathway;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Student extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, HasUuids;
+    use HasFactory, HasUuids, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -38,43 +39,44 @@ class Student extends Model
         $userVal = null;
         if ($this->relationLoaded('user')) {
             $userVal = $this->user?->{$attribute};
-        } elseif (!\Illuminate\Database\Eloquent\Model::preventsLazyLoading()) {
+        } elseif (! Model::preventsLazyLoading()) {
             $userVal = $this->user?->{$attribute};
         }
+
         return $userVal ?? $this->attributes[$attribute] ?? null;
     }
 
-    protected function firstName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function firstName(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('first_name'),
         );
     }
 
-    protected function lastName(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function lastName(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('last_name'),
         );
     }
 
-    protected function email(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function email(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('email'),
         );
     }
 
-    protected function phone(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function phone(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('phone'),
         );
     }
 
-    protected function cin(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function cin(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('cin'),
         );
     }
@@ -109,7 +111,7 @@ class Student extends Model
         return $this->hasMany(StudentPathway::class);
     }
 
-    public function latestPathway(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function latestPathway(): HasOne
     {
         return $this->hasOne(StudentPathway::class)->latestOfMany();
     }
@@ -166,7 +168,7 @@ class Student extends Model
             return $this->where('id', (int) $value)->first();
         }
 
-        if (\Illuminate\Support\Str::isUuid($value)) {
+        if (Str::isUuid($value)) {
             return $this->where('uuid', $value)->first();
         }
 

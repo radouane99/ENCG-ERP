@@ -4,15 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AbsenceJustification;
-use App\Models\Assessment;
+use App\Models\Attendance;
+use App\Models\AuditLog;
 use App\Models\DocumentRequest;
+use App\Models\Exam;
 use App\Models\Filiere;
 use App\Models\Grade;
+use App\Models\Module;
 use App\Models\Professor;
+use App\Models\ProfessorDocumentRequest;
+use App\Models\Room;
 use App\Models\Student;
 use App\Models\StudentPathway;
-use App\Models\User;
 use App\Models\VacationContract;
+use App\Models\VacationPayment;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,7 +35,7 @@ class AdminDashboardController extends Controller
         // 1. Basic Counts
         $studentsQuery = Student::query();
         if ($filiereFilter && $filiereFilter !== 'all') {
-            $studentsQuery->whereHas('pathways', fn($q) => $q->where('filiere_id', $filiereFilter)->where('is_current', true));
+            $studentsQuery->whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereFilter)->where('is_current', true));
         }
         $studentsCount = $studentsQuery->count();
         if ($studentsCount === 0) {
@@ -45,12 +51,12 @@ class AdminDashboardController extends Controller
 
         // 2. Real Alerts Count
         $pendingStudentDocs = DocumentRequest::where('status', 'pending')->count();
-        $pendingProfDocs = \App\Models\ProfessorDocumentRequest::where('status', 'pending')->count();
+        $pendingProfDocs = ProfessorDocumentRequest::where('status', 'pending')->count();
         $pendingAbsences = AbsenceJustification::where('status', 'pending')->count();
         $alertsCount = $pendingStudentDocs + $pendingProfDocs + $pendingAbsences;
 
         // 3. Real At-Risk Students Count (e.g. absences >= 3 or low grades)
-        $atRiskCount = Student::whereHas('attendances', function($q) {
+        $atRiskCount = Student::whereHas('attendances', function ($q) {
             $q->where('status', 'absent');
         }, '>=', 3)->count();
         if ($atRiskCount === 0) {
@@ -58,8 +64,8 @@ class AdminDashboardController extends Controller
         }
 
         // 4. Real Attendance Rates
-        $totalAttendanceRecords = \App\Models\Attendance::count();
-        $presentRecords = \App\Models\Attendance::whereIn('status', ['present', 'late', 'justified'])->count();
+        $totalAttendanceRecords = Attendance::count();
+        $presentRecords = Attendance::whereIn('status', ['present', 'late', 'justified'])->count();
         $attendanceRate = $totalAttendanceRecords > 0 ? round(($presentRecords / $totalAttendanceRecords) * 100) : 88;
 
         // Attendance by day of current week
@@ -85,7 +91,7 @@ class AdminDashboardController extends Controller
                 $count = Student::where('filiere_id', $filiere->id)->count();
             }
             $filiereDistribution[] = [
-                'name'  => $filiere->code ?: $filiere->name,
+                'name' => $filiere->code ?: $filiere->name,
                 'count' => $count,
                 'color' => $palette[$index % count($palette)],
             ];
@@ -120,7 +126,7 @@ class AdminDashboardController extends Controller
         $pendingRequests = [];
 
         // Professor Requests
-        $profRequests = \App\Models\ProfessorDocumentRequest::with('user')
+        $profRequests = ProfessorDocumentRequest::with('user')
             ->where('status', 'pending')
             ->latest()
             ->take(5)
@@ -128,22 +134,22 @@ class AdminDashboardController extends Controller
 
         foreach ($profRequests as $pr) {
             $user = $pr->user;
-            $typeLabel = match($pr->document_type) {
-                'attestation_travail'  => 'Attestation de Travail',
-                'ordre_de_mission'     => 'Ordre de Mission',
-                'attestation_salaire'  => 'Attestation de Salaire',
+            $typeLabel = match ($pr->document_type) {
+                'attestation_travail' => 'Attestation de Travail',
+                'ordre_de_mission' => 'Ordre de Mission',
+                'attestation_salaire' => 'Attestation de Salaire',
                 'autorisation_absence' => 'Autorisation d\'Absence',
-                default                => ucwords(str_replace('_', ' ', $pr->document_type))
+                default => ucwords(str_replace('_', ' ', $pr->document_type))
             };
             $pendingRequests[] = [
-                'id'            => $pr->id,
-                'target_type'   => 'professor',
-                'name'          => $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant',
-                'filiere'       => 'DPT Économie & Gestion',
-                'docType'       => $typeLabel,
+                'id' => $pr->id,
+                'target_type' => 'professor',
+                'name' => $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant',
+                'filiere' => 'DPT Économie & Gestion',
+                'docType' => $typeLabel,
                 'tracking_code' => $pr->tracking_code,
-                'date'          => $pr->created_at->format('d/m/Y H:i'),
-                'time_ago'      => $pr->created_at->diffForHumans(),
+                'date' => $pr->created_at->format('d/m/Y H:i'),
+                'time_ago' => $pr->created_at->diffForHumans(),
             ];
         }
 
@@ -157,102 +163,104 @@ class AdminDashboardController extends Controller
         foreach ($studentRequests as $sr) {
             $sUser = $sr->student?->user;
             $pendingRequests[] = [
-                'id'            => $sr->id,
-                'target_type'   => 'student',
-                'name'          => $sUser ? "{$sUser->first_name} {$sUser->last_name}" : 'Étudiant',
-                'filiere'       => $sr->student?->filiere?->code ?? 'ENCG',
-                'docType'       => $sr->documentType?->name ?? 'Attestation de Scolarité',
+                'id' => $sr->id,
+                'target_type' => 'student',
+                'name' => $sUser ? "{$sUser->first_name} {$sUser->last_name}" : 'Étudiant',
+                'filiere' => $sr->student?->filiere?->code ?? 'ENCG',
+                'docType' => $sr->documentType?->name ?? 'Attestation de Scolarité',
                 'tracking_code' => $sr->tracking_number ?? "DOC-STU-{$sr->id}",
-                'date'          => $sr->created_at->format('d/m/Y H:i'),
-                'time_ago'      => $sr->created_at->diffForHumans(),
+                'date' => $sr->created_at->format('d/m/Y H:i'),
+                'time_ago' => $sr->created_at->diffForHumans(),
             ];
         }
 
         // 8. Real Exam Session & Room Metrics
-        $totalRooms = \App\Models\Room::count();
-        if ($totalRooms === 0) $totalRooms = 12;
+        $totalRooms = Room::count();
+        if ($totalRooms === 0) {
+            $totalRooms = 12;
+        }
 
-        $nextExam = \App\Models\Exam::where('exam_date', '>=', now()->toDateString())->orderBy('exam_date')->first();
-        $upcomingExamsCount = \App\Models\Exam::where('exam_date', '>=', now()->toDateString())->count();
-        
+        $nextExam = Exam::where('exam_date', '>=', now()->toDateString())->orderBy('exam_date')->first();
+        $upcomingExamsCount = Exam::where('exam_date', '>=', now()->toDateString())->count();
+
         $examStats = [
-            'upcomingCount'      => max($upcomingExamsCount, 4),
-            'nextExamDate'       => $nextExam ? \Carbon\Carbon::parse($nextExam->exam_date)->format('d/m/Y') : 'Prochainement',
-            'sessionTitle'       => 'Session Ordinaire Printemps · S2 / S4 / S6',
-            'countdown'          => $nextExam ? \Carbon\Carbon::parse($nextExam->exam_date)->diffForHumans() : 'Dans 4 jours',
-            'totalRooms'         => $totalRooms,
-            'validRooms'         => min($totalRooms, max(8, $totalRooms - 1)),
+            'upcomingCount' => max($upcomingExamsCount, 4),
+            'nextExamDate' => $nextExam ? Carbon::parse($nextExam->exam_date)->format('d/m/Y') : 'Prochainement',
+            'sessionTitle' => 'Session Ordinaire Printemps · S2 / S4 / S6',
+            'countdown' => $nextExam ? Carbon::parse($nextExam->exam_date)->diffForHumans() : 'Dans 4 jours',
+            'totalRooms' => $totalRooms,
+            'validRooms' => min($totalRooms, max(8, $totalRooms - 1)),
             'supervisorCoverage' => 96,
         ];
 
         // 9. Real Global Average Grade & System Indicators
-        $avgGrade = round(\App\Models\Grade::avg('value') ?? 13.8, 1);
-        $totalSignedDocs = \App\Models\ProfessorDocumentRequest::where('status', 'ready')->count()
+        $avgGrade = round(Grade::avg('value') ?? 13.8, 1);
+        $totalSignedDocs = ProfessorDocumentRequest::where('status', 'ready')->count()
             + DocumentRequest::where('status', 'ready')->count();
-        $activeModulesCount = \App\Models\Module::count();
+        $activeModulesCount = Module::count();
 
         // 10. Real Recent Activities Stream
         $recentActivities = [];
 
-        $latestProfDoc = \App\Models\ProfessorDocumentRequest::with('user')->latest()->first();
+        $latestProfDoc = ProfessorDocumentRequest::with('user')->latest()->first();
         if ($latestProfDoc) {
             $recentActivities[] = [
-                'type'    => 'doc',
+                'type' => 'doc',
                 'message' => "Nouvelle demande de {$latestProfDoc->document_type} (Pr. {$latestProfDoc->user?->last_name})",
-                'time'    => $latestProfDoc->created_at->diffForHumans(),
-                'icon'    => 'stamp',
+                'time' => $latestProfDoc->created_at->diffForHumans(),
+                'icon' => 'stamp',
             ];
         }
 
         $latestGrade = Grade::latest()->first();
         if ($latestGrade) {
             $recentActivities[] = [
-                'type'    => 'grade',
-                'message' => "Nouvelle note saisie enregistrée",
-                'time'    => $latestGrade->created_at->diffForHumans(),
-                'icon'    => 'file-edit',
+                'type' => 'grade',
+                'message' => 'Nouvelle note saisie enregistrée',
+                'time' => $latestGrade->created_at->diffForHumans(),
+                'icon' => 'file-edit',
             ];
         }
 
         $latestAbsence = AbsenceJustification::with('student.user')->latest()->first();
         if ($latestAbsence) {
             $recentActivities[] = [
-                'type'    => 'absence',
+                'type' => 'absence',
                 'message' => "Justificatif d'absence soumis par {$latestAbsence->student?->user?->last_name}",
-                'time'    => $latestAbsence->created_at->diffForHumans(),
-                'icon'    => 'alert-circle',
+                'time' => $latestAbsence->created_at->diffForHumans(),
+                'icon' => 'alert-circle',
             ];
         }
 
         $latestStudent = Student::with('user')->latest()->first();
         if ($latestStudent) {
             $recentActivities[] = [
-                'type'    => 'student',
+                'type' => 'student',
                 'message' => "Inscription validée pour {$latestStudent->user?->first_name} {$latestStudent->user?->last_name}",
-                'time'    => $latestStudent->created_at->diffForHumans(),
-                'icon'    => 'user-plus',
+                'time' => $latestStudent->created_at->diffForHumans(),
+                'icon' => 'user-plus',
             ];
         }
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'studentsCount'        => $studentsCount,
-                'professorsCount'      => $professorsCount,
-                'permanentsCount'      => $permanentsCount,
-                'vacatairesCount'      => $vacatairesCount,
-                'attendanceRate'       => $attendanceRate,
-                'atRiskCount'          => $atRiskCount,
-                'alertsCount'          => $alertsCount,
-                'filiereDistribution'  => $filiereDistribution,
-                'enrollmentData'       => $enrollmentData,
-                'attendanceByWeek'     => $attendanceByWeek,
-                'pendingRequests'      => $pendingRequests,
-                'examStats'            => $examStats,
-                'avgGrade'             => $avgGrade,
-                'totalSignedDocs'      => max($totalSignedDocs, 12),
-                'activeModulesCount'   => max($activeModulesCount, 24),
-                'recentActivities'     => $recentActivities,
+            'data' => [
+                'studentsCount' => $studentsCount,
+                'professorsCount' => $professorsCount,
+                'permanentsCount' => $permanentsCount,
+                'vacatairesCount' => $vacatairesCount,
+                'attendanceRate' => $attendanceRate,
+                'atRiskCount' => $atRiskCount,
+                'alertsCount' => $alertsCount,
+                'filiereDistribution' => $filiereDistribution,
+                'enrollmentData' => $enrollmentData,
+                'attendanceByWeek' => $attendanceByWeek,
+                'pendingRequests' => $pendingRequests,
+                'examStats' => $examStats,
+                'avgGrade' => $avgGrade,
+                'totalSignedDocs' => max($totalSignedDocs, 12),
+                'activeModulesCount' => max($activeModulesCount, 24),
+                'recentActivities' => $recentActivities,
             ],
         ]);
     }
@@ -262,20 +270,20 @@ class AdminDashboardController extends Controller
      */
     public function generateMinistryReport(Request $request): JsonResponse
     {
-        $totalStudents   = Student::count();
+        $totalStudents = Student::count();
         $totalProfessors = Professor::count();
         $ratio = $totalProfessors > 0 ? round($totalStudents / $totalProfessors, 1) : 0;
 
         return response()->json([
             'success' => true,
-            'report'  => [
-                'institution'          => 'École Nationale de Commerce et de Gestion - Fès',
-                'academic_year'        => '2025/2026',
-                'total_students'       => $totalStudents,
-                'total_professors'     => $totalProfessors,
+            'report' => [
+                'institution' => 'École Nationale de Commerce et de Gestion - Fès',
+                'academic_year' => '2025/2026',
+                'total_students' => $totalStudents,
+                'total_professors' => $totalProfessors,
                 'student_teacher_ratio' => "1:{$ratio}",
-                'audit_date'           => now()->format('d/m/Y H:i'),
-                'status'               => 'CONFORME_MESRSFC',
+                'audit_date' => now()->format('d/m/Y H:i'),
+                'status' => 'CONFORME_MESRSFC',
             ],
         ]);
     }
@@ -286,11 +294,11 @@ class AdminDashboardController extends Controller
     public function getFinanceStats(Request $request): JsonResponse
     {
         $studentsCount = Student::count();
-        
-        $vacationSum = (float) \App\Models\VacationPayment::sum('total_amount') 
-            + ((float) \App\Models\VacationContract::sum('hourly_rate') * 20);
 
-        $unpaidCount = \App\Models\AbsenceJustification::where('status', 'pending')->count();
+        $vacationSum = (float) VacationPayment::sum('total_amount')
+            + ((float) VacationContract::sum('hourly_rate') * 20);
+
+        $unpaidCount = AbsenceJustification::where('status', 'pending')->count();
         $unpaidAmount = $unpaidCount * 12500;
 
         $revenueSum = $studentsCount * 15000;
@@ -299,31 +307,31 @@ class AdminDashboardController extends Controller
         $realStudents = Student::with(['user', 'registrations.filiere'])->take(15)->get();
 
         $payments = $realStudents->map(function ($std, $idx) {
-            $name = $std->user?->name ?? (trim(($std->first_name ?? '') . ' ' . ($std->last_name ?? '')) ?: "Étudiant #{$std->id}");
+            $name = $std->user?->name ?? (trim(($std->first_name ?? '').' '.($std->last_name ?? '')) ?: "Étudiant #{$std->id}");
             $filiereCode = $std->registrations->first()?->filiere?->code ?? 'Master Exécutif';
             $isPaid = ($std->id % 2 === 0);
-            $isLate = ($std->id % 3 === 0 && !$isPaid);
+            $isLate = ($std->id % 3 === 0 && ! $isPaid);
             $status = $isPaid ? 'PAID' : ($isLate ? 'LATE' : 'PENDING');
 
             return [
-                'id'     => (string) $std->id,
-                'name'   => $name,
-                'type'   => "Formation Continue / {$filiereCode}",
-                'amount' => number_format(12500, 2) . ' MAD',
-                'date'   => $std->created_at ? $std->created_at->format('d/m/Y') : now()->subDays($idx)->format('d/m/Y'),
+                'id' => (string) $std->id,
+                'name' => $name,
+                'type' => "Formation Continue / {$filiereCode}",
+                'amount' => number_format(12500, 2).' MAD',
+                'date' => $std->created_at ? $std->created_at->format('d/m/Y') : now()->subDays($idx)->format('d/m/Y'),
                 'status' => $status,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'revenue_month'     => number_format($revenueSum, 0) . ' MAD',
-                'unpaid_amount'     => number_format($unpaidAmount, 0) . ' MAD',
-                'unpaid_count'      => $unpaidCount,
-                'club_budget'       => number_format($vacationSum, 0) . ' MAD',
-                'scholarship_total' => number_format($scholarshipSum, 0) . ' MAD',
-                'payments'          => $payments,
+            'data' => [
+                'revenue_month' => number_format($revenueSum, 0).' MAD',
+                'unpaid_amount' => number_format($unpaidAmount, 0).' MAD',
+                'unpaid_count' => $unpaidCount,
+                'club_budget' => number_format($vacationSum, 0).' MAD',
+                'scholarship_total' => number_format($scholarshipSum, 0).' MAD',
+                'payments' => $payments,
             ],
         ]);
     }
@@ -337,7 +345,7 @@ class AdminDashboardController extends Controller
         $currentUser = $request->user();
 
         // 1. Auto-seed realistic initial audit records if table is empty
-        if (\App\Models\AuditLog::count() === 0) {
+        if (AuditLog::count() === 0) {
             $sampleAudits = [
                 [
                     'user_name' => 'Pr. Abdelhak El Amrani',
@@ -426,98 +434,98 @@ class AdminDashboardController extends Controller
             ];
 
             foreach ($sampleAudits as $audit) {
-                \App\Models\AuditLog::record($audit);
+                AuditLog::record($audit);
             }
         }
 
         // 2. Fetch real audit logs from database
-        $dbLogs = \App\Models\AuditLog::latest('id')->take(50)->get();
+        $dbLogs = AuditLog::latest('id')->take(50)->get();
 
         if ($dbLogs->isNotEmpty()) {
             $formattedLogs = $dbLogs->map(function ($l) {
                 return [
-                    'id'          => 'LOG-' . str_pad((string) $l->id, 5, '0', STR_PAD_LEFT),
-                    'user'        => $l->user_name ?: ($l->user?->name ?? 'Utilisateur'),
-                    'email'       => $l->user_email ?: ($l->user?->email ?? 'N/A'),
-                    'role'        => $l->user_role ?: 'Staff',
-                    'action'      => $l->action,
-                    'type'        => $l->action_type ?: 'DATA_MUTATION',
+                    'id' => 'LOG-'.str_pad((string) $l->id, 5, '0', STR_PAD_LEFT),
+                    'user' => $l->user_name ?: ($l->user?->name ?? 'Utilisateur'),
+                    'email' => $l->user_email ?: ($l->user?->email ?? 'N/A'),
+                    'role' => $l->user_role ?: 'Staff',
+                    'action' => $l->action,
+                    'type' => $l->action_type ?: 'DATA_MUTATION',
                     'description' => $l->description,
-                    'ip'          => $l->ip_address,
-                    'userAgent'   => $l->user_agent,
-                    'date'        => $l->created_at ? $l->created_at->format('d/m/Y H:i:s') : now()->format('d/m/Y H:i:s'),
-                    'severity'    => $l->severity ?: 'info',
-                    'payload'     => $l->payload,
+                    'ip' => $l->ip_address,
+                    'userAgent' => $l->user_agent,
+                    'date' => $l->created_at ? $l->created_at->format('d/m/Y H:i:s') : now()->format('d/m/Y H:i:s'),
+                    'severity' => $l->severity ?: 'info',
+                    'payload' => $l->payload,
                     'sha256_hash' => $l->sha256_hash,
                 ];
             });
 
             return response()->json([
-                'success'                 => true,
-                'cndp_status'             => 'CONFORME_LOI_09_08',
+                'success' => true,
+                'cndp_status' => 'CONFORME_LOI_09_08',
                 'cndp_declaration_number' => 'D-W-2025/ENCG-FES-0908',
-                'total_logs_count'        => \App\Models\AuditLog::count(),
-                'hash_chain_integrity'   => 'VERIFIED_SHA256_CHAIN',
-                'data'                    => $formattedLogs,
+                'total_logs_count' => AuditLog::count(),
+                'hash_chain_integrity' => 'VERIFIED_SHA256_CHAIN',
+                'data' => $formattedLogs,
             ]);
         }
 
         // Fallback live session log
         $logs[] = [
-            'id'          => 'LOG-AUTH-LIVE-' . ($currentUser?->id ?? 0),
-            'user'        => $currentUser?->name ?? 'Admin',
-            'email'       => $currentUser?->email ?? 'admin@encg-fes.ma',
-            'role'        => 'Super Admin',
-            'action'      => 'Session Active (Loi 09-08)',
-            'type'        => 'AUTHENTICATION',
+            'id' => 'LOG-AUTH-LIVE-'.($currentUser?->id ?? 0),
+            'user' => $currentUser?->name ?? 'Admin',
+            'email' => $currentUser?->email ?? 'admin@encg-fes.ma',
+            'role' => 'Super Admin',
+            'action' => 'Session Active (Loi 09-08)',
+            'type' => 'AUTHENTICATION',
             'description' => 'Session active avec jeton Sanctum sur le portail ERP ENCG.',
-            'ip'          => $request->ip() ?: '127.0.0.1',
-            'date'        => now()->format('d/m/Y H:i:s'),
-            'severity'    => 'success',
-            'payload'     => ['auth_provider' => 'SANCTUM_BEARER', 'cndp_status' => 'CONFORME_LOI_09_08']
+            'ip' => $request->ip() ?: '127.0.0.1',
+            'date' => now()->format('d/m/Y H:i:s'),
+            'severity' => 'success',
+            'payload' => ['auth_provider' => 'SANCTUM_BEARER', 'cndp_status' => 'CONFORME_LOI_09_08'],
         ];
 
         // Dernières demandes de documents
         DocumentRequest::with('student.user')->latest()->take(6)->get()->each(function ($doc) use (&$logs, $request) {
             $logs[] = [
-                'id'          => 'LOG-DOC-' . $doc->id,
-                'user'        => $doc->student->user->name ?? 'Étudiant',
-                'email'       => $doc->student->user->email ?? 'N/A',
-                'role'        => 'Étudiant',
-                'action'      => 'Demande de document',
-                'type'        => 'DATA_ACCESS',
-                'description' => "Demande de {$doc->document_type} — Statut : " . strtoupper($doc->status),
-                'ip'          => $request->ip() ?: '192.168.1.45',
-                'date'        => $doc->created_at->format('d/m/Y H:i:s'),
-                'severity'    => 'info',
-                'payload'     => ['document_id' => $doc->id, 'type' => $doc->document_type, 'status' => $doc->status]
+                'id' => 'LOG-DOC-'.$doc->id,
+                'user' => $doc->student->user->name ?? 'Étudiant',
+                'email' => $doc->student->user->email ?? 'N/A',
+                'role' => 'Étudiant',
+                'action' => 'Demande de document',
+                'type' => 'DATA_ACCESS',
+                'description' => "Demande de {$doc->document_type} — Statut : ".strtoupper($doc->status),
+                'ip' => $request->ip() ?: '192.168.1.45',
+                'date' => $doc->created_at->format('d/m/Y H:i:s'),
+                'severity' => 'info',
+                'payload' => ['document_id' => $doc->id, 'type' => $doc->document_type, 'status' => $doc->status],
             ];
         });
 
         // Dernières notes saisies
         Grade::with('student.user')->latest()->take(4)->get()->each(function ($grade) use (&$logs, $request) {
             $logs[] = [
-                'id'          => 'LOG-GRD-' . $grade->id,
-                'user'        => 'Prof. Département ENCG',
-                'email'       => 'professeur@encg-fes.ma',
-                'role'        => 'Enseignant',
-                'action'      => 'Saisie de note',
-                'type'        => 'GRADE_MUTATION',
+                'id' => 'LOG-GRD-'.$grade->id,
+                'user' => 'Prof. Département ENCG',
+                'email' => 'professeur@encg-fes.ma',
+                'role' => 'Enseignant',
+                'action' => 'Saisie de note',
+                'type' => 'GRADE_MUTATION',
                 'description' => "Note saisie pour {$grade->student->user->name} : {$grade->value}/20",
-                'ip'          => $request->ip() ?: '192.168.1.88',
-                'date'        => $grade->created_at->format('d/m/Y H:i:s'),
-                'severity'    => 'success',
-                'payload'     => ['student_id' => $grade->student_id, 'note' => $grade->value, 'locked' => true]
+                'ip' => $request->ip() ?: '192.168.1.88',
+                'date' => $grade->created_at->format('d/m/Y H:i:s'),
+                'severity' => 'success',
+                'payload' => ['student_id' => $grade->student_id, 'note' => $grade->value, 'locked' => true],
             ];
         });
 
         return response()->json([
-            'success'                 => true,
-            'cndp_status'             => 'CONFORME_LOI_09_08',
+            'success' => true,
+            'cndp_status' => 'CONFORME_LOI_09_08',
             'cndp_declaration_number' => 'D-W-2025/ENCG-FES-0908',
-            'total_logs_count'        => count($logs),
-            'hash_chain_integrity'   => 'VERIFIED_SHA256_CHAIN',
-            'data'                    => $logs,
+            'total_logs_count' => count($logs),
+            'hash_chain_integrity' => 'VERIFIED_SHA256_CHAIN',
+            'data' => $logs,
         ]);
     }
 }

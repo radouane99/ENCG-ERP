@@ -11,6 +11,7 @@ class ReservisteRetakeNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $student;
+
     public $debtModules;
 
     /**
@@ -28,7 +29,7 @@ class ReservisteRetakeNotificationMail extends Mailable
     public function build()
     {
         return $this->from(config('mail.from.address', 'no-reply@benadadarentcar.com'), config('mail.from.name', 'ENCG Portail'))
-                    ->subject('▶ Convocation & Notification pour Examen des Dettes — ENCG')
-                    ->view('emails.reserviste_retake');
+            ->subject('▶ Convocation & Notification pour Examen des Dettes — ENCG')
+            ->view('emails.reserviste_retake');
     }
 }

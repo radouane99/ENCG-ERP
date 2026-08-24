@@ -16,11 +16,11 @@ class AcademicYear extends Model
     protected function casts(): array
     {
         return [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'is_current' => 'boolean',
-        'is_locked' => 'boolean',
-    ];
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'is_current' => 'boolean',
+            'is_locked' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo

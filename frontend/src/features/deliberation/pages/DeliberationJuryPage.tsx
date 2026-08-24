@@ -22,6 +22,17 @@ export default function DeliberationJuryPage() {
     }
   });
 
+  const sealed = Boolean(data?.is_sealed || data?.deliberation?.is_sealed);
+
+  const { data: aiBrief } = useQuery({
+    queryKey: ['deliberation-ai-brief', id],
+    enabled: Boolean(id) && Boolean(data) && !sealed,
+    queryFn: async () => {
+      const res = await api.get(`/admin/academic/deliberations/${id}/ai-brief`);
+      return res.data;
+    }
+  });
+
   const applyRachatMutation = useMutation({
     mutationFn: async (payload: any) => {
       return await api.post(`/admin/academic/deliberations/${id}/rachat`, payload);
@@ -88,6 +99,15 @@ export default function DeliberationJuryPage() {
             <Download className="w-4 h-4"/> Générer PV (PDF)
           </button>
         </div>
+      </div>
+
+      <div data-testid="ai-jury-brief" className={cn('rounded-xl border p-4', sealed ? 'opacity-50' : 'bg-indigo-50/80 border-indigo-100')}>
+        <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Brief IA (lecture seule)</p>
+        {sealed ? (
+          <p className="text-sm mt-1">PV scellé — le brief IA est désactivé.</p>
+        ) : (
+          <p className="text-sm mt-1 text-slate-700">{aiBrief?.text_fr || 'Chargement du brief…'}</p>
+        )}
       </div>
 
       {/* Matrice */}

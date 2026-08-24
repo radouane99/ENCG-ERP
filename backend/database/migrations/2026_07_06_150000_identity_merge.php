@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -47,21 +47,41 @@ return new class extends Migration
         Schema::table('students', function (Blueprint $table) {
             // 1. مسح الـ Index أولاً باش نتفاداو خطأ SQLite
             $table->dropIndex('students_last_name_first_name_index');
-            
+
             // 2. عاد نمسحو الأعمدة بأمان
-            if (Schema::hasColumn('students', 'first_name')) $table->dropColumn('first_name');
-            if (Schema::hasColumn('students', 'last_name')) $table->dropColumn('last_name');
-            if (Schema::hasColumn('students', 'cin')) $table->dropColumn('cin');
-            if (Schema::hasColumn('students', 'phone')) $table->dropColumn('phone');
-            if (Schema::hasColumn('students', 'photo_path')) $table->dropColumn('photo_path');
+            if (Schema::hasColumn('students', 'first_name')) {
+                $table->dropColumn('first_name');
+            }
+            if (Schema::hasColumn('students', 'last_name')) {
+                $table->dropColumn('last_name');
+            }
+            if (Schema::hasColumn('students', 'cin')) {
+                $table->dropColumn('cin');
+            }
+            if (Schema::hasColumn('students', 'phone')) {
+                $table->dropColumn('phone');
+            }
+            if (Schema::hasColumn('students', 'photo_path')) {
+                $table->dropColumn('photo_path');
+            }
         });
 
         Schema::table('professors', function (Blueprint $table) {
-            if (Schema::hasColumn('professors', 'first_name')) $table->dropColumn('first_name');
-            if (Schema::hasColumn('professors', 'last_name')) $table->dropColumn('last_name');
-            if (Schema::hasColumn('professors', 'cin')) $table->dropColumn('cin');
-            if (Schema::hasColumn('professors', 'phone')) $table->dropColumn('phone');
-            if (Schema::hasColumn('professors', 'photo_path')) $table->dropColumn('photo_path');
+            if (Schema::hasColumn('professors', 'first_name')) {
+                $table->dropColumn('first_name');
+            }
+            if (Schema::hasColumn('professors', 'last_name')) {
+                $table->dropColumn('last_name');
+            }
+            if (Schema::hasColumn('professors', 'cin')) {
+                $table->dropColumn('cin');
+            }
+            if (Schema::hasColumn('professors', 'phone')) {
+                $table->dropColumn('phone');
+            }
+            if (Schema::hasColumn('professors', 'photo_path')) {
+                $table->dropColumn('photo_path');
+            }
         });
     }
 

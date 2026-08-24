@@ -26,7 +26,7 @@ class ModuleService
                 'id' => $module->id,
                 'code' => $module->code,
                 'name' => $module->name,
-                'semester' => 'S' . $module->semester_number,
+                'semester' => 'S'.$module->semester_number,
                 'coefficient' => $module->coefficient,
                 'filiere' => $module->filiere ? $module->filiere->code : 'TC',
                 'professor' => DB::table('module_professor')
@@ -63,6 +63,7 @@ class ModuleService
     public function updateModule(Module $module, array $data): Module
     {
         $module->update($data);
+
         return $module;
     }
 }

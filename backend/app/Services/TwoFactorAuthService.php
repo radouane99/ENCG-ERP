@@ -3,15 +3,15 @@
 namespace App\Services;
 
 use App\Models\User;
-use PragmaRX\Google2FA\Google2FA;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorAuthService
 {
     public function __construct(
-        private Google2FA $google2fa = new Google2FA()
+        private Google2FA $google2fa = new Google2FA
     ) {}
 
     /**
@@ -19,13 +19,13 @@ class TwoFactorAuthService
      */
     public function generateSetupData(User $user): array
     {
-        $secret        = $this->google2fa->generateSecretKey();
+        $secret = $this->google2fa->generateSecretKey();
         $recoveryCodes = $this->generateRecoveryCodes();
 
         $user->forceFill([
-            'two_factor_secret'          => encrypt($secret),
-            'two_factor_recovery_codes'  => encrypt(json_encode($recoveryCodes)),
-            'two_factor_confirmed_at'    => null,
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
+            'two_factor_confirmed_at' => null,
         ])->save();
 
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
@@ -35,8 +35,8 @@ class TwoFactorAuthService
         );
 
         return [
-            'qr_code_url'    => $qrCodeUrl,
-            'secret'         => $secret,
+            'qr_code_url' => $qrCodeUrl,
+            'secret' => $secret,
             'recovery_codes' => $recoveryCodes,
         ];
     }
@@ -46,7 +46,7 @@ class TwoFactorAuthService
      */
     public function confirmAndEnable(User $user, string $code): bool
     {
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return false;
         }
 
@@ -54,13 +54,13 @@ class TwoFactorAuthService
 
         if ($valid) {
             $user->update([
-                'two_factor_enabled'       => true,
-                'two_factor_confirmed_at'  => now(),
+                'two_factor_enabled' => true,
+                'two_factor_confirmed_at' => now(),
             ]);
         }
 
         Log::info('2FA Confirmation', [
-            'user'  => $user->email,
+            'user' => $user->email,
             'valid' => $valid,
         ]);
 
@@ -72,7 +72,7 @@ class TwoFactorAuthService
      */
     public function verify(User $user, string $code): bool
     {
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return false;
         }
 
@@ -91,10 +91,10 @@ class TwoFactorAuthService
     public function disable(User $user): void
     {
         $user->forceFill([
-            'two_factor_enabled'         => false,
-            'two_factor_secret'          => null,
-            'two_factor_recovery_codes'  => null,
-            'two_factor_confirmed_at'    => null,
+            'two_factor_enabled' => false,
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
         ])->save();
     }
 
@@ -112,9 +112,11 @@ class TwoFactorAuthService
 
         try {
             $secret = $this->getDecryptedSecret($user);
+
             return $secret && $this->google2fa->verifyKey($secret, $cleanCode, 20);
         } catch (\Exception $e) {
-            Log::warning('Erreur vérification 2FA: ' . $e->getMessage());
+            Log::warning('Erreur vérification 2FA: '.$e->getMessage());
+
             return false;
         }
     }
@@ -124,11 +126,11 @@ class TwoFactorAuthService
      */
     private function verifyRecoveryCode(User $user, string $code): bool
     {
-        if (!$user->two_factor_recovery_codes) {
+        if (! $user->two_factor_recovery_codes) {
             return false;
         }
 
-        $codes          = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $codes = json_decode(decrypt($user->two_factor_recovery_codes), true);
         $normalizedCode = str_replace('-', '', strtoupper(trim($code)));
 
         foreach ($codes as $index => $storedCode) {
@@ -137,6 +139,7 @@ class TwoFactorAuthService
                 $user->update([
                     'two_factor_recovery_codes' => encrypt(json_encode(array_values($codes))),
                 ]);
+
                 return true;
             }
         }
@@ -149,7 +152,7 @@ class TwoFactorAuthService
      */
     private function getDecryptedSecret(User $user): ?string
     {
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return null;
         }
 
@@ -174,6 +177,6 @@ class TwoFactorAuthService
      */
     private function generateRecoveryCodes(int $count = 8): array
     {
-        return Collection::times($count, fn() => strtoupper(Str::random(5) . '-' . Str::random(5)))->toArray();
+        return Collection::times($count, fn () => strtoupper(Str::random(5).'-'.Str::random(5)))->toArray();
     }
 }

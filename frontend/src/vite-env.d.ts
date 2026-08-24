@@ -14,3 +14,5 @@ interface ImportMetaEnv {
 interface Window {
   Pusher: any;
 }
+
+declare module '@sentry/react';

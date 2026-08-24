@@ -3,7 +3,6 @@
 namespace App\Services\Analytics;
 
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class PredictiveAnalyticsService
 {
@@ -53,7 +52,7 @@ class PredictiveAnalyticsService
             // Max Risk Score = 100
             // 5 absences = 50 points (10 pts per absence)
             // CC Average below 10 = adds risk.
-            
+
             $riskScore = 0;
             $riskFactors = [];
 
@@ -72,9 +71,9 @@ class PredictiveAnalyticsService
                 $deficit = 10 - $studentCCAvg;
                 $gradeRisk = min(50, $deficit * 10);
                 $riskScore += $gradeRisk;
-                
+
                 if ($studentCCAvg < 8) {
-                    $riskFactors[] = "Lacunes critiques en CC (Moyenne: " . round($studentCCAvg, 2) . "/20)";
+                    $riskFactors[] = 'Lacunes critiques en CC (Moyenne: '.round($studentCCAvg, 2).'/20)';
                 }
             }
 
@@ -89,19 +88,19 @@ class PredictiveAnalyticsService
                     'absences' => $studentAbsences,
                     'cc_average' => $studentCCAvg ? round($studentCCAvg, 2) : 'N/A',
                     'risk_factors' => $riskFactors,
-                    'category' => $riskScore >= 80 ? 'CRITICAL' : 'WARNING'
+                    'category' => $riskScore >= 80 ? 'CRITICAL' : 'WARNING',
                 ];
             }
         }
 
         // Sort by risk score descending
-        usort($atRiskList, fn($a, $b) => $b['risk_score'] <=> $a['risk_score']);
+        usort($atRiskList, fn ($a, $b) => $b['risk_score'] <=> $a['risk_score']);
 
         return [
             'total_analyzed' => $students->count(),
             'total_at_risk' => count($atRiskList),
             'critical_count' => collect($atRiskList)->where('category', 'CRITICAL')->count(),
-            'students' => array_slice($atRiskList, 0, 50) // Return top 50
+            'students' => array_slice($atRiskList, 0, 50), // Return top 50
         ];
     }
 }

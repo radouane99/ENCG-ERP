@@ -2,12 +2,12 @@
 
 namespace App\Mail;
 
+use App\Domain\Student\Models\Student;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Domain\Student\Models\Student;
 
 /**
  * Email sent when reinscription opens for a student (Recommendation #4).
@@ -18,17 +18,19 @@ class ReinscriptionOuverteMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $studentName;
+
     public string $cne;
-    public bool   $isReminder;
+
+    public bool $isReminder;
 
     public function __construct(
         public readonly Student $student,
         public readonly string $academicYear,
         bool $isReminder = false
     ) {
-        $this->studentName = strtoupper($student->last_name) . ' ' . $student->first_name;
-        $this->cne         = $student->cne ?? '';
-        $this->isReminder  = $isReminder;
+        $this->studentName = strtoupper($student->last_name).' '.$student->first_name;
+        $this->cne = $student->cne ?? '';
+        $this->isReminder = $isReminder;
     }
 
     public function envelope(): Envelope

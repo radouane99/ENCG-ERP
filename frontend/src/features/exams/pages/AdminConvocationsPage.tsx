@@ -407,12 +407,22 @@ export default function AdminConvocationsPage() {
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <button
-              onClick={() => {
-                toast.success("📲 Relance WhatsApp expédiée ! 142 étudiants ont reçu la convocation sur leur numéro WhatsApp mobile.");
+              onClick={async () => {
+                const sessionId = selectedSessionId || sessions?.[0]?.id
+                if (!sessionId) {
+                  toast.error('Sélectionnez une session d’examens.')
+                  return
+                }
+                try {
+                  const res = await examsApi.sendCampusSms(sessionId)
+                  toast.success(res.message || `${res.sent ?? 0} SMS convocation journalisés.`)
+                } catch (err: any) {
+                  toast.error(err.response?.data?.message || 'Échec de l’envoi SMS.')
+                }
               }}
               className="px-5 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer transition-all"
             >
-              <MessageCircle className="w-4 h-4 text-amber-300" /> RELANCE WHATSAPP
+              <MessageCircle className="w-4 h-4 text-amber-300" /> SMS CONVOCATION
             </button>
             <button
               onClick={() => setFlashAlertModalOpen(true)}

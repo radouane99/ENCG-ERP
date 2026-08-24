@@ -4,16 +4,19 @@ namespace App\Exports;
 
 use App\Models\Professor;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProfessorsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
+class ProfessorsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
-    public function title(): string { return 'Professeurs'; }
+    public function title(): string
+    {
+        return 'Professeurs';
+    }
 
     public function collection()
     {
@@ -25,7 +28,7 @@ class ProfessorsExport implements FromCollection, WithHeadings, WithMapping, Wit
         return [
             'Nom', 'Prénom', 'Email', 'Téléphone',
             'CIN', 'Grade', 'Spécialité', 'Département',
-            'Date de Recrutement', 'Statut'
+            'Date de Recrutement', 'Statut',
         ];
     }
 

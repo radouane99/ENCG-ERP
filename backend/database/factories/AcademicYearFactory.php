@@ -16,13 +16,13 @@ class AcademicYearFactory extends Factory
 
         return [
             'institution_id' => 1,
-            'label'          => "{$startYear}/{$endYear}",
-            'start_year'     => $startYear,
-            'end_year'       => $endYear,
-            'start_date'     => "{$startYear}-09-01",
-            'end_date'       => "{$endYear}-06-30",
-            'is_current'     => false,
-            'is_locked'      => false,
+            'label' => "{$startYear}/{$endYear}",
+            'start_year' => $startYear,
+            'end_year' => $endYear,
+            'start_date' => "{$startYear}-09-01",
+            'end_date' => "{$endYear}-06-30",
+            'is_current' => false,
+            'is_locked' => false,
         ];
     }
 }

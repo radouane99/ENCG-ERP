@@ -19,9 +19,9 @@ class StrictIpWhitelisting
         }
 
         $whitelistedIps = config("security.whitelisted_ips.{$module}", []);
-        $clientIp       = $request->ip();
+        $clientIp = $request->ip();
 
-        if (!in_array($clientIp, $whitelistedIps, true)) {
+        if (! in_array($clientIp, $whitelistedIps, true)) {
             Log::warning("Accès non autorisé — IP {$clientIp} — Module {$module}");
 
             return response()->json([

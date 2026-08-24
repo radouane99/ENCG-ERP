@@ -18,7 +18,7 @@ class ConflictResolutionService
     public function validateAndSuggestMove(int $scheduleId, int $newDay, string $newStart, string $newEnd, int $newRoomId): array
     {
         $schedule = Schedule::find($scheduleId);
-        if (!$schedule) {
+        if (! $schedule) {
             return ['success' => false, 'message' => 'Créneau introuvable.'];
         }
 
@@ -27,8 +27,8 @@ class ConflictResolutionService
         }
 
         return [
-            'success'     => false,
-            'message'     => 'Conflit détecté (salle, professeur ou groupe non disponible).',
+            'success' => false,
+            'message' => 'Conflit détecté (salle, professeur ou groupe non disponible).',
             'suggestions' => $this->findAlternatives($schedule, $newDay, $newStart, $newEnd),
         ];
     }
@@ -38,7 +38,7 @@ class ConflictResolutionService
      */
     private function findAlternatives(Schedule $schedule, int $desiredDay, string $desiredStart, string $desiredEnd): array
     {
-        $suggestions   = [];
+        $suggestions = [];
         $groupCapacity = Group::where('id', $schedule->group_id)->value('capacity') ?? 0;
 
         $rooms = Room::where('institution_id', $schedule->institution_id)
@@ -50,14 +50,16 @@ class ConflictResolutionService
         foreach ($rooms as $room) {
             if ($this->engine->isSlotFree($desiredDay, $desiredStart, $desiredEnd, $room->id, $schedule->professor_id, $schedule->group_id, $schedule->academic_year_id, $schedule->id)) {
                 $suggestions[] = [
-                    'day'        => $desiredDay,
+                    'day' => $desiredDay,
                     'start_time' => $desiredStart,
-                    'end_time'   => $desiredEnd,
-                    'room_id'    => $room->id,
-                    'room_name'  => $room->name,
-                    'type'       => 'same_time_different_room',
+                    'end_time' => $desiredEnd,
+                    'room_id' => $room->id,
+                    'room_name' => $room->name,
+                    'type' => 'same_time_different_room',
                 ];
-                if (count($suggestions) >= 2) break;
+                if (count($suggestions) >= 2) {
+                    break;
+                }
             }
         }
 

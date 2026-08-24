@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 class CalendarController extends Controller
 {
-    public function __construct(private CalendarService $calendarService)
-    {
-    }
+    public function __construct(private CalendarService $calendarService) {}
 
     public function getEvents(Request $request)
     {
@@ -27,19 +25,21 @@ class CalendarController extends Controller
 
         if ($user->hasRole('student')) {
             $student = $user->student;
-            if (!$student) {
+            if (! $student) {
                 return response()->json([]);
             }
             $events = $this->calendarService->getStudentEvents($student->id, $startDate, $endDate);
+
             return response()->json($events);
         }
 
         if ($user->hasRole('professor')) {
             $professor = $user->professor;
-            if (!$professor) {
+            if (! $professor) {
                 return response()->json([]);
             }
             $events = $this->calendarService->getProfessorEvents($professor->id, $startDate, $endDate);
+
             return response()->json($events);
         }
 
@@ -57,18 +57,19 @@ class CalendarController extends Controller
         ]);
 
         // Only admins can move events
-        if (!$request->user()->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty()) {
+        if (! $request->user()->roles->pluck('name')->intersect(['admin', 'super-admin', 'super_admin', 'institution-admin'])->isNotEmpty()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-
         $eventId = $request->input('event_id');
-        
+
         // Parse event ID (e.g. "schedule_15_2026-07-06" or "makeup_12")
         if (str_starts_with($eventId, 'schedule_')) {
             $parts = explode('_', $eventId);
-            if (count($parts) < 3) return response()->json(['message' => 'Invalid event ID'], 400);
-            
+            if (count($parts) < 3) {
+                return response()->json(['message' => 'Invalid event ID'], 400);
+            }
+
             $scheduleId = $parts[1];
             $originalDate = $request->input('old_date');
 
@@ -94,7 +95,7 @@ class CalendarController extends Controller
             $parts = explode('_', $eventId);
             $makeupId = $parts[1];
             $change = ScheduleChange::findOrFail($makeupId);
-            
+
             $change->update([
                 'new_date' => $request->input('new_date'),
                 'new_start_time' => $request->input('new_start_time'),

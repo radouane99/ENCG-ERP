@@ -2,8 +2,6 @@
 
 namespace App\Services\Core;
 
-use Illuminate\Support\Facades\Log;
-
 class DocumentOcrAuditorService
 {
     /**
@@ -13,7 +11,7 @@ class DocumentOcrAuditorService
     {
         $declaredCne = strtoupper(trim($candidateData['cne'] ?? ''));
         $declaredCin = strtoupper(trim($candidateData['cin'] ?? ''));
-        $declaredName = strtoupper(trim(($candidateData['last_name'] ?? '') . ' ' . ($candidateData['first_name'] ?? '')));
+        $declaredName = strtoupper(trim(($candidateData['last_name'] ?? '').' '.($candidateData['first_name'] ?? '')));
         $declaredGrade = floatval($candidateData['bac_average'] ?? 16.63);
 
         // Itemized Verification Statuses
@@ -33,7 +31,7 @@ class DocumentOcrAuditorService
 
         $releveStatus = [
             'status' => 'verified',
-            'badge' => '🟢 Relevé de Notes Conforme (Moyenne Générale ' . number_format($declaredGrade, 2) . '/20 certifiée par IA)',
+            'badge' => '🟢 Relevé de Notes Conforme (Moyenne Générale '.number_format($declaredGrade, 2).'/20 certifiée par IA)',
             'grade_match' => true,
             'declared_grade' => $declaredGrade,
             'detected_grade' => $declaredGrade,

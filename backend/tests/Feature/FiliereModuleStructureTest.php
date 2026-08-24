@@ -4,9 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\Department;
-use App\Models\Filiere;
 use App\Models\Group;
-use App\Models\Module;
 use App\Models\Semester;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +15,7 @@ class FiliereModuleStructureTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private AcademicYear $academicYear;
 
     protected function setUp(): void
@@ -34,14 +33,14 @@ class FiliereModuleStructureTest extends TestCase
     {
         $department = Department::create([
             'institution_id' => 1,
-            'name'           => 'Département Gestion Financière & Comptable',
-            'code'           => 'GFC',
+            'name' => 'Département Gestion Financière & Comptable',
+            'code' => 'GFC',
         ]);
 
         $filiere = $this->makeTestFiliere([
-            'name'           => 'Audit et Contrôle de Gestion',
-            'code'           => 'ACG',
-            'department_id'  => $department->id,
+            'name' => 'Audit et Contrôle de Gestion',
+            'code' => 'ACG',
+            'department_id' => $department->id,
             'duration_years' => 5,
         ]);
 
@@ -59,7 +58,7 @@ class FiliereModuleStructureTest extends TestCase
     {
         for ($i = 1; $i <= 10; $i++) {
             $this->makeTestSemester($this->academicYear->id, [
-                'name'   => "Semestre {$i}",
+                'name' => "Semestre {$i}",
                 'number' => $i,
             ]);
         }
@@ -74,15 +73,15 @@ class FiliereModuleStructureTest extends TestCase
     {
         $filiere = $this->makeTestFiliere(['name' => 'Management', 'code' => 'MGT']);
         $semester = $this->makeTestSemester($this->academicYear->id, [
-            'name'   => 'Semestre 1',
+            'name' => 'Semestre 1',
             'number' => 1,
         ]);
 
         $module = $this->makeTestModule($filiere->id, [
-            'name'            => 'Comptabilité Générale I',
-            'code'            => 'M101',
+            'name' => 'Comptabilité Générale I',
+            'code' => 'M101',
             'semester_number' => 1,
-            'credit_hours'    => 48,
+            'credit_hours' => 48,
         ]);
 
         $this->assertDatabaseHas('modules', [
@@ -98,21 +97,21 @@ class FiliereModuleStructureTest extends TestCase
     public function test_can_create_groups_per_semester_and_filiere(): void
     {
         $filiere = $this->makeTestFiliere(['name' => 'Tronc Commun', 'code' => 'TC']);
-        
+
         $group1 = Group::create([
             'academic_year_id' => $this->academicYear->id,
-            'filiere_id'       => $filiere->id,
-            'semester_number'  => 1,
-            'name'             => 'Groupe 1 (S1)',
-            'capacity'         => 60,
+            'filiere_id' => $filiere->id,
+            'semester_number' => 1,
+            'name' => 'Groupe 1 (S1)',
+            'capacity' => 60,
         ]);
 
         $group2 = Group::create([
             'academic_year_id' => $this->academicYear->id,
-            'filiere_id'       => $filiere->id,
-            'semester_number'  => 1,
-            'name'             => 'Groupe 2 (S1)',
-            'capacity'         => 60,
+            'filiere_id' => $filiere->id,
+            'semester_number' => 1,
+            'name' => 'Groupe 2 (S1)',
+            'capacity' => 60,
         ]);
 
         $this->assertDatabaseHas('groups', ['name' => 'Groupe 1 (S1)']);

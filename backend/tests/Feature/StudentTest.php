@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
@@ -12,7 +13,7 @@ use Spatie\Permission\PermissionRegistrar;
 
 function ensureInstitution()
 {
-    \App\Models\Institution::firstOrCreate(
+    Institution::firstOrCreate(
         ['id' => 1],
         ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
@@ -38,6 +39,7 @@ function makeAdminUser(): User
         $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
     $user->givePermissionTo($permModels);
+
     return $user;
 }
 
@@ -45,6 +47,7 @@ function makeRestrictedUser(): User
 {
     ensureInstitution();
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
     return User::factory()->create();
 }
 
@@ -84,19 +87,17 @@ it('creates a student with valid data', function () {
     $user = makeAdminUser();
 
     $payload = [
-        'first_name'    => 'Amine',
-        'last_name'     => 'Benchekroun',
-        'email'         => 'amine.bench@encg-test.ma',
-        'cne'           => 'AB123456',
-        'gender'        => 'male',
-        'status'        => 'active',
+        'first_name' => 'Amine',
+        'last_name' => 'Benchekroun',
+        'email' => 'amine.bench@encg-test.ma',
+        'cne' => 'AB123456',
+        'gender' => 'male',
+        'status' => 'active',
     ];
 
-    $this->withoutExceptionHandling();
     $response = $this->actingAs($user, 'sanctum')
         ->postJson('/api/students', $payload);
 
-    $response->dump();
     $response->assertStatus(201)
         ->assertJsonPath('message', 'Étudiant créé avec succès.');
 });
@@ -117,11 +118,11 @@ it('returns 422 when email is already taken on store', function () {
 
     $payload = [
         'first_name' => 'Test',
-        'last_name'  => 'User',
-        'email'      => 'taken@test.ma',
-        'cne'        => 'XX999999',
-        'gender'     => 'male',
-        'status'     => 'active',
+        'last_name' => 'User',
+        'email' => 'taken@test.ma',
+        'cne' => 'XX999999',
+        'gender' => 'male',
+        'status' => 'active',
     ];
 
     $response = $this->actingAs($user, 'sanctum')
@@ -137,11 +138,11 @@ it('returns 403 when creating student without permission', function () {
     $response = $this->actingAs($user, 'sanctum')
         ->postJson('/api/students', [
             'first_name' => 'Amine',
-            'last_name'  => 'Test',
-            'email'      => 'test@test.ma',
-            'cne'        => 'AB999999',
-            'gender'     => 'male',
-            'status'     => 'active',
+            'last_name' => 'Test',
+            'email' => 'test@test.ma',
+            'cne' => 'AB999999',
+            'gender' => 'male',
+            'status' => 'active',
         ]);
 
     $response->assertStatus(403);

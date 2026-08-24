@@ -16,9 +16,9 @@ class Filiere extends Model
     protected function casts(): array
     {
         return [
-        'accreditation_expiry' => 'date',
-        'is_active' => 'boolean',
-    ];
+            'accreditation_expiry' => 'date',
+            'is_active' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo
@@ -29,6 +29,11 @@ class Filiere extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function requiresTuitionPayment(): bool
+    {
+        return \App\Domain\Deliberation\LmdRules::filiereRequiresPayment($this->type ?? null);
     }
 
     public function specialities(): HasMany

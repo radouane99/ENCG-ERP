@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\artisan;
-use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 
 it('requires authentication to create a DSAR export request', function () {

@@ -4,6 +4,8 @@ import { useAuthStore } from '@stores/authStore';
 import { gradesApi } from '@shared/api/grades';
 import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { decisionFromScore, decisionLabel } from '@shared/lib/lmd';
+import LmdLegend from '@shared/components/academic/LmdLegend';
 function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, delay: number) {
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -141,6 +143,7 @@ export default function GradeEntry() {
         </div>
       </div>
 
+      <LmdLegend />
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
@@ -199,14 +202,20 @@ export default function GradeEntry() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-center">
-                  <span className={cn(
-                    "inline-flex px-3 py-1 rounded-full text-[10px] font-bold",
-                    st.status === 'Validée' ? "bg-emerald-50 text-emerald-600" :
-                    st.status === 'Saisie en cours' ? "bg-amber-50 text-amber-600" :
-                    "bg-slate-100 text-slate-500"
-                  )}>
-                    {st.status}
-                  </span>
+                  {(() => {
+                    const code = decisionFromScore(st.average)
+                    return (
+                      <span className={cn(
+                        "inline-flex px-3 py-1 rounded-full text-[10px] font-bold",
+                        code === 'V' ? "bg-emerald-50 text-emerald-600" :
+                        code === 'RAT' ? "bg-amber-50 text-amber-600" :
+                        code === 'NV' ? "bg-rose-50 text-rose-600" :
+                        "bg-slate-100 text-slate-500"
+                      )}>
+                        {code ? decisionLabel(code) : (st.status || '—')}
+                      </span>
+                    )
+                  })()}
                 </td>
               </tr>
             ))}

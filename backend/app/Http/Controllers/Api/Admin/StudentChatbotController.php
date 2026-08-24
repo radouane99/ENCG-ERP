@@ -30,27 +30,27 @@ class StudentChatbotController extends Controller
         ]);
 
         $userMessage = $request->input('message');
-        $userId      = auth()->id();
-        $context     = $this->buildRealDbContext($userId);
+        $userId = auth()->id();
+        $context = $this->buildRealDbContext($userId);
 
         $systemInstructions = [
             "Tu es l'Assistant Officiel de l'ENCG Fès.",
-            "Tu réponds exclusivement en français, de manière professionnelle et concise.",
-            "Contexte actuel : " . $context,
-            "RÈGLES :",
-            "- 2-3 phrases maximum.",
-            "- Documents → Guichet Électronique.",
-            "- Notes → Mes Notes & Résultats.",
-            "- Absences → Justification sous 48h.",
-            "- Stages/PFE → Mes Stages & PFE.",
-            "- Si tu ne sais pas → scolarite@encg-fes.ma",
+            'Tu réponds exclusivement en français, de manière professionnelle et concise.',
+            'Contexte actuel : '.$context,
+            'RÈGLES :',
+            '- 2-3 phrases maximum.',
+            '- Documents → Guichet Électronique.',
+            '- Notes → Mes Notes & Résultats.',
+            '- Absences → Justification sous 48h.',
+            '- Stages/PFE → Mes Stages & PFE.',
+            '- Si tu ne sais pas → scolarite@encg-fes.ma',
         ];
 
         $reply = $this->gemini->generateContent($userMessage, $systemInstructions);
 
         return response()->json([
             'success' => true,
-            'reply'   => $reply ?? "Je suis désolé, je rencontre une difficulté technique. Contactez scolarite@encg-fes.ma",
+            'reply' => $reply ?? 'Je suis désolé, je rencontre une difficulté technique. Contactez scolarite@encg-fes.ma',
         ]);
     }
 
@@ -61,11 +61,11 @@ class StudentChatbotController extends Controller
     {
         try {
             $stats = [
-                'total_students'          => Student::count(),
-                'total_professors'        => User::where('role', 'professor')->count(),
-                'active_year'             => AcademicYear::where('is_current', true)->value('label') ?? '2025-2026',
-                'open_document_requests'  => DocumentRequest::where('status', 'pending')->count(),
-                'evaluation_status'       => EvaluationCampaign::where('status', 'OPEN')->exists() ? 'OUVERTE' : 'FERMÉE',
+                'total_students' => Student::count(),
+                'total_professors' => User::where('role', 'professor')->count(),
+                'active_year' => AcademicYear::where('is_current', true)->value('label') ?? '2025-2026',
+                'open_document_requests' => DocumentRequest::where('status', 'pending')->count(),
+                'evaluation_status' => EvaluationCampaign::where('status', 'OPEN')->exists() ? 'OUVERTE' : 'FERMÉE',
             ];
 
             $contextParts = [
@@ -80,8 +80,8 @@ class StudentChatbotController extends Controller
                 $student = Student::where('user_id', $userId)->first();
                 if ($student) {
                     $studentName = User::where('id', $userId)->value('name');
-                    $absences    = Attendance::where('student_id', $student->id)->count();
-                    $pending     = DocumentRequest::where('student_id', $student->id)->where('status', 'pending')->count();
+                    $absences = Attendance::where('student_id', $student->id)->count();
+                    $pending = DocumentRequest::where('student_id', $student->id)->where('status', 'pending')->count();
 
                     $contextParts[] = "Étudiant connecté : {$studentName}";
                     $contextParts[] = "Ses absences : {$absences}";
@@ -89,9 +89,9 @@ class StudentChatbotController extends Controller
                 }
             }
 
-            return implode('. ', $contextParts) . '.';
+            return implode('. ', $contextParts).'.';
         } catch (\Exception $e) {
-            return "Établissement ENCG Fès — système ERP actif.";
+            return 'Établissement ENCG Fès — système ERP actif.';
         }
     }
 }

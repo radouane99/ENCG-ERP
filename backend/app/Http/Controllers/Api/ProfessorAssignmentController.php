@@ -20,23 +20,23 @@ class ProfessorAssignmentController extends Controller
     {
         $currentYear = AcademicYear::where('is_current', true)->first();
 
-        if (!$currentYear) {
+        if (! $currentYear) {
             return response()->json(['success' => true, 'data' => []]);
         }
 
         $assignments = ModuleProfessor::with(['professor.user', 'module', 'group'])
             ->where('academic_year_id', $currentYear->id)
             ->get()
-            ->map(fn($item) => [
-                'id'     => $item->id,
-                'prof'   => trim(($item->professor->user->first_name ?? '') . ' ' . ($item->professor->user->last_name ?? '')),
-                'module' => ($item->module->code ?? '') . ' ' . ($item->module->name ?? ''),
-                'group'  => $item->group->name ?? 'N/A',
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'prof' => trim(($item->professor->user->first_name ?? '').' '.($item->professor->user->last_name ?? '')),
+                'module' => ($item->module->code ?? '').' '.($item->module->name ?? ''),
+                'group' => $item->group->name ?? 'N/A',
             ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $assignments,
+            'data' => $assignments,
         ]);
     }
 
@@ -47,20 +47,20 @@ class ProfessorAssignmentController extends Controller
     {
         $validated = $request->validate([
             'professor_id' => 'required',
-            'module_id'    => 'required',
-            'group_id'     => 'required',
+            'module_id' => 'required',
+            'group_id' => 'required',
         ]);
 
         $currentYear = AcademicYear::where('is_current', true)->first();
-        if (!$currentYear) {
+        if (! $currentYear) {
             return response()->json(['success' => false, 'message' => 'Aucune année universitaire en cours.'], 400);
         }
 
         $profId = Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
-        $modId  = Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
-        $grpId  = Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
+        $modId = Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
+        $grpId = Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
 
-        if (!$profId || !$modId || !$grpId) {
+        if (! $profId || ! $modId || ! $grpId) {
             return response()->json(['success' => false, 'message' => 'Entités invalides.'], 400);
         }
 
@@ -76,17 +76,17 @@ class ProfessorAssignmentController extends Controller
 
         $assignment = ModuleProfessor::create([
             'academic_year_id' => $currentYear->id,
-            'module_id'        => $modId,
-            'group_id'         => $grpId,
-            'professor_id'     => $profId,
-            'professor_type'   => 'App\\Models\\Professor',
-            'session_type'     => 'cm',
+            'module_id' => $modId,
+            'group_id' => $grpId,
+            'professor_id' => $profId,
+            'professor_type' => 'App\\Models\\Professor',
+            'session_type' => 'cm',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Affectation ajoutée.',
-            'data'    => ['id' => $assignment->id],
+            'data' => ['id' => $assignment->id],
         ]);
     }
 
@@ -97,7 +97,7 @@ class ProfessorAssignmentController extends Controller
     {
         $deleted = ModuleProfessor::where('id', $id)->delete();
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json(['success' => false, 'message' => 'Affectation non trouvée.'], 404);
         }
 

@@ -15,7 +15,7 @@ class ValidateInternshipRequest extends FormRequest
     {
         return [
             'status' => 'required|in:approved,rejected',
-            'professor_supervisor_id' => 'nullable|exists:professors,id'
+            'professor_supervisor_id' => 'nullable|exists:professors,id',
         ];
     }
 }

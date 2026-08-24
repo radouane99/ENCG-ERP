@@ -2,8 +2,11 @@
 
 namespace App\Services\Academic;
 
+use App\Models\Filiere;
+use App\Models\Module;
+use App\Models\Professor;
+use App\Models\Room;
 use App\Models\Schedule;
-use Illuminate\Support\Facades\DB;
 use Exception;
 
 class ScheduleService
@@ -11,8 +14,6 @@ class ScheduleService
     /**
      * Crée une nouvelle séance en vérifiant les collisions.
      *
-     * @param array $data
-     * @return Schedule
      * @throws Exception Si un conflit est détecté.
      */
     public function createSchedule(array $data): Schedule
@@ -25,6 +26,22 @@ class ScheduleService
             $data['start_time'],
             $data['end_time']
         );
+
+        $day = (int) \Carbon\Carbon::parse($data['date'])->isoWeekday();
+        $yearId = (int) ($data['academic_year_id'] ?? \App\Models\AcademicYear::where('is_current', true)->value('id') ?? 1);
+        $exceptions = app(ScheduleExceptionService::class)->validateSlot(
+            $yearId,
+            $day,
+            $data['start_time'].(strlen($data['start_time']) === 5 ? ':00' : ''),
+            $data['end_time'].(strlen($data['end_time']) === 5 ? ':00' : ''),
+            (int) $data['room_id'],
+            (int) $data['professor_id'],
+            (int) ($data['group_id'] ?? 0),
+            $data['date']
+        );
+        if (! $exceptions['isValid']) {
+            throw new Exception($exceptions['reason'] ?? 'Créneau refusé (calendrier / salle).');
+        }
 
         return Schedule::create([
             'module_id' => $data['module_id'],
@@ -51,12 +68,12 @@ class ScheduleService
             ->where(function ($query) use ($startTime, $endTime) {
                 $query->where(function ($q) use ($startTime, $endTime) {
                     $q->where('start_time', '<', $endTime)
-                      ->where('end_time', '>', $startTime);
+                        ->where('end_time', '>', $startTime);
                 });
             })->exists();
 
         if ($professorConflict) {
-            throw new Exception("Conflit détecté : Ce professeur a déjà un cours prévu sur cette plage horaire.");
+            throw new Exception('Conflit détecté : Ce professeur a déjà un cours prévu sur cette plage horaire.');
         }
 
         // 2. Conflit Salle
@@ -65,12 +82,12 @@ class ScheduleService
             ->where(function ($query) use ($startTime, $endTime) {
                 $query->where(function ($q) use ($startTime, $endTime) {
                     $q->where('start_time', '<', $endTime)
-                      ->where('end_time', '>', $startTime);
+                        ->where('end_time', '>', $startTime);
                 });
             })->exists();
 
         if ($roomConflict) {
-            throw new Exception("Conflit détecté : La salle sélectionnée est déjà occupée sur cette plage horaire.");
+            throw new Exception('Conflit détecté : La salle sélectionnée est déjà occupée sur cette plage horaire.');
         }
 
         // 3. Conflit Groupe (si un groupe est spécifié)
@@ -80,12 +97,12 @@ class ScheduleService
                 ->where(function ($query) use ($startTime, $endTime) {
                     $query->where(function ($q) use ($startTime, $endTime) {
                         $q->where('start_time', '<', $endTime)
-                          ->where('end_time', '>', $startTime);
+                            ->where('end_time', '>', $startTime);
                     });
                 })->exists();
 
             if ($groupConflict) {
-                throw new Exception("Conflit détecté : Ce groupe a déjà un cours prévu sur cette plage horaire.");
+                throw new Exception('Conflit détecté : Ce groupe a déjà un cours prévu sur cette plage horaire.');
             }
         }
     }
@@ -104,8 +121,8 @@ class ScheduleService
      */
     public function generateAiCourseTimetable(int $filiereId, ?int $semesterNumber = null): array
     {
-        $filiere = \App\Models\Filiere::find($filiereId);
-        $modulesQuery = \App\Models\Module::where('filiere_id', $filiereId);
+        $filiere = Filiere::find($filiereId);
+        $modulesQuery = Module::where('filiere_id', $filiereId);
 
         if ($semesterNumber) {
             $modulesQuery->where('semester_number', $semesterNumber);
@@ -115,23 +132,23 @@ class ScheduleService
         if ($modules->isEmpty()) {
             return [
                 'success' => false,
-                'message' => 'Erreur : Aucun module trouvé pour cette filière et ce semestre. Veuillez ajouter des modules dans la base de données.'
+                'message' => 'Erreur : Aucun module trouvé pour cette filière et ce semestre. Veuillez ajouter des modules dans la base de données.',
             ];
         }
 
-        $professors = \App\Models\Professor::with('user')->get();
+        $professors = Professor::with('user')->get();
         if ($professors->isEmpty()) {
             return [
                 'success' => false,
-                'message' => 'Erreur : Aucun professeur n\'a été trouvé dans la base de données.'
+                'message' => 'Erreur : Aucun professeur n\'a été trouvé dans la base de données.',
             ];
         }
 
-        $rooms = \App\Models\Room::all();
+        $rooms = Room::all();
         if ($rooms->isEmpty()) {
             return [
                 'success' => false,
-                'message' => 'Erreur : Aucune salle n\'a été trouvée dans la base de données.'
+                'message' => 'Erreur : Aucune salle n\'a été trouvée dans la base de données.',
             ];
         }
 
@@ -140,7 +157,7 @@ class ScheduleService
             ['start' => '08:30', 'end' => '10:30', 'label' => '08:30 - 10:30 (Matin S1)'],
             ['start' => '10:45', 'end' => '12:45', 'label' => '10:45 - 12:45 (Matin S2)'],
             ['start' => '14:00', 'end' => '16:00', 'label' => '14:00 - 16:00 (Aprem S1)'],
-            ['start' => '16:15', 'end' => '18:15', 'label' => '16:15 - 18:15 (Aprem S2)']
+            ['start' => '16:15', 'end' => '18:15', 'label' => '16:15 - 18:15 (Aprem S2)'],
         ];
 
         $group1Schedule = [];
@@ -155,7 +172,7 @@ class ScheduleService
                 // Group 1 Session
                 $mod1 = $modulesList[$modIndex % $totalModules];
                 $prof1 = $professors[$modIndex % count($professors)];
-                $prof1Name = ($prof1->user?->first_name ?? $prof1->first_name ?? 'Professeur') . ' ' . ($prof1->user?->last_name ?? $prof1->last_name ?? 'Inconnu');
+                $prof1Name = ($prof1->user?->first_name ?? $prof1->first_name ?? 'Professeur').' '.($prof1->user?->last_name ?? $prof1->last_name ?? 'Inconnu');
 
                 $room1 = $rooms[$slotIndex % count($rooms)];
                 $room1Name = $room1->name ?? 'Salle Inconnue';
@@ -166,17 +183,17 @@ class ScheduleService
                     'end_time' => $slot['end'],
                     'slot_label' => $slot['label'],
                     'module' => $mod1->name,
-                    'code' => $mod1->code ?? ('MOD-' . $mod1->id),
+                    'code' => $mod1->code ?? ('MOD-'.$mod1->id),
                     'professor' => $prof1Name,
                     'room' => $room1Name,
-                    'group' => 'Groupe 1'
+                    'group' => 'Groupe 1',
                 ];
 
                 // Group 2 Session (Shifted to eliminate collisions)
                 $mod2Index = ($modIndex + 2) % $totalModules;
                 $mod2 = $modulesList[$mod2Index];
                 $prof2 = $professors[($modIndex + 1) % count($professors)];
-                $prof2Name = ($prof2->user?->first_name ?? $prof2->first_name ?? 'Professeur') . ' ' . ($prof2->user?->last_name ?? $prof2->last_name ?? 'Inconnu');
+                $prof2Name = ($prof2->user?->first_name ?? $prof2->first_name ?? 'Professeur').' '.($prof2->user?->last_name ?? $prof2->last_name ?? 'Inconnu');
 
                 // Shift room index by 1 for group 2 to avoid room collision
                 $room2 = $rooms[($slotIndex + 1) % count($rooms)];
@@ -188,10 +205,10 @@ class ScheduleService
                     'end_time' => $slot['end'],
                     'slot_label' => $slot['label'],
                     'module' => $mod2->name,
-                    'code' => $mod2->code ?? ('MOD-' . $mod2->id),
+                    'code' => $mod2->code ?? ('MOD-'.$mod2->id),
                     'professor' => $prof2Name,
                     'room' => $room2Name,
-                    'group' => 'Groupe 2'
+                    'group' => 'Groupe 2',
                 ];
 
                 $modIndex++;
@@ -210,8 +227,8 @@ class ScheduleService
                 'weekend_classes' => 0,
                 'collision_free_score' => '100%',
                 'room_capacity_fit' => '99.2%',
-                'prof_workload_balance' => '97.8%'
-            ]
+                'prof_workload_balance' => '97.8%',
+            ],
         ];
     }
 }

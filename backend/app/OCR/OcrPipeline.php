@@ -4,7 +4,6 @@ namespace App\OCR;
 
 use App\OCR\Contracts\OcrEngineInterface;
 use App\OCR\Contracts\OcrPipelineInterface;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -14,8 +13,11 @@ use Throwable;
 class OcrPipeline implements OcrPipelineInterface
 {
     private array $engines = [];
+
     private array $config;
+
     private array $processedEngines = [];
+
     private array $performanceMetrics = [];
 
     public function __construct(array $config = [])
@@ -43,13 +45,13 @@ class OcrPipeline implements OcrPipelineInterface
         $startTime = microtime(true);
 
         // 1. Vérification rapide du fichier
-        if (!file_exists($filePath) || filesize($filePath) === 0) {
+        if (! file_exists($filePath) || filesize($filePath) === 0) {
             return new OcrResult('');
         }
 
         // 2. Tri des engines par priorité
         $sortedEngines = $this->sortEnginesByPriority($this->engines);
-        
+
         // 3. Limiter le nombre d'engines à tester
         $enginesToTry = array_slice($sortedEngines, 0, $this->config['max_engines_to_try']);
 
@@ -61,21 +63,21 @@ class OcrPipeline implements OcrPipelineInterface
         $docType = $this->quickDetectDocType($filePath, $docType);
 
         foreach ($enginesToTry as $engine) {
-            if (!$this->shouldUseEngine($engine, $filePath, $docType)) {
+            if (! $this->shouldUseEngine($engine, $filePath, $docType)) {
                 continue;
             }
 
             try {
                 $engineStartTime = microtime(true);
-                
+
                 // Exécution avec timeout
                 $result = $this->executeWithTimeout(
-                    fn() => $engine->extract($filePath, $mimeType, $docType),
+                    fn () => $engine->extract($filePath, $mimeType, $docType),
                     $this->config['timeout_per_engine']
                 );
 
                 $duration = microtime(true) - $engineStartTime;
-                
+
                 $this->performanceMetrics[] = [
                     'engine' => get_class($engine),
                     'duration' => $duration,
@@ -85,7 +87,7 @@ class OcrPipeline implements OcrPipelineInterface
                 // Vérification rapide si le résultat est valide
                 if ($this->isResultValid($result)) {
                     $confidence = $this->quickConfidence($result);
-                    
+
                     if ($confidence > $bestConfidence) {
                         $bestConfidence = $confidence;
                         $bestResult = $result;
@@ -106,7 +108,7 @@ class OcrPipeline implements OcrPipelineInterface
         }
 
         // 5. Si aucun résultat, utiliser le premier engine qui fonctionne
-        if (!$bestResult) {
+        if (! $bestResult) {
             $bestResult = $this->emergencyExtract($filePath, $mimeType, $docType);
         }
 
@@ -125,17 +127,17 @@ class OcrPipeline implements OcrPipelineInterface
      */
     private function executeWithTimeout(callable $callback, int $timeout)
     {
-        if (!function_exists('pcntl_fork')) {
+        if (! function_exists('pcntl_fork')) {
             // Fallback si pcntl n'est pas disponible
             return $callback();
         }
 
         $pid = pcntl_fork();
-        
+
         if ($pid === -1) {
             return $callback();
         }
-        
+
         if ($pid === 0) {
             // Processus enfant
             try {
@@ -145,28 +147,28 @@ class OcrPipeline implements OcrPipelineInterface
                 exit(serialize(null));
             }
         }
-        
+
         // Processus parent
         $status = 0;
         $start = time();
-        
+
         while (time() - $start < $timeout) {
             if (pcntl_waitpid($pid, $status, WNOHANG) > 0) {
                 break;
             }
             usleep(10000); // 10ms
         }
-        
-        if (!pcntl_waitpid($pid, $status, WNOHANG)) {
+
+        if (! pcntl_waitpid($pid, $status, WNOHANG)) {
             posix_kill($pid, SIGKILL);
             throw new \RuntimeException("Engine timeout after {$timeout}s");
         }
-        
+
         $result = pcntl_wexitstatus($status);
         if ($result !== 0) {
             throw new \RuntimeException("Engine failed with code: {$result}");
         }
-        
+
         return null;
     }
 
@@ -180,7 +182,7 @@ class OcrPipeline implements OcrPipelineInterface
         }
 
         $text = trim($result->text);
-        
+
         // Trop court = invalide
         if (strlen($text) < 20) {
             return false;
@@ -205,9 +207,13 @@ class OcrPipeline implements OcrPipelineInterface
 
         // Bonus pour la longueur
         $length = strlen($text);
-        if ($length > 1000) $confidence += 0.3;
-        else if ($length > 500) $confidence += 0.2;
-        else if ($length > 100) $confidence += 0.1;
+        if ($length > 1000) {
+            $confidence += 0.3;
+        } elseif ($length > 500) {
+            $confidence += 0.2;
+        } elseif ($length > 100) {
+            $confidence += 0.1;
+        }
 
         // Bonus pour les patterns utiles
         $patterns = [
@@ -239,13 +245,13 @@ class OcrPipeline implements OcrPipelineInterface
      */
     private function quickDetectDocType(string $filePath, string $docType): string
     {
-        if (!empty($docType) && $docType !== 'unknown') {
+        if (! empty($docType) && $docType !== 'unknown') {
             return $docType;
         }
 
         // Détection par extension
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        
+
         $extToType = [
             'pdf' => 'unknown',
             'png' => 'unknown',
@@ -266,7 +272,7 @@ class OcrPipeline implements OcrPipelineInterface
         foreach ($this->engines as $engine) {
             try {
                 $result = $engine->extract($filePath, $mimeType, $docType);
-                if (!empty($result->text) && strlen(trim($result->text)) > 50) {
+                if (! empty($result->text) && strlen(trim($result->text)) > 50) {
                     return $result;
                 }
             } catch (Throwable $e) {
@@ -282,12 +288,14 @@ class OcrPipeline implements OcrPipelineInterface
         usort($engines, function ($a, $b) {
             return $a->getPriority() <=> $b->getPriority();
         });
+
         return $engines;
     }
 
     private function shouldUseEngine(OcrEngineInterface $engine, string $filePath, string $docType): bool
     {
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
+
         return $engine->supports($mimeType, $filePath, $docType);
     }
 

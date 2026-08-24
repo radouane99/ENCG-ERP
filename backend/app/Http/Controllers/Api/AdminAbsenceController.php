@@ -30,7 +30,7 @@ class AdminAbsenceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $justifications,
+            'data' => $justifications,
         ]);
     }
 
@@ -40,7 +40,7 @@ class AdminAbsenceController extends Controller
     public function updateStatus(Request $request, AbsenceJustification $justification): JsonResponse
     {
         $validated = $request->validate([
-            'status'           => 'required|string|in:approved,rejected',
+            'status' => 'required|string|in:approved,rejected',
             'rejection_reason' => 'required_if:status,rejected|string|nullable',
         ]);
 
@@ -55,13 +55,13 @@ class AdminAbsenceController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Justificatif mis à jour avec succès.',
-                'data'    => $updatedJustification->load('media'),
+                'data' => $updatedJustification->load('media'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

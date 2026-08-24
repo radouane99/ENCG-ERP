@@ -28,8 +28,8 @@ class SearchController extends Controller
         $users = User::with('roles')
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%");
             })
             ->take(5)
             ->get();
@@ -37,11 +37,11 @@ class SearchController extends Controller
         foreach ($users as $user) {
             $role = $user->roles->first()?->name ?? 'user';
             $results[] = [
-                'id'       => 'user_' . $user->id,
-                'title'    => $user->name,
+                'id' => 'user_'.$user->id,
+                'title' => $user->name,
                 'subtitle' => $user->email,
-                'type'     => $role === 'student' ? 'student' : 'professor',
-                'url'      => $role === 'student' ? "/students/{$user->id}" : "/professors/{$user->id}",
+                'type' => $role === 'student' ? 'student' : 'professor',
+                'url' => $role === 'student' ? "/students/{$user->id}" : "/professors/{$user->id}",
             ];
         }
 
@@ -51,11 +51,11 @@ class SearchController extends Controller
             ->get()
             ->each(function ($mod) use (&$results) {
                 $results[] = [
-                    'id'       => 'mod_' . $mod->id,
-                    'title'    => $mod->name,
+                    'id' => 'mod_'.$mod->id,
+                    'title' => $mod->name,
                     'subtitle' => 'Module d\'enseignement',
-                    'type'     => 'module',
-                    'url'      => '/academic/modules',
+                    'type' => 'module',
+                    'url' => '/academic/modules',
                 ];
             });
 
@@ -65,17 +65,17 @@ class SearchController extends Controller
             ->get()
             ->each(function ($room) use (&$results) {
                 $results[] = [
-                    'id'       => 'room_' . $room->id,
-                    'title'    => $room->name,
-                    'subtitle' => 'Capacité : ' . $room->capacity,
-                    'type'     => 'room',
-                    'url'      => '/timetable',
+                    'id' => 'room_'.$room->id,
+                    'title' => $room->name,
+                    'subtitle' => 'Capacité : '.$room->capacity,
+                    'type' => 'room',
+                    'url' => '/timetable',
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data'    => $results,
+            'data' => $results,
         ]);
     }
 }

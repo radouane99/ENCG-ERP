@@ -198,7 +198,8 @@ export default function AdminFinanceDashboard() {
             </h1>
 
             <p className="text-blue-100/90 text-sm leading-relaxed">
-              Suivi des droits d'inscription, encaissement des tranches, relances automatiques et délivrance des reçus de paiement officiels A4 certifiés avec QR code fiscal.
+              Paiement uniquement pour licence, master spécialisé et formation continue.
+              La Grande École (filière <strong>grande_ecole</strong>) est gratuite — aucun frais de scolarité.
             </p>
           </div>
 

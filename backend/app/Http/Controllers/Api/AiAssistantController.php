@@ -20,9 +20,9 @@ class AiAssistantController extends Controller
     public function generateQuiz(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'topic'      => 'required|string',
+            'topic' => 'required|string',
             'difficulty' => 'required|string|in:beginner,intermediate,advanced',
-            'count'      => 'nullable|integer|min:1|max:20',
+            'count' => 'nullable|integer|min:1|max:20',
         ]);
 
         $result = $this->aiService->generateQuiz(
@@ -41,12 +41,12 @@ class AiAssistantController extends Controller
     {
         $validated = $request->validate([
             'message' => 'required|string',
-            'role'    => 'nullable|string',
+            'role' => 'nullable|string',
         ]);
 
-        $user   = $request->user();
-        $name   = $user?->name ?? 'Utilisateur';
-        $role   = $request->input('role', 'Étudiant');
+        $user = $request->user();
+        $name = $user?->name ?? 'Utilisateur';
+        $role = $request->input('role', 'Étudiant');
         $userId = $user?->id;
 
         $result = $this->aiService->chatWithAssistant($validated['message'], $role, $name, $userId);
@@ -61,20 +61,20 @@ class AiAssistantController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['success' => true, 'messages' => []]);
         }
 
         $messages = AiChatMessage::where('user_id', $user->id)
             ->orderBy('id')
             ->get()
-            ->map(fn($msg) => [
-                'role'    => $msg->role,
+            ->map(fn ($msg) => [
+                'role' => $msg->role,
                 'content' => $msg->content,
             ]);
 
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'messages' => $messages,
         ]);
     }

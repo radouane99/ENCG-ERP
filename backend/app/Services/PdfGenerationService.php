@@ -19,24 +19,24 @@ class PdfGenerationService
     public function generatePdf(DocumentRequest $documentRequest): string
     {
         $documentType = $documentRequest->documentType;
-        $student      = $documentRequest->student;
+        $student = $documentRequest->student;
 
         $html = $documentType->html_template
-            ?? '<h1>' . e($documentType->name ?? 'Document') . '</h1><p>Étudiant : ' . e($student->user->name ?? 'Inconnu') . '</p>';
+            ?? '<h1>'.e($documentType->name ?? 'Document').'</h1><p>Étudiant : '.e($student->user->name ?? 'Inconnu').'</p>';
 
-        $filename  = $documentRequest->reference_number . '.pdf';
+        $filename = $documentRequest->reference_number.'.pdf';
         $directory = 'documents/generated/';
 
         $path = $this->pdfEngine->generateFromHtml($html, $directory, $filename);
 
-        $verificationToken = hash('sha256', $documentRequest->id . time() . Str::random(10));
+        $verificationToken = hash('sha256', $documentRequest->id.time().Str::random(10));
 
         GeneratedDocument::create([
             'document_request_id' => $documentRequest->id,
-            'file_path'           => $path,
-            'verification_token'  => $verificationToken,
-            'verification_url'    => config('app.url') . '/verify/document/' . $verificationToken,
-            'expires_at'          => now()->addMonths(6),
+            'file_path' => $path,
+            'verification_token' => $verificationToken,
+            'verification_url' => config('app.url').'/verify/document/'.$verificationToken,
+            'expires_at' => now()->addMonths(6),
         ]);
 
         return $path;

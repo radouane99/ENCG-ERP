@@ -3,20 +3,16 @@
 namespace App\Domain\Document\Services;
 
 use App\Models\DocumentRequest;
-use App\Models\DocumentTemplate;
 use App\Models\GeneratedDocument;
-use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PdfGenerationService
 {
     /**
      * Generate a PDF based on a Document Request.
-     * 
-     * @param DocumentRequest $request
-     * @return GeneratedDocument
      */
     public function generateForRequest(DocumentRequest $request): GeneratedDocument
     {
@@ -43,24 +39,24 @@ class PdfGenerationService
         ];
 
         // Ensure the directory exists
-        $directory = 'documents/' . now()->format('Y/m');
-        if (!Storage::disk('local')->exists($directory)) {
+        $directory = 'documents/'.now()->format('Y/m');
+        if (! Storage::disk('local')->exists($directory)) {
             Storage::disk('local')->makeDirectory($directory);
         }
 
         // Generate the PDF from a blade view string (using the template's HTML content)
         // Note: For advanced scenarios, we can parse HTML tags here.
         $pdf = Pdf::loadView('pdf.dynamic_template', [
-            'html_content' => $this->parseVariables($template->html_content, $data)
+            'html_content' => $this->parseVariables($template->html_content, $data),
         ]);
 
-        $fileName = sprintf('%s_%s_%s.pdf', 
-            Str::slug($template->name), 
-            $student->cne, 
+        $fileName = sprintf('%s_%s_%s.pdf',
+            Str::slug($template->name),
+            $student->cne,
             now()->timestamp
         );
 
-        $filePath = $directory . '/' . $fileName;
+        $filePath = $directory.'/'.$fileName;
 
         // Store the file securely (can be moved to S3 / MinIO later)
         Storage::disk('local')->put($filePath, $pdf->output());
@@ -84,17 +80,14 @@ class PdfGenerationService
 
     /**
      * Parse and replace placeholder variables in the HTML content.
-     *
-     * @param string $content
-     * @param array $data
-     * @return string
      */
     private function parseVariables(string $content, array $data): string
     {
         foreach ($data as $key => $value) {
             // Replace placeholders like {{ student_name }}
-            $content = preg_replace('/\{\{\s*' . preg_quote($key) . '\s*\}\}/', $value, $content);
+            $content = preg_replace('/\{\{\s*'.preg_quote($key).'\s*\}\}/', $value, $content);
         }
+
         return $content;
     }
 }

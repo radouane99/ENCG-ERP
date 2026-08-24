@@ -14,10 +14,10 @@ class SemesterFactory extends Factory
     {
         return [
             'academic_year_id' => AcademicYear::factory(),
-            'name'             => 'Semestre 1',
-            'number'           => 1,
-            'start_date'       => '2026-09-01',
-            'end_date'         => '2027-01-31',
+            'name' => 'Semestre 1',
+            'number' => 1,
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-01-31',
         ];
     }
 }

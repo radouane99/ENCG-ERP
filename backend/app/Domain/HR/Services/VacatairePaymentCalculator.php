@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\HR\Services;
 
 use App\Domain\HR\Models\VacataireContract;
-use App\Domain\HR\Models\VacationSession;
 use App\Domain\HR\Models\VacationPayment;
+use App\Domain\HR\Models\VacationSession;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 /**
  * VacatairePaymentCalculator
@@ -51,18 +50,18 @@ class VacatairePaymentCalculator
         $netAmount = round($grossAmount - $cnssDeduction - $irDeduction, 2);
 
         return VacationPayment::create([
-            'institution_id'      => $contract->institution_id,
+            'institution_id' => $contract->institution_id,
             'vacation_contract_id' => $contract->id,
-            'reference_number'    => $this->generateReference($contract, $year, $month),
-            'payment_year'        => $year,
-            'payment_month'       => $month,
-            'total_hours'         => $totalHours,
-            'hourly_rate'         => $hourlyRate,
-            'gross_amount'        => $grossAmount,
-            'tax_deduction'       => $irDeduction,
-            'cnss_deduction'      => $cnssDeduction,
-            'net_amount'          => $netAmount,
-            'status'              => 'pending',
+            'reference_number' => $this->generateReference($contract, $year, $month),
+            'payment_year' => $year,
+            'payment_month' => $month,
+            'total_hours' => $totalHours,
+            'hourly_rate' => $hourlyRate,
+            'gross_amount' => $grossAmount,
+            'tax_deduction' => $irDeduction,
+            'cnss_deduction' => $cnssDeduction,
+            'net_amount' => $netAmount,
+            'status' => 'pending',
         ]);
     }
 
@@ -77,8 +76,7 @@ class VacatairePaymentCalculator
             ->where('status', 'active')
             ->get();
 
-        return $contracts->map(fn ($contract) =>
-            $this->calculateMonthlyPayment($contract, $year, $month)
+        return $contracts->map(fn ($contract) => $this->calculateMonthlyPayment($contract, $year, $month)
         );
     }
 
@@ -164,13 +162,13 @@ class VacatairePaymentCalculator
             ->get();
 
         return [
-            'total_contracts'  => $payments->count(),
-            'total_hours'      => $payments->sum('total_hours'),
-            'total_gross'      => $payments->sum('gross_amount'),
-            'total_cnss'       => $payments->sum('cnss_deduction'),
-            'total_ir'         => $payments->sum('tax_deduction'),
-            'total_net'        => $payments->sum('net_amount'),
-            'by_status'        => $payments->groupBy('status')->map->count(),
+            'total_contracts' => $payments->count(),
+            'total_hours' => $payments->sum('total_hours'),
+            'total_gross' => $payments->sum('gross_amount'),
+            'total_cnss' => $payments->sum('cnss_deduction'),
+            'total_ir' => $payments->sum('tax_deduction'),
+            'total_net' => $payments->sum('net_amount'),
+            'by_status' => $payments->groupBy('status')->map->count(),
         ];
     }
 
@@ -178,6 +176,7 @@ class VacatairePaymentCalculator
     {
         $monthPadded = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
         $institutionCode = $contract->institution->code ?? 'ENCG';
+
         return "{$institutionCode}-VAC-{$year}{$monthPadded}-{$contract->id}";
     }
 }

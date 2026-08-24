@@ -2,25 +2,26 @@
 
 namespace App\Models;
 
+use App\Traits\HasValidationWorkflow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AbsenceJustification extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory;
-    use \App\Traits\HasValidationWorkflow;
+    use HasValidationWorkflow;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
-        'reviewed_at' => 'datetime',
-    ];
+            'reviewed_at' => 'datetime',
+        ];
     }
 
     public function student(): BelongsTo
@@ -38,4 +39,3 @@ class AbsenceJustification extends Model implements HasMedia
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 }
-

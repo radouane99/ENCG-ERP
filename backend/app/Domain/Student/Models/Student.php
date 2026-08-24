@@ -4,17 +4,26 @@ declare(strict_types=1);
 
 namespace App\Domain\Student\Models;
 
-use App\Domain\Shared\Traits\BelongsToInstitution;
+use App\Domain\Academic\Models\FinalProject;
+use App\Domain\AI\Models\RiskPrediction;
+use App\Domain\Attendance\Models\Attendance;
+use App\Domain\Exam\Models\DeliberationDecision;
+use App\Domain\Exam\Models\Grade;
+use App\Domain\HR\Models\Internship;
+use App\Domain\Institution\Models\Institution;
 use App\Domain\Shared\Traits\Auditable;
+use App\Domain\Shared\Traits\BelongsToInstitution;
+use App\Models\StudentDocument;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
 {
-    use SoftDeletes, BelongsToInstitution, Auditable;
+    use Auditable, BelongsToInstitution, SoftDeletes;
 
     protected $fillable = [
         'institution_id', 'user_id', 'student_number', 'cne', 'cin', 'massar_code',
@@ -31,12 +40,12 @@ class Student extends Model
     ];
 
     protected $casts = [
-        'birth_date'                      => 'date',
-        'has_disability'                  => 'boolean',
-        'inscription_submitted_at'        => 'datetime',
-        'inscription_validated_at'        => 'datetime',
-        'rgpd_consent_at'                 => 'datetime',
-        'reglement_interieur_consent_at'  => 'datetime',
+        'birth_date' => 'date',
+        'has_disability' => 'boolean',
+        'inscription_submitted_at' => 'datetime',
+        'inscription_validated_at' => 'datetime',
+        'rgpd_consent_at' => 'datetime',
+        'reglement_interieur_consent_at' => 'datetime',
     ];
 
     protected $hidden = [
@@ -57,17 +66,17 @@ class Student extends Model
     // ── Relationships ──────────────────────────────────────────
     public function institution(): BelongsTo
     {
-        return $this->belongsTo(\App\Domain\Institution\Models\Institution::class);
+        return $this->belongsTo(Institution::class);
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function documents(): HasMany
     {
-        return $this->hasMany(\App\Models\StudentDocument::class, 'student_id');
+        return $this->hasMany(StudentDocument::class, 'student_id');
     }
 
     public function pathways(): HasMany
@@ -92,37 +101,37 @@ class Student extends Model
 
     public function grades(): HasMany
     {
-        return $this->hasMany(\App\Domain\Exam\Models\Grade::class);
+        return $this->hasMany(Grade::class);
     }
 
     public function attendances(): HasMany
     {
-        return $this->hasMany(\App\Domain\Attendance\Models\Attendance::class);
+        return $this->hasMany(Attendance::class);
     }
 
     public function deliberationDecisions(): HasMany
     {
-        return $this->hasMany(\App\Domain\Exam\Models\DeliberationDecision::class);
+        return $this->hasMany(DeliberationDecision::class);
     }
 
     public function internships(): HasMany
     {
-        return $this->hasMany(\App\Domain\HR\Models\Internship::class);
+        return $this->hasMany(Internship::class);
     }
 
     public function finalProjects(): HasMany
     {
-        return $this->hasMany(\App\Domain\Academic\Models\FinalProject::class);
+        return $this->hasMany(FinalProject::class);
     }
 
     public function riskPredictions(): HasMany
     {
-        return $this->hasMany(\App\Domain\AI\Models\RiskPrediction::class)->latest();
+        return $this->hasMany(RiskPrediction::class)->latest();
     }
 
     public function latestRiskPrediction(): HasOne
     {
-        return $this->hasOne(\App\Domain\AI\Models\RiskPrediction::class)->latestOfMany();
+        return $this->hasOne(RiskPrediction::class)->latestOfMany();
     }
 
     // ── Scopes ────────────────────────────────────────────────
@@ -145,10 +154,10 @@ class Student extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('first_name', 'ilike', "%{$search}%")
-              ->orWhere('last_name', 'ilike', "%{$search}%")
-              ->orWhere('student_number', 'ilike', "%{$search}%")
-              ->orWhere('cne', 'ilike', "%{$search}%")
-              ->orWhere('email', 'ilike', "%{$search}%");
+                ->orWhere('last_name', 'ilike', "%{$search}%")
+                ->orWhere('student_number', 'ilike', "%{$search}%")
+                ->orWhere('cne', 'ilike', "%{$search}%")
+                ->orWhere('email', 'ilike', "%{$search}%");
         });
     }
 
@@ -177,7 +186,7 @@ class Student extends Model
     // ── Auto Student Number Generator (Recommendation #7) ─────────────
     public static function generateStudentNumber(string $filiereCode, int $year): string
     {
-        $prefix = "ENCG-FES-{$year}-" . strtoupper($filiereCode);
+        $prefix = "ENCG-FES-{$year}-".strtoupper($filiereCode);
         $lastStudent = self::where('student_number', 'like', "{$prefix}-%")
             ->orderByDesc('student_number')
             ->first();
@@ -188,7 +197,6 @@ class Student extends Model
             $seq = ((int) end($parts)) + 1;
         }
 
-        return $prefix . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
+        return $prefix.'-'.str_pad($seq, 5, '0', STR_PAD_LEFT);
     }
 }
-

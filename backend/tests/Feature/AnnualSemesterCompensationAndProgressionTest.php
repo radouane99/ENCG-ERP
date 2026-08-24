@@ -3,16 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Assessment;
 use App\Models\Department;
 use App\Models\Filiere;
-use App\Models\Grade;
-use App\Models\Group;
 use App\Models\Institution;
 use App\Models\Module;
-use App\Models\Semester;
 use App\Models\Student;
-use App\Models\StudentPathway;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -21,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Moroccan Higher Education (MESRSFC / ENCG) Academic Progression & Compensation Rules.
- * - Compensation inter-semestres: Année validée si Moyenne(S1, S2) >= 10.0 sans note éliminatoire (< 7.0).
+ * - Compensation inter-semestres: Année validée si Moyenne(S1, S2) >= 10.0 sans note éliminatoire (< 6.0).
  * - Passage Conditionnel: Si l'année n'est pas validée mais la moyenne >= 10.0 ou modules validés >= seuil.
  */
 class AnnualSemesterCompensationAndProgressionTest extends TestCase
@@ -29,8 +24,11 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected AcademicYear $academicYear;
+
     protected Filiere $filiere;
+
     protected User $adminUser;
 
     protected function setUp(): void
@@ -54,18 +52,18 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
         $this->filiere = Filiere::firstOrCreate(
             ['code' => 'CI'],
             [
-                'name'           => 'Commerce International',
-                'type'           => 'grande_ecole',
+                'name' => 'Commerce International',
+                'type' => 'grande_ecole',
                 'duration_years' => 5,
-                'department_id'  => $department->id,
+                'department_id' => $department->id,
                 'institution_id' => $this->institution->id,
-                'is_active'      => true,
+                'is_active' => true,
             ]
         );
 
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
         $this->adminUser = User::factory()->create([
-            'email'          => 'admin.progression@encg-fes.ac.ma',
+            'email' => 'admin.progression@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->adminUser->assignRole($adminRole);
@@ -77,11 +75,11 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
 
         $studentUser = User::factory()->create(['institution_id' => $this->institution->id]);
         $student = Student::create([
-            'user_id'        => $studentUser->id,
+            'user_id' => $studentUser->id,
             'student_number' => 'ENCG-2026-CI01',
-            'cne'            => 'K130099881',
-            'gender'         => 'female',
-            'status'         => 'active',
+            'cne' => 'K130099881',
+            'gender' => 'female',
+            'status' => 'active',
             'institution_id' => $this->institution->id,
         ]);
 
@@ -92,8 +90,8 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
         $s2Average = 12.00;
         $annualAverage = ($s1Average + $s2Average) / 2.0;
 
-        $hasEliminatory = false; // No mark < 7.0
-        $isAnnualAdmitted = ($annualAverage >= 10.0) && !$hasEliminatory;
+        $hasEliminatory = false; // No mark < 6.0
+        $isAnnualAdmitted = ($annualAverage >= 10.0) && ! $hasEliminatory;
 
         $this->assertTrue($isAnnualAdmitted);
         $this->assertEquals(10.60, round($annualAverage, 2));
@@ -103,14 +101,12 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
     {
         Sanctum::actingAs($this->adminUser);
 
-        // S1 has a module with 6.5/20 (< 7.0 eliminatory mark)
-        // Even if annual average = 11.5/20, student must pass Rattrapage for that module
         $annualAverage = 11.50;
-        $lowestModuleScore = 6.50;
-        $eliminatoryThreshold = 7.00;
+        $lowestModuleScore = 5.50;
+        $eliminatoryThreshold = \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD;
 
         $hasEliminatory = $lowestModuleScore < $eliminatoryThreshold;
-        $isAnnualAdmittedDirectly = ($annualAverage >= 10.0) && !$hasEliminatory;
+        $isAnnualAdmittedDirectly = ($annualAverage >= 10.0) && ! $hasEliminatory;
 
         $this->assertTrue($hasEliminatory);
         $this->assertFalse($isAnnualAdmittedDirectly);

@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use App\Models\AttendanceSession;
+use App\Models\Institution;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function ensureAttendanceInstitution()
 {
-    \App\Models\Institution::firstOrCreate(
+    Institution::firstOrCreate(
         ['id' => 1],
         ['name' => 'ENCG Test', 'code' => 'ENCG']
     );
@@ -19,10 +21,11 @@ function ensureAttendanceInstitution()
 function makeAttendanceAdmin(): User
 {
     ensureAttendanceInstitution();
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
     $role = Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
     $user->assignRole($role);
+
     return $user;
 }
 

@@ -3,10 +3,10 @@
 namespace App\OCR\Parsers;
 
 use App\OCR\Contracts\DocumentParserInterface;
-use App\OCR\OcrResult;
-use App\OCR\Helpers\FrenchNameHelper;
 use App\OCR\Helpers\ArabicTextHelper;
 use App\OCR\Helpers\BacFieldsHelper;
+use App\OCR\Helpers\FrenchNameHelper;
+use App\OCR\OcrResult;
 
 /**
  * Universal Dynamic Parser for Moroccan Baccalauréat Diplomas & Attestations.
@@ -15,7 +15,9 @@ use App\OCR\Helpers\BacFieldsHelper;
 class BacParser implements DocumentParserInterface
 {
     private FrenchNameHelper $frenchNameHelper;
+
     private ArabicTextHelper $arabicTextHelper;
+
     private BacFieldsHelper $bacFieldsHelper;
 
     // Mentions valides
@@ -26,7 +28,7 @@ class BacParser implements DocumentParserInterface
         'ASSEZ BIEN',
         'PASSABLE',
         'MOYEN',
-        'EXCELLENT'
+        'EXCELLENT',
     ];
 
     public function __construct(
@@ -34,9 +36,9 @@ class BacParser implements DocumentParserInterface
         ?ArabicTextHelper $arabicTextHelper = null,
         ?BacFieldsHelper $bacFieldsHelper = null
     ) {
-        $this->frenchNameHelper = $frenchNameHelper ?? new FrenchNameHelper();
-        $this->arabicTextHelper = $arabicTextHelper ?? new ArabicTextHelper();
-        $this->bacFieldsHelper  = $bacFieldsHelper ?? new BacFieldsHelper();
+        $this->frenchNameHelper = $frenchNameHelper ?? new FrenchNameHelper;
+        $this->arabicTextHelper = $arabicTextHelper ?? new ArabicTextHelper;
+        $this->bacFieldsHelper = $bacFieldsHelper ?? new BacFieldsHelper;
     }
 
     public function supports(string $docType): bool
@@ -90,6 +92,7 @@ class BacParser implements DocumentParserInterface
         $this->validateAndNormalizeFields($fields);
 
         $result->fields = $fields;
+
         return $result;
     }
 
@@ -101,6 +104,7 @@ class BacParser implements DocumentParserInterface
         $text = preg_replace('/\r\n|\r/', "\n", $text);
         $text = preg_replace('/[^\x{0600}-\x{06FF}A-Za-z0-9\s\.\,\-\/\(\)\:\n]/u', ' ', $text);
         $text = preg_replace('/\s+/', ' ', $text);
+
         return trim($text);
     }
 
@@ -169,6 +173,7 @@ class BacParser implements DocumentParserInterface
         // Pattern 1: Format "candidat(e): XXXX"
         if (preg_match('/candidat\(e\)\s*[:\.]?\s*([A-Z\s\-]+)/iu', $candidateZone, $match)) {
             $this->parseFrenchFullName($match[1], $fields);
+
             return;
         }
 
@@ -176,6 +181,7 @@ class BacParser implements DocumentParserInterface
         if (preg_match('/(?:NOM|Nom)\s*[:\.]?\s*([A-Z\s\-]{2,30})\s*(?:PRENOM|Prénom)\s*[:\.]?\s*([A-Z\s\-]{2,30})/iu', $text, $match)) {
             $fields['last_name_fr'] = $this->normalizeFrenchName(trim($match[1]));
             $fields['first_name_fr'] = $this->normalizeFrenchName(trim($match[2]));
+
             return;
         }
 
@@ -184,16 +190,17 @@ class BacParser implements DocumentParserInterface
             if (strlen($match[1]) > 2 && strlen($match[2]) > 2) {
                 $fields['last_name_fr'] = $this->normalizeFrenchName($match[1]);
                 $fields['first_name_fr'] = $this->normalizeFrenchName($match[2]);
+
                 return;
             }
         }
 
         // Fallback via helper
         $frenchNames = $this->frenchNameHelper->extractName($candidateZone);
-        if (!empty($frenchNames['last_name_fr'])) {
+        if (! empty($frenchNames['last_name_fr'])) {
             $fields['last_name_fr'] = $this->normalizeFrenchName($frenchNames['last_name_fr']);
         }
-        if (!empty($frenchNames['first_name_fr'])) {
+        if (! empty($frenchNames['first_name_fr'])) {
             $fields['first_name_fr'] = $this->normalizeFrenchName($frenchNames['first_name_fr']);
         }
     }
@@ -205,7 +212,7 @@ class BacParser implements DocumentParserInterface
     {
         $fullName = trim(preg_replace('/\s+/', ' ', $fullName));
         $parts = array_values(array_filter(explode(' ', $fullName)));
-        
+
         if (count($parts) >= 2) {
             $lastName = array_shift($parts);
             if (strlen($lastName) >= 2) {
@@ -223,6 +230,7 @@ class BacParser implements DocumentParserInterface
         // Pattern 1: Format structuré "المترشح(ة): XXXX"
         if (preg_match('/المترشح\(ة\)\s*[:\-]?\s*([\x{0600}-\x{06FF}\s]+)/u', $text, $match)) {
             $this->parseArabicFullName($match[1], $fields);
+
             return;
         }
 
@@ -230,6 +238,7 @@ class BacParser implements DocumentParserInterface
         if (preg_match('/(?:اللقب|النسب)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]{2,30})\s*(?:الاسم\s+الشخصي|الاسم)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]{2,30})/u', $text, $match)) {
             $fields['last_name_ar'] = $this->normalizeArabicName(trim($match[1]));
             $fields['first_name_ar'] = $this->normalizeArabicName(trim($match[2]));
+
             return;
         }
 
@@ -237,15 +246,16 @@ class BacParser implements DocumentParserInterface
         if (preg_match('/([\x{0600}-\x{06FF}]{2,10})\s+([\x{0600}-\x{06FF}]{2,10})/u', $candidateZone, $match)) {
             $fields['last_name_ar'] = $this->normalizeArabicName($match[1]);
             $fields['first_name_ar'] = $this->normalizeArabicName($match[2]);
+
             return;
         }
 
         // Fallback via helper
         $arabicNames = $this->arabicTextHelper->extractName($candidateZone);
-        if (!empty($arabicNames['last_name_ar'])) {
+        if (! empty($arabicNames['last_name_ar'])) {
             $fields['last_name_ar'] = $this->normalizeArabicName($arabicNames['last_name_ar']);
         }
-        if (!empty($arabicNames['first_name_ar'])) {
+        if (! empty($arabicNames['first_name_ar'])) {
             $fields['first_name_ar'] = $this->normalizeArabicName($arabicNames['first_name_ar']);
         }
     }
@@ -257,7 +267,7 @@ class BacParser implements DocumentParserInterface
     {
         $fullName = trim(preg_replace('/\s+/', ' ', $fullName));
         $parts = array_values(array_filter(explode(' ', $fullName)));
-        
+
         if (count($parts) >= 2) {
             $fields['last_name_ar'] = $this->normalizeArabicName($parts[0]);
             $fields['first_name_ar'] = $this->normalizeArabicName(implode(' ', array_slice($parts, 1)));
@@ -280,6 +290,7 @@ class BacParser implements DocumentParserInterface
                 $cne = strtoupper(trim($match[1]));
                 if ($this->validateCNE($cne)) {
                     $fields['cne'] = $cne;
+
                     return;
                 }
             }
@@ -309,9 +320,10 @@ class BacParser implements DocumentParserInterface
                 foreach ($matches[1] as $candidate) {
                     $cin = strtoupper(trim($candidate));
                     $exclude = ['MAROC', 'ROYAUME', 'CAN', 'FRA', 'CARD', 'CNIE', 'CIN'];
-                    
-                    if (!in_array($cin, $exclude) && $this->validateCIN($cin)) {
+
+                    if (! in_array($cin, $exclude) && $this->validateCIN($cin)) {
                         $fields['cin'] = $cin;
+
                         return;
                     }
                 }
@@ -344,6 +356,7 @@ class BacParser implements DocumentParserInterface
                 $date = $this->parseDate($match);
                 if ($date && $this->validateDate($date)) {
                     $fields['birth_date'] = $date;
+
                     return;
                 }
             }
@@ -380,10 +393,10 @@ class BacParser implements DocumentParserInterface
             return false;
         }
 
-        list($year, $month, $day) = $parts;
-        $year = (int)$year;
-        $month = (int)$month;
-        $day = (int)$day;
+        [$year, $month, $day] = $parts;
+        $year = (int) $year;
+        $month = (int) $month;
+        $day = (int) $day;
 
         if ($year < 1900 || $year > date('Y')) {
             return false;
@@ -417,6 +430,7 @@ class BacParser implements DocumentParserInterface
                 $place = trim($match[1]);
                 if (strlen($place) > 2) {
                     $fields['birth_place_fr'] = $this->normalizeFrenchName($place);
+
                     return;
                 }
             }
@@ -438,6 +452,7 @@ class BacParser implements DocumentParserInterface
                 $nationality = trim($match[1]);
                 if (strlen($nationality) > 2) {
                     $fields['nationality'] = $nationality;
+
                     return;
                 }
             }
@@ -450,8 +465,9 @@ class BacParser implements DocumentParserInterface
     private function extractBacType(string $text, array &$fields): void
     {
         $bacType = $this->bacFieldsHelper->extractBacType($text);
-        if (!empty($bacType)) {
+        if (! empty($bacType)) {
             $fields['bac_type'] = $bacType;
+
             return;
         }
 
@@ -464,6 +480,7 @@ class BacParser implements DocumentParserInterface
             if (preg_match($pattern, $text, $match)) {
                 $type = strtoupper(trim($match[1] ?? $match[0]));
                 $fields['bac_type'] = $type;
+
                 return;
             }
         }
@@ -474,7 +491,7 @@ class BacParser implements DocumentParserInterface
      */
     private function extractMention(string $text, array &$fields): void
     {
-        $mentionsPattern = implode('|', array_map(function($m) {
+        $mentionsPattern = implode('|', array_map(function ($m) {
             return preg_quote($m, '/');
         }, self::VALID_MENTIONS));
 
@@ -488,9 +505,10 @@ class BacParser implements DocumentParserInterface
             if (preg_match($pattern, $text, $match)) {
                 $mention = strtoupper(trim($match[1]));
                 $mention = str_replace('TRÈS', 'TRES', $mention);
-                
+
                 if (in_array($mention, self::VALID_MENTIONS)) {
                     $fields['mention'] = $mention;
+
                     return;
                 }
             }
@@ -498,7 +516,7 @@ class BacParser implements DocumentParserInterface
 
         // Fallback via helper
         $mention = $this->bacFieldsHelper->extractBacMention($text);
-        if (!empty($mention)) {
+        if (! empty($mention)) {
             $fields['mention'] = strtoupper($mention);
         }
     }
@@ -509,8 +527,9 @@ class BacParser implements DocumentParserInterface
     private function extractHighSchool(string $text, array &$fields): void
     {
         $highSchool = $this->bacFieldsHelper->extractHighSchool($text);
-        if (!empty($highSchool)) {
+        if (! empty($highSchool)) {
             $fields['high_school'] = $highSchool;
+
             return;
         }
 
@@ -524,6 +543,7 @@ class BacParser implements DocumentParserInterface
                 $school = trim($match[1]);
                 if (strlen($school) > 3) {
                     $fields['high_school'] = $school;
+
                     return;
                 }
             }
@@ -546,6 +566,7 @@ class BacParser implements DocumentParserInterface
                 $academy = trim($match[1]);
                 if (strlen($academy) > 3) {
                     $fields['academy'] = $academy;
+
                     return;
                 }
             }
@@ -566,9 +587,10 @@ class BacParser implements DocumentParserInterface
         foreach ($patterns as $pattern) {
             if (preg_match_all($pattern, $text, $matches)) {
                 foreach ($matches[1] as $year) {
-                    $year = (int)$year;
+                    $year = (int) $year;
                     if ($year >= 2000 && $year <= date('Y') + 2) {
                         $fields['bac_year'] = $year;
+
                         return;
                     }
                 }
@@ -591,6 +613,7 @@ class BacParser implements DocumentParserInterface
                 $session = strtoupper(trim($match[1]));
                 if (in_array($session, ['NORMALE', 'RATTRAPAGE', 'ORDINAIRE', 'JANVIER', 'JUIN', 'JUILLET'])) {
                     $fields['session'] = $session;
+
                     return;
                 }
             }
@@ -613,6 +636,7 @@ class BacParser implements DocumentParserInterface
                 $average = (float) str_replace(',', '.', $match[1]);
                 if ($average >= 0 && $average <= 20) {
                     $fields['moyenne_bac'] = $average;
+
                     return;
                 }
             }
@@ -635,6 +659,7 @@ class BacParser implements DocumentParserInterface
                 $serial = trim($match[1]);
                 if (strlen($serial) > 3) {
                     $fields['serial_number'] = str_replace(' ', '', $serial);
+
                     return;
                 }
             }
@@ -657,6 +682,7 @@ class BacParser implements DocumentParserInterface
                 $date = $this->parseDate($match);
                 if ($date && $this->validateDate($date)) {
                     $fields['issue_date'] = $date;
+
                     return;
                 }
             }
@@ -679,6 +705,7 @@ class BacParser implements DocumentParserInterface
                 $date = $this->parseDate($match);
                 if ($date && $this->validateDate($date)) {
                     $fields['deliberation_date'] = $date;
+
                     return;
                 }
             }
@@ -700,6 +727,7 @@ class BacParser implements DocumentParserInterface
         foreach ($types as $type => $pattern) {
             if (preg_match($pattern, $text)) {
                 $fields['document_type'] = $type;
+
                 return;
             }
         }
@@ -716,23 +744,23 @@ class BacParser implements DocumentParserInterface
     private function validateAndNormalizeFields(array &$fields): void
     {
         // Normaliser les noms français
-        if (!empty($fields['last_name_fr'])) {
+        if (! empty($fields['last_name_fr'])) {
             $fields['last_name_fr'] = $this->normalizeFrenchName($fields['last_name_fr']);
         }
-        if (!empty($fields['first_name_fr'])) {
+        if (! empty($fields['first_name_fr'])) {
             $fields['first_name_fr'] = $this->normalizeFrenchName($fields['first_name_fr']);
         }
 
         // Normaliser les noms arabes
-        if (!empty($fields['last_name_ar'])) {
+        if (! empty($fields['last_name_ar'])) {
             $fields['last_name_ar'] = $this->normalizeArabicName($fields['last_name_ar']);
         }
-        if (!empty($fields['first_name_ar'])) {
+        if (! empty($fields['first_name_ar'])) {
             $fields['first_name_ar'] = $this->normalizeArabicName($fields['first_name_ar']);
         }
 
         // Valider la moyenne
-        if (!empty($fields['moyenne_bac']) && ($fields['moyenne_bac'] < 0 || $fields['moyenne_bac'] > 20)) {
+        if (! empty($fields['moyenne_bac']) && ($fields['moyenne_bac'] < 0 || $fields['moyenne_bac'] > 20)) {
             unset($fields['moyenne_bac']);
         }
 
@@ -754,10 +782,10 @@ class BacParser implements DocumentParserInterface
             ['E', 'E', 'E', 'E', 'A', 'A', 'U', 'O', 'I', 'I', 'C'],
             $name
         );
-        
+
         $name = preg_replace('/\s+/', ' ', $name);
         $name = preg_replace('/[^A-Za-z\s\-]/', '', $name);
-        
+
         return strtoupper(trim($name));
     }
 
@@ -767,7 +795,7 @@ class BacParser implements DocumentParserInterface
     private function normalizeArabicName(string $name): string
     {
         $name = preg_replace('/\s+/', ' ', $name);
-        
+
         $replacements = [
             'آ' => 'ا',
             'أ' => 'ا',
@@ -777,7 +805,7 @@ class BacParser implements DocumentParserInterface
             'ؤ' => 'و',
             'ئ' => 'ي',
         ];
-        
+
         return str_replace(array_keys($replacements), array_values($replacements), trim($name));
     }
 }

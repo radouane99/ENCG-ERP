@@ -2,9 +2,9 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Club;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentLifeService
 {
@@ -25,11 +25,11 @@ class StudentLifeService
     {
         return DB::transaction(function () use ($data) {
             return Club::create([
-                'name'         => $data['name'],
-                'description'  => $data['description'],
+                'name' => $data['name'],
+                'description' => $data['description'],
                 'president_id' => $data['president_id'],
-                'status'       => 'pending',
-                'logo_url'     => $data['logo_url'] ?? null
+                'status' => 'pending',
+                'logo_url' => $data['logo_url'] ?? null,
             ]);
         });
     }
@@ -41,8 +41,8 @@ class StudentLifeService
     {
         $validStatuses = ['active', 'inactive', 'pending', 'rejected'];
 
-        if (!in_array($status, $validStatuses)) {
-            throw new \InvalidArgumentException("Statut de club invalide.");
+        if (! in_array($status, $validStatuses)) {
+            throw new \InvalidArgumentException('Statut de club invalide.');
         }
 
         return DB::transaction(function () use ($clubId, $status) {

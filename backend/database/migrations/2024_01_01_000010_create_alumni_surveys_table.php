@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('student_id');
             $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
-            
+
             $table->string('graduation_year');
             $table->string('employment_status'); // cdi, cdd, freelance, searching, entrepreneur
             $table->string('company_name')->nullable();
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('starting_salary', 10, 2)->nullable();
             $table->integer('months_to_hire')->nullable(); // Number of months it took to find a job
             $table->string('sector')->nullable(); // Finance, IT, Marketing, etc.
-            
+
             $table->timestamps();
         });
     }

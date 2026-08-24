@@ -15,9 +15,9 @@ class StudentPathway extends Model
     protected function casts(): array
     {
         return [
-        'is_current'       => 'boolean',
-        'current_semester' => 'integer',
-    ];
+            'is_current' => 'boolean',
+            'current_semester' => 'integer',
+        ];
     }
 
     public function student(): BelongsTo

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\AcademicProject;
 use App\Models\AcademicYear;
+use App\Models\Assessment;
 use App\Models\AttendanceSession;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
@@ -15,10 +16,9 @@ use App\Models\Professor;
 use App\Models\Schedule;
 use App\Models\Semester;
 use App\Models\Student;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
+use App\Models\StudentRegistration;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class TransactionalSeeder extends Seeder
 {
@@ -32,7 +32,7 @@ class TransactionalSeeder extends Seeder
         $professors = Professor::all();
         $schedules = Schedule::all();
 
-        if (!$institution || !$academicYear || $students->isEmpty() || $schedules->isEmpty()) {
+        if (! $institution || ! $academicYear || $students->isEmpty() || $schedules->isEmpty()) {
             return;
         }
 
@@ -99,7 +99,7 @@ class TransactionalSeeder extends Seeder
             ]);
 
             // Use assessments table
-            $assessment = \App\Models\Assessment::create([
+            $assessment = Assessment::create([
                 'module_id' => $schedule->module_id,
                 'type' => 'Exam',
                 'weight' => 100,
@@ -107,7 +107,7 @@ class TransactionalSeeder extends Seeder
             ]);
 
             // Get students via StudentRegistration
-            $registrations = \App\Models\StudentRegistration::where('group_id', $schedule->group_id)->get();
+            $registrations = StudentRegistration::where('group_id', $schedule->group_id)->get();
             foreach ($registrations as $reg) {
                 Grade::create([
                     'assessment_id' => $assessment->id,

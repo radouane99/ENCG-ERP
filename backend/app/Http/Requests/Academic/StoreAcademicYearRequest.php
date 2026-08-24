@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Academic;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAcademicYearRequest extends FormRequest
@@ -17,16 +18,16 @@ class StoreAcademicYearRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'label'      => 'required|string|max:50',
+            'label' => 'required|string|max:50',
             'start_year' => 'required|integer|min:2000',
-            'end_year'   => 'required|integer|gt:start_year',
+            'end_year' => 'required|integer|gt:start_year',
             'start_date' => 'nullable|date',
-            'end_date'   => 'nullable|date',
+            'end_date' => 'nullable|date',
             'is_current' => 'boolean',
         ];
     }

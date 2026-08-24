@@ -23,7 +23,7 @@ class ProfessorInternshipController extends Controller
         $internships = Internship::with(['student'])->get();
 
         return response()->json([
-            'success'     => true,
+            'success' => true,
             'internships' => $internships,
         ]);
     }
@@ -40,8 +40,8 @@ class ProfessorInternshipController extends Controller
         );
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Soutenance évaluée avec succès.',
+            'success' => true,
+            'message' => 'Soutenance évaluée avec succès.',
             'soutenance' => $soutenance,
         ]);
     }
@@ -53,7 +53,7 @@ class ProfessorInternshipController extends Controller
     {
         $validated = $request->validate([
             'internship_id' => 'required|integer|exists:internships,id',
-            'status'        => 'required|string|in:pending,approved,active,submitted,completed',
+            'status' => 'required|string|in:pending,approved,active,submitted,completed',
         ]);
 
         $internship = Internship::findOrFail($validated['internship_id']);
@@ -61,8 +61,8 @@ class ProfessorInternshipController extends Controller
         $internship->save();
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Statut du projet mis à jour avec succès.',
+            'success' => true,
+            'message' => 'Statut du projet mis à jour avec succès.',
             'internship' => $internship,
         ]);
     }

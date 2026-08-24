@@ -10,8 +10,14 @@ class SentryReporter
 {
     public function capture(Throwable $exception): void
     {
-        $dsn = (string) config('services.sentry.dsn', '');
+        $dsn = (string) (config('sentry.dsn') ?: config('services.sentry.dsn', ''));
         if ($dsn === '' || app()->environment('testing')) {
+            return;
+        }
+
+        if (function_exists('\\Sentry\\captureException')) {
+            \Sentry\captureException($exception);
+
             return;
         }
 

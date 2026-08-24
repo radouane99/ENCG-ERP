@@ -17,10 +17,10 @@ class AcademicProject extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'metadata' => 'array',
-    ];
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'metadata' => 'array',
+        ];
     }
 
     public function institution(): BelongsTo

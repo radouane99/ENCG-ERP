@@ -17,14 +17,14 @@ interface DocumentParserInterface
     /**
      * Determine if this parser can process the target document type.
      *
-     * @param string $docType Document identifier ('cnie', 'bac', 'releve')
+     * @param  string  $docType  Document identifier ('cnie', 'bac', 'releve')
      */
     public function supports(string $docType): bool;
 
     /**
      * Parse raw OCR text into a structured, strongly-typed OcrResult DTO.
      *
-     * @param string $text Raw OCR text output from OcrPipeline
+     * @param  string  $text  Raw OCR text output from OcrPipeline
      */
     public function parse(string $text): OcrResult;
 }

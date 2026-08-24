@@ -14,6 +14,7 @@ class ProfessorConvocationEmail extends Mailable
     use Queueable, SerializesModels;
 
     public $emailData;
+
     public $pdfContent;
 
     public function __construct($emailData, $pdfContent)

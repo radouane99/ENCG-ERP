@@ -15,7 +15,7 @@ class EvaluateInternshipRequest extends FormRequest
     {
         return [
             'grade' => 'required|numeric|min:0|max:20',
-            'remarks' => 'nullable|string|max:1000'
+            'remarks' => 'nullable|string|max:1000',
         ];
     }
 }

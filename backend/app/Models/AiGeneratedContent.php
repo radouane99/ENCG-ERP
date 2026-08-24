@@ -15,8 +15,8 @@ class AiGeneratedContent extends Model
     protected function casts(): array
     {
         return [
-        'tokens_used' => 'integer',
-    ];
+            'tokens_used' => 'integer',
+        ];
     }
 
     public function conversation(): BelongsTo

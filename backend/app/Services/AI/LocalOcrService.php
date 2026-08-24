@@ -2,32 +2,36 @@
 
 namespace App\Services\AI;
 
-use App\OCR\OcrPipeline;
-use App\OCR\OcrResult;
-use App\OCR\Contracts\OcrEngineInterface;
 use App\OCR\Contracts\DocumentParserInterface;
 use App\OCR\Contracts\DocumentParserManager;
-use App\OCR\Engines\PdfTextEngine;
+use App\OCR\Contracts\OcrEngineInterface;
+use App\OCR\Engines\GroqLlamaEngine;
 use App\OCR\Engines\PdfBinaryEngine;
+use App\OCR\Engines\PdfTextEngine;
 use App\OCR\Engines\TesseractEngine;
+use App\OCR\OcrPipeline;
+use App\OCR\OcrResult;
 use App\OCR\Parsers\BacParser;
 use App\OCR\Parsers\CnieParser;
 use App\OCR\Parsers\ReleveParser;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Local OCR Service - Version Finale Optimisée
- * 
+ *
  * Gère l'extraction OCR locale avec pipeline, cache, validation et fallbacks
  */
 class LocalOcrService
 {
     private OcrPipeline $pipeline;
+
     private DocumentParserManager $parserManager;
+
     private ?string $lastError = null;
+
     private array $config;
+
     private array $stats = [];
 
     /**
@@ -54,9 +58,9 @@ class LocalOcrService
     ];
 
     /**
-     * @param iterable<DocumentParserInterface> $parsers
-     * @param iterable<OcrEngineInterface> $engines
-     * @param array $config Configuration supplémentaire
+     * @param  iterable<DocumentParserInterface>  $parsers
+     * @param  iterable<OcrEngineInterface>  $engines
+     * @param  array  $config  Configuration supplémentaire
      */
     public function __construct(
         iterable $parsers = [],
@@ -82,10 +86,10 @@ class LocalOcrService
         // 1. Enregistrement des engines
         if (empty($engineList)) {
             $engineList = [
-                new PdfTextEngine(),
-                new PdfBinaryEngine(),
-                new \App\OCR\Engines\GroqLlamaEngine(),
-                new TesseractEngine(),
+                new PdfTextEngine,
+                new PdfBinaryEngine,
+                new GroqLlamaEngine,
+                new TesseractEngine,
             ];
         }
 
@@ -93,7 +97,7 @@ class LocalOcrService
             if ($engine instanceof OcrEngineInterface) {
                 $this->pipeline->addEngine($engine);
                 if ($this->config['enable_logging']) {
-                    Log::debug("[LocalOcrService] Engine registered: " . get_class($engine));
+                    Log::debug('[LocalOcrService] Engine registered: '.get_class($engine));
                 }
             }
         }
@@ -103,9 +107,9 @@ class LocalOcrService
 
         if (empty($parserList)) {
             $parserList = [
-                new BacParser(),
-                new CnieParser(),
-                new ReleveParser(),
+                new BacParser,
+                new CnieParser,
+                new ReleveParser,
             ];
         }
 
@@ -113,7 +117,7 @@ class LocalOcrService
             if ($parser instanceof DocumentParserInterface) {
                 $this->parserManager->registerParser($parser);
                 if ($this->config['enable_logging']) {
-                    Log::debug("[LocalOcrService] Parser registered: " . get_class($parser));
+                    Log::debug('[LocalOcrService] Parser registered: '.get_class($parser));
                 }
             }
         }
@@ -126,7 +130,7 @@ class LocalOcrService
         }
 
         if ($this->config['enable_logging']) {
-            Log::info("[LocalOcrService] Initialized with " . count($engineList) . " engines and " . count($parserList) . " parsers");
+            Log::info('[LocalOcrService] Initialized with '.count($engineList).' engines and '.count($parserList).' parsers');
         }
     }
 
@@ -145,9 +149,10 @@ class LocalOcrService
 
         // Validation du fichier
         $validationResult = $this->validateFile($filePath, $mimeType);
-        if (!$validationResult['valid']) {
+        if (! $validationResult['valid']) {
             $this->lastError = $validationResult['error'];
             $this->stats['failed']++;
+
             return $this->createErrorResponse($validationResult['error']);
         }
 
@@ -162,6 +167,7 @@ class LocalOcrService
                 if ($this->config['enable_logging']) {
                     Log::debug("[LocalOcrService] Cache hit for: {$cacheKey}");
                 }
+
                 return $cachedResult;
             }
         }
@@ -182,11 +188,11 @@ class LocalOcrService
             if (empty(trim($extractedText))) {
                 $this->lastError = "Aucun texte n'a pu être extrait du document localement.";
                 $this->stats['failed']++;
-                
+
                 if ($this->config['enable_logging']) {
                     Log::warning("[LocalOcrService] Empty extraction for: {$filePath} (DocType: {$docType})");
                 }
-                
+
                 return $this->createEmptyResponse($filePath, $detectedDocType);
             }
 
@@ -217,7 +223,7 @@ class LocalOcrService
                 Log::info("[LocalOcrService] Successfully processed: {$filePath}", [
                     'doc_type' => $detectedDocType,
                     'text_length' => strlen($extractedText),
-                    'duration' => round(microtime(true) - $startTime, 2) . 's',
+                    'duration' => round(microtime(true) - $startTime, 2).'s',
                     'confidence' => $this->getConfidence($ocrResult),
                 ]);
             }
@@ -225,13 +231,13 @@ class LocalOcrService
             return $response;
 
         } catch (\Throwable $e) {
-            $this->lastError = "Erreur d'extraction OCR: " . $e->getMessage();
+            $this->lastError = "Erreur d'extraction OCR: ".$e->getMessage();
             $this->stats['failed']++;
 
             Log::error("[LocalOcrService] Exception: {$e->getMessage()}", [
                 'file' => $originalName ?? $filePath,
                 'doc_type' => $docType,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return $this->createErrorResponse($this->lastError, $filePath);
@@ -243,10 +249,10 @@ class LocalOcrService
      */
     private function validateFile(string $filePath, string $mimeType): array
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return [
                 'valid' => false,
-                'error' => "Fichier introuvable: {$filePath}"
+                'error' => "Fichier introuvable: {$filePath}",
             ];
         }
 
@@ -255,29 +261,29 @@ class LocalOcrService
             return [
                 'valid' => false,
                 'error' => sprintf(
-                    "Fichier trop volumineux: %d MB (max: %d MB)",
+                    'Fichier trop volumineux: %d MB (max: %d MB)',
                     round($fileSize / 1024 / 1024, 2),
                     $this->config['max_file_size'] / 1024 / 1024
-                )
+                ),
             ];
         }
 
         if ($fileSize === 0) {
             return [
                 'valid' => false,
-                'error' => "Fichier vide"
+                'error' => 'Fichier vide',
             ];
         }
 
         // Vérification du mime type
         $allowedMimes = $this->config['supported_mime_types'];
-        if (!in_array($mimeType, $allowedMimes)) {
+        if (! in_array($mimeType, $allowedMimes)) {
             // Vérification du fichier réel
             $realMime = mime_content_type($filePath);
-            if (!in_array($realMime, $allowedMimes)) {
+            if (! in_array($realMime, $allowedMimes)) {
                 return [
                     'valid' => false,
-                    'error' => "Type de fichier non supporté: {$mimeType} (détecté: {$realMime})"
+                    'error' => "Type de fichier non supporté: {$mimeType} (détecté: {$realMime})",
                 ];
             }
         }
@@ -294,8 +300,8 @@ class LocalOcrService
         $modifiedTime = filemtime($filePath) ?: 0;
         $fileSize = filesize($filePath) ?: 0;
 
-        return $this->config['cache_prefix'] . md5(
-            $identifier . '_' . $modifiedTime . '_' . $fileSize . '_' . $docType
+        return $this->config['cache_prefix'].md5(
+            $identifier.'_'.$modifiedTime.'_'.$fileSize.'_'.$docType
         );
     }
 
@@ -307,7 +313,8 @@ class LocalOcrService
         try {
             return Cache::get($key);
         } catch (\Throwable $e) {
-            Log::warning("[LocalOcrService] Cache read failed: " . $e->getMessage());
+            Log::warning('[LocalOcrService] Cache read failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -320,7 +327,7 @@ class LocalOcrService
         try {
             Cache::put($key, $data, $this->config['cache_ttl']);
         } catch (\Throwable $e) {
-            Log::warning("[LocalOcrService] Cache write failed: " . $e->getMessage());
+            Log::warning('[LocalOcrService] Cache write failed: '.$e->getMessage());
         }
     }
 
@@ -364,7 +371,7 @@ class LocalOcrService
 
         // Suppression des lignes vides excessives
         $lines = array_filter(array_map('trim', explode("\n", $text)));
-        
+
         return implode("\n", $lines);
     }
 
@@ -376,15 +383,16 @@ class LocalOcrService
         try {
             // Utiliser le DocumentParserManager pour le parsing
             $result = $this->parserManager->parse($docType, $text);
-            
+
             // Vérifier si le parsing a réussi
             if (empty($result->fields)) {
                 Log::warning("[LocalOcrService] No fields extracted for doc type: {$docType}");
             }
-            
+
             return $result;
         } catch (\Throwable $e) {
-            Log::error("[LocalOcrService] Parsing failed: " . $e->getMessage());
+            Log::error('[LocalOcrService] Parsing failed: '.$e->getMessage());
+
             return new OcrResult($text);
         }
     }
@@ -420,20 +428,20 @@ class LocalOcrService
         }
 
         // Ajout des noms normalisés pour faciliter l'accès
-        if (!empty($response['fields'])) {
-            $response['nom'] = $response['fields']['last_name_fr'] ?? 
-                              $response['fields']['nom'] ?? 
+        if (! empty($response['fields'])) {
+            $response['nom'] = $response['fields']['last_name_fr'] ??
+                              $response['fields']['nom'] ??
                               $response['fields']['identity_last_name_fr'] ?? '';
-            
-            $response['prenom'] = $response['fields']['first_name_fr'] ?? 
-                                 $response['fields']['prenom'] ?? 
+
+            $response['prenom'] = $response['fields']['first_name_fr'] ??
+                                 $response['fields']['prenom'] ??
                                  $response['fields']['identity_first_name_fr'] ?? '';
-            
-            $response['cin'] = $response['fields']['cin'] ?? 
-                              $response['fields']['numero_cin'] ?? 
+
+            $response['cin'] = $response['fields']['cin'] ??
+                              $response['fields']['numero_cin'] ??
                               $response['fields']['identity_cin'] ?? '';
-            
-            $response['cne'] = $response['fields']['cne'] ?? 
+
+            $response['cne'] = $response['fields']['cne'] ??
                               $response['fields']['identity_cne'] ?? '';
         }
 
@@ -477,11 +485,11 @@ class LocalOcrService
         if ($result instanceof OcrResult) {
             return $result->getConfidence() ?? 0.0;
         }
-        
+
         if (is_array($result) && isset($result['confidence'])) {
             return (float) $result['confidence'];
         }
-        
+
         return 0.0;
     }
 
@@ -493,11 +501,11 @@ class LocalOcrService
         if ($result instanceof OcrResult) {
             return $result->validationPassed() ?? false;
         }
-        
+
         if (is_array($result)) {
             return $result['validation_passed'] ?? false;
         }
-        
+
         return false;
     }
 
@@ -509,11 +517,11 @@ class LocalOcrService
         if ($result instanceof OcrResult) {
             return $result->getValidationWarnings() ?? [];
         }
-        
+
         if (is_array($result)) {
             return $result['validation_warnings'] ?? [];
         }
-        
+
         return [];
     }
 
@@ -524,9 +532,10 @@ class LocalOcrService
     {
         if ($result instanceof OcrResult) {
             $metadata = $result->metadata ?? [];
+
             return $metadata['engines_used'] ?? [];
         }
-        
+
         return [];
     }
 
@@ -541,20 +550,20 @@ class LocalOcrService
             if ($handle) {
                 $header = fread($handle, 4096);
                 fclose($handle);
-                
+
                 // Détection basée sur le contenu
                 if (preg_match('/\bCNIE\b|\bCIN\b|\bCARTE\s+NATIONALE\b/i', $header)) {
                     return 'cnie';
                 }
-                
+
                 if (preg_match('/\bRELEVÉ\s+DE\s+NOTES\b|\bRELEVE\s+DES\s+NOTES\b/i', $header)) {
                     return 'releve';
                 }
-                
+
                 if (preg_match('/\bBACCALAURÉAT\b|\bBACCALAUREAT\b|\bDIPLÔME\b/i', $header)) {
                     return 'bac';
                 }
-                
+
                 // Détection par extension
                 $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
                 if ($extension === 'pdf') {
@@ -562,9 +571,9 @@ class LocalOcrService
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning("[LocalOcrService] Auto-detection failed: " . $e->getMessage());
+            Log::warning('[LocalOcrService] Auto-detection failed: '.$e->getMessage());
         }
-        
+
         return 'unknown';
     }
 
@@ -636,7 +645,7 @@ class LocalOcrService
     public function checkAvailability(): array
     {
         $engines = [];
-        
+
         // Vérification des commandes
         $commands = [
             'pdftotext' => 'PdfTextEngine',
@@ -644,11 +653,11 @@ class LocalOcrService
             'tesseract' => 'TesseractEngine',
             'convert' => 'ImageMagick (pour Tesseract)',
         ];
-        
+
         foreach ($commands as $command => $engine) {
             $engines[$engine] = $this->commandExists($command);
         }
-        
+
         return [
             'engines_available' => $engines,
             'any_available' => in_array(true, $engines, true),
@@ -668,6 +677,7 @@ class LocalOcrService
         $output = [];
         $returnVar = -1;
         @exec("which {$command} 2>/dev/null", $output, $returnVar);
+
         return $returnVar === 0;
     }
 
@@ -677,16 +687,16 @@ class LocalOcrService
     public function clearCache(): void
     {
         try {
-            $pattern = $this->config['cache_prefix'] . '*';
+            $pattern = $this->config['cache_prefix'].'*';
             $keys = Cache::get($pattern);
-            
+
             if ($keys) {
                 foreach ($keys as $key) {
                     Cache::forget($key);
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning("[LocalOcrService] Cache clear failed: " . $e->getMessage());
+            Log::warning('[LocalOcrService] Cache clear failed: '.$e->getMessage());
         }
     }
 }

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Internship\ValidateInternshipRequest;
 use App\Http\Requests\Internship\ScheduleSoutenanceRequest;
-use App\Services\Academic\InternshipService;
-use App\Services\Academic\SoutenanceService;
+use App\Http\Requests\Internship\ValidateInternshipRequest;
 use App\Models\Internship;
 use App\Models\Soutenance;
+use App\Services\Academic\InternshipService;
+use App\Services\Academic\SoutenanceService;
 use Illuminate\Http\JsonResponse;
 
 class AdminInternshipController extends Controller
@@ -28,9 +28,9 @@ class AdminInternshipController extends Controller
             ->get();
 
         return response()->json([
-            'success'     => true,
-            'data'        => $internships,
-            'total'       => $internships->count(),
+            'success' => true,
+            'data' => $internships,
+            'total' => $internships->count(),
         ]);
     }
 
@@ -50,8 +50,8 @@ class AdminInternshipController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $soutenances,
-            'total'   => $soutenances->count(),
+            'data' => $soutenances,
+            'total' => $soutenances->count(),
         ]);
     }
 
@@ -67,8 +67,8 @@ class AdminInternshipController extends Controller
         );
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Stage validé avec succès.',
+            'success' => true,
+            'message' => 'Stage validé avec succès.',
             'internship' => $internship,
         ]);
     }
@@ -81,8 +81,8 @@ class AdminInternshipController extends Controller
         $soutenance = $this->soutenanceService->schedule($request->validated());
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Soutenance planifiée avec succès.',
+            'success' => true,
+            'message' => 'Soutenance planifiée avec succès.',
             'soutenance' => $soutenance,
         ], 201);
     }

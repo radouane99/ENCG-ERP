@@ -15,8 +15,8 @@ class AiConversation extends Model
     protected function casts(): array
     {
         return [
-        'is_active' => 'boolean',
-    ];
+            'is_active' => 'boolean',
+        ];
     }
 
     public function user(): BelongsTo

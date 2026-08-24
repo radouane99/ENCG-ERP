@@ -2,10 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AuditLog;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\AuditLog;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuditTrailMiddleware
@@ -33,12 +34,12 @@ class AuditTrailMiddleware
         $method = $request->method();
         $isMutating = in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE']);
         $isSensitiveGet = $method === 'GET' && (
-            str_contains($request->path(), 'export') || 
-            str_contains($request->path(), 'pv-pdf') || 
+            str_contains($request->path(), 'export') ||
+            str_contains($request->path(), 'pv-pdf') ||
             str_contains($request->path(), 'download')
         );
 
-        if (!$isMutating && !$isSensitiveGet) {
+        if (! $isMutating && ! $isSensitiveGet) {
             return $response;
         }
 
@@ -51,15 +52,15 @@ class AuditTrailMiddleware
 
         try {
             $user = $request->user() ?? Auth::user();
-            
+
             // Clean sensitive parameters
             $payload = $request->except([
-                'password', 
-                'password_confirmation', 
-                'token', 
-                'current_password', 
+                'password',
+                'password_confirmation',
+                'token',
+                'current_password',
                 '_token',
-                'secret'
+                'secret',
             ]);
 
             // Determine Action Type & Severity
@@ -94,7 +95,7 @@ class AuditTrailMiddleware
                 $severity = 'warning';
             }
 
-            $userName = $user ? ($user->name ?? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) : 'Visiteur / Anonyme';
+            $userName = $user ? ($user->name ?? trim(($user->first_name ?? '').' '.($user->last_name ?? ''))) : 'Visiteur / Anonyme';
             $userEmail = $user?->email;
             $userRole = $user?->role ?? ($user?->roles?->first()?->name ?? 'Invité');
 
@@ -102,25 +103,25 @@ class AuditTrailMiddleware
 
             if (class_exists(AuditLog::class)) {
                 AuditLog::record([
-                    'user_id'         => $user?->id,
-                    'user_name'       => $userName ?: 'Utilisateur',
-                    'user_email'      => $userEmail,
-                    'user_role'       => $userRole,
-                    'action'          => $actionName,
-                    'action_type'     => $actionType,
-                    'description'     => $description,
-                    'method'          => $method,
-                    'url'             => $request->fullUrl(),
-                    'ip_address'      => $request->ip() ?: '127.0.0.1',
-                    'user_agent'      => substr($request->userAgent() ?? '', 0, 500),
-                    'payload'         => !empty($payload) ? $payload : null,
+                    'user_id' => $user?->id,
+                    'user_name' => $userName ?: 'Utilisateur',
+                    'user_email' => $userEmail,
+                    'user_role' => $userRole,
+                    'action' => $actionName,
+                    'action_type' => $actionType,
+                    'description' => $description,
+                    'method' => $method,
+                    'url' => $request->fullUrl(),
+                    'ip_address' => $request->ip() ?: '127.0.0.1',
+                    'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+                    'payload' => ! empty($payload) ? $payload : null,
                     'response_status' => $response->getStatusCode(),
-                    'severity'        => $response->getStatusCode() >= 400 ? 'error' : $severity,
+                    'severity' => $response->getStatusCode() >= 400 ? 'error' : $severity,
                 ]);
             }
         } catch (\Throwable $e) {
             // Silently fail to avoid breaking user operations
-            \Illuminate\Support\Facades\Log::warning("AuditTrailMiddleware failed: " . $e->getMessage());
+            Log::warning('AuditTrailMiddleware failed: '.$e->getMessage());
         }
 
         return $response;

@@ -2,8 +2,8 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TimetableService
 {
@@ -34,15 +34,15 @@ class TimetableService
             )
             ->where('schedules.is_active', true);
 
-        if (!empty($filters['group_id'])) {
+        if (! empty($filters['group_id'])) {
             $query->where('schedules.group_id', $filters['group_id']);
         }
-        
-        if (!empty($filters['professor_id'])) {
+
+        if (! empty($filters['professor_id'])) {
             $query->where('schedules.professor_id', $filters['professor_id']);
         }
-        
-        if (!empty($filters['room_id'])) {
+
+        if (! empty($filters['room_id'])) {
             $query->where('schedules.room_id', $filters['room_id']);
         }
 

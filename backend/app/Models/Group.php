@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Group extends Model
 {
@@ -23,11 +24,11 @@ class Group extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function students(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'student_pathways', 'group_id', 'student_id')
-                    ->where('student_pathways.is_current', true)
-                    ->withPivot(['academic_year_id', 'current_semester', 'is_current']);
+            ->where('student_pathways.is_current', true)
+            ->withPivot(['academic_year_id', 'current_semester', 'is_current']);
     }
 
     public function speciality(): BelongsTo

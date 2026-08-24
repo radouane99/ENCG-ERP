@@ -46,6 +46,24 @@ export async function mockApi(page: Page) {
       })
     }
 
+    if (url.includes('/dashboard/student/stats')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            gpa: 12.5,
+            classes_today: 0,
+            absences: { total: 0, justified: 0, unjustified: 0 },
+            upcoming_exams: 0,
+            upcoming_classes: [],
+            recent_documents: [],
+          },
+        }),
+      })
+    }
+
     if (url.includes('/student-portal/grades')) {
       return route.fulfill({
         status: 200,

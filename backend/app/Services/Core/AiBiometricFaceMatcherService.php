@@ -14,26 +14,26 @@ class AiBiometricFaceMatcherService
 
     public function __construct()
     {
-        $this->gemini = new GeminiAiDriver();
+        $this->gemini = new GeminiAiDriver;
     }
 
     public function matchCandidateFaceWithDocument(string $photoPath, ?string $documentPath): array
     {
-        if (!file_exists($photoPath)) {
+        if (! file_exists($photoPath)) {
             return [
-                'matched'     => true,
+                'matched' => true,
                 'match_score' => 96.5,
-                'badge'       => '🟢 Match Biométrique Gemini Vision : 96.5% — Identité Confirmée',
-                'confidence'  => 'Élevée',
+                'badge' => '🟢 Match Biométrique Gemini Vision : 96.5% — Identité Confirmée',
+                'confidence' => 'Élevée',
             ];
         }
 
         $imagesToAnalyze = [$photoPath];
-        if (!empty($documentPath) && file_exists($documentPath)) {
+        if (! empty($documentPath) && file_exists($documentPath)) {
             $imagesToAnalyze[] = $documentPath;
         }
 
-        $prompt = <<<PROMPT
+        $prompt = <<<'PROMPT'
 You are a Computer Vision Biometric Face Matcher for ENCG Fès Admissions.
 Analyze the provided images (Image 1 = Student ID photo, Image 2 = Scanned CNIE/ID card).
 Compare facial landmarks, features, jawline, eyes, and overall facial structure.
@@ -55,24 +55,24 @@ PROMPT;
 
                 if (is_array($json) && isset($json['match_score'])) {
                     return [
-                        'matched'     => $json['matched'] ?? true,
-                        'match_score' => (float)($json['match_score'] ?? 97.5),
-                        'badge'       => $json['badge'] ?? "🟢 Match Biométrique Gemini Vision : {$json['match_score']}% — Identité Confirmée",
-                        'confidence'  => $json['confidence'] ?? 'Très Élevée',
-                        'details'     => $json['details'] ?? 'Visages concordants vérifiés par Gemini Vision AI.',
+                        'matched' => $json['matched'] ?? true,
+                        'match_score' => (float) ($json['match_score'] ?? 97.5),
+                        'badge' => $json['badge'] ?? "🟢 Match Biométrique Gemini Vision : {$json['match_score']}% — Identité Confirmée",
+                        'confidence' => $json['confidence'] ?? 'Très Élevée',
+                        'details' => $json['details'] ?? 'Visages concordants vérifiés par Gemini Vision AI.',
                     ];
                 }
             }
         } catch (\Exception $e) {
-            Log::warning("Gemini Vision biometric match exception: " . $e->getMessage());
+            Log::warning('Gemini Vision biometric match exception: '.$e->getMessage());
         }
 
         return [
-            'matched'     => true,
+            'matched' => true,
             'match_score' => 97.8,
-            'badge'       => '🟢 Match Biométrique Gemini Vision : 97.8% — Identité Confirmée',
-            'confidence'  => 'Très Élevée',
-            'details'     => 'Analyse biométrique faciale validée par Gemini Vision AI.',
+            'badge' => '🟢 Match Biométrique Gemini Vision : 97.8% — Identité Confirmée',
+            'confidence' => 'Très Élevée',
+            'details' => 'Analyse biométrique faciale validée par Gemini Vision AI.',
         ];
     }
 }

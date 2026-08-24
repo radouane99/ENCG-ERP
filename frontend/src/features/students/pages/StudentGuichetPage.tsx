@@ -190,7 +190,8 @@ export default function StudentGuichetPage() {
         ) : (
           <div className="space-y-5">
             {requests.map((req: any) => {
-              const isApproved = req.status === 'approved' || req.status === 'ready';
+              const isCollected = req.status === 'collected' || req.status === 'withdrawn';
+              const isApproved = req.status === 'approved' || req.status === 'ready' || isCollected;
               const isRejected = req.status === 'rejected';
               const step = isApproved ? 3 : isRejected ? 0 : (req.step || 2);
 
@@ -210,7 +211,11 @@ export default function StudentGuichetPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {isApproved ? (
+                      {isCollected ? (
+                        <span className="px-3.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-black">
+                          À retirer
+                        </span>
+                      ) : isApproved ? (
                         <span className="px-3.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-black flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" /> Document Prêt dans le Coffre-Fort
                         </span>

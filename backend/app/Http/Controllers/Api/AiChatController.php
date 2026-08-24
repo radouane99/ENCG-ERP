@@ -20,10 +20,10 @@ class AiChatController extends Controller
     {
         $request->validate([
             'message' => 'required|string',
-            'role'    => 'nullable|string',
+            'role' => 'nullable|string',
         ]);
 
-        $user     = $request->user();
+        $user = $request->user();
         $userRole = $request->input('role', 'Étudiant');
         $userName = $user?->name ?? 'Utilisateur';
 
@@ -37,7 +37,7 @@ Adaptez vos réponses à son rôle. Répondez en 3 paragraphes maximum.";
         if ($reply) {
             return response()->json([
                 'success' => true,
-                'reply'   => $reply,
+                'reply' => $reply,
             ]);
         }
 

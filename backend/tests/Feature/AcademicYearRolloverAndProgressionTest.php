@@ -2,13 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Services\Academic\ApogeeDeliberationEngine;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
-use App\Models\Student;
 use App\Models\StudentPathway;
-use App\Models\User;
 use App\Services\Academic\AcademicYearRolloverService;
+use App\Services\Academic\ApogeeDeliberationEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,6 +15,7 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
     use RefreshDatabase;
 
     private AcademicYear $year2025;
+
     private Filiere $filiere;
 
     protected function setUp(): void
@@ -24,11 +23,11 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
         parent::setUp();
 
         $this->year2025 = $this->makeTestAcademicYear([
-            'label'      => '2025/2026',
+            'label' => '2025/2026',
             'start_year' => 2025,
-            'end_year'   => 2026,
+            'end_year' => 2026,
             'start_date' => '2025-09-01',
-            'end_date'   => '2026-06-30',
+            'end_date' => '2026-06-30',
             'is_current' => true,
         ]);
 
@@ -42,19 +41,19 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
     {
         $student = $this->makeTestStudent([
             'first_name' => 'Amine',
-            'last_name'  => 'TAZI',
-            'cne'        => 'N987654321',
+            'last_name' => 'TAZI',
+            'cne' => 'N987654321',
         ]);
 
         $pathway = StudentPathway::create([
-            'student_id'       => $student->id,
-            'filiere_id'       => $this->filiere->id,
+            'student_id' => $student->id,
+            'filiere_id' => $this->filiere->id,
             'academic_year_id' => $this->year2025->id,
             'current_semester' => 1,
-            'is_current'       => true,
+            'is_current' => true,
         ]);
 
-        $delibEngine = new ApogeeDeliberationEngine();
+        $delibEngine = new ApogeeDeliberationEngine;
         $rolloverService = new AcademicYearRolloverService($delibEngine);
 
         $result = $rolloverService->executeRollover(
@@ -69,9 +68,9 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
 
         // Vérifier l'ancien parcours archivé
         $this->assertDatabaseHas('student_pathways', [
-            'student_id'       => $student->id,
+            'student_id' => $student->id,
             'academic_year_id' => $this->year2025->id,
-            'is_current'       => false,
+            'is_current' => false,
         ]);
 
         // Vérifier le nouveau parcours en S3 (2ème Année)
@@ -80,10 +79,10 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
         $this->assertTrue($newYear->is_current);
 
         $this->assertDatabaseHas('student_pathways', [
-            'student_id'       => $student->id,
+            'student_id' => $student->id,
             'academic_year_id' => $newYear->id,
             'current_semester' => 3, // Promotion S1 -> S3
-            'is_current'       => true,
+            'is_current' => true,
         ]);
     }
 
@@ -94,20 +93,20 @@ class AcademicYearRolloverAndProgressionTest extends TestCase
     {
         $student = $this->makeTestStudent([
             'first_name' => 'Sanaa',
-            'last_name'  => 'ALAOUI',
-            'cne'        => 'N556677889',
+            'last_name' => 'ALAOUI',
+            'cne' => 'N556677889',
         ]);
 
         // Étudiant en S9 (5ème Année)
         StudentPathway::create([
-            'student_id'       => $student->id,
-            'filiere_id'       => $this->filiere->id,
+            'student_id' => $student->id,
+            'filiere_id' => $this->filiere->id,
             'academic_year_id' => $this->year2025->id,
             'current_semester' => 9,
-            'is_current'       => true,
+            'is_current' => true,
         ]);
 
-        $delibEngine = new ApogeeDeliberationEngine();
+        $delibEngine = new ApogeeDeliberationEngine;
         $rolloverService = new AcademicYearRolloverService($delibEngine);
 
         $result = $rolloverService->executeRollover(

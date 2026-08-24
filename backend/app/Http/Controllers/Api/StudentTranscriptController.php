@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
+use App\Models\DocumentRequest;
+use App\Models\DocumentType;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
+use App\Services\DocumentRequestService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -61,9 +64,10 @@ class StudentTranscriptController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $pdfController = app(\App\Http\Controllers\Api\PdfExportController::class);
-        $currentYearLabel = \App\Models\AcademicYear::where('is_current', true)->value('label') ?? '2026/2027';
+        $pdfController = app(PdfExportController::class);
+        $currentYearLabel = AcademicYear::where('is_current', true)->value('label') ?? '2026/2027';
         $year = $request->query('year', $currentYearLabel);
+
         return $pdfController->attestationReussite($student->id, $year);
     }
 
@@ -76,7 +80,8 @@ class StudentTranscriptController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $pdfController = app(\App\Http\Controllers\Api\PdfExportController::class);
+        $pdfController = app(PdfExportController::class);
+
         return $pdfController->downloadDiplomeOfficielPdf($request, $student->id);
     }
 
@@ -85,21 +90,21 @@ class StudentTranscriptController extends Controller
      */
     private function generatePdfResponse(Student $student, ?string $academicYearId, string $semester)
     {
-        $docType = \App\Models\DocumentType::where('code', 'REL_NOTES')->first()
-            ?? \App\Models\DocumentType::firstOrCreate(
+        $docType = DocumentType::where('code', 'REL_NOTES')->first()
+            ?? DocumentType::firstOrCreate(
                 ['code' => 'REL_NOTES'],
                 ['name' => 'Relevé de Notes', 'view_name' => 'documents.releve_notes', 'is_active' => true]
             );
 
-        $docRequest = \App\Models\DocumentRequest::create([
-            'student_id'       => $student->id,
+        $docRequest = DocumentRequest::create([
+            'student_id' => $student->id,
             'document_type_id' => $docType->id,
-            'status'           => 'ready',
-            'requested_at'     => now(),
-            'processed_at'     => now(),
+            'status' => 'ready',
+            'requested_at' => now(),
+            'processed_at' => now(),
         ]);
 
-        $docService = app(\App\Services\DocumentRequestService::class);
+        $docService = app(DocumentRequestService::class);
         $genDoc = $docService->generateDocumentPdf($docRequest);
 
         $fullPath = null;
@@ -107,14 +112,14 @@ class StudentTranscriptController extends Controller
             $fullPath = Storage::disk('private')->path($genDoc->file_path);
         } elseif (Storage::disk('local')->exists($genDoc->file_path)) {
             $fullPath = Storage::disk('local')->path($genDoc->file_path);
-        } elseif (file_exists(storage_path('app/' . $genDoc->file_path))) {
-            $fullPath = storage_path('app/' . $genDoc->file_path);
+        } elseif (file_exists(storage_path('app/'.$genDoc->file_path))) {
+            $fullPath = storage_path('app/'.$genDoc->file_path);
         }
 
         if ($fullPath && file_exists($fullPath)) {
             return response()->file($fullPath, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="Releve_Notes_' . strtoupper($student->user?->last_name ?? 'Etudiant') . '.pdf"',
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="Releve_Notes_'.strtoupper($student->user?->last_name ?? 'Etudiant').'.pdf"',
             ]);
         }
 
@@ -130,7 +135,7 @@ class StudentTranscriptController extends Controller
             ? $student->registrations->firstWhere('academic_year_id', $academicYearId)
             : $student->registrations->sortByDesc('id')->first();
 
-        $filiere      = $registration?->filiere;
+        $filiere = $registration?->filiere;
         $academicYear = $registration?->academicYear;
 
         $modules = $this->getModulesForTranscript($filiere, $semester);
@@ -138,34 +143,34 @@ class StudentTranscriptController extends Controller
 
         $gpa = $this->calculateGpa($transcriptRows);
 
-        $verifyToken = hash('sha256', "transcript-{$student->id}-" . now()->format('Y-m-d'));
-        $verifyUrl   = config('app.url', 'http://localhost:8000') . "/verify/transcript/{$verifyToken}";
+        $verifyToken = hash('sha256', "transcript-{$student->id}-".now()->format('Y-m-d'));
+        $verifyUrl = config('app.url', 'http://localhost:8000')."/verify/transcript/{$verifyToken}";
 
         $qrBase64 = base64_encode(QrCode::size(150)->generate($verifyUrl));
         $logoPath = public_path('logo-encg.png');
         $logoBase64 = file_exists($logoPath)
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath))
             : '';
 
         return Pdf::loadView('pdf.transcript', [
-            'student'       => $student,
-            'filiere'       => $filiere,
+            'student' => $student,
+            'filiere' => $filiere,
             'academic_year' => $academicYear,
-            'semester'      => strtoupper($semester),
-            'rows'          => $transcriptRows->values(),
-            'gpa'           => $gpa,
-            'logoBase64'    => $logoBase64,
-            'qrBase64'      => $qrBase64,
-            'verify_url'    => $verifyUrl,
-            'generated_at'  => now()->format('d/m/Y à H:i'),
+            'semester' => strtoupper($semester),
+            'rows' => $transcriptRows->values(),
+            'gpa' => $gpa,
+            'logoBase64' => $logoBase64,
+            'qrBase64' => $qrBase64,
+            'verify_url' => $verifyUrl,
+            'generated_at' => now()->format('d/m/Y à H:i'),
         ])
-        ->setPaper('a4', 'portrait')
-        ->setOptions([
-            'dpi'                  => 150,
-            'defaultFont'          => 'DejaVu Sans',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled'      => true,
-        ]);
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'dpi' => 150,
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]);
     }
 
     /**
@@ -173,14 +178,16 @@ class StudentTranscriptController extends Controller
      */
     private function getModulesForTranscript($filiere, string $semester)
     {
-        if (!$filiere) return collect();
+        if (! $filiere) {
+            return collect();
+        }
 
         $query = Module::where('filiere_id', $filiere->id)->with(['assessments']);
 
         if ($semester !== 'all') {
             $query->where(function ($q) use ($semester) {
                 $q->where('code', 'LIKE', "%{$semester}%")
-                  ->orWhere('name', 'LIKE', "%{$semester}%");
+                    ->orWhere('name', 'LIKE', "%{$semester}%");
             });
         }
 
@@ -195,8 +202,8 @@ class StudentTranscriptController extends Controller
         return $modules->map(function ($module) use ($student) {
             $assessments = $module->assessments->where('type', '!=', 'Rattrapage');
 
-            $totalWeight  = 0;
-            $weightedSum  = 0;
+            $totalWeight = 0;
+            $weightedSum = 0;
             $gradesDetail = [];
 
             foreach ($assessments as $assessment) {
@@ -204,12 +211,12 @@ class StudentTranscriptController extends Controller
                     ->where('assessment_id', $assessment->id)
                     ->first();
 
-                $val     = $grade?->value;
-                $absent  = $grade?->absent ?? false;
+                $val = $grade?->value;
+                $absent = $grade?->absent ?? false;
                 $calcVal = $absent ? 0 : ($val !== null ? floatval($val) : null);
 
                 $gradesDetail[$assessment->type] = [
-                    'value'  => $val,
+                    'value' => $val,
                     'absent' => $absent,
                     'weight' => $assessment->weight,
                 ];
@@ -223,20 +230,20 @@ class StudentTranscriptController extends Controller
             $moyenne = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
 
             $rattrapageGrade = $this->getRattrapageGrade($student, $module);
-            $moyenneFinale   = $moyenne;
-            $decision        = $this->determineTranscriptDecision($moyenne, $rattrapageGrade, $moyenneFinale);
+            $moyenneFinale = $moyenne;
+            $decision = $this->determineTranscriptDecision($moyenne, $rattrapageGrade, $moyenneFinale);
 
             return [
-                'module'         => $module->name,
-                'code'           => $module->code,
-                'credits'        => $module->credits ?? '–',
-                'grades_detail'  => $gradesDetail,
-                'moyenne'        => $moyenne,
-                'rattrapage'     => $rattrapageGrade,
+                'module' => $module->name,
+                'code' => $module->code,
+                'credits' => $module->credits ?? '–',
+                'grades_detail' => $gradesDetail,
+                'moyenne' => $moyenne,
+                'rattrapage' => $rattrapageGrade,
                 'moyenne_finale' => $moyenneFinale,
-                'decision'       => $decision,
+                'decision' => $decision,
             ];
-        })->filter(fn($r) => $r['moyenne'] !== null || !empty($r['grades_detail']));
+        })->filter(fn ($r) => $r['moyenne'] !== null || ! empty($r['grades_detail']));
     }
 
     /**
@@ -245,10 +252,12 @@ class StudentTranscriptController extends Controller
     private function getRattrapageGrade(Student $student, Module $module): ?float
     {
         $rattrapageAssessment = $module->assessments->first(
-            fn($a) => strtolower($a->type) === 'rattrapage'
+            fn ($a) => strtolower($a->type) === 'rattrapage'
         );
 
-        if (!$rattrapageAssessment) return null;
+        if (! $rattrapageAssessment) {
+            return null;
+        }
 
         $rg = Grade::where('student_id', $student->id)
             ->where('assessment_id', $rattrapageAssessment->id)
@@ -262,21 +271,29 @@ class StudentTranscriptController extends Controller
      */
     private function determineTranscriptDecision(?float $moyenne, ?float $rattrapageGrade, ?float &$moyenneFinale): string
     {
-        if ($moyenne === null) return '–';
+        if ($moyenne === null) {
+            return '–';
+        }
 
-        if ($moyenne >= 10) return 'Validé';
+        if ($moyenne >= 10) {
+            return 'Validé';
+        }
 
         if ($rattrapageGrade !== null) {
             $rawAverage = max($moyenne, $rattrapageGrade);
             if ($rawAverage >= 10) {
                 $moyenneFinale = min(12.00, round($rawAverage, 2));
+
                 return 'Validé (R)';
             }
             $moyenneFinale = round($rawAverage, 2);
+
             return 'Non Validé';
         }
 
-        if ($moyenne < 6) return 'Non Validé';
+        if ($moyenne < 6) {
+            return 'Non Validé';
+        }
 
         return 'Rattrapage';
     }
@@ -287,6 +304,7 @@ class StudentTranscriptController extends Controller
     private function calculateGpa($transcriptRows): ?float
     {
         $moyennes = $transcriptRows->pluck('moyenne_finale')->filter();
+
         return $moyennes->isNotEmpty() ? round($moyennes->avg(), 2) : null;
     }
 }

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -44,7 +44,7 @@ return new class extends Migration
                     'academic_year_id' => $internship->academic_year_id ?? null,
                     'student_id' => $internship->student_id,
                     'type' => 'internship',
-                    'title' => 'Internship at ' . ($internship->company_name ?? 'Unknown'),
+                    'title' => 'Internship at '.($internship->company_name ?? 'Unknown'),
                     'company_name' => $internship->company_name ?? null,
                     'company_address' => $internship->company_address ?? null,
                     'company_city' => $internship->company_city ?? null,

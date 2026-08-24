@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Middleware\AuditTrailMiddleware;
+use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\RequireAdmin2FA;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\XssSanitizer;
+use App\Support\SentryReporter;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,19 +37,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'require-admin-2fa' => \App\Http\Middleware\RequireAdmin2FA::class,
-            'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
+            'role' => RoleMiddleware::class,
+            'require-admin-2fa' => RequireAdmin2FA::class,
+            'password.changed' => EnsurePasswordChanged::class,
         ]);
-        
+
         $middleware->api(prepend: [
-            \App\Http\Middleware\SetLocale::class,
+            SetLocale::class,
         ]);
-        
+
         $middleware->api(append: [
-            \App\Http\Middleware\XssSanitizer::class,
-            \App\Http\Middleware\AuditTrailMiddleware::class,
-            \App\Http\Middleware\EnsurePasswordChanged::class,
+            XssSanitizer::class,
+            AuditTrailMiddleware::class,
+            EnsurePasswordChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -50,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        $exceptions->reportable(function (\Throwable $e) {
-            app(\App\Support\SentryReporter::class)->capture($e);
+        $exceptions->reportable(function (Throwable $e) {
+            app(SentryReporter::class)->capture($e);
         });
     })->create();

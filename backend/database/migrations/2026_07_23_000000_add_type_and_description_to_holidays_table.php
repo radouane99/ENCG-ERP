@@ -13,13 +13,13 @@ return new class extends Migration
     {
         if (Schema::hasTable('holidays')) {
             Schema::table('holidays', function (Blueprint $table) {
-                if (!Schema::hasColumn('holidays', 'type')) {
+                if (! Schema::hasColumn('holidays', 'type')) {
                     $table->string('type')->default('academic')->after('end_date');
                 }
-                if (!Schema::hasColumn('holidays', 'description')) {
+                if (! Schema::hasColumn('holidays', 'description')) {
                     $table->text('description')->nullable()->after('type');
                 }
-                if (!Schema::hasColumn('holidays', 'is_active')) {
+                if (! Schema::hasColumn('holidays', 'is_active')) {
                     $table->boolean('is_active')->default(true)->after('description');
                 }
             });
@@ -43,7 +43,7 @@ return new class extends Migration
                 if (Schema::hasColumn('holidays', 'is_active')) {
                     $columns[] = 'is_active';
                 }
-                if (!empty($columns)) {
+                if (! empty($columns)) {
                     $table->dropColumn($columns);
                 }
             });

@@ -2,17 +2,18 @@
 
 namespace App\Notifications;
 
+use App\Enums\ValidationStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Enums\ValidationStatus;
 
 class ValidationStatusUpdated extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public $validatable;
+
     public $newStatus;
 
     public function __construct($validatable, $newStatus)
@@ -32,12 +33,12 @@ class ValidationStatusUpdated extends Notification implements ShouldQueue
         $type = class_basename($this->validatable);
 
         return (new MailMessage)
-                    ->subject("Mise à jour de votre demande : {$type}")
-                    ->greeting("Bonjour {$notifiable->first_name},")
-                    ->line("Le statut de votre demande ({$type}) a été mis à jour.")
-                    ->line("Nouveau statut : **{$statusLabel}**")
-                    ->action('Consulter mon dossier', url('/student/dashboard'))
-                    ->line("Merci d'utiliser le portail ENCG.");
+            ->subject("Mise à jour de votre demande : {$type}")
+            ->greeting("Bonjour {$notifiable->first_name},")
+            ->line("Le statut de votre demande ({$type}) a été mis à jour.")
+            ->line("Nouveau statut : **{$statusLabel}**")
+            ->action('Consulter mon dossier', url('/student/dashboard'))
+            ->line("Merci d'utiliser le portail ENCG.");
     }
 
     public function toArray($notifiable)

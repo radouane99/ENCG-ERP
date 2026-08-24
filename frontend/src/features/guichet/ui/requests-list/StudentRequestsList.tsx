@@ -3,18 +3,20 @@ import { useStudentRequests } from '../../api/guichetApi';
 import { DocumentRequestStatus } from '../../model/types';
 
 const StatusBadge: React.FC<{ status: DocumentRequestStatus }> = ({ status }) => {
-  const colors = {
+  const colors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
     processing: 'bg-blue-100 text-blue-800',
     ready: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-800',
+    collected: 'bg-indigo-100 text-indigo-800',
   };
 
-  const labels = {
+  const labels: Record<string, string> = {
     pending: 'En attente',
-    processing: 'En cours',
+    processing: 'En attente',
     ready: 'Prêt',
-    rejected: 'Rejeté',
+    rejected: 'Refusé',
+    collected: 'À retirer',
   };
 
   return (

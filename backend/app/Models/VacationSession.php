@@ -15,10 +15,10 @@ class VacationSession extends Model
     protected function casts(): array
     {
         return [
-        'session_date' => 'date',
-        'hours' => 'float',
-        'validated_at' => 'datetime',
-    ];
+            'session_date' => 'date',
+            'hours' => 'float',
+            'validated_at' => 'datetime',
+        ];
     }
 
     public function contract(): BelongsTo

@@ -74,6 +74,31 @@ api.interceptors.response.use(
 
 export default api
 
+export interface ApiErrorResponse {
+  message: string
+  errors?: Record<string, string[]>
+}
+
+export function extractValidationErrors(error: unknown): Record<string, string> {
+  if (!axios.isAxiosError(error)) return {}
+  const data = error.response?.data as ApiErrorResponse | undefined
+  if (!data?.errors) return {}
+
+  return Object.fromEntries(
+    Object.entries(data.errors).map(([field, messages]) => [
+      field,
+      messages[0] ?? 'Erreur de validation',
+    ]),
+  )
+}
+
+export function getErrorMessage(error: unknown, fallback = 'Une erreur est survenue.'): string {
+  if (axios.isAxiosError(error)) {
+    return (error.response?.data as ApiErrorResponse | undefined)?.message ?? fallback
+  }
+  return fallback
+}
+
 // ── Typed API helpers ──────────────────────────────────────────
 export interface ApiResponse<T> {
   data: T

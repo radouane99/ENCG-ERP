@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'institution_id')) {
+            if (! Schema::hasColumn('users', 'institution_id')) {
                 $table->foreignUuid('institution_id')->nullable()->constrained()->nullOnDelete();
             }
         });
 
         Schema::table('academic_years', function (Blueprint $table) {
-            if (!Schema::hasColumn('academic_years', 'institution_id')) {
+            if (! Schema::hasColumn('academic_years', 'institution_id')) {
                 $table->foreignUuid('institution_id')->nullable()->constrained()->cascadeOnDelete();
             }
         });

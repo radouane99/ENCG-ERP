@@ -12,7 +12,7 @@ enum ValidationStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'En attente',
             self::REVIEWED => 'Vérifié',
             self::APPROVED => 'Approuvé',

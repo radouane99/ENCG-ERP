@@ -23,12 +23,12 @@ class UserController extends Controller
         abort_unless($request->user()->can('users.view'), 403);
 
         $users = User::with('roles')
-            ->whereDoesntHave('roles', fn($q) => $q->where('name', 'student'))
+            ->whereDoesntHave('roles', fn ($q) => $q->where('name', 'student'))
             ->get();
 
         return response()->json([
             'success' => true,
-            'data'    => UserResource::collection($users),
+            'data' => UserResource::collection($users),
         ]);
     }
 
@@ -43,7 +43,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user),
+            'data' => new UserResource($user),
         ]);
     }
 
@@ -57,10 +57,10 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
-            'name'     => 'sometimes|required|string|max:255',
-            'email'    => 'sometimes|required|email|max:255|unique:users,email,' . $user->id,
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|max:255|unique:users,email,'.$user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role'     => 'sometimes|required|string',
+            'role' => 'sometimes|required|string',
         ]);
 
         if (isset($validated['name'])) {
@@ -71,7 +71,7 @@ class UserController extends Controller
             $user->email = $validated['email'];
         }
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = bcrypt($validated['password']);
         }
 
@@ -84,7 +84,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Utilisateur mis à jour avec succès.',
-            'data'    => new UserResource($user->load('roles')),
+            'data' => new UserResource($user->load('roles')),
         ]);
     }
 

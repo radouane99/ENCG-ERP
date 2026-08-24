@@ -4,16 +4,19 @@ namespace App\Exports;
 
 use App\Models\VacationContract;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class VacatairesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
+class VacatairesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
-    public function title(): string { return 'Vacataires'; }
+    public function title(): string
+    {
+        return 'Vacataires';
+    }
 
     public function collection()
     {
@@ -26,7 +29,7 @@ class VacatairesExport implements FromCollection, WithHeadings, WithMapping, Wit
             'Nom', 'Prénom', 'Email', 'CIN',
             'Module', 'Heures Prévues', 'Heures Effectuées',
             'Taux Horaire (MAD)', 'Statut Contrat',
-            'Date Début', 'Date Fin'
+            'Date Début', 'Date Fin',
         ];
     }
 

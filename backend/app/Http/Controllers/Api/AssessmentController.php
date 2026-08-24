@@ -20,7 +20,7 @@ class AssessmentController extends Controller
      */
     public function getForModule(Module $module, Request $request): JsonResponse
     {
-        if (!$this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
+        if (! $this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 
@@ -32,21 +32,21 @@ class AssessmentController extends Controller
      */
     public function storeForModule(Module $module, Request $request): JsonResponse
     {
-        if (!$this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
+        if (! $this->accessService->isAuthorizedForModule($request->user(), $module->id)) {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 
         $validated = $request->validate([
-            'assessments'             => 'required|array',
-            'assessments.*.id'       => 'nullable|integer',
-            'assessments.*.type'     => 'required|string|max:50',
-            'assessments.*.weight'   => 'required|numeric|min:0|max:100',
+            'assessments' => 'required|array',
+            'assessments.*.id' => 'nullable|integer',
+            'assessments.*.type' => 'required|string|max:50',
+            'assessments.*.weight' => 'required|numeric|min:0|max:100',
         ]);
 
         // Vérifier la somme des poids (hors rattrapage)
         $ordinarySum = collect($validated['assessments'])
-            ->filter(fn($a) => strtolower($a['type']) !== 'rattrapage')
-            ->sum(fn($a) => floatval($a['weight']));
+            ->filter(fn ($a) => strtolower($a['type']) !== 'rattrapage')
+            ->sum(fn ($a) => floatval($a['weight']));
 
         if (count($validated['assessments']) > 0 && abs($ordinarySum - 100) > 0.01) {
             return response()->json([
@@ -56,20 +56,21 @@ class AssessmentController extends Controller
 
         $savedIds = [];
         foreach ($validated['assessments'] as $aData) {
-            if (!empty($aData['id'])) {
+            if (! empty($aData['id'])) {
                 $assessment = Assessment::where('id', $aData['id'])->where('module_id', $module->id)->first();
                 if ($assessment) {
                     $assessment->update(['type' => $aData['type'], 'weight' => floatval($aData['weight'])]);
                     $savedIds[] = $assessment->id;
+
                     continue;
                 }
             }
 
             $assessment = Assessment::create([
                 'module_id' => $module->id,
-                'type'      => $aData['type'],
-                'weight'    => floatval($aData['weight']),
-                'date'      => now()->format('Y-m-d'),
+                'type' => $aData['type'],
+                'weight' => floatval($aData['weight']),
+                'date' => now()->format('Y-m-d'),
             ]);
             $savedIds[] = $assessment->id;
         }
@@ -80,7 +81,7 @@ class AssessmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Modalités d\'évaluation enregistrées.',
-            'data'    => $module->fresh()->assessments,
+            'data' => $module->fresh()->assessments,
         ]);
     }
 
@@ -90,13 +91,13 @@ class AssessmentController extends Controller
     private function isAuthorizedForModule($user, Module $module): bool
     {
         // Les admins passent toujours
-        if (!$user || !$user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+        if (! $user || ! $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
             return true;
         }
 
         $prof = Professor::where('user_id', $user->id)->first();
-        if (!$prof) {
-            $prof = Professor::whereHas('user', fn($q) => $q->where('email', $user->email))
+        if (! $prof) {
+            $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email))
                 ->orWhere('id', $user->id)
                 ->first();
         }

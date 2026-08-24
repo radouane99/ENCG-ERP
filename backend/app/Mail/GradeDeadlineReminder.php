@@ -32,8 +32,8 @@ class GradeDeadlineReminder extends Mailable implements ShouldQueue
             view: 'emails.grade-deadline-reminder',
             with: [
                 'professorName' => $this->professorName,
-                'endDate'       => $this->endDate,
-                'sessionLabel'  => $this->sessionLabel,
+                'endDate' => $this->endDate,
+                'sessionLabel' => $this->sessionLabel,
             ],
         );
     }

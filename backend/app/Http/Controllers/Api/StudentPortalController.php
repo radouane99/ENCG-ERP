@@ -24,7 +24,7 @@ class StudentPortalController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $this->portalService->getGrades($studentId),
+            'data' => $this->portalService->getGrades($studentId),
         ]);
     }
 
@@ -37,7 +37,7 @@ class StudentPortalController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $this->portalService->getDashboardStats($studentId),
+            'data' => $this->portalService->getDashboardStats($studentId),
         ]);
     }
 
@@ -50,7 +50,7 @@ class StudentPortalController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $this->portalService->getSchedule($studentId),
+            'data' => $this->portalService->getSchedule($studentId),
         ]);
     }
 
@@ -70,22 +70,32 @@ class StudentPortalController extends Controller
         return response()->json($result, 201);
     }
 
+    public function submitAbsenceJustification(SubmitAbsenceRequest $request): JsonResponse
+    {
+        return $this->submitAbsence($request);
+    }
+
     /**
      * Ressources de la bibliothèque numérique.
      */
     public function getLibraryMaterials(Request $request): JsonResponse
     {
-        $this->resolveAuthenticatedStudentId($request);
+        $studentId = $this->resolveAuthenticatedStudentId($request);
+        $student = $request->user()?->student;
 
-        $materials = LearningMaterial::where('is_published', true)
+        $materials = \App\Models\LearningMaterial::where('is_published', true)
             ->with(['module', 'professor'])
             ->latest()
             ->take(20)
             ->get();
 
+        $kohaLoans = app(\App\Services\Library\KohaLibraryClient::class)->loansForStudent($student?->cne);
+
         return response()->json([
             'success' => true,
-            'data'    => $materials,
+            'data' => $materials,
+            'koha_loans' => $kohaLoans,
+            'koha_configured' => filled(config('services.koha.base_url')),
         ]);
     }
 

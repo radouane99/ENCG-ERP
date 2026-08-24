@@ -18,10 +18,10 @@ class RequireAdmin2FA
         $user = $request->user();
 
         if ($user?->hasAnyRole(self::ADMIN_ROLES)) {
-            if (!$user->two_factor_confirmed_at && !$user->two_factor_secret) {
+            if (! $user->two_factor_confirmed_at && ! $user->two_factor_secret) {
                 return response()->json([
-                    'success'            => false,
-                    'message'            => '2FA requise pour les comptes administrateurs.',
+                    'success' => false,
+                    'message' => '2FA requise pour les comptes administrateurs.',
                     'requires_2fa_setup' => true,
                 ], 403);
             }

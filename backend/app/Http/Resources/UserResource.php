@@ -18,9 +18,9 @@ class UserResource extends JsonResource
             'id' => $this->uuid ?? $this->id,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'name' => trim($this->first_name . ' ' . $this->last_name),
+            'name' => trim($this->first_name.' '.$this->last_name),
             'email' => $this->email,
-            'is_active' => (bool)$this->is_active,
+            'is_active' => (bool) $this->is_active,
             'roles' => $this->whenLoaded('roles', function () {
                 return $this->roles->pluck('name')->values()->toArray();
             }, []),

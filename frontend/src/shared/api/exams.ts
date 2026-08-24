@@ -67,6 +67,10 @@ export const examsApi = {
     const response = await api.post('/convocations/send-session', { session_id: sessionId });
     return response.data;
   },
+  sendCampusSms: async (sessionId: number) => {
+    const response = await api.post(`/convocations/session/${sessionId}/campus-sms`);
+    return response.data;
+  },
   generateSession: async (sessionId: number, filiereId: number, semesterNumber?: number, options?: { modules_per_day?: number; day_slot_mode?: string; module_ids?: number[]; start_date?: string }) => {
     const data: any = { session_id: sessionId, filiere_id: filiereId };
     if (semesterNumber) data.semester_number = semesterNumber;

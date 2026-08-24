@@ -2,9 +2,6 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
-use Exception;
-
 class ProctorAssignmentService
 {
     /**
@@ -16,7 +13,7 @@ class ProctorAssignmentService
     {
         // 1. Fetch exams for the session that have NO proctors assigned.
         // $exams = Exam::where('session_id', $sessionId)->whereDoesntHave('proctors')->get();
-        
+
         // 2. Fetch all professors with their current "Supervision Load" (Charge de surveillance en heures).
         // $professors = Professor::withCount('surveillanceHours')->orderBy('surveillance_hours_count', 'asc')->get();
 
@@ -25,7 +22,7 @@ class ProctorAssignmentService
         //     // Assign Principal (Lowest load)
         //     $principal = $professors->shift();
         //     $exam->proctors()->attach($principal->id, ['role' => 'Principal']);
-        //     
+        //
         //     // Assign Assistant
         //     if ($exam->capacity > 30) {
         //         $assistant = $professors->shift();
@@ -47,9 +44,9 @@ class ProctorAssignmentService
                 'roles_assigned' => [
                     'Principal' => 5,
                     'Assistant' => 5,
-                    'Réserviste' => 5
-                ]
-            ]
+                    'Réserviste' => 5,
+                ],
+            ],
         ];
     }
 }

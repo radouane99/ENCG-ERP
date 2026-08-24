@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Assessment;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\Student;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class GradeGridController extends Controller
 {
@@ -16,21 +20,21 @@ class GradeGridController extends Controller
         $moduleId = $request->query('module_id');
         $groupId = $request->query('group_id');
 
-        if (!$moduleId || !$groupId) {
+        if (! $moduleId || ! $groupId) {
             return response()->json(['success' => false, 'message' => 'module_id et group_id sont requis.'], 400);
         }
 
-        $students = \App\Models\Student::whereHas('registrations', function ($query) use ($groupId) {
+        $students = Student::whereHas('registrations', function ($query) use ($groupId) {
             $query->where('group_id', $groupId);
         })->with(['user'])->get();
 
         // Find or create CC and Exam assessments for this module
-        $ccAssessment = \App\Models\Assessment::firstOrCreate(
+        $ccAssessment = Assessment::firstOrCreate(
             ['module_id' => $moduleId, 'type' => 'CC'],
             ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
         );
 
-        $examAssessment = \App\Models\Assessment::firstOrCreate(
+        $examAssessment = Assessment::firstOrCreate(
             ['module_id' => $moduleId, 'type' => 'Exam'],
             ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
         );
@@ -53,11 +57,11 @@ class GradeGridController extends Controller
             $ccGrade = $ccGrades->get($student->id);
             $examGrade = $examGrades->get($student->id);
 
-            $ccNum = ($ccGrade && !$ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
-            $examNum = ($examGrade && !$examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
+            $ccNum = ($ccGrade && ! $ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
+            $examNum = ($examGrade && ! $examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
 
-            $ccAbsent = $ccGrade ? (bool)$ccGrade->absent : false;
-            $examAbsent = $examGrade ? (bool)$examGrade->absent : false;
+            $ccAbsent = $ccGrade ? (bool) $ccGrade->absent : false;
+            $examAbsent = $examGrade ? (bool) $examGrade->absent : false;
 
             $average = null;
             $status = 'Non saisie';
@@ -86,10 +90,10 @@ class GradeGridController extends Controller
             'success' => true,
             'data' => $gridData,
             'meta' => [
-                'module_name' => \App\Models\Module::find($moduleId)?->name ?? 'Module inconnu',
-                'group_name' => \App\Models\Group::find($groupId)?->name ?? 'Groupe inconnu',
-                'weights' => ['cc' => 0.5, 'exam' => 0.5]
-            ]
+                'module_name' => Module::find($moduleId)?->name ?? 'Module inconnu',
+                'group_name' => Group::find($groupId)?->name ?? 'Groupe inconnu',
+                'weights' => ['cc' => 0.5, 'exam' => 0.5],
+            ],
         ]);
     }
 
@@ -112,12 +116,12 @@ class GradeGridController extends Controller
         $moduleId = $validated['module_id'];
 
         // Find or create CC and Exam assessments for this module
-        $ccAssessment = \App\Models\Assessment::firstOrCreate(
+        $ccAssessment = Assessment::firstOrCreate(
             ['module_id' => $moduleId, 'type' => 'CC'],
             ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
         );
 
-        $examAssessment = \App\Models\Assessment::firstOrCreate(
+        $examAssessment = Assessment::firstOrCreate(
             ['module_id' => $moduleId, 'type' => 'Exam'],
             ['weight' => 50.00, 'date' => now()->format('Y-m-d')]
         );
@@ -173,8 +177,8 @@ class GradeGridController extends Controller
                 ->where('assessment_id', $examAssessment->id)
                 ->first();
 
-            $ccNum = ($ccGrade && !$ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
-            $examNum = ($examGrade && !$examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
+            $ccNum = ($ccGrade && ! $ccGrade->absent && $ccGrade->value !== null) ? floatval($ccGrade->value) : null;
+            $examNum = ($examGrade && ! $examGrade->absent && $examGrade->value !== null) ? floatval($examGrade->value) : null;
 
             $average = null;
             $status = 'Non saisie';
@@ -189,14 +193,14 @@ class GradeGridController extends Controller
             $results[] = [
                 'student_id' => $studentId,
                 'average' => $average,
-                'status' => $status
+                'status' => $status,
             ];
         }
 
         return response()->json([
             'success' => true,
-            'message' => count($validated['updates']) . ' note(s) enregistrée(s) avec succès.',
-            'calculated_results' => $results
+            'message' => count($validated['updates']).' note(s) enregistrée(s) avec succès.',
+            'calculated_results' => $results,
         ]);
     }
 }

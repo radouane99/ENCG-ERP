@@ -2,10 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -20,7 +20,7 @@ return new class extends Migration
         // 1. Add UUIDs
         foreach ($uuidTables as $tableName) {
             Schema::table($tableName, function (Blueprint $table) {
-                if (!Schema::hasColumn($table->getTable(), 'uuid')) {
+                if (! Schema::hasColumn($table->getTable(), 'uuid')) {
                     $table->uuid('uuid')->nullable()->after('id');
                 }
             });
@@ -48,7 +48,7 @@ return new class extends Migration
         // 4. Add Optimistic Locking (version)
         foreach ($versionTables as $tableName) {
             Schema::table($tableName, function (Blueprint $table) {
-                if (!Schema::hasColumn($table->getTable(), 'version')) {
+                if (! Schema::hasColumn($table->getTable(), 'version')) {
                     $table->integer('version')->default(1)->after('updated_at');
                 }
             });
@@ -65,7 +65,7 @@ return new class extends Migration
         foreach ($orphanConfigs as $config) {
             // Pre-flight: Delete orphans safely
             DB::statement("DELETE FROM {$config['table']} WHERE {$config['col']} IS NOT NULL AND {$config['col']} NOT IN (SELECT id FROM {$config['ref']})");
-            
+
             Schema::table($config['table'], function (Blueprint $table) use ($config) {
                 // Ensure index exists first (optional depending on engine, but good practice)
                 $table->index($config['col']);
@@ -82,7 +82,7 @@ return new class extends Migration
     {
         $uuidTables = ['users', 'students', 'professors', 'modules', 'rooms', 'groups', 'schedules'];
         $versionTables = ['schedules', 'grades', 'attendances', 'student_registrations'];
-        
+
         $orphanConfigs = [
             ['table' => 'attendance_sessions', 'col' => 'professor_id', 'ref' => 'professors'],
             ['table' => 'defense_juries', 'col' => 'professor_id', 'ref' => 'professors'],

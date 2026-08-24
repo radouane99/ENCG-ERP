@@ -15,7 +15,7 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non authentifié.',
@@ -24,7 +24,7 @@ class RoleMiddleware
 
         $allowedRoles = explode('|', $role);
 
-        if (!$user->hasAnyRole($allowedRoles)) {
+        if (! $user->hasAnyRole($allowedRoles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès refusé. Rôle insuffisant.',

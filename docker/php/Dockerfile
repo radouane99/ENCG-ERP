@@ -66,15 +66,26 @@ RUN addgroup -g 1000 -S www \
 # ── Working directory ─────────────────────────────────────────
 WORKDIR /var/www/html
 
-# Fix permissions so www can write to storage & cache
+COPY --chown=www:www backend/composer.json backend/composer.lock /var/www/html/
+
+# Fix permissions so www can write to storage, cache and vendor
 RUN mkdir -p /var/www/html/storage/logs \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
              /var/www/html/storage/framework/views \
              /var/www/html/bootstrap/cache \
+             /var/www/html/vendor \
     && chown -R www:www /var/www/html
 
 USER www
+RUN composer install --no-interaction --prefer-dist --no-scripts --no-autoloader \
+    && composer dump-autoload --no-interaction --optimize || true
+
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+USER root
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER www
 
 EXPOSE 9000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

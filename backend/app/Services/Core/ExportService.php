@@ -2,11 +2,23 @@
 
 namespace App\Services\Core;
 
+use App\Exports\FilieresExport;
+use App\Exports\GroupsExport;
+use App\Exports\ModulesExport;
+use App\Exports\ProfessorsExport;
+use App\Exports\RoomsExport;
+use App\Exports\StudentsExport;
+use App\Exports\VacatairesExport;
+use App\Imports\FilieresImport;
+use App\Imports\GroupsImport;
+use App\Imports\ModulesImport;
+use App\Imports\ProfessorsImport;
+use App\Imports\RoomsImport;
+use App\Imports\StudentsImport;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use Symfony\Component\HttpFoundation\Response;
 
 class ExportService
 {
@@ -14,25 +26,25 @@ class ExportService
      * Map model names to their corresponding Export classes.
      */
     protected array $exportMap = [
-        'modules'     => \App\Exports\ModulesExport::class,
-        'students'    => \App\Exports\StudentsExport::class,
-        'professors'  => \App\Exports\ProfessorsExport::class,
-        'vacataires'  => \App\Exports\VacatairesExport::class,
-        'filieres'    => \App\Exports\FilieresExport::class,
-        'groups'      => \App\Exports\GroupsExport::class,
-        'rooms'       => \App\Exports\RoomsExport::class,
+        'modules' => ModulesExport::class,
+        'students' => StudentsExport::class,
+        'professors' => ProfessorsExport::class,
+        'vacataires' => VacatairesExport::class,
+        'filieres' => FilieresExport::class,
+        'groups' => GroupsExport::class,
+        'rooms' => RoomsExport::class,
     ];
 
     /**
      * Map model names to their corresponding Import classes.
      */
     protected array $importMap = [
-        'modules'     => \App\Imports\ModulesImport::class,
-        'students'    => \App\Imports\StudentsImport::class,
-        'professors'  => \App\Imports\ProfessorsImport::class,
-        'filieres'    => \App\Imports\FilieresImport::class,
-        'groups'      => \App\Imports\GroupsImport::class,
-        'rooms'       => \App\Imports\RoomsImport::class,
+        'modules' => ModulesImport::class,
+        'students' => StudentsImport::class,
+        'professors' => ProfessorsImport::class,
+        'filieres' => FilieresImport::class,
+        'groups' => GroupsImport::class,
+        'rooms' => RoomsImport::class,
     ];
 
     /**
@@ -42,33 +54,33 @@ class ExportService
     {
         $normalized = strtolower(trim($modelName));
 
-        if (!isset($this->exportMap[$normalized])) {
-            throw new \InvalidArgumentException("Export for model '{$modelName}' is not supported. Supported models: " . implode(', ', array_keys($this->exportMap)));
+        if (! isset($this->exportMap[$normalized])) {
+            throw new \InvalidArgumentException("Export for model '{$modelName}' is not supported. Supported models: ".implode(', ', array_keys($this->exportMap)));
         }
 
         $exportClass = $this->exportMap[$normalized];
-        $filename = "{$normalized}_export_" . date('Ymd_His') . ".xlsx";
+        $filename = "{$normalized}_export_".date('Ymd_His').'.xlsx';
 
         // Audit Trail
         $user = Auth::user();
         if (class_exists(AuditLog::class)) {
             AuditLog::record([
-                'user_id'     => $user?->id,
-                'user_name'   => $user?->name ?? 'Admin',
-                'user_email'  => $user?->email,
-                'user_role'   => $user?->role ?? 'Admin',
-                'action'      => "Export Excel {$normalized}",
+                'user_id' => $user?->id,
+                'user_name' => $user?->name ?? 'Admin',
+                'user_email' => $user?->email,
+                'user_role' => $user?->role ?? 'Admin',
+                'action' => "Export Excel {$normalized}",
                 'action_type' => 'DATA_ACCESS',
                 'description' => "Exportation officielle des données du registre {$normalized} au format Excel",
-                'method'      => 'GET',
-                'severity'    => 'info',
-                'payload'     => ['model' => $normalized, 'filename' => $filename, 'filters' => $filters],
+                'method' => 'GET',
+                'severity' => 'info',
+                'payload' => ['model' => $normalized, 'filename' => $filename, 'filters' => $filters],
             ]);
         }
 
         return Excel::download(new $exportClass(false), $filename);
     }
-    
+
     /**
      * Download Excel template for batch data import.
      */
@@ -76,7 +88,7 @@ class ExportService
     {
         $normalized = strtolower(trim($modelName));
 
-        if (!isset($this->exportMap[$normalized])) {
+        if (! isset($this->exportMap[$normalized])) {
             throw new \InvalidArgumentException("Template export for model '{$modelName}' is not supported.");
         }
 
@@ -93,12 +105,12 @@ class ExportService
     {
         $normalized = strtolower(trim($modelName));
 
-        if (!isset($this->importMap[$normalized])) {
-            throw new \InvalidArgumentException("Import processing for model '{$modelName}' is not supported. Supported models: " . implode(', ', array_keys($this->importMap)));
+        if (! isset($this->importMap[$normalized])) {
+            throw new \InvalidArgumentException("Import processing for model '{$modelName}' is not supported. Supported models: ".implode(', ', array_keys($this->importMap)));
         }
 
         $importClass = $this->importMap[$normalized];
-        $importInstance = new $importClass();
+        $importInstance = new $importClass;
 
         $user = Auth::user();
 
@@ -110,24 +122,24 @@ class ExportService
             // Audit Trail
             if (class_exists(AuditLog::class)) {
                 AuditLog::record([
-                    'user_id'     => $user?->id,
-                    'user_name'   => $user?->name ?? 'Admin',
-                    'user_email'  => $user?->email,
-                    'user_role'   => $user?->role ?? 'Admin',
-                    'action'      => "Import Excel {$normalized}",
+                    'user_id' => $user?->id,
+                    'user_name' => $user?->name ?? 'Admin',
+                    'user_email' => $user?->email,
+                    'user_role' => $user?->role ?? 'Admin',
+                    'action' => "Import Excel {$normalized}",
                     'action_type' => 'DATA_MUTATION',
                     'description' => "Importation en masse réussie de {$importedCount} enregistrements dans le registre {$normalized}",
-                    'method'      => 'POST',
-                    'severity'    => 'warning',
-                    'payload'     => ['model' => $normalized, 'imported_count' => $importedCount],
+                    'method' => 'POST',
+                    'severity' => 'warning',
+                    'payload' => ['model' => $normalized, 'imported_count' => $importedCount],
                 ]);
             }
 
             return [
-                'success'        => true,
-                'imported'       => $importedCount,
-                'message'        => "Importation de {$importedCount} {$normalized} effectuée avec succès dans la base de données.",
-                'cndp_status'    => 'CONFORME_LOI_09_08'
+                'success' => true,
+                'imported' => $importedCount,
+                'message' => "Importation de {$importedCount} {$normalized} effectuée avec succès dans la base de données.",
+                'cndp_status' => 'CONFORME_LOI_09_08',
             ];
         });
     }

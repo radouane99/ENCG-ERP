@@ -4,9 +4,9 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 
 class StudentTranscriptMail extends Mailable
@@ -14,7 +14,9 @@ class StudentTranscriptMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $studentName;
+
     public string $sessionName;
+
     public ?string $pdfPath;
 
     public function __construct(string $studentName, string $sessionName = 'Session Automne 2025/2026', ?string $pdfPath = null)
@@ -27,7 +29,7 @@ class StudentTranscriptMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Relevé de Notes Officiel — ENCG Fès (' . $this->sessionName . ')',
+            subject: 'Relevé de Notes Officiel — ENCG Fès ('.$this->sessionName.')',
         );
     }
 

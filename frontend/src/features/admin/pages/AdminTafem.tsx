@@ -15,6 +15,8 @@ export default function AdminTafem() {
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [scanQuery, setScanQuery] = useState('');
   const [scannedCandidate, setScannedCandidate] = useState<any | null>(null);
+  const [qualityReport, setQualityReport] = useState<any | null>(null);
+  const [aiReview, setAiReview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [statsData, setStatsData] = useState({
@@ -99,16 +101,26 @@ export default function AdminTafem() {
     }, 800);
   };
 
-  const handleFileSelect = (files: FileList | null) => {
+  const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     setImportingNotes(true);
-    const toastId = toast.loading(`Importation des grilles OMR depuis "${file.name}"...`);
-
-    setTimeout(() => {
+    const toastId = toast.loading(`Import TAFEM depuis "${file.name}"...`);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api.post('/admissions/import-ministry-tafem-csv', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setQualityReport(res.data.quality_report || null);
+      const review = await api.post('/admissions/tafem-ai-review');
+      setAiReview(review.data.text_fr || null);
+      toast.success(res.data.message || 'Import TAFEM terminé', { id: toastId });
+    } catch {
+      toast.error('Erreur lors de l’import TAFEM.', { id: toastId });
+    } finally {
       setImportingNotes(false);
-      toast.success(`📊 Notes et grilles OMR importées avec succès à partir de "${file.name}" (4,852 copies corrigées) !`, { id: toastId });
-    }, 1200);
+    }
   };
 
   const handleSimulateScan = async () => {
@@ -154,6 +166,16 @@ export default function AdminTafem() {
 
   return (
     <div data-testid="admin-tafem-page" className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
+      {(qualityReport || aiReview) && (
+        <div data-testid="tafem-quality-banner" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          {aiReview && <p className="font-medium">{aiReview}</p>}
+          {qualityReport && (
+            <p className="mt-1 text-xs">
+              Doublons CNE {qualityReport.duplicates_cne} · CIN manquants {qualityReport.missing_cin} · Photos {qualityReport.missing_photo} · Massar {qualityReport.massar_mismatch}
+            </p>
+          )}
+        </div>
+      )}
       
       {/* Hero Header Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">

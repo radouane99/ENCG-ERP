@@ -15,8 +15,11 @@ class DigitalLibraryAndKohaLoansTest extends TestCase
     use RefreshDatabase;
 
     private Student $student;
+
     private Book $book;
+
     private BookCopy $bookCopy;
+
     private User $librarian;
 
     protected function setUp(): void
@@ -25,27 +28,27 @@ class DigitalLibraryAndKohaLoansTest extends TestCase
 
         $this->student = $this->makeTestStudent([
             'first_name' => 'Houda',
-            'last_name'  => 'TAHIRI',
-            'cne'        => 'N776655443',
-            'gender'     => 'female',
+            'last_name' => 'TAHIRI',
+            'cne' => 'N776655443',
+            'gender' => 'female',
         ]);
 
         $this->librarian = User::factory()->create();
 
         $this->book = Book::create([
-            'institution_id'   => 1,
-            'title'            => 'Finance d\'Entreprise — Pierre Vernimmen',
-            'isbn'             => '978-2047338520',
-            'author'           => 'Pascal Quiry & Yann Le Fur',
-            'category'         => 'Finance',
-            'total_copies'     => 10,
+            'institution_id' => 1,
+            'title' => 'Finance d\'Entreprise — Pierre Vernimmen',
+            'isbn' => '978-2047338520',
+            'author' => 'Pascal Quiry & Yann Le Fur',
+            'category' => 'Finance',
+            'total_copies' => 10,
             'available_copies' => 9,
         ]);
 
         $this->bookCopy = BookCopy::create([
-            'book_id'      => $this->book->id,
-            'barcode'      => 'ENCG-LIB-00142',
-            'condition'    => 'good',
+            'book_id' => $this->book->id,
+            'barcode' => 'ENCG-LIB-00142',
+            'condition' => 'good',
             'is_available' => true,
         ]);
     }
@@ -57,26 +60,26 @@ class DigitalLibraryAndKohaLoansTest extends TestCase
     {
         $borrowing = Borrowing::create([
             'book_copy_id' => $this->bookCopy->id,
-            'user_id'      => $this->student->user_id,
-            'issued_by'    => $this->librarian->id,
-            'borrow_date'  => now()->toDateString(),
-            'due_date'     => now()->addDays(14)->toDateString(),
-            'status'       => 'borrowed',
+            'user_id' => $this->student->user_id,
+            'issued_by' => $this->librarian->id,
+            'borrow_date' => now()->toDateString(),
+            'due_date' => now()->addDays(14)->toDateString(),
+            'status' => 'borrowed',
         ]);
 
         $this->assertDatabaseHas('borrowings', [
             'book_copy_id' => $this->bookCopy->id,
-            'user_id'      => $this->student->user_id,
-            'status'       => 'borrowed',
+            'user_id' => $this->student->user_id,
+            'status' => 'borrowed',
         ]);
 
         $borrowing->update([
             'return_date' => now()->toDateString(),
-            'status'      => 'returned',
+            'status' => 'returned',
         ]);
 
         $this->assertDatabaseHas('borrowings', [
-            'id'     => $borrowing->id,
+            'id' => $borrowing->id,
             'status' => 'returned',
         ]);
     }

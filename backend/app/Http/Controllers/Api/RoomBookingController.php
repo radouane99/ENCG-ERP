@@ -22,7 +22,7 @@ class RoomBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $bookings,
+            'data' => $bookings,
         ]);
     }
 
@@ -32,13 +32,13 @@ class RoomBookingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'room_id'    => 'required|exists:rooms,id',
-            'room_name'  => 'required|string',
-            'booked_by'  => 'required|exists:users,id',
-            'purpose'    => 'required|string',
+            'room_id' => 'required|exists:rooms,id',
+            'room_name' => 'required|string',
+            'booked_by' => 'required|exists:users,id',
+            'purpose' => 'required|string',
             'start_time' => 'required|date',
-            'end_time'   => 'required|date|after:start_time',
-            'status'     => 'required|string|in:pending,approved,rejected,cancelled',
+            'end_time' => 'required|date|after:start_time',
+            'status' => 'required|string|in:pending,approved,rejected,cancelled',
         ]);
 
         if ($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time'])) {
@@ -52,7 +52,7 @@ class RoomBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $booking->load(['booker', 'room']),
+            'data' => $booking->load(['booker', 'room']),
         ], 201);
     }
 
@@ -69,7 +69,7 @@ class RoomBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $roomBooking->fresh(['booker', 'room']),
+            'data' => $roomBooking->fresh(['booker', 'room']),
         ]);
     }
 
@@ -92,20 +92,20 @@ class RoomBookingController extends Controller
     public function checkAvailability(Request $request): JsonResponse
     {
         $request->validate([
-            'room_id'    => 'required|exists:rooms,id',
-            'date'       => 'required|date',
+            'room_id' => 'required|exists:rooms,id',
+            'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
-            'end_time'   => 'required|date_format:H:i|after:start_time',
+            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
-        $startDateTime = Carbon::parse($request->date . ' ' . $request->start_time);
-        $endDateTime   = Carbon::parse($request->date . ' ' . $request->end_time);
+        $startDateTime = Carbon::parse($request->date.' '.$request->start_time);
+        $endDateTime = Carbon::parse($request->date.' '.$request->end_time);
 
         $hasConflict = $this->hasConflict($request->room_id, $startDateTime, $endDateTime);
 
         return response()->json([
             'success' => true,
-            'data'    => ['is_available' => !$hasConflict],
+            'data' => ['is_available' => ! $hasConflict],
         ]);
     }
 
@@ -115,7 +115,7 @@ class RoomBookingController extends Controller
     private function hasConflict(int $roomId, string $startDateTime, string $endDateTime): bool
     {
         $start = Carbon::parse($startDateTime);
-        $end   = Carbon::parse($endDateTime);
+        $end = Carbon::parse($endDateTime);
 
         // 1. Conflit avec les réservations existantes
         $bookingConflict = RoomBooking::where('room_id', $roomId)
@@ -123,16 +123,18 @@ class RoomBookingController extends Controller
             ->where(function ($query) use ($start, $end) {
                 $query->whereBetween('start_time', [$start, $end])
                     ->orWhereBetween('end_time', [$start, $end])
-                    ->orWhere(fn($q) => $q->where('start_time', '<=', $start)->where('end_time', '>=', $end));
+                    ->orWhere(fn ($q) => $q->where('start_time', '<=', $start)->where('end_time', '>=', $end));
             })
             ->exists();
 
-        if ($bookingConflict) return true;
+        if ($bookingConflict) {
+            return true;
+        }
 
         // 2. Conflit avec l'emploi du temps
         $dayOfWeek = $start->dayOfWeekIso;
         $timeStart = $start->format('H:i:s');
-        $timeEnd   = $end->format('H:i:s');
+        $timeEnd = $end->format('H:i:s');
 
         return Schedule::where('room_id', $roomId)
             ->where('is_active', true)

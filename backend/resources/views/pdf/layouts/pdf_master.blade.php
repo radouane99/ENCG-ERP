@@ -119,32 +119,8 @@
     <!-- Subtle Watermark -->
     <div class="watermark-bg">ROYAUME DU MAROC • ENCG FÈS</div>
 
-    <!-- Official Moroccan Ministry & University Header -->
     <div class="official-logos-header">
-        <table class="logos-table">
-            <tr>
-                <td style="text-align: left; width: 36%;">
-                    <div style="font-size: 8pt; font-weight: bold; color: #0f172a; line-height: 1.35;">
-                        ROYAUME DU MAROC<br>
-                        <span style="font-size: 7.5pt; color: #334155;">Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation</span>
-                    </div>
-                </td>
-                <td style="text-align: center; width: 28%;">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Logo ENCG Fès" style="max-height: 52px; max-width: 130px;">
-                    @else
-                        <strong style="color: #002e5b; font-size: 14pt; letter-spacing: 1px;">ENCG FÈS</strong>
-                    @endif
-                </td>
-                <td style="text-align: right; width: 36%;">
-                    <div style="font-size: 8pt; font-weight: bold; color: #0f172a; line-height: 1.35;">
-                        UNIVERSITÉ SIDI MOHAMED<br>
-                        BEN ABDELLAH DE FÈS<br>
-                        <span style="font-size: 7.5pt; color: #002e5b; font-weight: 900;">ENCG FÈS</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
+        @include('pdf.encg-header')
     </div>
 
     <!-- Dynamic Document Body Content -->

@@ -9,7 +9,7 @@ import {
   UserPlus, CheckCircle2, ShieldAlert,
   RefreshCcw, FileSpreadsheet, Filter, Check, X,
   BrainCircuit, ShieldCheck, Link2, Calendar, Lock, Globe, Sun, Moon,
-  Stamp, Clock, TrendingUp, TrendingDown, ArrowUpRight
+  Stamp, Clock, TrendingUp, TrendingDown, ArrowUpRight, Trophy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
@@ -139,10 +139,11 @@ const DICT = {
 
 // ── Quick Action Tiles ───────────────────────────────────────────────────
 const QUICK_ACTIONS = [
-  { label: 'Guichet Unique', path: '/admin/guichet', icon: Stamp, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
-  { label: 'Inscrire Étudiant', path: '/academic/enrollments', icon: UserPlus, color: 'from-blue-600 to-indigo-600', shadow: 'shadow-blue-500/20' },
-  { label: 'Saisie des Notes', path: '/admin/grades', icon: FileSpreadsheet, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-500/20' },
-  { label: 'Gestion Examens', path: '/admin/exams', icon: CalendarCheck, color: 'from-purple-600 to-pink-600', shadow: 'shadow-purple-500/20' },
+  { label: 'Import TAFEM', path: '/admin/tafem', icon: Trophy, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
+  { label: 'Guichet Unique', path: '/admin/guichet', icon: Stamp, color: 'from-blue-600 to-indigo-600', shadow: 'shadow-blue-500/20' },
+  { label: 'Notes & PV', path: '/admin/grades/pv', icon: FileSpreadsheet, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-500/20' },
+  { label: 'Convocations', path: '/admin/convocations', icon: CalendarCheck, color: 'from-purple-600 to-pink-600', shadow: 'shadow-purple-500/20' },
+  { label: 'Export APOGEE', path: '/admin/exams/pv-archive', icon: Link2, color: 'from-slate-700 to-slate-900', shadow: 'shadow-slate-500/20' },
 ];
 
 export default function AdminDashboard() {

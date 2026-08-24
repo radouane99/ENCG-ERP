@@ -13,15 +13,15 @@ class DocumentGenerationService
     public function generateAntiFraudDocument(int $studentId, string $documentType): array
     {
         $student = DB::table('students')->find($studentId);
-        if (!$student) {
-            throw new \Exception("Student not found");
+        if (! $student) {
+            throw new \Exception('Student not found');
         }
 
         // Generate a unique cryptographic hash
-        $verificationToken = hash('sha256', $studentId . $documentType . time() . Str::random(10));
-        
+        $verificationToken = hash('sha256', $studentId.$documentType.time().Str::random(10));
+
         // In a real app, this would point to the frontend verification route
-        $verificationUrl = config('app.url') . "/verify-document/" . $verificationToken;
+        $verificationUrl = config('app.url').'/verify-document/'.$verificationToken;
 
         // Ensure a corresponding document request exists
         $docRequest = DB::table('document_requests')
@@ -35,7 +35,7 @@ class DocumentGenerationService
 
         $docId = DB::table('generated_documents')->insertGetId([
             'document_request_id' => $docRequest->id,
-            'file_path' => '/storage/documents/' . $verificationToken . '.pdf',
+            'file_path' => '/storage/documents/'.$verificationToken.'.pdf',
             'verification_token' => $verificationToken,
             'verification_url' => $verificationUrl,
             'expires_at' => now()->addYears(5),
@@ -46,11 +46,11 @@ class DocumentGenerationService
         return [
             'success' => true,
             'document_id' => $docId,
-            'student_name' => $student->first_name . ' ' . $student->last_name,
+            'student_name' => $student->first_name.' '.$student->last_name,
             'document_type' => $documentType,
             'verification_token' => $verificationToken,
             'verification_url' => $verificationUrl,
-            'message' => 'Document généré avec QR Code cryptographique.'
+            'message' => 'Document généré avec QR Code cryptographique.',
         ];
     }
 
@@ -61,17 +61,17 @@ class DocumentGenerationService
     {
         $document = DB::table('generated_documents')->where('verification_token', $token)->first();
 
-        if (!$document) {
+        if (! $document) {
             return [
                 'is_valid' => false,
-                'message' => 'Document introuvable ou falsifié.'
+                'message' => 'Document introuvable ou falsifié.',
             ];
         }
 
         if ($document->expires_at && now()->greaterThan($document->expires_at)) {
             return [
                 'is_valid' => false,
-                'message' => 'Ce document a expiré.'
+                'message' => 'Ce document a expiré.',
             ];
         }
 
@@ -86,7 +86,7 @@ class DocumentGenerationService
             'is_valid' => true,
             'document_type' => $docRequest->document_type ?? null,
             'issued_at' => $document->created_at,
-            'student_name' => $studentInfo ? ($studentInfo->first_name . ' ' . $studentInfo->last_name) : null,
+            'student_name' => $studentInfo ? ($studentInfo->first_name.' '.$studentInfo->last_name) : null,
             'student_number' => $studentInfo->student_number ?? null,
         ];
     }

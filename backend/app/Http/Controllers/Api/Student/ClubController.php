@@ -19,8 +19,8 @@ class ClubController extends Controller
 
         return response()->json([
             'success' => true,
-            'clubs'   => $clubs,
-            'posts'   => $posts,
+            'clubs' => $clubs,
+            'posts' => $posts,
         ]);
     }
 }

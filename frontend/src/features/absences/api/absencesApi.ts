@@ -11,14 +11,15 @@ export const absencesKeys = {
 // --- Student API ---
 export const fetchStudentAbsences = async () => {
   const { data } = await api.get('/student-portal/absences');
-  return data.data; // assuming { data: [...] }
+  return data.data || data.absences || [];
 };
 
 export const justifyAbsence = async ({ attendanceId, formData }: { attendanceId: number; formData: FormData }) => {
-  const { data } = await api.post(`/student-portal/absences/${attendanceId}/justify`, formData, {
+  formData.append('attendance_id', String(attendanceId));
+  const { data } = await api.post('/student-portal/absences/justify', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
-  return data.data;
+  return data.data || data;
 };
 
 // --- Admin API ---

@@ -20,12 +20,12 @@ class AnalyticsController extends Controller
     public function getAtRiskStudents(Request $request): JsonResponse
     {
         $academicYear = AcademicYear::where('is_current', true)->first();
-        if (!$academicYear) {
+        if (! $academicYear) {
             return response()->json(['success' => false, 'message' => 'Aucune année académique en cours.'], 404);
         }
 
         $user = $request->user();
-        if (!$user?->institution_id) {
+        if (! $user?->institution_id) {
             return response()->json(['success' => false, 'message' => 'Institution non définie.'], 400);
         }
 

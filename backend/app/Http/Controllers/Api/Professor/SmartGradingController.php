@@ -41,25 +41,25 @@ class SmartGradingController extends Controller
     public function export(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'student_id'    => 'required|string',
-            'score'         => 'required|numeric|min:0|max:20',
+            'student_id' => 'required|string',
+            'score' => 'required|numeric|min:0|max:20',
             'assessment_id' => 'nullable|integer',
         ]);
 
         $student = Student::where('student_number', $validated['student_id'])->first();
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
         $grade = Grade::create([
-            'student_id'    => $student->id,
-            'value'         => $validated['score'],
+            'student_id' => $student->id,
+            'value' => $validated['score'],
             'assessment_id' => $validated['assessment_id'] ?? null,
         ]);
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Note enregistrée.',
+            'success' => true,
+            'message' => 'Note enregistrée.',
             'grade_id' => $grade->id,
         ]);
     }

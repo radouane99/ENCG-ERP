@@ -10,17 +10,17 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class DocumentRequest extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia, \App\Traits\HasValidationWorkflow;
+    use \App\Traits\HasValidationWorkflow, HasFactory, InteractsWithMedia;
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
-        'requested_at' => 'datetime',
-        'processed_at' => 'datetime',
-        'admin_notes' => 'array',
-    ];
+            'requested_at' => 'datetime',
+            'processed_at' => 'datetime',
+            'admin_notes' => 'array',
+        ];
     }
 
     public function student(): BelongsTo

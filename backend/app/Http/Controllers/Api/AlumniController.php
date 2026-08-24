@@ -22,7 +22,7 @@ class AlumniController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $stats,
+            'data' => $stats,
         ]);
     }
 
@@ -35,7 +35,7 @@ class AlumniController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $directory,
+            'data' => $directory,
         ]);
     }
 }

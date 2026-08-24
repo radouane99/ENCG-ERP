@@ -31,8 +31,8 @@ class ProfessorDocumentRequest extends Model
 
     protected $casts = [
         'start_date' => 'date',
-        'end_date'   => 'date',
-        'signed_at'  => 'datetime',
+        'end_date' => 'date',
+        'signed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

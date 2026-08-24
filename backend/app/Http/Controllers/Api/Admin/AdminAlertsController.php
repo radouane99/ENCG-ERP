@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
 use App\Models\Assessment;
-use App\Models\DocumentRequest;
-use App\Models\Exam;
-use App\Models\User;
-use App\Models\EvaluationCampaign;
 use App\Models\CourseEvaluation;
+use App\Models\DocumentRequest;
+use App\Models\EvaluationCampaign;
+use App\Models\Exam;
 use App\Models\FinalProject;
+use App\Models\Student;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
 class AdminAlertsController extends Controller
@@ -32,13 +32,13 @@ class AdminAlertsController extends Controller
 
         if ($studentsAtRisk > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'CRITIQUE',
-                'category'    => 'Scolarité',
-                'title'       => 'Étudiants en situation de décrochage',
+                'id' => $id++,
+                'type' => 'CRITIQUE',
+                'category' => 'Scolarité',
+                'title' => 'Étudiants en situation de décrochage',
                 'description' => "$studentsAtRisk étudiant(s) ont un taux d'absences élevé (>10 absences).",
-                'count'       => $studentsAtRisk,
-                'link'        => '/admin/students-risk',
+                'count' => $studentsAtRisk,
+                'link' => '/admin/students-risk',
             ];
         }
 
@@ -49,13 +49,13 @@ class AdminAlertsController extends Controller
 
         if ($missedGrades > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'CRITIQUE',
-                'category'    => 'Examens',
-                'title'       => 'Épreuves sans saisie de notes',
+                'id' => $id++,
+                'type' => 'CRITIQUE',
+                'category' => 'Examens',
+                'title' => 'Épreuves sans saisie de notes',
                 'description' => "$missedGrades épreuve(s) planifiée(s) il y a plus de 14 jours sans notes.",
-                'count'       => $missedGrades,
-                'link'        => '/admin/grades',
+                'count' => $missedGrades,
+                'link' => '/admin/grades',
             ];
         }
 
@@ -66,33 +66,33 @@ class AdminAlertsController extends Controller
 
         if ($pendingDocs > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => $pendingDocs > 5 ? 'CRITIQUE' : 'AVERTISSEMENT',
-                'category'    => 'Guichet Électronique',
-                'title'       => 'Demandes de documents en attente depuis >48h',
+                'id' => $id++,
+                'type' => $pendingDocs > 5 ? 'CRITIQUE' : 'AVERTISSEMENT',
+                'category' => 'Guichet Électronique',
+                'title' => 'Demandes de documents en attente depuis >48h',
                 'description' => "$pendingDocs demande(s) en attente depuis plus de 48 heures.",
-                'count'       => $pendingDocs,
-                'link'        => '/admin/requests',
+                'count' => $pendingDocs,
+                'link' => '/admin/requests',
             ];
         }
 
         // ── 4. Examens sans convocations (7 prochains jours) ──────────
         $examsWithoutConv = Exam::whereBetween('date', [
-                now()->toDateString(),
-                now()->addDays(7)->toDateString(),
-            ])
+            now()->toDateString(),
+            now()->addDays(7)->toDateString(),
+        ])
             ->whereDoesntHave('convocations')
             ->count();
 
         if ($examsWithoutConv > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'CRITIQUE',
-                'category'    => 'Convocations',
-                'title'       => 'Examens sans convocations générées',
+                'id' => $id++,
+                'type' => 'CRITIQUE',
+                'category' => 'Convocations',
+                'title' => 'Examens sans convocations générées',
                 'description' => "$examsWithoutConv examen(s) dans les 7 jours sans convocations.",
-                'count'       => $examsWithoutConv,
-                'link'        => '/admin/convocations',
+                'count' => $examsWithoutConv,
+                'link' => '/admin/convocations',
             ];
         }
 
@@ -103,29 +103,29 @@ class AdminAlertsController extends Controller
 
         if ($profWithoutAvail > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'AVERTISSEMENT',
-                'category'    => 'Corps Professoral',
-                'title'       => 'Professeurs sans disponibilités soumises',
+                'id' => $id++,
+                'type' => 'AVERTISSEMENT',
+                'category' => 'Corps Professoral',
+                'title' => 'Professeurs sans disponibilités soumises',
                 'description' => "$profWithoutAvail professeur(s) n'ont pas soumis leurs créneaux.",
-                'count'       => $profWithoutAvail,
-                'link'        => '/admin/professor-availability',
+                'count' => $profWithoutAvail,
+                'link' => '/admin/professor-availability',
             ];
         }
 
         // ── 6. Campagne d'évaluation ouverte sans réponses ────────────
         $campaignOpen = EvaluationCampaign::where('status', 'OPEN')->exists();
-        $evalCount    = CourseEvaluation::count();
+        $evalCount = CourseEvaluation::count();
 
         if ($campaignOpen && $evalCount === 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'AVERTISSEMENT',
-                'category'    => 'Évaluations',
-                'title'       => "Campagne d'évaluation ouverte sans réponses",
+                'id' => $id++,
+                'type' => 'AVERTISSEMENT',
+                'category' => 'Évaluations',
+                'title' => "Campagne d'évaluation ouverte sans réponses",
                 'description' => "La campagne est ouverte mais aucun étudiant n'a soumis d'évaluation.",
-                'count'       => 0,
-                'link'        => '/admin/evaluations',
+                'count' => 0,
+                'link' => '/admin/evaluations',
             ];
         }
 
@@ -136,26 +136,26 @@ class AdminAlertsController extends Controller
 
         if ($pfeWithoutSupervisor > 0) {
             $alerts[] = [
-                'id'          => $id++,
-                'type'        => 'AVERTISSEMENT',
-                'category'    => 'PFE & Stages',
-                'title'       => "PFE en attente d'affectation d'encadreur",
+                'id' => $id++,
+                'type' => 'AVERTISSEMENT',
+                'category' => 'PFE & Stages',
+                'title' => "PFE en attente d'affectation d'encadreur",
                 'description' => "$pfeWithoutSupervisor projet(s) PFE sans encadreur affecté.",
-                'count'       => $pfeWithoutSupervisor,
-                'link'        => '/admin/pfe-workflow',
+                'count' => $pfeWithoutSupervisor,
+                'link' => '/admin/pfe-workflow',
             ];
         }
 
         // ── Stats ────────────────────────────────────────────────────
         return response()->json([
             'success' => true,
-            'alerts'  => $alerts,
-            'stats'   => [
-                'critiques'         => count(array_filter($alerts, fn($a) => $a['type'] === 'CRITIQUE')),
-                'avertissements'    => count(array_filter($alerts, fn($a) => $a['type'] === 'AVERTISSEMENT')),
-                'students_at_risk'  => $studentsAtRisk,
+            'alerts' => $alerts,
+            'stats' => [
+                'critiques' => count(array_filter($alerts, fn ($a) => $a['type'] === 'CRITIQUE')),
+                'avertissements' => count(array_filter($alerts, fn ($a) => $a['type'] === 'AVERTISSEMENT')),
+                'students_at_risk' => $studentsAtRisk,
                 'pending_documents' => $pendingDocs,
-                'last_refresh'      => now()->toIso8601String(),
+                'last_refresh' => now()->toIso8601String(),
             ],
         ]);
     }

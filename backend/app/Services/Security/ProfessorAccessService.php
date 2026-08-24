@@ -2,11 +2,11 @@
 
 namespace App\Services\Security;
 
-use App\Models\User;
-use App\Models\Professor;
-use App\Models\Module;
 use App\Models\Filiere;
 use App\Models\Group;
+use App\Models\Module;
+use App\Models\Professor;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ class ProfessorAccessService
      */
     public function getAuthorizedModuleIds(?User $user): Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -27,9 +27,9 @@ class ProfessorAccessService
         }
 
         $prof = Professor::where('user_id', $user->id)->first();
-        if (!$prof) {
+        if (! $prof) {
             $userName = trim($user->name ?? '');
-            $prof = Professor::whereHas('user', fn($q) => $q->where('email', $user->email)->orWhere('name', 'LIKE', "%{$userName}%"))
+            $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email)->orWhere('name', 'LIKE', "%{$userName}%"))
                 ->orWhere('id', $user->id)
                 ->first();
         }
@@ -56,7 +56,7 @@ class ProfessorAccessService
      */
     public function getAuthorizedFiliereIds(?User $user): Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -82,7 +82,7 @@ class ProfessorAccessService
      */
     public function getAuthorizedGroupIds(?User $user): Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -91,7 +91,7 @@ class ProfessorAccessService
         }
 
         $prof = Professor::where('user_id', $user->id)->first();
-        if (!$prof) {
+        if (! $prof) {
             return collect();
         }
 
@@ -124,7 +124,9 @@ class ProfessorAccessService
      */
     public function isAuthorizedForModule(?User $user, int $moduleId): bool
     {
-        if (!$user) return false;
+        if (! $user) {
+            return false;
+        }
         if ($user->hasAnyRole(['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
             return true;
         }

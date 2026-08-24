@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('internships')) {
+        if (! Schema::hasTable('internships')) {
             Schema::create('internships', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('student_id')->constrained()->cascadeOnDelete();
@@ -22,19 +22,19 @@ return new class extends Migration
             });
         } else {
             Schema::table('internships', function (Blueprint $table) {
-                if (!Schema::hasColumn('internships', 'student_id')) {
+                if (! Schema::hasColumn('internships', 'student_id')) {
                     $table->foreignId('student_id')->nullable()->constrained()->cascadeOnDelete();
                 }
-                if (!Schema::hasColumn('internships', 'status')) {
+                if (! Schema::hasColumn('internships', 'status')) {
                     $table->string('status')->default('pending');
                 }
-                if (!Schema::hasColumn('internships', 'supervisor_id')) {
+                if (! Schema::hasColumn('internships', 'supervisor_id')) {
                     $table->foreignId('supervisor_id')->nullable()->constrained('professors')->nullOnDelete();
                 }
             });
         }
 
-        if (!Schema::hasTable('final_projects')) {
+        if (! Schema::hasTable('final_projects')) {
             Schema::create('final_projects', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('student_id')->constrained()->cascadeOnDelete();
@@ -45,16 +45,16 @@ return new class extends Migration
             });
         } else {
             Schema::table('final_projects', function (Blueprint $table) {
-                if (!Schema::hasColumn('final_projects', 'student_id')) {
+                if (! Schema::hasColumn('final_projects', 'student_id')) {
                     $table->foreignId('student_id')->nullable()->constrained()->cascadeOnDelete();
                 }
-                if (!Schema::hasColumn('final_projects', 'status')) {
+                if (! Schema::hasColumn('final_projects', 'status')) {
                     $table->string('status')->default('pending');
                 }
             });
         }
 
-        if (!Schema::hasTable('quizzes')) {
+        if (! Schema::hasTable('quizzes')) {
             Schema::create('quizzes', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('module_id')->nullable()->constrained()->cascadeOnDelete();
@@ -65,10 +65,10 @@ return new class extends Migration
             });
         } else {
             Schema::table('quizzes', function (Blueprint $table) {
-                if (!Schema::hasColumn('quizzes', 'module_id')) {
+                if (! Schema::hasColumn('quizzes', 'module_id')) {
                     $table->foreignId('module_id')->nullable()->constrained()->cascadeOnDelete();
                 }
-                if (!Schema::hasColumn('quizzes', 'status')) {
+                if (! Schema::hasColumn('quizzes', 'status')) {
                     $table->string('status')->default('draft');
                 }
             });

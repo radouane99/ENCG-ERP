@@ -68,7 +68,7 @@ export default function StudentExams() {
 
       {/* Exams List */}
       <div className="space-y-4">
-        {exams.map((exam, idx) => (
+        {exams.map((exam: { name: string; type: string; date?: string; time?: string; duration?: string; status?: string; action?: string }, idx: number) => (
           <div key={idx} className="bg-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm border border-white/5 hover:shadow-md transition-shadow">
             
             <div className="flex-1">

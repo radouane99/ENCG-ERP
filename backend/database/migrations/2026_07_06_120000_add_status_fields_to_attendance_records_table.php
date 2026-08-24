@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendance_records', function (Blueprint $table) {
-            if (!Schema::hasColumn('attendance_records', 'status')) {
+            if (! Schema::hasColumn('attendance_records', 'status')) {
                 $table->string('status')->default('present')->after('scanned_at'); // present, absent, late, excused
             }
-            if (!Schema::hasColumn('attendance_records', 'is_justified')) {
+            if (! Schema::hasColumn('attendance_records', 'is_justified')) {
                 $table->boolean('is_justified')->default(false)->after('status');
             }
         });

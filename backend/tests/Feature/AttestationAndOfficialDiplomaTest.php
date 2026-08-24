@@ -17,8 +17,11 @@ class AttestationAndOfficialDiplomaTest extends TestCase
     use RefreshDatabase;
 
     private User $studentUser;
+
     private Student $student;
+
     private AcademicYear $academicYear;
+
     private Filiere $filiere;
 
     protected function setUp(): void
@@ -33,19 +36,19 @@ class AttestationAndOfficialDiplomaTest extends TestCase
 
         $this->student = $this->makeTestStudent([
             'first_name' => 'Salma',
-            'last_name'  => 'BENKIRANE',
-            'cne'        => 'N112233445',
+            'last_name' => 'BENKIRANE',
+            'cne' => 'N112233445',
         ]);
         $this->studentUser = $this->student->user;
         $role = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
         $this->studentUser->assignRole($role);
 
         StudentPathway::create([
-            'student_id'       => $this->student->id,
-            'filiere_id'       => $this->filiere->id,
+            'student_id' => $this->student->id,
+            'filiere_id' => $this->filiere->id,
             'academic_year_id' => $this->academicYear->id,
             'current_semester' => 4,
-            'is_current'       => true,
+            'is_current' => true,
         ]);
     }
 

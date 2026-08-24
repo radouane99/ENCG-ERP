@@ -23,7 +23,7 @@ class StudentDocumentRequestController extends Controller
     public function index(Request $request): JsonResponse
     {
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
@@ -35,20 +35,20 @@ class StudentDocumentRequestController extends Controller
                 $generatedDocument = $this->documentRequestService->getGeneratedDocument($docRequest);
 
                 return [
-                    'id'                => $docRequest->id,
-                    'status'            => $docRequest->status,
-                    'requested_at'      => $docRequest->requested_at,
-                    'processed_at'      => $docRequest->processed_at,
-                    'document_type'     => $docRequest->documentType?->name,
-                    'document_type_id'  => $docRequest->document_type_id,
-                    'download_url'      => $generatedDocument ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/download") : null,
-                    'admin_notes'       => $docRequest->admin_notes,
+                    'id' => $docRequest->id,
+                    'status' => $docRequest->status,
+                    'requested_at' => $docRequest->requested_at,
+                    'processed_at' => $docRequest->processed_at,
+                    'document_type' => $docRequest->documentType?->name,
+                    'document_type_id' => $docRequest->document_type_id,
+                    'download_url' => $generatedDocument ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/download") : null,
+                    'admin_notes' => $docRequest->admin_notes,
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data'    => $requests,
+            'data' => $requests,
         ]);
     }
 
@@ -58,11 +58,11 @@ class StudentDocumentRequestController extends Controller
     public function store(StoreDocumentRequest $request, AcademicCalendarService $calendarService): JsonResponse
     {
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
-        if (!$calendarService->isDocumentSubmissionOpen()) {
+        if (! $calendarService->isDocumentSubmissionOpen()) {
             return response()->json([
                 'success' => false,
                 'message' => 'La période de dépôt des documents est actuellement fermée.',
@@ -73,7 +73,7 @@ class StudentDocumentRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $documentRequest,
+            'data' => $documentRequest,
         ], 201);
     }
 
@@ -83,14 +83,14 @@ class StudentDocumentRequestController extends Controller
     public function download(Request $request, int $id)
     {
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
-        $documentRequest   = DocumentRequest::where('student_id', $student->id)->findOrFail($id);
+        $documentRequest = DocumentRequest::where('student_id', $student->id)->findOrFail($id);
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
-        if (!$generatedDocument || !Storage::disk('private')->exists($generatedDocument->file_path)) {
+        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
             return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
         }
 

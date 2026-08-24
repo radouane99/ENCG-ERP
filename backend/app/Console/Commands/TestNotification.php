@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use Illuminate\Console\Command;
 
 class TestNotification extends Command
 {
@@ -28,17 +28,18 @@ class TestNotification extends Command
     public function handle()
     {
         $email = $this->argument('email');
-        
+
         if ($email) {
             $user = User::where('email', $email)->first();
         } else {
-            $user = User::whereHas('roles', function($q) {
+            $user = User::whereHas('roles', function ($q) {
                 $q->where('name', 'admin');
             })->first();
         }
 
-        if (!$user) {
+        if (! $user) {
             $this->error('User not found.');
+
             return 1;
         }
 
@@ -52,6 +53,7 @@ class TestNotification extends Command
         ));
 
         $this->info('Notification sent successfully!');
+
         return 0;
     }
 }

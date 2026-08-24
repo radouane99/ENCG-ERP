@@ -20,8 +20,8 @@ class AiFeatureController extends Controller
     {
         $validated = $request->validate([
             'module_id' => 'required|integer|exists:modules,id',
-            'group_id'  => 'nullable|integer',
-            'question'  => 'required|string|max:1000',
+            'group_id' => 'nullable|integer',
+            'question' => 'required|string|max:1000',
         ]);
 
         $result = $this->tutorService->askTutor(

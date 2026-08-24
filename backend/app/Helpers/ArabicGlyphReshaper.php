@@ -58,14 +58,11 @@ class ArabicGlyphReshaper
      */
     private static array $nonConnectingAfter = [
         0x0621, 0x0622, 0x0623, 0x0624, 0x0625, 0x0627,
-        0x0629, 0x062F, 0x0630, 0x0631, 0x0632, 0x0648, 0x0649
+        0x0629, 0x062F, 0x0630, 0x0631, 0x0632, 0x0648, 0x0649,
     ];
 
     /**
      * Reshape Arabic text in string into connected glyphs & reverse visual order for PDF.
-     *
-     * @param string|null $text
-     * @return string
      */
     public static function reshape(?string $text): string
     {
@@ -74,7 +71,7 @@ class ArabicGlyphReshaper
         }
 
         // Fast check if string contains Arabic characters
-        if (!preg_match('/\p{Arabic}/u', $text)) {
+        if (! preg_match('/\p{Arabic}/u', $text)) {
             return $text;
         }
 
@@ -100,7 +97,9 @@ class ArabicGlyphReshaper
     {
         $codes = self::utf8ToCodepoints($word);
         $count = count($codes);
-        if ($count === 0) return $word;
+        if ($count === 0) {
+            return $word;
+        }
 
         $reshaped = [];
 
@@ -108,8 +107,9 @@ class ArabicGlyphReshaper
             $curr = $codes[$i];
 
             // If not an Arabic letter in our map, keep as is
-            if (!isset(self::$glyphMap[$curr])) {
+            if (! isset(self::$glyphMap[$curr])) {
                 $reshaped[] = $curr;
+
                 continue;
             }
 
@@ -120,6 +120,7 @@ class ArabicGlyphReshaper
                 if ($lamAlef !== null) {
                     $reshaped[] = $lamAlef;
                     $i++; // skip alef
+
                     continue;
                 }
             }
@@ -127,7 +128,7 @@ class ArabicGlyphReshaper
             $prev = $i > 0 ? $codes[$i - 1] : null;
             $next = $i + 1 < $count ? $codes[$i + 1] : null;
 
-            $connectPrev = ($prev !== null && isset(self::$glyphMap[$prev]) && !in_array($prev, self::$nonConnectingAfter, true));
+            $connectPrev = ($prev !== null && isset(self::$glyphMap[$prev]) && ! in_array($prev, self::$nonConnectingAfter, true));
             $connectNext = ($next !== null && isset(self::$glyphMap[$next]));
 
             if ($connectPrev && $connectNext) {
@@ -148,7 +149,7 @@ class ArabicGlyphReshaper
 
     private static function getLamAlef(int $alefCode, ?int $prevCode): ?int
     {
-        $connectPrev = ($prevCode !== null && isset(self::$glyphMap[$prevCode]) && !in_array($prevCode, self::$nonConnectingAfter, true));
+        $connectPrev = ($prevCode !== null && isset(self::$glyphMap[$prevCode]) && ! in_array($prevCode, self::$nonConnectingAfter, true));
 
         switch ($alefCode) {
             case 0x0622: // آ

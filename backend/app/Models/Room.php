@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Room extends Model
 {
@@ -20,6 +20,7 @@ class Room extends Model
             'has_projector' => 'boolean',
             'has_ac' => 'boolean',
             'is_available' => 'boolean',
+            'is_out_of_service' => 'boolean',
         ];
     }
 

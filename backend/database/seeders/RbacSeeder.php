@@ -2,13 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\Institution;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * RbacSeeder
@@ -104,7 +105,7 @@ class RbacSeeder extends Seeder
 
         // ── System ─────────────────────────────────────────────
         'system.settings', 'system.horizon', 'system.logs',
-        
+
         // ── Infrastructure ─────────────────────────────────────
         'infrastructure.view', 'infrastructure.create', 'infrastructure.edit', 'infrastructure.delete',
     ];
@@ -218,7 +219,7 @@ class RbacSeeder extends Seeder
         $institution = Institution::first();
 
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create all permissions
         foreach ($this->permissions as $permission) {
@@ -236,8 +237,10 @@ class RbacSeeder extends Seeder
                 $resolvedPermissions = collect($permissions)->flatMap(function ($perm) {
                     if (str_ends_with($perm, '.*')) {
                         $prefix = str_replace('.*', '.', $perm);
+
                         return Permission::where('name', 'like', "{$prefix}%")->pluck('name');
                     }
+
                     return [$perm];
                 })->unique()->toArray();
 
@@ -253,40 +256,40 @@ class RbacSeeder extends Seeder
     {
         $users = [
             [
-                'name'  => 'Super Administrateur',
+                'name' => 'Super Administrateur',
                 'email' => 'superadmin@encg-fes.ma',
-                'role'  => 'super-admin',
+                'role' => 'super-admin',
                 'institution_id' => null,
             ],
             [
-                'name'  => 'Admin ENCG Fès',
+                'name' => 'Admin ENCG Fès',
                 'email' => 'admin@encg-fes.ma',
-                'role'  => 'institution-admin',
+                'role' => 'institution-admin',
                 'institution_id' => $institution?->id,
             ],
             [
-                'name'  => 'Directeur ENCG',
+                'name' => 'Directeur ENCG',
                 'email' => 'directeur@encg-fes.ma',
-                'role'  => 'director',
+                'role' => 'director',
                 'institution_id' => $institution?->id,
             ],
             // Sample accounts removed for production safety. Add real seeded accounts via environment-driven seeders if needed.
             [
-                'name'  => 'RH — Khalid BENJELLOUN',
+                'name' => 'RH — Khalid BENJELLOUN',
                 'email' => 'rh@encg-fes.ma',
-                'role'  => 'hr-officer',
+                'role' => 'hr-officer',
                 'institution_id' => $institution?->id,
             ],
             [
-                'name'  => 'Finance — Samira HADDAD',
+                'name' => 'Finance — Samira HADDAD',
                 'email' => 'finance@encg-fes.ma',
-                'role'  => 'finance-officer',
+                'role' => 'finance-officer',
                 'institution_id' => $institution?->id,
             ],
             [
-                'name'  => 'Bibliothèque — Omar TAZI',
+                'name' => 'Bibliothèque — Omar TAZI',
                 'email' => 'bibliotheque@encg-fes.ma',
-                'role'  => 'library-manager',
+                'role' => 'library-manager',
                 'institution_id' => $institution?->id,
             ],
         ];
@@ -300,9 +303,9 @@ class RbacSeeder extends Seeder
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 array_merge($userData, [
-                    'password'          => $seededPassword ? Hash::make($seededPassword) : Hash::make(Str::random(24)),
+                    'password' => $seededPassword ? Hash::make($seededPassword) : Hash::make(Str::random(24)),
                     'email_verified_at' => now(),
-                    'is_active'         => true,
+                    'is_active' => true,
                 ])
             );
 

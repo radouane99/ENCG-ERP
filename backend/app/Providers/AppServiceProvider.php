@@ -2,33 +2,48 @@
 
 namespace App\Providers;
 
+use App\Events\DocumentProcessed;
+use App\Events\OcrProcessingComplete;
+use App\Listeners\HandleOcrComplete;
+use App\Listeners\LogFailedLogin;
+use App\Listeners\LogSuccessfulLogin;
+use App\Listeners\LogSuccessfulLogout;
+use App\Listeners\NotifyDocumentProcessed;
 use App\Models\Grade;
-use App\OCR\Contracts\DocumentParserInterface;
-use App\OCR\Contracts\OcrEngineInterface;
+use App\Models\Student;
+use App\Observers\GradeObserver;
 use App\OCR\Engines\PdfBinaryEngine;
 use App\OCR\Engines\PdfTextEngine;
 use App\OCR\Engines\TesseractEngine;
 use App\OCR\Parsers\BacParser;
 use App\OCR\Parsers\CnieParser;
 use App\OCR\Parsers\ReleveParser;
-use App\Observers\GradeObserver;
-use App\Listeners\LogSuccessfulLogin;
+use App\Policies\GradePolicy;
+use App\Policies\StudentPolicy;
 use App\Services\AI\LocalOcrService;
+use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Horizon\HorizonServiceProvider;
+use Laravel\Octane\OctaneServiceProvider;
 
 /**
  * Application Service Provider - Version Finale Optimisée
- * 
+ *
  * Centralise l'enregistrement des services, la configuration
  * et les bindings de l'application.
  */
@@ -121,9 +136,9 @@ class AppServiceProvider extends ServiceProvider
     {
         foreach ($this->tags as $tag => $classes) {
             $this->app->tag($classes, $tag);
-            
+
             if ($this->app->environment('local', 'testing')) {
-                \Illuminate\Support\Facades\Log::debug("[AppServiceProvider] Tagged: {$tag} with " . count($classes) . " classes");
+                Log::debug("[AppServiceProvider] Tagged: {$tag} with ".count($classes).' classes');
             }
         }
     }
@@ -175,7 +190,7 @@ class AppServiceProvider extends ServiceProvider
     private function registerSingletons(): void
     {
         foreach ($this->singletons as $singleton) {
-            if (!$this->app->bound($singleton)) {
+            if (! $this->app->bound($singleton)) {
                 $this->app->singleton($singleton);
             }
         }
@@ -186,7 +201,7 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerDevelopmentServices(): void
     {
-        if (!$this->app->environment('local', 'testing')) {
+        if (! $this->app->environment('local', 'testing')) {
             return;
         }
 
@@ -196,13 +211,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Ide-helper en développement
-        if (class_exists(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class)) {
-            $this->app->register(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class);
+        if (class_exists(IdeHelperServiceProvider::class)) {
+            $this->app->register(IdeHelperServiceProvider::class);
         }
 
         // Horizon en développement (si utilisé)
-        if (class_exists(\Laravel\Horizon\HorizonServiceProvider::class)) {
-            $this->app->register(\Laravel\Horizon\HorizonServiceProvider::class);
+        if (class_exists(HorizonServiceProvider::class)) {
+            $this->app->register(HorizonServiceProvider::class);
         }
     }
 
@@ -211,13 +226,13 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerProductionServices(): void
     {
-        if (!$this->app->environment('production')) {
+        if (! $this->app->environment('production')) {
             return;
         }
 
         // Opcache en production
-        if (class_exists(\Laravel\Octane\OctaneServiceProvider::class)) {
-            $this->app->register(\Laravel\Octane\OctaneServiceProvider::class);
+        if (class_exists(OctaneServiceProvider::class)) {
+            $this->app->register(OctaneServiceProvider::class);
         }
     }
 
@@ -231,6 +246,7 @@ class AppServiceProvider extends ServiceProvider
             if ($user->hasRole('super-admin')) {
                 return true;
             }
+
             return null;
         });
 
@@ -247,8 +263,8 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasPermissionTo('manage users') || $user->hasRole('admin');
         });
 
-        Gate::policy(\App\Models\Student::class, \App\Policies\StudentPolicy::class);
-        Gate::policy(\App\Models\Grade::class, \App\Policies\GradePolicy::class);
+        Gate::policy(Student::class, StudentPolicy::class);
+        Gate::policy(Grade::class, GradePolicy::class);
     }
 
     /**
@@ -257,10 +273,10 @@ class AppServiceProvider extends ServiceProvider
     private function bootEloquent(): void
     {
         // Empêcher le lazy loading en développement
-        Model::preventLazyLoading(!app()->isProduction());
+        Model::preventLazyLoading(! app()->isProduction());
 
         // Empêcher les modifications silencieuses
-        Model::preventSilentlyDiscardingAttributes(!app()->isProduction());
+        Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
 
         // Mass assignment remains model-level ($fillable / $guarded). Do not unguard globally.
 
@@ -296,7 +312,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             $user = $request->user();
             $identifier = $user?->id ?: $request->ip();
-            
+
             return Limit::perMinute(60)
                 ->by($identifier)
                 ->response(function (Request $request, array $headers) {
@@ -311,10 +327,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ocr', function (Request $request) {
             $user = $request->user();
             $identifier = $user?->id ?: $request->ip();
-            
+
             // Limites différentes pour les utilisateurs authentifiés
             $limit = $user ? 30 : 10;
-            
+
             return Limit::perMinute($limit)
                 ->by($identifier)
                 ->response(function (Request $request, array $headers) {
@@ -340,7 +356,7 @@ class AppServiceProvider extends ServiceProvider
         // Rate Limiter pour les authentifications
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)
-                ->by($request->email . '|' . $request->ip())
+                ->by($request->email.'|'.$request->ip())
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Trop de tentatives de connexion. Veuillez réessayer plus tard.',
@@ -366,28 +382,31 @@ class AppServiceProvider extends ServiceProvider
 
         // Listeners supplémentaires
         Event::listen(
-            \Illuminate\Auth\Events\Failed::class,
-            \App\Listeners\LogFailedLogin::class
+            Failed::class,
+            LogFailedLogin::class
         );
 
         Event::listen(
-            \Illuminate\Auth\Events\Logout::class,
-            \App\Listeners\LogSuccessfulLogout::class
+            \App\Events\GradeDeadlineWarning::class,
+            function (\App\Events\GradeDeadlineWarning $event) {
+                app(\App\Services\Campus\CampusAlertService::class)
+                    ->notifyProfessorsGradeDeadline($event->endDate, $event->sessionLabel);
+            }
         );
 
         // Listeners pour les événements OCR (si implémentés)
-        if (class_exists(\App\Events\OcrProcessingComplete::class)) {
+        if (class_exists(OcrProcessingComplete::class)) {
             Event::listen(
-                \App\Events\OcrProcessingComplete::class,
-                \App\Listeners\HandleOcrComplete::class
+                OcrProcessingComplete::class,
+                HandleOcrComplete::class
             );
         }
 
         // Listeners pour les événements de modèle
-        if (class_exists(\App\Events\DocumentProcessed::class)) {
+        if (class_exists(DocumentProcessed::class)) {
             Event::listen(
-                \App\Events\DocumentProcessed::class,
-                \App\Listeners\NotifyDocumentProcessed::class
+                DocumentProcessed::class,
+                NotifyDocumentProcessed::class
             );
         }
     }
@@ -425,6 +444,7 @@ class AppServiceProvider extends ServiceProvider
         // Validation : mention bac
         Validator::extend('bac_mention', function ($attribute, $value, $parameters, $validator) {
             $mentions = ['TRES BIEN', 'TRÈS BIEN', 'BIEN', 'ASSEZ BIEN', 'PASSABLE', 'MOYEN', 'EXCELLENT'];
+
             return in_array(strtoupper($value), $mentions);
         }, 'Le :attribute doit être une mention valide.');
     }
@@ -446,7 +466,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Directive @endproduction
         Blade::directive('endproduction', function () {
-            return "<?php endif; ?>";
+            return '<?php endif; ?>';
         });
 
         // Directive @development
@@ -456,7 +476,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Directive @enddevelopment
         Blade::directive('enddevelopment', function () {
-            return "<?php endif; ?>";
+            return '<?php endif; ?>';
         });
 
         // Directive @formatDate
@@ -496,30 +516,31 @@ class AppServiceProvider extends ServiceProvider
     private function bootMacros(): void
     {
         // Macro pour les collections
-        if (!\Illuminate\Support\Collection::hasMacro('toJsonPretty')) {
-            \Illuminate\Support\Collection::macro('toJsonPretty', function () {
+        if (! Collection::hasMacro('toJsonPretty')) {
+            Collection::macro('toJsonPretty', function () {
                 return json_encode($this->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             });
         }
 
         // Macro pour les requêtes
-        if (!\Illuminate\Http\Request::hasMacro('isBot')) {
-            \Illuminate\Http\Request::macro('isBot', function () {
+        if (! Request::hasMacro('isBot')) {
+            Request::macro('isBot', function () {
                 $bots = ['googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandexbot'];
                 $userAgent = strtolower($this->userAgent() ?? '');
-                
+
                 foreach ($bots as $bot) {
                     if (str_contains($userAgent, $bot)) {
                         return true;
                     }
                 }
+
                 return false;
             });
         }
 
         // Macro pour les chaînes
-        if (!\Illuminate\Support\Str::hasMacro('isFrenchName')) {
-            \Illuminate\Support\Str::macro('isFrenchName', function ($value) {
+        if (! Str::hasMacro('isFrenchName')) {
+            Str::macro('isFrenchName', function ($value) {
                 return preg_match('/^[a-zA-ZÀ-ÿ\s\-\']+$/', $value) && strlen($value) >= 2;
             });
         }

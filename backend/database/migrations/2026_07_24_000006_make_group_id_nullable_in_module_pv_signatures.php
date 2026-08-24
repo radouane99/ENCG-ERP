@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -15,13 +15,14 @@ return new class extends Migration
         Schema::table('module_pv_signatures', function (Blueprint $table) {
             try {
                 $table->dropForeign(['group_id']);
-            } catch (\Throwable $e) {}
+            } catch (Throwable $e) {
+            }
 
             $table->foreignId('group_id')->nullable()->change();
 
             $table->foreign('group_id')
-                  ->references('id')->on('groups')
-                  ->nullOnDelete();
+                ->references('id')->on('groups')
+                ->nullOnDelete();
         });
     }
 
@@ -30,7 +31,8 @@ return new class extends Migration
         Schema::table('module_pv_signatures', function (Blueprint $table) {
             try {
                 $table->dropForeign(['group_id']);
-            } catch (\Throwable $e) {}
+            } catch (Throwable $e) {
+            }
             $table->foreignId('group_id')->nullable(false)->change();
             $table->foreign('group_id')->references('id')->on('groups')->cascadeOnDelete();
         });

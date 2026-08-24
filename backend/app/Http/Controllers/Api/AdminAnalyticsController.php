@@ -21,39 +21,39 @@ class AdminAnalyticsController extends Controller
     {
         try {
             $documentStats = $this->analyticsService->getDocumentRequestStats();
-            $projectStats  = $this->analyticsService->getAcademicProjectStats();
-            $studentStats  = $this->analyticsService->getStudentActivityStats();
+            $projectStats = $this->analyticsService->getAcademicProjectStats();
+            $studentStats = $this->analyticsService->getStudentActivityStats();
 
             return response()->json([
                 'success' => true,
-                'data'    => [
+                'data' => [
                     'document_requests' => $documentStats,
                     'academic_projects' => $projectStats,
-                    'student_activity'  => $studentStats,
+                    'student_activity' => $studentStats,
                 ],
             ]);
         } catch (\Throwable $e) {
-            Log::error('Analytics API Error: ' . $e->getMessage());
+            Log::error('Analytics API Error: '.$e->getMessage());
 
             $studentsCount = Student::count();
 
             return response()->json([
                 'success' => true,
-                'data'    => [
+                'data' => [
                     'document_requests' => [
-                        'total'            => 0,
-                        'pending_count'    => 0,
+                        'total' => 0,
+                        'pending_count' => 0,
                         'status_breakdown' => [],
-                        'monthly_trend'    => [],
+                        'monthly_trend' => [],
                     ],
                     'academic_projects' => [
-                        'total'              => 0,
-                        'active_count'       => 0,
-                        'completion_rate'    => 0,
-                        'type_distribution'  => [],
+                        'total' => 0,
+                        'active_count' => 0,
+                        'completion_rate' => 0,
+                        'type_distribution' => [],
                     ],
                     'student_activity' => [
-                        'total_active'      => $studentsCount,
+                        'total_active' => $studentsCount,
                         'filiere_breakdown' => [],
                     ],
                 ],

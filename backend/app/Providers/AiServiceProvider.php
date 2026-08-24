@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Domain\AI\Contracts\AiDriverInterface;
-use App\Domain\AI\Services\StubAiDriver;
 use App\Domain\AI\Services\GeminiAiDriver;
+use App\Domain\AI\Services\StubAiDriver;
+use Illuminate\Support\ServiceProvider;
 
 class AiServiceProvider extends ServiceProvider
 {
@@ -23,7 +23,7 @@ class AiServiceProvider extends ServiceProvider
             }
 
             if ($driver === 'gemini') {
-                return new GeminiAiDriver();
+                return new GeminiAiDriver;
             }
 
             if ($driver === 'stub') {
@@ -31,7 +31,7 @@ class AiServiceProvider extends ServiceProvider
                     throw new \InvalidArgumentException('AI_DRIVER=stub is not allowed in production. Set AI_DRIVER=gemini and configure GEMINI_API_KEY.');
                 }
 
-                return new StubAiDriver();
+                return new StubAiDriver;
             }
 
             throw new \InvalidArgumentException("Unsupported AI_DRIVER '{$driver}'. Supported values are: gemini, stub.");

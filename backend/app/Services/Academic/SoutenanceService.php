@@ -19,7 +19,7 @@ class SoutenanceService
             'room_id' => $data['room_id'],
             'president_id' => $data['president_id'],
             'examiner_id' => $data['examiner_id'],
-            'status' => 'scheduled'
+            'status' => 'scheduled',
         ]);
     }
 
@@ -33,7 +33,7 @@ class SoutenanceService
             $soutenance->update([
                 'grade' => $grade,
                 'remarks' => $remarks,
-                'status' => 'completed'
+                'status' => 'completed',
             ]);
 
             // Also mark internship as completed

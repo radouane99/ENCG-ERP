@@ -64,15 +64,15 @@ class InternalApiController extends Controller
             ->first();
 
         return response()->json([
-            'success'         => true,
-            'available'       => $currentBooking === null,
+            'success' => true,
+            'available' => $currentBooking === null,
             'current_booking' => $currentBooking ? [
                 'purpose' => $currentBooking->purpose,
                 'ends_at' => $currentBooking->end_time,
             ] : null,
-            'next_booking'    => $nextBooking ? [
-                'purpose'    => $nextBooking->purpose,
-                'starts_at'  => $nextBooking->start_time,
+            'next_booking' => $nextBooking ? [
+                'purpose' => $nextBooking->purpose,
+                'starts_at' => $nextBooking->start_time,
             ] : null,
         ]);
     }
@@ -86,12 +86,12 @@ class InternalApiController extends Controller
             ->whereNotNull('exam_date')
             ->orderBy('exam_date')
             ->get()
-            ->map(fn(Exam $exam) => [
-                'id'    => $exam->id,
-                'title' => trim(($exam->module?->name ?? 'Examen') . ' • ' . ($exam->group?->name ?? 'Groupe')),
+            ->map(fn (Exam $exam) => [
+                'id' => $exam->id,
+                'title' => trim(($exam->module?->name ?? 'Examen').' • '.($exam->group?->name ?? 'Groupe')),
                 'start' => $exam->exam_date?->format('Y-m-d'),
-                'type'  => $exam->type,
-                'room'  => $exam->room?->name,
+                'type' => $exam->type,
+                'room' => $exam->room?->name,
             ]);
 
         return response()->json(['success' => true, 'data' => $events]);
@@ -111,11 +111,11 @@ class InternalApiController extends Controller
                 $targetDate = $today->copy()->startOfWeek()->addDays(max(0, ((int) $schedule->day_of_week) - 1));
 
                 return [
-                    'id'           => $schedule->id,
-                    'title'        => trim(($schedule->module?->name ?? 'Cours') . ' • ' . ($schedule->group?->name ?? 'Groupe')),
-                    'start'        => $targetDate->format('Y-m-d') . 'T' . $schedule->start_time,
-                    'end'          => $targetDate->format('Y-m-d') . 'T' . $schedule->end_time,
-                    'room'         => $schedule->room?->name,
+                    'id' => $schedule->id,
+                    'title' => trim(($schedule->module?->name ?? 'Cours').' • '.($schedule->group?->name ?? 'Groupe')),
+                    'start' => $targetDate->format('Y-m-d').'T'.$schedule->start_time,
+                    'end' => $targetDate->format('Y-m-d').'T'.$schedule->end_time,
+                    'room' => $schedule->room?->name,
                     'session_type' => $schedule->session_type,
                 ];
             });
@@ -128,16 +128,16 @@ class InternalApiController extends Controller
      */
     public function liveAttendanceStats(int $examId): JsonResponse
     {
-        $total   = ExamSeating::where('exam_id', $examId)->count();
+        $total = ExamSeating::where('exam_id', $examId)->count();
         $present = ExamSeating::where('exam_id', $examId)->where('is_present', true)->count();
-        $absent  = max(0, $total - $present);
-        $rate    = $total > 0 ? round(($present / $total) * 100, 1) : 0;
+        $absent = max(0, $total - $present);
+        $rate = $total > 0 ? round(($present / $total) * 100, 1) : 0;
 
         return response()->json([
             'success' => true,
             'present' => $present,
-            'absent'  => $absent,
-            'rate'    => $rate,
+            'absent' => $absent,
+            'rate' => $rate,
         ]);
     }
 
@@ -152,11 +152,11 @@ class InternalApiController extends Controller
             ->get()
             ->reverse()
             ->values()
-            ->map(fn($msg) => [
-                'id'         => $msg->id,
-                'text'       => $msg->body,
+            ->map(fn ($msg) => [
+                'id' => $msg->id,
+                'text' => $msg->body,
                 'created_at' => $msg->created_at,
-                'sender'     => $msg->sender->name ?? 'Inconnu',
+                'sender' => $msg->sender->name ?? 'Inconnu',
             ]);
 
         return response()->json(['success' => true, 'data' => $messages]);
@@ -168,30 +168,30 @@ class InternalApiController extends Controller
     public function suggestMakeup(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'room_id'          => 'nullable|integer|exists:rooms,id',
+            'room_id' => 'nullable|integer|exists:rooms,id',
             'duration_minutes' => 'nullable|integer|min:30|max:240',
         ]);
 
         $duration = $validated['duration_minutes'] ?? 120;
-        $start    = now()->addDay()->startOfDay()->setHour(8);
-        $end      = now()->addDay()->startOfDay()->setHour(18);
-        $roomId   = $validated['room_id'] ?? null;
+        $start = now()->addDay()->startOfDay()->setHour(8);
+        $end = now()->addDay()->startOfDay()->setHour(18);
+        $roomId = $validated['room_id'] ?? null;
 
         while ($start->lt($end)) {
             $slotEnd = $start->copy()->addMinutes($duration);
 
             $conflict = RoomBooking::query()
-                ->when($roomId, fn($query) => $query->where('room_id', $roomId))
+                ->when($roomId, fn ($query) => $query->where('room_id', $roomId))
                 ->whereIn('status', ['pending', 'approved'])
                 ->where('start_time', '<', $slotEnd)
                 ->where('end_time', '>', $start)
                 ->exists();
 
-            if (!$conflict) {
+            if (! $conflict) {
                 return response()->json([
-                    'success'        => true,
+                    'success' => true,
                     'suggested_slot' => $start->toDateTimeString(),
-                    'suggested_end'  => $slotEnd->toDateTimeString(),
+                    'suggested_end' => $slotEnd->toDateTimeString(),
                 ]);
             }
 

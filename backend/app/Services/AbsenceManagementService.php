@@ -21,18 +21,18 @@ class AbsenceManagementService
             $session = AttendanceSession::create([
                 ...$sessionData,
                 'professor_id' => $professorId,
-                'created_by'   => $professorId,
-                'is_locked'    => false,
+                'created_by' => $professorId,
+                'is_locked' => false,
             ]);
 
-            $attendances = array_map(fn($s) => [
+            $attendances = array_map(fn ($s) => [
                 'attendance_session_id' => $session->id,
-                'student_id'            => $s['student_id'],
-                'status'                => $s['status'],
-                'is_justified'          => false,
-                'notes'                 => $s['notes'] ?? null,
-                'created_at'            => now(),
-                'updated_at'            => now(),
+                'student_id' => $s['student_id'],
+                'status' => $s['status'],
+                'is_justified' => false,
+                'notes' => $s['notes'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ], $studentsData);
 
             Attendance::insert($attendances);
@@ -46,21 +46,23 @@ class AbsenceManagementService
      */
     public function submitJustification(Student $student, Attendance $attendance, array $data, UploadedFile $file): AbsenceJustification
     {
+        app(\App\Services\Academic\AcademicWindowGuard::class)->assertJustificationsOpen();
+
         if ($attendance->student_id !== $student->id) {
             throw new Exception("Cette absence n'appartient pas à l'étudiant.");
         }
 
         if ($attendance->status !== 'absent') {
-            throw new Exception("Seules les absences peuvent être justifiées.");
+            throw new Exception('Seules les absences peuvent être justifiées.');
         }
 
         return DB::transaction(function () use ($student, $attendance, $data, $file) {
             $justification = AbsenceJustification::create([
                 'attendance_id' => $attendance->id,
-                'student_id'    => $student->id,
-                'reason'        => $data['reason'],
-                'description'   => $data['description'] ?? null,
-                'status'        => 'pending',
+                'student_id' => $student->id,
+                'reason' => $data['reason'],
+                'description' => $data['description'] ?? null,
+                'status' => 'pending',
             ]);
 
             if (method_exists($justification, 'addMedia')) {
@@ -82,16 +84,16 @@ class AbsenceManagementService
     ): AbsenceJustification {
         return DB::transaction(function () use ($justification, $status, $adminId, $rejectionReason) {
             $justification->update([
-                'status'           => $status,
-                'reviewed_by'      => $adminId,
-                'reviewed_at'      => now(),
+                'status' => $status,
+                'reviewed_by' => $adminId,
+                'reviewed_at' => now(),
                 'rejection_reason' => $status === 'rejected' ? $rejectionReason : null,
             ]);
 
             if ($status === 'approved') {
                 $justification->attendance->update([
                     'is_justified' => true,
-                    'status'       => 'excused',
+                    'status' => 'excused',
                 ]);
             }
 

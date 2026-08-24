@@ -29,17 +29,18 @@ class VerifyDatabaseIntegrity extends Command
     {
         $isPre = $this->option('pre');
         $isPost = $this->option('post');
-        
-        if (!$isPre && !$isPost) {
+
+        if (! $isPre && ! $isPost) {
             $this->error('You must specify either --pre or --post.');
+
             return 1;
         }
 
         $snapshotFile = storage_path('app/db_integrity_snapshot.json');
-        
+
         $tables = DB::select('SHOW TABLES');
         $dbName = env('DB_DATABASE', 'encg_erp');
-        
+
         $currentState = [];
 
         $this->info('Scanning database...');
@@ -47,17 +48,17 @@ class VerifyDatabaseIntegrity extends Command
         foreach ($tables as $tableObj) {
             $tableArray = (array) $tableObj;
             $tableName = array_values($tableArray)[0];
-            
+
             // Skip system tables
             if (in_array($tableName, ['migrations', 'cache', 'cache_locks', 'failed_jobs', 'jobs', 'personal_access_tokens', 'telescope_entries'])) {
                 continue;
             }
 
             $count = DB::table($tableName)->count();
-            
+
             $indexes = DB::select("SHOW INDEX FROM `$tableName`");
             $indexCount = count($indexes);
-            
+
             $currentState[$tableName] = [
                 'count' => $count,
                 'index_count' => $indexCount,
@@ -67,29 +68,32 @@ class VerifyDatabaseIntegrity extends Command
         if ($isPre) {
             File::put($snapshotFile, json_encode($currentState, JSON_PRETTY_PRINT));
             $this->info('✅ Pre-migration snapshot saved.');
+
             return 0;
         }
 
         if ($isPost) {
-            if (!File::exists($snapshotFile)) {
+            if (! File::exists($snapshotFile)) {
                 $this->error('No pre-migration snapshot found.');
+
                 return 1;
             }
-            
+
             $snapshot = json_decode(File::get($snapshotFile), true);
             $errors = 0;
-            
+
             $this->info('Verifying data retention...');
 
             foreach ($snapshot as $table => $preData) {
-                if (!isset($currentState[$table])) {
+                if (! isset($currentState[$table])) {
                     $this->error("❌ Table dropped: $table");
                     $errors++;
+
                     continue;
                 }
-                
+
                 $postData = $currentState[$table];
-                
+
                 if ($preData['count'] > $postData['count']) {
                     $this->error("❌ Data Loss in $table! Pre: {$preData['count']}, Post: {$postData['count']}");
                     $errors++;
@@ -98,9 +102,11 @@ class VerifyDatabaseIntegrity extends Command
 
             if ($errors === 0) {
                 $this->info('✅ Post-migration verification successful. Zero data loss detected.');
+
                 return 0;
             } else {
                 $this->error("🚨 Verification failed with $errors errors.");
+
                 return 1;
             }
         }

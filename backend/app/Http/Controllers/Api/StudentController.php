@@ -2,18 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Student\CreateStudentAction;
+use App\Actions\Student\DeleteStudentAction;
+use App\Actions\Student\UpdateStudentAction;
+use App\Domain\Admissions\Models\Application;
+use App\Domain\Student\Models\StudentDossierAuditLog;
 use App\Http\Controllers\Controller;
-use App\Models\Student;
-use App\Models\StudentDocument;
-use App\Services\StudentService;
-use App\Http\Resources\StudentResource;
 use App\Http\Requests\Student\StoreStudentRequest;
 use App\Http\Requests\Student\UpdateStudentRequest;
-use App\Actions\Student\CreateStudentAction;
-use App\Actions\Student\UpdateStudentAction;
-use App\Actions\Student\DeleteStudentAction;
-use Illuminate\Http\Request;
+use App\Http\Resources\StudentResource;
+use App\Mail\InscriptionStatusChangedMail;
+use App\Models\Student;
+use App\Models\StudentDocument;
+use App\Services\Core\AiBiometricFaceMatcherService;
+use App\Services\Core\AiPhotoQualityValidatorService;
+use App\Services\StudentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class StudentController extends Controller
 {
@@ -26,9 +33,9 @@ class StudentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->can('students.view'), 403);
+        $this->authorize('viewAny', Student::class);
 
-        $perPage   = min((int) $request->input('per_page', 20), 100);
+        $perPage = min((int) $request->input('per_page', 20), 100);
         $sortField = $request->input('sort', 'last_name');
         $sortOrder = $request->input('order', 'asc');
 
@@ -43,18 +50,19 @@ class StudentController extends Controller
             return response()->json([
                 'data' => StudentResource::collection($paginated->getCollection()),
                 'meta' => [
-                    'total'        => $paginated->total(),
-                    'per_page'     => $paginated->perPage(),
+                    'total' => $paginated->total(),
+                    'per_page' => $paginated->perPage(),
                     'current_page' => $paginated->currentPage(),
-                    'last_page'    => $paginated->lastPage(),
+                    'last_page' => $paginated->lastPage(),
                 ],
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('StudentController index: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            Log::error('StudentController index: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return response()->json([
-                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'message' => 'Erreur serveur: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -64,19 +72,19 @@ class StudentController extends Controller
      */
     public function store(StoreStudentRequest $request, CreateStudentAction $action): JsonResponse
     {
-        abort_unless($request->user()->can('students.create'), 403);
+        $this->authorize('create', Student::class);
 
         try {
             $student = $action->execute($request->validated());
 
             return response()->json([
                 'message' => 'Étudiant créé avec succès.',
-                'data'    => new StudentResource($student->load(['latestPathway.filiere', 'user'])),
+                'data' => new StudentResource($student->load(['latestPathway.filiere', 'user'])),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de la création de l\'étudiant.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -86,7 +94,7 @@ class StudentController extends Controller
      */
     public function show(Student $student): JsonResponse
     {
-        abort_unless(request()->user()->can('students.view'), 403);
+        $this->authorize('view', $student);
 
         return response()->json([
             'data' => new StudentResource($student->load(['latestPathway.filiere', 'user'])),
@@ -98,17 +106,19 @@ class StudentController extends Controller
      */
     public function update(UpdateStudentRequest $request, Student $student, UpdateStudentAction $action): JsonResponse
     {
+        $this->authorize('update', $student);
+
         try {
             $updated = $action->execute($student, $request->validated());
 
             return response()->json([
                 'message' => 'Étudiant mis à jour avec succès.',
-                'data'    => new StudentResource($updated->load(['latestPathway.filiere', 'user'])),
+                'data' => new StudentResource($updated->load(['latestPathway.filiere', 'user'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de la mise à jour de l\'étudiant.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -118,7 +128,7 @@ class StudentController extends Controller
      */
     public function destroy(Student $student, DeleteStudentAction $action): JsonResponse
     {
-        abort_unless(request()->user()->can('students.delete'), 403);
+        $this->authorize('delete', $student);
 
         try {
             $action->execute($student);
@@ -127,7 +137,7 @@ class StudentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de la suppression de l\'étudiant.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -155,24 +165,24 @@ class StudentController extends Controller
         $file = $request->file('file');
         $type = $request->input('type');
 
-        $path    = $file->store("student_documents/{$student->id}", 'public');
-        $fileUrl = "/storage/" . $path;
+        $path = $file->store("student_documents/{$student->id}", 'public');
+        $fileUrl = '/storage/'.$path;
 
         StudentDocument::updateOrCreate(
             ['student_id' => $student->id, 'type' => $type],
             [
-                'file_path'         => $fileUrl,
+                'file_path' => $fileUrl,
                 'original_filename' => $file->getClientOriginalName(),
-                'mime_type'         => $file->getClientMimeType(),
-                'file_size'         => $file->getSize(),
-                'status'            => 'verified',
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'status' => 'verified',
             ]
         );
 
         return response()->json([
-            'message'   => 'Document numérisé enregistré avec succès.',
+            'message' => 'Document numérisé enregistré avec succès.',
             'file_path' => $fileUrl,
-            'type'      => $type,
+            'type' => $type,
         ]);
     }
 
@@ -185,16 +195,16 @@ class StudentController extends Controller
             ->take(500)
             ->get();
 
-        $filename = 'Export_Comptes_Academiques_USMBA_' . date('Ymd_His') . '.csv';
+        $filename = 'Export_Comptes_Academiques_USMBA_'.date('Ymd_His').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
         $callback = function () use ($students) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($file, [
                 'ID Etudiant',
@@ -209,10 +219,10 @@ class StudentController extends Controller
             ]);
 
             foreach ($students as $student) {
-                $firstName    = $student->first_name;
-                $lastName     = $student->last_name;
-                $cleanFirst   = strtolower(preg_replace('/[^a-zA-Z]/', '', $firstName));
-                $cleanLast    = strtolower(preg_replace('/[^a-zA-Z]/', '', $lastName));
+                $firstName = $student->first_name;
+                $lastName = $student->last_name;
+                $cleanFirst = strtolower(preg_replace('/[^a-zA-Z]/', '', $firstName));
+                $cleanLast = strtolower(preg_replace('/[^a-zA-Z]/', '', $lastName));
                 $academicEmail = "{$cleanFirst}.{$cleanLast}@usmba.ac.ma";
 
                 fputcsv($file, [
@@ -223,7 +233,7 @@ class StudentController extends Controller
                     ucfirst($firstName),
                     '2026-2027',
                     $student->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES',
-                    $student->user?->email ?? ($cleanFirst . $cleanLast . '@gmail.com'),
+                    $student->user?->email ?? ($cleanFirst.$cleanLast.'@gmail.com'),
                     $academicEmail,
                 ]);
             }
@@ -241,19 +251,19 @@ class StudentController extends Controller
     {
         $request->validate([
             'inscription_status' => 'required|in:submitted,dossier_incomplet,dossier_complet,valide,inscrit,reinscrit',
-            'inscription_notes'  => 'nullable|string|max:1000',
+            'inscription_notes' => 'nullable|string|max:1000',
         ]);
 
-        $student   = \App\Domain\Student\Models\Student::with(['latestPathway.filiere'])->findOrFail($studentId);
+        $student = \App\Domain\Student\Models\Student::with(['latestPathway.filiere'])->findOrFail($studentId);
         $oldStatus = $student->inscription_status;
         $newStatus = $request->inscription_status;
 
         $updateData = [
             'inscription_status' => $newStatus,
-            'inscription_notes'  => $request->inscription_notes,
+            'inscription_notes' => $request->inscription_notes,
         ];
 
-        if ($newStatus === 'inscrit' && !$student->student_number) {
+        if ($newStatus === 'inscrit' && ! $student->student_number) {
             $filiereCode = $student->latestPathway?->filiere?->code ?? 'TC';
             $year = (int) date('Y');
             $updateData['student_number'] = \App\Domain\Student\Models\Student::generateStudentNumber($filiereCode, $year);
@@ -268,10 +278,10 @@ class StudentController extends Controller
         $student->update($updateData);
 
         // Audit log
-        if (class_exists(\App\Domain\Student\Models\StudentDossierAuditLog::class)) {
-            \App\Domain\Student\Models\StudentDossierAuditLog::log(
+        if (class_exists(StudentDossierAuditLog::class)) {
+            StudentDossierAuditLog::log(
                 studentId: $studentId,
-                action: \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_INSCRIPTION_STATUS,
+                action: StudentDossierAuditLog::ACTION_INSCRIPTION_STATUS,
                 fieldChanged: 'inscription_status',
                 oldValue: $oldStatus,
                 newValue: $newStatus,
@@ -283,18 +293,18 @@ class StudentController extends Controller
         try {
             $userEmail = $student->user?->email ?? $student->email;
             if ($userEmail && in_array($newStatus, ['valide', 'inscrit', 'dossier_incomplet'])) {
-                \Illuminate\Support\Facades\Mail::to($userEmail)->queue(
-                    new \App\Mail\InscriptionStatusChangedMail($student, $oldStatus, $newStatus)
+                Mail::to($userEmail)->queue(
+                    new InscriptionStatusChangedMail($student, $oldStatus, $newStatus)
                 );
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Email inscription status failed: ' . $e->getMessage());
+            Log::warning('Email inscription status failed: '.$e->getMessage());
         }
 
         return response()->json([
-            'message'            => "Statut d'inscription mis à jour : {$newStatus}",
+            'message' => "Statut d'inscription mis à jour : {$newStatus}",
             'inscription_status' => $newStatus,
-            'student_number'     => $student->fresh()->student_number,
+            'student_number' => $student->fresh()->student_number,
         ]);
     }
 
@@ -305,24 +315,24 @@ class StudentController extends Controller
     {
         $student = \App\Domain\Student\Models\Student::findOrFail($studentId);
 
-        $logs = \App\Domain\Student\Models\StudentDossierAuditLog::where('student_id', $studentId)
+        $logs = StudentDossierAuditLog::where('student_id', $studentId)
             ->with('admin:id,first_name,last_name,email')
             ->orderByDesc('created_at')
             ->take(50)
             ->get()
-            ->map(fn($log) => [
-                'id'            => $log->id,
-                'action'        => $log->action,
-                'action_label'  => $log->action_label,
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'action_label' => $log->action_label,
                 'field_changed' => $log->field_changed,
-                'old_value'     => $log->old_value,
-                'new_value'     => $log->new_value,
-                'comment'       => $log->comment,
-                'admin_name'    => $log->admin
-                    ? ($log->admin->first_name . ' ' . $log->admin->last_name)
+                'old_value' => $log->old_value,
+                'new_value' => $log->new_value,
+                'comment' => $log->comment,
+                'admin_name' => $log->admin
+                    ? ($log->admin->first_name.' '.$log->admin->last_name)
                     : 'Système',
-                'ip_address'    => $log->ip_address,
-                'created_at'    => $log->created_at?->format('d/m/Y H:i'),
+                'ip_address' => $log->ip_address,
+                'created_at' => $log->created_at?->format('d/m/Y H:i'),
             ]);
 
         return response()->json(['data' => $logs]);
@@ -334,7 +344,7 @@ class StudentController extends Controller
     public function getInscriptionStatusPublic(Request $request): JsonResponse
     {
         $cne = $request->input('cne');
-        if (!$cne) {
+        if (! $cne) {
             return response()->json(['message' => 'CNE requis.'], 422);
         }
 
@@ -342,24 +352,24 @@ class StudentController extends Controller
             ->with(['latestPathway.filiere', 'documents'])
             ->first();
 
-        if (!$student) {
+        if (! $student) {
             return response()->json(['message' => 'Aucun dossier trouvé pour ce CNE.'], 404);
         }
 
-        $docTypes     = $student->documents->pluck('type')->toArray();
+        $docTypes = $student->documents->pluck('type')->toArray();
         $requiredDocs = ['photo', 'bac_recto', 'cin_recto_verso', 'releve_notes', 'extrait_naissance'];
-        $missingDocs  = array_diff($requiredDocs, $docTypes);
+        $missingDocs = array_diff($requiredDocs, $docTypes);
 
         return response()->json([
-            'cne'                => $student->cne,
-            'nom'                => strtoupper($student->last_name) . ' ' . $student->first_name,
+            'cne' => $student->cne,
+            'nom' => strtoupper($student->last_name).' '.$student->first_name,
             'inscription_status' => $student->inscription_status ?? 'submitted',
-            'student_number'     => $student->student_number,
-            'filiere'            => $student->latestPathway?->filiere?->name,
-            'submitted_at'       => $student->inscription_submitted_at?->format('d/m/Y'),
-            'validated_at'       => $student->inscription_validated_at?->format('d/m/Y'),
-            'missing_documents'  => array_values($missingDocs),
-            'academic_year'      => $student->academic_year ?? date('Y') . '-' . (date('Y') + 1),
+            'student_number' => $student->student_number,
+            'filiere' => $student->latestPathway?->filiere?->name,
+            'submitted_at' => $student->inscription_submitted_at?->format('d/m/Y'),
+            'validated_at' => $student->inscription_validated_at?->format('d/m/Y'),
+            'missing_documents' => array_values($missingDocs),
+            'academic_year' => $student->academic_year ?? date('Y').'-'.(date('Y') + 1),
         ]);
     }
 
@@ -370,11 +380,11 @@ class StudentController extends Controller
     {
         $request->validate(['file' => 'required|image|max:10240']);
 
-        $file     = $request->file('file');
+        $file = $request->file('file');
         $tempPath = $file->getRealPath();
 
-        $validator = new \App\Services\Core\AiPhotoQualityValidatorService();
-        $result    = $validator->validatePhotoQuality($tempPath);
+        $validator = new AiPhotoQualityValidatorService;
+        $result = $validator->validatePhotoQuality($tempPath);
 
         return response()->json($result);
     }
@@ -387,13 +397,13 @@ class StudentController extends Controller
         $student = \App\Domain\Student\Models\Student::with('documents')->findOrFail($studentId);
 
         $photoDoc = $student->documents->where('type', 'photo')->first();
-        $cnieDoc  = $student->documents->where('type', 'cin_recto_verso')->first();
+        $cnieDoc = $student->documents->where('type', 'cin_recto_verso')->first();
 
-        $photoPath = $photoDoc ? storage_path('app/public/' . str_replace('/storage/', '', $photoDoc->file_path)) : '';
-        $cniePath  = $cnieDoc  ? storage_path('app/public/' . str_replace('/storage/', '', $cnieDoc->file_path)) : '';
+        $photoPath = $photoDoc ? storage_path('app/public/'.str_replace('/storage/', '', $photoDoc->file_path)) : '';
+        $cniePath = $cnieDoc ? storage_path('app/public/'.str_replace('/storage/', '', $cnieDoc->file_path)) : '';
 
-        $matcher = new \App\Services\Core\AiBiometricFaceMatcherService();
-        $result  = $matcher->matchCandidateFaceWithDocument($photoPath, $cniePath);
+        $matcher = new AiBiometricFaceMatcherService;
+        $result = $matcher->matchCandidateFaceWithDocument($photoPath, $cniePath);
 
         return response()->json($result);
     }
@@ -403,14 +413,14 @@ class StudentController extends Controller
      */
     public function auditWithGeminiAi(Request $request, int $studentId): JsonResponse
     {
-        $student     = Student::with(['user', 'pathways.filiere'])->find($studentId);
+        $student = Student::with(['user', 'pathways.filiere'])->find($studentId);
         $application = null;
 
-        if (!$student) {
-            $application = \App\Domain\Admissions\Models\Application::find($studentId);
+        if (! $student) {
+            $application = Application::find($studentId);
         }
 
-        if (!$student && !$application) {
+        if (! $student && ! $application) {
             return response()->json([
                 'success' => false,
                 'message' => 'Aucun dossier étudiant ou candidature trouvé.',
@@ -418,49 +428,49 @@ class StudentController extends Controller
         }
 
         if ($student) {
-            $user             = $student->user;
-            $cne              = $student->cne ?? 'Non renseigné';
-            $cin              = $user?->cin ?? $student->cin ?? 'Non renseigné';
-            $name             = strtoupper(trim(($student->last_name ?? $user?->last_name ?? '') . ' ' . ($student->first_name ?? $user?->first_name ?? '')));
-            $declaredAverage  = (float) ($student->bac_note ?? 0);
+            $user = $student->user;
+            $cne = $student->cne ?? 'Non renseigné';
+            $cin = $user?->cin ?? $student->cin ?? 'Non renseigné';
+            $name = strtoupper(trim(($student->last_name ?? $user?->last_name ?? '').' '.($student->first_name ?? $user?->first_name ?? '')));
+            $declaredAverage = (float) ($student->bac_note ?? 0);
         } else {
-            $cne              = $application->cne ?? 'Non renseigné';
-            $cin              = $application->cin ?? 'Non renseigné';
-            $name             = strtoupper(trim(($application->last_name ?? '') . ' ' . ($application->first_name ?? '')));
-            $declaredAverage  = (float) ($application->bac_note ?? $application->bac_average ?? $application->score_tafem ?? 0);
+            $cne = $application->cne ?? 'Non renseigné';
+            $cin = $application->cin ?? 'Non renseigné';
+            $name = strtoupper(trim(($application->last_name ?? '').' '.($application->first_name ?? '')));
+            $declaredAverage = (float) ($application->bac_note ?? $application->bac_average ?? $application->score_tafem ?? 0);
         }
 
         $biometricRes = ['similarity_percentage' => 98.4];
-        if (class_exists(\App\Services\Core\AiBiometricFaceMatcherService::class)) {
-            $matcher      = new \App\Services\Core\AiBiometricFaceMatcherService();
+        if (class_exists(AiBiometricFaceMatcherService::class)) {
+            $matcher = new AiBiometricFaceMatcherService;
             $biometricRes = $matcher->matchCandidateFaceWithDocument('', '');
         }
 
         $ocrDetectedAverage = $declaredAverage > 0 ? $declaredAverage : 15.00;
-        $isGradeMatching    = abs($declaredAverage - $ocrDetectedAverage) < 0.05;
+        $isGradeMatching = abs($declaredAverage - $ocrDetectedAverage) < 0.05;
 
         $auditResult = [
-            'is_valid'                  => true,
-            'confidence_score'          => 98.4,
-            'cne_verified'              => $cne,
-            'cin_verified'              => $cin,
-            'student_name'              => $name,
-            'bac_average_declared'      => $declaredAverage > 0 ? $declaredAverage : 'Non renseignée',
-            'bac_average_ocr_detected'  => $ocrDetectedAverage,
-            'is_grade_matching'         => $isGradeMatching,
-            'grade_verdict'             => "✅ MOYENNE VÉRIFIÉE : {$ocrDetectedAverage}/20",
+            'is_valid' => true,
+            'confidence_score' => 98.4,
+            'cne_verified' => $cne,
+            'cin_verified' => $cin,
+            'student_name' => $name,
+            'bac_average_declared' => $declaredAverage > 0 ? $declaredAverage : 'Non renseignée',
+            'bac_average_ocr_detected' => $ocrDetectedAverage,
+            'is_grade_matching' => $isGradeMatching,
+            'grade_verdict' => "✅ MOYENNE VÉRIFIÉE : {$ocrDetectedAverage}/20",
             'biometric_match_percentage' => $biometricRes['similarity_percentage'] ?? 98.4,
-            'biometric_verdict'         => 'PASSED — Visages Identiques',
-            'ocr_status'                => 'CONFORME — Données validées par Gemini AI Vision',
-            'is_cnie_recto_verso'       => true,
-            'cnie_layout_verdict'       => '✅ RECTO-VERSO CONFORME',
-            'missing_items'             => [],
-            'guichet_copilot_advice'    => "Le dossier de {$name} (CNE : {$cne}) est complet et conforme.",
-            'audited_at'                => now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s'),
+            'biometric_verdict' => 'PASSED — Visages Identiques',
+            'ocr_status' => 'CONFORME — Données validées par Gemini AI Vision',
+            'is_cnie_recto_verso' => true,
+            'cnie_layout_verdict' => '✅ RECTO-VERSO CONFORME',
+            'missing_items' => [],
+            'guichet_copilot_advice' => "Le dossier de {$name} (CNE : {$cne}) est complet et conforme.",
+            'audited_at' => now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s'),
         ];
 
-        if (class_exists(\App\Domain\Student\Models\StudentDossierAuditLog::class) && $student) {
-            \App\Domain\Student\Models\StudentDossierAuditLog::log(
+        if (class_exists(StudentDossierAuditLog::class) && $student) {
+            StudentDossierAuditLog::log(
                 studentId: $student->id,
                 action: 'gemini_ai_audit',
                 comment: "Audit IA Gemini Vision : {$name} — Conforme ✅"
@@ -470,7 +480,7 @@ class StudentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Audit IA Gemini Vision exécuté avec succès.',
-            'data'    => $auditResult,
+            'data' => $auditResult,
         ]);
     }
 }

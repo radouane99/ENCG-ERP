@@ -20,12 +20,12 @@ return new class extends Migration
                         break;
                     }
                 }
-                if (!$hasIndex) {
+                if (! $hasIndex) {
                     // Only index if columns exist
-                    if (Schema::hasColumn('schedules', 'room_id') && 
-                        Schema::hasColumn('schedules', 'day_of_week') && 
+                    if (Schema::hasColumn('schedules', 'room_id') &&
+                        Schema::hasColumn('schedules', 'day_of_week') &&
                         Schema::hasColumn('schedules', 'start_time')) {
-                        
+
                         $table->index(['room_id', 'day_of_week', 'start_time']);
                     }
                 }
@@ -33,7 +33,5 @@ return new class extends Migration
         }
     }
 
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

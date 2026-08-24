@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateOfficialPdfJob;
 use App\Mail\ProfessorAssignmentNotificationMail;
 use App\Models\AcademicYear;
 use App\Models\Application;
@@ -287,48 +288,7 @@ class PdfExportController extends Controller
         return $pdf->download('convocations_surveillants_lot.pdf');
     }
 
-    // ─── PV EXAMEN ──────────────────────────────────────────────
-
-    public function pvExamen(int $examId)
-    {
-        $exam = Exam::with(['module.filiere', 'group', 'room', 'examSession'])->findOrFail($examId);
-
-        $seatings = ExamSeating::with(['student.user'])
-            ->where('exam_id', $examId)
-            ->orderBy('seat_number')
-            ->get();
-
-        $surveillances = ExamSurveillance::with('professor')
-            ->where('exam_id', $examId)
-            ->get();
-
-        $incidents = ExamIncident::with(['student.user'])
-            ->where('exam_id', $examId)
-            ->get();
-
-        $seal = 'SHA256:ENCG-FES-'.$examId.'-'.strtoupper(substr(md5($examId.($exam->locked_at ?? now())), 0, 16));
-
-        $mode = request()->query('mode', request()->query('type', 'pv'));
-        if (request()->query('emargement') == '1') {
-            $mode = 'emargement';
-        }
-
-        $pdf = $this->getPdfInstance('pdf.pv_examen', [
-            'exam_id' => $examId,
-            'exam' => $exam,
-            'seatings' => $seatings,
-            'surveillances' => $surveillances,
-            'incidents' => $incidents,
-            'mode' => $mode,
-            'total_students' => $seatings->count(),
-            'present_students' => $seatings->where('is_present', true)->count(),
-            'absent_students' => $seatings->where('is_present', false)->count(),
-            'seal' => $seal,
-            'generated_at' => now()->format('d/m/Y H:i'),
-        ]);
-
-        return $pdf->stream("PV_Examen_{$examId}.pdf", ['Attachment' => false]);
-    }
+    // PV d’examen : App\Http\Controllers\Api\ExamPdfController::pvExamen
 
     // ─── ATTESTATIONS & DOCUMENTS OFFICIELS ───────────────────────────────
 
@@ -1675,6 +1635,20 @@ class PdfExportController extends Controller
             'bacRegionalNote' => '14.90 / 20',
             'bacGeneralNote' => '15.41 / 20',
         ];
+
+        if ($request->boolean('async')) {
+            GenerateOfficialPdfJob::dispatch(
+                'pdf.dossier_complet_scolarite',
+                $data,
+                'pdf-queue/dossier-'.$studentCne.'.pdf'
+            );
+
+            return response()->json([
+                'success' => true,
+                'queued' => true,
+                'message' => 'Génération PDF mise en file d’attente.',
+            ], 202);
+        }
 
         $pdf = Pdf::setOption([
             'isRemoteEnabled' => true,

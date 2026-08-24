@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
-use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -20,10 +19,15 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
     use RefreshDatabase;
 
     protected Institution $institution;
+
     protected User $studentUserA;
+
     protected User $studentUserB;
+
     protected Student $studentA;
+
     protected Student $studentB;
+
     protected User $adminUser;
 
     protected function setUp(): void
@@ -40,41 +44,41 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
 
         // Student A
         $this->studentUserA = User::factory()->create([
-            'email'          => 'student.a@encg-fes.ac.ma',
+            'email' => 'student.a@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->studentUserA->assignRole($studentRole);
         $this->studentA = Student::create([
-            'user_id'        => $this->studentUserA->id,
+            'user_id' => $this->studentUserA->id,
             'student_number' => 'ENCG-SEC-001',
-            'cne'            => 'S130000001',
-            'gender'         => 'male',
-            'status'         => 'active',
+            'cne' => 'S130000001',
+            'gender' => 'male',
+            'status' => 'active',
             'institution_id' => $this->institution->id,
         ]);
 
         // Student B
         $this->studentUserB = User::factory()->create([
-            'email'          => 'student.b@encg-fes.ac.ma',
+            'email' => 'student.b@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->studentUserB->assignRole($studentRole);
         $this->studentB = Student::create([
-            'user_id'        => $this->studentUserB->id,
+            'user_id' => $this->studentUserB->id,
             'student_number' => 'ENCG-SEC-002',
-            'cne'            => 'S130000002',
-            'gender'         => 'female',
-            'status'         => 'active',
+            'cne' => 'S130000002',
+            'gender' => 'female',
+            'status' => 'active',
             'institution_id' => $this->institution->id,
         ]);
 
         // Admin User
         $this->adminUser = User::factory()->create([
-            'email'          => 'admin.security@encg-fes.ac.ma',
+            'email' => 'admin.security@encg-fes.ac.ma',
             'institution_id' => $this->institution->id,
         ]);
         $this->adminUser->assignRole($adminRole);
-        $viewPerm = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'students.view', 'guard_name' => 'sanctum']);
+        $viewPerm = Permission::firstOrCreate(['name' => 'students.view', 'guard_name' => 'sanctum']);
         $this->adminUser->givePermissionTo($viewPerm);
     }
 
@@ -89,13 +93,13 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
         $sqlPayloads = [
             "' OR '1'='1",
             "'; DROP TABLE students; --",
-            "1 UNION SELECT null, email, password FROM users --",
+            '1 UNION SELECT null, email, password FROM users --',
             "admin'--",
             "1' OR 1=1#",
         ];
 
         foreach ($sqlPayloads as $payload) {
-            $response = $this->getJson("/api/students?search=" . urlencode($payload));
+            $response = $this->getJson('/api/students?search='.urlencode($payload));
             // Must return 200 with 0 or clean filtered results, NEVER 500 SQL syntax error
             $response->assertOk();
             $this->assertDatabaseHas('students', ['id' => $this->studentA->id]);
@@ -112,8 +116,8 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
 
         $xssPayload = "<script>alert('XSS-ATTACK');</script>";
         $response = $this->postJson('/api/student-portal/complaints', [
-            'type'        => 'pedagogical',
-            'subject'     => 'Réclamation' . $xssPayload,
+            'type' => 'pedagogical',
+            'subject' => 'Réclamation'.$xssPayload,
             'description' => 'Contenu du message <img src=x onerror=alert(1)>',
         ]);
 
@@ -146,9 +150,9 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
 
         $response = $this->postJson('/api/profile', [
             'first_name' => 'HackerName',
-            'is_admin'   => true,
-            'role'       => 'admin',
-            'type'       => 'admin',
+            'is_admin' => true,
+            'role' => 'admin',
+            'type' => 'admin',
         ]);
 
         // User role must remain 'student'
@@ -163,7 +167,7 @@ class CybersecurityAndOwaspProtectionTest extends TestCase
     public function test_authentication_invalid_credentials_do_not_leak_stack_traces(): void
     {
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'nonexistent.user@encg-fes.ac.ma',
+            'email' => 'nonexistent.user@encg-fes.ac.ma',
             'password' => 'WrongPassword123!',
         ]);
 

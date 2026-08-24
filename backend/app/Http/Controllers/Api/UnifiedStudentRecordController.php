@@ -26,14 +26,6 @@ class UnifiedStudentRecordController extends Controller
      */
     public function show(Request $request, Student|string|int $student): JsonResponse
     {
-        $user = $request->user();
-
-        $isAuthorized = ($user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'super-admin', 'institution-admin', 'professor']))
-            || ($user && method_exists($user, 'hasRole') && ($user->hasRole('admin') || $user->hasRole('professor')))
-            || in_array($user?->role, ['admin', 'professor']);
-
-        abort_unless($isAuthorized, 403, 'Accès non autorisé.');
-
         $studentModel = $student instanceof Student
             ? $student
             : (is_numeric($student)
@@ -43,6 +35,10 @@ class UnifiedStudentRecordController extends Controller
                     : Student::where('student_number', (string) $student)->firstOrFail()
                 )
             );
+
+        $this->authorize('view', $studentModel);
+
+        $user = $request->user();
 
         return $this->buildDossierResponse($studentModel, $request, $user && method_exists($user, 'hasRole') && $user->hasRole('professor'));
     }

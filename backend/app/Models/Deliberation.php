@@ -4,23 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Deliberation extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
-        'deliberation_date' => 'date',
-    ];
+            'deliberation_date' => 'date',
+            'is_sealed' => 'boolean',
+            'sealed_at' => 'datetime',
+        ];
     }
 
     public function institution(): BelongsTo
@@ -58,4 +60,3 @@ class Deliberation extends Model implements HasMedia
         return $this->hasMany(DeliberationDecision::class);
     }
 }
-

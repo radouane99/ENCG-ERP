@@ -29,7 +29,7 @@ class StudentInternshipController extends Controller
             ->get();
 
         return response()->json([
-            'success'     => true,
+            'success' => true,
             'internships' => $internships,
         ]);
     }
@@ -48,8 +48,8 @@ class StudentInternshipController extends Controller
         );
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Candidature au stage soumise avec succès.',
+            'success' => true,
+            'message' => 'Candidature au stage soumise avec succès.',
             'internship' => $internship,
         ], 201);
     }
@@ -66,8 +66,8 @@ class StudentInternshipController extends Controller
         );
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Document uploadé avec succès.',
+            'success' => true,
+            'message' => 'Document uploadé avec succès.',
             'document' => $document,
         ], 201);
     }

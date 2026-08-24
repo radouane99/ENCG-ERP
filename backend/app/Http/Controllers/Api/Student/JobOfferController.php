@@ -17,7 +17,7 @@ class JobOfferController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $offers,
+            'data' => $offers,
         ]);
     }
 }

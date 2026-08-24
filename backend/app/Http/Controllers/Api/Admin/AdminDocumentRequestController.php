@@ -5,14 +5,23 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateDocumentRequestStatus;
 use App\Mail\DocumentRequestStatusMail;
+use App\Mail\ProfessorDocumentApprovedMail;
 use App\Models\DocumentRequest;
+use App\Models\DocumentType;
 use App\Models\NotificationLog;
+use App\Models\ProfessorDocumentRequest;
+use App\Models\Student;
+use App\Models\User;
+use App\Services\Academic\DeliberationService;
 use App\Services\DocumentRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdminDocumentRequestController extends Controller
 {
@@ -32,29 +41,29 @@ class AdminDocumentRequestController extends Controller
         }
 
         $requests = $query->latest()->get()->map(function (DocumentRequest $documentRequest) {
-            $status     = in_array($documentRequest->status, ['ready', 'processing'], true) ? 'approved' : $documentRequest->status;
+            $status = in_array($documentRequest->status, ['ready', 'processing'], true) ? 'approved' : $documentRequest->status;
             $adminNotes = $documentRequest->admin_notes ?? [];
 
             return [
-                'id'              => $documentRequest->id,
-                'person'          => $documentRequest->student?->user?->name ?? 'Inconnu',
-                'role'            => 'Étudiant',
-                'type'            => $documentRequest->documentType?->name ?? 'Document',
-                'motif'           => 'Demande de document administratif',
-                'time'            => $documentRequest->requested_at?->diffForHumans() ?? $documentRequest->created_at?->diffForHumans(),
-                'status'          => $status,
-                'reason'          => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
-                'email_sent'      => $adminNotes['email_sent'] ?? false,
-                'email_sent_at'   => $adminNotes['email_sent_at'] ?? null,
+                'id' => $documentRequest->id,
+                'person' => $documentRequest->student?->user?->name ?? 'Inconnu',
+                'role' => 'Étudiant',
+                'type' => $documentRequest->documentType?->name ?? 'Document',
+                'motif' => 'Demande de document administratif',
+                'time' => $documentRequest->requested_at?->diffForHumans() ?? $documentRequest->created_at?->diffForHumans(),
+                'status' => $status,
+                'reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
+                'email_sent' => $adminNotes['email_sent'] ?? false,
+                'email_sent_at' => $adminNotes['email_sent_at'] ?? null,
                 'email_recipient' => $adminNotes['email_recipient'] ?? $documentRequest->student?->user?->email ?? null,
-                'url'             => url("/api/admin/document-requests/{$documentRequest->id}/download"),
-                'preview_url'     => url("/api/admin/document-requests/{$documentRequest->id}/preview"),
+                'url' => url("/api/admin/document-requests/{$documentRequest->id}/download"),
+                'preview_url' => url("/api/admin/document-requests/{$documentRequest->id}/preview"),
             ];
         });
 
         // Also fetch Professor Document Requests if table exists
-        if (\Illuminate\Support\Facades\Schema::hasTable('professor_document_requests')) {
-            $profQuery = \App\Models\ProfessorDocumentRequest::with(['user', 'professor']);
+        if (Schema::hasTable('professor_document_requests')) {
+            $profQuery = ProfessorDocumentRequest::with(['user', 'professor']);
             if ($request->filled('status')) {
                 $profQuery->where('status', $request->string('status'));
             }
@@ -62,34 +71,34 @@ class AdminDocumentRequestController extends Controller
                 $status = in_array($pDoc->status, ['ready', 'processing', 'approved'], true) ? 'approved' : $pDoc->status;
                 $user = $pDoc->user;
                 $profName = $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant';
-                $typeLabel = match($pDoc->document_type) {
-                    'attestation_travail'  => 'Attestation de Travail',
-                    'ordre_de_mission'     => 'Ordre de Mission',
-                    'attestation_salaire'  => 'Attestation de Salaire',
+                $typeLabel = match ($pDoc->document_type) {
+                    'attestation_travail' => 'Attestation de Travail',
+                    'ordre_de_mission' => 'Ordre de Mission',
+                    'attestation_salaire' => 'Attestation de Salaire',
                     'autorisation_absence' => 'Autorisation d\'Absence',
-                    default                => ucwords(str_replace('_', ' ', $pDoc->document_type))
+                    default => ucwords(str_replace('_', ' ', $pDoc->document_type))
                 };
 
                 return [
-                    'id'              => 'prof_' . $pDoc->id,
-                    'real_id'         => $pDoc->id,
-                    'is_professor'    => true,
-                    'person'          => $profName,
-                    'role'            => 'Enseignant',
-                    'type'            => $typeLabel,
-                    'motif'           => $pDoc->purpose . ($pDoc->destination ? " (Destination: {$pDoc->destination})" : ''),
-                    'destination'     => $pDoc->destination,
-                    'start_date'      => $pDoc->start_date?->format('Y-m-d'),
-                    'end_date'        => $pDoc->end_date?->format('Y-m-d'),
-                    'has_date_anomaly'=> ($pDoc->start_date && $pDoc->end_date && $pDoc->start_date->gt($pDoc->end_date)),
-                    'time'            => $pDoc->created_at?->diffForHumans(),
-                    'status'          => $status,
-                    'reason'          => $pDoc->admin_notes,
-                    'email_sent'      => in_array($status, ['approved', 'ready']),
-                    'email_sent_at'   => $pDoc->signed_at?->toIso8601String(),
+                    'id' => 'prof_'.$pDoc->id,
+                    'real_id' => $pDoc->id,
+                    'is_professor' => true,
+                    'person' => $profName,
+                    'role' => 'Enseignant',
+                    'type' => $typeLabel,
+                    'motif' => $pDoc->purpose.($pDoc->destination ? " (Destination: {$pDoc->destination})" : ''),
+                    'destination' => $pDoc->destination,
+                    'start_date' => $pDoc->start_date?->format('Y-m-d'),
+                    'end_date' => $pDoc->end_date?->format('Y-m-d'),
+                    'has_date_anomaly' => ($pDoc->start_date && $pDoc->end_date && $pDoc->start_date->gt($pDoc->end_date)),
+                    'time' => $pDoc->created_at?->diffForHumans(),
+                    'status' => $status,
+                    'reason' => $pDoc->admin_notes,
+                    'email_sent' => in_array($status, ['approved', 'ready']),
+                    'email_sent_at' => $pDoc->signed_at?->toIso8601String(),
                     'email_recipient' => $user?->email,
-                    'url'             => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
-                    'preview_url'     => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                    'url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                    'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
                 ];
             });
 
@@ -98,9 +107,9 @@ class AdminDocumentRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $requests->values(),
-            'stats'   => [
-                'pending'  => $requests->where('status', 'pending')->count(),
+            'data' => $requests->values(),
+            'stats' => [
+                'pending' => $requests->where('status', 'pending')->count(),
                 'approved' => $requests->where('status', 'approved')->count(),
                 'rejected' => $requests->where('status', 'rejected')->count(),
             ],
@@ -114,19 +123,19 @@ class AdminDocumentRequestController extends Controller
     {
         $validated = $request->validate([
             'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $pDoc = \App\Models\ProfessorDocumentRequest::findOrFail($id);
+        $pDoc = ProfessorDocumentRequest::findOrFail($id);
         $pDoc->update([
             'start_date' => $validated['start_date'],
-            'end_date'   => $validated['end_date'],
+            'end_date' => $validated['end_date'],
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Dates de mission corrigées et validées avec succès.',
-            'data'    => $pDoc,
+            'data' => $pDoc,
         ]);
     }
 
@@ -144,7 +153,7 @@ class AdminDocumentRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Statut mis à jour.',
-            'data'    => $updatedRequest,
+            'data' => $updatedRequest,
         ]);
     }
 
@@ -154,108 +163,109 @@ class AdminDocumentRequestController extends Controller
     public function updateProfessorStatus(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'status'           => 'required|in:approved,ready,rejected,pending',
+            'status' => 'required|in:approved,ready,rejected,pending,processing,collected',
             'rejection_reason' => 'nullable|string',
         ]);
 
-        $pDoc = \App\Models\ProfessorDocumentRequest::with('user')->findOrFail($id);
+        $pDoc = ProfessorDocumentRequest::with('user')->findOrFail($id);
         $newStatus = in_array($validated['status'], ['approved', 'ready']) ? 'ready' : $validated['status'];
 
         $pDoc->update([
-            'status'      => $newStatus,
-            'signed_by'   => $newStatus === 'ready' ? 'Secrétaire Général ENCG Fès' : null,
-            'signed_at'   => $newStatus === 'ready' ? now() : null,
+            'status' => $newStatus,
+            'signed_by' => $newStatus === 'ready' ? 'Secrétaire Général ENCG Fès' : null,
+            'signed_at' => $newStatus === 'ready' ? now() : null,
             'admin_notes' => $validated['rejection_reason'] ?? null,
         ]);
 
-        $user = $pDoc->user ?? \App\Models\User::find($pDoc->user_id);
-        $typeLabel = match($pDoc->document_type) {
-            'attestation_travail'  => 'Attestation de Travail',
-            'ordre_de_mission'     => 'Ordre de Mission',
-            'attestation_salaire'  => 'Attestation de Salaire',
+        $user = $pDoc->user ?? User::find($pDoc->user_id);
+        $typeLabel = match ($pDoc->document_type) {
+            'attestation_travail' => 'Attestation de Travail',
+            'ordre_de_mission' => 'Ordre de Mission',
+            'attestation_salaire' => 'Attestation de Salaire',
             'autorisation_absence' => 'Autorisation d\'Absence',
-            default                => ucwords(str_replace('_', ' ', $pDoc->document_type))
+            default => ucwords(str_replace('_', ' ', $pDoc->document_type))
         };
 
         if ($user) {
             if ($newStatus === 'ready') {
                 // 1. In-App Notification (Approved & Signed)
                 try {
-                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                        'type'            => 'App\Notifications\SystemNotification',
+                    DB::table('notifications')->insert([
+                        'id' => Str::uuid()->toString(),
+                        'type' => 'App\Notifications\SystemNotification',
                         'notifiable_type' => 'App\Models\User',
-                        'notifiable_id'   => $user->id,
-                        'data'            => json_encode([
-                            'title'         => "✅ {$typeLabel} Validée & Signée",
-                            'message'       => "Votre {$typeLabel} (Réf: {$pDoc->tracking_code}) a été officiellement validée et signée par le Secrétaire Général. Elle est prête au téléchargement.",
-                            'type'          => 'document_approved',
-                            'action_url'    => '/professor/documents',
+                        'notifiable_id' => $user->id,
+                        'data' => json_encode([
+                            'title' => "✅ {$typeLabel} Validée & Signée",
+                            'message' => "Votre {$typeLabel} (Réf: {$pDoc->tracking_code}) a été officiellement validée et signée par le Secrétaire Général. Elle est prête au téléchargement.",
+                            'type' => 'document_approved',
+                            'action_url' => '/professor/documents',
                             'tracking_code' => $pDoc->tracking_code,
                         ]),
-                        'created_at'      => now(),
-                        'updated_at'      => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Professor Notification Approved Error: " . $e->getMessage());
+                    Log::warning('Professor Notification Approved Error: '.$e->getMessage());
                 }
 
                 // 2. Email via Resend Transport
-                if (!empty($user->email)) {
+                if (! empty($user->email)) {
                     try {
                         $profName = "{$user->first_name} {$user->last_name}";
-                        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ProfessorDocumentApprovedMail([
+                        Mail::to($user->email)->send(new ProfessorDocumentApprovedMail([
                             'professor_name' => $profName,
                             'document_title' => $typeLabel,
-                            'tracking_code'  => $pDoc->tracking_code,
-                            'purpose'        => $pDoc->purpose,
-                            'signer'         => 'Secrétaire Général ENCG Fès',
-                            'portal_url'     => config('app.frontend_url', 'http://localhost:5173') . '/professor/documents',
+                            'tracking_code' => $pDoc->tracking_code,
+                            'purpose' => $pDoc->purpose,
+                            'signer' => 'Secrétaire Général ENCG Fès',
+                            'portal_url' => config('app.frontend_url', 'http://localhost:5173').'/professor/documents',
                         ]));
-                    } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                    }
                 }
             } elseif ($newStatus === 'rejected') {
                 // In-App Notification (Rejected)
                 try {
-                    $reason = !empty($validated['rejection_reason']) ? $validated['rejection_reason'] : 'Motif non précisé.';
-                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                        'type'            => 'App\Notifications\SystemNotification',
+                    $reason = ! empty($validated['rejection_reason']) ? $validated['rejection_reason'] : 'Motif non précisé.';
+                    DB::table('notifications')->insert([
+                        'id' => Str::uuid()->toString(),
+                        'type' => 'App\Notifications\SystemNotification',
                         'notifiable_type' => 'App\Models\User',
-                        'notifiable_id'   => $user->id,
-                        'data'            => json_encode([
-                            'title'         => "❌ Demande {$typeLabel} Rejetée",
-                            'message'       => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été rejetée. Motif : {$reason}",
-                            'type'          => 'system',
-                            'action_url'    => '/professor/documents',
+                        'notifiable_id' => $user->id,
+                        'data' => json_encode([
+                            'title' => "❌ Demande {$typeLabel} Rejetée",
+                            'message' => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été rejetée. Motif : {$reason}",
+                            'type' => 'system',
+                            'action_url' => '/professor/documents',
                             'tracking_code' => $pDoc->tracking_code,
                         ]),
-                        'created_at'      => now(),
-                        'updated_at'      => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Professor Notification Rejected Error: " . $e->getMessage());
+                    Log::warning('Professor Notification Rejected Error: '.$e->getMessage());
                 }
             } elseif ($newStatus === 'pending') {
                 // In-App Notification (Reset to Pending)
                 try {
-                    \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                        'id'              => \Illuminate\Support\Str::uuid()->toString(),
-                        'type'            => 'App\Notifications\SystemNotification',
+                    DB::table('notifications')->insert([
+                        'id' => Str::uuid()->toString(),
+                        'type' => 'App\Notifications\SystemNotification',
                         'notifiable_type' => 'App\Models\User',
-                        'notifiable_id'   => $user->id,
-                        'data'            => json_encode([
-                            'title'         => "🔄 Demande {$typeLabel} Remise en Attente",
-                            'message'       => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été remise en attente d'instruction.",
-                            'type'          => 'system',
-                            'action_url'    => '/professor/documents',
+                        'notifiable_id' => $user->id,
+                        'data' => json_encode([
+                            'title' => "🔄 Demande {$typeLabel} Remise en Attente",
+                            'message' => "Votre demande de {$typeLabel} (Réf: {$pDoc->tracking_code}) a été remise en attente d'instruction.",
+                            'type' => 'system',
+                            'action_url' => '/professor/documents',
                             'tracking_code' => $pDoc->tracking_code,
                         ]),
-                        'created_at'      => now(),
-                        'updated_at'      => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Professor Notification Pending Error: " . $e->getMessage());
+                    Log::warning('Professor Notification Pending Error: '.$e->getMessage());
                 }
             }
         }
@@ -263,7 +273,7 @@ class AdminDocumentRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => $newStatus === 'ready' ? 'Demande approuvée avec signature numérique et notification envoyée.' : 'Demande mise à jour et notification envoyée.',
-            'data'    => $pDoc,
+            'data' => $pDoc,
         ]);
     }
 
@@ -283,7 +293,7 @@ class AdminDocumentRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'PDF généré avec succès.',
-            'data'    => $updatedRequest,
+            'data' => $updatedRequest,
         ]);
     }
 
@@ -292,28 +302,30 @@ class AdminDocumentRequestController extends Controller
      */
     public function download(string|int $id)
     {
-        if (str_starts_with((string)$id, 'prof_')) {
-            $profId = (int) str_replace('prof_', '', (string)$id);
+        if (str_starts_with((string) $id, 'prof_')) {
+            $profId = (int) str_replace('prof_', '', (string) $id);
+
             return redirect()->to(url("/api/professor-portal/documents/{$profId}/pdf"));
         }
 
-        if (!is_numeric($id)) {
+        if (! is_numeric($id)) {
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
         $documentRequest = DocumentRequest::find($id);
-        if (!$documentRequest) {
-            $pDoc = \App\Models\ProfessorDocumentRequest::find($id);
+        if (! $documentRequest) {
+            $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
                 return redirect()->to(url("/api/professor-portal/documents/{$pDoc->id}/pdf"));
             }
+
             return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
         }
 
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
-        if (!$generatedDocument || !Storage::disk('private')->exists($generatedDocument->file_path)) {
-            $documentRequest   = $this->documentRequestService->processRequest($documentRequest, 'ready');
+        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
+            $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
             $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
         }
 
@@ -329,29 +341,31 @@ class AdminDocumentRequestController extends Controller
      */
     public function preview(string|int $id)
     {
-        if (str_starts_with((string)$id, 'prof_')) {
-            $profId = (int) str_replace('prof_', '', (string)$id);
+        if (str_starts_with((string) $id, 'prof_')) {
+            $profId = (int) str_replace('prof_', '', (string) $id);
+
             return redirect()->to(url("/api/professor-portal/documents/{$profId}/pdf"));
         }
 
-        if (!is_numeric($id)) {
+        if (! is_numeric($id)) {
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
         $documentRequest = DocumentRequest::find($id);
-        if (!$documentRequest) {
-            $pDoc = \App\Models\ProfessorDocumentRequest::find($id);
+        if (! $documentRequest) {
+            $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
                 return redirect()->to(url("/api/professor-portal/documents/{$pDoc->id}/pdf"));
             }
+
             return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
         }
 
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
-        if (!$generatedDocument || !Storage::disk('private')->exists($generatedDocument->file_path)) {
+        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
             try {
-                $documentRequest   = $this->documentRequestService->processRequest($documentRequest, 'ready');
+                $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
                 $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
             } catch (\Throwable $e) {
                 return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
@@ -360,8 +374,8 @@ class AdminDocumentRequestController extends Controller
 
         if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
             return response()->file(Storage::disk('private')->path($generatedDocument->file_path), [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . basename($generatedDocument->file_path) . '"',
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.basename($generatedDocument->file_path).'"',
             ]);
         }
 
@@ -376,15 +390,15 @@ class AdminDocumentRequestController extends Controller
         $documentRequest->loadMissing(['student.user', 'documentType']);
         $studentUser = $documentRequest->student?->user;
 
-        if (!$studentUser?->email) {
+        if (! $studentUser?->email) {
             return response()->json(['success' => false, 'message' => "L'étudiant n'a pas d'adresse email."], 422);
         }
 
         $emailData = [
-            'student_name'    => $studentUser->name,
-            'document_type'   => $documentRequest->documentType?->name ?? 'Document Administratif',
-            'request_id'      => $documentRequest->id,
-            'status'          => $documentRequest->status,
+            'student_name' => $studentUser->name,
+            'document_type' => $documentRequest->documentType?->name ?? 'Document Administratif',
+            'request_id' => $documentRequest->id,
+            'status' => $documentRequest->status,
             'rejection_reason' => $documentRequest->admin_notes['reason'] ?? $documentRequest->admin_notes['rejection_reason'] ?? null,
         ];
 
@@ -392,37 +406,37 @@ class AdminDocumentRequestController extends Controller
             Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
 
             $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
-            $adminNotes['email_sent']      = true;
-            $adminNotes['email_sent_at']   = now()->toIso8601String();
+            $adminNotes['email_sent'] = true;
+            $adminNotes['email_sent_at'] = now()->toIso8601String();
             $adminNotes['email_recipient'] = $studentUser->email;
             $documentRequest->update(['admin_notes' => $adminNotes]);
 
             NotificationLog::create([
-                'user_id'   => $studentUser->id,
-                'type'      => 'email',
+                'user_id' => $studentUser->id,
+                'type' => 'email',
                 'recipient' => $studentUser->email,
-                'message'   => "Notification envoyée à {$studentUser->email}.",
-                'status'    => 'sent',
+                'message' => "Notification envoyée à {$studentUser->email}.",
+                'status' => 'sent',
             ]);
 
             return response()->json([
-                'success'         => true,
-                'message'         => "Email envoyé à {$studentUser->email}.",
-                'email_sent'      => true,
-                'email_sent_at'   => $adminNotes['email_sent_at'],
+                'success' => true,
+                'message' => "Email envoyé à {$studentUser->email}.",
+                'email_sent' => true,
+                'email_sent_at' => $adminNotes['email_sent_at'],
                 'email_recipient' => $studentUser->email,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Échec envoi email: ' . $e->getMessage());
+            Log::error('Échec envoi email: '.$e->getMessage());
 
             $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
-            $adminNotes['email_sent']  = false;
+            $adminNotes['email_sent'] = false;
             $adminNotes['email_error'] = $e->getMessage();
             $documentRequest->update(['admin_notes' => $adminNotes]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'envoi : ' . $e->getMessage(),
+                'message' => 'Erreur lors de l\'envoi : '.$e->getMessage(),
             ], 500);
         }
     }
@@ -433,10 +447,10 @@ class AdminDocumentRequestController extends Controller
     public function quickGenerate(Request $request): JsonResponse
     {
         $request->validate([
-            'cne_or_name'   => 'required|string',
+            'cne_or_name' => 'required|string',
             'document_type' => 'required|string',
-            'target_type'   => 'nullable|string|in:student,professor',
-            'destination'   => 'nullable|string',
+            'target_type' => 'nullable|string|in:student,professor',
+            'destination' => 'nullable|string',
         ]);
 
         $input = trim($request->string('cne_or_name')->toString());
@@ -445,67 +459,67 @@ class AdminDocumentRequestController extends Controller
 
         // ── 1. Traitement Cas Enseignant ──
         if ($targetType === 'professor') {
-            $profUser = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))
+            $profUser = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))
                 ->where(function ($q) use ($input) {
                     $q->where('name', 'like', "%{$input}%")
-                      ->orWhere('first_name', 'like', "%{$input}%")
-                      ->orWhere('last_name', 'like', "%{$input}%")
-                      ->orWhere('email', 'like', "%{$input}%")
-                      ->orWhere('cin', $input);
+                        ->orWhere('first_name', 'like', "%{$input}%")
+                        ->orWhere('last_name', 'like', "%{$input}%")
+                        ->orWhere('email', 'like', "%{$input}%")
+                        ->orWhere('cin', $input);
                 })
                 ->first();
 
-            if (!$profUser) {
-                $profUser = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))->first();
+            if (! $profUser) {
+                $profUser = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))->first();
             }
 
-            if (!$profUser) {
+            if (! $profUser) {
                 $profUser = $request->user();
             }
 
-            $docTypeKey = match(true) {
+            $docTypeKey = match (true) {
                 str_contains(strtolower($docTypeName), 'mission') => 'ordre_de_mission',
                 str_contains(strtolower($docTypeName), 'salaire') => 'attestation_salaire',
                 str_contains(strtolower($docTypeName), 'absence') => 'autorisation_absence',
-                default                                            => 'attestation_travail'
+                default => 'attestation_travail'
             };
 
-            $trackingCode = 'DOC-PROF-' . date('Y') . '-' . str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
+            $trackingCode = 'DOC-PROF-'.date('Y').'-'.str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
 
-            $pDoc = \App\Models\ProfessorDocumentRequest::create([
-                'user_id'        => $profUser->id,
-                'professor_id'   => $profUser->professor?->id,
-                'document_type'  => $docTypeKey,
-                'tracking_code'  => $trackingCode,
-                'purpose'        => $request->input('purpose', 'Délivrance expresse certifiée au Guichet Administratif'),
-                'destination'    => $request->input('destination', 'Casablanca / Rabat (Maroc)'),
-                'start_date'     => now()->toDateString(),
-                'end_date'       => now()->addDays(3)->toDateString(),
-                'status'         => 'ready',
-                'signed_by'      => 'Secrétaire Général ENCG Fès',
-                'signed_at'      => now(),
+            $pDoc = ProfessorDocumentRequest::create([
+                'user_id' => $profUser->id,
+                'professor_id' => $profUser->professor?->id,
+                'document_type' => $docTypeKey,
+                'tracking_code' => $trackingCode,
+                'purpose' => $request->input('purpose', 'Délivrance expresse certifiée au Guichet Administratif'),
+                'destination' => $request->input('destination', 'Casablanca / Rabat (Maroc)'),
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addDays(3)->toDateString(),
+                'status' => 'ready',
+                'signed_by' => 'Secrétaire Général ENCG Fès',
+                'signed_at' => now(),
             ]);
 
             return response()->json([
-                'success'      => true,
-                'message'      => "Document enseignant certifié et signé pour Pr. {$profUser->name} !",
-                'request_id'   => $pDoc->id,
-                'preview_url'  => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                'success' => true,
+                'message' => "Document enseignant certifié et signé pour Pr. {$profUser->name} !",
+                'request_id' => $pDoc->id,
+                'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
                 'download_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
             ]);
         }
 
         // ── 2. Traitement Cas Étudiant ──
-        $student = \App\Models\Student::where('cne', $input)
+        $student = Student::where('cne', $input)
             ->orWhere('student_number', $input)
-            ->orWhereHas('user', fn($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input))
+            ->orWhereHas('user', fn ($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input))
             ->first();
 
-        if (!$student) {
-            $student = \App\Models\Student::first();
+        if (! $student) {
+            $student = Student::first();
         }
 
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
@@ -514,53 +528,53 @@ class AdminDocumentRequestController extends Controller
         $docType = null;
 
         if (str_contains($lowerInput, 'stage') || str_contains($lowerInput, 'conv')) {
-            $docType = \App\Models\DocumentType::where('code', 'CONV_STAGE')
+            $docType = DocumentType::where('code', 'CONV_STAGE')
                 ->orWhere('view_name', 'documents.convention_stage')
                 ->orWhere('name', 'like', '%Stage%')
                 ->first();
-            if (!$docType) {
-                $docType = \App\Models\DocumentType::create([
-                    'code'      => 'CONV_STAGE',
-                    'name'      => 'Convention de Stage',
+            if (! $docType) {
+                $docType = DocumentType::create([
+                    'code' => 'CONV_STAGE',
+                    'name' => 'Convention de Stage',
                     'view_name' => 'documents.convention_stage',
                     'is_active' => true,
                 ]);
             }
         } elseif (str_contains($lowerInput, 'relev') || str_contains($lowerInput, 'note') || str_contains($lowerInput, 'transcript')) {
-            $docType = \App\Models\DocumentType::where('code', 'REL_NOTES')
+            $docType = DocumentType::where('code', 'REL_NOTES')
                 ->orWhere('view_name', 'documents.releve_notes')
                 ->orWhere('name', 'like', '%Relev%')
                 ->first();
-            if (!$docType) {
-                $docType = \App\Models\DocumentType::create([
-                    'code'      => 'REL_NOTES',
-                    'name'      => 'Relevé de Notes',
+            if (! $docType) {
+                $docType = DocumentType::create([
+                    'code' => 'REL_NOTES',
+                    'name' => 'Relevé de Notes',
                     'view_name' => 'documents.releve_notes',
                     'is_active' => true,
                 ]);
             }
         } elseif (str_contains($lowerInput, 'réuss') || str_contains($lowerInput, 'reuss')) {
-            $docType = \App\Models\DocumentType::where('code', 'ATT_REUSSITE')
+            $docType = DocumentType::where('code', 'ATT_REUSSITE')
                 ->orWhere('view_name', 'documents.attestation_reussite')
                 ->orWhere('name', 'like', '%Réuss%')
                 ->first();
-            if (!$docType) {
-                $docType = \App\Models\DocumentType::create([
-                    'code'      => 'ATT_REUSSITE',
-                    'name'      => 'Attestation de Réussite',
+            if (! $docType) {
+                $docType = DocumentType::create([
+                    'code' => 'ATT_REUSSITE',
+                    'name' => 'Attestation de Réussite',
                     'view_name' => 'documents.attestation_reussite',
                     'is_active' => true,
                 ]);
             }
         } else {
-            $docType = \App\Models\DocumentType::where('code', 'ATT_SCOL')
+            $docType = DocumentType::where('code', 'ATT_SCOL')
                 ->orWhere('view_name', 'documents.attestation_scolarite')
                 ->orWhere('name', 'like', '%Scolar%')
                 ->first();
-            if (!$docType) {
-                $docType = \App\Models\DocumentType::create([
-                    'code'      => 'ATT_SCOL',
-                    'name'      => 'Attestation de Scolarité',
+            if (! $docType) {
+                $docType = DocumentType::create([
+                    'code' => 'ATT_SCOL',
+                    'name' => 'Attestation de Scolarité',
                     'view_name' => 'documents.attestation_scolarite',
                     'is_active' => true,
                 ]);
@@ -568,20 +582,20 @@ class AdminDocumentRequestController extends Controller
         }
 
         $docRequest = DocumentRequest::create([
-            'student_id'       => $student->id,
+            'student_id' => $student->id,
             'document_type_id' => $docType->id,
-            'status'           => 'ready',
-            'requested_at'     => now(),
-            'processed_at'     => now(),
+            'status' => 'ready',
+            'requested_at' => now(),
+            'processed_at' => now(),
         ]);
 
         $updatedRequest = $this->documentRequestService->processRequest($docRequest, 'ready');
 
         return response()->json([
-            'success'      => true,
-            'message'      => 'Document officiel certifié généré avec succès !',
-            'request_id'   => $updatedRequest->id,
-            'preview_url'  => url("/api/admin/document-requests/{$updatedRequest->id}/preview"),
+            'success' => true,
+            'message' => 'Document officiel certifié généré avec succès !',
+            'request_id' => $updatedRequest->id,
+            'preview_url' => url("/api/admin/document-requests/{$updatedRequest->id}/preview"),
             'download_url' => url("/api/admin/document-requests/{$updatedRequest->id}/download"),
         ]);
     }
@@ -591,20 +605,20 @@ class AdminDocumentRequestController extends Controller
      */
     public function bulkExportZip(Request $request)
     {
-        $filiereId    = $request->query('filiere_id');
-        $docTypeCode  = strtoupper($request->query('document_type', 'REL_NOTES'));
-        $onlyPassed   = filter_var($request->query('only_passed', false), FILTER_VALIDATE_BOOLEAN);
+        $filiereId = $request->query('filiere_id');
+        $docTypeCode = strtoupper($request->query('document_type', 'REL_NOTES'));
+        $onlyPassed = filter_var($request->query('only_passed', false), FILTER_VALIDATE_BOOLEAN);
 
-        $query = \App\Models\Student::with(['user', 'pathways.filiere']);
+        $query = Student::with(['user', 'pathways.filiere']);
 
-        if (!empty($filiereId)) {
-            $query->whereHas('pathways', fn($q) => $q->where('filiere_id', $filiereId));
+        if (! empty($filiereId)) {
+            $query->whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereId));
         }
 
         $students = $query->get();
 
         if ($students->isEmpty()) {
-            $students = \App\Models\Student::with(['user', 'pathways.filiere'])->take(15)->get();
+            $students = Student::with(['user', 'pathways.filiere'])->take(15)->get();
         }
 
         if ($students->isEmpty()) {
@@ -612,12 +626,12 @@ class AdminDocumentRequestController extends Controller
         }
 
         // Resolving DocumentType
-        $docType = \App\Models\DocumentType::where('code', $docTypeCode)->first();
-        if (!$docType) {
-            $docType = \App\Models\DocumentType::firstOrCreate(
+        $docType = DocumentType::where('code', $docTypeCode)->first();
+        if (! $docType) {
+            $docType = DocumentType::firstOrCreate(
                 ['code' => $docTypeCode],
                 [
-                    'name'      => str_contains($docTypeCode, 'REUSSITE') ? 'Attestation de Réussite' : (str_contains($docTypeCode, 'SCOL') ? 'Attestation de Scolarité' : 'Relevé de Notes'),
+                    'name' => str_contains($docTypeCode, 'REUSSITE') ? 'Attestation de Réussite' : (str_contains($docTypeCode, 'SCOL') ? 'Attestation de Scolarité' : 'Relevé de Notes'),
                     'view_name' => str_contains($docTypeCode, 'REUSSITE') ? 'documents.attestation_reussite' : (str_contains($docTypeCode, 'SCOL') ? 'documents.attestation_inscription' : 'documents.releve_notes'),
                     'is_active' => true,
                 ]
@@ -627,12 +641,12 @@ class AdminDocumentRequestController extends Controller
         // Prepare Temporary ZIP Archive
         $zipFileName = sprintf('Exports_%s_%s.zip', $docTypeCode, now()->format('Y-m-d_Hi'));
         $tempDir = storage_path('app/temp_exports');
-        if (!file_exists($tempDir)) {
+        if (! file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
-        $zipPath = $tempDir . '/' . $zipFileName;
+        $zipPath = $tempDir.'/'.$zipFileName;
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
             return response()->json(['success' => false, 'message' => 'Impossible de créer le fichier ZIP.'], 500);
         }
@@ -644,7 +658,7 @@ class AdminDocumentRequestController extends Controller
                 try {
                     $pathway = $student->pathways()->latest()->first();
                     $fId = $pathway?->filiere_id ?? 1;
-                    $annualData = app(\App\Services\Academic\DeliberationService::class)->calculateAnnualCompensation($fId, 1, $pathway?->year_level ?? 1);
+                    $annualData = app(DeliberationService::class)->calculateAnnualCompensation($fId, 1, $pathway?->year_level ?? 1);
                     $studentRow = collect($annualData['students'] ?? [])->firstWhere('student_id', $student->id);
                     $avg = floatval($studentRow['annual_average'] ?? 0);
                     $dec = strtoupper(trim($studentRow['decision'] ?? ''));
@@ -653,7 +667,7 @@ class AdminDocumentRequestController extends Controller
                     $isRedoublement = str_contains($dec, 'REDOUBLEMENT') || str_contains($dec, 'AJOURNÉ') || $dec === 'AJ';
                     $isValidated = in_array($dec, ['V', 'V.COMP', 'VPC', 'VALIDÉ P. COMP (S1+S2)', 'VALIDÉ P. COMP', 'PASS_DETTES', 'VALIDE', 'ADMIS']);
 
-                    if ($avg < 10.0 || $isFraud || $isRedoublement || !$isValidated) {
+                    if ($avg < 10.0 || $isFraud || $isRedoublement || ! $isValidated) {
                         continue; // Strictly skip non-admitted students!
                     }
                 } catch (\Throwable $e) {
@@ -662,11 +676,11 @@ class AdminDocumentRequestController extends Controller
             }
 
             $docRequest = DocumentRequest::create([
-                'student_id'       => $student->id,
+                'student_id' => $student->id,
                 'document_type_id' => $docType->id,
-                'status'           => 'ready',
-                'requested_at'     => now(),
-                'processed_at'     => now(),
+                'status' => 'ready',
+                'requested_at' => now(),
+                'processed_at' => now(),
             ]);
 
             try {
@@ -674,19 +688,19 @@ class AdminDocumentRequestController extends Controller
                 $filePath = Storage::disk('private')->path($genDoc->file_path);
 
                 if (file_exists($filePath)) {
-                    $stdName = \Illuminate\Support\Str::slug($student->user?->name ?? ($student->last_name . '_' . $student->first_name));
+                    $stdName = Str::slug($student->user?->name ?? ($student->last_name.'_'.$student->first_name));
                     $cleanPdfName = sprintf('%s_%s_%s.pdf', $docTypeCode, $student->cne ?? $student->id, $stdName);
                     $zip->addFile($filePath, $cleanPdfName);
                     $count++;
                 }
             } catch (\Throwable $e) {
-                Log::warning("Bulk ZIP PDF generation failed for student {$student->id}: " . $e->getMessage());
+                Log::warning("Bulk ZIP PDF generation failed for student {$student->id}: ".$e->getMessage());
             }
         }
 
         $zip->close();
 
-        if ($count === 0 || !file_exists($zipPath)) {
+        if ($count === 0 || ! file_exists($zipPath)) {
             return response()->json(['success' => false, 'message' => 'Aucun document n\'a pu être généré.'], 400);
         }
 

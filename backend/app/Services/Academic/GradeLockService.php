@@ -11,9 +11,6 @@ class GradeLockService
      * Check if grade entry is permitted.
      * Throws an exception if locked.
      *
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examSessionId
      * @throws Exception
      */
     public function authorizeGradeEntry(int $academicYearId, int $semesterId, int $examSessionId): void
@@ -23,12 +20,12 @@ class GradeLockService
             ->where('exam_session_id', $examSessionId)
             ->first();
 
-        if (!$period) {
+        if (! $period) {
             throw new Exception("Opération refusée : Aucune période de saisie de notes n'a été définie pour cette session par l'administration.");
         }
 
-        if (!$period->isActive()) {
-            throw new Exception("Opération refusée : La période de saisie de notes pour cette session est fermée.");
+        if (! $period->isActive()) {
+            throw new Exception('Opération refusée : La période de saisie de notes pour cette session est fermée.');
         }
     }
 

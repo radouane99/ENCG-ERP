@@ -14,7 +14,7 @@ class ProfessorSubstitution extends Model
 
     protected $casts = [
         'start_date' => 'date',
-        'end_date'   => 'date',
+        'end_date' => 'date',
     ];
 
     public function originalProfessor(): BelongsTo
@@ -40,6 +40,7 @@ class ProfessorSubstitution extends Model
     public function scopeCurrentlyActive($query)
     {
         $today = now()->format('Y-m-d');
+
         return $query->where('status', 'active')
             ->where('start_date', '<=', $today)
             ->where('end_date', '>=', $today);

@@ -37,7 +37,7 @@ export default function ProfessorAbsences() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sessions.map((session) => (
+        {(sessions ?? []).map((session: { id: number | string; title: string; group?: string; time?: string }) => (
           <div key={session.id} className="bg-white rounded-3xl p-8 shadow-sm border border-white/5 flex flex-col justify-between h-full group hover:shadow-md transition-all">
             
             <div>

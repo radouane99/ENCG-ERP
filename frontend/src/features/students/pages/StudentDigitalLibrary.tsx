@@ -121,7 +121,7 @@ export default function StudentDigitalLibrary() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {recommendedBooks.map((book, idx) => (
+          {recommendedBooks.map((book: { cover: string; title?: string; type?: string; author?: string; rating?: number; recommendedBy?: string }, idx: number) => (
             <div key={idx} className="group relative">
               
               {/* Book Cover */}

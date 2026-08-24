@@ -44,7 +44,7 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Session de présence démarrée.',
-            'data'    => $session,
+            'data' => $session,
         ], 201);
     }
 
@@ -54,23 +54,23 @@ class AttendanceController extends Controller
     public function createSession(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'module_id'        => 'nullable|integer|exists:modules,id',
-            'module_name'      => 'nullable|string|max:255',
-            'group_id'         => 'nullable|integer|exists:groups,id',
-            'group_name'       => 'nullable|string|max:255',
-            'room_name'        => 'required|string|max:100',
+            'module_id' => 'nullable|integer|exists:modules,id',
+            'module_name' => 'nullable|string|max:255',
+            'group_id' => 'nullable|integer|exists:groups,id',
+            'group_name' => 'nullable|string|max:255',
+            'room_name' => 'required|string|max:100',
             'duration_minutes' => 'nullable|integer|min:1|max:180',
-            'latitude'         => 'nullable|numeric',
-            'longitude'        => 'nullable|numeric',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
-        $module = !empty($validated['module_id'])
+        $module = ! empty($validated['module_id'])
             ? Module::findOrFail($validated['module_id'])
             : Module::where('name', $validated['module_name'] ?? '')
                 ->orWhere('code', $validated['module_name'] ?? '')
                 ->firstOrFail();
 
-        $group = !empty($validated['group_id'])
+        $group = ! empty($validated['group_id'])
             ? Group::findOrFail($validated['group_id'])
             : Group::where('name', $validated['group_name'] ?? '')->firstOrFail();
 
@@ -80,18 +80,18 @@ class AttendanceController extends Controller
             $request->user()->id,
             $validated['room_name'],
             [
-                'module_name'      => $module->name,
-                'group_name'       => $group->name,
+                'module_name' => $module->name,
+                'group_name' => $group->name,
                 'duration_minutes' => $validated['duration_minutes'] ?? 15,
-                'latitude'         => $validated['latitude'] ?? null,
-                'longitude'        => $validated['longitude'] ?? null,
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
             ]
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Session de présence démarrée.',
-            'data'    => $session,
+            'data' => $session,
         ], 201);
     }
 
@@ -103,23 +103,23 @@ class AttendanceController extends Controller
         $session = AttendanceSession::with(['records.student.user'])->findOrFail($id);
         $records = $session->records;
         $presentRecords = $records->filter(
-            fn($record) => in_array((string) $record->status, ['present', 'late', 'excused'], true)
+            fn ($record) => in_array((string) $record->status, ['present', 'late', 'excused'], true)
         );
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'session_id'    => $session->id,
-                'scans_count'   => $presentRecords->count(),
+            'data' => [
+                'session_id' => $session->id,
+                'scans_count' => $presentRecords->count(),
                 'present_count' => $presentRecords->where('status', 'present')->count(),
-                'late_count'    => $presentRecords->where('status', 'late')->count(),
-                'absent_count'  => $records->where('status', 'absent')->count(),
-                'students'      => $presentRecords->map(fn($record) => [
-                    'id'         => $record->student_id,
-                    'name'       => $record->student?->user?->name ?? 'Étudiant',
-                    'status'     => (string) $record->status,
+                'late_count' => $presentRecords->where('status', 'late')->count(),
+                'absent_count' => $records->where('status', 'absent')->count(),
+                'students' => $presentRecords->map(fn ($record) => [
+                    'id' => $record->student_id,
+                    'name' => $record->student?->user?->name ?? 'Étudiant',
+                    'status' => (string) $record->status,
                     'scanned_at' => $record->scanned_at,
-                    'is_valid'   => (bool) $record->is_valid,
+                    'is_valid' => (bool) $record->is_valid,
                 ])->values(),
             ],
         ]);
@@ -131,13 +131,13 @@ class AttendanceController extends Controller
     public function scanQr(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'qr_token'  => 'required|string',
-            'latitude'  => 'nullable|numeric',
+            'qr_token' => 'required|string',
+            'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
 
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
@@ -148,7 +148,7 @@ class AttendanceController extends Controller
             })
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['success' => false, 'message' => 'Session QR invalide ou expirée.'], 404);
         }
 
@@ -163,10 +163,10 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Présence enregistrée avec succès.',
-            'data'    => [
-                'session_id'    => $session->id,
+            'data' => [
+                'session_id' => $session->id,
                 'attendance_id' => $record->id,
-                'status'        => (string) $record->status,
+                'status' => (string) $record->status,
             ],
         ]);
     }

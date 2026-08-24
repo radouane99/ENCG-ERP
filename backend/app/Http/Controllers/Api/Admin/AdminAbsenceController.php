@@ -3,20 +3,18 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\Academic\AbsenceWorkflowService;
 use App\Http\Requests\Academic\ReviewJustificationRequest;
+use App\Services\Academic\AbsenceWorkflowService;
 use Illuminate\Http\JsonResponse;
 
 class AdminAbsenceController extends Controller
 {
-    public function __construct(private AbsenceWorkflowService $workflowService)
-    {
-    }
+    public function __construct(private AbsenceWorkflowService $workflowService) {}
 
     public function stats(): JsonResponse
     {
         return response()->json([
-            'stats' => $this->workflowService->getGlobalAbsenceStats()
+            'stats' => $this->workflowService->getGlobalAbsenceStats(),
         ]);
     }
 
@@ -31,7 +29,7 @@ class AdminAbsenceController extends Controller
 
         return response()->json([
             'message' => 'Justification reviewed successfully',
-            'justification' => $justification
+            'justification' => $justification,
         ]);
     }
 }

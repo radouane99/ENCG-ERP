@@ -142,6 +142,7 @@
     </style>
 </head>
 <body>
+    @include('pdf.encg-header')
 
     <!-- Header Table -->
     <table class="header-table">

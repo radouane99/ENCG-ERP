@@ -1,89 +1,105 @@
 <?php
 
+use App\Http\Controllers\Api\AiAssistantController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\ConvocationController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExamPdfController;
+use App\Http\Controllers\Api\GradeController;
+use App\Http\Controllers\Api\GradeGridController;
+use App\Http\Controllers\Api\Professor\ProfessorAttendanceController;
+use App\Http\Controllers\Api\Professor\ProfessorInternshipController;
+use App\Http\Controllers\Api\Professor\ProfessorPortalController;
+use App\Http\Controllers\Api\Professor\SmartGradingController;
+use App\Http\Controllers\Api\ProfessorAiController;
+use App\Http\Controllers\Api\ProfessorAiCopilotController;
+use App\Http\Controllers\Api\ProfessorAvailabilityController;
+use App\Http\Controllers\Api\RoomBookingController;
 use Illuminate\Support\Facades\Route;
 
 // Professor API — Accessible to Professors, Vacataires, and Academic Coordinators/Admins
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->prefix('v1/professor')->group(function () {
-    Route::post('/attendance/session', [\App\Http\Controllers\Api\AttendanceController::class, 'createSession']);
-    Route::get('/attendance/session/{id}/stats', [\App\Http\Controllers\Api\AttendanceController::class, 'sessionStats']);
-    
+    Route::post('/attendance/session', [AttendanceController::class, 'createSession']);
+    Route::get('/attendance/session/{id}/stats', [AttendanceController::class, 'sessionStats']);
+
     // Grade Grid Entry
-    Route::get('/grades/grid', [\App\Http\Controllers\Api\GradeGridController::class, 'getGrid']);
-    Route::post('/grades/save', [\App\Http\Controllers\Api\GradeGridController::class, 'saveGrades']);
+    Route::get('/grades/grid', [GradeGridController::class, 'getGrid']);
+    Route::post('/grades/save', [GradeGridController::class, 'saveGrades']);
 
     // Apogée Deliberation Engine - Grade Entry
-    Route::post('/assessments/{assessment}/grades', [\App\Http\Controllers\Api\GradeController::class, 'storeBulk']);
-    
+    Route::post('/assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
+
     // Professor AI Suite
     Route::prefix('ai')->group(function () {
-        Route::post('generate-exam', [\App\Http\Controllers\Api\ProfessorAiController::class, 'generateExam']);
-        Route::get('class-analytics/{moduleId}', [\App\Http\Controllers\Api\ProfessorAiController::class, 'getClassAnalytics']);
-        Route::post('copilot', [\App\Http\Controllers\Api\ProfessorAiController::class, 'copilotQuery']);
-        Route::post('grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
+        Route::post('generate-exam', [ProfessorAiController::class, 'generateExam']);
+        Route::get('class-analytics/{moduleId}', [ProfessorAiController::class, 'getClassAnalytics']);
+        Route::post('copilot', [ProfessorAiController::class, 'copilotQuery']);
+        Route::post('grade-report', [ProfessorAiController::class, 'gradeReport']);
     });
 
     Route::prefix('copilot')->group(function () {
-        Route::post('textbook-outline', [\App\Http\Controllers\Api\ProfessorAiCopilotController::class, 'generateTextbookOutline']);
-        Route::post('generate-exam-paper', [\App\Http\Controllers\Api\ProfessorAiCopilotController::class, 'generateExamPaper']);
+        Route::post('textbook-outline', [ProfessorAiCopilotController::class, 'generateTextbookOutline']);
+        Route::post('generate-exam-paper', [ProfessorAiCopilotController::class, 'generateExamPaper']);
     });
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
     // Dashboard Stats
-    Route::get('/dashboard/professor/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
-    Route::get('/professor/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'getProfessorStats']);
+    Route::get('/dashboard/professor/stats', [DashboardController::class, 'getProfessorStats']);
+    Route::get('/professor/dashboard/stats', [DashboardController::class, 'getProfessorStats']);
 
     // Professor Availability
     Route::prefix('professor-availability')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'index']);
-        Route::post('/alert', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'alert']);
-        Route::get('/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'myAvailability']);
-        Route::post('/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'saveMyAvailability']);
+        Route::get('/', [ProfessorAvailabilityController::class, 'index']);
+        Route::post('/alert', [ProfessorAvailabilityController::class, 'alert']);
+        Route::get('/my', [ProfessorAvailabilityController::class, 'myAvailability']);
+        Route::post('/my', [ProfessorAvailabilityController::class, 'saveMyAvailability']);
     });
-    Route::get('/professor/availability/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'myAvailability']);
-    Route::post('/professor/availability/my', [\App\Http\Controllers\Api\ProfessorAvailabilityController::class, 'saveMyAvailability']);
-    
+    Route::get('/professor/availability/my', [ProfessorAvailabilityController::class, 'myAvailability']);
+    Route::post('/professor/availability/my', [ProfessorAvailabilityController::class, 'saveMyAvailability']);
+
     // AI Tools for Professor
-    Route::post('/professor/ai/generate-qcm', [\App\Http\Controllers\Api\AiAssistantController::class, 'generateQuiz']);
-    Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
-    Route::post('/professor/smart-grading/process', [\App\Http\Controllers\Api\Professor\SmartGradingController::class, 'process']);
-    Route::post('/professor/smart-grading/export', [\App\Http\Controllers\Api\Professor\SmartGradingController::class, 'export']);
-    
+    Route::post('/professor/ai/generate-qcm', [AiAssistantController::class, 'generateQuiz']);
+    Route::post('/professor/ai/grade-report', [ProfessorAiController::class, 'gradeReport']);
+    Route::post('/professor/smart-grading/process', [SmartGradingController::class, 'process']);
+    Route::post('/professor/smart-grading/export', [SmartGradingController::class, 'export']);
+
     // PDF Exports for Professor
-    Route::get('/professor/exams/{exam}/pv/pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'pvExamen']);
+    Route::get('/professor/exams/{exam}/pv/pdf', [ExamPdfController::class, 'pvExamen']);
 
     // Attendance Module
     Route::prefix('professor/attendance')->group(function () {
-        Route::post('/start', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'startSession']);
-        Route::post('/{session}/manual-call', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'manualCall']);
-        Route::post('/{session}/scan', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'scanQrCode']);
-        Route::post('/{session}/close', [\App\Http\Controllers\Api\Professor\ProfessorAttendanceController::class, 'closeSession']);
+        Route::post('/start', [ProfessorAttendanceController::class, 'startSession']);
+        Route::post('/save', [ProfessorAttendanceController::class, 'save']);
+        Route::post('/{session}/manual-call', [ProfessorAttendanceController::class, 'manualCall']);
+        Route::post('/{session}/scan', [ProfessorAttendanceController::class, 'scanQrCode']);
+        Route::post('/{session}/close', [ProfessorAttendanceController::class, 'closeSession']);
     });
 
     // Internships
     Route::prefix('professor/internships')->group(function () {
-        Route::get('/supervised', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'supervised']);
-        Route::post('/soutenances/{id}/evaluate', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'evaluate']);
-        Route::post('/update-status', [\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class, 'updateStatus']);
+        Route::get('/supervised', [ProfessorInternshipController::class, 'supervised']);
+        Route::post('/soutenances/{id}/evaluate', [ProfessorInternshipController::class, 'evaluate']);
+        Route::post('/update-status', [ProfessorInternshipController::class, 'updateStatus']);
     });
 
     // Portal
-    Route::get('/professor-portal/schedule', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getSchedule']);
-    Route::get('/professor-portal/reservations', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getReservations']);
-    Route::post('/professor-portal/reservations', [\App\Http\Controllers\Api\RoomBookingController::class, 'store']);
-    Route::get('/professor-portal/analytics', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getAnalytics']);
-    Route::get('/professor-portal/workload', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getWorkloadSummary']);
-    Route::get('/professor-portal/research', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getResearchDashboard']);
-    Route::get('/professor-portal/double-grading', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDoubleGrading']);
+    Route::get('/professor-portal/schedule', [ProfessorPortalController::class, 'getSchedule']);
+    Route::get('/professor-portal/reservations', [ProfessorPortalController::class, 'getReservations']);
+    Route::post('/professor-portal/reservations', [RoomBookingController::class, 'store']);
+    Route::get('/professor-portal/analytics', [ProfessorPortalController::class, 'getAnalytics']);
+    Route::get('/professor-portal/workload', [ProfessorPortalController::class, 'getWorkloadSummary']);
+    Route::get('/professor-portal/research', [ProfessorPortalController::class, 'getResearchDashboard']);
+    Route::get('/professor-portal/double-grading', [ProfessorPortalController::class, 'getDoubleGrading']);
     // Documents & Attestations RH
-    Route::get('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'getDocumentRequests']);
-    Route::post('/professor-portal/documents', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'storeDocumentRequest']);
-    
+    Route::get('/professor-portal/documents', [ProfessorPortalController::class, 'getDocumentRequests']);
+    Route::post('/professor-portal/documents', [ProfessorPortalController::class, 'storeDocumentRequest']);
+
     // Surveillances
-    Route::get('/professor/my-surveillances', [\App\Http\Controllers\Api\ConvocationController::class, 'mySurveillances']);
+    Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
-    Route::get('/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);
-    Route::get('/v1/professor-portal/documents/{id}/pdf', [\App\Http\Controllers\Api\Professor\ProfessorPortalController::class, 'downloadDocumentPdf']);
+    Route::get('/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
+    Route::get('/v1/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
 });

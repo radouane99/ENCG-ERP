@@ -2,15 +2,14 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Student;
+use App\Http\Controllers\Api\UnifiedStudentRecordController;
 use App\Models\DocumentRequest;
-use App\Models\Grade;
+use App\Models\Student;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
-use App\Http\Controllers\Api\UnifiedStudentRecordController;
+use Tests\TestCase;
 
 class UnifiedStudentRecordTest extends TestCase
 {
@@ -31,13 +30,13 @@ class UnifiedStudentRecordTest extends TestCase
         $user->assignRole($studentRole);
 
         $student = Student::factory()->create(['user_id' => $user->id]);
-        
+
         DocumentRequest::factory()->create(['student_id' => $student->id]);
 
         $this->actingAs($user, 'sanctum');
 
         $response = $this->getJson('/api/v1/student-portal/my-dossier');
-        
+
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'data' => [
@@ -45,13 +44,13 @@ class UnifiedStudentRecordTest extends TestCase
                 'academic_records',
                 'absences',
                 'documents',
-                'internships'
-            ]
+                'internships',
+            ],
         ]);
-        
+
         // Student should not see admin notes
         $documents = $response->json('data.documents');
-        if (!empty($documents)) {
+        if (! empty($documents)) {
             $this->assertArrayNotHasKey('admin_notes', $documents[0]);
         }
     }
@@ -69,18 +68,18 @@ class UnifiedStudentRecordTest extends TestCase
         $student = Student::factory()->create(['user_id' => $studentUser->id]);
 
         DocumentRequest::factory()->create([
-            'student_id' => $student->id, 
-            'admin_notes' => ['note' => 'Needs review']
+            'student_id' => $student->id,
+            'admin_notes' => ['note' => 'Needs review'],
         ]);
 
         $this->actingAs($admin, 'sanctum');
 
-        $response = $this->getJson('/api/students/' . $student->id . '/dossier');
+        $response = $this->getJson('/api/students/'.$student->id.'/dossier');
         $response->assertStatus(200);
-        
+
         // Admin should see admin notes
         $documents = $response->json('data.documents');
-        if (!empty($documents)) {
+        if (! empty($documents)) {
             $this->assertArrayHasKey('admin_notes', $documents[0]);
         }
     }

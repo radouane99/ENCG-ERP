@@ -35,13 +35,13 @@ class DocumentStatusChangedNotification extends Notification implements ShouldQu
 
         if ($status === 'ready') {
             $mailMessage->line("Votre demande pour le document '{$documentName}' a été traitée avec succès et le document est prêt.")
-                        ->action('Consulter mes documents', url('/student-portal/documents'))
-                        ->line('Vous pouvez le télécharger depuis votre espace étudiant.');
+                ->action('Consulter mes documents', url('/student-portal/documents'))
+                ->line('Vous pouvez le télécharger depuis votre espace étudiant.');
         } elseif ($status === 'rejected') {
             $reason = $this->documentRequest->rejection_reason ?? 'Non spécifiée';
             $mailMessage->line("Votre demande pour le document '{$documentName}' a malheureusement été refusée.")
-                        ->line("Motif du refus : {$reason}")
-                        ->line('Veuillez contacter le service administratif pour plus de détails.');
+                ->line("Motif du refus : {$reason}")
+                ->line('Veuillez contacter le service administratif pour plus de détails.');
         }
 
         return $mailMessage->line('Merci de votre confiance.');

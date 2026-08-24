@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('resit_eligibilities', function (Blueprint $table) {
-            if (!Schema::hasColumn('resit_eligibilities', 'reason')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'reason')) {
                 $table->string('reason')->nullable();
             }
-            if (!Schema::hasColumn('resit_eligibilities', 'status')) {
+            if (! Schema::hasColumn('resit_eligibilities', 'status')) {
                 $table->string('status')->default('En attente');
             }
         });

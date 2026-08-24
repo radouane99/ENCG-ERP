@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsenceJustification;
 use App\Models\AttendanceRecord;
 use App\Notifications\SystemNotification;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AbsenceJustificationController extends Controller
 {
@@ -23,7 +25,7 @@ class AbsenceJustificationController extends Controller
             'student.registrations.filiere',
             'attendance.attendanceSession.module',
             'attendance.attendanceSession.group',
-            'reviewer'
+            'reviewer',
         ]);
 
         if ($request->filled('status')) {
@@ -32,28 +34,28 @@ class AbsenceJustificationController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($mainQ) use ($search) {
+            $query->where(function ($mainQ) use ($search) {
                 $mainQ->where('reason', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhereHas('student', function($q) use ($search) {
-                          $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('student', function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
                             ->orWhere('cne', 'like', "%{$search}%")
                             ->orWhere('cin', 'like', "%{$search}%")
                             ->orWhere('student_number', 'like', "%{$search}%")
-                            ->orWhereHas('user', fn($uq) => $uq->where('name', 'like', "%{$search}%"));
-                      });
+                            ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
+                    });
             });
         }
 
         $perPage = min((int) $request->input('per_page', 15), 100);
         $paginated = $query->latest()->paginate($perPage);
 
-        $items = $paginated->getCollection()->map(function($j) {
+        $items = $paginated->getCollection()->map(function ($j) {
             $std = $j->student;
             $user = $std?->user;
-            $stdName = $user?->name ?? (trim(($std?->first_name ?? '') . ' ' . ($std?->last_name ?? '')) ?: 'Étudiant ENCG');
-            
+            $stdName = $user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: 'Étudiant ENCG');
+
             $att = $j->attendance;
             $session = $att?->attendanceSession;
             $mod = $session?->module;
@@ -64,8 +66,8 @@ class AbsenceJustificationController extends Controller
             $grpName = $grp?->name ?? $att?->group_name ?? 'TC-S1-G1';
             $sessType = $session?->session_type ?? $att?->session_type ?? 'CM';
 
-            $docUrl = $j->document_path 
-                ? (str_starts_with($j->document_path, 'http') ? $j->document_path : \Illuminate\Support\Facades\Storage::disk('public')->url($j->document_path))
+            $docUrl = $j->document_path
+                ? (str_starts_with($j->document_path, 'http') ? $j->document_path : Storage::disk('public')->url($j->document_path))
                 : null;
 
             $absenceDate = $session?->date ?? $j->created_at?->format('Y-m-d') ?? now()->format('Y-m-d');
@@ -73,60 +75,60 @@ class AbsenceJustificationController extends Controller
             $certDate = $j->certificate_date ?? $submissionDate;
 
             // Calculate delay in hours between absence date and submission/certificate date
-            $absCarbon = \Carbon\Carbon::parse($absenceDate);
-            $subCarbon = \Carbon\Carbon::parse($submissionDate);
+            $absCarbon = Carbon::parse($absenceDate);
+            $subCarbon = Carbon::parse($submissionDate);
             $delayHours = max(0, $absCarbon->diffInHours($subCarbon));
             $isWithin48h = $delayHours <= 48;
 
             return [
-                'id'               => $j->id,
-                'reason'           => $j->reason ?? 'Certificat Médical',
-                'description'      => $j->description ?? 'Justificatif médical soumis par l\'étudiant pour absence au cours.',
-                'doctor_clinic'    => $j->doctor_clinic ?? 'Dr. Bennani — Clinique Ibn Sina Fès',
-                'certificate_date' => \Carbon\Carbon::parse($certDate)->format('d/m/Y'),
-                'absence_date'     => \Carbon\Carbon::parse($absenceDate)->format('d/m/Y'),
-                'delay_hours'      => $delayHours,
-                'is_within_48h'    => $isWithin48h,
-                'document_path'    => $j->document_path,
-                'document_url'     => $docUrl,
-                'status'           => $j->status ?? 'pending',
+                'id' => $j->id,
+                'reason' => $j->reason ?? 'Certificat Médical',
+                'description' => $j->description ?? 'Justificatif médical soumis par l\'étudiant pour absence au cours.',
+                'doctor_clinic' => $j->doctor_clinic ?? 'Dr. Bennani — Clinique Ibn Sina Fès',
+                'certificate_date' => Carbon::parse($certDate)->format('d/m/Y'),
+                'absence_date' => Carbon::parse($absenceDate)->format('d/m/Y'),
+                'delay_hours' => $delayHours,
+                'is_within_48h' => $isWithin48h,
+                'document_path' => $j->document_path,
+                'document_url' => $docUrl,
+                'status' => $j->status ?? 'pending',
                 'rejection_reason' => $j->rejection_reason,
-                'reviewed_at'      => $j->reviewed_at?->format('d/m/Y H:i'),
-                'created_at'       => $j->created_at?->format('d/m/Y'),
-                'student'          => [
-                    'id'             => $std?->id,
-                    'name'           => $stdName,
-                    'first_name'     => $std?->first_name ?? strtok($stdName, ' '),
-                    'last_name'      => $std?->last_name ?? substr($stdName, strpos($stdName, ' ') ?: 0),
-                    'student_number' => $std?->student_number ?? '202400' . ($std?->id ?? '1'),
-                    'cne'            => $std?->cne ?? 'N130000' . ($std?->id ?? '1'),
-                    'cin'            => $std?->cin ?? 'CD' . (58270 + ($std?->id ?? 1)),
-                    'filiere'        => $std?->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG',
+                'reviewed_at' => $j->reviewed_at?->format('d/m/Y H:i'),
+                'created_at' => $j->created_at?->format('d/m/Y'),
+                'student' => [
+                    'id' => $std?->id,
+                    'name' => $stdName,
+                    'first_name' => $std?->first_name ?? strtok($stdName, ' '),
+                    'last_name' => $std?->last_name ?? substr($stdName, strpos($stdName, ' ') ?: 0),
+                    'student_number' => $std?->student_number ?? '202400'.($std?->id ?? '1'),
+                    'cne' => $std?->cne ?? 'N130000'.($std?->id ?? '1'),
+                    'cin' => $std?->cin ?? 'CD'.(58270 + ($std?->id ?? 1)),
+                    'filiere' => $std?->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG',
                 ],
-                'attendance'       => [
-                    'id'           => $att?->id,
-                    'module_code'  => $modCode,
-                    'module_name'  => $modName,
-                    'group_name'   => $grpName,
+                'attendance' => [
+                    'id' => $att?->id,
+                    'module_code' => $modCode,
+                    'module_name' => $modName,
+                    'group_name' => $grpName,
                     'session_type' => $sessType,
-                    'date'         => \Carbon\Carbon::parse($absenceDate)->format('d/m/Y'),
+                    'date' => Carbon::parse($absenceDate)->format('d/m/Y'),
                 ],
-                'reviewer'         => $j->reviewer?->name,
+                'reviewer' => $j->reviewer?->name,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data'    => $items,
-            'meta'    => [
-                'total'        => $paginated->total(),
-                'per_page'     => $paginated->perPage(),
+            'data' => $items,
+            'meta' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
                 'current_page' => $paginated->currentPage(),
-                'last_page'    => $paginated->lastPage(),
+                'last_page' => $paginated->lastPage(),
             ],
-            'stats'   => [
-                'total'    => AbsenceJustification::count(),
-                'pending'  => AbsenceJustification::where('status', 'pending')->count(),
+            'stats' => [
+                'total' => AbsenceJustification::count(),
+                'pending' => AbsenceJustification::where('status', 'pending')->count(),
                 'approved' => AbsenceJustification::where('status', 'approved')->count(),
                 'rejected' => AbsenceJustification::where('status', 'rejected')->count(),
             ],
@@ -141,15 +143,15 @@ class AbsenceJustificationController extends Controller
         abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']) || $request->user()->can('students.edit'), 403);
 
         $validated = $request->validate([
-            'status'           => 'required|in:approved,rejected',
+            'status' => 'required|in:approved,rejected',
             'rejection_reason' => 'nullable|string|max:500',
         ]);
 
         $absenceJustification->update([
-            'status'           => $validated['status'],
+            'status' => $validated['status'],
             'rejection_reason' => $validated['rejection_reason'] ?? null,
-            'reviewed_by'      => $request->user()->id,
-            'reviewed_at'      => now(),
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
         ]);
 
         // Marquer la présence comme justifiée si approuvé
@@ -164,7 +166,7 @@ class AbsenceJustificationController extends Controller
         if ($studentUser) {
             $statusText = $validated['status'] === 'approved' ? 'approuvé' : 'rejeté';
             $message = "Votre justificatif d'absence a été {$statusText}.";
-            if ($validated['status'] === 'rejected' && !empty($validated['rejection_reason'])) {
+            if ($validated['status'] === 'rejected' && ! empty($validated['rejection_reason'])) {
                 $message .= " Motif : {$validated['rejection_reason']}";
             }
             $studentUser->notify(new SystemNotification(
@@ -180,7 +182,7 @@ class AbsenceJustificationController extends Controller
             'message' => $validated['status'] === 'approved'
                 ? 'Justificatif approuvé avec succès.'
                 : 'Justificatif rejeté.',
-            'data'    => $absenceJustification->fresh(),
+            'data' => $absenceJustification->fresh(),
         ]);
     }
 

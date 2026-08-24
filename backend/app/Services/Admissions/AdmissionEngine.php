@@ -2,8 +2,8 @@
 
 namespace App\Services\Admissions;
 
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class AdmissionEngine
 {
@@ -14,7 +14,7 @@ class AdmissionEngine
     public function calculateSeuilAndRank(int $campaignId): array
     {
         $campaign = DB::table('admission_campaigns')->find($campaignId);
-        if (!$campaign) {
+        if (! $campaign) {
             throw new Exception("Campagne d'admission introuvable.");
         }
 
@@ -27,7 +27,7 @@ class AdmissionEngine
             ->get();
 
         if ($applications->isEmpty()) {
-            throw new Exception("Aucune candidature soumise pour cette campagne.");
+            throw new Exception('Aucune candidature soumise pour cette campagne.');
         }
 
         $rankedApplications = [];
@@ -36,24 +36,24 @@ class AdmissionEngine
         foreach ($applications as $app) {
             // Seuil Formula ENCG: 0.75 * National + 0.25 * Regional
             $score = ($app->bac_national_score * 0.75) + ($app->bac_regional_score * 0.25);
-            
+
             $rankedApplications[] = [
                 'application_id' => $app->id,
                 'first_name' => $app->first_name,
                 'last_name' => $app->last_name,
-                'score' => round($score, 3)
+                'score' => round($score, 3),
             ];
         }
 
         // 2. Sort by score descending
-        usort($rankedApplications, fn($a, $b) => $b['score'] <=> $a['score']);
+        usort($rankedApplications, fn ($a, $b) => $b['score'] <=> $a['score']);
 
         // 3. Determine Threshold (Seuil) based on target capacity
         $targetCapacity = $campaign->target_capacity ?? 100;
-        
+
         // Let's say we invite 4 times the capacity to the written exam
         $invitedCount = min(count($rankedApplications), $targetCapacity * 4);
-        
+
         // The seuil is the score of the last invited person
         $seuil = 0;
         if ($invitedCount > 0) {
@@ -71,13 +71,13 @@ class AdmissionEngine
                     'selection_score' => $app['score'],
                     'rank' => $rank,
                     'status' => $status,
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]);
             }
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
-            throw new Exception("Erreur lors de la mise à jour des candidatures.");
+            throw new Exception('Erreur lors de la mise à jour des candidatures.');
         }
 
         return [
@@ -87,7 +87,7 @@ class AdmissionEngine
             'target_capacity' => $targetCapacity,
             'invited_to_exam' => $invitedCount,
             'seuil_calculated' => $seuil,
-            'top_candidates' => array_slice($rankedApplications, 0, 10)
+            'top_candidates' => array_slice($rankedApplications, 0, 10),
         ];
     }
 }

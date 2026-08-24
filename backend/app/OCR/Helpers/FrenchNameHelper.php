@@ -22,7 +22,7 @@ class FrenchNameHelper
     private array $surnamePrefixes = [
         'EL', 'AL', 'BEN', 'IBN', 'AIT', 'AYT', 'OU', 'ABOU', 'ABD', 'BENI', 'BOU',
         'ME', 'MO', 'MA', 'MOHAMED', 'AHMED', 'ABDEL', 'ABDERRAHMAN', 'ABDERRAHIM',
-        'DE', 'DU', 'DES', 'DE LA', 'LE', 'LA', 'LES'
+        'DE', 'DU', 'DES', 'DE LA', 'LE', 'LA', 'LES',
     ];
 
     /**
@@ -32,7 +32,7 @@ class FrenchNameHelper
         'NE', 'NEE', 'NÉE', 'NÉ', 'LE', 'À', 'A', 'CODE', 'CNE', 'CIN', 'MASSAR',
         'SESSION', 'NE(E)', 'NÉ(E)', 'DU', 'DANS', 'AU', 'BAC', 'FILIERE', 'SERIE',
         'N°', 'NO', 'NUMERO', 'NUMÉRO', 'DATE', 'LIEU', 'NAISSANCE', 'NATIONALITE',
-        'SEXE', 'M', 'F', 'MASCULIN', 'FEMININ'
+        'SEXE', 'M', 'F', 'MASCULIN', 'FEMININ',
     ];
 
     /**
@@ -60,7 +60,7 @@ class FrenchNameHelper
 
         // Clean unicode spaces and double spaces
         $normalizedText = preg_replace('/[^\S\r\n]+/u', ' ', $text);
-        
+
         // Remove OCR noise
         $normalizedText = $this->cleanOcrNoise($normalizedText);
 
@@ -71,14 +71,14 @@ class FrenchNameHelper
         )) {
             [$last, $first] = $this->splitFullName($m[1]);
 
-        // Pattern 2 — Combined: «Nom et Prénom : EL ASRI RADOUANE» or «Nom & Prénom»
+            // Pattern 2 — Combined: «Nom et Prénom : EL ASRI RADOUANE» or «Nom & Prénom»
         } elseif (preg_match(
             '/(?:Nom\s+(?:et|&|\/)\s*Pr[eé]nom(?:s)?|Nom\s*Pr[eé]nom|NOM\s*ET\s*PRENOM)\s*[:\-]?\s*([a-zA-ZÀ-ÿ\-\'\s]{2,60}?)(?=\s{2,}|\t|\n|\r|N[eé]\(?e\)?\s+le|CNE|CIN|Code|N[°o]|$)/iu',
             $normalizedText, $m
         )) {
             [$last, $first] = $this->splitFullName($m[1]);
 
-        // Pattern 3 — Separate: «Nom : EL ASRI» + «Prénom : RADOUANE»
+            // Pattern 3 — Separate: «Nom : EL ASRI» + «Prénom : RADOUANE»
         } elseif (preg_match(
             '/\bNom\b\s*[:\-]?\s*([a-zA-ZÀ-ÿ\-\'\s]{1,40}?)(?=\s{2,}|\t|Pr[eé]nom|\n|\r|$)/iu',
             $normalizedText, $m
@@ -126,13 +126,13 @@ class FrenchNameHelper
         $first = $this->normalizeName($first);
 
         // If first name is empty but we have a last name, try to split
-        if (!empty($last) && empty($first)) {
+        if (! empty($last) && empty($first)) {
             $tokens = explode(' ', $last);
             if (count($tokens) >= 2) {
                 // Check if the first token looks like a first name
                 $firstToken = $tokens[0];
                 $lastToken = implode(' ', array_slice($tokens, 1));
-                
+
                 // If first token is lowercase, it's probably a prefix
                 if (strtoupper($firstToken) === $firstToken) {
                     // All caps - could be last name
@@ -143,7 +143,7 @@ class FrenchNameHelper
         }
 
         return [
-            'last_name_fr'  => mb_strtoupper($last, 'UTF-8'),
+            'last_name_fr' => mb_strtoupper($last, 'UTF-8'),
             'first_name_fr' => mb_strtoupper($first, 'UTF-8'),
         ];
     }
@@ -171,8 +171,12 @@ class FrenchNameHelper
         $tokens = array_values(array_filter($tokens));
         $count = count($tokens);
 
-        if ($count === 0) return ['', ''];
-        if ($count === 1) return [$tokens[0], ''];
+        if ($count === 0) {
+            return ['', ''];
+        }
+        if ($count === 1) {
+            return [$tokens[0], ''];
+        }
 
         // Handle compound family name prefixes (e.g. "EL ASRI", "BEN JELLOUN", "AIT BEN ALI")
         $firstTokenUpper = mb_strtoupper($tokens[0], 'UTF-8');
@@ -185,14 +189,14 @@ class FrenchNameHelper
                 // Check if third token also looks like a prefix
                 $thirdTokenUpper = mb_strtoupper($tokens[2], 'UTF-8');
                 if (in_array($thirdTokenUpper, $this->surnamePrefixes, true) && isset($tokens[3])) {
-                    $lastName = $tokens[0] . ' ' . $tokens[1] . ' ' . $tokens[2] . ' ' . $tokens[3];
+                    $lastName = $tokens[0].' '.$tokens[1].' '.$tokens[2].' '.$tokens[3];
                     $firstName = implode(' ', array_slice($tokens, 4));
                 } else {
-                    $lastName = $tokens[0] . ' ' . $tokens[1] . ' ' . $tokens[2];
+                    $lastName = $tokens[0].' '.$tokens[1].' '.$tokens[2];
                     $firstName = implode(' ', array_slice($tokens, 3));
                 }
             } else {
-                $lastName = $tokens[0] . ' ' . $tokens[1];
+                $lastName = $tokens[0].' '.$tokens[1];
                 $firstName = implode(' ', array_slice($tokens, 2));
             }
         } else {
@@ -230,7 +234,7 @@ class FrenchNameHelper
 
         // Filter individual stop-words at the end of the extracted text
         $words = preg_split('/\s+/', $clean);
-        while (!empty($words)) {
+        while (! empty($words)) {
             $lastWord = mb_strtoupper(end($words), 'UTF-8');
             if (in_array($lastWord, $this->stopWords, true) || preg_match('/^\d+$/', $lastWord)) {
                 array_pop($words);
@@ -247,14 +251,16 @@ class FrenchNameHelper
      */
     private function normalizeName(string $name): string
     {
-        if (empty($name)) return '';
+        if (empty($name)) {
+            return '';
+        }
 
         // Remove excessive spaces
         $name = preg_replace('/\s+/', ' ', $name);
-        
+
         // Remove special characters except hyphens, apostrophes
         $name = preg_replace('/[^a-zA-ZÀ-ÿ\s\-\']/', '', $name);
-        
+
         // Remove leading/trailing spaces
         $name = trim($name);
 
@@ -268,13 +274,13 @@ class FrenchNameHelper
     {
         // Correct common OCR errors
         $text = str_replace(array_keys($this->ocrCorrections), array_values($this->ocrCorrections), $text);
-        
+
         // Remove excessive punctuation
         $text = preg_replace('/[^\w\s\.\,\-\'\:]/u', ' ', $text);
-        
+
         // Normalize multiple spaces
         $text = preg_replace('/\s+/', ' ', $text);
-        
+
         return $text;
     }
 
@@ -284,21 +290,31 @@ class FrenchNameHelper
     public function isLikelyFrenchName(string $text): bool
     {
         $text = trim($text);
-        if (empty($text)) return false;
-        
+        if (empty($text)) {
+            return false;
+        }
+
         // Contains only French letters, spaces, hyphens, apostrophes
-        if (!preg_match('/^[a-zA-ZÀ-ÿ\s\-\']+$/', $text)) return false;
-        
+        if (! preg_match('/^[a-zA-ZÀ-ÿ\s\-\']+$/', $text)) {
+            return false;
+        }
+
         // Minimum length
-        if (strlen($text) < 3) return false;
-        
+        if (strlen($text) < 3) {
+            return false;
+        }
+
         // Contains at least one vowel
-        if (!preg_match('/[aeiouyAEIOUYÀ-ÿ]/', $text)) return false;
-        
+        if (! preg_match('/[aeiouyAEIOUYÀ-ÿ]/', $text)) {
+            return false;
+        }
+
         // Not all caps and too short
         $words = explode(' ', $text);
-        if (count($words) === 1 && strlen($words[0]) < 3) return false;
-        
+        if (count($words) === 1 && strlen($words[0]) < 3) {
+            return false;
+        }
+
         return true;
     }
 
@@ -308,6 +324,7 @@ class FrenchNameHelper
     public function extractFirstName(string $fullName): string
     {
         [, $firstName] = $this->splitFullName($fullName);
+
         return $firstName;
     }
 
@@ -317,6 +334,7 @@ class FrenchNameHelper
     public function extractLastName(string $fullName): string
     {
         [$lastName] = $this->splitFullName($fullName);
+
         return $lastName;
     }
 
@@ -326,10 +344,12 @@ class FrenchNameHelper
     public function getNameVariations(string $name): array
     {
         $name = trim($name);
-        if (empty($name)) return [];
+        if (empty($name)) {
+            return [];
+        }
 
         $variations = [$name];
-        
+
         // Remove accents
         $withoutAccents = str_replace(
             ['À', 'Â', 'Æ', 'Ç', 'É', 'È', 'Ê', 'Ë', 'Î', 'Ï', 'Ô', 'Ù', 'Û', 'Ü'],

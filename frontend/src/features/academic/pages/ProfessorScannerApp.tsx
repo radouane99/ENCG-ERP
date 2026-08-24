@@ -144,7 +144,7 @@ export default function ProfessorScannerApp() {
             <div className="text-[10px] font-bold uppercase tracking-widest text-blue-200 mt-1">Présents</div>
           </div>
           <div className="flex-1 bg-white/10 rounded-2xl p-4 text-center backdrop-blur-sm border border-white/5">
-            <div className="text-2xl font-black text-red-400">{totalExpected - scanned}</div>
+            <div className="text-2xl font-black text-red-400">{(totalExpected ?? 0) - scanned}</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-blue-200 mt-1">En attente</div>
           </div>
         </div>

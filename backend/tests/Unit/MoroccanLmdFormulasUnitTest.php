@@ -53,12 +53,12 @@ class MoroccanLmdFormulasUnitTest extends TestCase
     }
 
     /**
-     * Test Eliminatory Threshold: Grade < 7.0/20 requires retake regardless of average.
+     * Test Eliminatory Threshold: Grade < 6.0/20 requires retake regardless of average.
      */
     public function test_eliminatory_grade_detection(): void
     {
-        $moduleGrades = [15.0, 16.0, 14.0, 6.5]; // 6.5 < 7.0 is eliminatory
-        $eliminatoryThreshold = 7.0;
+        $moduleGrades = [15.0, 16.0, 14.0, 5.5];
+        $eliminatoryThreshold = \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD;
 
         $hasEliminatory = false;
         foreach ($moduleGrades as $grade) {
@@ -82,7 +82,7 @@ class MoroccanLmdFormulasUnitTest extends TestCase
                 $average >= 14.0 => 'Bien',
                 $average >= 12.0 => 'Assez Bien',
                 $average >= 10.0 => 'Passable',
-                default          => 'Ajourné',
+                default => 'Ajourné',
             };
         };
 

@@ -14,7 +14,7 @@ interface AiServiceInterface
     /**
      * Generate Multiple-Choice Questions for a given topic.
      *
-     * @param int $count Number of questions
+     * @param  int  $count  Number of questions
      * @return array<int, array{question: string, options: array, answer: string, explanation: string}>
      */
     public function generateMCQ(string $topic, string $level = 'intermediate', int $count = 10): array;

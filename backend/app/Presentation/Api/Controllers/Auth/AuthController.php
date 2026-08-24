@@ -10,6 +10,7 @@ use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\TwoFactorAuthService;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -31,19 +32,19 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
         $user = User::with('roles', 'permissions')->where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Ces identifiants ne correspondent à aucun compte.'],
             ]);
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
@@ -55,25 +56,25 @@ class AuthController extends Controller
         // 2FA pour admins
         if ($user->two_factor_enabled && $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             $challengeToken = Str::uuid()->toString();
-            Cache::put('2fa_challenge_' . $challengeToken, $user->id, now()->addMinutes(10));
+            Cache::put('2fa_challenge_'.$challengeToken, $user->id, now()->addMinutes(10));
 
             return response()->json([
                 'data' => [
-                    'requires_two_factor'          => true,
-                    'two_factor_challenge_token'   => $challengeToken,
+                    'requires_two_factor' => true,
+                    'two_factor_challenge_token' => $challengeToken,
                 ],
             ]);
         }
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-        event(new \Illuminate\Auth\Events\Login('sanctum', $user, false));
+        event(new Login('sanctum', $user, false));
 
         return response()->json([
             'data' => [
                 'requires_two_factor' => false,
-                'token'               => $token,
-                'user'                => $this->buildUserData($user),
+                'token' => $token,
+                'user' => $this->buildUserData($user),
             ],
         ]);
     }
@@ -85,32 +86,32 @@ class AuthController extends Controller
     {
         $request->validate([
             'challenge_token' => 'required|string',
-            'code'            => 'required|string',
+            'code' => 'required|string',
         ]);
 
-        $userId = Cache::get('2fa_challenge_' . $request->challenge_token);
-        if (!$userId) {
+        $userId = Cache::get('2fa_challenge_'.$request->challenge_token);
+        if (! $userId) {
             return response()->json(['message' => 'Session 2FA expirée ou invalide.'], 401);
         }
 
         $user = User::with('roles', 'permissions')->find($userId);
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Utilisateur introuvable.'], 404);
         }
 
-        if (!$this->twoFactorService->verify($user, $request->code)) {
+        if (! $this->twoFactorService->verify($user, $request->code)) {
             return response()->json(['message' => 'Code 2FA invalide ou expiré.'], 422);
         }
 
-        Cache::forget('2fa_challenge_' . $request->challenge_token);
+        Cache::forget('2fa_challenge_'.$request->challenge_token);
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
         return response()->json([
             'data' => [
                 'requires_two_factor' => false,
-                'token'               => $token,
-                'user'                => $this->buildUserData($user),
+                'token' => $token,
+                'user' => $this->buildUserData($user),
             ],
         ]);
     }
@@ -139,24 +140,24 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'first_name'  => 'required|string|max:255',
-            'last_name'   => 'required|string|max:255',
-            'email'       => 'required|email|max:255',
-            'password'    => 'required|string|min:8',
-            'cne'         => 'required|string|max:255',
-            'cin'         => 'nullable|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|min:8',
+            'cne' => 'required|string|max:255',
+            'cin' => 'nullable|string|max:255',
         ]);
 
         try {
-            $user  = $this->registerUserService->registerUser($validated, $request->ip());
+            $user = $this->registerUserService->registerUser($validated, $request->ip());
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
             return response()->json([
                 'message' => 'Inscription réussie.',
-                'data'    => [
+                'data' => [
                     'requires_two_factor' => false,
-                    'token'               => $token,
-                    'user'                => $this->buildUserData($user),
+                    'token' => $token,
+                    'user' => $this->buildUserData($user),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -170,17 +171,17 @@ class AuthController extends Controller
     public function setup2FA(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+        if (! $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             return response()->json(['message' => 'Non autorisé.'], 403);
         }
 
         $setupData = $this->twoFactorService->generateSetupData($user);
 
         return response()->json([
-            'qr_code_url'    => $setupData['qr_code_url'],
-            'secret'         => $setupData['secret'],
+            'qr_code_url' => $setupData['qr_code_url'],
+            'secret' => $setupData['secret'],
             'recovery_codes' => $setupData['recovery_codes'],
-            'message'        => 'Scannez le QR code avec Google Authenticator ou Authy.',
+            'message' => 'Scannez le QR code avec Google Authenticator ou Authy.',
         ]);
     }
 
@@ -193,7 +194,7 @@ class AuthController extends Controller
 
         $confirmed = $this->twoFactorService->confirmAndEnable($request->user(), $request->code);
 
-        if (!$confirmed) {
+        if (! $confirmed) {
             return response()->json(['message' => 'Code incorrect.'], 422);
         }
 
@@ -210,7 +211,7 @@ class AuthController extends Controller
     {
         $request->validate(['password' => 'required|string']);
 
-        if (!Hash::check($request->password, $request->user()->password)) {
+        if (! Hash::check($request->password, $request->user()->password)) {
             return response()->json(['message' => 'Mot de passe incorrect.'], 422);
         }
 
@@ -244,12 +245,12 @@ class AuthController extends Controller
             $allowed = array_map('strtolower', config('services.google.allowed_domains', []));
 
             if ($email === '' || $domain === '' || ! in_array($domain, $allowed, true)) {
-                return redirect()->to($frontend . '/login?error=domain');
+                return redirect()->to($frontend.'/login?error=domain');
             }
 
             $user = User::where('email', $email)->first();
             if (! $user || ! $user->is_active) {
-                return redirect()->to($frontend . '/login?error=unknown_account');
+                return redirect()->to($frontend.'/login?error=unknown_account');
             }
 
             $user->update([
@@ -258,9 +259,9 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-            return redirect()->to($frontend . '/auth/callback?token=' . $token);
+            return redirect()->to($frontend.'/auth/callback?token='.$token);
         } catch (\Exception $e) {
-            return redirect()->to($frontend . '/login?error=google');
+            return redirect()->to($frontend.'/login?error=google');
         }
     }
 
@@ -271,7 +272,7 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'current_password' => 'required|string',
-            'password'         => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = $request->user();
@@ -296,8 +297,12 @@ class AuthController extends Controller
         $cin = strtoupper(trim((string) $request->query('cin', '')));
 
         $application = Application::where(function ($q) use ($cne, $cin) {
-            if ($cne) $q->where('cne', $cne);
-            if ($cin) $q->orWhere('cin', $cin);
+            if ($cne) {
+                $q->where('cne', $cne);
+            }
+            if ($cin) {
+                $q->orWhere('cin', $cin);
+            }
         })->first();
 
         $cneExists = $cinExists = $isPreAdmitted = false;
@@ -306,18 +311,22 @@ class AuthController extends Controller
             $cneExists = $cinExists = true;
             $isPreAdmitted = in_array(strtolower($application->status ?? ''), ['accepted', 'admis', 'valide', 'admis_tafem', 'liste_principale', 'submitted']);
         } else {
-            if ($cne) $cneExists = Student::where('cne', $cne)->exists();
-            if ($cin) $cinExists = Student::where('cin', $cin)->exists() || User::where('cin', $cin)->exists();
+            if ($cne) {
+                $cneExists = Student::where('cne', $cne)->exists();
+            }
+            if ($cin) {
+                $cinExists = Student::where('cin', $cin)->exists() || User::where('cin', $cin)->exists();
+            }
         }
 
         return response()->json([
-            'cne_available'   => true,
-            'cin_available'   => true,
+            'cne_available' => true,
+            'cin_available' => true,
             'is_pre_admitted' => $isPreAdmitted || $cneExists || $cinExists,
-            'cne'             => $cne,
-            'cin'             => $cin,
-            'candidate_name'  => $application ? trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')) : null,
-            'message'         => $isPreAdmitted ? '🟢 Candidat Pré-Admis TAFEM identifié.' : '✅ CNE et CNIE valides.',
+            'cne' => $cne,
+            'cin' => $cin,
+            'candidate_name' => $application ? trim(($application->first_name ?? '').' '.($application->last_name ?? '')) : null,
+            'message' => $isPreAdmitted ? '🟢 Candidat Pré-Admis TAFEM identifié.' : '✅ CNE et CNIE valides.',
         ]);
     }
 
@@ -330,9 +339,9 @@ class AuthController extends Controller
 
         return [
             ...$user->toArray(),
-            'roles'                 => $user->roles->pluck('name')->toArray(),
-            'permissions'           => $user->permissions->pluck('name')->toArray(),
-            'must_change_password'  => (bool) $user->must_change_password,
+            'roles' => $user->roles->pluck('name')->toArray(),
+            'permissions' => $user->permissions->pluck('name')->toArray(),
+            'must_change_password' => (bool) $user->must_change_password,
         ];
     }
 }

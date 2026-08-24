@@ -2,9 +2,8 @@
 
 namespace App\Services\Academic;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\DisciplineCase;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentAffairsService
 {
@@ -25,13 +24,13 @@ class StudentAffairsService
     {
         return DB::transaction(function () use ($data, $reporterId) {
             return DisciplineCase::create([
-                'student_id'   => $data['student_id'],
-                'reported_by'  => $reporterId,
-                'incident_date'=> $data['incident_date'],
-                'type'         => $data['type'], // e.g. cheating, absence, behavior
-                'description'  => $data['description'],
-                'status'       => 'pending',
-                'severity'     => $data['severity'] ?? 'medium'
+                'student_id' => $data['student_id'],
+                'reported_by' => $reporterId,
+                'incident_date' => $data['incident_date'],
+                'type' => $data['type'], // e.g. cheating, absence, behavior
+                'description' => $data['description'],
+                'status' => 'pending',
+                'severity' => $data['severity'] ?? 'medium',
             ]);
         });
     }
@@ -43,8 +42,8 @@ class StudentAffairsService
     {
         $validDecisions = ['warning', 'blame', 'annulation_module', 'annulation_semestre', 'exclusion', 'dismissed'];
 
-        if (!in_array($decision, $validDecisions)) {
-            throw new \InvalidArgumentException("Invalid decision type. Valid decisions: warning, blame, annulation_module, annulation_semestre, exclusion, dismissed.");
+        if (! in_array($decision, $validDecisions)) {
+            throw new \InvalidArgumentException('Invalid decision type. Valid decisions: warning, blame, annulation_module, annulation_semestre, exclusion, dismissed.');
         }
 
         return DB::transaction(function () use ($caseId, $decision, $notes) {

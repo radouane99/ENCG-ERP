@@ -22,30 +22,32 @@ class StubAiDriver implements AiServiceInterface
         $questions = [];
         for ($i = 1; $i <= $count; $i++) {
             $questions[] = [
-                'question'    => "Stub question {$i} for topic: {$topic}",
-                'options'     => [
+                'question' => "Stub question {$i} for topic: {$topic}",
+                'options' => [
                     'A' => 'Option A',
                     'B' => 'Option B',
                     'C' => 'Option C',
                     'D' => 'Option D',
                 ],
-                'answer'      => 'A',
+                'answer' => 'A',
                 'explanation' => 'Configure a production AI driver for real question generation.',
             ];
         }
+
         return $questions;
     }
 
     public function summarize(string $content, string $language = 'fr'): string
     {
         $wordCount = str_word_count($content);
+
         return "Local stub summary generated for {$wordCount} words. Configure Gemini AI in production for a real summary.";
     }
 
     public function predictStudentRisk(array $studentData): array
     {
         $attendanceRate = $studentData['attendance_rate'] ?? 0;
-        $gradeAverage   = $studentData['grade_average'] ?? 0;
+        $gradeAverage = $studentData['grade_average'] ?? 0;
 
         $riskScore = max(0, min(100, 100 - ($attendanceRate * 0.4) - ($gradeAverage * 3)));
 
@@ -55,13 +57,13 @@ class StubAiDriver implements AiServiceInterface
             $riskScore >= 70 => 'critical',
             $riskScore >= 50 => 'high',
             $riskScore >= 30 => 'medium',
-            default          => 'low',
+            default => 'low',
         };
 
         return [
             'risk_score' => round($riskScore, 2),
             'risk_level' => $level,
-            'factors'    => [
+            'factors' => [
                 ['factor' => 'Taux de présence', 'value' => $attendanceRate, 'weight' => 0.4],
                 ['factor' => 'Moyenne générale', 'value' => $gradeAverage, 'weight' => 0.6],
             ],

@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
                 MobilityPartnerSeeder::class,
             ]);
 
-            $rbacSeeder = new RbacSeeder();
+            $rbacSeeder = new RbacSeeder;
             $rbacSeeder->run();
         });
 

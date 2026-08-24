@@ -22,7 +22,7 @@ class ClubController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $clubs,
+            'data' => $clubs,
         ]);
     }
 
@@ -32,10 +32,10 @@ class ClubController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'description'  => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
             'president_id' => 'required|integer|exists:students,id',
-            'logo_url'     => 'nullable|url',
+            'logo_url' => 'nullable|url',
         ]);
 
         $club = $this->studentLifeService->createClub($validated);
@@ -43,7 +43,7 @@ class ClubController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Club créé et en attente de validation.',
-            'data'    => $club,
+            'data' => $club,
         ], 201);
     }
 

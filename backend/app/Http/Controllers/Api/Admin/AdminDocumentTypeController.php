@@ -16,7 +16,7 @@ class AdminDocumentTypeController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => DocumentTemplate::all(),
+            'data' => DocumentTemplate::all(),
         ]);
     }
 
@@ -30,7 +30,7 @@ class AdminDocumentTypeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Type de document créé.',
-            'data'    => $template,
+            'data' => $template,
         ], 201);
     }
 
@@ -41,7 +41,7 @@ class AdminDocumentTypeController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => DocumentTemplate::findOrFail($id),
+            'data' => DocumentTemplate::findOrFail($id),
         ]);
     }
 
@@ -56,7 +56,7 @@ class AdminDocumentTypeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Type de document mis à jour.',
-            'data'    => $template,
+            'data' => $template,
         ]);
     }
 

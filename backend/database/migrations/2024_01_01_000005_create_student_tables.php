@@ -183,7 +183,7 @@ return new class extends Migration
             $table->foreignId('admin_validated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-                            $table->unique(['student_id', 'academic_year_id', 'semester_number'], 'student_reg_unique');
+            $table->unique(['student_id', 'academic_year_id', 'semester_number'], 'student_reg_unique');
             $table->index(['academic_year_id', 'status']);
         });
     }

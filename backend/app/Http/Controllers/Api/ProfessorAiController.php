@@ -20,7 +20,7 @@ class ProfessorAiController extends Controller
     {
         $validated = $request->validate([
             'module_id' => 'required|integer',
-            'type'      => 'nullable|string',
+            'type' => 'nullable|string',
         ]);
 
         $result = $this->profAiService->generateExamSubject(
@@ -52,7 +52,7 @@ class ProfessorAiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $result,
+            'data' => $result,
         ]);
     }
 
@@ -63,7 +63,7 @@ class ProfessorAiController extends Controller
     {
         $validated = $request->validate([
             'report_content' => 'required|string|min:10',
-            'rubric'         => 'nullable|string',
+            'rubric' => 'nullable|string',
         ]);
 
         $result = $this->profAiService->gradeReport(

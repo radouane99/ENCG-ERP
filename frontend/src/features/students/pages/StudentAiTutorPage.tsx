@@ -85,18 +85,22 @@ export default function StudentAiTutorPage() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/student-portal/ai-tutor/chat', {
-        module: selectedModule.key,
-        question: text
-      });
+      const looksLmd = /valid|rattrap|élimin|elimin|moyenne|6\/20|LMD/i.test(text);
+      const res = looksLmd
+        ? await api.post('/v1/student-portal/ai/lmd-judge', { question: text })
+        : await api.post('/student-portal/ai-tutor/chat', {
+            module: selectedModule.key,
+            question: text
+          });
 
-      const data = res.data.data;
+      const data = res.data.data || res.data;
+      const answer = data.answer || data.explanation_fr || data.text_fr || '';
 
       const aiMsg: Message = {
         id: 'ai-' + Date.now(),
         sender: 'ai',
-        text: data.answer,
-        citation: data.citation,
+        text: answer,
+        citation: data.citation || (looksLmd ? `Verdict ${data.verdict}` : undefined),
         suggestedQuiz: data.suggested_quiz,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };

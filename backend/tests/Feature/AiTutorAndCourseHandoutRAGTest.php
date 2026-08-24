@@ -2,10 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
-use App\Models\Filiere;
 use App\Models\Module;
-use App\Models\Semester;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +15,9 @@ class AiTutorAndCourseHandoutRAGTest extends TestCase
     use RefreshDatabase;
 
     private User $studentUser;
+
     private Student $student;
+
     private Module $module;
 
     protected function setUp(): void
@@ -28,20 +27,20 @@ class AiTutorAndCourseHandoutRAGTest extends TestCase
         $academicYear = $this->makeTestAcademicYear();
         $filiere = $this->makeTestFiliere(['name' => 'Sciences de Gestion', 'code' => 'SDG']);
         $semester = $this->makeTestSemester($academicYear->id, [
-            'name'   => 'Semestre 3',
+            'name' => 'Semestre 3',
             'number' => 3,
         ]);
 
         $this->module = $this->makeTestModule($filiere->id, [
-            'name'            => 'Droit des Sociétés',
-            'code'            => 'M305',
+            'name' => 'Droit des Sociétés',
+            'code' => 'M305',
             'semester_number' => 3,
         ]);
 
         $this->student = $this->makeTestStudent([
             'first_name' => 'Reda',
-            'last_name'  => 'EL HASSANI',
-            'cne'        => 'N889900112',
+            'last_name' => 'EL HASSANI',
+            'cne' => 'N889900112',
         ]);
         $this->studentUser = $this->student->user;
         $role = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
@@ -56,7 +55,7 @@ class AiTutorAndCourseHandoutRAGTest extends TestCase
         Sanctum::actingAs($this->studentUser);
 
         $payload = [
-            'module'   => 'finance',
+            'module' => 'finance',
             'question' => 'Quelle est la formule du CMPC WACC en Finance ?',
         ];
 
@@ -73,7 +72,7 @@ class AiTutorAndCourseHandoutRAGTest extends TestCase
     {
         Sanctum::actingAs($this->studentUser);
 
-        $response = $this->getJson("/api/v1/student-portal/ai-tutor/quiz?module=finance");
+        $response = $this->getJson('/api/v1/student-portal/ai-tutor/quiz?module=finance');
 
         $response->assertOk()
             ->assertJsonStructure(['success', 'data' => ['questions']]);

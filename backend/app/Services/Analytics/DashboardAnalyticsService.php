@@ -2,15 +2,17 @@
 
 namespace App\Services\Analytics;
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Student;
-use App\Models\Professor;
-use App\Models\Module;
-use App\Models\Filiere;
-use App\Models\VacationContract;
-use App\Models\AttendanceRecord;
 use App\Models\Application;
+use App\Models\AttendanceRecord;
+use App\Models\Filiere;
 use App\Models\FinalProject;
+use App\Models\Module;
+use App\Models\Professor;
+use App\Models\Student;
+use App\Models\User;
+use App\Models\VacationContract;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardAnalyticsService
 {
@@ -27,9 +29,9 @@ class DashboardAnalyticsService
 
             // 2. Répartition par Filière
             $studentsByFiliere = DB::table('students')
-                ->join('student_pathways', function($join) {
+                ->join('student_pathways', function ($join) {
                     $join->on('students.id', '=', 'student_pathways.student_id')
-                         ->where('student_pathways.is_current', '=', true);
+                        ->where('student_pathways.is_current', '=', true);
                 })
                 ->join('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
                 ->select('filieres.code as name', DB::raw('count(students.id) as value'))
@@ -50,7 +52,7 @@ class DashboardAnalyticsService
             // 5. Ressources Humaines (Permanent vs Vacataire)
             $hrStats = [
                 'permanents' => Professor::where('contract_type', 'permanent')->count(),
-                'vacataires' => VacationContract::where('status', 'active')->count()
+                'vacataires' => VacationContract::where('status', 'active')->count(),
             ];
 
             // 6. Finances (computed when available)
@@ -81,12 +83,12 @@ class DashboardAnalyticsService
                         'admissions' => $admissionStats,
                         'projects' => $projectsStats,
                         'hr' => $hrStats,
-                        'finances' => $finances
-                    ]
-                ]
+                        'finances' => $finances,
+                    ],
+                ],
             ];
         } catch (\Throwable $e) {
-            \Log::error('Analytics getGlobalMetrics failed: ' . $e->getMessage());
+            \Log::error('Analytics getGlobalMetrics failed: '.$e->getMessage());
             throw new \Exception('Analytics data unavailable');
         }
     }
@@ -96,20 +98,20 @@ class DashboardAnalyticsService
      */
     public function getAdminStats(): array
     {
-        $totalStudents  = Student::count();
+        $totalStudents = Student::count();
         $activeStudents = Student::where('status', 'active')->count();
-        $newThisMonth   = Student::whereMonth('created_at', now()->month)
-                                 ->whereYear('created_at', now()->year)->count();
+        $newThisMonth = Student::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)->count();
 
-        $totalProfessors     = Professor::count();
-        $activeProfessors    = Professor::where('is_active', true)->count();
+        $totalProfessors = Professor::count();
+        $activeProfessors = Professor::where('is_active', true)->count();
         $permanentProfessors = Professor::where('contract_type', 'permanent')->count();
 
-        $totalVacataires   = VacationContract::count();
+        $totalVacataires = VacationContract::count();
         $pendingVacataires = VacationContract::where('status', 'pending')->count();
-        $totalVacHours     = VacationContract::sum('agreed_hours');
+        $totalVacHours = VacationContract::sum('agreed_hours');
 
-        $totalRecords   = AttendanceRecord::count();
+        $totalRecords = AttendanceRecord::count();
         $presentRecords = AttendanceRecord::where('status', 'present')->count();
         $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : 0;
 
@@ -117,29 +119,29 @@ class DashboardAnalyticsService
             'success' => true,
             'data' => [
                 'students' => [
-                    'total'          => $totalStudents,
-                    'active'         => $activeStudents,
+                    'total' => $totalStudents,
+                    'active' => $activeStudents,
                     'new_this_month' => $newThisMonth,
-                    'graduated'      => Student::where('status', 'graduated')->count(),
-                    'suspended'      => Student::where('status', 'suspended')->count(),
+                    'graduated' => Student::where('status', 'graduated')->count(),
+                    'suspended' => Student::where('status', 'suspended')->count(),
                 ],
                 'professors' => [
-                    'total'          => $totalProfessors,
-                    'active'         => $activeProfessors,
-                    'permanent'      => $permanentProfessors,
-                    'contractual'    => Professor::where('contract_type', 'contractual')->count(),
+                    'total' => $totalProfessors,
+                    'active' => $activeProfessors,
+                    'permanent' => $permanentProfessors,
+                    'contractual' => Professor::where('contract_type', 'contractual')->count(),
                 ],
                 'vacataires' => [
-                    'total'         => $totalVacataires,
-                    'pending'       => $pendingVacataires,
-                    'total_hours'   => $totalVacHours,
+                    'total' => $totalVacataires,
+                    'pending' => $pendingVacataires,
+                    'total_hours' => $totalVacHours,
                 ],
                 'academic' => [
-                    'total_modules'  => Module::count(),
+                    'total_modules' => Module::count(),
                     'total_filieres' => Filiere::where('is_active', true)->count(),
                 ],
-                'attendance_rate'   => $attendanceRate,
-            ]
+                'attendance_rate' => $attendanceRate,
+            ],
         ];
     }
 
@@ -151,19 +153,19 @@ class DashboardAnalyticsService
         try {
             $student = Student::where('user_id', $userId)->first()
                 ?? Student::where('id', $userId)->first();
-            
-            if (!$student) {
+
+            if (! $student) {
                 return [
                     'success' => true,
                     'data' => [
-                        'gpa'                 => null,
-                        'attendance'          => 100,
-                        'absences'            => ['total' => 0, 'justified' => 0, 'unjustified' => 0],
-                        'upcoming_exams'      => 0,
+                        'gpa' => null,
+                        'attendance' => 100,
+                        'absences' => ['total' => 0, 'justified' => 0, 'unjustified' => 0],
+                        'upcoming_exams' => 0,
                         'pending_assignments' => 0,
-                        'upcoming_classes'    => [],
-                        'recent_documents'    => []
-                    ]
+                        'upcoming_classes' => [],
+                        'recent_documents' => [],
+                    ],
                 ];
             }
 
@@ -175,39 +177,40 @@ class DashboardAnalyticsService
             $grades = DB::table('grades')->where('student_id', $student->id)->whereNotNull('value')->avg('value');
 
             $upcomingExams = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('exams')) {
+            if (Schema::hasTable('exams')) {
                 $upcomingExams = DB::table('exams')->where('date', '>=', now())->count();
             }
 
             return [
                 'success' => true,
                 'data' => [
-                    'gpa'                 => $grades !== null ? round($grades, 2) : null,
-                    'attendance'          => $attendanceRate,
-                    'absences'            => [
-                        'total'       => $absentRecords,
-                        'justified'   => 0,
-                        'unjustified' => $absentRecords
+                    'gpa' => $grades !== null ? round($grades, 2) : null,
+                    'attendance' => $attendanceRate,
+                    'absences' => [
+                        'total' => $absentRecords,
+                        'justified' => 0,
+                        'unjustified' => $absentRecords,
                     ],
-                    'upcoming_exams'      => $upcomingExams,
+                    'upcoming_exams' => $upcomingExams,
                     'pending_assignments' => 0,
-                    'upcoming_classes'    => [],
-                    'recent_documents'    => []
-                ]
+                    'upcoming_classes' => [],
+                    'recent_documents' => [],
+                ],
             ];
         } catch (\Throwable $e) {
-            \Log::error('Analytics getStudentStats failed for user ' . $userId . ': ' . $e->getMessage());
+            \Log::error('Analytics getStudentStats failed for user '.$userId.': '.$e->getMessage());
+
             return [
                 'success' => true,
                 'data' => [
-                    'gpa'                 => null,
-                    'attendance'          => 100,
-                    'absences'            => ['total' => 0, 'justified' => 0, 'unjustified' => 0],
-                    'upcoming_exams'      => 0,
+                    'gpa' => null,
+                    'attendance' => 100,
+                    'absences' => ['total' => 0, 'justified' => 0, 'unjustified' => 0],
+                    'upcoming_exams' => 0,
                     'pending_assignments' => 0,
-                    'upcoming_classes'    => [],
-                    'recent_documents'    => []
-                ]
+                    'upcoming_classes' => [],
+                    'recent_documents' => [],
+                ],
             ];
         }
     }
@@ -218,7 +221,7 @@ class DashboardAnalyticsService
     public function getProfessorStats(int $userId): array
     {
         try {
-            $user = \App\Models\User::find($userId);
+            $user = User::find($userId);
 
             // 1. Obtenir les IDs de professeur liés à l'utilisateur
             $profIds = DB::table('professors')
@@ -274,10 +277,10 @@ class DashboardAnalyticsService
                 ->whereIn('id', $moduleIds)
                 ->select('id', 'name', 'code', 'credit_hours', 'filiere_id')
                 ->get()
-                ->map(function($mod) use ($assignments) {
+                ->map(function ($mod) use ($assignments) {
                     $assignmentRow = $assignments->firstWhere('module_id', $mod->id);
                     $groupName = 'GÉNÉRAL';
-                    if ($assignmentRow && !empty($assignmentRow->group_id)) {
+                    if ($assignmentRow && ! empty($assignmentRow->group_id)) {
                         $groupName = DB::table('groups')->where('id', $assignmentRow->group_id)->value('name') ?? 'GROUPE AFFECTÉ';
                     } else {
                         $groupName = DB::table('filieres')->where('id', $mod->filiere_id)->value('name') ?? 'TRONC COMMUN ENCG';
@@ -291,26 +294,27 @@ class DashboardAnalyticsService
                     }
                     $expected = max(1, $totalAssessments * 30);
                     $progress = (int) round(min(100, max(25, ($enteredGrades / $expected) * 100)));
+
                     return [
-                        'id'          => $mod->id,
-                        'name'        => $mod->name,
-                        'code'        => $mod->code ?? "MOD-{$mod->id}",
-                        'group_name'  => $groupName,
-                        'progress'    => $progress,
-                        'hours_done'  => (int) round(($progress / 100) * ($mod->credit_hours ?? 45)),
-                        'hours_total' => (int) ($mod->credit_hours ?? 45)
+                        'id' => $mod->id,
+                        'name' => $mod->name,
+                        'code' => $mod->code ?? "MOD-{$mod->id}",
+                        'group_name' => $groupName,
+                        'progress' => $progress,
+                        'hours_done' => (int) round(($progress / 100) * ($mod->credit_hours ?? 45)),
+                        'hours_total' => (int) ($mod->credit_hours ?? 45),
                     ];
                 });
 
             if ($modules->isEmpty()) {
-                $modules = DB::table('modules')->take(6)->get()->map(fn($mod) => [
-                    'id'          => $mod->id,
-                    'name'        => $mod->name,
-                    'code'        => $mod->code ?? "MOD-{$mod->id}",
-                    'group_name'  => 'TC-S2-G1',
-                    'progress'    => 50,
-                    'hours_done'  => 24,
-                    'hours_total' => 48
+                $modules = DB::table('modules')->take(6)->get()->map(fn ($mod) => [
+                    'id' => $mod->id,
+                    'name' => $mod->name,
+                    'code' => $mod->code ?? "MOD-{$mod->id}",
+                    'group_name' => 'TC-S2-G1',
+                    'progress' => 50,
+                    'hours_done' => 24,
+                    'hours_total' => 48,
                 ]);
             }
 
@@ -337,29 +341,31 @@ class DashboardAnalyticsService
                     ->orderBy('schedules.start_time')
                     ->take(5)
                     ->get()
-                    ->map(function($sched) use ($daysMap) {
+                    ->map(function ($sched) use ($daysMap) {
                         $dayName = $daysMap[$sched->day_of_week] ?? 'Jour J';
                         $startTime = date('H:i', strtotime($sched->start_time));
                         $endTime = date('H:i', strtotime($sched->end_time));
+
                         return [
                             'title' => $sched->title,
-                            'code'  => $sched->module_code,
-                            'time'  => "{$dayName} {$startTime} - {$endTime}",
-                            'room'  => $sched->room_name ?? 'Salle de cours ENCG',
+                            'code' => $sched->module_code,
+                            'time' => "{$dayName} {$startTime} - {$endTime}",
+                            'room' => $sched->room_name ?? 'Salle de cours ENCG',
                             'group' => $sched->group_name ?? 'Groupe affecté',
                         ];
                     });
             }
 
             if ((empty($nextClasses) || (is_object($nextClasses) && $nextClasses->isEmpty())) && $modules->isNotEmpty()) {
-                $nextClasses = $modules->take(3)->map(function($mod, $idx) {
+                $nextClasses = $modules->take(3)->map(function ($mod, $idx) {
                     $slots = ['Lundi 08:30 - 11:30', 'Mercredi 14:00 - 17:00', 'Vendredi 09:00 - 12:00'];
                     $rooms = ['Amphi A', 'Salle 12', 'Salle 05'];
+
                     return [
                         'title' => $mod['name'],
-                        'code'  => $mod['code'],
-                        'time'  => $slots[$idx % 3],
-                        'room'  => $rooms[$idx % 3],
+                        'code' => $mod['code'],
+                        'time' => $slots[$idx % 3],
+                        'room' => $rooms[$idx % 3],
                         'group' => $mod['group_name'],
                     ];
                 });
@@ -367,48 +373,49 @@ class DashboardAnalyticsService
 
             $departmentName = $professor?->department?->name ?? 'Management & Commerce';
             $roleTitle = "Enseignant-Chercheur — {$departmentName}";
-            $roleBadge = "Professeur Permanent";
+            $roleBadge = 'Professeur Permanent';
 
             return [
                 'success' => true,
                 'data' => [
-                    'total_students'  => $studentCount,
-                    'total_modules'   => $modulesCount,
-                    'pending_grades'  => $pendingGrades,
-                    'next_classes'    => $nextClasses,
-                    'modules_list'    => $modules,
-                    'has_contract'    => ($professor?->contract_type === 'visiting'),
-                    'professor_id'    => $professor?->id ?? 1,
-                    'role_title'      => $roleTitle,
-                    'role_badge'      => $roleBadge,
+                    'total_students' => $studentCount,
+                    'total_modules' => $modulesCount,
+                    'pending_grades' => $pendingGrades,
+                    'next_classes' => $nextClasses,
+                    'modules_list' => $modules,
+                    'has_contract' => ($professor?->contract_type === 'visiting'),
+                    'professor_id' => $professor?->id ?? 1,
+                    'role_title' => $roleTitle,
+                    'role_badge' => $roleBadge,
                     'department_name' => $departmentName,
-                ]
+                ],
             ];
         } catch (\Throwable $e) {
-            \Log::error('Analytics getProfessorStats failed for user ' . $userId . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            \Log::error('Analytics getProfessorStats failed for user '.$userId.': '.$e->getMessage()."\n".$e->getTraceAsString());
+
             return [
                 'success' => true,
                 'error_debug' => $e->getMessage(),
                 'data' => [
-                    'total_students'  => DB::table('students')->count() ?: 148,
-                    'total_modules'   => DB::table('modules')->count() ?: 6,
-                    'pending_grades'  => DB::table('assessments')->count() ?: 4,
-                    'next_classes'    => [],
-                    'modules_list'    => DB::table('modules')->take(6)->get()->map(fn($m) => [
+                    'total_students' => DB::table('students')->count() ?: 148,
+                    'total_modules' => DB::table('modules')->count() ?: 6,
+                    'pending_grades' => DB::table('assessments')->count() ?: 4,
+                    'next_classes' => [],
+                    'modules_list' => DB::table('modules')->take(6)->get()->map(fn ($m) => [
                         'id' => $m->id,
                         'name' => $m->name,
                         'code' => $m->code ?? "MOD-{$m->id}",
                         'group_name' => 'TC-S2-G1',
                         'progress' => 50,
                         'hours_done' => 24,
-                        'hours_total' => 48
+                        'hours_total' => 48,
                     ]),
-                    'has_contract'    => false,
-                    'professor_id'    => 1,
-                    'role_title'      => 'Espace Enseignant-Chercheur — ENCG Fès',
-                    'role_badge'      => 'Professeur Permanent',
+                    'has_contract' => false,
+                    'professor_id' => 1,
+                    'role_title' => 'Espace Enseignant-Chercheur — ENCG Fès',
+                    'role_badge' => 'Professeur Permanent',
                     'department_name' => 'ENCG Fès',
-                ]
+                ],
             ];
         }
     }

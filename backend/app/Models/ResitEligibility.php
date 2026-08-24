@@ -16,7 +16,7 @@ class ResitEligibility extends Model
     {
         return [
             'is_eligible' => 'boolean',
-            'decided_at'  => 'datetime',
+            'decided_at' => 'datetime',
         ];
     }
 

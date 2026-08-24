@@ -3,6 +3,8 @@
 namespace App\Services\HR;
 
 use App\Models\Professor;
+use App\Models\User;
+use App\Support\TemporaryPassword;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -15,26 +17,26 @@ class ProfessorService
     {
         $query = Professor::with(['department', 'user']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $s = $filters['search'];
             $query->where(function ($q) use ($s) {
                 $q->where('first_name', 'like', "%$s%")
-                  ->orWhere('last_name', 'like', "%$s%")
-                  ->orWhere('email', 'like', "%$s%")
-                  ->orWhere('employee_number', 'like', "%$s%")
-                  ->orWhereHas('user', function($uq) use ($s) {
-                      if (DB::connection()->getDriverName() === 'sqlite') {
-                          $uq->where('first_name', 'like', "%$s%")
-                             ->orWhere('last_name', 'like', "%$s%")
-                             ->orWhere('email', 'like', "%$s%");
-                      } else {
-                          $uq->whereRaw('MATCH(first_name, last_name, email) AGAINST (? IN BOOLEAN MODE)', [$s . '*']);
-                      }
-                  });
+                    ->orWhere('last_name', 'like', "%$s%")
+                    ->orWhere('email', 'like', "%$s%")
+                    ->orWhere('employee_number', 'like', "%$s%")
+                    ->orWhereHas('user', function ($uq) use ($s) {
+                        if (DB::connection()->getDriverName() === 'sqlite') {
+                            $uq->where('first_name', 'like', "%$s%")
+                                ->orWhere('last_name', 'like', "%$s%")
+                                ->orWhere('email', 'like', "%$s%");
+                        } else {
+                            $uq->whereRaw('MATCH(first_name, last_name, email) AGAINST (? IN BOOLEAN MODE)', [$s.'*']);
+                        }
+                    });
             });
         }
 
-        if (!empty($filters['contract_type'])) {
+        if (! empty($filters['contract_type'])) {
             $query->where('contract_type', $filters['contract_type']);
         }
 
@@ -72,14 +74,14 @@ class ProfessorService
     {
         return DB::transaction(function () use ($data, $institutionId) {
             // Create user first
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'name' => $data['first_name'] . ' ' . $data['last_name'],
+                'name' => $data['first_name'].' '.$data['last_name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
                 'cin' => $data['cin'] ?? null,
-                'password' => $data['password'] ?? \App\Support\TemporaryPassword::hash(),
+                'password' => $data['password'] ?? TemporaryPassword::hash(),
                 'must_change_password' => empty($data['password']),
                 'is_active' => $data['is_active'] ?? true,
             ]);
@@ -88,20 +90,20 @@ class ProfessorService
             unset($data['first_name'], $data['last_name'], $data['email'], $data['phone'], $data['cin']);
 
             $year = date('Y');
-            
+
             // Get the maximum employee number for this year to avoid duplicates on soft deletes
             $lastProf = Professor::withTrashed()
                 ->where('employee_number', 'LIKE', "PROF-$year-%")
                 ->orderBy('employee_number', 'desc')
                 ->first();
-                
+
             $count = 1;
             if ($lastProf) {
                 $lastNumber = intval(substr($lastProf->employee_number, -3));
                 $count = $lastNumber + 1;
             }
-            
-            $data['employee_number'] = 'PROF-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+            $data['employee_number'] = 'PROF-'.$year.'-'.str_pad($count, 3, '0', STR_PAD_LEFT);
             $data['institution_id'] = $institutionId;
             $data['user_id'] = $user->id;
 
@@ -127,17 +129,17 @@ class ProfessorService
             if (isset($userData['first_name']) || isset($userData['last_name'])) {
                 $firstName = $userData['first_name'] ?? $professor->first_name;
                 $lastName = $userData['last_name'] ?? $professor->last_name;
-                $userData['name'] = trim($firstName . ' ' . $lastName);
+                $userData['name'] = trim($firstName.' '.$lastName);
             }
 
-            if (!empty($userData)) {
+            if (! empty($userData)) {
                 $professor->user()->update($userData);
             }
 
-            if (!empty($data)) {
+            if (! empty($data)) {
                 $professor->update($data);
             }
-            
+
             return $professor->refresh();
         });
     }

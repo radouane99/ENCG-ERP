@@ -3,22 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Internship;
+use Illuminate\Http\Request;
 
 class AdminInternshipController extends Controller
 {
     public function index()
     {
         $internships = Internship::with('student')->get();
-        
-        $data = $internships->map(function($i) {
+
+        $data = $internships->map(function ($i) {
             return [
                 'id' => $i->id,
                 'student' => $i->student ? [
                     'first_name' => $i->student->user->first_name ?? '',
                     'last_name' => $i->student->user->last_name ?? '',
-                    'cne' => $i->student->cne
+                    'cne' => $i->student->cne,
                 ] : null,
                 'title' => $i->title ?? 'Stage',
                 'company' => $i->company_name ?? 'Entreprise',
@@ -30,26 +30,26 @@ class AdminInternshipController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function updateStatus(Request $request, $id)
     {
         $internship = Internship::findOrFail($id);
-        
+
         $validated = $request->validate([
-            'status' => 'required|string'
+            'status' => 'required|string',
         ]);
 
         $internship->update([
-            'status' => $validated['status']
+            'status' => $validated['status'],
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Statut mis à jour',
-            'data' => $internship
+            'data' => $internship,
         ]);
     }
 }

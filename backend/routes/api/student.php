@@ -1,15 +1,23 @@
 <?php
 
+use App\Http\Controllers\Api\AiCourseTutorController;
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\CedocController;
 use App\Http\Controllers\Api\DeliberationController;
 use App\Http\Controllers\Api\Mobile\MobileStudentController;
+use App\Http\Controllers\Api\ReinscriptionController;
+use App\Http\Controllers\Api\Student\ClubController;
+use App\Http\Controllers\Api\Student\JobOfferController;
+use App\Http\Controllers\Api\Student\StudentAiController;
 use App\Http\Controllers\Api\Student\StudentConvocationController;
 use App\Http\Controllers\Api\Student\StudentDocumentRequestController;
 use App\Http\Controllers\Api\Student\StudentInternshipController;
 use App\Http\Controllers\Api\Student\StudentMobilityController;
 use App\Http\Controllers\Api\StudentCardController;
 use App\Http\Controllers\Api\StudentPortalController;
+use App\Http\Controllers\Api\Student\StudentAbsenceController;
 use App\Http\Controllers\Api\StudentTranscriptController;
+use App\Http\Controllers\Api\UnifiedStudentRecordController;
 use App\Http\Middleware\EnsureInstitutionContext;
 use Illuminate\Support\Facades\Route;
 
@@ -26,10 +34,11 @@ Route::middleware(['auth:sanctum', 'role:student', EnsureInstitutionContext::cla
 
 // Web App Student Portal API
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group(function () {
-    Route::get('/my-dossier', [\App\Http\Controllers\Api\UnifiedStudentRecordController::class, 'myDossier']);
+    Route::get('/my-dossier', [UnifiedStudentRecordController::class, 'myDossier']);
     Route::get('/dashboard', [StudentPortalController::class, 'getDashboardStats']);
     Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
     Route::get('/grades', [StudentPortalController::class, 'getGrades']);
+    Route::get('/absences', [StudentAbsenceController::class, 'index']);
     Route::post('/absences', [StudentPortalController::class, 'submitAbsence']);
     Route::post('/absences/justify', [StudentPortalController::class, 'submitAbsenceJustification']);
     Route::get('/card', [StudentCardController::class, 'show']);
@@ -41,10 +50,12 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
 
     // Student AI Suite
     Route::prefix('ai')->group(function () {
-        Route::post('tutor', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'tutorQuery']);
-        Route::get('simulate-grade', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'simulateGrade']);
-        Route::get('career-recommendations', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'getCareerRecommendations']);
-        Route::post('exam-assistant', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'examAssistant']);
+        Route::post('tutor', [StudentAiController::class, 'tutorQuery']);
+        Route::get('simulate-grade', [StudentAiController::class, 'simulateGrade']);
+        Route::post('lmd-judge', [StudentAiController::class, 'lmdJudge']);
+        Route::post('pfe-oral', [StudentAiController::class, 'pfeOral']);
+        Route::get('career-recommendations', [StudentAiController::class, 'getCareerRecommendations']);
+        Route::post('exam-assistant', [StudentAiController::class, 'examAssistant']);
     });
 
     // Digital Library
@@ -66,7 +77,7 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     });
 
     // CEDOC Dashboard
-    Route::get('/cedoc/dashboard', [\App\Http\Controllers\Api\CedocController::class, 'getDashboardStats']);
+    Route::get('/cedoc/dashboard', [CedocController::class, 'getDashboardStats']);
 
     // Document Requests (Guichet Électronique)
     Route::prefix('document-requests')->group(function () {
@@ -82,10 +93,10 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     });
 
     // Job Offers & Market
-    Route::get('/job-offers', [\App\Http\Controllers\Api\Student\JobOfferController::class, 'index']);
+    Route::get('/job-offers', [JobOfferController::class, 'index']);
 
     // Clubs & Vie associative
-    Route::get('/clubs', [\App\Http\Controllers\Api\Student\ClubController::class, 'index']);
+    Route::get('/clubs', [ClubController::class, 'index']);
 
     // Official Documents PDF (Relevé, Attestation de Réussite, Diplôme d'État ENCG)
     Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);
@@ -93,11 +104,11 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     Route::get('/diplome-officiel/pdf', [StudentTranscriptController::class, 'generateDiplomeForStudent']);
 
     // Re-inscription en ligne (Confirmation pour l'année supérieure)
-    Route::get('/reinscription/status', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getStatus']);
-    Route::post('/reinscription/confirm', [\App\Http\Controllers\Api\ReinscriptionController::class, 'confirm']);
+    Route::get('/reinscription/status', [ReinscriptionController::class, 'getStatus']);
+    Route::post('/reinscription/simulate-pay', [ReinscriptionController::class, 'simulatePay']);
+    Route::post('/reinscription/confirm', [ReinscriptionController::class, 'confirm']);
 
     // AI Course Tutor (RAG anchored on ENCG handouts)
-    Route::post('/ai-tutor/chat', [\App\Http\Controllers\Api\AiCourseTutorController::class, 'chat']);
-    Route::get('/ai-tutor/quiz', [\App\Http\Controllers\Api\AiCourseTutorController::class, 'getQuiz']);
+    Route::post('/ai-tutor/chat', [AiCourseTutorController::class, 'chat']);
+    Route::get('/ai-tutor/quiz', [AiCourseTutorController::class, 'getQuiz']);
 });
-

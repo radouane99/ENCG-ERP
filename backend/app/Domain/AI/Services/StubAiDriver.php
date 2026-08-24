@@ -20,7 +20,7 @@ class StubAiDriver implements AiDriverInterface
     {
         // Simple stub logic: if absence rate > 20%, high risk
         $absences = $data['absence_rate'] ?? 0;
-        
+
         return [
             'risk_level' => $absences > 20 ? 'High' : 'Low',
             'confidence' => 0.85,

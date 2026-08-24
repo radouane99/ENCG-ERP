@@ -6,8 +6,8 @@ use App\Models\AcademicYear;
 use App\Models\Professor;
 use App\Models\VacationContract;
 use App\Models\VacationPayment;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class VacataireService
 {
@@ -16,10 +16,10 @@ class VacataireService
      */
     public function getAllVacataires(): Collection
     {
-        return Professor::with(['department', 'vacationContracts' => function($query) {
-                // Load only active/latest contracts to reduce payload
-                $query->with('module')->latest()->limit(1);
-            }])
+        return Professor::with(['department', 'vacationContracts' => function ($query) {
+            // Load only active/latest contracts to reduce payload
+            $query->with('module')->latest()->limit(1);
+        }])
             ->where('contract_type', 'visiting')
             ->get();
     }
@@ -30,10 +30,10 @@ class VacataireService
     public function getVacataireDetails(int $id): ?Professor
     {
         return Professor::with([
-                'department', 
-                'vacationContracts.payments',
-                'modules' // Modules taught
-            ])
+            'department',
+            'vacationContracts.payments',
+            'modules', // Modules taught
+        ])
             ->where('contract_type', 'visiting')
             ->find($id);
     }
@@ -45,21 +45,21 @@ class VacataireService
     {
         return DB::transaction(function () use ($data) {
             $professor = Professor::findOrFail($data['professor_id']);
-            
+
             $contract = VacationContract::create([
-                'professor_id'  => $data['professor_id'],
-                'first_name'    => $professor->first_name,
-                'last_name'     => $professor->last_name,
-                'email'         => $professor->email,
-                'phone'         => $professor->phone,
+                'professor_id' => $data['professor_id'],
+                'first_name' => $professor->first_name,
+                'last_name' => $professor->last_name,
+                'email' => $professor->email,
+                'phone' => $professor->phone,
                 'institution_id' => $professor->institution_id,
                 'academic_year_id' => AcademicYear::where('is_current', true)->value('id') ?? throw new \InvalidArgumentException('No current academic year is configured.'),
-                'module_id'     => $data['module_id'] ?? null,
-                'agreed_hours'  => $data['agreed_hours'],
-                'hourly_rate'   => $data['hourly_rate'] ?? 400.00, // Standard rate MAD
-                'contract_start'=> $data['start_date'],
-                'contract_end'  => $data['end_date'],
-                'status'        => $data['status'] ?? 'pending'
+                'module_id' => $data['module_id'] ?? null,
+                'agreed_hours' => $data['agreed_hours'],
+                'hourly_rate' => $data['hourly_rate'] ?? 400.00, // Standard rate MAD
+                'contract_start' => $data['start_date'],
+                'contract_end' => $data['end_date'],
+                'status' => $data['status'] ?? 'pending',
             ]);
 
             return $contract;
@@ -73,15 +73,15 @@ class VacataireService
     {
         return DB::transaction(function () use ($contractId, $hoursDeclared) {
             $contract = VacationContract::findOrFail($contractId);
-            
+
             $totalAmount = $hoursDeclared * $contract->hourly_rate;
 
             $payment = VacationPayment::create([
                 'vacation_contract_id' => $contract->id,
-                'hours_paid'           => $hoursDeclared,
-                'amount'               => $totalAmount,
-                'payment_date'         => now(),
-                'status'               => 'pending'
+                'hours_paid' => $hoursDeclared,
+                'amount' => $totalAmount,
+                'payment_date' => now(),
+                'status' => 'pending',
             ]);
 
             return $payment;

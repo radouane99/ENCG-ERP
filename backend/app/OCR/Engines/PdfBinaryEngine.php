@@ -16,7 +16,7 @@ class PdfBinaryEngine implements OcrEngineInterface
 
     public function supports(string $mimeType, string $filePath, string $docType = ''): bool
     {
-        return str_contains(strtolower($mimeType), 'pdf') 
+        return str_contains(strtolower($mimeType), 'pdf')
             || str_ends_with(strtolower($filePath), '.pdf');
     }
 
@@ -24,13 +24,15 @@ class PdfBinaryEngine implements OcrEngineInterface
     {
         $mimeType = mime_content_type($filePath) ?: 'application/pdf';
         $result = $this->extract($filePath, $mimeType, '');
+
         return $result->text;
     }
 
     public function extract(string $filePath, string $mimeType, string $docType = ''): OcrResult
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             Log::warning("[PdfBinaryEngine] File not found: {$filePath}");
+
             return new OcrResult('');
         }
 
@@ -38,7 +40,7 @@ class PdfBinaryEngine implements OcrEngineInterface
             // Use pdftotext with both layout and raw options
             $output = [];
             $returnVar = -1;
-            
+
             // Try with layout first
             $command = sprintf('pdftotext -layout -nopgbrk %s - 2>/dev/null', escapeshellarg($filePath));
             @exec($command, $output, $returnVar);
@@ -61,7 +63,8 @@ class PdfBinaryEngine implements OcrEngineInterface
             return new OcrResult(trim($text));
 
         } catch (Throwable $e) {
-            Log::warning("[PdfBinaryEngine] Extraction failed: " . $e->getMessage());
+            Log::warning('[PdfBinaryEngine] Extraction failed: '.$e->getMessage());
+
             return new OcrResult('');
         }
     }
@@ -72,21 +75,22 @@ class PdfBinaryEngine implements OcrEngineInterface
     private function extractWithPdfToHtml(string $filePath): string
     {
         $tmpDir = sys_get_temp_dir();
-        $tmpFile = $tmpDir . '/pdfhtml_' . uniqid() . '.html';
-        
-        $command = sprintf('pdftohtml -noframes -s -i %s %s 2>/dev/null', 
-            escapeshellarg($filePath), 
+        $tmpFile = $tmpDir.'/pdfhtml_'.uniqid().'.html';
+
+        $command = sprintf('pdftohtml -noframes -s -i %s %s 2>/dev/null',
+            escapeshellarg($filePath),
             escapeshellarg($tmpFile)
         );
-        
+
         @exec($command);
 
         if (file_exists($tmpFile)) {
             $html = file_get_contents($tmpFile);
             @unlink($tmpFile);
-            
+
             // Extract text from HTML
             $text = strip_tags($html);
+
             return trim($text);
         }
 

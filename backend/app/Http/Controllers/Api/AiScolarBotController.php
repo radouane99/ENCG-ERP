@@ -25,7 +25,7 @@ class AiScolarBotController extends Controller
 
         $userMsg = trim($request->input('message'));
 
-        $systemPrompt = <<<SYSTEM
+        $systemPrompt = <<<'SYSTEM'
 Tu es ScolarBot, l'Assistant Virtuel IA officiel de l'ENCG Fès (École Nationale de Commerce et de Gestion de Fès - Université Sidi Mohamed Ben Abdellah).
 Tu réponds de manière intelligente, chaleureuse et très concise aux questions des étudiants en DARIJA MAROCAINE ou en FRANÇAIS.
 
@@ -41,29 +41,29 @@ SYSTEM;
             if ($this->gemini->isConfigured()) {
                 $reply = $this->gemini->generate("{$systemPrompt}\n\nQuestion : {$userMsg}");
 
-                if (!empty($reply)) {
+                if (! empty($reply)) {
                     return response()->json([
-                        'success'  => true,
-                        'reply'    => $reply,
+                        'success' => true,
+                        'reply' => $reply,
                         'language' => preg_match('/[\x{0600}-\x{06FF}]/u', $userMsg) ? 'ar_ma' : 'fr',
                         'category' => 'gemini_llm',
-                        'actions'  => [
+                        'actions' => [
                             ['label' => '🔍 Suivre mon Dossier (CNE)', 'action' => 'track_status'],
                         ],
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            Log::warning('Gemini ScolarBot erreur: ' . $e->getMessage());
+            Log::warning('Gemini ScolarBot erreur: '.$e->getMessage());
         }
 
         // Fallback
         return response()->json([
-            'success'  => true,
-            'reply'    => "📋 **ScolarBot ENCG Fès :**\n\n1. 📜 Original Bac + copies certifiées.\n2. 🪪 Copie CNIE.\n3. 📊 Relevé de notes.\n4. 🖼️ 4 photos d'identité pour carte CR80.",
+            'success' => true,
+            'reply' => "📋 **ScolarBot ENCG Fès :**\n\n1. 📜 Original Bac + copies certifiées.\n2. 🪪 Copie CNIE.\n3. 📊 Relevé de notes.\n4. 🖼️ 4 photos d'identité pour carte CR80.",
             'language' => 'ar_ma',
             'category' => 'fallback',
-            'actions'  => [
+            'actions' => [
                 ['label' => '🔍 Suivre mon Dossier (CNE)', 'action' => 'track_status'],
             ],
         ]);

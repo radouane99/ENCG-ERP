@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - docker-v2
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -116,7 +117,6 @@ jobs:
 
       - name: 🛡️ TypeScript Typecheck
         run: npx tsc --noEmit
-        continue-on-error: true
 
       - name: 🧪 Execute Vitest Suites
         run: npm run test -- --run
@@ -213,9 +213,20 @@ jobs:
       - name: 🎨 Laravel Pint Code Style Check
         working-directory: ./backend
         run: ./vendor/bin/pint --test
-        continue-on-error: true
 
       - name: 🛡️ Composer Security Audit
         working-directory: ./backend
         run: composer audit --abandoned=report
         continue-on-error: true
+
+  backup-restore-drill:
+    name: 🗄️ Postgres restore drill (manual)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax-check restore scripts
+        run: |
+          bash -n scripts/backup-postgres.sh
+          bash -n scripts/restore-postgres-drill.sh
+          echo "Scripts parse. Run the drill on the VPS monthly (see PRODUCTION_CHECKLIST.md)."

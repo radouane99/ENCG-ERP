@@ -10,8 +10,11 @@ class SystemNotification extends Notification
     use Queueable;
 
     public string $title;
+
     public string $message;
+
     public string $type;
+
     public ?string $actionUrl;
 
     /**
@@ -43,9 +46,9 @@ class SystemNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title'      => $this->title,
-            'message'    => $this->message,
-            'type'       => $this->type,
+            'title' => $this->title,
+            'message' => $this->message,
+            'type' => $this->type,
             'action_url' => $this->actionUrl,
         ];
     }

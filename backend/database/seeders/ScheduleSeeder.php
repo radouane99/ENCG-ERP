@@ -17,20 +17,26 @@ class ScheduleSeeder extends Seeder
     public function run(): void
     {
         $academicYear = AcademicYear::where('is_current', true)->first();
-        if (!$academicYear) return;
+        if (! $academicYear) {
+            return;
+        }
 
         $semester = Semester::where('academic_year_id', $academicYear->id)
             ->where('is_current', true)->first();
-        if (!$semester) return;
+        if (! $semester) {
+            return;
+        }
 
         $groups = Group::where('academic_year_id', $academicYear->id)->get();
         $professors = Professor::all();
         $rooms = Room::all();
         $days = [1, 2, 3, 4, 5]; // Monday=1, Friday=5
-        
+
         foreach ($groups as $group) {
             $filiereModules = Module::where('filiere_id', $group->filiere_id)->get();
-            if ($filiereModules->isEmpty()) continue;
+            if ($filiereModules->isEmpty()) {
+                continue;
+            }
 
             // Generate 3 sessions per group
             for ($i = 0; $i < 3; $i++) {
@@ -38,7 +44,7 @@ class ScheduleSeeder extends Seeder
                 $prof = $professors->random();
                 $room = $rooms->random();
                 $dayOfWeek = $days[array_rand($days)];
-                
+
                 $startTime = Carbon::createFromTime(rand(8, 14), 0, 0);
                 $endTime = (clone $startTime)->addHours(2);
 

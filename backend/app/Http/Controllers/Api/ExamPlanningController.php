@@ -8,13 +8,11 @@ use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
 use App\Models\Filiere;
 use App\Models\Room;
-use App\Services\Academic\ExamPlanningEngine;
 use App\Services\Academic\ExamConvocationService;
+use App\Services\Academic\ExamPlanningEngine;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class ExamPlanningController extends Controller
 {
@@ -29,11 +27,11 @@ class ExamPlanningController extends Controller
     public function generate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'exam_id'            => 'required|integer',
-            'room_ids'           => 'required|array',
-            'room_ids.*'         => 'integer',
-            'professor_ids'      => 'required|array',
-            'professor_ids.*'    => 'integer',
+            'exam_id' => 'required|integer',
+            'room_ids' => 'required|array',
+            'room_ids.*' => 'integer',
+            'professor_ids' => 'required|array',
+            'professor_ids.*' => 'integer',
             'secondary_group_id' => 'nullable|integer',
         ]);
 
@@ -71,26 +69,26 @@ class ExamPlanningController extends Controller
         }
 
         if ($filiereId) {
-            $query->whereHas('module', fn($q) => $q->where('filiere_id', $filiereId));
+            $query->whereHas('module', fn ($q) => $q->where('filiere_id', $filiereId));
         }
 
         $exams = $query->orderBy('exam_date')->get()->map(function ($e) {
-            $proctors = $e->surveillances->map(fn($s) => $s->professor->last_name . ' ' . $s->professor->first_name)->toArray();
+            $proctors = $e->surveillances->map(fn ($s) => $s->professor->last_name.' '.$s->professor->first_name)->toArray();
 
             return [
-                'id'                    => $e->id,
-                'module'                => $e->module->name ?? 'N/A',
-                'group'                 => $e->group->name ?? 'N/A',
-                'date'                  => $e->exam_date?->format('d/m/Y'),
-                'dayLabel'              => $e->exam_date?->format('d') ?? '--',
-                'monthLabel'            => $e->exam_date?->translatedFormat('M') ?? '---',
-                'dayName'               => $e->exam_date?->translatedFormat('D') ?? '--',
-                'sessionLabel'          => $e->examSession->name ?? 'Session',
-                'time'                  => $e->start_time ? substr($e->start_time, 0, 5) : null,
-                'duration'              => $e->duration_minutes . ' min',
-                'room'                  => $e->room->name ?? 'À affecter',
+                'id' => $e->id,
+                'module' => $e->module->name ?? 'N/A',
+                'group' => $e->group->name ?? 'N/A',
+                'date' => $e->exam_date?->format('d/m/Y'),
+                'dayLabel' => $e->exam_date?->format('d') ?? '--',
+                'monthLabel' => $e->exam_date?->translatedFormat('M') ?? '---',
+                'dayName' => $e->exam_date?->translatedFormat('D') ?? '--',
+                'sessionLabel' => $e->examSession->name ?? 'Session',
+                'time' => $e->start_time ? substr($e->start_time, 0, 5) : null,
+                'duration' => $e->duration_minutes.' min',
+                'room' => $e->room->name ?? 'À affecter',
                 'convocations_generated' => $e->seatings_count ?? 0,
-                'proctors'              => $proctors,
+                'proctors' => $proctors,
             ];
         });
 
@@ -103,19 +101,19 @@ class ExamPlanningController extends Controller
     public function resetExams(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id'      => 'nullable|integer',
-            'session_id'      => 'required|integer',
+            'filiere_id' => 'nullable|integer',
+            'session_id' => 'required|integer',
             'semester_number' => 'nullable|integer',
         ]);
 
         $query = Exam::where('exam_session_id', $validated['session_id']);
 
-        if (!empty($validated['filiere_id']) || !empty($validated['semester_number'])) {
+        if (! empty($validated['filiere_id']) || ! empty($validated['semester_number'])) {
             $query->whereHas('module', function ($q) use ($validated) {
-                if (!empty($validated['filiere_id'])) {
+                if (! empty($validated['filiere_id'])) {
                     $q->where('filiere_id', $validated['filiere_id']);
                 }
-                if (!empty($validated['semester_number'])) {
+                if (! empty($validated['semester_number'])) {
                     $q->where('semester_number', $validated['semester_number']);
                 }
             });
@@ -141,21 +139,21 @@ class ExamPlanningController extends Controller
     public function autoGenerateBatch(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id'         => 'required|integer',
-            'session_id'         => 'nullable|integer',
-            'exam_session_id'    => 'nullable|integer',
-            'semester_number'    => 'nullable|integer',
-            'modules_per_day'    => 'nullable|integer|in:1,2,3',
-            'day_slot_mode'      => 'nullable|string|in:matin,pm,split',
-            'module_ids'         => 'nullable|array',
-            'module_ids.*'       => 'integer',
+            'filiere_id' => 'required|integer',
+            'session_id' => 'nullable|integer',
+            'exam_session_id' => 'nullable|integer',
+            'semester_number' => 'nullable|integer',
+            'modules_per_day' => 'nullable|integer|in:1,2,3',
+            'day_slot_mode' => 'nullable|string|in:matin,pm,split',
+            'module_ids' => 'nullable|array',
+            'module_ids.*' => 'integer',
             'ordered_module_ids' => 'nullable|array',
             'ordered_module_ids.*' => 'integer',
-            'start_date'         => 'nullable|date',
+            'start_date' => 'nullable|date',
         ]);
 
         $sessionId = $validated['session_id'] ?? $validated['exam_session_id'] ?? null;
-        if (!$sessionId) {
+        if (! $sessionId) {
             return response()->json(['success' => false, 'message' => "Session d'examen obligatoire."], 422);
         }
 
@@ -178,29 +176,29 @@ class ExamPlanningController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'module_id'        => 'required|integer',
-            'group_id'         => 'nullable|integer',
-            'room_id'          => 'nullable|integer',
-            'exam_date'        => 'required|date',
-            'start_time'       => 'required|string',
+            'module_id' => 'required|integer',
+            'group_id' => 'nullable|integer',
+            'room_id' => 'nullable|integer',
+            'exam_date' => 'required|date',
+            'start_time' => 'required|string',
             'duration_minutes' => 'required|integer',
-            'session_type'     => 'nullable|string',
+            'session_type' => 'nullable|string',
         ]);
 
         $exam = Exam::create([
-            'module_id'        => $validated['module_id'],
-            'group_id'         => $validated['group_id'] ?? null,
-            'room_id'          => $validated['room_id'] ?? null,
-            'exam_date'        => $validated['exam_date'],
-            'start_time'       => $validated['start_time'],
+            'module_id' => $validated['module_id'],
+            'group_id' => $validated['group_id'] ?? null,
+            'room_id' => $validated['room_id'] ?? null,
+            'exam_date' => $validated['exam_date'],
+            'start_time' => $validated['start_time'],
             'duration_minutes' => $validated['duration_minutes'],
-            'session_type'     => $validated['session_type'] ?? 'normale',
+            'session_type' => $validated['session_type'] ?? 'normale',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Examen créé avec succès.',
-            'exam'    => $exam->load(['module', 'group', 'room']),
+            'exam' => $exam->load(['module', 'group', 'room']),
         ]);
     }
 
@@ -210,10 +208,10 @@ class ExamPlanningController extends Controller
     public function checkRoomConflict(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'room_id'          => 'required|integer',
-            'group_id'         => 'nullable|integer',
-            'exam_date'        => 'required|date',
-            'start_time'       => 'required|string',
+            'room_id' => 'required|integer',
+            'group_id' => 'nullable|integer',
+            'exam_date' => 'required|date',
+            'start_time' => 'required|string',
             'duration_minutes' => 'required|integer',
         ]);
 
@@ -226,14 +224,14 @@ class ExamPlanningController extends Controller
 
         if ($roomConflict) {
             return response()->json([
-                'success'      => false,
+                'success' => false,
                 'has_conflict' => true,
-                'message'      => "{$roomConflict->room->name} est déjà réservée pour {$roomConflict->module->name}.",
+                'message' => "{$roomConflict->room->name} est déjà réservée pour {$roomConflict->module->name}.",
             ]);
         }
 
         // Conflit de groupe le même jour
-        if (!empty($validated['group_id'])) {
+        if (! empty($validated['group_id'])) {
             $groupConflict = Exam::with('module')
                 ->where('group_id', $validated['group_id'])
                 ->where('exam_date', $validated['exam_date'])
@@ -241,17 +239,17 @@ class ExamPlanningController extends Controller
 
             if ($groupConflict) {
                 return response()->json([
-                    'success'      => true,
+                    'success' => true,
                     'has_conflict' => false,
-                    'warning'      => "Ce groupe a déjà {$groupConflict->module->name} le même jour.",
+                    'warning' => "Ce groupe a déjà {$groupConflict->module->name} le même jour.",
                 ]);
             }
         }
 
         return response()->json([
-            'success'      => true,
+            'success' => true,
             'has_conflict' => false,
-            'message'      => 'Aucun conflit détecté.',
+            'message' => 'Aucun conflit détecté.',
         ]);
     }
 
@@ -261,26 +259,26 @@ class ExamPlanningController extends Controller
     public function downloadExamTimetablePdf(Request $request)
     {
         $sessionType = strtoupper($request->query('session_type', 'NORMALE'));
-        $filiereId   = $request->query('filiere_id');
+        $filiereId = $request->query('filiere_id');
 
         $examsQuery = Exam::with(['module.filiere', 'room']);
-        
+
         if ($sessionType === 'RATTRAPAGE') {
             $examsQuery->where('session_type', 'rattrapage');
         } else {
-            $examsQuery->where(fn($q) => $q->where('session_type', 'normale')->orWhereNull('session_type'));
+            $examsQuery->where(fn ($q) => $q->where('session_type', 'normale')->orWhereNull('session_type'));
         }
 
         if ($filiereId) {
-            $examsQuery->whereHas('module', fn($m) => $m->where('filiere_id', $filiereId));
+            $examsQuery->whereHas('module', fn ($m) => $m->where('filiere_id', $filiereId));
         }
 
-        $examsList = $examsQuery->orderBy('exam_date')->get()->map(fn($e) => [
-            'date'      => $e->exam_date?->format('d/m/Y') ?? 'À fixer',
-            'time'      => $e->start_time ? substr($e->start_time, 0, 5) . ' (' . ($e->duration_minutes ?? 120) . 'm)' : '09:00',
-            'module'    => $e->module->name ?? 'N/A',
-            'filiere'   => $e->module->filiere->name ?? 'Tronc Commun',
-            'rooms'     => $e->room->name ?? 'À affecter',
+        $examsList = $examsQuery->orderBy('exam_date')->get()->map(fn ($e) => [
+            'date' => $e->exam_date?->format('d/m/Y') ?? 'À fixer',
+            'time' => $e->start_time ? substr($e->start_time, 0, 5).' ('.($e->duration_minutes ?? 120).'m)' : '09:00',
+            'module' => $e->module->name ?? 'N/A',
+            'filiere' => $e->module->filiere->name ?? 'Tronc Commun',
+            'rooms' => $e->room->name ?? 'À affecter',
         ])->toArray();
 
         // Si vide, retourne un message au lieu de données mockées
@@ -294,12 +292,12 @@ class ExamPlanningController extends Controller
         $filiere = $filiereId ? Filiere::find($filiereId) : null;
 
         $pdf = Pdf::loadView('pdf.timetable', [
-            'session_name' => 'SESSION ' . $sessionType,
+            'session_name' => 'SESSION '.$sessionType,
             'session_type' => $sessionType,
             'academic_year' => '2025/2026',
-            'filiere_name'  => $filiere?->name ?? 'Toutes les Filières',
-            'exams'         => $examsList,
-            'date'          => now()->format('d/m/Y'),
+            'filiere_name' => $filiere?->name ?? 'Toutes les Filières',
+            'exams' => $examsList,
+            'date' => now()->format('d/m/Y'),
         ])->setPaper('a4', 'landscape');
 
         return $pdf->download("Planning_Examens_{$sessionType}_2026.pdf");
@@ -321,16 +319,16 @@ class ExamPlanningController extends Controller
             $seatingsQuery->where('room_id', $roomId);
         }
 
-        $seatings = $seatingsQuery->orderBy('seat_number')->get()->map(fn($s) => [
+        $seatings = $seatingsQuery->orderBy('seat_number')->get()->map(fn ($s) => [
             'seat_number' => $s->seat_number,
-            'full_name'   => $s->student->user->name ?? 'N/A',
-            'cne'         => $s->student->cne ?? 'N/A',
-            'cin'         => $s->student->user->cin ?? 'N/A',
+            'full_name' => $s->student->user->name ?? 'N/A',
+            'cne' => $s->student->cne ?? 'N/A',
+            'cin' => $s->student->user->cin ?? 'N/A',
         ]);
 
         $pdf = Pdf::loadView('pdf.exam_door_sign', [
-            'exam'     => $exam,
-            'room'     => $room ?? (object) ['name' => 'Non assignée', 'code' => 'N/A'],
+            'exam' => $exam,
+            'room' => $room ?? (object) ['name' => 'Non assignée', 'code' => 'N/A'],
             'seatings' => $seatings,
         ])->setPaper('a4', 'portrait');
 

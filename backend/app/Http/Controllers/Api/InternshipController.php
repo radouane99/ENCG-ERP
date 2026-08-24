@@ -28,7 +28,7 @@ class InternshipController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => InternshipResource::collection($internships),
+            'data' => InternshipResource::collection($internships),
         ]);
     }
 
@@ -46,7 +46,7 @@ class InternshipController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Stage mis à jour avec succès.',
-                'data'    => new InternshipResource($updated->load(['student.user', 'supervisor.user'])),
+                'data' => new InternshipResource($updated->load(['student.user', 'supervisor.user'])),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
@@ -54,7 +54,7 @@ class InternshipController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour du stage.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * OCR Extraction Controller - Version Finale Optimisée
- * 
+ *
  * Gère l'extraction OCR des documents avec validation, logging,
  * support multi-formats et fallbacks
  */
@@ -59,7 +59,7 @@ class OcrExtractController extends Controller
 
         // 1. Validation de la requête
         $validationResult = $this->validateRequest($request);
-        if (!$validationResult['valid']) {
+        if (! $validationResult['valid']) {
             return $this->errorResponse(
                 $validationResult['message'],
                 422,
@@ -75,7 +75,7 @@ class OcrExtractController extends Controller
 
         // Validation supplémentaire du fichier
         $fileValidation = $this->validateFile($file);
-        if (!$fileValidation['valid']) {
+        if (! $fileValidation['valid']) {
             return $this->errorResponse(
                 $fileValidation['message'],
                 422,
@@ -89,10 +89,11 @@ class OcrExtractController extends Controller
 
         // 3. Vérification des outils OCR disponibles
         $availability = $this->localOcrService->checkAvailability();
-        if (!$availability['any_available']) {
+        if (! $availability['any_available']) {
             Log::error("[OCR-{$requestId}] Aucun outil OCR disponible sur le serveur", [
-                'engines' => $availability['engines_available']
+                'engines' => $availability['engines_available'],
             ]);
+
             return $this->errorResponse(
                 'Le service OCR n\'est pas disponible. Veuillez contacter l\'administrateur.',
                 503,
@@ -105,6 +106,7 @@ class OcrExtractController extends Controller
         $cachedResult = $this->getCachedResult($cacheKey);
         if ($cachedResult) {
             Log::info("[OCR-{$requestId}] Cache hit pour: {$originalName}");
+
             return $this->successResponse(
                 $cachedResult,
                 $requestId,
@@ -128,7 +130,7 @@ class OcrExtractController extends Controller
 
             // 6. Vérification du résultat
             if (empty(trim($rawText))) {
-                $lastError = $this->localOcrService->getLastError() ?? 
+                $lastError = $this->localOcrService->getLastError() ??
                             "Impossible d'extraire le texte du document. Le fichier est peut-être illisible ou mal numérisé.";
 
                 $this->logFailedExtraction($requestId, $originalName, $docType, $mimeType, $lastError);
@@ -190,10 +192,10 @@ class OcrExtractController extends Controller
             'file' => [
                 'required',
                 'file',
-                'mimes:' . implode(',', $this->config['allowed_mimes']),
-                'max:' . ($this->config['max_file_size'] / 1024), // KB
+                'mimes:'.implode(',', $this->config['allowed_mimes']),
+                'max:'.($this->config['max_file_size'] / 1024), // KB
             ],
-            'doc_type' => 'nullable|string|in:' . implode(',', $this->config['allowed_doc_types']),
+            'doc_type' => 'nullable|string|in:'.implode(',', $this->config['allowed_doc_types']),
             'options' => 'nullable|array',
             'options.cache' => 'nullable|boolean',
             'options.cleanup' => 'nullable|boolean',
@@ -216,7 +218,7 @@ class OcrExtractController extends Controller
     private function validateFile($file): array
     {
         // Vérifier que le fichier est valide
-        if (!$file->isValid()) {
+        if (! $file->isValid()) {
             return [
                 'valid' => false,
                 'message' => 'Le fichier téléchargé est invalide ou corrompu.',
@@ -238,10 +240,10 @@ class OcrExtractController extends Controller
 
         // Vérifier le type MIME réel
         $realMime = mime_content_type($file->getRealPath());
-        if ($realMime && !in_array($realMime, array_keys($this->mimeToExtension))) {
+        if ($realMime && ! in_array($realMime, array_keys($this->mimeToExtension))) {
             return [
                 'valid' => false,
-                'message' => 'Type de fichier non supporté: ' . $realMime,
+                'message' => 'Type de fichier non supporté: '.$realMime,
                 'error' => 'unsupported_mime_type',
             ];
         }
@@ -257,7 +259,7 @@ class OcrExtractController extends Controller
         $docType = $request->input('doc_type');
 
         // Si le type est fourni et valide, l'utiliser
-        if (!empty($docType) && in_array($docType, $this->config['allowed_doc_types'])) {
+        if (! empty($docType) && in_array($docType, $this->config['allowed_doc_types'])) {
             return strtolower($docType);
         }
 
@@ -362,7 +364,7 @@ class OcrExtractController extends Controller
 
         foreach ($mapping as $target => $sources) {
             foreach ($sources as $source) {
-                if (!empty($fields[$source])) {
+                if (! empty($fields[$source])) {
                     $normalized[$target] = $fields[$source];
                     break;
                 }
@@ -371,7 +373,7 @@ class OcrExtractController extends Controller
 
         // Ajout des champs supplémentaires
         foreach ($fields as $key => $value) {
-            if (!str_starts_with($key, '_') && !isset($normalized[$key])) {
+            if (! str_starts_with($key, '_') && ! isset($normalized[$key])) {
                 $normalized[$key] = $value;
             }
         }
@@ -384,7 +386,7 @@ class OcrExtractController extends Controller
      */
     private function generateRequestId(): string
     {
-        return uniqid('ocr_', true) . '_' . substr(md5(microtime()), 0, 8);
+        return uniqid('ocr_', true).'_'.substr(md5(microtime()), 0, 8);
     }
 
     /**
@@ -393,12 +395,13 @@ class OcrExtractController extends Controller
     private function generateCacheKey($file, string $docType): string
     {
         $hash = md5(
-            $file->getClientOriginalName() .
-            $file->getSize() .
-            $file->getMimeType() .
+            $file->getClientOriginalName().
+            $file->getSize().
+            $file->getMimeType().
             $docType
         );
-        return 'ocr_result_' . $hash;
+
+        return 'ocr_result_'.$hash;
     }
 
     /**
@@ -411,9 +414,11 @@ class OcrExtractController extends Controller
                 return null;
             }
             $cached = cache()->get($key);
-            return $cached && !empty($cached['raw_text']) ? $cached : null;
+
+            return $cached && ! empty($cached['raw_text']) ? $cached : null;
         } catch (Throwable $e) {
-            Log::warning("Cache read failed: " . $e->getMessage());
+            Log::warning('Cache read failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -429,7 +434,7 @@ class OcrExtractController extends Controller
             }
             cache()->put($key, $data, now()->addHours(24));
         } catch (Throwable $e) {
-            Log::warning("Cache write failed: " . $e->getMessage());
+            Log::warning('Cache write failed: '.$e->getMessage());
         }
     }
 
@@ -438,7 +443,7 @@ class OcrExtractController extends Controller
      */
     private function logRequest(Request $request, string $requestId): void
     {
-        Log::channel($this->config['log_channel'])->info("--- OCR Extraction Triggered ---", [
+        Log::channel($this->config['log_channel'])->info('--- OCR Extraction Triggered ---', [
             'request_id' => $requestId,
             'file' => $request->file('file')?->getClientOriginalName(),
             'doc_type' => $request->input('doc_type'),
@@ -458,18 +463,18 @@ class OcrExtractController extends Controller
         array $responseData
     ): void {
         $normalized = $responseData['normalized'] ?? [];
-        
-        Log::channel($this->config['log_channel'])->info("OCR Extraction successful", [
+
+        Log::channel($this->config['log_channel'])->info('OCR Extraction successful', [
             'request_id' => $requestId,
             'file' => $fileName,
             'doc_type' => $docType,
-            'duration' => $duration . 's',
+            'duration' => $duration.'s',
             'text_length' => strlen($responseData['raw_text'] ?? ''),
             'extracted_fields' => array_keys($responseData['fields'] ?? []),
-            'has_nom' => !empty($normalized['nom']),
-            'has_prenom' => !empty($normalized['prenom']),
-            'has_cin' => !empty($normalized['cin']),
-            'has_cne' => !empty($normalized['cne']),
+            'has_nom' => ! empty($normalized['nom']),
+            'has_prenom' => ! empty($normalized['prenom']),
+            'has_cin' => ! empty($normalized['cin']),
+            'has_cne' => ! empty($normalized['cne']),
         ]);
     }
 
@@ -483,7 +488,7 @@ class OcrExtractController extends Controller
         string $mimeType,
         string $error
     ): void {
-        Log::channel($this->config['log_channel'])->warning("OCR Extraction failed", [
+        Log::channel($this->config['log_channel'])->warning('OCR Extraction failed', [
             'request_id' => $requestId,
             'file' => $fileName,
             'doc_type' => $docType,
@@ -498,7 +503,7 @@ class OcrExtractController extends Controller
      */
     private function logCriticalError(string $requestId, string $fileName, Throwable $e): void
     {
-        Log::channel($this->config['log_channel'])->error("OCR Extraction Exception", [
+        Log::channel($this->config['log_channel'])->error('OCR Extraction Exception', [
             'request_id' => $requestId,
             'file' => $fileName,
             'message' => $e->getMessage(),
@@ -575,7 +580,7 @@ class OcrExtractController extends Controller
     public function clearCache(Request $request): JsonResponse
     {
         // Vérification des permissions (admin uniquement)
-        if (!$this->isAdmin($request)) {
+        if (! $this->isAdmin($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé',
@@ -584,6 +589,7 @@ class OcrExtractController extends Controller
 
         try {
             $this->localOcrService->clearCache();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Cache OCR nettoyé avec succès',
@@ -591,7 +597,7 @@ class OcrExtractController extends Controller
         } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du nettoyage du cache: ' . $e->getMessage(),
+                'message' => 'Erreur lors du nettoyage du cache: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -612,8 +618,8 @@ class OcrExtractController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'files' => 'required|array|max:10',
-            'files.*' => 'file|mimes:' . implode(',', $this->config['allowed_mimes']) . '|max:' . ($this->config['max_file_size'] / 1024),
-            'doc_type' => 'nullable|string|in:' . implode(',', $this->config['allowed_doc_types']),
+            'files.*' => 'file|mimes:'.implode(',', $this->config['allowed_mimes']).'|max:'.($this->config['max_file_size'] / 1024),
+            'doc_type' => 'nullable|string|in:'.implode(',', $this->config['allowed_doc_types']),
         ]);
 
         if ($validator->fails()) {
@@ -638,7 +644,7 @@ class OcrExtractController extends Controller
                 );
 
                 $rawText = $this->extractRawText($result);
-                
+
                 if (empty(trim($rawText))) {
                     $errors[] = [
                         'file' => $file->getClientOriginalName(),

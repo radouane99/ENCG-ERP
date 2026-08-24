@@ -15,8 +15,8 @@ class Campus extends Model
     protected function casts(): array
     {
         return [
-        'is_main' => 'boolean',
-    ];
+            'is_main' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo

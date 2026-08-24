@@ -2,14 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Student;
-use App\Models\Schedule;
-use App\Models\ScheduleChange;
 use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
+use App\Models\Schedule;
+use App\Models\ScheduleChange;
+use App\Models\Student;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class CalendarService
 {
@@ -19,12 +17,12 @@ class CalendarService
     public function getStudentEvents(int $studentId, Carbon $startDate, Carbon $endDate): array
     {
         $events = [];
-        $student = Student::with(['registrations' => function($query) {
+        $student = Student::with(['registrations' => function ($query) {
             $query->where('status', 'admin_validated')->latest();
         }])->findOrFail($studentId);
 
         $registration = $student->registrations->first();
-        if (!$registration || !$registration->group_id) {
+        if (! $registration || ! $registration->group_id) {
             return $events; // No active group
         }
 
@@ -51,7 +49,7 @@ class CalendarService
             foreach ($schedules as $schedule) {
                 if ($schedule->day_of_week === $dayOfWeek) {
                     $dateStr = $currentDate->toDateString();
-                    
+
                     // Check for changes (cancellation)
                     $isCancelled = false;
                     if ($changes->has($schedule->id)) {
@@ -64,12 +62,12 @@ class CalendarService
                         }
                     }
 
-                    if (!$isCancelled) {
+                    if (! $isCancelled) {
                         $events[] = [
-                            'id' => 'schedule_' . $schedule->id . '_' . $dateStr,
+                            'id' => 'schedule_'.$schedule->id.'_'.$dateStr,
                             'title' => $schedule->module->name ?? 'Class',
-                            'start' => $dateStr . 'T' . $schedule->start_time,
-                            'end' => $dateStr . 'T' . $schedule->end_time,
+                            'start' => $dateStr.'T'.$schedule->start_time,
+                            'end' => $dateStr.'T'.$schedule->end_time,
                             'extendedProps' => [
                                 'type' => 'class',
                                 'session_type' => $schedule->session_type,
@@ -93,10 +91,10 @@ class CalendarService
 
         foreach ($makeupChanges as $makeup) {
             $events[] = [
-                'id' => 'makeup_' . $makeup->id,
-                'title' => '[Rattrapage] ' . ($makeup->schedule->module->name ?? 'Class'),
-                'start' => $makeup->new_date . 'T' . $makeup->new_start_time,
-                'end' => $makeup->new_date . 'T' . $makeup->new_end_time,
+                'id' => 'makeup_'.$makeup->id,
+                'title' => '[Rattrapage] '.($makeup->schedule->module->name ?? 'Class'),
+                'start' => $makeup->new_date.'T'.$makeup->new_start_time,
+                'end' => $makeup->new_date.'T'.$makeup->new_end_time,
                 'extendedProps' => [
                     'type' => 'makeup',
                     'session_type' => $makeup->schedule->session_type ?? 'cm',
@@ -109,19 +107,19 @@ class CalendarService
         // 4. Fetch Exams
         $examSeatings = ExamSeating::with(['exam.module', 'room'])
             ->where('student_id', $studentId)
-            ->whereHas('exam', function($query) use ($startDate, $endDate) {
+            ->whereHas('exam', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('exam_date', [$startDate->toDateString(), $endDate->toDateString()]);
             })
             ->get();
 
         foreach ($examSeatings as $seating) {
             $exam = $seating->exam;
-            $startDateTime = Carbon::parse($exam->exam_date . ' ' . $exam->start_time);
+            $startDateTime = Carbon::parse($exam->exam_date.' '.$exam->start_time);
             $endDateTime = $startDateTime->copy()->addMinutes($exam->duration_minutes);
 
             $events[] = [
-                'id' => 'exam_' . $exam->id,
-                'title' => '[EXAM] ' . ($exam->module->name ?? 'Exam'),
+                'id' => 'exam_'.$exam->id,
+                'title' => '[EXAM] '.($exam->module->name ?? 'Exam'),
                 'start' => $startDateTime->toIso8601String(),
                 'end' => $endDateTime->toIso8601String(),
                 'extendedProps' => [
@@ -143,7 +141,7 @@ class CalendarService
     public function getProfessorEvents(int $professorId, Carbon $startDate, Carbon $endDate): array
     {
         $events = [];
-        
+
         // 1. Fetch recurring schedules for professor
         $schedules = Schedule::with(['module', 'room', 'group'])
             ->where('professor_id', $professorId)
@@ -164,7 +162,7 @@ class CalendarService
             foreach ($schedules as $schedule) {
                 if ($schedule->day_of_week === $dayOfWeek) {
                     $dateStr = $currentDate->toDateString();
-                    
+
                     $isCancelled = false;
                     if ($changes->has($schedule->id)) {
                         $dayChanges = $changes->get($schedule->id)->where('original_date', $dateStr);
@@ -176,13 +174,13 @@ class CalendarService
                         }
                     }
 
-                    if (!$isCancelled) {
+                    if (! $isCancelled) {
                         $groupName = $schedule->group->name ?? '';
                         $events[] = [
-                            'id' => 'schedule_' . $schedule->id . '_' . $dateStr,
-                            'title' => ($schedule->module->name ?? 'Class') . ' - ' . $groupName,
-                            'start' => $dateStr . 'T' . $schedule->start_time,
-                            'end' => $dateStr . 'T' . $schedule->end_time,
+                            'id' => 'schedule_'.$schedule->id.'_'.$dateStr,
+                            'title' => ($schedule->module->name ?? 'Class').' - '.$groupName,
+                            'start' => $dateStr.'T'.$schedule->start_time,
+                            'end' => $dateStr.'T'.$schedule->end_time,
                             'extendedProps' => [
                                 'type' => 'class',
                                 'session_type' => $schedule->session_type,
@@ -205,10 +203,10 @@ class CalendarService
 
         foreach ($makeupChanges as $makeup) {
             $events[] = [
-                'id' => 'makeup_' . $makeup->id,
-                'title' => '[Rattrapage] ' . ($makeup->schedule->module->name ?? 'Class'),
-                'start' => $makeup->new_date . 'T' . $makeup->new_start_time,
-                'end' => $makeup->new_date . 'T' . $makeup->new_end_time,
+                'id' => 'makeup_'.$makeup->id,
+                'title' => '[Rattrapage] '.($makeup->schedule->module->name ?? 'Class'),
+                'start' => $makeup->new_date.'T'.$makeup->new_start_time,
+                'end' => $makeup->new_date.'T'.$makeup->new_end_time,
                 'extendedProps' => [
                     'type' => 'makeup',
                     'session_type' => $makeup->schedule->session_type ?? 'cm',
@@ -220,7 +218,7 @@ class CalendarService
 
         // 4. Fetch Exam Surveillances
         $surveillances = ExamSurveillance::with(['exam.module', 'room'])
-            ->whereHas('exam', function($query) use ($startDate, $endDate) {
+            ->whereHas('exam', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('exam_date', [$startDate->toDateString(), $endDate->toDateString()]);
             })
             // Since exam_surveillances binds professor_id to User table, check logic:
@@ -229,12 +227,12 @@ class CalendarService
 
         foreach ($surveillances as $surveillance) {
             $exam = $surveillance->exam;
-            $startDateTime = Carbon::parse($exam->exam_date . ' ' . $exam->start_time);
+            $startDateTime = Carbon::parse($exam->exam_date.' '.$exam->start_time);
             $endDateTime = $startDateTime->copy()->addMinutes($exam->duration_minutes);
 
             $events[] = [
-                'id' => 'surveillance_' . $surveillance->id,
-                'title' => '[SURVEILLANCE] ' . ($exam->module->name ?? 'Exam'),
+                'id' => 'surveillance_'.$surveillance->id,
+                'title' => '[SURVEILLANCE] '.($exam->module->name ?? 'Exam'),
                 'start' => $startDateTime->toIso8601String(),
                 'end' => $endDateTime->toIso8601String(),
                 'extendedProps' => [

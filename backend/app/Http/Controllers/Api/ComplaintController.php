@@ -28,9 +28,9 @@ class ComplaintController extends Controller
     {
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
-            'type'       => 'required|string',
-            'subject'    => 'required|string|max:255',
-            'message'    => 'required|string',
+            'type' => 'required|string',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
         ]);
 
         $complaint = Complaint::create($validated);
@@ -38,7 +38,7 @@ class ComplaintController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Réclamation envoyée.',
-            'data'    => $complaint,
+            'data' => $complaint,
         ]);
     }
 
@@ -60,7 +60,7 @@ class ComplaintController extends Controller
         $complaint = Complaint::findOrFail($id);
 
         $validated = $request->validate([
-            'status'         => 'string|in:pending,investigating,resolved,closed',
+            'status' => 'string|in:pending,investigating,resolved,closed',
             'admin_response' => 'nullable|string',
         ]);
 
@@ -70,7 +70,7 @@ class ComplaintController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Réclamation traitée.',
-            'data'    => $complaint,
+            'data' => $complaint,
         ]);
     }
 
@@ -80,10 +80,10 @@ class ComplaintController extends Controller
     public function submitGradeAppeal(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'student_id'    => 'required|exists:students,id',
+            'student_id' => 'required|exists:students,id',
             'assessment_id' => 'required|exists:assessments,id',
-            'grade_id'      => 'nullable|exists:grades,id',
-            'reason'        => 'required|string|max:1000',
+            'grade_id' => 'nullable|exists:grades,id',
+            'reason' => 'required|string|max:1000',
         ]);
 
         $existingGrade = Grade::where('student_id', $validated['student_id'])
@@ -91,17 +91,17 @@ class ComplaintController extends Controller
             ->first();
 
         $appeal = GradeAppeal::create([
-            'student_id'    => $validated['student_id'],
+            'student_id' => $validated['student_id'],
             'assessment_id' => $validated['assessment_id'],
-            'grade_id'      => $existingGrade?->id,
-            'reason'        => $validated['reason'],
-            'status'        => 'pending',
-            'old_grade'     => $existingGrade?->value ?? 0.00,
+            'grade_id' => $existingGrade?->id,
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+            'old_grade' => $existingGrade?->value ?? 0.00,
         ]);
 
         return response()->json([
-            'success'   => true,
-            'message'   => 'Réclamation de note transmise au professeur.',
+            'success' => true,
+            'message' => 'Réclamation de note transmise au professeur.',
             'appeal_id' => $appeal->id,
         ], 201);
     }
@@ -117,18 +117,18 @@ class ComplaintController extends Controller
             $query->where('student_id', $request->student_id);
         }
 
-        $appeals = $query->latest()->get()->map(fn($a) => [
-            'id'              => $a->id,
-            'student_name'    => $a->student->user->name ?? 'N/A',
-            'cne'             => $a->student->cne ?? 'N/A',
-            'module_name'     => $a->assessment->module->name ?? 'N/A',
+        $appeals = $query->latest()->get()->map(fn ($a) => [
+            'id' => $a->id,
+            'student_name' => $a->student->user->name ?? 'N/A',
+            'cne' => $a->student->cne ?? 'N/A',
+            'module_name' => $a->assessment->module->name ?? 'N/A',
             'assessment_type' => $a->assessment->type ?? 'N/A',
-            'reason'          => $a->reason,
-            'old_grade'       => $a->old_grade,
-            'new_grade'       => $a->new_grade,
-            'status'          => $a->status,
+            'reason' => $a->reason,
+            'old_grade' => $a->old_grade,
+            'new_grade' => $a->new_grade,
+            'status' => $a->status,
             'professor_notes' => $a->professor_notes,
-            'created_at'      => $a->created_at?->format('d/m/Y'),
+            'created_at' => $a->created_at?->format('d/m/Y'),
         ]);
 
         return response()->json(['success' => true, 'data' => $appeals]);
@@ -140,29 +140,29 @@ class ComplaintController extends Controller
     public function resolveGradeAppeal(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'status'          => 'required|string|in:approved,rejected,under_review',
-            'new_grade'       => 'required_if:status,approved|nullable|numeric|min:0|max:20',
+            'status' => 'required|string|in:approved,rejected,under_review',
+            'new_grade' => 'required_if:status,approved|nullable|numeric|min:0|max:20',
             'professor_notes' => 'nullable|string',
         ]);
 
         $appeal = GradeAppeal::findOrFail($id);
 
         $appeal->update([
-            'status'          => $validated['status'],
-            'new_grade'       => $validated['status'] === 'approved' ? $validated['new_grade'] : null,
+            'status' => $validated['status'],
+            'new_grade' => $validated['status'] === 'approved' ? $validated['new_grade'] : null,
             'professor_notes' => $validated['professor_notes'] ?? null,
-            'resolved_at'     => now(),
+            'resolved_at' => now(),
         ]);
 
         // Mettre à jour la note officielle si approuvé
         if ($validated['status'] === 'approved') {
             Grade::updateOrCreate(
                 [
-                    'student_id'    => $appeal->student_id,
+                    'student_id' => $appeal->student_id,
                     'assessment_id' => $appeal->assessment_id,
                 ],
                 [
-                    'value'  => $validated['new_grade'],
+                    'value' => $validated['new_grade'],
                     'absent' => false,
                 ]
             );

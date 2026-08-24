@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\Exam;
+use App\Models\ExamSeating;
 use App\Models\Group;
+use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
@@ -38,7 +41,7 @@ class GroupController extends Controller
             $query->where('semester_number', (int) $request->semester);
         }
 
-        if ($user && $user->professor && !$user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+        if ($user && $user->professor && ! $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             $assignedGroupIds = $this->accessService->getAuthorizedGroupIds($user);
             if ($assignedGroupIds->isNotEmpty()) {
                 $query->whereIn('id', $assignedGroupIds);
@@ -50,7 +53,7 @@ class GroupController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $mapped,
+            'data' => $mapped,
         ]);
     }
 
@@ -67,14 +70,14 @@ class GroupController extends Controller
         $validated = $request->validate([
             'name' => [
                 'required', 'string', 'max:100',
-                Rule::unique('groups', 'name')->where(fn($query) => $query->where('academic_year_id', $academicYearId)),
+                Rule::unique('groups', 'name')->where(fn ($query) => $query->where('academic_year_id', $academicYearId)),
             ],
-            'filiere_id'       => 'nullable|exists:filieres,id',
+            'filiere_id' => 'nullable|exists:filieres,id',
             'academic_year_id' => 'nullable|exists:academic_years,id',
-            'semester_number'  => 'required|integer|min:1|max:12',
-            'capacity'         => 'required|integer|min:1',
+            'semester_number' => 'required|integer|min:1|max:12',
+            'capacity' => 'required|integer|min:1',
         ], [
-            'name.unique' => 'Un groupe portant le nom "' . $request->input('name') . '" existe déjà.',
+            'name.unique' => 'Un groupe portant le nom "'.$request->input('name').'" existe déjà.',
         ]);
 
         $group = $this->groupService->createGroup($validated);
@@ -82,7 +85,7 @@ class GroupController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Groupe créé avec succès.',
-            'data'    => $group,
+            'data' => $group,
         ], 201);
     }
 
@@ -97,14 +100,14 @@ class GroupController extends Controller
         $validated = $request->validate([
             'name' => [
                 'sometimes', 'required', 'string', 'max:100',
-                Rule::unique('groups', 'name')->where(fn($query) => $query->where('academic_year_id', $academicYearId))->ignore($group->id),
+                Rule::unique('groups', 'name')->where(fn ($query) => $query->where('academic_year_id', $academicYearId))->ignore($group->id),
             ],
-            'filiere_id'       => 'nullable|exists:filieres,id',
+            'filiere_id' => 'nullable|exists:filieres,id',
             'academic_year_id' => 'nullable|exists:academic_years,id',
-            'semester_number'  => 'sometimes|required|integer|min:1|max:12',
-            'capacity'         => 'sometimes|required|integer|min:1',
+            'semester_number' => 'sometimes|required|integer|min:1|max:12',
+            'capacity' => 'sometimes|required|integer|min:1',
         ], [
-            'name.unique' => 'Un groupe portant le nom "' . $request->input('name') . '" existe déjà.',
+            'name.unique' => 'Un groupe portant le nom "'.$request->input('name').'" existe déjà.',
         ]);
 
         $group = $this->groupService->updateGroup($group, $validated);
@@ -112,7 +115,7 @@ class GroupController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Groupe mis à jour.',
-            'data'    => $group,
+            'data' => $group,
         ]);
     }
 
@@ -126,9 +129,9 @@ class GroupController extends Controller
         DB::transaction(function () use ($group) {
             StudentRegistration::where('group_id', $group->id)->update(['group_id' => null]);
             StudentPathway::where('group_id', $group->id)->update(['group_id' => null]);
-            \App\Models\Exam::where('group_id', $group->id)->update(['group_id' => null]);
-            \App\Models\Schedule::where('group_id', $group->id)->delete();
-            \App\Models\ExamSeating::whereHas('exam', fn($q) => $q->where('group_id', $group->id))->delete();
+            Exam::where('group_id', $group->id)->update(['group_id' => null]);
+            Schedule::where('group_id', $group->id)->delete();
+            ExamSeating::whereHas('exam', fn ($q) => $q->where('group_id', $group->id))->delete();
             $group->delete();
         });
 
@@ -152,21 +155,21 @@ class GroupController extends Controller
 
         $students = Student::with('user')->whereIn('id', $studentIds)->get();
 
-        $mapped = $students->map(fn($st) => [
-            'id'          => $st->id,
-            'cne'         => $st->cne ?? 'N' . (13800000 + $st->id),
-            'first_name'  => $st->user->first_name ?? 'Étudiant',
-            'last_name'   => $st->user->last_name ?? '#' . $st->id,
-            'email'       => $st->user->email ?? 'student' . $st->id . '@encg.ma',
+        $mapped = $students->map(fn ($st) => [
+            'id' => $st->id,
+            'cne' => $st->cne ?? 'N'.(13800000 + $st->id),
+            'first_name' => $st->user->first_name ?? 'Étudiant',
+            'last_name' => $st->user->last_name ?? '#'.$st->id,
+            'email' => $st->user->email ?? 'student'.$st->id.'@encg.ma',
             'is_delegate' => $group->delegate_student_id == $st->id,
         ]);
 
         return response()->json([
-            'success'  => true,
-            'group'    => [
-                'id'                  => $group->id,
-                'name'                => $group->name,
-                'delegate_name'       => $group->delegate_name,
+            'success' => true,
+            'group' => [
+                'id' => $group->id,
+                'name' => $group->name,
+                'delegate_name' => $group->delegate_name,
                 'delegate_student_id' => $group->delegate_student_id,
             ],
             'students' => $mapped,
@@ -182,12 +185,12 @@ class GroupController extends Controller
 
         $group->update([
             'delegate_student_id' => $request->input('student_id'),
-            'delegate_name'       => $request->input('student_name'),
+            'delegate_name' => $request->input('student_name'),
         ]);
 
         return response()->json([
-            'success'       => true,
-            'message'       => 'Délégué mis à jour : ' . $request->input('student_name'),
+            'success' => true,
+            'message' => 'Délégué mis à jour : '.$request->input('student_name'),
             'delegate_name' => $request->input('student_name'),
         ]);
     }
@@ -198,7 +201,7 @@ class GroupController extends Controller
     public function dispatchStudentsToGroups(Request $request): JsonResponse
     {
         $filiereId = $request->input('filiere_id');
-        if (!$filiereId) {
+        if (! $filiereId) {
             return response()->json(['success' => false, 'message' => 'Filière requise.'], 422);
         }
 
@@ -221,8 +224,8 @@ class GroupController extends Controller
         }
 
         return response()->json([
-            'success'          => true,
-            'message'          => "{$dispatched} étudiants répartis.",
+            'success' => true,
+            'message' => "{$dispatched} étudiants répartis.",
             'dispatched_count' => $dispatched,
         ]);
     }

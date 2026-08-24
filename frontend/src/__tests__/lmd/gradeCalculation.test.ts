@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest'
  * Standard: ENCG Fès / MESRSFC
  */
 describe('Moroccan LMD Academic Deliberation Engine Rules', () => {
-  const ELIMINATORY_THRESHOLD = 7.0
+  const ELIMINATORY_THRESHOLD = 6.0
   const PASSING_THRESHOLD = 10.0
   const SYSTEM_RACHAT_LOWER_BOUND = 9.5
 
@@ -46,9 +46,9 @@ describe('Moroccan LMD Academic Deliberation Engine Rules', () => {
     expect(result.hasEliminatory).toBe(false)
   })
 
-  it('forces rattrapage if any single module has eliminatory mark (< 7.0) even with high average', () => {
-    const result = evaluateSemester([16.0, 15.0, 14.0, 6.5])
-    expect(result.average).toBe(12.88)
+  it('forces rattrapage if any single module has eliminatory mark (< 6.0) even with high average', () => {
+    const result = evaluateSemester([16.0, 15.0, 14.0, 5.5])
+    expect(result.average).toBe(12.63)
     expect(result.status).toBe('rattrapage')
     expect(result.hasEliminatory).toBe(true)
   })

@@ -25,31 +25,31 @@ class RoomController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('code', 'like', "%{$request->search}%");
+                    ->orWhere('code', 'like', "%{$request->search}%");
             });
         }
 
-        $rooms = $query->get()->map(fn($r) => [
-            'id'               => $r->id,
-            'name'             => $r->name,
-            'code'             => $r->code,
-            'type'             => $r->type,
-            'capacity'         => $r->capacity,
-            'exam_capacity'    => $r->exam_capacity ?? (int) floor($r->capacity / 2),
-            'has_projector'    => $r->has_projector,
-            'has_ac'           => $r->has_ac,
-            'is_available'     => $r->is_available,
+        $rooms = $query->get()->map(fn ($r) => [
+            'id' => $r->id,
+            'name' => $r->name,
+            'code' => $r->code,
+            'type' => $r->type,
+            'capacity' => $r->capacity,
+            'exam_capacity' => $r->exam_capacity ?? (int) floor($r->capacity / 2),
+            'has_projector' => $r->has_projector,
+            'has_ac' => $r->has_ac,
+            'is_available' => $r->is_available,
             'equipment_status' => $r->equipment_status ?? ['projector' => 'ok', 'ac' => 'ok', 'sound' => 'ok', 'pc_lab' => 'ok'],
         ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $rooms,
-            'stats'   => [
-                'total'               => $rooms->count(),
-                'available'           => $rooms->where('is_available', true)->count(),
-                'amphitheatres'       => $rooms->where('type', 'amphitheatre')->count(),
-                'total_capacity'      => $rooms->sum('capacity'),
+            'data' => $rooms,
+            'stats' => [
+                'total' => $rooms->count(),
+                'available' => $rooms->where('is_available', true)->count(),
+                'amphitheatres' => $rooms->where('type', 'amphitheatre')->count(),
+                'total_capacity' => $rooms->sum('capacity'),
                 'total_exam_capacity' => $rooms->sum('exam_capacity'),
             ],
         ]);
@@ -63,14 +63,14 @@ class RoomController extends Controller
         abort_unless($request->user()->can('infrastructure.create'), 403);
 
         $validated = $request->validate([
-            'name'             => 'required|string|max:100',
-            'code'             => 'required|string|max:20|unique:rooms,code',
-            'type'             => 'required|in:classroom,amphitheatre,lab,seminar,admin',
-            'capacity'         => 'required|integer|min:1',
-            'exam_capacity'    => 'nullable|integer|min:1',
-            'has_projector'    => 'boolean',
-            'has_ac'           => 'boolean',
-            'is_available'     => 'boolean',
+            'name' => 'required|string|max:100',
+            'code' => 'required|string|max:20|unique:rooms,code',
+            'type' => 'required|in:classroom,amphitheatre,lab,seminar,admin',
+            'capacity' => 'required|integer|min:1',
+            'exam_capacity' => 'nullable|integer|min:1',
+            'has_projector' => 'boolean',
+            'has_ac' => 'boolean',
+            'is_available' => 'boolean',
             'equipment_status' => 'nullable|array',
         ]);
 
@@ -84,7 +84,7 @@ class RoomController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Salle créée avec succès.',
-            'data'    => $room,
+            'data' => $room,
         ], 201);
     }
 
@@ -96,14 +96,14 @@ class RoomController extends Controller
         abort_unless($request->user()->can('infrastructure.edit'), 403);
 
         $validated = $request->validate([
-            'name'             => 'sometimes|required|string|max:100',
-            'code'             => 'sometimes|required|string|max:20|unique:rooms,code,' . $room->id,
-            'type'             => 'sometimes|required|in:classroom,amphitheatre,lab,seminar,admin',
-            'capacity'         => 'sometimes|required|integer|min:1',
-            'exam_capacity'    => 'nullable|integer|min:1',
-            'has_projector'    => 'boolean',
-            'has_ac'           => 'boolean',
-            'is_available'     => 'boolean',
+            'name' => 'sometimes|required|string|max:100',
+            'code' => 'sometimes|required|string|max:20|unique:rooms,code,'.$room->id,
+            'type' => 'sometimes|required|in:classroom,amphitheatre,lab,seminar,admin',
+            'capacity' => 'sometimes|required|integer|min:1',
+            'exam_capacity' => 'nullable|integer|min:1',
+            'has_projector' => 'boolean',
+            'has_ac' => 'boolean',
+            'is_available' => 'boolean',
             'equipment_status' => 'nullable|array',
         ]);
 
@@ -112,7 +112,7 @@ class RoomController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Salle mise à jour.',
-            'data'    => $room,
+            'data' => $room,
         ]);
     }
 

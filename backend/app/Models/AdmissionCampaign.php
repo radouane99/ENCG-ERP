@@ -16,11 +16,11 @@ class AdmissionCampaign extends Model
     protected function casts(): array
     {
         return [
-        'open_date' => 'date',
-        'close_date' => 'date',
-        'result_date' => 'date',
-        'requires_entrance_exam' => 'boolean',
-    ];
+            'open_date' => 'date',
+            'close_date' => 'date',
+            'result_date' => 'date',
+            'requires_entrance_exam' => 'boolean',
+        ];
     }
 
     public function institution(): BelongsTo

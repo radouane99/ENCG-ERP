@@ -2,39 +2,24 @@
 
 namespace App\Domain\Deliberation\Services;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
 use App\Models\ResitEligibility;
 use App\Models\Student;
-use App\Models\Module;
 use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Enterprise Service for processing academic deliberations (Apogée style).
- * Handles average calculations, elimination rules, rachat, and Rattrapage eligibility.
+ * Orchestration jury / décisions — les moyennes module/semestre viennent du moteur LMD canonique.
  */
-class DeliberationEngine
+class DeliberationEngine extends CanonicalDeliberationEngine
 {
-    public function __construct(
-        private CanonicalDeliberationEngine $moduleEngine = new CanonicalDeliberationEngine()
-    ) {}
-
-    public function calculateModuleResult(Student $student, Module $module): array
-    {
-        return $this->moduleEngine->calculateModuleResult($student, $module);
-    }
-
-    public function calculateSemesterDeliberation(Student $student, $modules): array
-    {
-        return $this->moduleEngine->calculateSemesterDeliberation($student, $modules);
-    }
-    /**
-     * Run a full deliberation process for a given semester or year.
-     */
     public function processDeliberation(Deliberation $deliberation): void
     {
+        app(\App\Services\Academic\DeliberationSealService::class)->assertNotSealed($deliberation);
+
         DB::transaction(function () use ($deliberation) {
             $deliberation->update(['status' => 'in_progress']);
 
@@ -52,7 +37,7 @@ class DeliberationEngine
                     $this->grantResitEligibility($student->id, $moduleAverages, $deliberation);
                 }
 
-                // 4. Check for eliminatory marks (< 7/20)
+                // 4. Check for eliminatory marks (< 6/20 NPN)
                 $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages);
 
                 // 5. Calculate semester average
@@ -63,9 +48,9 @@ class DeliberationEngine
                 $wasCompensated = false;
                 $compensatedAverage = null;
 
-                if ($semesterAverage >= 10 && ! $hasEliminatory) {
+                if ($semesterAverage >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
                     $decision = 'admitted';
-                } elseif ($semesterAverage >= 9.5 && $semesterAverage < 10 && ! $hasEliminatory) {
+                } elseif ($semesterAverage >= LmdRules::RACHAT_MIN_AVERAGE && $semesterAverage < LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
                     // System Rachat (Jury Compensation)
                     $decision = 'admitted';
                     $wasCompensated = true;
@@ -167,9 +152,8 @@ class DeliberationEngine
             return;
         }
 
-        // Standard rule: < 10 grants rattrapage eligibility
         foreach ($moduleAverages as $module) {
-            if ($module->final_module_score < 10.0) {
+            if ($module->final_module_score < LmdRules::VALIDATION_THRESHOLD) {
                 ResitEligibility::updateOrCreate(
                     [
                         'student_id' => $studentId,
@@ -186,11 +170,8 @@ class DeliberationEngine
 
     private function checkEliminatoryMarks(Collection $moduleAverages): bool
     {
-        // Moroccan university standard: < 7/20 is often eliminatory for the whole semester
-        $threshold = 7.0;
-
         foreach ($moduleAverages as $module) {
-            if ($module->final_module_score < $threshold) {
+            if (LmdRules::isEliminatory((float) $module->final_module_score)) {
                 return true;
             }
         }
@@ -200,7 +181,7 @@ class DeliberationEngine
 
     private function calculateMention(float $average): ?string
     {
-        if ($average < 10) {
+        if ($average < LmdRules::VALIDATION_THRESHOLD) {
             return null;
         }
         if ($average < 12) {

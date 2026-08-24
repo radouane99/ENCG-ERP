@@ -59,4 +59,13 @@ return [
         'traces_sample_rate' => (float) env('SENTRY_TRACES_SAMPLE_RATE', 0.1),
     ],
 
+    'koha' => [
+        'base_url' => env('KOHA_BASE_URL', ''),
+        'api_key' => env('KOHA_API_KEY', ''),
+    ],
+
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+    ],
+
 ];

@@ -20,19 +20,19 @@ class AdminBlockchainController extends Controller
         $certificates = BlockchainCertificate::with('student.user')
             ->orderByDesc('certified_at')
             ->get()
-            ->map(fn($cert) => [
-                'id'             => $cert->id,
-                'student_name'   => $cert->student->user->name ?? $cert->student->first_name . ' ' . $cert->student->last_name,
-                'degree'         => $cert->diploma_name,
-                'date'           => $cert->certified_at->format('d/m/Y'),
-                'hash'           => $cert->hash,
+            ->map(fn ($cert) => [
+                'id' => $cert->id,
+                'student_name' => $cert->student->user->name ?? $cert->student->first_name.' '.$cert->student->last_name,
+                'degree' => $cert->diploma_name,
+                'date' => $cert->certified_at->format('d/m/Y'),
+                'hash' => $cert->hash,
                 'transaction_id' => $cert->transaction_id,
-                'status'         => $cert->network_status,
+                'status' => $cert->network_status,
             ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $certificates,
+            'data' => $certificates,
         ]);
     }
 
@@ -75,19 +75,19 @@ class AdminBlockchainController extends Controller
             $filiere = $student->latestPathway?->filiere
                 ?? ($student->filiere_id ? Filiere::find($student->filiere_id) : null);
             if ($filiere) {
-                $degreeName = 'Diplôme ENCG - ' . $filiere->name;
+                $degreeName = 'Diplôme ENCG - '.$filiere->name;
             }
 
-            $rawData = $student->id . $degreeName . $year . now()->timestamp;
-            $hash    = '0x' . hash('sha256', $rawData);
-            $txId    = 'tx_' . Str::random(24);
+            $rawData = $student->id.$degreeName.$year.now()->timestamp;
+            $hash = '0x'.hash('sha256', $rawData);
+            $txId = 'tx_'.Str::random(24);
 
             BlockchainCertificate::create([
-                'student_id'     => $student->id,
-                'diploma_name'   => $degreeName,
-                'hash'           => $hash,
+                'student_id' => $student->id,
+                'diploma_name' => $degreeName,
+                'hash' => $hash,
                 'transaction_id' => $txId,
-                'certified_at'   => now(),
+                'certified_at' => now(),
                 'network_status' => 'VERIFIED',
             ]);
 
@@ -97,7 +97,7 @@ class AdminBlockchainController extends Controller
         return response()->json([
             'success' => true,
             'message' => "La promotion {$year} a été ancrée sur la blockchain ({$certifiedCount} diplômes).",
-            'count'   => $certifiedCount,
+            'count' => $certifiedCount,
         ]);
     }
 
@@ -115,7 +115,7 @@ class AdminBlockchainController extends Controller
             ->orWhere('transaction_id', $request->input('query'))
             ->first();
 
-        if (!$cert) {
+        if (! $cert) {
             return response()->json([
                 'success' => false,
                 'message' => 'Aucun certificat trouvé.',
@@ -125,11 +125,11 @@ class AdminBlockchainController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Diplôme Authentique.',
-            'data'    => [
-                'student'      => $cert->student->user->name ?? 'N/A',
-                'degree'       => $cert->diploma_name,
+            'data' => [
+                'student' => $cert->student->user->name ?? 'N/A',
+                'degree' => $cert->diploma_name,
                 'certified_at' => $cert->certified_at->format('d/m/Y H:i'),
-                'hash'         => $cert->hash,
+                'hash' => $cert->hash,
             ],
         ]);
     }

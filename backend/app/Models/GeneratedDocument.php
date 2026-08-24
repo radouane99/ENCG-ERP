@@ -4,23 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GeneratedDocument extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
-        'expires_at' => 'datetime',
-        'download_count' => 'integer',
-    ];
+            'expires_at' => 'datetime',
+            'download_count' => 'integer',
+        ];
     }
 
     public function request(): BelongsTo
@@ -33,4 +33,3 @@ class GeneratedDocument extends Model implements HasMedia
         return $this->belongsTo(Student::class);
     }
 }
-

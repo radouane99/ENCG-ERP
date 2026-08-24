@@ -12,11 +12,11 @@ class WhatsAppService
     public function sendMessage(?int $userId, string $phone, string $message): NotificationLog
     {
         return NotificationLog::create([
-            'user_id'   => $userId,
-            'type'      => 'whatsapp',
+            'user_id' => $userId,
+            'type' => 'whatsapp',
             'recipient' => $phone,
-            'message'   => $message,
-            'status'    => 'sent',
+            'message' => $message,
+            'status' => 'sent',
         ]);
     }
 }

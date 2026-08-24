@@ -26,7 +26,7 @@ class AdmissionCampaignController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $campaigns,
+            'data' => $campaigns,
         ]);
     }
 
@@ -58,16 +58,16 @@ class AdmissionCampaignController extends Controller
         });
 
         $stats = [
-            'total'    => $applications->count(),
-            'pending'  => $applications->filter(fn($a) => str_contains(strtolower(($a->status ?? '') . ' ' . ($a->list_type ?? '')), 'attente'))->count(),
-            'accepted' => $applications->filter(fn($a) => str_contains(strtolower(($a->status ?? '') . ' ' . ($a->list_type ?? '')), 'principale') || in_array($a->status, ['accepted', 'admis', 'admis_tafem', 'valide']))->count(),
-            'rejected' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'rejete', 'suspended']))->count(),
+            'total' => $applications->count(),
+            'pending' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'attente'))->count(),
+            'accepted' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'principale') || in_array($a->status, ['accepted', 'admis', 'admis_tafem', 'valide']))->count(),
+            'rejected' => $applications->filter(fn ($a) => in_array($a->status, ['rejected', 'rejete', 'suspended']))->count(),
         ];
 
         return response()->json([
             'success' => true,
-            'data'    => $applications,
-            'stats'   => $stats,
+            'data' => $applications,
+            'stats' => $stats,
         ]);
     }
 }

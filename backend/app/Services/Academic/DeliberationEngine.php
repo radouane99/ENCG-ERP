@@ -2,7 +2,7 @@
 
 namespace App\Services\Academic;
 
-use App\Models\DisciplinaryCase;
+use App\Domain\Deliberation\LmdRules;
 use App\Models\DisciplinaryDecision;
 use App\Models\Grade;
 use App\Models\Module;
@@ -16,54 +16,55 @@ class DeliberationEngine
     public function calculateModuleResult(Student $student, Module $module): array
     {
         // Vérifier les sanctions disciplinaires
-        $sanction = DisciplinaryDecision::whereHas('disciplinaryCase', function ($q) use ($student, $module) {
+        $sanction = DisciplinaryDecision::whereHas('disciplinaryCase', function ($q) use ($student) {
             $q->where('student_id', $student->id)
-              ->where('status', 'resolved');
+                ->where('status', 'resolved');
         })->whereIn('sanction_type', ['annulation_module', 'annulation_semestre', 'exclusion'])
-          ->first();
+            ->first();
 
         if ($sanction) {
             return match ($sanction->sanction_type) {
                 'annulation_module' => [
-                    'average'              => 0.0,
-                    'status'               => 'FRAUDE',
-                    'has_eliminatory'      => true,
-                    'missing_grades'       => false,
+                    'average' => 0.0,
+                    'status' => 'FRAUDE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
                     'disciplinary_mention' => 'Annulation de Note (Conseil de Discipline)',
                 ],
                 'annulation_semestre', 'exclusion' => [
-                    'average'              => 0.0,
-                    'status'               => 'DISCIPLINE',
-                    'has_eliminatory'      => true,
-                    'missing_grades'       => false,
+                    'average' => 0.0,
+                    'status' => 'DISCIPLINE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
                     'disciplinary_mention' => 'Annulation du Semestre (Conseil de Discipline)',
                 ],
                 default => [],
             };
         }
 
-        $assessments   = $module->assessments;
-        $totalWeight   = 0;
-        $weightedSum   = 0;
+        $assessments = $module->assessments;
+        $totalWeight = 0;
+        $weightedSum = 0;
         $hasEliminatory = false;
-        $missingGrades  = false;
+        $missingGrades = false;
 
         foreach ($assessments as $assessment) {
             $grade = Grade::where('student_id', $student->id)
                 ->where('assessment_id', $assessment->id)
                 ->first();
 
-            if (!$grade) {
+            if (! $grade) {
                 $missingGrades = true;
+
                 continue;
             }
 
             $value = $grade->absent ? 0.0 : ($grade->value ?? 0.0);
             $weightFraction = $assessment->weight / 100.0;
-            $weightedSum   += ($value * $weightFraction);
-            $totalWeight   += $weightFraction;
+            $weightedSum += ($value * $weightFraction);
+            $totalWeight += $weightFraction;
 
-            if (in_array(strtolower($assessment->type), ['exam', 'examen', 'cc2']) && $value < 6.0) {
+            if (in_array(strtolower($assessment->type), ['exam', 'examen', 'cc2']) && LmdRules::isEliminatory($value)) {
                 $hasEliminatory = true;
             }
         }
@@ -72,17 +73,17 @@ class DeliberationEngine
 
         $status = match (true) {
             $hasEliminatory => 'NV',
-            $average < 10.0 => 'RAT',
-            default         => 'V',
+            $average < LmdRules::VALIDATION_THRESHOLD => 'RAT',
+            default => 'V',
         };
 
         return [
-            'average'              => $average,
-            'status'               => $status,
-            'has_eliminatory'      => $hasEliminatory,
-            'hasEliminatory'       => $hasEliminatory,
-            'missing_grades'       => $missingGrades,
-            'missingGrades'        => $missingGrades,
+            'average' => $average,
+            'status' => $status,
+            'has_eliminatory' => $hasEliminatory,
+            'hasEliminatory' => $hasEliminatory,
+            'missing_grades' => $missingGrades,
+            'missingGrades' => $missingGrades,
             'disciplinary_mention' => null,
         ];
     }
@@ -101,35 +102,35 @@ class DeliberationEngine
             $moduleResults = [];
             foreach ($modules as $module) {
                 $moduleResults[$module->id] = [
-                    'average'              => 0.0,
-                    'status'               => 'DISCIPLINE',
-                    'has_eliminatory'      => true,
-                    'missing_grades'       => false,
+                    'average' => 0.0,
+                    'status' => 'DISCIPLINE',
+                    'has_eliminatory' => true,
+                    'missing_grades' => false,
                     'disciplinary_mention' => 'Annulé par Conseil de Discipline',
                 ];
             }
 
             return [
                 'semester_average' => 0.0,
-                'is_admitted'      => false,
-                'has_eliminatory'  => true,
-                'is_disciplinary'  => true,
-                'decision'         => 'ANNULATION DU SEMESTRE (CONSEIL DE DISCIPLINE)',
-                'module_results'   => $moduleResults,
+                'is_admitted' => false,
+                'has_eliminatory' => true,
+                'is_disciplinary' => true,
+                'decision' => 'ANNULATION DU SEMESTRE (CONSEIL DE DISCIPLINE)',
+                'module_results' => $moduleResults,
             ];
         }
 
-        $moduleResults       = [];
-        $totalWeights        = 0;
-        $totalWeightedScore  = 0;
+        $moduleResults = [];
+        $totalWeights = 0;
+        $totalWeightedScore = 0;
         $hasEliminatoryGrade = false;
 
         foreach ($modules as $module) {
-            $res    = $this->calculateModuleResult($student, $module);
+            $res = $this->calculateModuleResult($student, $module);
             $weight = $module->coefficient ?? 1.0;
 
             $totalWeightedScore += ($res['average'] * $weight);
-            $totalWeights       += $weight;
+            $totalWeights += $weight;
 
             if ($res['has_eliminatory']) {
                 $hasEliminatoryGrade = true;
@@ -139,12 +140,11 @@ class DeliberationEngine
         }
 
         $semesterAverage = $totalWeights > 0 ? round($totalWeightedScore / $totalWeights, 2) : 0.0;
-        $isAdmitted      = $semesterAverage >= 10.0 && !$hasEliminatoryGrade;
+        $isAdmitted = $semesterAverage >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoryGrade;
 
-        // Compensation (VC)
         if ($isAdmitted) {
             foreach ($moduleResults as &$res) {
-                if ($res['status'] === 'RAT' && $res['average'] >= 7.0) {
+                if ($res['status'] === 'RAT' && $res['average'] >= LmdRules::ELIMINATORY_THRESHOLD) {
                     $res['status'] = 'VC';
                 }
             }
@@ -152,11 +152,11 @@ class DeliberationEngine
 
         return [
             'semester_average' => $semesterAverage,
-            'is_admitted'      => $isAdmitted,
-            'has_eliminatory'  => $hasEliminatoryGrade,
-            'is_disciplinary'  => false,
-            'decision'         => $isAdmitted ? 'ADMIS (SEMESTRE VALIDÉ)' : 'RATTRAPAGE / NON ADMIS',
-            'module_results'   => $moduleResults,
+            'is_admitted' => $isAdmitted,
+            'has_eliminatory' => $hasEliminatoryGrade,
+            'is_disciplinary' => false,
+            'decision' => $isAdmitted ? 'ADMIS (SEMESTRE VALIDÉ)' : 'RATTRAPAGE / NON ADMIS',
+            'module_results' => $moduleResults,
         ];
     }
 }

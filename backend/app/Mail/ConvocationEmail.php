@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -15,6 +14,7 @@ class ConvocationEmail extends Mailable
     use Queueable, SerializesModels;
 
     public array $examData;
+
     public string $pdfContent;
 
     /**
@@ -56,7 +56,7 @@ class ConvocationEmail extends Mailable
     {
         return [
             Attachment::fromData(fn () => $this->pdfContent, 'Convocation.pdf')
-                    ->withMime('application/pdf'),
+                ->withMime('application/pdf'),
         ];
     }
 }

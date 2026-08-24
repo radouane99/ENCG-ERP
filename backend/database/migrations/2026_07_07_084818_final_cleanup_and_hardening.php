@@ -34,7 +34,7 @@ return new class extends Migration
                     break;
                 }
             }
-            if (!$hasIndex) {
+            if (! $hasIndex) {
                 $table->index(['student_id', 'attendance_session_id', 'status'], 'att_rec_stu_sess_stat_idx');
             }
         });

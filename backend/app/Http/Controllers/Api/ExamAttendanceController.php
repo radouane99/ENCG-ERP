@@ -18,11 +18,11 @@ class ExamAttendanceController extends Controller
         $exam = Exam::with(['module', 'group'])->findOrFail($examId);
 
         // Étudiants inscrits au groupe de l'examen
-        $totalStudents = Student::whereHas('registrations', fn($q) => $q->where('group_id', $exam->group_id))->count();
+        $totalStudents = Student::whereHas('registrations', fn ($q) => $q->where('group_id', $exam->group_id))->count();
 
         // Fallback : par filière
         if ($totalStudents === 0) {
-            $totalStudents = Student::whereHas('registrations', fn($q) => $q->where('filiere_id', $exam->module->filiere_id))->count();
+            $totalStudents = Student::whereHas('registrations', fn ($q) => $q->where('filiere_id', $exam->module->filiere_id))->count();
         }
 
         if ($totalStudents === 0) {
@@ -34,11 +34,11 @@ class ExamAttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'total_students' => $totalStudents,
-                'present'        => $present,
-                'absent'         => $totalStudents - $present,
-                'rate'           => $totalStudents > 0 ? round(($present / $totalStudents) * 100, 1) : 0,
+                'present' => $present,
+                'absent' => $totalStudents - $present,
+                'rate' => $totalStudents > 0 ? round(($present / $totalStudents) * 100, 1) : 0,
             ],
         ]);
     }

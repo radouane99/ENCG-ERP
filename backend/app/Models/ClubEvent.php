@@ -10,8 +10,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ClubEvent extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 

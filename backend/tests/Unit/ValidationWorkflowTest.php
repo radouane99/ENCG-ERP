@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\DocumentRequest;
 use App\Enums\ValidationStatus;
+use App\Models\DocumentRequest;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ValidationWorkflowTest extends TestCase
 {
@@ -19,7 +19,7 @@ class ValidationWorkflowTest extends TestCase
 
         // We use DocumentRequest as a concrete example of a model using the trait
         $documentRequest = DocumentRequest::factory()->create([
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         $this->assertEquals('pending', $documentRequest->status);
@@ -31,7 +31,7 @@ class ValidationWorkflowTest extends TestCase
         $documentRequest->refresh();
         $this->assertEquals(ValidationStatus::REVIEWED->value, $documentRequest->status);
         $this->assertCount(1, $documentRequest->validationAudits);
-        
+
         $audit = $documentRequest->validationAudits->first();
         $this->assertEquals('pending', $audit->old_status);
         $this->assertEquals(ValidationStatus::REVIEWED->value, $audit->new_status);

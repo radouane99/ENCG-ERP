@@ -19,16 +19,16 @@ class ExamSchedulingService
         $studentIds = Group::find($exam->group_id)?->students()->pluck('students.id') ?? collect();
 
         $convocations = [];
-        $seatCounter  = 1;
+        $seatCounter = 1;
 
         foreach ($studentIds as $studentId) {
             $convocations[] = [
-                'exam_id'     => $examId,
-                'student_id'  => $studentId,
-                'room_id'     => $roomId,
+                'exam_id' => $examId,
+                'student_id' => $studentId,
+                'room_id' => $roomId,
                 'seat_number' => $seatCounter++,
-                'reference'   => Str::uuid()->toString(),
-                'status'      => 'draft',
+                'reference' => Str::uuid()->toString(),
+                'status' => 'draft',
             ];
         }
 

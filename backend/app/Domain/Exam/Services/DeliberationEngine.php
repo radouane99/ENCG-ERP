@@ -9,6 +9,4 @@ use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
 /**
  * Alias du moteur académique canonique — évite une 3e copie des règles LMD.
  */
-class DeliberationEngine extends CanonicalDeliberationEngine
-{
-}
+class DeliberationEngine extends CanonicalDeliberationEngine {}

@@ -22,7 +22,7 @@ class DocumentService
             'student' => $student,
             'trackingCode' => $trackingCode,
             'verifyUrl' => $verifyUrl,
-            'year' => now()->year . '/' . (now()->year + 1),
+            'year' => now()->year.'/'.(now()->year + 1),
         ]);
 
         $filename = "attestation_{$student->id}_{$trackingCode}.pdf";

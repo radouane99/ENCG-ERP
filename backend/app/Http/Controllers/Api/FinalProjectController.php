@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\Academic\CareerService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class FinalProjectController extends Controller
 {
@@ -22,10 +22,10 @@ class FinalProjectController extends Controller
     public function index(): JsonResponse
     {
         $projects = $this->careerService->getAllFinalProjects();
-        
+
         return response()->json([
             'success' => true,
-            'data' => $projects
+            'data' => $projects,
         ]);
     }
 
@@ -36,7 +36,7 @@ class FinalProjectController extends Controller
     {
         $validated = $request->validate([
             'defense_date' => 'required|date',
-            'room_id'      => 'nullable|integer|exists:rooms,id',
+            'room_id' => 'nullable|integer|exists:rooms,id',
         ]);
 
         $project = $this->careerService->scheduleDefense((int) $id, $validated);
@@ -44,7 +44,7 @@ class FinalProjectController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Soutenance planifiée avec succès.',
-            'data' => $project
+            'data' => $project,
         ]);
     }
 }

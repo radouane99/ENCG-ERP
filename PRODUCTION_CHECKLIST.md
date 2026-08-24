@@ -55,6 +55,10 @@ Before announcing Go-Live, perform manual testing on the following critical path
 - [ ] **File Uploads:** Test profile picture or document uploads to verify media/storage permissions and private/public disk separation.
 - [ ] **Queues:** Trigger an asynchronous job (email, notification, report generation) and verify it completes successfully in Horizon or worker logs.
 
-## 7. Stateless Architecture Check
+## 8. Backup & restore drill
+- [ ] Postgres dump runs on a documented schedule (`scripts/backup-postgres.sh`).
+- [ ] Monthly restore drill: `scripts/restore-postgres-drill.sh` into `encg_erp_drill`, smoke `php artisan test --filter=StudentTest`, drop the drill database.
+- [ ] Last restore tested on: _______________
+
 - [ ] Ensure no local session files or local cache files are being relied upon across scaled instances.
 - [ ] Verify CSRF token and Sanctum stateful domains (`SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`) are perfectly aligned with the production frontend URL.

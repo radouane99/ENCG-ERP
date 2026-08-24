@@ -24,7 +24,7 @@ class PasswordResetController extends Controller
         $request->validate(['email' => 'required|email']);
 
         $user = User::where('email', $request->email)->first();
-        if (!$user) {
+        if (! $user) {
             return $this->genericResetResponse();
         }
 
@@ -35,7 +35,7 @@ class PasswordResetController extends Controller
             ['token' => Hash::make($token), 'created_at' => Carbon::now()]
         );
 
-        $resetUrl = config('app.frontend_url', 'http://localhost:5173') . '/reset-password?token=' . $token . '&email=' . urlencode($request->email);
+        $resetUrl = config('app.frontend_url', 'http://localhost:5173').'/reset-password?token='.$token.'&email='.urlencode($request->email);
 
         Mail::to($request->email)->send(new ResetPasswordMail($resetUrl));
 
@@ -48,14 +48,14 @@ class PasswordResetController extends Controller
     public function reset(Request $request): JsonResponse
     {
         $request->validate([
-            'email'    => 'required|email',
-            'token'    => 'required|string',
+            'email' => 'required|email',
+            'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $resetRecord = DB::table('password_reset_tokens')->where('email', $request->email)->first();
 
-        if (!$resetRecord || !Hash::check($request->token, $resetRecord->token)) {
+        if (! $resetRecord || ! Hash::check($request->token, $resetRecord->token)) {
             return response()->json(['success' => false, 'message' => 'Token invalide ou expiré.'], 400);
         }
 
@@ -65,7 +65,7 @@ class PasswordResetController extends Controller
 
         try {
             $user = User::where('email', $request->email)->first();
-            if (!$user) {
+            if (! $user) {
                 return response()->json(['success' => false, 'message' => 'Token invalide ou expiré.'], 400);
             }
 
@@ -76,8 +76,9 @@ class PasswordResetController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Mot de passe réinitialisé avec succès.']);
         } catch (\Throwable $e) {
-            Log::error('Reset password error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+            Log::error('Reset password error: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Erreur: '.$e->getMessage()], 500);
         }
     }
 

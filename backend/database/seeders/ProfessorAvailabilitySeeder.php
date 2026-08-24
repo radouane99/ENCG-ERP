@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\ProfessorAvailability;
 use App\Models\AcademicYear;
+use App\Models\ProfessorAvailability;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class ProfessorAvailabilitySeeder extends Seeder
 {
@@ -18,7 +18,7 @@ class ProfessorAvailabilitySeeder extends Seeder
         $academicYear = AcademicYear::where('is_current', true)->first();
         $academicYearId = $academicYear ? $academicYear->id : 1;
 
-        $professors = User::whereHas('roles', function($q) {
+        $professors = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['professor', 'department-head', 'vacataire', 'doctorant']);
         })->get();
 
@@ -32,11 +32,11 @@ class ProfessorAvailabilitySeeder extends Seeder
             $status = ProfessorAvailability::updateOrCreate(
                 ['professor_id' => $prof->id, 'academic_year_id' => $academicYearId],
                 [
-                    'status' => 'Soumise', 
+                    'status' => 'Soumise',
                     'available_slots_count' => rand(5, 12),
                     'availability_data' => json_encode($selectedDays),
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]
             );
         }

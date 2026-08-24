@@ -3,10 +3,10 @@
 namespace App\OCR\Parsers;
 
 use App\OCR\Contracts\DocumentParserInterface;
-use App\OCR\OcrResult;
-use App\OCR\Helpers\FrenchNameHelper;
 use App\OCR\Helpers\ArabicTextHelper;
 use App\OCR\Helpers\BacFieldsHelper;
+use App\OCR\Helpers\FrenchNameHelper;
+use App\OCR\OcrResult;
 
 /**
  * Dynamic Universal Parser for Moroccan Baccalauréat Grade Transcripts.
@@ -15,7 +15,9 @@ use App\OCR\Helpers\BacFieldsHelper;
 class ReleveParser implements DocumentParserInterface
 {
     private FrenchNameHelper $frenchNameHelper;
+
     private ArabicTextHelper $arabicTextHelper;
+
     private BacFieldsHelper $bacFieldsHelper;
 
     // Liste des matières du bac marocain
@@ -39,9 +41,9 @@ class ReleveParser implements DocumentParserInterface
         ?ArabicTextHelper $arabicTextHelper = null,
         ?BacFieldsHelper $bacFieldsHelper = null
     ) {
-        $this->frenchNameHelper = $frenchNameHelper ?? new FrenchNameHelper();
-        $this->arabicTextHelper = $arabicTextHelper ?? new ArabicTextHelper();
-        $this->bacFieldsHelper  = $bacFieldsHelper ?? new BacFieldsHelper();
+        $this->frenchNameHelper = $frenchNameHelper ?? new FrenchNameHelper;
+        $this->arabicTextHelper = $arabicTextHelper ?? new ArabicTextHelper;
+        $this->bacFieldsHelper = $bacFieldsHelper ?? new BacFieldsHelper;
     }
 
     public function supports(string $docType): bool
@@ -92,6 +94,7 @@ class ReleveParser implements DocumentParserInterface
         $this->validateAndNormalizeFields($fields);
 
         $result->fields = $fields;
+
         return $result;
     }
 
@@ -102,7 +105,7 @@ class ReleveParser implements DocumentParserInterface
     {
         // Standardisation des sauts de ligne
         $text = preg_replace('/\r\n|\r/', "\n", $text);
-        
+
         // Correction des erreurs OCR communes
         $replacements = [
             '0' => 'O',  // Attention: parfois '0' est lu comme 'O'
@@ -111,12 +114,12 @@ class ReleveParser implements DocumentParserInterface
             '6' => 'G',
             '8' => 'B',
         ];
-        
+
         // Ne pas remplacer dans les nombres
-        $text = preg_replace_callback('/\b\d+\b/', function($match) {
+        $text = preg_replace_callback('/\b\d+\b/', function ($match) {
             return $match[0];
         }, $text);
-        
+
         return $text;
     }
 
@@ -167,6 +170,7 @@ class ReleveParser implements DocumentParserInterface
         // Pattern 1: Format structuré "Nom et Prénom: XXXX"
         if (preg_match('/Nom\s+et\s+Prénom\s*[:\.]?\s*([A-Z\s\-]+?)(?=\s+Code|\s+CNIE|\n|$)/i', $text, $match)) {
             $this->parseFrenchFullName($match[1], $fields);
+
             return;
         }
 
@@ -174,6 +178,7 @@ class ReleveParser implements DocumentParserInterface
         if (preg_match('/(?:NOM|Nom)\s*[:\.]?\s*([A-Z\s\-]{2,30})\s*(?:PRENOM|Prénom)\s*[:\.]?\s*([A-Z\s\-]{2,30})/i', $text, $match)) {
             $fields['last_name_fr'] = $this->normalizeFrenchName(trim($match[1]));
             $fields['first_name_fr'] = $this->normalizeFrenchName(trim($match[2]));
+
             return;
         }
 
@@ -182,16 +187,17 @@ class ReleveParser implements DocumentParserInterface
             if (strlen($match[1]) > 2 && strlen($match[2]) > 2) {
                 $fields['last_name_fr'] = $this->normalizeFrenchName($match[1]);
                 $fields['first_name_fr'] = $this->normalizeFrenchName($match[2]);
+
                 return;
             }
         }
 
         // Fallback via helper
         $frenchNames = $this->frenchNameHelper->extractName($headerZone);
-        if (!empty($frenchNames['last_name_fr'])) {
+        if (! empty($frenchNames['last_name_fr'])) {
             $fields['last_name_fr'] = $this->normalizeFrenchName($frenchNames['last_name_fr']);
         }
-        if (!empty($frenchNames['first_name_fr'])) {
+        if (! empty($frenchNames['first_name_fr'])) {
             $fields['first_name_fr'] = $this->normalizeFrenchName($frenchNames['first_name_fr']);
         }
     }
@@ -203,13 +209,13 @@ class ReleveParser implements DocumentParserInterface
     {
         $fullName = trim(preg_replace('/\s+/', ' ', $fullName));
         $parts = array_values(array_filter(explode(' ', $fullName)));
-        
+
         if (count($parts) >= 2) {
             $lastName = array_shift($parts);
             $firstName = implode(' ', $parts);
-            
+
             // Vérifier si le nom de famille est valide
-            if (strlen($lastName) >= 2 && !preg_match('/^(Code|CNIE|CIN)/i', $lastName)) {
+            if (strlen($lastName) >= 2 && ! preg_match('/^(Code|CNIE|CIN)/i', $lastName)) {
                 $fields['last_name_fr'] = $this->normalizeFrenchName($lastName);
                 $fields['first_name_fr'] = $this->normalizeFrenchName($firstName);
             }
@@ -227,6 +233,7 @@ class ReleveParser implements DocumentParserInterface
         // Pattern 1: Format structuré arabe
         if (preg_match('/(?:الاسم\s+واللقب|الاسم\s+والنسب)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]+)/u', $text, $match)) {
             $this->parseArabicFullName($match[1], $fields);
+
             return;
         }
 
@@ -234,15 +241,16 @@ class ReleveParser implements DocumentParserInterface
         if (preg_match('/(?:اللقب|النسب)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]{2,30})\s*(?:الاسم\s+الشخصي|الاسم)\s*[:\.]?\s*([\x{0600}-\x{06FF}\s]{2,30})/u', $text, $match)) {
             $fields['last_name_ar'] = $this->normalizeArabicName(trim($match[1]));
             $fields['first_name_ar'] = $this->normalizeArabicName(trim($match[2]));
+
             return;
         }
 
         // Fallback via helper
         $arabicNames = $this->arabicTextHelper->extractName($cleanHeader);
-        if (!empty($arabicNames['last_name_ar'])) {
+        if (! empty($arabicNames['last_name_ar'])) {
             $fields['last_name_ar'] = $this->normalizeArabicName($arabicNames['last_name_ar']);
         }
-        if (!empty($arabicNames['first_name_ar'])) {
+        if (! empty($arabicNames['first_name_ar'])) {
             $fields['first_name_ar'] = $this->normalizeArabicName($arabicNames['first_name_ar']);
         }
     }
@@ -263,11 +271,11 @@ class ReleveParser implements DocumentParserInterface
             '/المديرية/',
             '/الإقليمية/',
         ];
-        
+
         foreach ($exclude as $pattern) {
             $header = preg_replace($pattern, '', $header);
         }
-        
+
         return $header;
     }
 
@@ -278,7 +286,7 @@ class ReleveParser implements DocumentParserInterface
     {
         $fullName = trim(preg_replace('/\s+/', ' ', $fullName));
         $parts = array_values(array_filter(explode(' ', $fullName)));
-        
+
         if (count($parts) >= 2) {
             $fields['last_name_ar'] = $this->normalizeArabicName($parts[0]);
             $fields['first_name_ar'] = $this->normalizeArabicName(implode(' ', array_slice($parts, 1)));
@@ -301,6 +309,7 @@ class ReleveParser implements DocumentParserInterface
                 $cne = strtoupper(trim($match[1]));
                 if ($this->validateCNE($cne)) {
                     $fields['cne'] = $cne;
+
                     return;
                 }
             }
@@ -330,9 +339,10 @@ class ReleveParser implements DocumentParserInterface
                 foreach ($matches[1] as $candidate) {
                     $cin = strtoupper(trim($candidate));
                     $exclude = ['MAROC', 'ROYAUME', 'CAN', 'FRA', 'CARD', 'CNIE', 'CIN'];
-                    
-                    if (!in_array($cin, $exclude) && $this->validateCIN($cin)) {
+
+                    if (! in_array($cin, $exclude) && $this->validateCIN($cin)) {
                         $fields['cin'] = $cin;
+
                         return;
                     }
                 }
@@ -354,8 +364,9 @@ class ReleveParser implements DocumentParserInterface
     private function extractBacType(string $text, array &$fields): void
     {
         $bacType = $this->bacFieldsHelper->extractBacType($text);
-        if (!empty($bacType)) {
+        if (! empty($bacType)) {
             $fields['bac_type'] = $bacType;
+
             return;
         }
 
@@ -368,6 +379,7 @@ class ReleveParser implements DocumentParserInterface
             if (preg_match($pattern, $text, $match)) {
                 $type = strtoupper(trim($match[1] ?? $match[0]));
                 $fields['bac_type'] = $type;
+
                 return;
             }
         }
@@ -385,10 +397,10 @@ class ReleveParser implements DocumentParserInterface
             'ASSEZ BIEN',
             'PASSABLE',
             'MOYEN',
-            'EXCELLENT'
+            'EXCELLENT',
         ];
 
-        $mentionsPattern = implode('|', array_map(function($m) {
+        $mentionsPattern = implode('|', array_map(function ($m) {
             return preg_quote($m, '/');
         }, $validMentions));
 
@@ -401,9 +413,10 @@ class ReleveParser implements DocumentParserInterface
             if (preg_match($pattern, $text, $match)) {
                 $mention = strtoupper(trim($match[1]));
                 $mention = str_replace('TRÈS', 'TRES', $mention);
-                
+
                 if (in_array($mention, $validMentions)) {
                     $fields['mention'] = $mention;
+
                     return;
                 }
             }
@@ -411,7 +424,7 @@ class ReleveParser implements DocumentParserInterface
 
         // Fallback via helper
         $mention = $this->bacFieldsHelper->extractBacMention($text);
-        if (!empty($mention)) {
+        if (! empty($mention)) {
             $fields['mention'] = strtoupper($mention);
         }
     }
@@ -422,8 +435,9 @@ class ReleveParser implements DocumentParserInterface
     private function extractHighSchool(string $text, array &$fields): void
     {
         $highSchool = $this->bacFieldsHelper->extractHighSchool($text);
-        if (!empty($highSchool)) {
+        if (! empty($highSchool)) {
             $fields['high_school'] = $highSchool;
+
             return;
         }
 
@@ -437,6 +451,7 @@ class ReleveParser implements DocumentParserInterface
                 $school = trim($match[1]);
                 if (strlen($school) > 3) {
                     $fields['high_school'] = $school;
+
                     return;
                 }
             }
@@ -459,6 +474,7 @@ class ReleveParser implements DocumentParserInterface
                 $academy = trim($match[1]);
                 if (strlen($academy) > 3) {
                     $fields['academy'] = $academy;
+
                     return;
                 }
             }
@@ -478,9 +494,10 @@ class ReleveParser implements DocumentParserInterface
         foreach ($patterns as $pattern) {
             if (preg_match_all($pattern, $text, $matches)) {
                 foreach ($matches[1] as $year) {
-                    $year = (int)$year;
+                    $year = (int) $year;
                     if ($year >= 2000 && $year <= date('Y') + 2) {
                         $fields['bac_year'] = $year;
+
                         return;
                     }
                 }
@@ -503,6 +520,7 @@ class ReleveParser implements DocumentParserInterface
                 $session = strtoupper(trim($match[1]));
                 if (in_array($session, ['NORMALE', 'RATTRAPAGE', 'ORDINAIRE'])) {
                     $fields['session'] = $session;
+
                     return;
                 }
             }
@@ -571,16 +589,16 @@ class ReleveParser implements DocumentParserInterface
     private function validateAndNormalizeFields(array &$fields): void
     {
         // Normaliser les noms
-        if (!empty($fields['last_name_fr'])) {
+        if (! empty($fields['last_name_fr'])) {
             $fields['last_name_fr'] = $this->normalizeFrenchName($fields['last_name_fr']);
         }
-        if (!empty($fields['first_name_fr'])) {
+        if (! empty($fields['first_name_fr'])) {
             $fields['first_name_fr'] = $this->normalizeFrenchName($fields['first_name_fr']);
         }
-        if (!empty($fields['last_name_ar'])) {
+        if (! empty($fields['last_name_ar'])) {
             $fields['last_name_ar'] = $this->normalizeArabicName($fields['last_name_ar']);
         }
-        if (!empty($fields['first_name_ar'])) {
+        if (! empty($fields['first_name_ar'])) {
             $fields['first_name_ar'] = $this->normalizeArabicName($fields['first_name_ar']);
         }
 
@@ -611,10 +629,10 @@ class ReleveParser implements DocumentParserInterface
             ['E', 'E', 'E', 'E', 'A', 'A', 'U', 'O', 'I', 'I', 'C'],
             $name
         );
-        
+
         $name = preg_replace('/\s+/', ' ', $name);
         $name = preg_replace('/[^A-Za-z\s\-]/', '', $name);
-        
+
         return strtoupper(trim($name));
     }
 
@@ -624,7 +642,7 @@ class ReleveParser implements DocumentParserInterface
     private function normalizeArabicName(string $name): string
     {
         $name = preg_replace('/\s+/', ' ', $name);
-        
+
         $replacements = [
             'آ' => 'ا',
             'أ' => 'ا',
@@ -634,7 +652,7 @@ class ReleveParser implements DocumentParserInterface
             'ؤ' => 'و',
             'ئ' => 'ي',
         ];
-        
+
         return str_replace(array_keys($replacements), array_values($replacements), trim($name));
     }
 }

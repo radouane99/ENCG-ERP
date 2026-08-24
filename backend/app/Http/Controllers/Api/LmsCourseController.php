@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\LearningMaterial;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -50,26 +51,26 @@ class LmsCourseController extends Controller
         ];
 
         $classes = $modules->map(function ($module, $index) use ($colors) {
-            $pubs     = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
+            $pubs = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
             $supports = LearningMaterial::where('module_id', $module->id)->where('type', 'document')->count();
             $profAssigned = ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
             $teacherName = $profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
 
             return [
-                'id'       => $module->id,
-                'title'    => $module->name,
-                'code'     => $module->code ?? "MOD-{$module->id}",
-                'group'    => $module->filiere->name ?? 'TRONC COMMUN ENCG',
-                'color'    => $colors[$index % count($colors)],
-                'teacher'  => $teacherName,
-                'pubs'     => $pubs,
+                'id' => $module->id,
+                'title' => $module->name,
+                'code' => $module->code ?? "MOD-{$module->id}",
+                'group' => $module->filiere->name ?? 'TRONC COMMUN ENCG',
+                'color' => $colors[$index % count($colors)],
+                'teacher' => $teacherName,
+                'pubs' => $pubs,
                 'supports' => $supports,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data'    => $classes,
+            'data' => $classes,
         ]);
     }
 
@@ -78,18 +79,18 @@ class LmsCourseController extends Controller
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $module    = Module::findOrFail($id);
+        $module = Module::findOrFail($id);
         $materials = LearningMaterial::where('module_id', $module->id)
             ->with(['professor'])
             ->latest()
             ->get();
 
         return response()->json([
-            'success'   => true,
-            'module'    => [
-                'id'    => $module->id,
+            'success' => true,
+            'module' => [
+                'id' => $module->id,
                 'title' => $module->name,
-                'code'  => $module->code,
+                'code' => $module->code,
             ],
             'materials' => $materials,
         ]);
@@ -107,10 +108,10 @@ class LmsCourseController extends Controller
         abort_unless($hasPermittedRole, 403);
 
         $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'type'         => 'required|in:document,video,link,quiz_bank',
-            'file'         => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:51200',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|in:document,video,link,quiz_bank',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:51200',
             'external_url' => 'nullable|url',
         ]);
 
@@ -120,27 +121,27 @@ class LmsCourseController extends Controller
         }
 
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
-        if (!$academicYear) {
+        if (! $academicYear) {
             return response()->json(['success' => false, 'message' => 'Année académique introuvable.'], 404);
         }
 
         $material = LearningMaterial::create([
-            'module_id'        => $moduleId,
+            'module_id' => $moduleId,
             'academic_year_id' => $academicYear->id,
-            'professor_id'     => $request->user()->id,
-            'professor_type'   => \App\Models\User::class,
-            'title'            => $request->title,
-            'description'      => $request->description,
-            'type'             => $request->type,
-            'file_path'        => $filePath,
-            'external_url'     => $request->external_url,
-            'is_published'     => true,
+            'professor_id' => $request->user()->id,
+            'professor_type' => User::class,
+            'title' => $request->title,
+            'description' => $request->description,
+            'type' => $request->type,
+            'file_path' => $filePath,
+            'external_url' => $request->external_url,
+            'is_published' => true,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Support ajouté avec succès.',
-            'data'    => $material,
+            'data' => $material,
         ], 201);
     }
 }

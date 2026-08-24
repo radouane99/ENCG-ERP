@@ -14,10 +14,9 @@ use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Academic\ApogeeDeliberationEngine;
 use App\Services\Academic\GradeLockService;
+use App\Services\Apogee\ApogeeExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
-use App\Services\Apogee\ApogeeExportService;
 
 class ApogeeEngineController extends Controller
 {
@@ -32,18 +31,25 @@ class ApogeeEngineController extends Controller
      */
     public function exportApogeeCsv(Request $request)
     {
-        $filiereId      = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
-        $semesterId     = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
+        $filiereId = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
+        $semesterId = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
         $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;
 
-        $records = $this->exportService->generateExportData($filiereId, $semesterId, $academicYearId);
+        $records = $this->exportService->generateExportData(
+            $filiereId,
+            $semesterId,
+            $academicYearId,
+            $request->query('group_id') ? (int) $request->query('group_id') : null,
+            $request->query('session')
+        );
         $csvContent = $this->exportService->generateCsv($records);
 
-        $filename = 'EXPORT_APOGEE_ENCG_FES_' . date('Ymd_His') . '.csv';
+        $filename = 'EXPORT_APOGEE_ENCG_FES_'.date('Ymd_His').'.csv';
 
         return response($csvContent, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'X-Record-Count' => (string) count($records),
         ]);
     }
 
@@ -52,20 +58,26 @@ class ApogeeEngineController extends Controller
      */
     public function getApogeePreview(Request $request): JsonResponse
     {
-        $filiereId      = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
-        $semesterId     = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
+        $filiereId = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
+        $semesterId = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
         $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;
 
-        $records = $this->exportService->generateExportData($filiereId, $semesterId, $academicYearId);
+        $records = $this->exportService->generateExportData(
+            $filiereId,
+            $semesterId,
+            $academicYearId,
+            $request->query('group_id') ? (int) $request->query('group_id') : null,
+            $request->query('session')
+        );
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'establishment_code' => '040',
                 'establishment_name' => 'ENCG Fès — USMBA',
-                'total_records'      => count($records),
-                'generated_at'       => now()->toIso8601String(),
-                'records'            => array_slice($records, 0, 50),
+                'total_records' => count($records),
+                'generated_at' => now()->toIso8601String(),
+                'records' => array_slice($records, 0, 50),
             ],
         ]);
     }
@@ -77,10 +89,10 @@ class ApogeeEngineController extends Controller
     {
         $validated = $request->validate([
             'academic_year_id' => 'required|integer',
-            'semester_id'      => 'required|integer',
-            'exam_session_id'  => 'required|integer',
-            'start_date'       => 'required|date',
-            'end_date'         => 'required|date|after_or_equal:start_date',
+            'semester_id' => 'required|integer',
+            'exam_session_id' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
         $period = $this->gradeLockService->openPeriod(
@@ -99,7 +111,7 @@ class ApogeeEngineController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Période de saisie des notes ouverte.',
-            'data'    => $period,
+            'data' => $period,
         ]);
     }
 
@@ -109,60 +121,62 @@ class ApogeeEngineController extends Controller
     public function runDeliberation(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'student_id'  => 'required|integer|exists:students,id',
+            'student_id' => 'required|integer|exists:students,id',
             'semester_id' => 'required|integer',
         ]);
 
         $studentId = $validated['student_id'];
-        $grades    = Grade::with('assessment.module')->where('student_id', $studentId)->get();
+        $grades = Grade::with('assessment.module')->where('student_id', $studentId)->get();
 
         $processedModules = [];
-        $semesterGrades   = [];
-        $failedModules    = 0;
+        $semesterGrades = [];
+        $failedModules = 0;
 
         foreach ($grades as $grade) {
             $isValidated = $grade->value >= 10;
 
             $processedModules[] = [
-                'module_id'   => $grade->assessment->module_id ?? 0,
+                'module_id' => $grade->assessment->module_id ?? 0,
                 'module_name' => $grade->assessment->module->name ?? 'Inconnu',
-                'grade'       => $grade->value,
-                'validated'   => $isValidated,
+                'grade' => $grade->value,
+                'validated' => $isValidated,
             ];
 
             $semesterGrades[] = [
                 'module_id' => $grade->assessment->module_id ?? 0,
-                'grade'     => $grade->value,
+                'grade' => $grade->value,
             ];
 
-            if (!$isValidated) $failedModules++;
+            if (! $isValidated) {
+                $failedModules++;
+            }
         }
 
         $compensation = $this->deliberationEngine->applyCompensation($semesterGrades);
-        $progression  = $this->deliberationEngine->evaluateProgression($failedModules);
+        $progression = $this->deliberationEngine->evaluateProgression($failedModules);
 
         $delib = Deliberation::create([
             'academic_year_id' => 1,
-            'semester_id'      => $validated['semester_id'],
-            'status'           => 'validated',
+            'semester_id' => $validated['semester_id'],
+            'status' => 'validated',
         ]);
 
         DeliberationDecision::create([
             'deliberation_id' => $delib->id,
-            'student_id'      => $studentId,
-            'decision_type'   => $compensation['is_validated'] ? 'pass' : 'fail',
-            'gpa'             => $compensation['average'],
-            'comments'        => 'Délibération APOGEE automatisée',
+            'student_id' => $studentId,
+            'decision_type' => $compensation['is_validated'] ? 'pass' : 'fail',
+            'gpa' => $compensation['average'],
+            'comments' => 'Délibération APOGEE automatisée',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Délibération APOGEE exécutée.',
-            'data'    => [
-                'student_id'            => $studentId,
-                'modules_results'       => $processedModules,
+            'data' => [
+                'student_id' => $studentId,
+                'modules_results' => $processedModules,
                 'semester_compensation' => $compensation,
-                'progression_decision'  => ['failed_modules_count' => $failedModules, 'decision' => $progression],
+                'progression_decision' => ['failed_modules_count' => $failedModules, 'decision' => $progression],
             ],
         ]);
     }
@@ -173,20 +187,20 @@ class ApogeeEngineController extends Controller
     public function validateCandidate(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'student_id'     => 'required|integer',
-            'filiere_id'     => 'required|integer',
-            'group_id'       => 'nullable|integer',
+            'student_id' => 'required|integer',
+            'filiere_id' => 'required|integer',
+            'group_id' => 'nullable|integer',
             'admission_type' => 'nullable|string',
         ]);
 
         $student = Student::findOrFail($validated['student_id']);
-        $apogeeCode = '26' . str_pad((string) $student->id, 6, '0', STR_PAD_LEFT);
-        $cneCode    = 'K' . str_pad((string) random_int(10000000, 99999999), 8, '0', STR_PAD_LEFT);
+        $apogeeCode = '26'.str_pad((string) $student->id, 6, '0', STR_PAD_LEFT);
+        $cneCode = 'K'.str_pad((string) random_int(10000000, 99999999), 8, '0', STR_PAD_LEFT);
 
         $student->update([
             'student_number' => $apogeeCode,
-            'cne'            => $cneCode,
-            'status'         => 'active',
+            'cne' => $cneCode,
+            'status' => 'active',
         ]);
 
         $academicYearId = AcademicYear::where('is_current', true)->value('id') ?? 1;
@@ -194,8 +208,8 @@ class ApogeeEngineController extends Controller
         StudentPathway::updateOrCreate(
             ['student_id' => $student->id, 'is_current' => true],
             [
-                'filiere_id'       => $validated['filiere_id'],
-                'group_id'         => $validated['group_id'] ?? null,
+                'filiere_id' => $validated['filiere_id'],
+                'group_id' => $validated['group_id'] ?? null,
                 'academic_year_id' => $academicYearId,
                 'current_semester' => 1,
             ]
@@ -209,13 +223,13 @@ class ApogeeEngineController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Candidat validé. Code APOGEE et CNE attribués.',
-            'data'    => [
-                'student_id'     => $student->id,
-                'student_name'   => $student->user->name ?? 'N/A',
-                'apogee_code'    => $apogeeCode,
-                'cne'            => $cneCode,
-                'filiere_id'     => $validated['filiere_id'],
-                'group_id'       => $validated['group_id'] ?? null,
+            'data' => [
+                'student_id' => $student->id,
+                'student_name' => $student->user->name ?? 'N/A',
+                'apogee_code' => $apogeeCode,
+                'cne' => $cneCode,
+                'filiere_id' => $validated['filiere_id'],
+                'group_id' => $validated['group_id'] ?? null,
                 'admission_type' => $validated['admission_type'] ?? 'TAFEM',
             ],
         ]);
@@ -228,38 +242,38 @@ class ApogeeEngineController extends Controller
     {
         $vacataires = User::where('role', 'vacataire')->select('id', 'name', 'email')->get();
 
-        $payroll        = [];
-        $totalHoursAll  = 0;
+        $payroll = [];
+        $totalHoursAll = 0;
         $totalBudgetMad = 0;
 
         foreach ($vacataires as $v) {
             $sessionsCount = AttendanceSession::where('professor_id', $v->id)->count();
-            $hoursDone     = $sessionsCount * 2;
-            $rate          = 350;
-            $amount        = $hoursDone * $rate;
+            $hoursDone = $sessionsCount * 2;
+            $rate = 350;
+            $amount = $hoursDone * $rate;
 
-            $totalHoursAll  += $hoursDone;
+            $totalHoursAll += $hoursDone;
             $totalBudgetMad += $amount;
 
             $payroll[] = [
-                'vacataire_id'      => $v->id,
-                'name'              => $v->name,
-                'email'             => $v->email,
-                'sessions_count'    => $sessionsCount,
-                'hours_performed'   => $hoursDone,
-                'hourly_rate_mad'   => $rate,
-                'total_amount_mad'  => number_format($amount, 2),
-                'payment_status'    => 'Prêt pour Ordonnancement DAF',
+                'vacataire_id' => $v->id,
+                'name' => $v->name,
+                'email' => $v->email,
+                'sessions_count' => $sessionsCount,
+                'hours_performed' => $hoursDone,
+                'hourly_rate_mad' => $rate,
+                'total_amount_mad' => number_format($amount, 2),
+                'payment_status' => 'Prêt pour Ordonnancement DAF',
             ];
         }
 
         return response()->json([
             'success' => true,
             'summary' => [
-                'total_vacataires'    => count($payroll),
+                'total_vacataires' => count($payroll),
                 'total_hours_emarges' => $totalHoursAll,
-                'total_payroll_mad'   => number_format($totalBudgetMad, 2),
-                'calculated_at'       => now()->toIso8601String(),
+                'total_payroll_mad' => number_format($totalBudgetMad, 2),
+                'calculated_at' => now()->toIso8601String(),
             ],
             'payroll_details' => $payroll,
         ]);

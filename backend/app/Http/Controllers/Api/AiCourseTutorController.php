@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AiCourseTutorController extends Controller
 {
@@ -41,10 +41,10 @@ class AiCourseTutorController extends Controller
                         'A) Ke * (CP/V) + Kd * (1-IS) * (D/V)',
                         'B) Ke + Kd * (D/CP)',
                         'C) (Ke + Kd) / 2 * (1-IS)',
-                        'D) Rf + Beta * (Rm - Rf)'
+                        'D) Rf + Beta * (Rm - Rf)',
                     ],
                     'answer' => 'A',
-                    'explanation' => 'Le CMPC pondère le coût des fonds propres (Ke) et le coût net de la dette après déductibilité fiscale Kd * (1 - IS). (Chapitre 2, Page 25)'
+                    'explanation' => 'Le CMPC pondère le coût des fonds propres (Ke) et le coût net de la dette après déductibilité fiscale Kd * (1 - IS). (Chapitre 2, Page 25)',
                 ],
                 [
                     'question' => 'En présence d\'impôt sur les sociétés, selon Modigliani-Miller, la valeur de la firme endettée VL est :',
@@ -52,12 +52,12 @@ class AiCourseTutorController extends Controller
                         'A) Égale à la firme non endettée VU',
                         'B) VL = VU + (IS * Dette)',
                         'C) VL = VU - Dette',
-                        'D) Toujours inférieure à VU'
+                        'D) Toujours inférieure à VU',
                     ],
                     'answer' => 'B',
-                    'explanation' => 'L\'économie d\'impôt liée à la déductibilité des intérêts augmente la valeur de la firme du montant actualisé de l\'avantage fiscal IS * D. (Chapitre 1, Page 14)'
-                ]
-            ]
+                    'explanation' => 'L\'économie d\'impôt liée à la déductibilité des intérêts augmente la valeur de la firme du montant actualisé de l\'avantage fiscal IS * D. (Chapitre 1, Page 14)',
+                ],
+            ],
         ],
         'fiscalite' => [
             'name' => 'Fiscalité Marocaine des Entreprises',
@@ -79,7 +79,7 @@ class AiCourseTutorController extends Controller
                     'chapter' => 'Chapitre 3 : Taxe sur la Valeur Ajoutée (TVA) & Régimes d\'Encaissement',
                     'pages' => 'Pages 48 - 65',
                     'content' => 'La TVA due = TVA Facturée (Collectée) - TVA Récupérable sur Charges - TVA Récupérable sur Immobilisations. Le fait générateur est par défaut le régime de l\'encaissement (ou régime des débits sur option). La règle du décalage d\'un mois a été supprimée au Maroc, la TVA sur charges est récupérable au titre du mois de règlement.',
-                ]
+                ],
             ],
             'sample_quiz' => [
                 [
@@ -88,12 +88,12 @@ class AiCourseTutorController extends Controller
                         'A) 5 000 DH TTC par jour et 50 000 DH par mois',
                         'B) 10 000 DH TTC par jour',
                         'C) 1 000 DH TTC sans limite mensuelle',
-                        'D) Tout paiement en espèces est intégralement déductible'
+                        'D) Tout paiement en espèces est intégralement déductible',
                     ],
                     'answer' => 'A',
-                    'explanation' => 'L\'article 11 du CGI limite la déductibilité des charges payées en espèces à 5 000 DH TTC par jour et par fournisseur avec plafond mensuel de 50 000 DH. (Chapitre 1, Page 18)'
-                ]
-            ]
+                    'explanation' => 'L\'article 11 du CGI limite la déductibilité des charges payées en espèces à 5 000 DH TTC par jour et par fournisseur avec plafond mensuel de 50 000 DH. (Chapitre 1, Page 18)',
+                ],
+            ],
         ],
         'controle' => [
             'name' => 'Contrôle de Gestion & Pilotage de la Performance',
@@ -110,9 +110,9 @@ class AiCourseTutorController extends Controller
                     'chapter' => 'Chapitre 2 : Analyse des Écarts sur Coûts Préétablis',
                     'pages' => 'Pages 32 - 48',
                     'content' => 'Écart Total = Coût Réel Constaté - Coût Préétabli de la Production Réelle. Sur matières premières : Écart sur Prix = (Pr - Pp) * Qr et Écart sur Quantité = (Qr - Qp) * Pp. Sur charges indirectes : décomposition en Écart sur Budget, Écart sur Activité (coût du chômage/boni) et Écart sur Rendement.',
-                ]
-            ]
-        ]
+                ],
+            ],
+        ],
     ];
 
     /**
@@ -121,7 +121,7 @@ class AiCourseTutorController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'module'   => 'nullable|string',
+            'module' => 'nullable|string',
             'question' => 'required|string|max:1000',
         ]);
 
@@ -152,7 +152,7 @@ class AiCourseTutorController extends Controller
         // Generate Structured Pedagogical Response with verbatim citations
         $answer = "Bonjour ! D'après le polycopié officiel de **{$corpus['name']}** dispensé par **{$corpus['professor']}** (ENCG Fès) :\n\n";
         $answer .= "📌 **Synthèse Pédagogique :**\n";
-        $answer .= $bestChapter['content'] . "\n\n";
+        $answer .= $bestChapter['content']."\n\n";
         $answer .= "💡 **Application aux examens ENCG :**\n";
         $answer .= "Veillez à toujours justifier vos calculs avec les hypothèses de base et mentionner les limites théoriques lors des épreuves écrites.\n\n";
         $answer .= "📖 **Référence Documentaire Certifiée :**\n";
@@ -160,14 +160,14 @@ class AiCourseTutorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'module'         => $corpus['name'],
-                'professor'      => $corpus['professor'],
-                'department'     => $corpus['department'],
-                'citation'       => "[{$corpus['code']}] {$bestChapter['chapter']} ({$bestChapter['pages']})",
-                'answer'         => $answer,
-                'suggested_quiz' => !empty($corpus['sample_quiz']) ? $corpus['sample_quiz'][0] : null,
-            ]
+            'data' => [
+                'module' => $corpus['name'],
+                'professor' => $corpus['professor'],
+                'department' => $corpus['department'],
+                'citation' => "[{$corpus['code']}] {$bestChapter['chapter']} ({$bestChapter['pages']})",
+                'answer' => $answer,
+                'suggested_quiz' => ! empty($corpus['sample_quiz']) ? $corpus['sample_quiz'][0] : null,
+            ],
         ]);
     }
 
@@ -181,11 +181,11 @@ class AiCourseTutorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'module'    => $corpus['name'],
+            'data' => [
+                'module' => $corpus['name'],
                 'professor' => $corpus['professor'],
                 'questions' => $corpus['sample_quiz'] ?? [],
-            ]
+            ],
         ]);
     }
 }

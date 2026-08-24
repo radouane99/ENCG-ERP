@@ -4,26 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class VacationContract extends Model implements HasMedia
 {
-    use InteractsWithMedia;
     use HasFactory, SoftDeletes;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
-        'hourly_rate' => 'float',
-        'contract_start' => 'date',
-        'contract_end' => 'date',
-    ];
+            'hourly_rate' => 'float',
+            'contract_start' => 'date',
+            'contract_end' => 'date',
+        ];
     }
 
     public function institution(): BelongsTo
@@ -61,4 +61,3 @@ class VacationContract extends Model implements HasMedia
         return $this->hasMany(VacationPayment::class);
     }
 }
-

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuizStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,7 +24,7 @@ class Quiz extends Model
             'is_published' => 'boolean',
             'ai_generated' => 'boolean',
             'pass_score' => 'decimal:2',
-            'status' => \App\Enums\QuizStatus::class,
+            'status' => QuizStatus::class,
         ];
     }
 

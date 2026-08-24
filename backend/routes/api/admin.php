@@ -5,20 +5,27 @@ use App\Http\Controllers\Api\AbsenceJustificationController;
 use App\Http\Controllers\Api\AcademicReportController;
 use App\Http\Controllers\Api\AcademicYearController;
 use App\Http\Controllers\Api\Admin\AdminAbsenceController;
+use App\Http\Controllers\Api\Admin\AdminAlertsController;
+use App\Http\Controllers\Api\Admin\AdminBlockchainController;
+use App\Http\Controllers\Api\Admin\AdminCourseEvaluationController;
+use App\Http\Controllers\Api\Admin\AdminDocumentRequestController;
 use App\Http\Controllers\Api\Admin\AdminDocumentTypeController;
 use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
+use App\Http\Controllers\Api\Admin\AdminMinistryReportController;
+use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\AdminAiController;
-use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminDashboardController;
-use App\Http\Controllers\Api\Admin\AdminDocumentRequestController;
 use App\Http\Controllers\Api\AdminExamController;
 use App\Http\Controllers\Api\AdminInternshipController;
 use App\Http\Controllers\Api\AdminPredictiveAnalyticsController;
+use App\Http\Controllers\Api\AdminRolePermissionController;
 use App\Http\Controllers\Api\AdminSmartCampusController;
 use App\Http\Controllers\Api\AdmissionCampaignController;
 use App\Http\Controllers\Api\AdmissionController;
+use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AiFeatureController;
+use App\Http\Controllers\Api\AiScolarBotController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ApogeeEngineController;
 use App\Http\Controllers\Api\AssessmentController;
@@ -32,8 +39,8 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\DocumentCenterController;
 use App\Http\Controllers\Api\DocumentController;
-use App\Http\Controllers\Api\ExamAttendanceController;
 use App\Http\Controllers\Api\ExamLockingController;
+use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\ExamPlanningController;
 use App\Http\Controllers\Api\ExamSessionController;
 use App\Http\Controllers\Api\ExcelController;
@@ -48,27 +55,37 @@ use App\Http\Controllers\Api\LmsCourseController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PdfExportController;
+use App\Http\Controllers\Api\PilotageController;
+use App\Http\Controllers\Api\ProfessorAiController;
 use App\Http\Controllers\Api\ProfessorAssignmentController;
 use App\Http\Controllers\Api\ProfessorAvailabilityController;
 use App\Http\Controllers\Api\ProfessorController;
+use App\Http\Controllers\Api\ProfessorSubstitutionController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RecommendationLetterController;
+use App\Http\Controllers\Api\ReinscriptionController;
+use App\Http\Controllers\Api\ReservisteController;
 use App\Http\Controllers\Api\RetakeController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleChangeRequestController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SmartSchedulingController;
+use App\Http\Controllers\Api\Student\StudentAiController;
+use App\Http\Controllers\Api\Student\StudentMobilityController;
 use App\Http\Controllers\Api\StudentCardController;
 use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\Api\StudentPortalController;
 use App\Http\Controllers\Api\StudentTranscriptController;
+use App\Http\Controllers\Api\TafemMinistryImportController;
 use App\Http\Controllers\Api\TimetableController;
 use App\Http\Controllers\Api\TimetableExportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VacataireController;
+use App\Models\Semester;
 use App\Models\StudentPathway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
@@ -93,7 +110,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/smart-campus', [AdminSmartCampusController::class, 'getCampusData']);
     Route::get('/exams', [AdminExamController::class, 'index']);
     Route::get('/exams/analytics', [AdminExamController::class, 'analytics']);
-    Route::get('/exams/timetable-pdf', [\App\Http\Controllers\Api\ExamPlanningController::class, 'downloadExamTimetablePdf']);
+    Route::get('/exams/timetable-pdf', [ExamPlanningController::class, 'downloadExamTimetablePdf']);
     Route::get('/admin/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/admin/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
@@ -105,6 +122,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/pwa-notifications/stats', [NotificationController::class, 'getPwaStats']);
     Route::get('/pwa-notifications/stats', [NotificationController::class, 'getPwaStats']);
     Route::post('/deliberations/simulate', [DeliberationController::class, 'simulate']);
+    Route::get('academic/deliberations/{id}/ai-brief', [DeliberationController::class, 'aiBrief']);
+    Route::get('academic/deliberations/{id}/jury', [DeliberationController::class, 'showJury']);
+    Route::get('admin/academic/deliberations/{id}/ai-brief', [DeliberationController::class, 'aiBrief']);
+    Route::get('admin/academic/deliberations/{id}/jury', [DeliberationController::class, 'showJury']);
     Route::post('/complaints/grade-appeal', [ComplaintController::class, 'submitGradeAppeal']);
     Route::get('/complaints/grade-appeals', [ComplaintController::class, 'listGradeAppeals']);
     Route::post('/complaints/grade-appeals/{id}/resolve', [ComplaintController::class, 'resolveGradeAppeal']);
@@ -116,19 +137,21 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::apiResource('admin/holidays', HolidayController::class);
 
     // Room Bookings PDF Export & Management
-    Route::get('/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
-    Route::get('/admin/room-bookings/{id}/autorisation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportAutorisationSallePdf']);
+    Route::get('/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
+    Route::get('/admin/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
 
     // Automated Timetable Engine — CSP Solver & Energy Optimizer
     Route::prefix('smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
         Route::post('/generate', [SmartSchedulingController::class, 'generate']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
     });
     Route::prefix('admin/smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
         Route::post('/generate', [SmartSchedulingController::class, 'generate']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
     });
 
     // AI Predictive Analytics
@@ -143,8 +166,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/admin/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
 
     // Campagne de Réinscription des Étudiants Admis
-    Route::get('/admin/reinscriptions/stats', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getAdminStats']);
-    Route::post('/admin/reinscriptions/send-reminders', [\App\Http\Controllers\Api\ReinscriptionController::class, 'sendReminders']);
+    Route::get('/admin/reinscriptions/stats', [ReinscriptionController::class, 'getAdminStats']);
+    Route::post('/admin/reinscriptions/send-reminders', [ReinscriptionController::class, 'sendReminders']);
 
     // Official APOGEE Ministerial Export (MESRSFC)
     Route::get('/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
@@ -196,9 +219,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
     Route::apiResource('groups', GroupController::class);
 
-
     Route::get('semesters', function () {
-        return response()->json(['data' => \App\Models\Semester::all()]);
+        return response()->json(['data' => Semester::all()]);
     });
     Route::apiResource('academic-years', AcademicYearController::class);
     Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
@@ -238,11 +260,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     });
     Route::get('modules/{module}/assessments', [AssessmentController::class, 'getForModule']);
     Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
-    Route::get('modules/export-bulk-pv-zip', [\App\Http\Controllers\Api\PdfExportController::class, 'exportBulkPvZip']);
+    Route::get('modules/export-bulk-pv-zip', [PdfExportController::class, 'exportBulkPvZip']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
     Route::get('semester-pv', [GradeController::class, 'getSemesterPv']);
-    Route::get('modules/{module}/pv/export-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportModulePvPdf']);
-    Route::get('modules/{module}/pv/export-rattrapage-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRattrapage_PvPdf']); // #3
+    Route::get('modules/{module}/pv/export-pdf', [PdfExportController::class, 'exportModulePvPdf']);
+    Route::get('modules/{module}/pv/export-rattrapage-pdf', [PdfExportController::class, 'exportRattrapage_PvPdf']); // #3
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
     Route::post('modules/{module}/sign-pv', [GradeController::class, 'signModulePv']);
     Route::post('modules/{module}/generate-rattrapage-eligibilities', [GradeController::class, 'generateRattrapageEligibilities']); // Manual trigger
@@ -258,20 +280,22 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::match(['get', 'post'], 'admin/deliberations/run', [DeliberationController::class, 'run']);
     Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [DeliberationController::class, 'exportPvQuery']);
 
-
     Route::post('deliberations/apply-rachat', [DeliberationController::class, 'applyRachat']);
     Route::get('deliberations/export-pv-rachat', [DeliberationController::class, 'exportRattrapage']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
 
-
     Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
+    Route::post('academic/deliberations/{id}/vote', [DeliberationController::class, 'vote']);
+    Route::post('academic/deliberations/{id}/seal', [DeliberationController::class, 'seal']);
+    Route::post('academic/deliberations/{id}/reopen', [DeliberationController::class, 'requestReopen']);
+    Route::post('academic/deliberations/reopen/{requestId}/approve', [DeliberationController::class, 'approveReopen']);
     Route::get('academic/deliberations/annual-compensation', [DeliberationController::class, 'getAnnualCompensation']);
-    Route::get('academic/reports/{type}', [\App\Http\Controllers\Api\AcademicReportController::class, 'generate']);
+    Route::get('academic/reports/{type}', [AcademicReportController::class, 'generate']);
 
-    Route::get('admin/reservistes', [\App\Http\Controllers\Api\ReservisteController::class, 'index']);
-    Route::post('admin/reservistes/{studentId}/derogation', [\App\Http\Controllers\Api\ReservisteController::class, 'updateDerogation']);
-    Route::get('admin/reservistes/{studentId}/audit', [\App\Http\Controllers\Api\ReservisteController::class, 'getStudentAudit']);
-    Route::post('admin/reservistes/{studentId}/notify-email', [\App\Http\Controllers\Api\ReservisteController::class, 'sendNotificationEmail']);
+    Route::get('admin/reservistes', [ReservisteController::class, 'index']);
+    Route::post('admin/reservistes/{studentId}/derogation', [ReservisteController::class, 'updateDerogation']);
+    Route::get('admin/reservistes/{studentId}/audit', [ReservisteController::class, 'getStudentAudit']);
+    Route::post('admin/reservistes/{studentId}/notify-email', [ReservisteController::class, 'sendNotificationEmail']);
 
     // PRO MAX Deliberation & Grade Suite Endpoints
     Route::post('modules/{module}/bulk-send-transcripts', [GradeController::class, 'bulkSendModuleTranscripts']);
@@ -287,10 +311,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('admin/students/{student}/documents', [StudentController::class, 'uploadDocument']);
 
     // ── 📥 Importation Liste Officielle Admis Ministère TAFEM / MESRSFC
-    Route::post('admissions/import-ministry-tafem-csv', [\App\Http\Controllers\Api\TafemMinistryImportController::class, 'importMinistryList']);
-    Route::get('admissions/download-tafem-template-csv', [\App\Http\Controllers\Api\TafemMinistryImportController::class, 'downloadTemplate']);
-    Route::get('admin/admissions/campaigns', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'index']);
-    Route::get('admin/admissions/campaigns/{id}/applications', [\App\Http\Controllers\Api\AdmissionCampaignController::class, 'getApplications']);
+    Route::post('admissions/import-ministry-tafem-csv', [TafemMinistryImportController::class, 'importMinistryList']);
+    Route::post('admissions/tafem-ai-review', [TafemMinistryImportController::class, 'aiReview']);
+    Route::get('admissions/download-tafem-template-csv', [TafemMinistryImportController::class, 'downloadTemplate']);
+    Route::get('admin/admissions/campaigns', [AdmissionCampaignController::class, 'index']);
+    Route::get('admin/admissions/campaigns/{id}/applications', [AdmissionCampaignController::class, 'getApplications']);
 
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
@@ -317,17 +342,17 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/{student}/dossier-audit-log', [StudentController::class, 'getDossierAuditLog']);
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
 
-    Route::get('students/{student}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadStudentConvocationPdf']);
-    Route::get('professors/{professor}/convocation-pdf', [\App\Http\Controllers\Api\ConvocationController::class, 'downloadProfessorConvocationPdf']);
-    Route::post('convocations/send-students', [\App\Http\Controllers\Api\ConvocationController::class, 'sendStudentConvocationsIntelligent']);
-    Route::post('convocations/send-professors', [\App\Http\Controllers\Api\ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
-    Route::get('convocations/export-zip', [\App\Http\Controllers\Api\ConvocationController::class, 'exportConvocationsZip']);
-    Route::post('exam-sessions/{sessionId}/send-availability-survey', [\App\Http\Controllers\Api\ConvocationController::class, 'sendAvailabilitySurvey']);
+    Route::get('students/{student}/convocation-pdf', [ConvocationController::class, 'downloadStudentConvocationPdf']);
+    Route::get('professors/{professor}/convocation-pdf', [ConvocationController::class, 'downloadProfessorConvocationPdf']);
+    Route::post('convocations/send-students', [ConvocationController::class, 'sendStudentConvocationsIntelligent']);
+    Route::post('convocations/send-professors', [ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
+    Route::get('convocations/export-zip', [ConvocationController::class, 'exportConvocationsZip']);
+    Route::post('exam-sessions/{sessionId}/send-availability-survey', [ConvocationController::class, 'sendAvailabilitySurvey']);
     // [AUDIT ROUTE-02] Removed duplicate auto-assign-proctors route: already handled under /exam-planning/{sessionId}/auto-assign-proctors
     Route::post('students/{student}/send-transcript', [GradeController::class, 'sendTranscriptEmail']);
-    Route::post('mission-orders', [\App\Http\Controllers\Api\ConvocationController::class, 'generateMissionOrder']);
+    Route::post('mission-orders', [ConvocationController::class, 'generateMissionOrder']);
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
-    Route::get('mobility/ranking', [\App\Http\Controllers\Api\Student\StudentMobilityController::class, 'calculateMeritRanking']);
+    Route::get('mobility/ranking', [StudentMobilityController::class, 'calculateMeritRanking']);
 
     // Admin AI Suite
     Route::prefix('ai')->group(function () {
@@ -343,6 +368,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::apiResource('professors', ProfessorController::class);
         Route::get('vacataires/{vacataire}/contract-pdf', [VacataireController::class, 'downloadContract']);
         Route::post('vacataires/contracts/{contractId}/payments', [VacataireController::class, 'processPayment']);
+        Route::post('vacataires/contracts/{contractId}/approve-dept', [VacataireController::class, 'approveDepartment']);
+        Route::post('vacataires/contracts/{contractId}/approve-hr', [VacataireController::class, 'approveHr']);
         Route::apiResource('vacataires', VacataireController::class);
     });
 
@@ -415,7 +442,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Smart Scheduling & Substitutions
     Route::get('/schedule-change-requests/substitutes', [ScheduleChangeRequestController::class, 'suggestSubstitutes']);
     Route::post('/schedules/auto-generate', [SmartSchedulingController::class, 'autoGenerate']);
-    Route::apiResource('schedules', \App\Http\Controllers\Api\ScheduleController::class)->except(['update', 'show']);
+    Route::apiResource('schedules', ScheduleController::class)->except(['update', 'show']);
 
     // Exam Planning & Convocations
     Route::prefix('exam-planning')->group(function () {
@@ -452,11 +479,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::get('/student/{studentId}', [ConvocationController::class, 'getStudentConvocations']);
         Route::get('/student/{id}/download', [PdfExportController::class, 'studentConvocationPdf']);
         Route::get('/student/{id}/preview', [PdfExportController::class, 'studentConvocationPreview']);
-        
+
         // Surveillant endpoints
         Route::get('/surveillant/{id}/download', [PdfExportController::class, 'surveillantConvocationPdf']);
         Route::get('/surveillant/{id}/preview', [PdfExportController::class, 'surveillantConvocationPreview']);
-        
+
         // Batch actions
         Route::post('/session/{sessionId}/batch-pdf', [PdfExportController::class, 'batchPdf']);
         Route::post('/session/{sessionId}/send-batch-emails', [ConvocationController::class, 'sendBatchEmails']);
@@ -469,10 +496,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::prefix('convocations')->group(function () {
         Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
         Route::post('/send-session', [ConvocationController::class, 'sendSession']);
+        Route::post('/session/{sessionId}/campus-sms', [ConvocationController::class, 'sendCampusAlerts']);
         Route::get('/session/{sessionId}/stats', [ConvocationController::class, 'sessionStats']);
         Route::get('/session/{sessionId}/live-stats', [ConvocationController::class, 'globalLiveStats']);
         Route::get('/session/{sessionId}/list', [ConvocationController::class, 'sessionList']);
-        
+
         Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
         Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);
         Route::get('/scan-verify/{qrToken}', [ConvocationController::class, 'scanVerify']);
@@ -481,23 +509,20 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Exam Incidents & Discipline
     Route::prefix('exam-incidents')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
-        Route::get('/{id}/download-pdf', [\App\Http\Controllers\Api\ExamIncidentController::class, 'downloadPdf']);
+        Route::get('/', [App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
+        Route::get('/{id}/download-pdf', [App\Http\Controllers\Api\ExamIncidentController::class, 'downloadPdf']);
     });
 
     // Discipline Council Routes
-    Route::get('/discipline', [\App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
-    Route::post('/discipline/{id}/convoke', [\App\Http\Controllers\Api\ExamIncidentController::class, 'convoke']);
-    Route::post('/discipline/{id}/decide', [\App\Http\Controllers\Api\ExamIncidentController::class, 'decide']);
+    Route::get('/discipline', [App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
+    Route::post('/discipline/{id}/convoke', [App\Http\Controllers\Api\ExamIncidentController::class, 'convoke']);
+    Route::post('/discipline/{id}/decide', [App\Http\Controllers\Api\ExamIncidentController::class, 'decide']);
 
     // Exam Analytics & Cartography Route
-    Route::get('/exam-analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
-    Route::get('/analytics', [\App\Http\Controllers\Api\ExamIncidentController::class, 'globalAnalytics']);
-    Route::post('/exams/{id}/pv/lock', [\App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
-
-
-
+    Route::get('/exam-analytics', [App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
+    Route::get('/analytics', [App\Http\Controllers\Api\ExamIncidentController::class, 'globalAnalytics']);
+    Route::post('/exams/{id}/pv/lock', [App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
 
     // Retakes
     Route::prefix('retakes')->group(function () {
@@ -515,20 +540,20 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Blockchain Certification
     Route::prefix('admin/blockchain')->group(function () {
-        Route::get('/certificates', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'getLedger']);
-        Route::post('/certify-promo', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'certifyPromo']);
-        Route::post('/verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+        Route::get('/certificates', [AdminBlockchainController::class, 'getLedger']);
+        Route::post('/certify-promo', [AdminBlockchainController::class, 'certifyPromo']);
+        Route::post('/verify', [AdminBlockchainController::class, 'verify']);
     });
     Route::prefix('blockchain')->group(function () {
-        Route::get('/certificates', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'getLedger']);
-        Route::post('/certify-promo', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'certifyPromo']);
-        Route::post('/verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+        Route::get('/certificates', [AdminBlockchainController::class, 'getLedger']);
+        Route::post('/certify-promo', [AdminBlockchainController::class, 'certifyPromo']);
+        Route::post('/verify', [AdminBlockchainController::class, 'verify']);
     });
 
     // Course Evaluations Quality Management
     Route::prefix('course-evaluations')->group(function () {
-        Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminCourseEvaluationController::class, 'getStats']);
-        Route::post('/toggle-campaign', [\App\Http\Controllers\Api\Admin\AdminCourseEvaluationController::class, 'toggleCampaign']);
+        Route::get('/stats', [AdminCourseEvaluationController::class, 'getStats']);
+        Route::post('/toggle-campaign', [AdminCourseEvaluationController::class, 'toggleCampaign']);
     });
 
     // Schedule Change Requests
@@ -564,10 +589,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Admin — Document Requests Management
     Route::prefix('admin/document-requests')->middleware('require-admin-2fa')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'index']);
-        Route::match(['put', 'patch'], '/{documentRequest}/status', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'updateStatus']);
-        Route::post('/{documentRequest}/generate', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'generate']);
-        Route::get('/{documentRequest}/download', [App\Http\Controllers\Api\Admin\AdminDocumentRequestController::class, 'download']);
+        Route::get('/', [AdminDocumentRequestController::class, 'index']);
+        Route::match(['put', 'patch'], '/{documentRequest}/status', [AdminDocumentRequestController::class, 'updateStatus']);
+        Route::post('/{documentRequest}/generate', [AdminDocumentRequestController::class, 'generate']);
+        Route::get('/{documentRequest}/download', [AdminDocumentRequestController::class, 'download']);
     });
 
     // Admin — Document Types Management
@@ -583,8 +608,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // [AUDIT ROUTE-03] Removed duplicate student-portal routes: grades/schedule/absences already handled under v1/student-portal in student.php
 
     // Admin Academic Pilotage Dashboard
-    Route::get('/pilotage/dashboard', [\App\Http\Controllers\Api\PilotageController::class, 'getAcademicPilotageDashboard']);
-    Route::get('/admin/pilotage/dashboard', [\App\Http\Controllers\Api\PilotageController::class, 'getAcademicPilotageDashboard']);
+    Route::get('/pilotage/dashboard', [PilotageController::class, 'getAcademicPilotageDashboard']);
+    Route::get('/admin/pilotage/dashboard', [PilotageController::class, 'getAcademicPilotageDashboard']);
+    Route::get('/admin/pilotage/cockpit', [PilotageController::class, 'getDirectionCockpit']);
 
     // [AUDIT ROUTE-01] Dashboard routes (stats, search, timeline, pilotage) live in shared.php
     // Admin-exclusive APOGEE Academic Engine routes kept here:
@@ -600,7 +626,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // ---------------------------------------------------------
     Route::get('/admin/convocations/print-session', [PdfExportController::class, 'printSession']);
     Route::get('/admin/convocations/print-professors', [PdfExportController::class, 'printProfessors']);
-    Route::get('/professor/exams/{exam}/pv/pdf', [PdfExportController::class, 'pvExamen']);
+    Route::get('/professor/exams/{exam}/pv/pdf', [ExamPdfController::class, 'pvExamen']);
     Route::get('/admin/pv-globaux/pdf', [PdfExportController::class, 'pvGlobal']);
     Route::get('/admin/students/{id}/releve-notes/{year}', [PdfExportController::class, 'releveNotes']);
     Route::get('/admin/students/{id}/attestation-reussite/{year}', [PdfExportController::class, 'attestationReussite']);
@@ -634,384 +660,386 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/admin/document-requests/{documentRequest}/send-email-notification', [AdminDocumentRequestController::class, 'sendEmailNotification']);
 
     // Admin Absences & Justifications (With and Without /admin prefix)
-    Route::get('/absences-justifications', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
-    Route::patch('/absences-justifications/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
-    Route::delete('/absences-justifications/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
-    Route::get('/absences', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
-    Route::patch('/absences/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
-    Route::delete('/absences/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+    Route::get('/absences-justifications', [AbsenceJustificationController::class, 'index']);
+    Route::patch('/absences-justifications/{absenceJustification}/status', [AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/absences-justifications/{absenceJustification}', [AbsenceJustificationController::class, 'destroy']);
+    Route::get('/absences', [AbsenceJustificationController::class, 'index']);
+    Route::patch('/absences/{absenceJustification}/status', [AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/absences/{absenceJustification}', [AbsenceJustificationController::class, 'destroy']);
 
-    Route::get('/admin/absences-justifications', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
-    Route::patch('/admin/absences-justifications/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
-    Route::delete('/admin/absences-justifications/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
-    Route::get('/admin/absences', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'index']);
-    Route::patch('/admin/absences/{absenceJustification}/status', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'updateStatus']);
-    Route::delete('/admin/absences/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
+    Route::get('/admin/absences-justifications', [AbsenceJustificationController::class, 'index']);
+    Route::patch('/admin/absences-justifications/{absenceJustification}/status', [AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/admin/absences-justifications/{absenceJustification}', [AbsenceJustificationController::class, 'destroy']);
+    Route::get('/admin/absences', [AbsenceJustificationController::class, 'index']);
+    Route::patch('/admin/absences/{absenceJustification}/status', [AbsenceJustificationController::class, 'updateStatus']);
+    Route::delete('/admin/absences/{absenceJustification}', [AbsenceJustificationController::class, 'destroy']);
 });
 
 // Authenticated document streaming and previously exposed admin endpoints
 $staffRoles = 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee';
 
 Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
-Route::get('/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
-Route::get('/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
-Route::get('/v1/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
-Route::get('/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
-Route::get('/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
-Route::get('/v1/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
-Route::get('/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
-Route::get('/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
-Route::get('/v1/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
-Route::get('/v1/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
-Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
-Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+    Route::get('/admin/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+    Route::get('/v1/admin/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
+    Route::get('/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+    Route::get('/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+    Route::get('/v1/admin/students/bulk-export-zip', [AdminDocumentRequestController::class, 'bulkExportZip']);
+    Route::get('/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+    Route::get('/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+    Route::get('/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+    Route::get('/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+    Route::get('/v1/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
+    Route::get('/v1/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
+    Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
 
-Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
-Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
 
-Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
-Route::get('/v1/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
+    Route::get('/v1/admin/filieres/maquette_pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
 
-Route::get('/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
-Route::get('/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
-Route::get('/v1/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
-Route::get('/v1/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+    Route::get('/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+    Route::get('/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+    Route::get('/v1/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
+    Route::get('/v1/admin/modules/syllabique-pdf', [PdfExportController::class, 'exportSyllabiqueModulePdf']);
 
-Route::get('/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
-Route::get('/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
-Route::get('/v1/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
-Route::get('/v1/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+    Route::get('/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+    Route::get('/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+    Route::get('/v1/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
+    Route::get('/v1/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
 
-Route::get('/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
-Route::get('/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
-Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
-Route::get('/v1/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+    Route::get('/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+    Route::get('/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+    Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
+    Route::get('/v1/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
 
-Route::get('/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
-Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
-Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
-Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::get('/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
 
-// ── Reçu de Dépôt Complémentaire (document apporté après inscription initiale)
-Route::get('/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
-Route::get('/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
-Route::get('/v1/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
-Route::get('/v1/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    // ── Reçu de Dépôt Complémentaire (document apporté après inscription initiale)
+    Route::get('/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    Route::get('/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    Route::get('/v1/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
+    Route::get('/v1/admin/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);
 
-Route::get('/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
-Route::get('/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
-Route::get('/v1/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
-Route::get('/v1/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+    Route::get('/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+    Route::get('/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+    Route::get('/v1/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
+    Route::get('/v1/admin/tafem/etiquettes-pdf', [PdfExportController::class, 'exportEtiquettesTableTafemPdf']);
 
+    // ──────────────────────────────────────────────────────────────────────────────
+    // AI Chatbot (Gemini) — Student & Admin Assistant
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::post('/ai/chat', [StudentChatbotController::class, 'chat']);
+    Route::post('/admin/ai/chat', [StudentChatbotController::class, 'chat']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// AI Chatbot (Gemini) — Student & Admin Assistant
-// ──────────────────────────────────────────────────────────────────────────────
-Route::post('/ai/chat', [\App\Http\Controllers\Api\Admin\StudentChatbotController::class, 'chat']);
-Route::post('/admin/ai/chat', [\App\Http\Controllers\Api\Admin\StudentChatbotController::class, 'chat']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Alertes Centralisées
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::get('/admin/alerts', [AdminAlertsController::class, 'getAlerts']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Alertes Centralisées
-// ──────────────────────────────────────────────────────────────────────────────
-Route::get('/admin/alerts', [\App\Http\Controllers\Api\Admin\AdminAlertsController::class, 'getAlerts']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Rapport Ministère MESRSFC
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::get('/admin/ministry-report', [AdminMinistryReportController::class, 'getReport']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Rapport Ministère MESRSFC
-// ──────────────────────────────────────────────────────────────────────────────
-Route::get('/admin/ministry-report', [\App\Http\Controllers\Api\Admin\AdminMinistryReportController::class, 'getReport']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Calendrier Académique
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::get('/admin/academic-calendar/events', function () {
+        try {
+            $events = [];
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Calendrier Académique
-// ──────────────────────────────────────────────────────────────────────────────
-Route::get('/admin/academic-calendar/events', function () {
-    try {
-        $events = [];
-
-        // Exams
-        if (\Illuminate\Support\Facades\Schema::hasTable('exams')) {
-            $exams = \Illuminate\Support\Facades\DB::table('exams')
-                ->join('modules', 'exams.module_id', '=', 'modules.id')
-                ->select('exams.id', 'modules.name as title', 'exams.date as start', 'exams.start_time', 'exams.end_time')
-                ->get();
-            foreach ($exams as $e) {
-                $events[] = [
-                    'id' => 'exam-' . $e->id,
-                    'title' => '📝 ' . $e->title,
-                    'start' => $e->start,
-                    'type' => 'exam',
-                    'color' => '#ef4444',
-                ];
+            // Exams
+            if (Schema::hasTable('exams')) {
+                $exams = DB::table('exams')
+                    ->join('modules', 'exams.module_id', '=', 'modules.id')
+                    ->select('exams.id', 'modules.name as title', 'exams.date as start', 'exams.start_time', 'exams.end_time')
+                    ->get();
+                foreach ($exams as $e) {
+                    $events[] = [
+                        'id' => 'exam-'.$e->id,
+                        'title' => '📝 '.$e->title,
+                        'start' => $e->start,
+                        'type' => 'exam',
+                        'color' => '#ef4444',
+                    ];
+                }
             }
-        }
 
-        // Holidays
-        if (\Illuminate\Support\Facades\Schema::hasTable('academic_holidays')) {
-            $holidays = \Illuminate\Support\Facades\DB::table('academic_holidays')
-                ->select('id', 'name as title', 'start_date as start', 'end_date as end')
-                ->get();
-            foreach ($holidays as $h) {
-                $events[] = [
-                    'id' => 'holiday-' . $h->id,
-                    'title' => '🏖️ ' . $h->title,
-                    'start' => $h->start,
-                    'end' => $h->end,
-                    'type' => 'holiday',
-                    'color' => '#10b981',
-                ];
+            // Holidays
+            if (Schema::hasTable('academic_holidays')) {
+                $holidays = DB::table('academic_holidays')
+                    ->select('id', 'name as title', 'start_date as start', 'end_date as end')
+                    ->get();
+                foreach ($holidays as $h) {
+                    $events[] = [
+                        'id' => 'holiday-'.$h->id,
+                        'title' => '🏖️ '.$h->title,
+                        'start' => $h->start,
+                        'end' => $h->end,
+                        'type' => 'holiday',
+                        'color' => '#10b981',
+                    ];
+                }
             }
-        }
 
-        // PFE Soutenances
-        if (\Illuminate\Support\Facades\Schema::hasTable('final_projects')) {
-            $soutenances = \Illuminate\Support\Facades\DB::table('final_projects')
-                ->whereNotNull('soutenance_date')
-                ->select('id', 'title', 'soutenance_date as start')
-                ->get();
-            foreach ($soutenances as $s) {
-                $events[] = [
-                    'id' => 'pfe-' . $s->id,
-                    'title' => '🎓 Soutenance PFE — ' . $s->title,
-                    'start' => $s->start,
-                    'type' => 'soutenance',
-                    'color' => '#8b5cf6',
-                ];
+            // PFE Soutenances
+            if (Schema::hasTable('final_projects')) {
+                $soutenances = DB::table('final_projects')
+                    ->whereNotNull('soutenance_date')
+                    ->select('id', 'title', 'soutenance_date as start')
+                    ->get();
+                foreach ($soutenances as $s) {
+                    $events[] = [
+                        'id' => 'pfe-'.$s->id,
+                        'title' => '🎓 Soutenance PFE — '.$s->title,
+                        'start' => $s->start,
+                        'type' => 'soutenance',
+                        'color' => '#8b5cf6',
+                    ];
+                }
             }
+
+            return response()->json(['success' => true, 'events' => $events]);
+        } catch (Exception $e) {
+            return response()->json(['success' => true, 'events' => [], 'error' => $e->getMessage()]);
         }
+    });
 
-        return response()->json(['success' => true, 'events' => $events]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => true, 'events' => [], 'error' => $e->getMessage()]);
-    }
-});
+    // ──────────────────────────────────────────────────────────────────────────────
+    // PFE Workflow
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::get('/admin/pfe/workflow', function () {
+        try {
+            $table = Schema::hasTable('final_projects') ? 'final_projects' : null;
+            if (! $table) {
+                return response()->json(['success' => true, 'stages' => [], 'stats' => []]);
+            }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// PFE Workflow
-// ──────────────────────────────────────────────────────────────────────────────
-Route::get('/admin/pfe/workflow', function () {
-    try {
-        $table = \Illuminate\Support\Facades\Schema::hasTable('final_projects') ? 'final_projects' : null;
-        if (!$table) return response()->json(['success' => true, 'stages' => [], 'stats' => []]);
+            $allPfe = DB::table($table)
+                ->leftJoin('students', $table.'.student_id', '=', 'students.id')
+                ->leftJoin('users as su', 'students.user_id', '=', 'su.id')
+                ->leftJoin('users as prof', $table.'.supervisor_id', '=', 'prof.id')
+                ->select(
+                    $table.'.id',
+                    $table.'.title',
+                    $table.'.status',
+                    $table.'.created_at',
+                    $table.'.soutenance_date',
+                    'su.name as student_name',
+                    'prof.name as supervisor_name'
+                )
+                ->orderBy($table.'.created_at', 'desc')
+                ->get();
 
-        $allPfe = \Illuminate\Support\Facades\DB::table($table)
-            ->leftJoin('students', $table . '.student_id', '=', 'students.id')
-            ->leftJoin('users as su', 'students.user_id', '=', 'su.id')
-            ->leftJoin('users as prof', $table . '.supervisor_id', '=', 'prof.id')
-            ->select(
-                $table . '.id',
-                $table . '.title',
-                $table . '.status',
-                $table . '.created_at',
-                $table . '.soutenance_date',
-                'su.name as student_name',
-                'prof.name as supervisor_name'
-            )
-            ->orderBy($table . '.created_at', 'desc')
-            ->get();
+            $stages = [
+                'soumis' => $allPfe->whereIn('status', ['submitted', 'pending', 'soumis'])->values(),
+                'en_revue' => $allPfe->whereIn('status', ['under_review', 'en_revue', 'reviewing'])->values(),
+                'valide' => $allPfe->whereIn('status', ['validated', 'approved', 'valide'])->values(),
+                'encadreur_affecte' => $allPfe->where('supervisor_name', '!=', null)->whereIn('status', ['assigned', 'in_progress', 'encadre'])->values(),
+                'soutenance' => $allPfe->whereNotNull('soutenance_date')->whereIn('status', ['completed', 'soutenu'])->values(),
+            ];
 
-        $stages = [
-            'soumis' => $allPfe->whereIn('status', ['submitted', 'pending', 'soumis'])->values(),
-            'en_revue' => $allPfe->whereIn('status', ['under_review', 'en_revue', 'reviewing'])->values(),
-            'valide' => $allPfe->whereIn('status', ['validated', 'approved', 'valide'])->values(),
-            'encadreur_affecte' => $allPfe->where('supervisor_name', '!=', null)->whereIn('status', ['assigned', 'in_progress', 'encadre'])->values(),
-            'soutenance' => $allPfe->whereNotNull('soutenance_date')->whereIn('status', ['completed', 'soutenu'])->values(),
-        ];
+            return response()->json([
+                'success' => true,
+                'stages' => $stages,
+                'stats' => [
+                    'total' => $allPfe->count(),
+                    'soumis' => $stages['soumis']->count(),
+                    'en_revue' => $stages['en_revue']->count(),
+                    'valides' => $stages['valide']->count(),
+                    'en_cours' => $stages['encadreur_affecte']->count(),
+                    'soutenus' => $stages['soutenance']->count(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage(), 'stages' => [], 'stats' => []]);
+        }
+    });
 
-        return response()->json([
-            'success' => true,
-            'stages' => $stages,
-            'stats' => [
-                'total' => $allPfe->count(),
-                'soumis' => $stages['soumis']->count(),
-                'en_revue' => $stages['en_revue']->count(),
-                'valides' => $stages['valide']->count(),
-                'en_cours' => $stages['encadreur_affecte']->count(),
-                'soutenus' => $stages['soutenance']->count(),
-            ]
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage(), 'stages' => [], 'stats' => []]);
-    }
-});
+    Route::patch('/admin/pfe/{id}/status', function (Request $request, $id) {
+        try {
+            $table = Schema::hasTable('final_projects') ? 'final_projects' : 'internships';
+            DB::table($table)->where('id', $id)->update([
+                'status' => $request->input('status'),
+                'supervisor_id' => $request->input('supervisor_id'),
+                'updated_at' => now(),
+            ]);
 
-Route::patch('/admin/pfe/{id}/status', function (\Illuminate\Http\Request $request, $id) {
-    try {
-        $table = \Illuminate\Support\Facades\Schema::hasTable('final_projects') ? 'final_projects' : 'internships';
-        \Illuminate\Support\Facades\DB::table($table)->where('id', $id)->update([
-            'status' => $request->input('status'),
-            'supervisor_id' => $request->input('supervisor_id'),
-            'updated_at' => now(),
-        ]);
-        return response()->json(['success' => true, 'message' => 'Statut PFE mis à jour.']);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-});
+            return response()->json(['success' => true, 'message' => 'Statut PFE mis à jour.']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    });
 
-// Student Progress Report (full DB pull for one student)
-Route::get('/admin/students/{id}/progress-report', function ($id) {
-    try {
-        $student = \Illuminate\Support\Facades\DB::table('students')
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('student_pathways', function($join) {
-                $join->on('students.id', '=', 'student_pathways.student_id')
-                     ->where('student_pathways.is_current', '=', true);
-            })
-            ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-            ->where('students.id', $id)
-            ->select(
-                'students.id', 'students.cne', 'students.student_number as apogee_code',
-                'users.name', 'users.email',
-                'filieres.name as filiere'
-            )->first();
+    // Student Progress Report (full DB pull for one student)
+    Route::get('/admin/students/{id}/progress-report', function ($id) {
+        try {
+            $student = DB::table('students')
+                ->join('users', 'students.user_id', '=', 'users.id')
+                ->leftJoin('student_pathways', function ($join) {
+                    $join->on('students.id', '=', 'student_pathways.student_id')
+                        ->where('student_pathways.is_current', '=', true);
+                })
+                ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
+                ->where('students.id', $id)
+                ->select(
+                    'students.id', 'students.cne', 'students.student_number as apogee_code',
+                    'users.name', 'users.email',
+                    'filieres.name as filiere'
+                )->first();
 
-        if (!$student) return response()->json(['success' => false, 'message' => 'Étudiant introuvable'], 404);
+            if (! $student) {
+                return response()->json(['success' => false, 'message' => 'Étudiant introuvable'], 404);
+            }
 
-        $grades = \Illuminate\Support\Facades\DB::table('grades')
-            ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
-            ->join('modules', 'assessments.module_id', '=', 'modules.id')
-            ->where('grades.student_id', $id)
-            ->select('modules.name as module', 'modules.code', 'grades.grade', 'assessments.type')
-            ->get();
+            $grades = DB::table('grades')
+                ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
+                ->join('modules', 'assessments.module_id', '=', 'modules.id')
+                ->where('grades.student_id', $id)
+                ->select('modules.name as module', 'modules.code', 'grades.grade', 'assessments.type')
+                ->get();
 
-        $absences = \Illuminate\Support\Facades\DB::table('absences')
-            ->where('student_id', $id)
-            ->select('date', 'is_justified', 'reason')
-            ->orderBy('date', 'desc')
-            ->get();
+            $absences = DB::table('absences')
+                ->where('student_id', $id)
+                ->select('date', 'is_justified', 'reason')
+                ->orderBy('date', 'desc')
+                ->get();
 
-        $internships = \Illuminate\Support\Facades\DB::table('internships')
-            ->where('student_id', $id)
-            ->select('company_name', 'status', 'start_date', 'end_date', 'type')
-            ->get();
+            $internships = DB::table('internships')
+                ->where('student_id', $id)
+                ->select('company_name', 'status', 'start_date', 'end_date', 'type')
+                ->get();
 
-        $clubMemberships = \Illuminate\Support\Facades\Schema::hasTable('club_members')
-            ? \Illuminate\Support\Facades\DB::table('club_members')
-                ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
-                ->where('club_members.student_id', $id)
-                ->select('clubs.name as club')
-                ->get()
-            : collect([]);
+            $clubMemberships = Schema::hasTable('club_members')
+                ? DB::table('club_members')
+                    ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+                    ->where('club_members.student_id', $id)
+                    ->select('clubs.name as club')
+                    ->get()
+                : collect([]);
 
-        $avgGrade = $grades->avg('grade');
-        $totalAbsences = $absences->count();
-        $justifiedAbsences = $absences->where('is_justified', true)->count();
+            $avgGrade = $grades->avg('grade');
+            $totalAbsences = $absences->count();
+            $justifiedAbsences = $absences->where('is_justified', true)->count();
 
-        return response()->json([
-            'success' => true,
-            'student' => $student,
-            'summary' => [
-                'average_grade' => round($avgGrade ?? 0, 2),
-                'total_absences' => $totalAbsences,
-                'justified_absences' => $justifiedAbsences,
-                'total_modules' => $grades->count(),
-                'passed_modules' => $grades->where('grade', '>=', 10)->count(),
-            ],
-            'grades' => $grades,
-            'absences' => $absences,
-            'internships' => $internships,
-            'clubs' => $clubMemberships,
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-});
+            return response()->json([
+                'success' => true,
+                'student' => $student,
+                'summary' => [
+                    'average_grade' => round($avgGrade ?? 0, 2),
+                    'total_absences' => $totalAbsences,
+                    'justified_absences' => $justifiedAbsences,
+                    'total_modules' => $grades->count(),
+                    'passed_modules' => $grades->where('grade', '>=', 10)->count(),
+                ],
+                'grades' => $grades,
+                'absences' => $absences,
+                'internships' => $internships,
+                'clubs' => $clubMemberships,
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    });
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Correction Automatique de Compte-Rendus (Professeurs) & Analyse de Cours (Étudiants)
-// ──────────────────────────────────────────────────────────────────────────────
-Route::post('/professor/ai/grade-report', [\App\Http\Controllers\Api\ProfessorAiController::class, 'gradeReport']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Correction Automatique de Compte-Rendus (Professeurs) & Analyse de Cours (Étudiants)
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::post('/professor/ai/grade-report', [ProfessorAiController::class, 'gradeReport']);
 
-Route::middleware(['auth:sanctum'])->prefix('v1/admin/substitutions')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'index']);
-    Route::post('/', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'store']);
-    Route::post('/{id}/revoke', [\App\Http\Controllers\Api\ProfessorSubstitutionController::class, 'revoke']);
-});
+    Route::middleware(['auth:sanctum'])->prefix('v1/admin/substitutions')->group(function () {
+        Route::get('/', [ProfessorSubstitutionController::class, 'index']);
+        Route::post('/', [ProfessorSubstitutionController::class, 'store']);
+        Route::post('/{id}/revoke', [ProfessorSubstitutionController::class, 'revoke']);
+    });
 
-Route::middleware(['auth:sanctum'])->prefix('v1/admin/roles-permissions')->group(function () {
-    Route::get('/data', [\App\Http\Controllers\Api\AdminRolePermissionController::class, 'getData']);
-    Route::post('/users/{user}', [\App\Http\Controllers\Api\AdminRolePermissionController::class, 'updateUserPermissions']);
-});
-Route::post('/student/ai/analyze-course', [\App\Http\Controllers\Api\Student\StudentAiController::class, 'analyzeCourse']);
+    Route::middleware(['auth:sanctum'])->prefix('v1/admin/roles-permissions')->group(function () {
+        Route::get('/data', [AdminRolePermissionController::class, 'getData']);
+        Route::post('/users/{user}', [AdminRolePermissionController::class, 'updateUserPermissions']);
+    });
+    Route::post('/student/ai/analyze-course', [StudentAiController::class, 'analyzeCourse']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Nouvelles Fonctionnalités IA Avancées (PFE Matching, Anomalies, Recommandations)
-// ──────────────────────────────────────────────────────────────────────────────
-Route::post('/admin/ai/match-pfe-supervisor', [\App\Http\Controllers\Api\AdminAiController::class, 'matchPfeSupervisor']);
-Route::get('/admin/ai/grade-anomalies', [\App\Http\Controllers\Api\AdminAiController::class, 'detectGradeAnomalies']);
-Route::post('/admin/students/{id}/recommendation-letter', [\App\Http\Controllers\Api\AdminAiController::class, 'generateRecommendationLetter']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Nouvelles Fonctionnalités IA Avancées (PFE Matching, Anomalies, Recommandations)
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::post('/admin/ai/match-pfe-supervisor', [AdminAiController::class, 'matchPfeSupervisor']);
+    Route::get('/admin/ai/grade-anomalies', [AdminAiController::class, 'detectGradeAnomalies']);
+    Route::post('/admin/students/{id}/recommendation-letter', [AdminAiController::class, 'generateRecommendationLetter']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Lettres de Recommandation (Workflow Étudiant -> Professeur -> Signature & Email)
-// ──────────────────────────────────────────────────────────────────────────────
-Route::post('/student/recommendations/request', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'submitRequest']);
-Route::get('/student/recommendations', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'getStudentRequests']);
-Route::get('/professor/recommendations', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'getProfessorRequests']);
-Route::post('/professor/recommendations/{id}/approve', [\App\Http\Controllers\Api\RecommendationLetterController::class, 'approveRequest']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Lettres de Recommandation (Workflow Étudiant -> Professeur -> Signature & Email)
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::post('/student/recommendations/request', [RecommendationLetterController::class, 'submitRequest']);
+    Route::get('/student/recommendations', [RecommendationLetterController::class, 'getStudentRequests']);
+    Route::get('/professor/recommendations', [RecommendationLetterController::class, 'getProfessorRequests']);
+    Route::post('/professor/recommendations/{id}/approve', [RecommendationLetterController::class, 'approveRequest']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// APOGEE Inscriptions Engine & Moteur Paie Vacataires RH/DAF
-// ──────────────────────────────────────────────────────────────────────────────
-Route::post('/academic/candidates/validate', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'validateCandidate']);
-Route::get('/hr/vacataires/payroll', [\App\Http\Controllers\Api\ApogeeEngineController::class, 'calculateVacationPayroll']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // APOGEE Inscriptions Engine & Moteur Paie Vacataires RH/DAF
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::post('/academic/candidates/validate', [ApogeeEngineController::class, 'validateCandidate']);
+    Route::get('/hr/vacataires/payroll', [ApogeeEngineController::class, 'calculateVacationPayroll']);
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
-// ──────────────────────────────────────────────────────────────────────────────
-Route::get('/admin/tafem/ministry-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getMinistryTafemList']);
-Route::post('/admin/tafem/verify-physical-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'verifyPhysicalDossier']);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
+    // ──────────────────────────────────────────────────────────────────────────────
+    Route::get('/admin/tafem/ministry-list', [AdmissionController::class, 'getMinistryTafemList']);
+    Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
 
-Route::get('/admin/tafem/scan-envelope/{token}', [\App\Http\Controllers\Api\AdmissionController::class, 'scanEnvelopeQrCode']);
-Route::get('/admin/tafem/enrollment-stats', [\App\Http\Controllers\Api\AdmissionController::class, 'getEnrollmentStats']);
-Route::get('/admin/tafem/security-daily-list', [\App\Http\Controllers\Api\AdmissionController::class, 'getSecurityDailyList']);
-Route::post('/admin/tafem/promote-waiting-list', [\App\Http\Controllers\Api\AdmissionController::class, 'promoteWaitingListCandidates']);
+    Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
+    Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
+    Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
+    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingListCandidates']);
 
-Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
-Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
+    Route::get('/admin/activity-logs', [AdminDashboardController::class, 'getActivityLogs']);
+    Route::get('/activity-logs', [AdminDashboardController::class, 'getActivityLogs']);
+    Route::post('/students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
 
-    Route::get('/v1/enrollments/scolarite-print-hub', [\App\Http\Controllers\Api\PdfExportController::class, 'scolaritePrintHub']);
-    Route::get('/v1/enrollments/dossier-complet-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportDossierCompletPdf']);
-    Route::get('/v1/assignments/ordre-de-service-pdf/{id}', [\App\Http\Controllers\Api\PdfExportController::class, 'exportOrdreDeServicePdf']);
-    Route::get('/admin/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
-    Route::get('/admin/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
-    Route::get('/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
-    Route::get('/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
-    Route::post('/public/toggle-lock-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'toggleLockCandidateDossier']);
-    Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
+    Route::get('/v1/enrollments/scolarite-print-hub', [PdfExportController::class, 'scolaritePrintHub']);
+    Route::get('/v1/enrollments/dossier-complet-pdf', [PdfExportController::class, 'exportDossierCompletPdf']);
+    Route::get('/v1/assignments/ordre-de-service-pdf/{id}', [PdfExportController::class, 'exportOrdreDeServicePdf']);
+    Route::get('/admin/students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+    Route::get('/admin/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    Route::get('/students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+    Route::get('/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
+    Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Public Unauthenticated Endpoints (candidate TAFEM + document verify only)
 // ──────────────────────────────────────────────────────────────────────────────
-Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionController::class, 'submitOnlinePreinscription']);
-Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
-Route::post('/public/update-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'updateCandidateDossier']);
-Route::post('/public/upload-candidate-document', [\App\Http\Controllers\Api\AdmissionController::class, 'uploadCandidateDocument']);
-Route::delete('/public/delete-candidate-document', [\App\Http\Controllers\Api\AdmissionController::class, 'deleteCandidateDocument']);
-Route::post('/public/ocr-extract-documents', [\App\Http\Controllers\Api\AdmissionController::class, 'extractDocumentDataOcr']);
+Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
+Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
+Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
+Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument']);
+Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
+Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:6,1');
 
-Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
-Route::get('/public/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
-Route::get('/public/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
-Route::get('/public/serve-document/{type}/{cne}', [\App\Http\Controllers\Api\AdmissionController::class, 'serveCandidateDocumentPublic']);
-Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
-Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);
-Route::post('/public/scolarbot/chat', [\App\Http\Controllers\Api\AiScolarBotController::class, 'chat']);
-
-
+Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
+Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+Route::get('/public/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+Route::get('/public/serve-document/{type}/{cne}', [AdmissionController::class, 'serveCandidateDocumentPublic']);
+Route::get('/public/inscription/status', [StudentController::class, 'getInscriptionStatusPublic']);
+Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality']);
+Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat']);

@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Log;
 class GeminiApiService
 {
     protected string $geminiApiKey;
+
     protected string $groqApiKey;
+
     protected string $geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+
     protected string $geminiModel = 'gemini-1.5-flash';
+
     public ?string $lastError = null;
 
     public function getLastError(): ?string
@@ -21,7 +25,7 @@ class GeminiApiService
     public function __construct()
     {
         $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
-        $this->groqApiKey   = config('services.groq.key') ?: env('GROQ_API_KEY', '');
+        $this->groqApiKey = config('services.groq.key') ?: env('GROQ_API_KEY', '');
         Log::info('[GeminiApiService] Gemini key active check');
     }
 
@@ -30,17 +34,22 @@ class GeminiApiService
      */
     public function generateContent(string $prompt, array $systemInstructions = []): ?string
     {
-        if (!empty($this->geminiApiKey)) {
+        if (! empty($this->geminiApiKey)) {
             $res = $this->callGeminiApi($prompt, $systemInstructions);
-            if (!empty($res)) return $res;
+            if (! empty($res)) {
+                return $res;
+            }
         }
 
-        if (!empty($this->groqApiKey)) {
+        if (! empty($this->groqApiKey)) {
             $res = $this->callGroqApi($prompt, $systemInstructions);
-            if (!empty($res)) return $res;
+            if (! empty($res)) {
+                return $res;
+            }
         }
 
         Log::error('AI Engine Exception: Both Gemini and Groq API calls failed.');
+
         return null;
     }
 
@@ -52,34 +61,38 @@ class GeminiApiService
             'contents' => [
                 [
                     'parts' => [
-                        ['text' => $prompt]
-                    ]
-                ]
+                        ['text' => $prompt],
+                    ],
+                ],
             ],
             'generationConfig' => [
                 'temperature' => 0.7,
                 'maxOutputTokens' => 2048,
-            ]
+            ],
         ];
 
-        if (!empty($systemInstructions)) {
+        if (! empty($systemInstructions)) {
             $payload['systemInstruction'] = [
-                'parts' => array_map(fn($ins) => ['text' => $ins], $systemInstructions)
+                'parts' => array_map(fn ($ins) => ['text' => $ins], $systemInstructions),
             ];
         }
 
         try {
             $response = Http::withoutVerifying()->timeout(15)->withHeaders([
-                'X-goog-api-key' => $this->geminiApiKey
+                'X-goog-api-key' => $this->geminiApiKey,
             ])->post($url, $payload);
             if ($response->successful()) {
                 $text = $response->json('candidates.0.content.parts.0.text');
-                if (!empty($text)) return trim($text);
+                if (! empty($text)) {
+                    return trim($text);
+                }
             }
-            Log::warning('Gemini API Non-200 Response: ' . $response->body());
+            Log::warning('Gemini API Non-200 Response: '.$response->body());
+
             return null;
         } catch (\Exception $e) {
-            Log::warning('Gemini API Exception: ' . $e->getMessage());
+            Log::warning('Gemini API Exception: '.$e->getMessage());
+
             return null;
         }
     }
@@ -87,15 +100,15 @@ class GeminiApiService
     protected function callGroqApi(string $prompt, array $systemInstructions = []): ?string
     {
         $messages = [];
-        if (!empty($systemInstructions)) {
+        if (! empty($systemInstructions)) {
             $messages[] = ['role' => 'system', 'content' => implode("\n", $systemInstructions)];
         }
         $messages[] = ['role' => 'user', 'content' => $prompt];
 
         try {
             $response = Http::withoutVerifying()->timeout(15)->withHeaders([
-                'Authorization' => 'Bearer ' . $this->groqApiKey,
-                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer '.$this->groqApiKey,
+                'Content-Type' => 'application/json',
             ])->post('https://api.groq.com/openai/v1/chat/completions', [
                 'model' => 'llama-3.3-70b-versatile',
                 'messages' => $messages,
@@ -104,12 +117,16 @@ class GeminiApiService
 
             if ($response->successful()) {
                 $text = $response->json('choices.0.message.content');
-                if (!empty($text)) return trim($text);
+                if (! empty($text)) {
+                    return trim($text);
+                }
             }
-            Log::warning('Groq API Non-200 Response: ' . $response->body());
+            Log::warning('Groq API Non-200 Response: '.$response->body());
+
             return null;
         } catch (\Exception $e) {
-            Log::warning('Groq API Exception: ' . $e->getMessage());
+            Log::warning('Groq API Exception: '.$e->getMessage());
+
             return null;
         }
     }
@@ -128,14 +145,15 @@ class GeminiApiService
             @opcache_invalidate(app_path('OCR/Parsers/CnieParser.php'), true);
         }
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             Log::error("OCR File Not Found: {$filePath}");
+
             return null;
         }
-        
+
         if (empty($mimeType) || $mimeType === 'application/octet-stream') {
             $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-            $mimeType = match($ext) {
+            $mimeType = match ($ext) {
                 'pdf' => 'application/pdf',
                 'png' => 'image/png',
                 'webp' => 'image/webp',
@@ -143,7 +161,7 @@ class GeminiApiService
             };
         }
 
-        $promptText = match(strtolower($docType)) {
+        $promptText = match (strtolower($docType)) {
             'cin', 'cnie' => 'Analyze ALL PAGES of this Moroccan National Identity Card (CNIE) containing BOTH RECTO (front: candidate identity, CIN, birth date, birth city) and VERSO (back: father name, mother name, and current home address in French & Arabic). CRITICAL: You MUST extract parents names (father_name_fr, father_name_ar, mother_name_fr, mother_name_ar) and current residential address (address_fr, address_ar) printed on the VERSO. Output strictly raw JSON with keys: cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), birth_date (YYYY-MM-DD), birth_city_fr, birth_city_ar (in Arabic script), father_name_fr, father_name_ar (in Arabic script), mother_name_fr, mother_name_ar (in Arabic script), address_fr, address_ar (in Arabic script).',
             'releve', 'notes', 'releve_notes' => 'Analyze this Moroccan Baccalaureate Transcript (Relevé de Notes). CRITICAL: The CNE / Code Massar is formatted as 1 letter + 8-9 digits (e.g. H148073298, N142088916). MUST put it in "cne". MUST extract Arabic names in Arabic script. Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_average, national_note, regional_note, bac_type, high_school, academy, prefecture.',
             default => 'Analyze this Moroccan Baccalaureate Certificate (Attestation de Baccalauréat). CRITICAL: On Moroccan Bac certificates, the CNE / Code Massar (formatted as 1 letter + 8-9 digits like H148073298 or N142088916) is printed under candidate details (often near "Carte Nationale"). MUST put it in "cne". MUST extract Arabic names in Arabic script (e.g. فاطمة الزهراء). Extract strictly raw JSON with keys: cne, cin, first_name_fr, last_name_fr, first_name_ar (in Arabic script), last_name_ar (in Arabic script), bac_type, bac_mention, academy, prefecture, high_school.'
@@ -155,16 +173,16 @@ class GeminiApiService
         try {
             Log::info("OCR Local Service: Triggering Local OCR & PDF Parser for {$docType}...");
             // Use Laravel container to properly resolve all injected dependencies
-            $localOcr  = app(\App\Services\AI\LocalOcrService::class);
+            $localOcr = app(LocalOcrService::class);
             $localData = $localOcr->extractDocumentOcr($filePath, $mimeType, $originalName, $docType);
 
             Log::info('[GeminiApiService] Local OCR Execution Completed Successfully', $localData);
             $this->lastError = null;
+
             return $localData;
         } catch (\Throwable $e) {
-            Log::error('[GeminiApiService] Local OCR error: ' . $e->getMessage());
+            Log::error('[GeminiApiService] Local OCR error: '.$e->getMessage());
         }
-
 
         $fileBytes = base64_encode(file_get_contents($filePath));
         $pdfPages = $this->convertPdfToJpeg($filePath);
@@ -174,47 +192,48 @@ class GeminiApiService
         // ==========================================
         $geminiModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
-        if (!empty($this->geminiApiKey)) {
+        if (! empty($this->geminiApiKey)) {
             foreach ($geminiModels as $gModel) {
                 try {
                     Log::info("OCR Tier 1: Triggering Gemini Vision ({$gModel}) for {$docType}...");
                     $geminiUrl = "{$this->geminiBaseUrl}/{$gModel}:generateContent?key={$this->geminiApiKey}";
 
-                    $imgData = (!empty($pdfPages) && is_string($pdfPages)) ? $pdfPages : file_get_contents($filePath);
-                    $imgMime = (!empty($pdfPages) && is_string($pdfPages)) ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : 'image/jpeg');
+                    $imgData = (! empty($pdfPages) && is_string($pdfPages)) ? $pdfPages : file_get_contents($filePath);
+                    $imgMime = (! empty($pdfPages) && is_string($pdfPages)) ? 'image/jpeg' : (str_contains(strtolower($mimeType), 'png') ? 'image/png' : 'image/jpeg');
 
                     $parts = [
-                        ['text' => $promptText . ' Output ONLY valid raw JSON without markdown.'],
+                        ['text' => $promptText.' Output ONLY valid raw JSON without markdown.'],
                         [
                             'inline_data' => [
                                 'mime_type' => $imgMime,
-                                'data' => base64_encode($imgData)
-                            ]
-                        ]
+                                'data' => base64_encode($imgData),
+                            ],
+                        ],
                     ];
 
                     $resG = Http::withoutVerifying()->timeout(25)->withHeaders([
-                        'X-goog-api-key' => $this->geminiApiKey
+                        'X-goog-api-key' => $this->geminiApiKey,
                     ])->post($geminiUrl, [
                         'contents' => [['parts' => $parts]],
-                        'generationConfig' => ['temperature' => 0.1]
+                        'generationConfig' => ['temperature' => 0.1],
                     ]);
 
                     if ($resG->successful()) {
                         $rawTxt = $resG->json('candidates.0.content.parts.0.text');
                         $decodedG = $this->parseJsonResponse($rawTxt);
-                        if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                        if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
                             Log::info("OCR Tier 1 Success via Gemini Vision ({$gModel})!", $decodedG);
                             $this->lastError = null;
+
                             return $this->cleanAndNormalizeOcrData($decodedG);
                         }
                     } else {
                         $errBody = substr($resG->body(), 0, 250);
-                        $this->lastError = "Gemini Vision ({$gModel}) HTTP " . $resG->status() . ": " . $errBody;
-                        Log::warning("OCR Tier 1 Gemini ({$gModel}) HTTP " . $resG->status() . ": " . $errBody);
+                        $this->lastError = "Gemini Vision ({$gModel}) HTTP ".$resG->status().': '.$errBody;
+                        Log::warning("OCR Tier 1 Gemini ({$gModel}) HTTP ".$resG->status().': '.$errBody);
                     }
                 } catch (\Throwable $ex) {
-                    $this->lastError = "Gemini Vision Exception ({$gModel}): " . $ex->getMessage();
+                    $this->lastError = "Gemini Vision Exception ({$gModel}): ".$ex->getMessage();
                 }
             }
         }
@@ -222,30 +241,30 @@ class GeminiApiService
         // ==========================================
         // TIER 1.5: GROQ VISION FAILOVER (llama-3.2-90b-vision-preview / llama-3.2-11b-vision-preview)
         // ==========================================
-        if (!empty($this->groqApiKey)) {
+        if (! empty($this->groqApiKey)) {
             $isImageFile = str_contains(strtolower($mimeType), 'image');
             $imageMime = str_contains(strtolower($mimeType), 'png') ? 'image/png' : (str_contains(strtolower($mimeType), 'webp') ? 'image/webp' : 'image/jpeg');
-            
+
             $userContent = [
                 [
                     'type' => 'text',
-                    'text' => $promptText . ' IMPORTANT: Extract both French and Arabic text accurately from RECTO and VERSO. Output ONLY valid raw JSON.'
-                ]
+                    'text' => $promptText.' IMPORTANT: Extract both French and Arabic text accurately from RECTO and VERSO. Output ONLY valid raw JSON.',
+                ],
             ];
 
-            if (!empty($pdfPages) && is_string($pdfPages)) {
+            if (! empty($pdfPages) && is_string($pdfPages)) {
                 $userContent[] = [
                     'type' => 'image_url',
                     'image_url' => [
-                        'url' => "data:image/jpeg;base64," . base64_encode($pdfPages)
-                    ]
+                        'url' => 'data:image/jpeg;base64,'.base64_encode($pdfPages),
+                    ],
                 ];
-            } else if ($isImageFile) {
+            } elseif ($isImageFile) {
                 $userContent[] = [
                     'type' => 'image_url',
                     'image_url' => [
-                        'url' => "data:{$imageMime};base64,{$fileBytes}"
-                    ]
+                        'url' => "data:{$imageMime};base64,{$fileBytes}",
+                    ],
                 ];
             }
 
@@ -255,37 +274,38 @@ class GeminiApiService
                 foreach ($visionModels as $modelName) {
                     try {
                         Log::info("OCR Tier 1.5: Triggering Groq Vision ({$modelName}) for {$docType}...");
-                        
+
                         $gRes = Http::withoutVerifying()->timeout(25)->withHeaders([
-                            'Authorization' => 'Bearer ' . $this->groqApiKey,
-                            'Content-Type'  => 'application/json',
+                            'Authorization' => 'Bearer '.$this->groqApiKey,
+                            'Content-Type' => 'application/json',
                         ])->post('https://api.groq.com/openai/v1/chat/completions', [
                             'model' => $modelName,
                             'messages' => [
                                 [
                                     'role' => 'user',
-                                    'content' => $userContent
-                                ]
+                                    'content' => $userContent,
+                                ],
                             ],
-                            'temperature' => 0.1
+                            'temperature' => 0.1,
                         ]);
 
                         if ($gRes->successful()) {
                             $rawJson = $gRes->json('choices.0.message.content');
                             $decodedG = $this->parseJsonResponse($rawJson);
-                            if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                            if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
                                 Log::info("OCR Tier 1.5 Success via Groq Vision ({$modelName})!", $decodedG);
                                 $this->lastError = null;
+
                                 return $this->cleanAndNormalizeOcrData($decodedG);
                             }
                         } else {
                             $errBody = substr($gRes->body(), 0, 250);
-                            $this->lastError = "Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody;
-                            Log::warning("OCR Tier 1.5 Groq Vision ({$modelName}) HTTP " . $gRes->status() . ": " . $errBody);
+                            $this->lastError = "Groq Vision ({$modelName}) HTTP ".$gRes->status().': '.$errBody;
+                            Log::warning("OCR Tier 1.5 Groq Vision ({$modelName}) HTTP ".$gRes->status().': '.$errBody);
                         }
                     } catch (\Throwable $ex) {
-                        $this->lastError = "Groq Vision Exception ({$modelName}): " . $ex->getMessage();
-                        Log::error("OCR Tier 1.5 Groq Vision Exception ({$modelName}): " . $ex->getMessage());
+                        $this->lastError = "Groq Vision Exception ({$modelName}): ".$ex->getMessage();
+                        Log::error("OCR Tier 1.5 Groq Vision Exception ({$modelName}): ".$ex->getMessage());
                     }
                 }
             }
@@ -298,13 +318,13 @@ class GeminiApiService
         $extractedText = '';
 
         if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $raw, $mText)) {
-            $extractedText .= implode(' ', $mText[1]) . "\n";
+            $extractedText .= implode(' ', $mText[1])."\n";
         }
         if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streams)) {
             foreach ($streams[1] as $st) {
                 $dec = @gzuncompress($st) ?: @gzinflate($st);
                 if ($dec && preg_match_all('/\((.*?)\)\s*T[jJ]/s', $dec, $m2)) {
-                    $extractedText .= implode(' ', $m2[1]) . "\n";
+                    $extractedText .= implode(' ', $m2[1])."\n";
                 }
             }
         }
@@ -312,49 +332,50 @@ class GeminiApiService
         if (strlen(trim($extractedText)) < 15) {
             // Extract clean ASCII and Arabic strings safely from binary stream
             if (preg_match_all('/[a-zA-Z0-9\x{0600}-\x{06FF}\s\.\,\:\-\/]{3,}/u', $raw, $mStrings)) {
-                $cleanItems = array_filter(array_map('trim', $mStrings[0]), fn($s) => strlen($s) >= 3 && !preg_match('/^(stream|endstream|obj|endobj|xref|trailer|startxref)$/i', $s));
-                $extractedText .= implode("\n", array_slice(array_unique($cleanItems), 0, 200)) . "\n";
+                $cleanItems = array_filter(array_map('trim', $mStrings[0]), fn ($s) => strlen($s) >= 3 && ! preg_match('/^(stream|endstream|obj|endobj|xref|trailer|startxref)$/i', $s));
+                $extractedText .= implode("\n", array_slice(array_unique($cleanItems), 0, 200))."\n";
             }
         }
 
-        if (strlen(trim($extractedText)) > 5 && !empty($this->groqApiKey)) {
-            $docContent = "Contenu textuel du document :\n" . $extractedText;
+        if (strlen(trim($extractedText)) > 5 && ! empty($this->groqApiKey)) {
+            $docContent = "Contenu textuel du document :\n".$extractedText;
 
             try {
                 Log::info("OCR Tier 2: Triggering Groq Llama-3.3-70b Text LLM for {$docType}...");
                 $gResText = Http::withoutVerifying()->timeout(15)->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->groqApiKey,
-                    'Content-Type'  => 'application/json',
+                    'Authorization' => 'Bearer '.$this->groqApiKey,
+                    'Content-Type' => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
                     'model' => 'llama-3.3-70b-versatile',
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'Vous êtes un assistant OCR certifié. Extraire exactement les données. ' . $promptText
+                            'content' => 'Vous êtes un assistant OCR certifié. Extraire exactement les données. '.$promptText,
                         ],
                         [
                             'role' => 'user',
-                            'content' => $docContent
-                        ]
+                            'content' => $docContent,
+                        ],
                     ],
                     'temperature' => 0.1,
-                    'response_format' => ['type' => 'json_object']
+                    'response_format' => ['type' => 'json_object'],
                 ]);
 
                 if ($gResText->successful()) {
                     $rawJson = $gResText->json('choices.0.message.content');
                     $decodedG = $this->parseJsonResponse($rawJson);
-                    if ($decodedG && count(array_filter($decodedG, fn($v) => !empty($v) && strtolower((string)$v) !== 'inconnu')) > 0) {
+                    if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
                         Log::info('OCR Tier 2 Success via Groq Llama-3.3-70b Text LLM!', $decodedG);
                         $this->lastError = null;
+
                         return $this->cleanAndNormalizeOcrData($decodedG);
                     }
                 } else {
                     $errBody = substr($gResText->body(), 0, 250);
-                    $this->lastError = "Groq Text (llama-3.3-70b) HTTP " . $gResText->status() . ": " . $errBody;
+                    $this->lastError = 'Groq Text (llama-3.3-70b) HTTP '.$gResText->status().': '.$errBody;
                 }
             } catch (\Throwable $ex) {
-                $this->lastError = "Groq Text Exception: " . $ex->getMessage();
+                $this->lastError = 'Groq Text Exception: '.$ex->getMessage();
             }
         }
 
@@ -364,7 +385,7 @@ class GeminiApiService
         Log::info("OCR Tier 3: Executing Local Extraction Fallback for {$docType}...");
 
         $targetName = $originalName ?: basename($filePath);
-        $fullText = $targetName . "\n" . ($extractedText ?: '') . "\n" . $raw;
+        $fullText = $targetName."\n".($extractedText ?: '')."\n".$raw;
 
         $cne = null;
         if (preg_match('/(?:Massar|CNE|Code)\s*[:\.]?\s*([A-Za-z]\d{8,9}|\d{10})/i', $fullText, $mCne1)) {
@@ -377,7 +398,9 @@ class GeminiApiService
         if (preg_match_all('/([A-Za-z]{1,2}\d{5,7})/', $fullText, $mCins)) {
             foreach ($mCins[1] as $cCand) {
                 $cCand = strtoupper($cCand);
-                if ($cne && str_starts_with($cne, $cCand)) continue;
+                if ($cne && str_starts_with($cne, $cCand)) {
+                    continue;
+                }
                 $cin = $cCand;
                 break;
             }
@@ -440,31 +463,36 @@ class GeminiApiService
     {
         if (extension_loaded('imagick')) {
             try {
-                $imagick = new \Imagick();
+                $imagick = new \Imagick;
                 $imagick->setResolution(150, 150);
                 $imagick->readImage($filePath);
                 $imagick->setImageFormat('jpeg');
                 $imagick->setImageCompressionQuality(85);
-                
+
                 if ($imagick->getNumberImages() > 1) {
                     $blobs = [];
                     foreach ($imagick as $page) {
                         $blobs[] = $page->getImageBlob();
                     }
+
                     return $this->combineImagesVertically($blobs);
                 }
+
                 return $imagick->getImageBlob();
             } catch (\Throwable $e) {
-                Log::warning('Imagick PDF conversion failed: ' . $e->getMessage());
+                Log::warning('Imagick PDF conversion failed: '.$e->getMessage());
             }
         }
 
-        $tmpOut = sys_get_temp_dir() . '/pdf_pg_' . uniqid();
-        @exec("pdftoppm -jpeg -r 150 -f 1 -l 2 " . escapeshellarg($filePath) . " " . escapeshellarg($tmpOut));
+        $tmpOut = sys_get_temp_dir().'/pdf_pg_'.uniqid();
+        @exec('pdftoppm -jpeg -r 150 -f 1 -l 2 '.escapeshellarg($filePath).' '.escapeshellarg($tmpOut));
         $genFiles = glob("{$tmpOut}*.jpg");
-        if (!empty($genFiles)) {
+        if (! empty($genFiles)) {
             $blobs = array_map('file_get_contents', $genFiles);
-            foreach ($genFiles as $f) { @unlink($f); }
+            foreach ($genFiles as $f) {
+                @unlink($f);
+            }
+
             return $this->combineImagesVertically($blobs);
         }
 
@@ -514,7 +542,7 @@ class GeminiApiService
 
         if (count($extractedImages) >= 2) {
             return $this->combineImagesVertically($extractedImages);
-        } elseif (!empty($extractedImages)) {
+        } elseif (! empty($extractedImages)) {
             return $extractedImages[0];
         }
 
@@ -526,10 +554,14 @@ class GeminiApiService
      */
     protected function combineImagesVertically(array $imageBlobs): ?string
     {
-        if (empty($imageBlobs)) return null;
-        if (count($imageBlobs) === 1) return $imageBlobs[0];
+        if (empty($imageBlobs)) {
+            return null;
+        }
+        if (count($imageBlobs) === 1) {
+            return $imageBlobs[0];
+        }
 
-        if (!function_exists('imagecreatefromstring')) {
+        if (! function_exists('imagecreatefromstring')) {
             return $imageBlobs[0];
         }
 
@@ -544,15 +576,19 @@ class GeminiApiService
                     $h = imagesy($im);
                     $imgs[] = ['im' => $im, 'w' => $w, 'h' => $h];
                     $totalH += $h;
-                    if ($w > $maxW) $maxW = $w;
+                    if ($w > $maxW) {
+                        $maxW = $w;
+                    }
                 }
             }
 
-            if (empty($imgs)) return null;
+            if (empty($imgs)) {
+                return null;
+            }
 
             $scale = $maxW > 1200 ? (1200.0 / $maxW) : 1.0;
-            $finalW = (int)round($maxW * $scale);
-            $finalH = (int)round($totalH * $scale);
+            $finalW = (int) round($maxW * $scale);
+            $finalH = (int) round($totalH * $scale);
 
             $canvas = imagecreatetruecolor($finalW, $finalH);
             $bg = imagecolorallocate($canvas, 255, 255, 255);
@@ -560,8 +596,8 @@ class GeminiApiService
 
             $currY = 0;
             foreach ($imgs as $item) {
-                $itemW = (int)round($item['w'] * $scale);
-                $itemH = (int)round($item['h'] * $scale);
+                $itemW = (int) round($item['w'] * $scale);
+                $itemH = (int) round($item['h'] * $scale);
                 imagecopyresampled($canvas, $item['im'], 0, $currY, 0, 0, $itemW, $itemH, $item['w'], $item['h']);
                 $currY += $itemH;
                 imagedestroy($item['im']);
@@ -572,12 +608,13 @@ class GeminiApiService
             $combinedJpeg = ob_get_clean();
             imagedestroy($canvas);
 
-            if (!empty($combinedJpeg)) {
-                Log::info("Combined " . count($imageBlobs) . " PDF pages vertically into single {$finalW}x{$finalH} image (" . strlen($combinedJpeg) . " bytes).");
+            if (! empty($combinedJpeg)) {
+                Log::info('Combined '.count($imageBlobs)." PDF pages vertically into single {$finalW}x{$finalH} image (".strlen($combinedJpeg).' bytes).');
+
                 return $combinedJpeg;
             }
         } catch (\Throwable $e) {
-            Log::warning('Image stitch skipped: ' . $e->getMessage());
+            Log::warning('Image stitch skipped: '.$e->getMessage());
         }
 
         return $imageBlobs[0];
@@ -585,16 +622,16 @@ class GeminiApiService
 
     public function cleanAndNormalizeOcrData(array $data): array
     {
-        $cneRaw = strtoupper(trim((string)($data['cne'] ?? '')));
-        $cinRaw = strtoupper(trim((string)($data['cin'] ?? '')));
+        $cneRaw = strtoupper(trim((string) ($data['cne'] ?? '')));
+        $cinRaw = strtoupper(trim((string) ($data['cin'] ?? '')));
 
-        $isCinPattern = fn($val) => preg_match('/^[A-Z]{1,2}\d{5,7}$/', trim($val));
-        $isCnePattern = fn($val) => preg_match('/^([A-Z]\d{8,9}|\d{10})$/', trim($val));
+        $isCinPattern = fn ($val) => preg_match('/^[A-Z]{1,2}\d{5,7}$/', trim($val));
+        $isCnePattern = fn ($val) => preg_match('/^([A-Z]\d{8,9}|\d{10})$/', trim($val));
 
         $finalCin = '';
         $finalCne = '';
 
-        if (!empty($cinRaw)) {
+        if (! empty($cinRaw)) {
             if ($isCinPattern($cinRaw)) {
                 $finalCin = $cinRaw;
             } elseif ($isCnePattern($cinRaw)) {
@@ -602,7 +639,7 @@ class GeminiApiService
             }
         }
 
-        if (!empty($cneRaw)) {
+        if (! empty($cneRaw)) {
             if ($isCnePattern($cneRaw)) {
                 $finalCne = $cneRaw;
             } elseif ($isCinPattern($cneRaw) && empty($finalCin)) {
@@ -613,24 +650,33 @@ class GeminiApiService
         $data['cin'] = $finalCin;
         $data['cne'] = $finalCne;
 
-        if (!empty($data['bac_type']) && $data['bac_type'] !== 'Inconnu') {
+        if (! empty($data['bac_type']) && $data['bac_type'] !== 'Inconnu') {
             $bt = strtoupper($data['bac_type']);
-            if (str_contains($bt, 'ECONOMIQ')) $data['bac_type'] = 'Sciences Économiques';
-            elseif (str_contains($bt, 'GESTION')) $data['bac_type'] = 'Sciences de Gestion Comptable';
-            elseif (str_contains($bt, 'PHYSIQ')) $data['bac_type'] = 'Sciences Physiques';
-            elseif (str_contains($bt, 'SVT') || str_contains($bt, 'VIE') || str_contains($bt, 'TERRE')) $data['bac_type'] = 'Sciences de la Vie et de la Terre';
-            elseif (str_contains($bt, 'MATH')) $data['bac_type'] = 'Sciences Mathématiques';
-            elseif (str_contains($bt, 'LETTRE') || str_contains($bt, 'HUMAIN')) $data['bac_type'] = 'Lettres et Sciences Humaines';
+            if (str_contains($bt, 'ECONOMIQ')) {
+                $data['bac_type'] = 'Sciences Économiques';
+            } elseif (str_contains($bt, 'GESTION')) {
+                $data['bac_type'] = 'Sciences de Gestion Comptable';
+            } elseif (str_contains($bt, 'PHYSIQ')) {
+                $data['bac_type'] = 'Sciences Physiques';
+            } elseif (str_contains($bt, 'SVT') || str_contains($bt, 'VIE') || str_contains($bt, 'TERRE')) {
+                $data['bac_type'] = 'Sciences de la Vie et de la Terre';
+            } elseif (str_contains($bt, 'MATH')) {
+                $data['bac_type'] = 'Sciences Mathématiques';
+            } elseif (str_contains($bt, 'LETTRE') || str_contains($bt, 'HUMAIN')) {
+                $data['bac_type'] = 'Lettres et Sciences Humaines';
+            }
         }
 
-        if (!empty($data['birth_date']) && $data['birth_date'] !== 'Inconnu') {
+        if (! empty($data['birth_date']) && $data['birth_date'] !== 'Inconnu') {
             $bd = trim($data['birth_date']);
             if (preg_match('/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/', $bd, $mDate)) {
                 $day = str_pad($mDate[1], 2, '0', STR_PAD_LEFT);
                 $month = str_pad($mDate[2], 2, '0', STR_PAD_LEFT);
                 $year = $mDate[3];
-                if ((int)$day > 31 && (int)$month <= 12) {
-                    $tmp = $day; $day = $month; $month = substr($tmp, -2);
+                if ((int) $day > 31 && (int) $month <= 12) {
+                    $tmp = $day;
+                    $day = $month;
+                    $month = substr($tmp, -2);
                 }
                 $data['birth_date'] = "{$year}-{$month}-{$day}";
             } elseif (preg_match('/(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/', $bd, $mDate)) {
@@ -641,20 +687,23 @@ class GeminiApiService
             }
         }
 
-        if (!empty($data['bac_average']) && is_numeric($data['bac_average'])) {
-            $avg = (float)$data['bac_average'];
+        if (! empty($data['bac_average']) && is_numeric($data['bac_average'])) {
+            $avg = (float) $data['bac_average'];
             if (empty($data['bac_mention']) || $data['bac_mention'] === 'Inconnu') {
-                if ($avg >= 16) $data['bac_mention'] = 'Très Bien';
-                elseif ($avg >= 14) $data['bac_mention'] = 'Bien';
-                elseif ($avg >= 12) $data['bac_mention'] = 'Assez Bien';
-                elseif ($avg >= 10) $data['bac_mention'] = 'Passable';
+                if ($avg >= 16) {
+                    $data['bac_mention'] = 'Très Bien';
+                } elseif ($avg >= 14) {
+                    $data['bac_mention'] = 'Bien';
+                } elseif ($avg >= 12) {
+                    $data['bac_mention'] = 'Assez Bien';
+                } elseif ($avg >= 10) {
+                    $data['bac_mention'] = 'Passable';
+                }
             }
         }
 
-
-
         foreach ($data as $key => $val) {
-            if (is_null($val) || in_array(strtolower(trim((string)$val)), ['inconnu', 'n/a', 'null', 'none', 'undefined', 'aucun'])) {
+            if (is_null($val) || in_array(strtolower(trim((string) $val)), ['inconnu', 'n/a', 'null', 'none', 'undefined', 'aucun'])) {
                 $data[$key] = '';
             }
         }
@@ -664,7 +713,9 @@ class GeminiApiService
 
     protected function parseJsonResponse(?string $jsonText): ?array
     {
-        if (empty($jsonText)) return null;
+        if (empty($jsonText)) {
+            return null;
+        }
 
         $cleaned = trim($jsonText);
         $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned);
@@ -672,11 +723,15 @@ class GeminiApiService
         $cleaned = trim($cleaned);
 
         $decoded = json_decode($cleaned, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         if (preg_match('/\{.*\}/s', $cleaned, $matches)) {
             $decoded = json_decode($matches[0], true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         return null;

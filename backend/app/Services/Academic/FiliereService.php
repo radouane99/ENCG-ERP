@@ -28,19 +28,19 @@ class FiliereService
     {
         return $filieres->map(function ($filiere) {
             return [
-                'id'               => $filiere->id,
-                'code'             => $filiere->code,
-                'name'             => $filiere->name,
-                'type'             => $filiere->type ?? 'grande_ecole',
-                'coordinator'      => $filiere->department->head_name ?? 'Non assigné',
-                'responsable_id'   => $filiere->responsable_id,
+                'id' => $filiere->id,
+                'code' => $filiere->code,
+                'name' => $filiere->name,
+                'type' => $filiere->type ?? 'grande_ecole',
+                'coordinator' => $filiere->department->head_name ?? 'Non assigné',
+                'responsable_id' => $filiere->responsable_id,
                 'responsable_name' => $filiere->responsable?->name ?? 'Non assigné',
-                'students'         => StudentPathway::where('filiere_id', $filiere->id)->where('is_current', true)->count(),
-                'active'           => $filiere->is_active,
-                'duration_years'   => $filiere->duration_years,
-                'department_id'    => $filiere->department_id,
-                'groups_count'     => $filiere->groups_count ?? Group::where('filiere_id', $filiere->id)->count(),
-                'modules_count'    => $filiere->modules_count ?? Module::where('filiere_id', $filiere->id)->count(),
+                'students' => StudentPathway::where('filiere_id', $filiere->id)->where('is_current', true)->count(),
+                'active' => $filiere->is_active,
+                'duration_years' => $filiere->duration_years,
+                'department_id' => $filiere->department_id,
+                'groups_count' => $filiere->groups_count ?? Group::where('filiere_id', $filiere->id)->count(),
+                'modules_count' => $filiere->modules_count ?? Module::where('filiere_id', $filiere->id)->count(),
             ];
         })->toArray();
     }
@@ -52,7 +52,7 @@ class FiliereService
     {
         $data['institution_id'] = $institutionId;
 
-        return DB::transaction(fn() => Filiere::create($data));
+        return DB::transaction(fn () => Filiere::create($data));
     }
 
     /**

@@ -3,15 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreGradeRequest;
+use App\Mail\StudentTranscriptMail;
+use App\Models\AcademicYear;
 use App\Models\Assessment;
+use App\Models\AuditLog;
+use App\Models\Filiere;
 use App\Models\Grade;
 use App\Models\Module;
+use App\Models\ModulePvSignature;
+use App\Models\ModuleValidation;
 use App\Models\Student;
-use App\Http\Requests\StoreGradeRequest;
+use App\Models\StudentRegistration;
+use App\Services\Academic\AcademicWindowGuard;
 use App\Services\Academic\GradeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Exports\GradesExport;
+use App\Imports\GradesImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GradeController extends Controller
 {
@@ -24,6 +37,8 @@ class GradeController extends Controller
      */
     public function getForAssessment(int $assessmentId, Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Grade::class);
+
         $assessment = Assessment::with('module')->findOrFail($assessmentId);
         $groupId = $request->query('group_id');
         $students = $this->gradeService->getRegisteredStudents($assessment->module, $groupId);
@@ -31,7 +46,7 @@ class GradeController extends Controller
         $isRattrapage = $this->gradeService->isRattrapageAssessment($assessment);
         $isSigned = $this->gradeService->isPvSigned($assessment->module_id);
 
-        $signatureRecord = \App\Models\ModulePvSignature::where('module_id', $assessment->module_id)
+        $signatureRecord = ModulePvSignature::where('module_id', $assessment->module_id)
             ->with('signer')->latest()->first();
 
         $data = $students->map(function ($student) use ($assessment, $fraudIds) {
@@ -44,24 +59,24 @@ class GradeController extends Controller
             $isFraud = $hasFraud && $isExam;
 
             return [
-                'student_id'     => $student->id,
-                'first_name'     => $student->first_name,
-                'last_name'      => $student->last_name,
+                'student_id' => $student->id,
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
                 'student_number' => $student->student_number,
-                'apogee'         => $student->cne ?? $student->student_number,
-                'value'          => $isFraud ? 0.0 : ($grade ? (float) $grade->value : null),
-                'is_absent'      => $isFraud ? false : ($grade ? (bool) $grade->absent : false),
-                'is_fraud'       => $isFraud,
+                'apogee' => $student->cne ?? $student->student_number,
+                'value' => $isFraud ? 0.0 : ($grade ? (float) $grade->value : null),
+                'is_absent' => $isFraud ? false : ($grade ? (bool) $grade->absent : false),
+                'is_fraud' => $isFraud,
             ];
         });
 
         return response()->json([
-            'success'    => true,
-            'data'       => $data,
-            'is_locked'  => $isSigned,
-            'signature'  => $signatureRecord ? [
-                'signed_by'    => $signatureRecord->signer?->name ?? 'Enseignant',
-                'signed_at'    => $signatureRecord->signed_at?->toIso8601String(),
+            'success' => true,
+            'data' => $data,
+            'is_locked' => $isSigned,
+            'signature' => $signatureRecord ? [
+                'signed_by' => $signatureRecord->signer?->name ?? 'Enseignant',
+                'signed_at' => $signatureRecord->signed_at?->toIso8601String(),
                 'digital_seal' => $signatureRecord->digital_seal,
             ] : null,
         ]);
@@ -72,6 +87,9 @@ class GradeController extends Controller
      */
     public function storeBulk(StoreGradeRequest $request, int $assessmentId): JsonResponse
     {
+        $this->authorize('create', Grade::class);
+        app(AcademicWindowGuard::class)->assertGradesOpen();
+
         $assessment = Assessment::with('module')->findOrFail($assessmentId);
         $user = $request->user();
 
@@ -82,27 +100,27 @@ class GradeController extends Controller
         }
 
         $session = $this->gradeService->isRattrapageAssessment($assessment) ? 'rattrapage' : 'normale';
-        $isAdmin = $user->hasAnyRole(['admin', 'institution_admin', 'super-admin']) || ($user->roles && $user->roles->contains('name', 'admin')) || !empty($user->is_admin);
+        $isAdmin = $user->hasAnyRole(['admin', 'institution_admin', 'super-admin']) || ($user->roles && $user->roles->contains('name', 'admin')) || ! empty($user->is_admin);
 
         // Vérification professeur assigné (seulement si non-admin)
-        if (!$isAdmin && $user->roles && $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
-            if (!$this->gradeService->isProfessorAssignedToModule($user->id, $assessment->module_id)) {
+        if (! $isAdmin && $user->roles && $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
+            if (! $this->gradeService->isProfessorAssignedToModule($user->id, $assessment->module_id)) {
                 return response()->json(['message' => 'Vous n\'êtes pas assigné à ce module.'], 403);
             }
         }
 
         // Vérification PV signé pour cette session spécifique (pour les non-admins)
-        if (!$isAdmin && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
+        if (! $isAdmin && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
             return response()->json([
-                'message' => "Le Procès-Verbal ({$session}) est déjà signé. La modification des notes est verrouillée."
+                'message' => "Le Procès-Verbal ({$session}) est déjà signé. La modification des notes est verrouillée.",
             ], 403);
         }
 
         $validated = $request->validated();
 
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
-        
-        $updatedCount = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $assessment, $fraudIds, $request) {
+
+        $updatedCount = DB::transaction(function () use ($validated, $assessment, $fraudIds, $request) {
             $count = 0;
             foreach ($validated['grades'] as $gradeData) {
                 $isFraud = $this->gradeService->isStudentFraud($gradeData['student_id'], $fraudIds)
@@ -120,17 +138,18 @@ class GradeController extends Controller
 
                 Grade::updateOrCreate(
                     [
-                        'student_id'    => $gradeData['student_id'],
+                        'student_id' => $gradeData['student_id'],
                         'assessment_id' => $assessment->id,
                     ],
                     [
-                        'value'  => $newValue,
+                        'value' => $newValue,
                         'absent' => $newAbsent,
                     ]
                 );
 
                 $count++;
             }
+
             return $count;
         });
 
@@ -145,17 +164,19 @@ class GradeController extends Controller
      */
     public function getModulePv(Request $request, int $moduleId): JsonResponse
     {
+        $this->authorize('viewAny', Grade::class);
+
         $module = Module::with('assessments')->findOrFail($moduleId);
         $groupId = $request->query('group_id');
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);
         $fraudIds = $this->gradeService->getFraudStudentIds($module);
 
         $normaleAssessments = $module->assessments->filter(
-            fn($a) => !$this->gradeService->isRattrapageAssessment($a)
+            fn ($a) => ! $this->gradeService->isRattrapageAssessment($a)
         );
 
         $rattrapageAssessment = $module->assessments->first(
-            fn($a) => $this->gradeService->isRattrapageAssessment($a)
+            fn ($a) => $this->gradeService->isRattrapageAssessment($a)
         );
 
         $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $fraudIds) {
@@ -175,7 +196,7 @@ class GradeController extends Controller
                 $isAbsent = $g ? (bool) $g->absent : false;
 
                 $gradeObj = [
-                    'value'     => $gradeVal,
+                    'value' => $gradeVal,
                     'is_absent' => $isAbsent,
                 ];
 
@@ -225,20 +246,20 @@ class GradeController extends Controller
             }
 
             return [
-                'student_id'        => $student->id,
-                'first_name'        => $student->first_name,
-                'last_name'         => $student->last_name,
-                'student_number'    => $student->student_number,
-                'apogee'            => $student->cne ?? $student->student_number,
-                'is_fraud'          => $isFraud,
-                'grades_detail'     => $gradesDetail,
-                'grades'            => $gradesSimple,
-                'moyenne_normale'   => $moyenneNormale,
-                'decision_normale'  => $decisionNormale,
-                'rattrapage_note'   => $rattrapageGradeVal,
+                'student_id' => $student->id,
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'student_number' => $student->student_number,
+                'apogee' => $student->cne ?? $student->student_number,
+                'is_fraud' => $isFraud,
+                'grades_detail' => $gradesDetail,
+                'grades' => $gradesSimple,
+                'moyenne_normale' => $moyenneNormale,
+                'decision_normale' => $decisionNormale,
+                'rattrapage_note' => $rattrapageGradeVal,
                 'rattrapage_absent' => $rattrapageIsAbsent,
-                'moyenne_finale'    => $moyenneFinale,
-                'decision_finale'   => $decisionFinale,
+                'moyenne_finale' => $moyenneFinale,
+                'decision_finale' => $decisionFinale,
             ];
         });
 
@@ -246,14 +267,14 @@ class GradeController extends Controller
         $analytics = $this->gradeService->calculateAnalytics($data);
 
         return response()->json([
-            'success'     => true,
-            'module'      => ['id' => $module->id, 'name' => $module->name, 'code' => $module->code],
-            'assessments' => $module->assessments->map(fn($a) => [
-                'id' => $a->id, 'type' => $a->type, 'weight' => $a->weight
+            'success' => true,
+            'module' => ['id' => $module->id, 'name' => $module->name, 'code' => $module->code],
+            'assessments' => $module->assessments->map(fn ($a) => [
+                'id' => $a->id, 'type' => $a->type, 'weight' => $a->weight,
             ]),
-            'data'        => $data,
-            'signature'   => $signature,
-            'analytics'   => $analytics,
+            'data' => $data,
+            'signature' => $signature,
+            'analytics' => $analytics,
         ]);
     }
 
@@ -262,9 +283,11 @@ class GradeController extends Controller
      */
     public function signModulePv(Request $request, int $moduleId): JsonResponse
     {
+        $this->authorize('create', Grade::class);
+
         $validated = $request->validate([
-            'group_id'       => 'nullable',
-            'session'        => 'nullable|string|in:normale,rattrapage,totale',
+            'group_id' => 'nullable',
+            'session' => 'nullable|string|in:normale,rattrapage,totale',
             'signature_data' => 'nullable|string',
         ]);
 
@@ -273,40 +296,40 @@ class GradeController extends Controller
         $session = $validated['session'] ?? 'normale';
         $groupId = $validated['group_id'] ?? null;
 
-        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|signer:{$user->id}|ts:" . now()->timestamp);
+        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|signer:{$user->id}|ts:".now()->timestamp);
 
         // Signature
-        \App\Models\ModulePvSignature::updateOrCreate(
+        ModulePvSignature::updateOrCreate(
             ['module_id' => $moduleId, 'group_id' => $groupId, 'session' => $session],
             [
-                'signed_by'      => $user->id,
-                'signed_at'      => now(),
+                'signed_by' => $user->id,
+                'signed_at' => now(),
                 'signature_data' => $validated['signature_data'] ?? null,
-                'ip_address'     => $request->ip() ?: '127.0.0.1',
-                'digital_seal'   => $digitalSeal,
+                'ip_address' => $request->ip() ?: '127.0.0.1',
+                'digital_seal' => $digitalSeal,
             ]
         );
 
         // Audit Trail Log
-        if (class_exists(\App\Models\AuditLog::class)) {
-            \App\Models\AuditLog::record([
-                'user_id'     => $user->id,
-                'user_name'   => $user->name ?? $user->email,
-                'user_email'  => $user->email,
-                'user_role'   => $user->role ?? ($user->roles?->first()?->name ?? 'Enseignant'),
-                'action'      => 'Signature Électronique PV Module',
+        if (class_exists(AuditLog::class)) {
+            AuditLog::record([
+                'user_id' => $user->id,
+                'user_name' => $user->name ?? $user->email,
+                'user_email' => $user->email,
+                'user_role' => $user->role ?? ($user->roles?->first()?->name ?? 'Enseignant'),
+                'action' => 'Signature Électronique PV Module',
                 'action_type' => 'PV_SIGNATURE',
                 'description' => "Le Procès-Verbal ({$session}) du module '{$module->name}' ({$module->code}) a été signé électroniquement avec sceau SHA-256 [{$digitalSeal}]",
-                'method'      => 'POST',
-                'url'         => $request->fullUrl(),
-                'ip_address'  => $request->ip() ?: '127.0.0.1',
-                'user_agent'  => substr($request->userAgent() ?? '', 0, 500),
-                'severity'    => 'warning',
-                'payload'     => [
-                    'module_id'    => $moduleId,
-                    'module_name'  => $module->name,
-                    'session'      => $session,
-                    'group_id'     => $groupId,
+                'method' => 'POST',
+                'url' => $request->fullUrl(),
+                'ip_address' => $request->ip() ?: '127.0.0.1',
+                'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+                'severity' => 'warning',
+                'payload' => [
+                    'module_id' => $moduleId,
+                    'module_name' => $module->name,
+                    'session' => $session,
+                    'group_id' => $groupId,
                     'digital_seal' => $digitalSeal,
                 ],
             ]);
@@ -315,17 +338,17 @@ class GradeController extends Controller
         // Génération éligibilités rattrapage
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);
         $normaleAssessments = $module->assessments->filter(
-            fn($a) => !$this->gradeService->isRattrapageAssessment($a)
+            fn ($a) => ! $this->gradeService->isRattrapageAssessment($a)
         );
 
         $result = $this->gradeService->generateRattrapageEligibilities($module, $students, $normaleAssessments);
 
         return response()->json([
-            'success'      => true,
-            'message'      => 'PV signé avec succès. Éligibilités rattrapage générées.',
+            'success' => true,
+            'message' => 'PV signé avec succès. Éligibilités rattrapage générées.',
             'digital_seal' => $digitalSeal,
-            'created'      => $result['created'],
-            'updated'      => $result['updated'],
+            'created' => $result['created'],
+            'updated' => $result['updated'],
         ]);
     }
 
@@ -333,11 +356,13 @@ class GradeController extends Controller
 
     public function generateRattrapageEligibilities(Request $request, int $moduleId): JsonResponse
     {
+        $this->authorize('create', Grade::class);
+
         $module = Module::with('assessments')->findOrFail($moduleId);
         $groupId = $request->input('group_id');
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);
         $normaleAssessments = $module->assessments->filter(
-            fn($a) => !$this->gradeService->isRattrapageAssessment($a)
+            fn ($a) => ! $this->gradeService->isRattrapageAssessment($a)
         );
 
         $result = $this->gradeService->generateRattrapageEligibilities($module, $students, $normaleAssessments);
@@ -352,21 +377,23 @@ class GradeController extends Controller
 
     public function getModuleAuditLogs(int $moduleId): JsonResponse
     {
+        $this->authorize('viewAny', Grade::class);
+
         $module = Module::findOrFail($moduleId);
 
-        $logs = \Spatie\Activitylog\Models\Activity::where(function ($query) use ($module) {
+        $logs = Activity::where(function ($query) use ($module) {
             $query->where('description', 'like', "%{$module->code}%")
-                  ->orWhere('description', 'like', "%{$module->name}%");
+                ->orWhere('description', 'like', "%{$module->name}%");
         })
-        ->latest()
-        ->take(30)
-        ->get()
-        ->map(fn($log) => [
-            'id'          => $log->id,
-            'description' => $log->description,
-            'causer_name' => $log->causer?->name ?? 'Système',
-            'created_at'  => $log->created_at->toIso8601String(),
-        ]);
+            ->latest()
+            ->take(30)
+            ->get()
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'description' => $log->description,
+                'causer_name' => $log->causer?->name ?? 'Système',
+                'created_at' => $log->created_at->toIso8601String(),
+            ]);
 
         return response()->json(['success' => true, 'data' => $logs]);
     }
@@ -374,15 +401,17 @@ class GradeController extends Controller
     public function sendTranscriptEmail(Request $request, int $studentId): JsonResponse
     {
         $student = Student::with('user')->findOrFail($studentId);
+        $this->authorize('view', $student);
 
-        if (!$student->user?->email) {
+        if (! $student->user?->email) {
             return response()->json(['success' => false, 'message' => 'Email introuvable.'], 400);
         }
 
         try {
-            \Illuminate\Support\Facades\Mail::to($student->user->email)->send(
-                new \App\Mail\StudentTranscriptMail($student->user->name, 'Session 2025/2026')
+            Mail::to($student->user->email)->send(
+                new StudentTranscriptMail($student->user->name, 'Session 2025/2026')
             );
+
             return response()->json(['success' => true, 'message' => 'Email envoyé.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -391,13 +420,17 @@ class GradeController extends Controller
 
     public function getProgressSummary(): JsonResponse
     {
+        $this->authorize('viewAny', Grade::class);
+
         $modules = Module::with(['assessments', 'professors.user'])->get();
         $pendingList = [];
         $completedModules = 0;
 
         foreach ($modules as $mod) {
             $totalAssessments = $mod->assessments->count();
-            if ($totalAssessments === 0) continue;
+            if ($totalAssessments === 0) {
+                continue;
+            }
 
             $filledAssessments = 0;
             foreach ($mod->assessments as $ass) {
@@ -411,23 +444,23 @@ class GradeController extends Controller
             if ($progress >= 100) {
                 $completedModules++;
             } else {
-                $profNames = $mod->professors->map(fn($p) => $p->user?->name)->implode(', ');
+                $profNames = $mod->professors->map(fn ($p) => $p->user?->name)->implode(', ');
                 $pendingList[] = [
-                    'module_id'  => $mod->id,
-                    'code'       => $mod->code,
-                    'name'       => $mod->name,
-                    'progress'   => $progress,
+                    'module_id' => $mod->id,
+                    'code' => $mod->code,
+                    'name' => $mod->name,
+                    'progress' => $progress,
                     'professors' => $profNames ?: 'Non assigné',
                 ];
             }
         }
 
         return response()->json([
-            'success'            => true,
-            'total_modules'      => $modules->count(),
-            'completed_modules'  => $completedModules,
-            'overall_progress'   => $modules->count() > 0 ? round(($completedModules / $modules->count()) * 100) : 0,
-            'pending_modules'    => $pendingList,
+            'success' => true,
+            'total_modules' => $modules->count(),
+            'completed_modules' => $completedModules,
+            'overall_progress' => $modules->count() > 0 ? round(($completedModules / $modules->count()) * 100) : 0,
+            'pending_modules' => $pendingList,
         ]);
     }
 
@@ -442,20 +475,20 @@ class GradeController extends Controller
 
         $insights = [];
         if ($tauxReussite >= 75) {
-            $insights[] = "Excellente assimilation globale.";
+            $insights[] = 'Excellente assimilation globale.';
         } elseif ($tauxReussite < 40) {
-            $insights[] = "Alerte : Taux de réussite anormalement bas (<40%).";
+            $insights[] = 'Alerte : Taux de réussite anormalement bas (<40%).';
         } else {
-            $insights[] = "Distribution équilibrée conforme à la courbe gaussienne.";
+            $insights[] = 'Distribution équilibrée conforme à la courbe gaussienne.';
         }
 
         return response()->json([
-            'success'            => true,
-            'module_id'          => $moduleId,
-            'moyenne_promotion'  => $moyenne,
-            'taux_reussite'      => $tauxReussite,
+            'success' => true,
+            'module_id' => $moduleId,
+            'moyenne_promotion' => $moyenne,
+            'taux_reussite' => $tauxReussite,
             'anomalies_detected' => $tauxReussite < 40 || $moyenne < 9.0,
-            'insights'           => $insights,
+            'insights' => $insights,
         ]);
     }
 
@@ -463,17 +496,19 @@ class GradeController extends Controller
 
     private function getPvSignature(int $moduleId): ?array
     {
-        $sigRecord = \App\Models\ModulePvSignature::where('module_id', $moduleId)
+        $sigRecord = ModulePvSignature::where('module_id', $moduleId)
             ->with('signer')->latest()->first();
 
-        if (!$sigRecord) return null;
+        if (! $sigRecord) {
+            return null;
+        }
 
         return [
-            'signed_by'      => $sigRecord->signer?->name ?? 'Enseignant',
-            'signed_at'      => $sigRecord->signed_at?->toIso8601String(),
+            'signed_by' => $sigRecord->signer?->name ?? 'Enseignant',
+            'signed_at' => $sigRecord->signed_at?->toIso8601String(),
             'signature_data' => $sigRecord->signature_data,
-            'ip_address'     => $sigRecord->ip_address,
-            'digital_seal'   => $sigRecord->digital_seal,
+            'ip_address' => $sigRecord->ip_address,
+            'digital_seal' => $sigRecord->digital_seal,
         ];
     }
 
@@ -488,48 +523,52 @@ class GradeController extends Controller
         $changed = false;
         $oldValDesc = 'Néant';
 
-        if (!$oldGrade) {
-            if ($newValue !== null || $newAbsent) $changed = true;
-        } else {
-            if ($oldGrade->value != $newValue || (bool)$oldGrade->absent != (bool)$newAbsent) {
+        if (! $oldGrade) {
+            if ($newValue !== null || $newAbsent) {
                 $changed = true;
-                $oldValDesc = $oldGrade->absent ? 'ABSENT' : ($oldGrade->value . '/20');
+            }
+        } else {
+            if ($oldGrade->value != $newValue || (bool) $oldGrade->absent != (bool) $newAbsent) {
+                $changed = true;
+                $oldValDesc = $oldGrade->absent ? 'ABSENT' : ($oldGrade->value.'/20');
             }
         }
 
-        if (!$changed) return;
+        if (! $changed) {
+            return;
+        }
 
         $student = Student::with('user')->find($studentId);
-        $studentName = $student ? ($student->last_name . ' ' . $student->first_name) : "Étudiant #{$studentId}";
-        $newValDesc = $newAbsent ? 'ABSENT' : ($newValue . '/20');
+        $studentName = $student ? ($student->last_name.' '.$student->first_name) : "Étudiant #{$studentId}";
+        $newValDesc = $newAbsent ? 'ABSENT' : ($newValue.'/20');
         $user = $request->user();
         $userName = $user ? ($user->name ?? $user->email) : 'Système';
         $moduleName = $assessment->module?->name ?? "Module #{$assessment->module_id}";
         $assessmentType = strtoupper($assessment->type ?? 'Évaluation');
 
         // 1. Log to native CNDP AuditLog Model
-        if (class_exists(\App\Models\AuditLog::class)) {
-            \App\Models\AuditLog::record([
-                'user_id'     => $user?->id,
-                'user_name'   => $userName,
-                'user_email'  => $user?->email,
-                'user_role'   => $user?->role ?? ($user?->roles?->first()?->name ?? 'Enseignant'),
-                'action'      => 'Saisie / Modification de Note',
+        if (class_exists(AuditLog::class)) {
+            AuditLog::record([
+                'user_id' => $user?->id,
+                'user_name' => $userName,
+                'user_email' => $user?->email,
+                'user_role' => $user?->role ?? ($user?->roles?->first()?->name ?? 'Enseignant'),
+                'action' => 'Saisie / Modification de Note',
                 'action_type' => 'GRADE_MUTATION',
                 'description' => "Note [{$assessmentType}] modifiée pour {$studentName} dans le module '{$moduleName}' : {$oldValDesc} ➔ {$newValDesc}",
-                'method'      => 'POST',
-                'url'         => $request->fullUrl(),
-                'ip_address'  => $request->ip() ?: '127.0.0.1',
-                'user_agent'  => substr($request->userAgent() ?? '', 0, 500),
-                'severity'    => 'warning',
-                'payload'     => [
-                    'student_id'      => $studentId,
-                    'student_name'    => $studentName,
-                    'module_id'       => $assessment->module_id,
-                    'module_name'     => $moduleName,
+                'method' => 'POST',
+                'url' => $request->fullUrl(),
+                'ip_address' => $request->ip() ?: '127.0.0.1',
+                'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+                'severity' => 'warning',
+                'payload' => [
+                    'student_id' => $studentId,
+                    'student_name' => $studentName,
+                    'module_id' => $assessment->module_id,
+                    'module_name' => $moduleName,
                     'assessment_type' => $assessmentType,
-                    'old_value'       => $oldValDesc,
-                    'new_value'       => $newValDesc,
+                    'old_value' => $oldValDesc,
+                    'new_value' => $newValDesc,
                 ],
             ]);
         }
@@ -540,11 +579,11 @@ class GradeController extends Controller
                 ->performedOn($assessment)
                 ->event('grade_modified')
                 ->withProperties([
-                    'student'   => $studentName,
+                    'student' => $studentName,
                     'old_value' => $oldValDesc,
                     'new_value' => $newValDesc,
-                    'ip'        => $request->ip(),
-                    'author'    => $userName,
+                    'ip' => $request->ip(),
+                    'author' => $userName,
                 ])
                 ->log("Note modifiée : {$oldValDesc} -> {$newValDesc} par {$userName}");
         }
@@ -555,29 +594,31 @@ class GradeController extends Controller
      */
     public function getSemesterPv(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Grade::class);
+
         $filiereId = intval($request->query('filiere_id', 1));
         $semester = intval($request->query('semester', 1));
         $groupId = $request->query('group_id');
         $session = $request->query('session', 'normale');
 
-        $filiere = \App\Models\Filiere::find($filiereId);
-        $modules = \App\Models\Module::where('filiere_id', $filiereId)
+        $filiere = Filiere::find($filiereId);
+        $modules = Module::where('filiere_id', $filiereId)
             ->where('semester_number', $semester)
             ->with('assessments')
             ->orderBy('id')
             ->get();
 
         if ($modules->isEmpty()) {
-            $modules = \App\Models\Module::where('filiere_id', $filiereId)->take(7)->get();
+            $modules = Module::where('filiere_id', $filiereId)->take(7)->get();
         }
 
-        $academicYear = \App\Models\AcademicYear::where('is_current', true)->first()
-            ?? \App\Models\AcademicYear::first();
+        $academicYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::first();
 
-        $regQuery = \App\Models\StudentRegistration::where('filiere_id', $filiereId)
+        $regQuery = StudentRegistration::where('filiere_id', $filiereId)
             ->where('academic_year_id', $academicYear?->id ?? 1);
 
-        if ($groupId && !in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+        if ($groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
             $regQuery->where('group_id', intval($groupId));
         }
 
@@ -590,7 +631,9 @@ class GradeController extends Controller
 
         foreach ($registrations as $reg) {
             $student = $reg->student;
-            if (!$student) continue;
+            if (! $student) {
+                continue;
+            }
 
             $moduleGrades = [];
             $sumMoyennes = 0;
@@ -600,10 +643,10 @@ class GradeController extends Controller
             $hasVarModule = false;
 
             foreach ($modules as $mod) {
-                $normaleAssessments = $mod->assessments->filter(fn($a) => strtolower(trim($a->type)) !== 'rattrapage');
-                $rattrapageAssessment = $mod->assessments->first(fn($a) => strtolower(trim($a->type)) === 'rattrapage');
+                $normaleAssessments = $mod->assessments->filter(fn ($a) => strtolower(trim($a->type)) !== 'rattrapage');
+                $rattrapageAssessment = $mod->assessments->first(fn ($a) => strtolower(trim($a->type)) === 'rattrapage');
 
-                $studentGrades = \App\Models\Grade::where('student_id', $student->id)
+                $studentGrades = Grade::where('student_id', $student->id)
                     ->whereIn('assessment_id', $mod->assessments->pluck('id'))
                     ->get();
 
@@ -622,13 +665,13 @@ class GradeController extends Controller
                 }
 
                 $moyNormale = $totalWeight > 0 ? round($weightedSum * (100 / $totalWeight), 2) : null;
-                
-                $rattrapageGrade = $rattrapageAssessment 
-                    ? $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id) 
+
+                $rattrapageGrade = $rattrapageAssessment
+                    ? $studentGrades->firstWhere('assessment_id', $rattrapageAssessment->id)
                     : null;
 
                 $rVal = null;
-                if ($rattrapageGrade && !$rattrapageGrade->absent && $rattrapageGrade->value !== null) {
+                if ($rattrapageGrade && ! $rattrapageGrade->absent && $rattrapageGrade->value !== null) {
                     $rVal = floatval($rattrapageGrade->value);
                 }
 
@@ -639,7 +682,7 @@ class GradeController extends Controller
                     $rCappedExam = min(10.00, $rVal);
                     $newSum = 0;
                     $newW = 0;
-                    $examA = $normaleAssessments->first(fn($a) => str_contains(strtolower($a->type), 'exam'));
+                    $examA = $normaleAssessments->first(fn ($a) => str_contains(strtolower($a->type), 'exam'));
                     foreach ($normaleAssessments as $a) {
                         $g = $studentGrades->firstWhere('assessment_id', $a->id);
                         $val = ($a->id === $examA?->id) ? $rCappedExam : ($g ? ($g->absent ? 0 : floatval($g->value ?? 0)) : 0);
@@ -653,7 +696,9 @@ class GradeController extends Controller
                 if ($finalModNote !== null) {
                     if ($finalModNote >= 10.00) {
                         $modDecision = ($moyNormale !== null && $moyNormale >= 10.00) ? 'V' : 'VAR';
-                        if ($modDecision === 'VAR') $hasVarModule = true;
+                        if ($modDecision === 'VAR') {
+                            $hasVarModule = true;
+                        }
                     } else {
                         $modDecision = 'NV';
                         $hasRattrapageModule = true;
@@ -668,7 +713,7 @@ class GradeController extends Controller
                 }
 
                 // Check if student has a historical validation for this module from previous years
-                $histVal = \App\Models\ModuleValidation::where('student_id', $student->id)
+                $histVal = ModuleValidation::where('student_id', $student->id)
                     ->where('module_id', $mod->id)
                     ->first();
 
@@ -708,7 +753,7 @@ class GradeController extends Controller
 
             $canCompensate = ($weakModulesCount <= 2);
             $decisionGlobal = 'NV';
-            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && !$hasEliminatoire && $canCompensate);
+            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && ! $hasEliminatoire && $canCompensate);
 
             if ($isSemesterValidated) {
                 $decisionGlobal = $hasVarModule ? 'VAR' : 'V';
@@ -721,14 +766,14 @@ class GradeController extends Controller
                     }
                 }
                 unset($mInfo);
-            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10) || !$canCompensate) {
+            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10) || ! $canCompensate) {
                 $decisionGlobal = 'RAT';
                 $totalRattrapages++;
             } else {
                 $totalElimines++;
             }
 
-            $validatedCreditsCount = count(array_filter($moduleGrades, fn($m) => in_array($m['decision'], ['V', 'VAR', 'VPC', 'VC'])));
+            $validatedCreditsCount = count(array_filter($moduleGrades, fn ($m) => in_array($m['decision'], ['V', 'VAR', 'VPC', 'VC'])));
 
             $studentsData[] = [
                 'student_id' => $student->id,
@@ -749,7 +794,7 @@ class GradeController extends Controller
             'filiere' => $filiere ? ['id' => $filiere->id, 'name' => $filiere->name, 'code' => $filiere->code] : null,
             'semester' => $semester,
             'session' => $session,
-            'modules' => $modules->map(fn($m) => ['id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'coefficient' => $m->coefficient ?? 1]),
+            'modules' => $modules->map(fn ($m) => ['id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'coefficient' => $m->coefficient ?? 1]),
             'students' => $studentsData,
             'stats' => [
                 'total_students' => count($studentsData),
@@ -757,7 +802,45 @@ class GradeController extends Controller
                 'rattrapages' => $totalRattrapages,
                 'elimines' => $totalElimines,
                 'success_rate' => count($studentsData) > 0 ? round(($totalValids / count($studentsData)) * 100, 1) : 0,
-            ]
+            ],
+        ]);
+    }
+
+    public function exportGradesTemplate(int $module, Request $request)
+    {
+        $this->authorize('viewAny', Grade::class);
+
+        $moduleModel = Module::findOrFail($module);
+        $groupId = $request->query('group_id');
+        if ($groupId === 'all' || $groupId === '' || $groupId === 'undefined') {
+            $groupId = null;
+        }
+
+        $students = $this->gradeService->getRegisteredStudents($moduleModel, $groupId);
+
+        return Excel::download(
+            new GradesExport($moduleModel, $students),
+            'canevas_notes_'.$moduleModel->code.'.xlsx'
+        );
+    }
+
+    public function importGrades(int $module, Request $request): JsonResponse
+    {
+        $this->authorize('create', Grade::class);
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        $moduleModel = Module::findOrFail($module);
+        $import = new GradesImport($moduleModel);
+        Excel::import($import, $request->file('file'));
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->imported.' note(s) importée(s).',
+            'imported' => $import->imported,
+            'warnings' => $import->warnings,
         ]);
     }
 }

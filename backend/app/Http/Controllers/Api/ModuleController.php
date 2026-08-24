@@ -33,14 +33,14 @@ class ModuleController extends Controller
         }
 
         // 🛡️ RBAC : Les professeurs ne voient que leurs modules
-        if ($request->user()?->hasAnyRole(['professor', 'vacataire']) && !$request->user()?->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
+        if ($request->user()?->hasAnyRole(['professor', 'vacataire']) && ! $request->user()?->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
             $moduleIds = $this->accessService->getAuthorizedModuleIds($request->user());
             $query->whereIn('id', $moduleIds);
         }
 
         return response()->json([
             'success' => true,
-            'data'    => ModuleResource::collection($query->get()),
+            'data' => ModuleResource::collection($query->get()),
         ]);
     }
 
@@ -50,13 +50,13 @@ class ModuleController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'code'            => 'required|string|max:50|unique:modules,code',
-            'name'            => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:modules,code',
+            'name' => 'required|string|max:255',
             'semester_number' => 'required|integer|min:1|max:12',
-            'coefficient'     => 'required|numeric|min:0',
-            'filiere_id'      => 'nullable|exists:filieres,id',
-            'credit_hours'    => 'nullable|numeric|min:0',
-            'is_active'       => 'boolean',
+            'coefficient' => 'required|numeric|min:0',
+            'filiere_id' => 'nullable|exists:filieres,id',
+            'credit_hours' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
         ]);
 
         $module = $this->moduleService->createModule($validated, 1);
@@ -64,7 +64,7 @@ class ModuleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Module créé avec succès.',
-            'data'    => new ModuleResource($module),
+            'data' => new ModuleResource($module),
         ], 201);
     }
 
@@ -75,7 +75,7 @@ class ModuleController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => new ModuleResource($module->load('filiere')),
+            'data' => new ModuleResource($module->load('filiere')),
         ]);
     }
 
@@ -85,13 +85,13 @@ class ModuleController extends Controller
     public function update(Request $request, Module $module): JsonResponse
     {
         $validated = $request->validate([
-            'code'            => 'sometimes|required|string|max:50|unique:modules,code,' . $module->id,
-            'name'            => 'sometimes|required|string|max:255',
+            'code' => 'sometimes|required|string|max:50|unique:modules,code,'.$module->id,
+            'name' => 'sometimes|required|string|max:255',
             'semester_number' => 'sometimes|required|integer|min:1|max:12',
-            'coefficient'     => 'sometimes|required|numeric|min:0',
-            'filiere_id'      => 'nullable|exists:filieres,id',
-            'credit_hours'    => 'nullable|numeric|min:0',
-            'is_active'       => 'boolean',
+            'coefficient' => 'sometimes|required|numeric|min:0',
+            'filiere_id' => 'nullable|exists:filieres,id',
+            'credit_hours' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
         ]);
 
         $module = $this->moduleService->updateModule($module, $validated);
@@ -99,7 +99,7 @@ class ModuleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Module mis à jour avec succès.',
-            'data'    => new ModuleResource($module),
+            'data' => new ModuleResource($module),
         ]);
     }
 

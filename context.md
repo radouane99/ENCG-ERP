@@ -1212,9 +1212,9 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 ### 17.1 Respect Strict des 7 Principes Fondamentaux du Test Logiciel (Norme ISTQB)
 
 1. **Le test montre la présence de défauts, non leur absence :**
-   - Les suites prouvent que les cas d'erreur (absences non justifiées = 0/20, notes éliminatoires $< 7/20$, falsification de tokens QR) sont interceptés avec certitude.
+   - Les suites prouvent que les cas d'erreur (absences non justifiées = 0/20, notes éliminatoires $< 6/20$, falsification de tokens QR) sont interceptés avec certitude.
 2. **Les tests exhaustifs sont impossibles (Analyse des Valeurs Limites - BVA) :**
-   - Utilisation de classes d'équivalence autour des frontières critiques LMD ($6.99/20$ éliminatoire vs $7.00/20$ éligible, $9.49/20$ non repêchable vs $9.50/20$ rachat).
+   - Utilisation de classes d'équivalence autour des frontières critiques LMD ($5.99/20$ éliminatoire vs $6.00/20$ éligible, $9.49/20$ non repêchable vs $9.50/20$ rachat).
 3. **Tester tôt (Shift-Left Testing) :**
    - Validation unitaire des modèles et formules LMD dès le dev local avant tout push.
 4. **Regroupement des défauts (Loi de Pareto 80/20) :**
@@ -1257,7 +1257,7 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 9. **`DatabaseSchemaAndRelationshipIntegrityTest.php` (Unit Test) :** Intégrité structurelle PostgreSQL 16 (Clés primaires `id`, clés étrangères `foreignId`, relations Eloquent bidirectionnelles, et cascades `cascadeOnDelete`).
 10. **`MoroccanLmdFormulasUnitTest.php` (Unit Test) :** Formules unitaires pures du système LMD marocain (Moyennes pondérées CC/Exam, règle du max en rattrapage $\max(M_N, M_R)$, seuils éliminatoires, mentions, et ECTS).
 11. **`AcademicLifecycleIntegrationTest.php` :** Test d'intégration E2E : Candidat TAFEM $\rightarrow$ Inscription $\rightarrow$ Affectation Groupe $\rightarrow$ Saisie CC/Exam $\rightarrow$ Calcul Note $\rightarrow$ Dossier Unifié $\rightarrow$ Attestation PDF.
-12. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 7.0$).
+12. **`AnnualSemesterCompensationAndProgressionTest.php` :** Règles de compensation annuelle MESRSFC / LMD (Validation Annuelle si Moyenne(S1, S2) $\ge 10.0$ sans note éliminatoire $< 6.0$).
 13. **`PublicDocumentQrVerificationAndSecurityTest.php` :** Vérification de l'authenticité des documents via QR Code public et intégrité de la signature électronique des PVs.
 14. **`ConcurrentGradeSubmissionAndLockingTest.php` :** Verrouillage optimiste (`version` column) pour empêcher les collisions lors de la saisie des notes.
 15. **`DeliberationEngineTest.php` :** Moteur de délibération LMD (Moyennes semestrielles, seuils éliminatoires, rattrapage, et statuts V/RAT/NV).

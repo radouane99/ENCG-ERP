@@ -29,7 +29,7 @@ class StudentDocumentRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $requests,
+            'data' => $requests,
         ]);
     }
 
@@ -49,7 +49,7 @@ class StudentDocumentRequestController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Demande de document soumise avec succès.',
-                'data'    => $documentRequest,
+                'data' => $documentRequest,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

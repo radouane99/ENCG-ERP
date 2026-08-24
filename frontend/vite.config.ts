@@ -18,6 +18,12 @@ export default defineConfig({
         theme_color: '#A80A0B',
         background_color: '#F5F7FA',
         display: 'standalone',
+        shortcuts: [
+          { name: 'Notes', short_name: 'Notes', url: '/student/grades', description: 'Consulter les notes' },
+          { name: 'Convocations', short_name: 'Convocs', url: '/student/convocations' },
+          { name: 'Justificatif', short_name: 'Absence', url: '/student/absences' },
+          { name: 'Présence cours', short_name: 'QR', url: '/student/attendance' },
+        ],
         icons: [
           {
             src: '/pwa-icon.svg',

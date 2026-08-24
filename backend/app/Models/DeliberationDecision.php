@@ -15,13 +15,13 @@ class DeliberationDecision extends Model
     protected function casts(): array
     {
         return [
-        'semester_average' => 'float',
-        'annual_average' => 'float',
-        'compensated_average' => 'float',
-        'was_compensated' => 'boolean',
-        'was_rachat' => 'boolean',
-        'next_semester' => 'integer',
-    ];
+            'semester_average' => 'float',
+            'annual_average' => 'float',
+            'compensated_average' => 'float',
+            'was_compensated' => 'boolean',
+            'was_rachat' => 'boolean',
+            'next_semester' => 'integer',
+        ];
     }
 
     public function deliberation(): BelongsTo

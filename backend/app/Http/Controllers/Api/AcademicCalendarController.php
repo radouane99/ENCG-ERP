@@ -25,7 +25,7 @@ class AcademicCalendarController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $events,
+            'data' => $events,
         ]);
     }
 
@@ -36,11 +36,11 @@ class AcademicCalendarController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => [
-                'can_submit_documents'  => $this->calendarService->isDocumentSubmissionOpen(),
-                'can_enter_grades'      => $this->calendarService->isGradeEntryOpen(),
-                'is_registration_open'  => $this->calendarService->isRegistrationOpen(),
-                'are_exams_ongoing'     => $this->calendarService->areExamsOngoing(),
+            'data' => [
+                'can_submit_documents' => $this->calendarService->isDocumentSubmissionOpen(),
+                'can_enter_grades' => $this->calendarService->isGradeEntryOpen(),
+                'is_registration_open' => $this->calendarService->isRegistrationOpen(),
+                'are_exams_ongoing' => $this->calendarService->areExamsOngoing(),
             ],
         ]);
     }

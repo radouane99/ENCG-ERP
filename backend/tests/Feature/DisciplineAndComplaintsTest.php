@@ -14,6 +14,7 @@ class DisciplineAndComplaintsTest extends TestCase
     use RefreshDatabase;
 
     private Student $student;
+
     private User $studentUser;
 
     protected function setUp(): void
@@ -22,8 +23,8 @@ class DisciplineAndComplaintsTest extends TestCase
 
         $this->student = $this->makeTestStudent([
             'first_name' => 'Taha',
-            'last_name'  => 'BENABDELLAH',
-            'cne'        => 'N667788990',
+            'last_name' => 'BENABDELLAH',
+            'cne' => 'N667788990',
         ]);
         $this->studentUser = $this->student->user;
     }
@@ -34,27 +35,27 @@ class DisciplineAndComplaintsTest extends TestCase
     public function test_can_submit_and_resolve_student_complaint(): void
     {
         $case = DisciplinaryCase::create([
-            'institution_id'   => 1,
-            'student_id'       => $this->student->id,
-            'case_number'      => 'CASE-2026-' . uniqid(),
-            'infraction_type'  => 'cheating',
-            'description'      => 'Signalement d\'un incident lors de l\'épreuve.',
-            'incident_date'    => '2026-11-01',
-            'status'           => 'under_review',
+            'institution_id' => 1,
+            'student_id' => $this->student->id,
+            'case_number' => 'CASE-2026-'.uniqid(),
+            'infraction_type' => 'cheating',
+            'description' => 'Signalement d\'un incident lors de l\'épreuve.',
+            'incident_date' => '2026-11-01',
+            'status' => 'under_review',
         ]);
 
         $this->assertDatabaseHas('disciplinary_cases', [
-            'id'     => $case->id,
+            'id' => $case->id,
             'status' => 'under_review',
         ]);
 
         $case->update([
-            'status'            => 'decided',
+            'status' => 'decided',
             'student_statement' => 'Explication fournie et dossier clos.',
         ]);
 
         $this->assertDatabaseHas('disciplinary_cases', [
-            'id'     => $case->id,
+            'id' => $case->id,
             'status' => 'decided',
         ]);
     }
@@ -67,33 +68,33 @@ class DisciplineAndComplaintsTest extends TestCase
         $director = User::factory()->create();
 
         $case = DisciplinaryCase::create([
-            'institution_id'   => 1,
-            'student_id'       => $this->student->id,
-            'case_number'      => 'DISC-2026-' . uniqid(),
-            'infraction_type'  => 'cheating',
-            'description'      => 'Tentative de fraude constatée lors du devoir surveillé de Management.',
-            'incident_date'    => '2026-11-05',
-            'status'           => 'pending',
+            'institution_id' => 1,
+            'student_id' => $this->student->id,
+            'case_number' => 'DISC-2026-'.uniqid(),
+            'infraction_type' => 'cheating',
+            'description' => 'Tentative de fraude constatée lors du devoir surveillé de Management.',
+            'incident_date' => '2026-11-05',
+            'status' => 'pending',
         ]);
 
         $decision = DisciplinaryDecision::create([
             'disciplinary_case_id' => $case->id,
-            'sanction_type'        => 'warning',
-            'decision_text'        => 'Avertissement officiel avec inscription au dossier universitaire.',
-            'decision_date'        => '2026-11-10',
-            'decided_by'           => $director->id,
+            'sanction_type' => 'warning',
+            'decision_text' => 'Avertissement officiel avec inscription au dossier universitaire.',
+            'decision_date' => '2026-11-10',
+            'decided_by' => $director->id,
         ]);
 
         $case->update(['status' => 'decided']);
 
         $this->assertDatabaseHas('disciplinary_cases', [
-            'id'     => $case->id,
+            'id' => $case->id,
             'status' => 'decided',
         ]);
 
         $this->assertDatabaseHas('disciplinary_decisions', [
             'disciplinary_case_id' => $case->id,
-            'sanction_type'        => 'warning',
+            'sanction_type' => 'warning',
         ]);
     }
 }

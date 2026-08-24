@@ -15,7 +15,7 @@ class StudentAbsenceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $student = $request->user()?->student;
-        if (!$student) {
+        if (! $student) {
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
@@ -25,7 +25,8 @@ class StudentAbsenceController extends Controller
             ->get();
 
         return response()->json([
-            'success'  => true,
+            'success' => true,
+            'data' => $records,
             'absences' => $records,
         ]);
     }

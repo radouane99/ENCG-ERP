@@ -71,6 +71,7 @@ export default function AdminTimetableEnginePage() {
 
   // Simulation result state
   const [simResult, setSimResult] = useState<SimulationData | null>(null);
+  const [suggestedSlots, setSuggestedSlots] = useState<any[]>([]);
 
   // Fetch Filieres
   const { data: filieres = [] } = useQuery({
@@ -151,6 +152,17 @@ export default function AdminTimetableEnginePage() {
     toast.success("📅 Synchronisation iCal (.ics) téléchargée !");
   };
 
+  const suggestSlotsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/admin/smart-scheduling/suggest-slots', {});
+      return res.data.data || [];
+    },
+    onSuccess: (slots: any[]) => {
+      setSuggestedSlots(slots);
+      toast.success(`${slots.length} créneau(x) validé(s) par le moteur anti-conflit.`);
+    },
+  });
+
   const getFiliereColor = (code: string = '') => {
     const c = code.toUpperCase();
     if (c.includes('GFC') || c.includes('FINANCE')) return 'bg-indigo-600 border-indigo-800 text-white';
@@ -192,6 +204,14 @@ export default function AdminTimetableEnginePage() {
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
             <button
+              onClick={() => suggestSlotsMutation.mutate()}
+              disabled={suggestSlotsMutation.isPending}
+              className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all backdrop-blur-md shadow-lg disabled:opacity-50"
+            >
+              {suggestSlotsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              3 créneaux validés
+            </button>
+            <button
               onClick={() => simulateMutation.mutate()}
               disabled={simulateMutation.isPending}
               className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all backdrop-blur-md shadow-lg disabled:opacity-50"
@@ -211,6 +231,31 @@ export default function AdminTimetableEnginePage() {
           </div>
         </div>
       </div>
+
+      {suggestedSlots.length > 0 && (
+        <div data-testid="suggested-slots" className="bg-white rounded-3xl p-6 border border-slate-200 space-y-3">
+          <h2 className="text-sm font-black uppercase tracking-wide">3 créneaux validés (férié / Ramadan / salle)</h2>
+          {suggestedSlots.map((slot, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3">
+              <div>
+                <p className="text-sm font-bold">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
+                <p className="text-xs text-slate-500">{slot.reason_fr || slot.text_fr}</p>
+              </div>
+              <button
+                onClick={() => api.post('/schedules', {
+                  day_of_week: slot.day,
+                  start_time: slot.start_time,
+                  end_time: slot.end_time,
+                  room_id: slot.room_id,
+                }).then(() => toast.success('Séance créée.')).catch(() => toast.error('Création impossible — complète le formulaire EDT.'))}
+                className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"
+              >
+                Créer
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── KPI Metrics Cards ──────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -423,7 +468,7 @@ export default function AdminTimetableEnginePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {simResult.scheduled_sessions.map(session => (
+                {simResult.scheduled_sessions.map((session: ScheduledSession) => (
                   <div
                     key={session.id}
                     className={cn(
@@ -489,9 +534,9 @@ export default function AdminTimetableEnginePage() {
                 <div key={building} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <Building2 className="w-6 h-6 text-teal-600" />
                   <div className="font-black text-sm text-slate-800">{building}</div>
-                  <div className="text-2xl font-black text-slate-900">{count} <span className="text-xs font-medium text-slate-400">séances</span></div>
+                  <div className="text-2xl font-black text-slate-900">{Number(count)} <span className="text-xs font-medium text-slate-400">séances</span></div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div className="bg-teal-600 h-2 rounded-full" style={{ width: `${Math.min(100, count * 10)}%` }}></div>
+                    <div className="bg-teal-600 h-2 rounded-full" style={{ width: `${Math.min(100, Number(count) * 10)}%` }}></div>
                   </div>
                 </div>
               ))}

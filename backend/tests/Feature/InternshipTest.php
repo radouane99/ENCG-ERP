@@ -2,30 +2,34 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
+use App\Models\Institution;
 use App\Models\Internship;
 use App\Models\Professor;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function ensureInternshipInstitution()
 {
-    \App\Models\Institution::firstOrCreate(
+    Institution::firstOrCreate(
         ['id' => 1],
         ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
 
-    if (! \App\Models\AcademicYear::query()->find(1)) {
-        $year = new \App\Models\AcademicYear([
+    if (! AcademicYear::query()->find(1)) {
+        $year = new AcademicYear([
             'institution_id' => 1,
-            'label'          => '2026/2027',
-            'start_year'     => 2026,
-            'end_year'       => 2027,
-            'start_date'     => '2026-09-01',
-            'end_date'       => '2027-06-30',
-            'is_current'     => true,
-            'is_locked'      => false,
+            'label' => '2026/2027',
+            'start_year' => 2026,
+            'end_year' => 2027,
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-06-30',
+            'is_current' => true,
+            'is_locked' => false,
         ]);
         $year->id = 1;
         $year->save();
@@ -35,15 +39,16 @@ function ensureInternshipInstitution()
 function makeInternshipAdmin(): User
 {
     ensureInternshipInstitution();
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $user = User::factory()->create();
-    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
+    $role = Role::firstOrCreate(['name' => 'institution-admin', 'guard_name' => 'sanctum']);
     $user->assignRole($role);
     $permModels = [];
     foreach (['internships.view', 'internships.edit'] as $perm) {
         $permModels[] = Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'sanctum']);
     }
     $user->givePermissionTo($permModels);
+
     return $user;
 }
 
@@ -92,7 +97,7 @@ it('assigns a supervisor to an internship', function () {
 
     $this->actingAs($user, 'sanctum')
         ->putJson("/api/internships/{$internship->id}", [
-            'action'        => 'assign_supervisor',
+            'action' => 'assign_supervisor',
             'supervisor_id' => $professor->id,
         ])
         ->assertStatus(200)
@@ -142,7 +147,7 @@ it('returns 422 when supervisor_id does not exist in professors table', function
 
     $this->actingAs($user, 'sanctum')
         ->putJson("/api/internships/{$internship->id}", [
-            'action'        => 'assign_supervisor',
+            'action' => 'assign_supervisor',
             'supervisor_id' => 999999,
         ])
         ->assertStatus(422)

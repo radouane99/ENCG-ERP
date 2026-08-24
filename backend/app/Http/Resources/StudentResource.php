@@ -18,6 +18,8 @@ class StudentResource extends JsonResource
             'id' => $this->uuid ?? $this->id,
             'student_number' => $this->student_number,
             'cne' => $this->cne,
+            'massar_code' => $this->massar_code,
+            'photo_url' => $this->photo_url ?? $this->photo_path,
             'enrollment_date' => $this->enrollment_date,
             'status' => $this->status,
             'filiere_id' => $this->filiere_id,

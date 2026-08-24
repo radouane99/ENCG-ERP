@@ -20,7 +20,7 @@ class AdmissionService
         if ($campaignId && $campaignId > 0) {
             $query->where(function ($q) use ($campaignId) {
                 $q->where('admission_campaign_id', $campaignId)
-                  ->orWhere('campaign_id', $campaignId);
+                    ->orWhere('campaign_id', $campaignId);
             });
         }
 
@@ -32,7 +32,7 @@ class AdmissionService
      */
     public function updateApplicationStatus(int $applicationId, string $status): Application
     {
-        if (!in_array($status, self::VALID_STATUSES)) {
+        if (! in_array($status, self::VALID_STATUSES)) {
             throw new \InvalidArgumentException("Statut invalide : {$status}");
         }
 
@@ -49,10 +49,10 @@ class AdmissionService
      */
     public function bulkUpdateStatus(array $applicationIds, string $status): int
     {
-        if (!in_array($status, self::VALID_STATUSES)) {
+        if (! in_array($status, self::VALID_STATUSES)) {
             throw new \InvalidArgumentException("Statut invalide : {$status}");
         }
 
-        return DB::transaction(fn() => Application::whereIn('id', $applicationIds)->update(['status' => $status]));
+        return DB::transaction(fn () => Application::whereIn('id', $applicationIds)->update(['status' => $status]));
     }
 }

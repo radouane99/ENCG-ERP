@@ -170,6 +170,7 @@ export default function LoginPage() {
             />
             <button
               type="button"
+              aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Masquer le mot de passe') : (isAr ? 'إظهار كلمة المرور' : 'Afficher le mot de passe')}
               onClick={() => setShowPassword(!showPassword)}
               className={cn("absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer", isAr ? "left-3" : "end-3")}
             >
