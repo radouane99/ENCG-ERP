@@ -1343,8 +1343,498 @@ jobs:
 
 
 
+---
 
+## 18. INVENTAIRE COMPLET DES FICHIERS & RÔLES — RÉFÉRENCE ABSOLUE (Deep Scan 2026-08-24)
 
+> **Source :** Deep scan automatisé de l'intégralité du dépôt `docker-v2`.
+> **Règle absolue :** Toute modification de fichier non listé ici doit être documentée dans cette section.
 
+---
+
+### 18.1 Chiffres Globaux Réels du Projet
+
+| Composant | Nombre Réel Vérifié |
+|---|:---:|
+| Modèles Eloquent (`app/Models/`) | **98** |
+| Contrôleurs API (`app/Http/Controllers/Api/` + sous-dossiers) | **113** (après nettoyage) |
+| Migrations PostgreSQL (`database/migrations/`) | **115** |
+| Classes de Services (`app/Services/` — 9 sous-dossiers) | **66** |
+| Templates Blade (`resources/views/`) | **72** |
+| Classes Mail — Mailables (`app/Mail/`) | **19** |
+| Enums PHP (`app/Enums/`) | **5** |
+| Policies RBAC (`app/Policies/`) | **2** |
+| Jobs Asynchrones (`app/Jobs/`) | **1** |
+| Fichiers PHP totaux dans `/app` | **~430** |
+| Modules Frontend (`frontend/src/features/`) | **37** |
+| Fichiers TypeScript / TSX (`frontend/src/`) | **356** |
+| Suites de Tests Backend (Feature + Unit) | **48 fichiers, 137 suites** |
+| Tests Frontend (Vitest) | **10 fichiers, 17 tests** |
+
+---
+
+### 18.2 Inventaire Complet des Modèles Eloquent (98 Modèles)
+
+#### Domaine : Identité & Authentification
+| Modèle | Rôle |
+|---|---|
+| `User.php` | Utilisateur central (Admin, Prof, Étudiant). UUID, RBAC Spatie, 2FA, Google OAuth |
+| `Institution.php` | École (ENCG Fès). Multi-tenant root. Slug unique |
+| `AuditLog.php` | Journal d'audit immuable (qui, quoi, quand, IP) |
+
+#### Domaine : Étudiants & Parcours Académique
+| Modèle | Rôle |
+|---|---|
+| `Student.php` | Étudiant principal. CNE, CIN, statut, lien User, Filière, Groupe |
+| `StudentPathway.php` | Parcours étudiant : filière + semestre courant + année académique |
+| `StudentRegistration.php` | Inscription administrative par année |
+| `StudentCard.php` | Carte NFC/QR PVC ISO CR80 (statut, photo, UID puce) |
+| `StudentDocument.php` | Documents administratifs liés à l'étudiant |
+| `StudentModuleReservation.php` | Réservation de module optionnel |
+| `StudentMobilityChoice.php` | Choix de programme de mobilité internationale |
+| `Application.php` | Candidature TAFEM / Concours d'entrée |
+| `AdmissionCampaign.php` | Campagne d'admission nationale |
+
+#### Domaine : Corps Professoral & RH
+| Modèle | Rôle |
+|---|---|
+| `Professor.php` | Professeur (PES/PH/PA/Vacataire). Statut, grade, modules, groupes |
+| `ProfessorAvailability.php` | Créneaux de disponibilité hebdomadaire déclarés |
+| `ProfessorSubstitution.php` | Remplacement d'un professeur par un autre |
+| `ProfessorDocumentRequest.php` | Demande de documents par un enseignant |
+| `VacationContract.php` | Contrat de vacation (taux horaire, modules, état paiement) |
+| `VacationPayment.php` | Paiement effectif d'un contrat de vacation |
+| `VacationSession.php` | Session de vacation liée à un contrat |
+| `ModuleProfessor.php` | Table pivot : Affectation d'un professeur à un module+groupe |
+
+#### Domaine : Structure Académique
+| Modèle | Rôle |
+|---|---|
+| `AcademicYear.php` | Année académique (ex : 2026/2027, is_current) |
+| `Filiere.php` | Filière d'études (GFC, AML, SCM…) avec responsable |
+| `Department.php` | Département disciplinaire (Finance, Marketing…) |
+| `Speciality.php` | Spécialité dans une filière |
+| `Semester.php` | Semestre (S1 à S10) rattaché à une filière |
+| `Module.php` | Module pédagogique (45h, coefficient, ECTS, semestre) |
+| `Group.php` | Groupe d'étudiants (délégué, filière, semestre) |
+| `Assessment.php` | Évaluation d'un module (CC, Exam, TP) — type varchar libre |
+
+#### Domaine : Emplois du Temps & Salles
+| Modèle | Rôle |
+|---|---|
+| `Schedule.php` | Créneau d'emploi du temps (salle, prof, module, groupe, heure) |
+| `ScheduleChange.php` | Modification enregistrée d'un créneau |
+| `ScheduleChangeRequest.php` | Demande de changement soumise par un professeur |
+| `Room.php` | Salle physique (capacité, type, équipements, statut) |
+| `RoomBooking.php` | Réservation de salle (créneau, purpose, statut) |
+| `Campus.php` | Campus ou bâtiment de l'établissement |
+| `Holiday.php` | Jour férié ou période de vacances |
+| `AcademicEvent.php` | Événement académique (soutenance, conférence…) |
+
+#### Domaine : Notes, Délibérations & PVs
+| Modèle | Rôle |
+|---|---|
+| `Grade.php` | Note d'un étudiant pour un module+session (avec `version` pour OptimisticLocking) |
+| `GradeComponent.php` | Composantes d'une note (CC1, CC2, Exam) |
+| `GradeAudit.php` | Historique des modifications de notes (old→new, IP, timestamp ms) |
+| `GradeEntryPeriod.php` | Période de saisie des notes (ouverture/fermeture par module) |
+| `Deliberation.php` | Session de délibération académique (jury, date, statut) |
+| `DeliberationDecision.php` | Décision individuelle (V/RAT/NV/VARC) pour chaque étudiant |
+| `DeliberationJury.php` | Membres du jury (président, membres) |
+| `ModulePvSignature.php` | PV signé numériquement (hash SHA-256 + signataire + date) |
+| `ModuleValidation.php` | Résultat de validation d'un module par étudiant |
+| `ResitEligibility.php` | Éligibilité d'un étudiant au rattrapage |
+| `ValidationAudit.php` | Audit des changements de statut de validation |
+
+#### Domaine : Examens & Convocations
+| Modèle | Rôle |
+|---|---|
+| `Exam.php` | Examen (module, session, date, salle, statut verrouillé) |
+| `ExamSession.php` | Session d'examen (normale, rattrapage) |
+| `ExamSeating.php` | Placement d'un étudiant dans la salle d'examen (table, QR) |
+| `ExamSurveillance.php` | Affectation d'un surveillant à un examen |
+| `ExamIncident.php` | Incident/fraude enregistré pendant un examen |
+| `ExamLockingAudit.php` | Audit du verrouillage/déverrouillage des examens |
+| `Convocation.php` | Convocation officielle émise (étudiant ou prof) |
+
+#### Domaine : Assiduité & Absences
+| Modèle | Rôle |
+|---|---|
+| `Attendance.php` | Session d'assiduité globale par cours |
+| `AttendanceSession.php` | Session d'émargement QR (QR éphémère, durée, statut) |
+| `AttendanceRecord.php` | Enregistrement individuel (présent/absent/justifié) |
+| `AbsenceJustification.php` | Justificatif médical soumis (état, pièce jointe) |
+
+#### Domaine : Stages, PFE & Projets
+| Modèle | Rôle |
+|---|---|
+| `Internship.php` | Stage (convention, entreprise, superviseur, statut) |
+| `InternshipDocument.php` | Documents liés au stage (convention signée, rapport) |
+| `InternshipEvaluation.php` | Évaluation du maître de stage |
+| `InternshipReport.php` | Rapport de stage soumis |
+| `FinalProject.php` | Projet de Fin d'Études (PFE) — sujet, directeur, statut |
+| `ProjectDefense.php` | Soutenance PFE (jury, note, date) |
+| `Soutenance.php` | Soutenance générale (PFE ou Doctorat) |
+| `AcademicProject.php` | Projets académiques divers (études de cas, travaux) |
+
+#### Domaine : Documents & Guichet Numérique
+| Modèle | Rôle |
+|---|---|
+| `DocumentRequest.php` | Demande de document administratif (attestation, relevé) |
+| `DocumentType.php` | Type de document (attestation scolarité, réussite, diplôme) |
+| `DocumentTemplate.php` | Template PDF d'un type de document |
+| `GeneratedDocument.php` | Document généré et archivé (hash SHA-256, URL signé) |
+| `BlockchainCertificate.php` | Certificat enregistré sur blockchain (hash, transaction) |
+
+#### Domaine : LMS & Cours
+| Modèle | Rôle |
+|---|---|
+| `LearningMaterial.php` | Ressource pédagogique (cours PDF, vidéo, TP) |
+| `Assignment.php` | Devoir ou travail demandé aux étudiants |
+| `AssignmentSubmission.php` | Rendu d'un devoir par un étudiant |
+| `Quiz.php` | Quiz interactif (durée, questions, statut) |
+| `QuizQuestion.php` | Question d'un quiz (QCM, vrai/faux, ouverte) |
+| `QuizAttempt.php` | Tentative de quiz par un étudiant |
+| `CourseEvaluation.php` | Évaluation anonyme d'un cours (baromètre qualité) |
+| `EvaluationCampaign.php` | Campagne d'évaluation des enseignements |
+
+#### Domaine : Bibliothèque SIGB / Koha
+| Modèle | Rôle |
+|---|---|
+| `Book.php` | Ouvrage bibliographique (ISBN, auteur, éditeur) |
+| `BookCopy.php` | Exemplaire physique d'un ouvrage (code-barres, état) |
+| `Borrowing.php` | Emprunt d'un exemplaire (dates, étudiant, état retour) |
+
+#### Domaine : Vie Étudiante
+| Modèle | Rôle |
+|---|---|
+| `Club.php` | Club ou association étudiante |
+| `ClubMember.php` | Adhésion d'un étudiant à un club |
+| `ClubEvent.php` | Événement organisé par un club |
+| `Complaint.php` | Réclamation étudiante (type, statut, réponse) |
+| `DisciplinaryCase.php` | Dossier disciplinaire (incident, décision) |
+| `DisciplinaryDecision.php` | Décision du conseil de discipline |
+| `DisciplineCase.php` | Cas disciplinaire simplifié (alias/alias) |
+| `RecommendationRequest.php` | Demande de lettre de recommandation |
+
+#### Domaine : Alumni & Insertion Professionnelle
+| Modèle | Rôle |
+|---|---|
+| `AlumniSurvey.php` | Enquête insertion professionnelle lauréat |
+| `JobOffer.php` | Offre d'emploi publiée sur le portail alumni |
+
+#### Domaine : Mobilité Internationale
+| Modèle | Rôle |
+|---|---|
+| `MobilityPartner.php` | Université partenaire (Erasmus+, accord bilatéral) |
+| `StudentMobilityChoice.php` | Candidature d'un étudiant à la mobilité |
+
+#### Domaine : CEDOC & Recherche Doctorale
+| Modèle | Rôle |
+|---|---|
+| *(Géré via tables directes dans migrations CEDOC)* | Heures formation, publications, avancement thèse |
+
+#### Domaine : IA & Chatbot
+| Modèle | Rôle |
+|---|---|
+| `AiConversation.php` | Conversation avec le tuteur IA (contexte, rôle) |
+| `AiChatMessage.php` | Message individuel d'une conversation IA |
+| `AiGeneratedContent.php` | Contenu IA généré (synthèse, QCM, explication) |
+
+#### Domaine : Notifications & Communication
+| Modèle | Rôle |
+|---|---|
+| `NotificationLog.php` | Journal des notifications envoyées (email, push, SMS) |
+| `ContactSubmission.php` | Soumission du formulaire public de contact |
+
+---
+
+### 18.3 Inventaire des Contrôleurs API (113 — après nettoyage)
+
+> **Structure :** `/app/Http/Controllers/Api/` (racine) + sous-dossiers `/Admin/`, `/Professor/`, `/Student/`, `/Auth/`, `/Mobile/`
+
+#### Racine (`Api/`)
+| Contrôleur | Rôle & Endpoint Principal |
+|---|---|
+| `PdfExportController.php` (107 KB) | Génération de TOUS les PDFs officiels (attestations, PVs, diplômes, relevés, conventions…) |
+| `AdmissionController.php` (60 KB) | Pipeline complet TAFEM : réception candidatures, décisions, liste d'attente |
+| `GradeController.php` (32 KB) | CRUD notes, grille saisie, verrouillage optimiste, exports |
+| `DeliberationController.php` (21 KB) | Moteur de délibération : calcul automatique, PV, signature SHA-256 |
+| `StudentCardController.php` (20 KB) | Émission, activation, désactivation cartes NFC PVC |
+| `StudentController.php` (18 KB) | CRUD étudiants, dossier unifié, exports |
+| `ConvocationController.php` (14 KB) | Génération et envoi convocations examens |
+| `ReinscriptionController.php` (14 KB) | Tunnel de réinscription annuelle (calcul décision jury) |
+| `ExamPlanningController.php` (13 KB) | Planification sessions d'examens et placement étudiants |
+| `TafemMinistryImportController.php` (12 KB) | Import fichiers Excel/CSV TAFEM du ministère |
+| `ProfessorAiCopilotController.php` (12 KB) | Copilote IA pour les professeurs (préparation cours, questions) |
+| `VacataireController.php` (12 KB) | Gestion complète vacataires, contrats, états de paiement |
+| `AiCourseTutorController.php` (11 KB) | Tuteur IA RAG (Retrieval-Augmented Generation) sur les polycopiés |
+| `StudentTranscriptController.php` (10 KB) | Relevé de notes officiel avec mentions et ECTS |
+| `ReservisteController.php` (10 KB) | Gestion des étudiants réservistes et leur accès aux rattrapages |
+| `ExamIncidentController.php` (10 KB) | Enregistrement et traitement des fraudes et incidents d'examen |
+| `ApogeeEngineController.php` (10 KB) | Interopérabilité avec le système ministériel APOGEE/Massar |
+| `AbsenceJustificationController.php` (10 KB) | Workflow justificatifs médicaux (soumission → validation) |
+| `PublicVerificationController.php` (9 KB) | Vérification publique QR Code des diplômes et attestations |
+| `RetakeController.php` (9 KB) | Gestion des rattrapages (éligibilité, notes, résultats) |
+| `GroupController.php` (8 KB) | CRUD groupes, affectation étudiants, délégués |
+| `GradeGridController.php` (8 KB) | Grille interactive de saisie des notes en masse |
+| `DocumentRequestController.php` (7 KB) | Demandes de documents administratifs (admin side) |
+| `AcademicYearController.php` (7 KB) | CRUD années académiques, bascule is_current |
+| `ScheduleChangeRequestController.php` (7 KB) | Demandes de modification d'emploi du temps |
+| `InternalApiController.php` (7 KB) | API interne entre services (non exposée publiquement) |
+| `AttendanceController.php` (7 KB) | Sessions d'émargement QR, scan, validation présence |
+| `HolidayController.php` (6 KB) | CRUD jours fériés et vacances académiques |
+| `PilotageController.php` (6 KB) | Tableau de bord pilotage direction (KPIs, taux réussite…) |
+| `DocumentCenterController.php` (6 KB) | Centre de documentation institutionnelle |
+| `RecommendationLetterController.php` (6 KB) | Génération et envoi lettres de recommandation |
+| `TimetableController.php` (7 KB) | Emplois du temps : génération, anti-conflits, export |
+| `ProfessorAvailabilityController.php` (7 KB) | Déclaration et consultation des disponibilités prof |
+| `AdminAiController.php` (6 KB) | Outils IA côté administration (analytics prédictifs, rapports) |
+| `AdminRolePermissionController.php` (6 KB) | Gestion RBAC : rôles, permissions Spatie |
+| `AdminExamController.php` (6 KB) | Gestion admin des examens (verrouillage, surveillance) |
+| `LmsCourseController.php` (5 KB) | Gestion cours LMS (ressources, devoirs, quiz) |
+| `ExamLockingController.php` (5 KB) | Verrouillage/déverrouillage saisie des notes d'examen |
+| `NotificationController.php` (5 KB) | Notifications in-app (liste, markAsRead, suppression) |
+| `ComplaintController.php` (6 KB) | Réclamations étudiantes (soumission, suivi, réponse) |
+| `AssessmentController.php` (4 KB) | CRUD évaluations (CC, Exam, TP) par module |
+| `CalendarController.php` (4 KB) | Calendrier FullCalendar (events, move, filter) |
+| `TimetableExportController.php` (4 KB) | Export emploi du temps PDF/iCal/JSON |
+| `FiliereController.php` (4 KB) | CRUD filières, responsable, structure semestrielle |
+| `ProfessorSubstitutionController.php` (4 KB) | Gestion des remplacements de professeurs |
+| `ModuleController.php` (4 KB) | CRUD modules pédagogiques |
+| `DisciplineController.php` (2 KB) | Gestion du conseil de discipline |
+| `AlumniController.php` (0.9 KB) | Réseau alumni et portail lauréats |
+| `SearchController.php` (2 KB) | Moteur de recherche global (étudiants, profs, modules) |
+| `ProfileController.php` (2 KB) | Profil utilisateur connecté (update, avatar) |
+| `AiChatController.php` (1.3 KB) | Endpoint Groq AI chat (non routé directement — usage interne) |
+| `AiAssistantController.php` (2.4 KB) | Assistant IA général (suggestions, FAQ) |
+| `ContactController.php` (1 KB) | Formulaire public de contact |
+| `ExcelController.php` (1.3 KB) | Exports Excel (notes, listes étudiants) |
+| `ScheduleController.php` (3 KB) | CRUD créneaux emploi du temps |
+| `SmartSchedulingController.php` (2 KB) | Algorithme anti-conflits planification intelligente |
+| `UserController.php` (3 KB) | Gestion utilisateurs (admin) |
+| `DepartmentController.php` (2 KB) | CRUD départements |
+| `CedocController.php` (2 KB) | Études doctorales CEDOC (heures, publications, thèse) |
+| `DashboardController.php` (2 KB) | Dashboard général (statistiques globales) |
+| `TimelineController.php` (1 KB) | Timeline événements académiques |
+| `AnalyticsController.php` (1 KB) | Analytics généraux |
+| `AiScolarBotController.php` (3 KB) | Chatbot scolarité automatisé (FAQ, procédures) |
+| `AiFeatureController.php` (0.9 KB) | Feature flags IA |
+| `AiChatController.php` | Groq AI endpoint (voir ci-dessus) |
+| `SmartGradingController.php` (2 KB) | Notation intelligente (détection anomalies) |
+| `AdmissionCampaignController.php` (2 KB) | CRUD campagnes d'admission |
+| `AcademicCalendarController.php` (1 KB) | Calendrier académique (vacances, examens) |
+| `RoomController.php` (4 KB) | CRUD salles (capacité, équipements, disponibilité) |
+| `RoomBookingController.php` (5 KB) | Réservations de salles (avec détection conflits) |
+| `StudentPortalController.php` (3 KB) | Portail étudiant (vue d'ensemble, informations) |
+| `UnifiedStudentRecordController.php` (3 KB) | Dossier unifié étudiant (notes + absences + stages) |
+| `FinalProjectController.php` (1 KB) | Gestion PFE (soumission sujet, statut) |
+| `ExamSessionController.php` (4 KB) | Sessions d'examens (normale, rattrapage) |
+| `ExamAttendanceController.php` (1.5 KB) | Présence aux examens |
+| `StudentDocumentRequestController.php` | Version racine obsolète — **SUPPRIMÉE** (remplacée par `Student/`) |
+
+#### Sous-dossier `/Admin/`
+| Contrôleur | Rôle |
+|---|---|
+| `AdminDocumentRequestController.php` (33 KB) | Gestion admin des demandes de documents (validation, génération PDF) |
+| `AdminAbsenceController.php` (1 KB) | Statistiques et revue des absences côté admin |
+| `AdminInternshipController.php` (2 KB) | Gestion admin des conventions et soutenances PFE |
+| `AdminDocumentTypeController.php` (2 KB) | CRUD types de documents administratifs |
+| `AdminExamConvocationController.php` (1 KB) | Convocations d'examens (envoi en masse) |
+| `AdminCourseEvaluationController.php` (4 KB) | Campagnes d'évaluation des enseignements |
+| `AdminBlockchainController.php` (4 KB) | Émission de certificats blockchain |
+| `AdminAlertsController.php` (7 KB) | Alertes et notifications urgentes (broadcast) |
+| `AdminMinistryReportController.php` (4 KB) | Rapports officiels pour le ministère (APOGEE) |
+
+#### Sous-dossier `/Professor/`
+| Contrôleur | Rôle |
+|---|---|
+| `ProfessorPortalController.php` (31 KB) | Portail professeur complet (tableau de bord, modules, étudiants) |
+| `ProfessorAttendanceController.php` (3 KB) | Sessions QR d'émargement — côté professeur |
+| `ProfessorAiController.php` (2 KB) | Outils IA pour le professeur (génération sujets, résumés) |
+| `ProfessorInternshipController.php` (2 KB) | Encadrement stages côté professeur |
+| `ProfessorAssignmentController.php` (4 KB) | Devoirs LMS créés par le professeur |
+
+#### Sous-dossier `/Student/`
+| Contrôleur | Rôle |
+|---|---|
+| `StudentDocumentRequestController.php` (4 KB) | Demande de documents (attestation, relevé) côté étudiant |
+| `ClubController.php` (0.6 KB) | Consultation clubs et événements côté étudiant |
+| `StudentAbsenceController.php` (0.8 KB) | Consultation absences et justificatifs côté étudiant |
+| `MobileStudentController.php` (2 KB) | API mobile pour l'application étudiante |
+| `StudentConvocationController.php` (6 KB) | Convocations examens côté étudiant |
+| `StudentMobilityController.php` (5 KB) | Candidature mobilité internationale côté étudiant |
+| `StudentInternshipController.php` (2 KB) | Suivi de stage côté étudiant |
+| `StudentChatbotController.php` (4 KB) | Chatbot ScolarBot côté étudiant |
+| `StudentAiController.php` (3 KB) | Tuteur IA RAG côté étudiant |
+| `StudentAbsenceController.php` | Voir ci-dessus |
+
+#### Sous-dossier `/Auth/`
+| Contrôleur | Rôle |
+|---|---|
+| `AuthController.php` | Login, Register, Logout, Me, Google OAuth, 2FA |
+| `PasswordResetController.php` | Forgot Password, Reset (emails via Resend) |
+
+---
+
+### 18.4 Inventaire Complet des Mailables (19 Classes — Resend Transport)
+
+> **Règle absolue :** Tous les Mailables utilisent `envelope()` / `content()` / `attachments()`. **Jamais `Mail::raw()`**.
+
+| Mailable | Déclencheur | Template Blade |
+|---|---|---|
+| `ConvocationEmail.php` | Envoi convocation examen à l'étudiant | `emails/convocation` |
+| `ProfessorConvocationEmail.php` | Convocation d'un prof surveillant | `emails/professor-convocation` |
+| `StudentRegistrationSuccessMail.php` | Confirmation inscription réussie | `emails/student-registration` |
+| `InscriptionStatusChangedMail.php` | Changement statut dossier TAFEM | `emails/inscription-status` |
+| `ReinscriptionOuverteMail.php` | Ouverture réinscription annuelle | `emails/reinscription-ouverte` |
+| `RattrapageDecisionMail.php` | Résultat session de rattrapage | `emails/rattrapage-decision` |
+| `DocumentRequestCreatedMail.php` | Confirmation réception demande document | `emails/document-request` |
+| `DocumentRequestStatusMail.php` | Mise à jour statut demande document | `emails/document-status` |
+| `GradeDeadlineReminder.php` | Rappel avant clôture saisie notes | `emails/grade-deadline` |
+| `GradePhaseUpdatedMail.php` | Notification changement phase de saisie | `emails/grade-phase` |
+| `ProfessorAssignmentNotificationMail.php` | Affectation cours à un professeur | `emails/professor-assignment` |
+| `ProfessorAvailabilitySurveyMail.php` | Enquête disponibilités professeur | `emails/availability-survey` |
+| `ProfessorDocumentApprovedMail.php` | Approbation document professeur | `emails/prof-doc-approved` |
+| `RecommendationLetterMail.php` | Envoi lettre de recommandation | `emails/recommendation` |
+| `ReservisteRetakeNotificationMail.php` | Notification réserviste admis au rattrapage | `emails/reserviste-retake` |
+| `ScheduleChangeNotificationMail.php` | Notification changement emploi du temps | `emails/schedule-change` |
+| `StudentTranscriptMail.php` | Envoi relevé de notes par email | `emails/transcript` |
+| `ResetPasswordMail.php` | Réinitialisation mot de passe | `emails/reset-password` |
+| `ContactMessage.php` | Réponse formulaire contact public | `emails/contact` |
+
+---
+
+### 18.5 Inventaire des Services (66 Fichiers — 9 Sous-dossiers)
+
+| Sous-dossier | Services Principaux | Rôle |
+|---|---|---|
+| `Services/AI/` | `GroqAiService`, `AiTutorService`, `RagService` | Intégration Groq LLM, RAG sur polycopiés, génération QCM |
+| `Services/Academic/` | `LmdCalculationService`, `DeliberationEngine`, `RetakeService` | Formules LMD, moteur délibération, calcul ECTS |
+| `Services/Admissions/` | `TafemImportService`, `ApplicationScoringService` | Import TAFEM, scoring candidatures, notification |
+| `Services/Analytics/` | `DashboardAnalyticsService`, `PredictiveService` | KPIs, analytics BI, prédiction résultats |
+| `Services/Apogee/` | `ApogeeExportService`, `MassarReconciliationService` | Export format APOGEE, réconciliation CNE |
+| `Services/Core/` | `InstitutionService`, `NotificationDispatcher` | Services fondamentaux multi-tenant |
+| `Services/Documents/` | `PdfGenerationService`, `DocumentGeneratorService`, `DocumentRequestService` | Génération PDF DOMPDF, archivage, signature SHA-256 |
+| `Services/HR/` | `VacationContractService`, `ProfessorPaymentService` | Gestion contrats vacataires, états de paiement |
+| `Services/Security/` | `TwoFactorAuthService`, `AuditTrailService` | Google 2FA, audit forensique, logs immuables |
+
+---
+
+### 18.6 Inventory des Modules Frontend (37 Modules — React 19 / TypeScript)
+
+| Module (`features/`) | Rôle |
+|---|---|
+| `auth` | Login, Register, 2FA, Google OAuth, Password Reset |
+| `dashboard` | Tableau de bord multi-rôle (Admin, Prof, Étudiant) |
+| `students` | CRUD étudiants, dossier, carte PVC, parcours |
+| `professors` | CRUD professeurs, charges horaires, disponibilités |
+| `vacataire` | Gestion vacataires, contrats, paiements |
+| `academic` | Années académiques, filières, modules, groupes, semestres |
+| `admissions` | Tunnel TAFEM, candidatures, décisions, listes |
+| `timetable` | Emplois du temps FullCalendar, export PDF/iCal |
+| `exams` | Planification examens, convocations, incidents |
+| `deliberation` | Moteur délibération, PVs, signature numérique |
+| `attendance` | Émargement QR Code, sessions, statistiques |
+| `absences` | Absences, justificatifs médicaux, workflow |
+| `documents` | Guichet numérique, attestations, diplômes |
+| `internships` | Conventions stages, PFE, soutenances |
+| `finalprojects` | Projets de fin d'études |
+| `lms` | LMS cours, ressources, devoirs, quiz |
+| `hr` | RH institutionnelle, contrats, paiements |
+| `library` | Bibliothèque SIGB, emprunts, réservations |
+| `cedoc` | Études doctorales, heures formation, publications |
+| `alumni` | Réseau lauréats, enquêtes insertion, offres emploi |
+| `ai` | Tuteur IA, chatbot, copilote professeur |
+| `analytics` | Tableaux de bord analytiques, BI, rapports |
+| `calendar` | Calendrier académique global |
+| `clubs` | Clubs et associations étudiantes |
+| `communication` | Notifications, alertes, messagerie |
+| `discipline` | Conseil de discipline, incidents |
+| `guichet` | Guichet numérique étudiant |
+| `infrastructure` | Salles, campus, équipements |
+| `modules` | Gestion modules pédagogiques |
+| `professor-portal` | Portail dédié professeur |
+| `profile` | Profil utilisateur, avatar, mot de passe |
+| `public` | Pages publiques (landing, vérification QR) |
+| `settings` | Paramètres système et préférences |
+| `support` | Support et aide utilisateur |
+| `tools` | Outils administratifs divers |
+| `classroom` | Gestion salles de cours |
+| `admin` | Administration centrale (RBAC, config) |
+
+---
+
+### 18.7 Inventaire Migrations — Anomalies Détectées & Optimisations DB
+
+#### Migrations Problématiques Identifiées
+
+| Migration | Problème | Action |
+|---|---|---|
+| `2026_07_09_094930_scaffold_timetable_ai_and_views.php` | **Fichier VIDE** (up/down body vides) — ne fait rien | Peut être conservée (Laravel l'ignore si vide) mais clairement documentée |
+| `2026_07_09_phase8_fulltext_users_index.php` | Conçue pour MySQL uniquement (FULLTEXT MySQL syntax). **Le projet tourne sur PostgreSQL** — la migration est no-op car elle vérifie `driver !== 'mysql'` | Dead weight — conservée sans impact |
+| `2026_07_09_120831_add_fulltext_index_to_users_table.php` | Double tentative FULLTEXT users — méthode Blueprint. Sur PostgreSQL khi`not sqlite` guard → s'exécute sur PostgreSQL mais PostgreSQL supporte nativement FULLTEXT via `tsvector` | Garde — effectif sur PostgreSQL |
+| `2024_01_01_000010_*` (deux fichiers) | **Même préfixe timestamp** — Laravel les exécute tous les deux, ordre alphabétique. Pas de conflit si les tables sont différentes | OK — alumni_surveys ≠ library tables |
+| `2026_07_14_111104_create_discipline_cases_table.php` + `2026_07_17_085929_create_discipline_cases_table.php` | **Même table `discipline_cases` créée 2 fois** — la 2ème échoue si la 1ère a déjà été exécutée. La migration `2026_08_13_000003_drop_duplicate_discipline_cases_table.php` gère le drop | Résolu par la migration de purge |
+
+#### Optimisations PostgreSQL Déjà Appliquées (via migrations)
+- **`2026_08_13_000001_add_performance_indexes.php`** — Index B-Tree sur `student_id`, `module_id`, `academic_year_id`, `status`, `created_at` dans les tables à fort volume.
+- **`2026_08_13_000002_add_postgresql_partial_indexes.php`** — Index partiels PostgreSQL (ex: `WHERE is_current = true`, `WHERE status = 'active'`) pour les requêtes fréquentes.
+- **`2026_07_07_200000_final_database_optimization.php`** — Optimisation globale des clés étrangères et indexes composites.
+- **`2026_07_09_120831_add_fulltext_index_to_users_table.php`** — GIN/GiST FULLTEXT sur `first_name`, `last_name`, `email`.
+
+#### Recommandations d'Optimisations Supplémentaires
+
+```sql
+-- 1. Index composite sur grades (le plus critique — requête délibération)
+CREATE INDEX CONCURRENTLY idx_grades_student_module_session
+  ON grades (student_id, module_id, exam_session_id);
+
+-- 2. Index partiel sur students actifs uniquement
+CREATE INDEX CONCURRENTLY idx_students_active
+  ON students (institution_id, status)
+  WHERE status = 'active';
+
+-- 3. Index sur schedules pour anti-conflits (requête fréquente)
+CREATE INDEX CONCURRENTLY idx_schedules_conflict_check
+  ON schedules (room_id, day_of_week, start_time, end_time);
+
+-- 4. Partitionnement futur si > 50 000 étudiants
+-- ALTER TABLE grades PARTITION BY RANGE (academic_year_id);
+```
+
+---
+
+### 18.8 Fichiers Supprimés (Nettoyage Post-Scan)
+
+| Fichier Supprimé | Raison de Suppression | Date |
+|---|---|---|
+| `AdmissionController copy.php` (53 KB) | Copie non fonctionnelle du contrôleur principal | 2026-08-24 |
+| `GradeController copy.php` (78 KB) | Copie non fonctionnelle du contrôleur principal | 2026-08-24 |
+| `PdfExportController copy.php` (92 KB) | Copie non fonctionnelle du contrôleur principal | 2026-08-24 |
+| `StudentAbsenceController.php` (root `/Api/`) | Doublon non routé — remplacé par `Api/Student/StudentAbsenceController.php` | 2026-08-24 |
+
+**Total nettoyé :** 4 fichiers — **~225 KB de code mort supprimé** ✅
+
+---
+
+### 18.9 Policies RBAC (2 Policies)
+
+| Policy | Modèle Protégé | Règles Clés |
+|---|---|---|
+| `GradePolicy.php` | `Grade` | Seuls les professeurs affectés au module peuvent voir/modifier les notes. Admin override. |
+| `StudentPolicy.php` | `Student` | Un étudiant ne peut voir que son propre dossier. Admin/Prof ont accès selon scope institution. |
+
+---
+
+### 18.10 Enums PHP (5 Enums — PHP 8.1 Native)
+
+| Enum | Valeurs |
+|---|---|
+| `AttendanceStatus` | `PRESENT`, `ABSENT`, `LATE`, `EXCUSED` |
+| `FinalProjectStatus` | `PENDING`, `APPROVED`, `IN_PROGRESS`, `SUBMITTED`, `DEFENDED` |
+| `InternshipStatus` | `PENDING`, `APPROVED`, `ACTIVE`, `COMPLETED`, `REJECTED` |
+| `QuizStatus` | `DRAFT`, `PUBLISHED`, `CLOSED` |
+| `ValidationStatus` | `V` (Validé), `RAT` (Rattrapage), `NV` (Non Validé), `VARC` (Comp. Annuelle) |
 
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\AdminAbsenceController;
 use App\Http\Controllers\Api\Admin\AdminDocumentTypeController;
 use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
 use App\Http\Controllers\Api\AdminAiController;
+use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\AdminDocumentRequestController;
@@ -333,6 +334,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('copilot/query', [AdminAiController::class, 'copilotQuery']);
         Route::get('predictive-analytics', [AdminAiController::class, 'getPredictiveAnalytics']);
         Route::get('financial-forecast', [AdminAiController::class, 'getFinancialForecast']);
+        // Groq AI Chatbot — used by ChatbotWidget (all roles)
+        Route::post('chat', [AiChatController::class, 'chat']);
     });
 
     // HR & Personnel
