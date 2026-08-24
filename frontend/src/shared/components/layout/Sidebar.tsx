@@ -178,6 +178,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const { i18n } = useTranslation('common')
   const { user, hasAnyRole, activeRole } = useAuthStore()
   const loc = i18n.language.slice(0, 2)
+  const isRtl = loc === 'ar'
   const navLabel = (item: { label: string; labelAr?: string; labelEn?: string }) =>
     loc === 'ar' ? (item.labelAr || item.label) : loc === 'en' ? (item.labelEn || item.label) : item.label
   const navigate = useNavigate()
@@ -474,7 +475,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                                 "flex-1 truncate transition-colors duration-200",
                                 isActive ? "font-bold text-white" : "font-medium"
                               )}>
-                                {isRtl ? (item.labelAr || item.label) : item.label}
+                                {navLabel(item)}
                               </span>
                               {item.badge && (
                                 <span className="ms-auto px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -517,7 +518,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           "flex-1 truncate transition-colors duration-200",
                           isActive ? "font-bold text-white" : "font-medium"
                         )}>
-                          {isRtl ? (navItem.labelAr || navItem.label) : navItem.label}
+                          {navLabel(navItem)}
                         </span>
                       </>
                     )}
