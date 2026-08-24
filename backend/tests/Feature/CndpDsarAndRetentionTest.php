@@ -11,6 +11,8 @@ use function Pest\Laravel\postJson;
 
 it('requires authentication to create a DSAR export request', function () {
     postJson('/api/v1/privacy/export')->assertUnauthorized();
+    postJson('/api/v1/privacy/rectification')->assertUnauthorized();
+    postJson('/api/v1/privacy/opposition')->assertUnauthorized();
 });
 
 it('queues a DSAR export for the authenticated user', function () {
