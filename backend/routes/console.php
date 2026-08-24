@@ -16,14 +16,24 @@ Schedule::command('backup:clean')->dailyAt('02:00');
 Schedule::command('backup:run --only-db')->dailyAt('03:00');
 
 // Automated Weekly PostgreSQL Optimization & Statistics Update (Pilier 2)
+// VACUUM cannot run as a prepared statement or inside a transaction.
 Schedule::call(function () {
-    if (DB::getDriverName() === 'pgsql') {
-        try {
-            DB::statement('VACUUM ANALYZE');
-            \Illuminate\Support\Facades\Log::info('PostgreSQL VACUUM ANALYZE completed successfully.');
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('PostgreSQL VACUUM ANALYZE skipped: ' . $e->getMessage());
-        }
+    if (DB::getDriverName() !== 'pgsql') {
+        return;
+    }
+
+    $connection = DB::connection();
+    if ($connection->transactionLevel() > 0) {
+        \Illuminate\Support\Facades\Log::warning('PostgreSQL VACUUM ANALYZE skipped: connection is inside a transaction.');
+
+        return;
+    }
+
+    try {
+        $connection->unprepared('VACUUM (ANALYZE)');
+        \Illuminate\Support\Facades\Log::info('PostgreSQL VACUUM ANALYZE completed successfully.');
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning('PostgreSQL VACUUM ANALYZE skipped: '.$e->getMessage());
     }
 })->weeklyOn(0, '04:00')->description('Weekly PostgreSQL Vacuum & Statistics Optimization');
 
