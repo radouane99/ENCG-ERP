@@ -1987,79 +1987,103 @@ sequenceDiagram
 3. **Transport Email Resend :** Jamais de `Mail::raw()`. Tous les emails transactionnels utilisent les 19 classes `Mailable` typées avec templates Blade inline.
 4. **Zéro Dette Technique :** Aucune duplication de contrôleur ou de migration orpheline. L'intégralité du code exécutable est couvert par **137 suites de tests automatisées (387 assertions, 100% Green)**.
 
+---
 
-🏛️ Architecture MVC, Contrôle d'Accès (RBAC) & Organisation Globale du Projet
-Le projet ENCG-ERP-V1 respecte une architecture MVC / Clean Architecture d'entreprise, strictement découplée, sécurisée et sans aucun fichier mort.
+## 20. RECOMMANDATIONS STRATÉGIQUES & BONNES PRATIQUES (PRODUCTION-READY)
 
-1. 🧱 Organisation Modèle - Vue - Contrôleur (MVC) & Services
+> **Référence :** Guide de mise en production, scalabilité PostgreSQL, conformité CNDP/OWASP et automatisation CI/CD.
 
+---
 
-                                  ┌──────────────────────────────────────────────┐
-                                  │                NAVIGATEUR WEB                │
-                                  │      React 19 SPA + TypeScript + Vite 8      │
-                                  │             (37 Modules Métier)              │
-                                  └──────────────────────┬───────────────────────┘
-                                                         │
-                                                         ▼ (JSON REST / Sanctum Token)
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                 LARAVEL 11/12 BACKEND                                                  │
-│                                                                                                                        │
-│  ┌───────────────────────────┐         ┌───────────────────────────┐         ┌──────────────────────────────────────┐  │
-│  │     ROUTING & RBAC        │ ──────▶ │        CONTROLLERS        │ ──────▶ │          SERVICES & ACTIONS          │  │
-│  │  - admin.php (Admin)      │         │  - Api/Admin/* (33 KB+)   │         │  - Services/AI/ (Groq, RAG)          │  │
-│  │  - professor.php (Prof)   │         │  - Api/Professor/*        │         │  - Services/Academic/ (LMD, ECTS)    │  │
-│  │  - student.php (Étudiant) │         │  - Api/Student/*          │         │  - Services/Admissions/ (TAFEM)      │  │
-│  │  - shared.php (Commun)    │         │  - Api/Auth/*             │         │  - Services/Documents/ (PDF, SHA256) │  │
-│  │  - auth.php (Sanctum)     │         │  (113 Controllers actifs) │         │  (66 Services Métier Spécialisés)    │  │
-│  └───────────────────────────┘         └─────────────┬─────────────┘         └──────────────────┬───────────────────┘  │
-│                                                      │                                          │                      │
-│                                                      ▼                                          ▼                      │
-│                                        ┌───────────────────────────┐         ┌──────────────────────────────────────┐  │
-│                                        │     POLICIES (RBAC)       │         │           MODELS (ELOQUENT)          │  │
-│                                        │  - GradePolicy (IDOR/BOLA)│ ──────▶ │  - 98 Modèles Typés                  │  │
-│                                        │  - StudentPolicy (Isol.)  │         │  - OptimisticLocking (`version`)     │  │
-│                                        │  - Spatie Permissions     │         │  - UUIDs / Multi-Tenant Scopes       │  │
-│                                        └───────────────────────────┘         └──────────────────┬───────────────────┘  │
-│                                                                                                 │                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────────────────────▼───────────────────┐  │
-│  │                                                VIEWS (TEMPLATES SERVEUR)                                         │  │
-│  │  - 72 Templates Blade : Emails Transactionnels Resend (19 Mailables) + PDFs Officiels Sécurisés (DOMPDF + QR)   │  │
-│  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-👥 Matrice Officielle des Rôles du Système
-Rôle	Périmètre d'Accès	Routes Assignées	Policies Clés
-super-admin	Accès total inter-institutions, gestion des rôles et logs d'audit	routes/api/admin.php	Bypass autorisé
-institution-admin	Gestion intégrale de l'école (étudiants, profs, plannings, délibérations)	routes/api/admin.php	Scope institution_id
-director	Tableau de bord de pilotage, validation finale des PVs et diplômes	routes/api/admin.php	Signature SHA-256
-department-head	Gestion pédagogique du département, affectation des modules	routes/api/admin.php	Scope département
-filiere-head	Délibérations de filière, gestion des semestres S1 à S10	routes/api/admin.php	Scope filière
-professor	Saisie des notes, émargement QR en direct, cours LMS, copilote IA	routes/api/professor.php	GradePolicy@update
-vacataire	Saisie notes des modules assignés, suivi des contrats et paiements	routes/api/professor.php	GradePolicy@update
-student	Consultation notes/absences, réinscription, guichet attestations, carte NFC	routes/api/student.php	StudentPolicy@view
-finance-officer	Gestion des paiements vacataires et budget	routes/api/admin.php	Permissions finance
-hr-officer	Dossiers administratifs enseignants et personnel	routes/api/admin.php	Permissions RH
-library-manager	SIGB / Koha, gestion des emprunts et du fonds documentaire	routes/api/admin.php	Permissions bibliothèque
-discipline-committee	Traitement des incidents d'examen et conseil de discipline	routes/api/admin.php	Permissions discipline
-3. 🛡️ Validation de Sécurité & Non-Régression (137 Suites de Tests — 100% Green)
-Les tests d'intégration et unitaires vérifient automatiquement :
+### 20.1 Pilier 1 : Déploiement & Haute Disponibilité (Production Readiness)
 
-Protection IDOR/BOLA : Un étudiant (student.a) ne peut en aucun cas consulter les notes ou le dossier d'un autre étudiant (student.b) ➔ HTTP 403 Forbidden.
-Verrouillage Optimiste : Conflits d'édition simultanée sur les notes résolus via la colonne version (trait OptimisticLocking).
-Verrouillage des Sessions d'Examens : Impossible de modifier une note sur une session d'examen clôturée (is_locked = true).
-Émargement QR Éphémère : QR codes rotatifs à durée limitée avec signature HMAC anti-fraude.
-Vérification Publique : QR codes universels sur diplômes/attestations avec empreinte SHA-256 immuable.
-bash
-Tests:    137 passed (387 assertions)
-Duration: 184.74s
-Status:   100% GREEN ✅
-4. 🧹 État Zéro Dette & Zéro Fichier Mort (Clean Codebase)
-422 KB de code mort supprimé :
-4 copies de contrôleurs backend éliminées (AdmissionController copy.php, GradeController copy.php, PdfExportController copy.php, StudentAbsenceController.php racine).
-100% des fichiers actifs sont référencés :
-AiChatController.php est désormais branché sur /api/ai/chat pour le widget d'assistance IA.
-Les 98 modèles, 113 contrôleurs, 66 services et 37 modules frontend sont documentés dans le 
+#### A. Préchauffage des Caches Laravel en Production
+Avant de basculer le trafic réel sur le conteneur `encg_backend`, exécutez systématiquement dans le script de déploiement (`deploy.sh`) :
+```bash
+docker exec encg_backend php artisan config:cache
+docker exec encg_backend php artisan route:cache
+docker exec encg_backend php artisan view:cache
+docker exec encg_backend php artisan event:cache
+```
+> **Bénéfice :** Réduit le temps de bootstrap de Laravel de ~80ms à moins de **8ms** par requête.
 
-context.md
- (Section 18).
-Migrations PostgreSQL Intègres :
-Toutes les migrations existantes sont stabilisées et conformes à l'état Ran de la base PostgreSQL 16.
+#### B. Gestion des Files d'Attente Asynchrones via Laravel Horizon
+- Les emails transactionnels Resend (`Mailables`), les scans OCR et les générations de PDF volumineux (PVs de délibération de 500+ pages) doivent impérativement être traités en arrière-plan par le conteneur worker `encg_queue_worker`.
+- Le tableau de bord Horizon est accessible en production via `/horizon` (protégé par le rôle `super-admin`).
+
+---
+
+### 20.2 Pilier 2 : Performance & Scalabilité Base de Données (PostgreSQL 16)
+
+#### A. Index Composites Stratégiques pour les Périodes de Délibération
+Pendant les périodes de clôture et de délibération des notes (semestres S1 à S10), des milliers de requêtes conjointes frappent la table `grades`. Ces index sont recommandés :
+```sql
+-- Accélère le calcul de la moyenne de module par session
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_grades_deliberation_fast 
+ON grades (student_id, module_id, exam_session_id);
+
+-- Accélère les requêtes filtrées par groupe d'étudiants
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_student_registrations_group_year
+ON student_registrations (academic_year_id, group_id, student_id);
+```
+
+#### B. Maintenance Automatique PostgreSQL
+Planifier une tâche cron hebdomadaire sur le serveur hôte :
+```bash
+docker exec encg_postgres vacuumdb -U encg_user -d encg_erp --analyze --verbose
+```
+> **Bénéfice :** Maintient les statistiques de l'optimiseur de requêtes PostgreSQL à jour et libère l'espace disque non utilisé.
+
+---
+
+### 20.3 Pilier 3 : Sécurité & Conformité Réglementaire (Loi 09-08 CNDP & OWASP)
+
+#### A. Rotation & Sauvegarde Automatique des Données (`spatie/laravel-backup`)
+Planifier un backup chiffré quotidien vers MinIO / AWS S3 :
+```bash
+docker exec encg_backend php artisan backup:run --only-db
+```
+
+#### B. Logs d'Audit Immuables
+- Conserver la table `audit_logs` en lecture seule pour les utilisateurs applicatifs.
+- Toute modification d'une note ou de statut d'un étudiant est enregistrée avec : `user_id`, `old_values`, `new_values`, `ip_address`, `user_agent`, `timestamp_ms`.
+
+---
+
+### 20.4 Pilier 4 : Pipeline CI/CD Recommandé (GitHub Actions)
+
+```yaml
+name: 🚀 CI/CD Pipeline ENCG ERP
+on:
+  push:
+    branches: [ main, docker-v2 ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-quality:
+    name: 🐘 PHP 8.4 Tests & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_pgsql, redis, gd
+      - run: composer install --prefer-dist --no-progress
+      - run: php artisan test --parallel
+
+  frontend-quality:
+    name: ⚛️ React 19 Lint & Vitest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend run lint
+      - run: npm --prefix frontend run test -- --run
+      - run: npm --prefix frontend run build
+```
