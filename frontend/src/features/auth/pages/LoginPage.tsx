@@ -67,7 +67,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div dir={isAr ? 'rtl' : 'ltr'} className={cn("space-y-6 font-sans", isAr && "text-right")}>
+    <div data-testid="login-page" dir={isAr ? 'rtl' : 'ltr'} className={cn("space-y-6 font-sans", isAr && "text-right")}>
       {/* Header Title */}
       <div>
         <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2 border border-primary/20">
@@ -198,6 +198,7 @@ export default function LoginPage() {
         {/* Main Submit Button */}
         <Button
           id="login-submit"
+          data-testid="login-submit"
           type="submit"
           isLoading={isSubmitting}
           className="w-full mt-2 py-3 rounded-xl font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-[#E60028] hover:opacity-95 shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer uppercase text-xs tracking-wider"
@@ -244,6 +245,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => setShowCndpModal(true)}
           className="text-primary hover:underline font-bold text-[11px] cursor-pointer"
+          data-testid="cndp-privacy-link"
         >
           {isAr ? 'معلومات حماية البيانات الشخصية' : 'Protection des Données Personnelles'}
         </button>

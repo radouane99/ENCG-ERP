@@ -5,6 +5,7 @@ import { Camera, Save, User as UserIcon, Lock, Mail, Phone, Loader2, Upload, Shi
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
+import { DsarPanel } from '../components/DsarPanel'
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation('common')
@@ -426,6 +427,8 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        <DsarPanel />
 
         {/* Delete Account Card */}
         <div className="bg-white border border-red-100 rounded-[1.5rem] shadow-sm p-8 md:p-12">

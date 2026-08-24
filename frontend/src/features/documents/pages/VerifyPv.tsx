@@ -23,7 +23,7 @@ export default function VerifyPv() {
   }, [moduleId, groupId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6" data-testid="verify-pv-page">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
         {/* Header */}
         <div className="bg-[#0f2863] p-6 text-center">

@@ -24,6 +24,10 @@ class ProcessDataExportRequest implements ShouldQueue
             return;
         }
 
+        if (($request->request_type ?? 'access') !== 'access') {
+            return;
+        }
+
         $request->update(['status' => 'processing']);
 
         $user = $request->user;

@@ -4,7 +4,6 @@ namespace App\Domain\Deliberation\Services;
 
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
-use App\Models\ExamSession;
 use App\Models\ResitEligibility;
 use App\Models\Student;
 use App\Models\Module;
@@ -107,24 +106,60 @@ class DeliberationEngine
 
     private function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
     {
-        return DB::table('grades')
+        $rows = DB::table('grades')
             ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
             ->join('modules', 'assessments.module_id', '=', 'modules.id')
             ->where('grades.student_id', $studentId)
             ->where('modules.semester_number', $semesterNumber)
             ->select(
                 'modules.id as module_id',
-                DB::raw('SUM(grades.value * (assessments.weight / 100.0)) as final_module_score')
+                'assessments.id as assessment_id',
+                'assessments.type as assessment_type',
+                'assessments.weight as weight',
+                'grades.value as value'
             )
-            ->groupBy('modules.id')
             ->get();
+
+        return $rows->groupBy('module_id')->map(function (Collection $moduleRows, $moduleId) use ($includeRattrapage) {
+            $normale = $moduleRows->reject(fn ($row) => $this->isRattrapageType($row->assessment_type));
+            $resitBest = $moduleRows
+                ->filter(fn ($row) => $this->isRattrapageType($row->assessment_type))
+                ->max('value');
+
+            $score = 0.0;
+            foreach ($normale as $row) {
+                $value = (float) ($row->value ?? 0);
+                if ($includeRattrapage && $resitBest !== null && $this->isExamComponentType($row->assessment_type)) {
+                    $value = max($value, (float) $resitBest);
+                }
+                $score += $value * ((float) $row->weight / 100.0);
+            }
+
+            return (object) [
+                'module_id' => $moduleId,
+                'final_module_score' => $score,
+            ];
+        })->values();
+    }
+
+    private function isRattrapageType(?string $type): bool
+    {
+        return in_array(strtolower(trim((string) $type)), ['rattrapage', 'r', 'resit', 'rat'], true);
+    }
+
+    private function isExamComponentType(?string $type): bool
+    {
+        return in_array(strtolower(trim((string) $type)), ['exam', 'examen', 'examen_final', 'final', 'epreuve', 'cc2'], true);
     }
 
     private function grantResitEligibility(int $studentId, Collection $moduleAverages, Deliberation $deliberation): void
     {
-        $session = $deliberation->semester?->examSessions()->where('type', 'normale')->orWhere('type', 'NORMALE')->first()
-            ?? $deliberation->semester?->examSessions()->first()
-            ?? ExamSession::first();
+        $session = $deliberation->semester?->examSessions()
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(type) = ?', ['normale']);
+            })
+            ->first()
+            ?? $deliberation->semester?->examSessions()->first();
 
         $examSessionId = $session?->id;
 

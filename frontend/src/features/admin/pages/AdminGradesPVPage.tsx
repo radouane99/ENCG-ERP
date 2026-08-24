@@ -922,7 +922,7 @@ export default function AdminGradesPVPage() {
 
 
   const renderSelectorBar = () => (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-pv-page">
       {/* Top Deep Navy Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>

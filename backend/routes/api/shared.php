@@ -33,6 +33,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('v1/privacy')->group(function () {
         Route::post('/export', [\App\Http\Controllers\Api\PrivacyController::class, 'requestExport']);
+        Route::post('/rectification', [\App\Http\Controllers\Api\PrivacyController::class, 'requestRectification']);
+        Route::post('/opposition', [\App\Http\Controllers\Api\PrivacyController::class, 'requestOpposition']);
         Route::get('/export', [\App\Http\Controllers\Api\PrivacyController::class, 'myExports']);
         Route::get('/export/{id}/download', [\App\Http\Controllers\Api\PrivacyController::class, 'download']);
     });

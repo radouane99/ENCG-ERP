@@ -18,6 +18,7 @@ class DataAnonymizationService
     {
         return DB::transaction(function () use ($userId) {
             $user = User::findOrFail($userId);
+            $originalEmail = $user->email;
 
             $hash = substr(hash('sha256', uniqid('anon', true)), 0, 10);
 
@@ -33,14 +34,32 @@ class DataAnonymizationService
             if (Schema::hasColumn('users', 'cin')) {
                 $payload['cin'] = null;
             }
+            if (Schema::hasColumn('users', 'cne')) {
+                $payload['cne'] = null;
+            }
             if (Schema::hasColumn('users', 'birth_date')) {
                 $payload['birth_date'] = null;
             }
 
+            $student = Student::where('user_id', $user->id)->first();
+            $originalCne = $student?->cne;
+
             $user->update($payload);
 
-            $student = Student::where('user_id', $user->id)->first();
-            if ($student && Schema::hasTable('applications')) {
+            if ($student) {
+                $studentPayload = [];
+                if (Schema::hasColumn('students', 'cne')) {
+                    $studentPayload['cne'] = null;
+                }
+                if (Schema::hasColumn('students', 'cin')) {
+                    $studentPayload['cin'] = null;
+                }
+                if ($studentPayload !== []) {
+                    $student->update($studentPayload);
+                }
+            }
+
+            if (Schema::hasTable('applications')) {
                 $appUpdate = [];
                 if (Schema::hasColumn('applications', 'cin')) {
                     $appUpdate['cin'] = null;
@@ -63,12 +82,23 @@ class DataAnonymizationService
 
                 if ($appUpdate !== []) {
                     $query = DB::table('applications');
-                    if (Schema::hasColumn('applications', 'student_id')) {
+                    $scoped = false;
+                    if ($student && Schema::hasColumn('applications', 'student_id')) {
                         $query->where('student_id', $student->id);
-                    } elseif (Schema::hasColumn('applications', 'cne') && $student->cne) {
-                        $query->where('cne', $student->cne);
+                        $scoped = true;
+                    } elseif ($originalCne && Schema::hasColumn('applications', 'cne')) {
+                        $query->where('cne', $originalCne);
+                        $scoped = true;
+                    } elseif ($originalEmail && Schema::hasColumn('applications', 'email')) {
+                        $query->where('email', $originalEmail);
+                        $scoped = true;
                     }
-                    $query->update($appUpdate);
+
+                    if ($scoped) {
+                        $query->update($appUpdate);
+                    } else {
+                        Log::warning("Skipped application anonymization for user {$userId}: no safe identity filter.");
+                    }
                 }
             }
 

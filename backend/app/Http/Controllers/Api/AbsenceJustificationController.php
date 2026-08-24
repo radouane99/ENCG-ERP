@@ -18,20 +18,6 @@ class AbsenceJustificationController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']) || $request->user()->can('students.view'), 403);
 
-        if (AbsenceJustification::count() === 0) {
-            $students = \App\Models\Student::take(5)->get();
-            foreach ($students as $idx => $std) {
-                AbsenceJustification::create([
-                    'student_id'    => $std->id,
-                    'reason'        => $idx % 2 === 0 ? 'Certificat Médical' : 'Convocation Officielle',
-                    'description'   => 'Justificatif médical transmis par l\'étudiant pour absence au cours.',
-                    'document_path' => 'documents/justificatifs/certificat_medical_demo.pdf',
-                    'status'        => $idx === 0 ? 'pending' : ($idx === 1 ? 'approved' : 'rejected'),
-                    'created_at'    => now()->subDays($idx + 1),
-                ]);
-            }
-        }
-
         $query = AbsenceJustification::with([
             'student.user',
             'student.registrations.filiere',

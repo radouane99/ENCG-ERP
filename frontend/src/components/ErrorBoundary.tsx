@@ -24,7 +24,9 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ error, errorInfo });
     console.error('ErrorBoundary caught an error', error, errorInfo);
-    // Optional: send to remote logging service here
+    void import('@shared/lib/sentry').then(({ captureException }) => {
+      captureException(error, { componentStack: errorInfo.componentStack ?? '' })
+    })
   }
 
   render() {

@@ -26,6 +26,36 @@ it('queues a DSAR export for the authenticated user', function () {
     expect(DataExportRequest::where('user_id', $user->id)->count())->toBe(1);
 });
 
+it('records a CNDP rectification request without queuing an export', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+
+    actingAs($user, 'sanctum')
+        ->postJson('/api/v1/privacy/rectification', [
+            'payload' => ['phone' => '0612345678'],
+            'notes' => 'Correction du numéro de téléphone',
+        ])
+        ->assertAccepted()
+        ->assertJsonPath('success', true);
+
+    Queue::assertNothingPushed();
+    expect(DataExportRequest::where('user_id', $user->id)->value('request_type'))->toBe('rectification');
+});
+
+it('records a CNDP opposition request without auto-anonymizing', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+
+    actingAs($user, 'sanctum')
+        ->postJson('/api/v1/privacy/opposition', ['notes' => 'Opposition pour motif légitime'])
+        ->assertAccepted();
+
+    Queue::assertNothingPushed();
+    $user->refresh();
+    expect($user->email)->not->toStartWith('anonymized_')
+        ->and(DataExportRequest::where('user_id', $user->id)->value('request_type'))->toBe('opposition');
+});
+
 it('anonymizes inactive accounts past the retention threshold', function () {
     $stale = User::factory()->create([
         'is_active' => false,

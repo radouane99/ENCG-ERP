@@ -41,11 +41,24 @@ class AdminBlockchainController extends Controller
      */
     public function certifyPromo(Request $request): JsonResponse
     {
-        $year = $request->input('year', date('Y'));
+        $year = (int) $request->input('year', date('Y'));
 
-        $students = Student::with('user')
+        $students = Student::with(['user', 'latestPathway.filiere', 'registrations.academicYear'])
             ->whereDoesntHave('blockchainCertificates')
-            ->limit(10)
+            ->where('status', 'graduated')
+            ->where(function ($query) use ($year) {
+                $query->where('student_number', 'like', $year.'%')
+                    ->orWhereHas('registrations', function ($registrations) use ($year) {
+                        $registrations->whereHas('academicYear', function ($academicYear) use ($year) {
+                            $academicYear->where('end_year', $year)->orWhere('start_year', $year);
+                        });
+                    })
+                    ->orWhereHas('pathways', function ($pathways) use ($year) {
+                        $pathways->whereHas('academicYear', function ($academicYear) use ($year) {
+                            $academicYear->where('end_year', $year)->orWhere('start_year', $year);
+                        });
+                    });
+            })
             ->get();
 
         if ($students->isEmpty()) {
@@ -59,9 +72,10 @@ class AdminBlockchainController extends Controller
 
         foreach ($students as $student) {
             $degreeName = 'Diplôme ENCG';
-            if ($student->filiere_id) {
-                $filiere    = Filiere::find($student->filiere_id);
-                $degreeName = $filiere ? 'Diplôme ENCG - ' . $filiere->name : $degreeName;
+            $filiere = $student->latestPathway?->filiere
+                ?? ($student->filiere_id ? Filiere::find($student->filiere_id) : null);
+            if ($filiere) {
+                $degreeName = 'Diplôme ENCG - ' . $filiere->name;
             }
 
             $rawData = $student->id . $degreeName . $year . now()->timestamp;

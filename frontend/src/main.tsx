@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { AxiosError } from 'axios'
+import { initSentry } from './shared/lib/sentry'
 import App from './App'
 import { ThemeProvider } from './shared/components/layout/ThemeProvider'
 // [FE-02] Use the proper standalone ErrorBoundary component
@@ -13,6 +14,7 @@ import './app/i18n'
 
 // Register PWA Service Worker
 import { registerSW } from 'virtual:pwa-register'
+initSentry()
 registerSW({ immediate: true })
 
 // ─────────────────────────────────────────────────────────────────────────────

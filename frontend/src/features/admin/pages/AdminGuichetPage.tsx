@@ -302,7 +302,7 @@ export default function UnifiedGuichetAttestationsPage() {
   }
 
   return (
-    <div className="max-w-[1500px] mx-auto p-3 sm:p-6 md:p-8 space-y-6 sm:space-y-8 font-sans animate-in fade-in pb-24">
+    <div data-testid="admin-guichet-page" className="max-w-[1500px] mx-auto p-3 sm:p-6 md:p-8 space-y-6 sm:space-y-8 font-sans animate-in fade-in pb-24">
 
       {/* ── Deep Navy Hero Banner ── */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">

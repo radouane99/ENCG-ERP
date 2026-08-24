@@ -127,24 +127,10 @@ class AcademicYearController extends Controller
     {
         $years = AcademicYear::orderByDesc('start_year')->get();
 
-        if ($years->isEmpty()) {
-            AcademicYear::create(['institution_id' => 1, 'name' => '2025-2026', 'code' => 'AY2025', 'start_year' => 2025, 'end_year' => 2026, 'is_current' => true, 'is_locked' => false]);
-            AcademicYear::create(['institution_id' => 1, 'name' => '2024-2025', 'code' => 'AY2024', 'start_year' => 2024, 'end_year' => 2025, 'is_current' => false, 'is_locked' => true]);
-            AcademicYear::create(['institution_id' => 1, 'name' => '2023-2024', 'code' => 'AY2023', 'start_year' => 2023, 'end_year' => 2024, 'is_current' => false, 'is_locked' => true]);
-            AcademicYear::create(['institution_id' => 1, 'name' => '2022-2023', 'code' => 'AY2022', 'start_year' => 2022, 'end_year' => 2023, 'is_current' => false, 'is_locked' => true]);
-            $years = AcademicYear::orderByDesc('start_year')->get();
-        }
-
-        $totalStudents = Student::count() ?: 2450;
-
-        $archives = $years->map(function ($y, $index) use ($totalStudents) {
+        $archives = $years->map(function ($y, $index) {
             $pathwayCount = StudentPathway::where('academic_year_id', $y->id)->count();
             $regCount     = \App\Models\StudentRegistration::where('academic_year_id', $y->id)->count();
-            
             $studentCount = max($pathwayCount, $regCount);
-            if ($studentCount === 0) {
-                $studentCount = max(500, $totalStudents - ($index * 80));
-            }
 
             $admittedCount  = (int) round($studentCount * 0.89);
             $repeatedCount  = $studentCount - $admittedCount;

@@ -14,22 +14,17 @@ class PrivacyController extends Controller
 {
     public function requestExport(Request $request): JsonResponse
     {
-        $user = $request->user();
+        return $this->storeDsar($request, 'access');
+    }
 
-        $export = DataExportRequest::create([
-            'institution_id' => $user->institution_id ?? 1,
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'export_format' => $request->input('format', 'json'),
-        ]);
+    public function requestRectification(Request $request): JsonResponse
+    {
+        return $this->storeDsar($request, 'rectification');
+    }
 
-        ProcessDataExportRequest::dispatch($export->id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande d\'accès (DSAR) enregistrée.',
-            'data' => $export,
-        ], 202);
+    public function requestOpposition(Request $request): JsonResponse
+    {
+        return $this->storeDsar($request, 'opposition');
     }
 
     public function myExports(Request $request): JsonResponse
@@ -51,5 +46,42 @@ class PrivacyController extends Controller
         }
 
         return Storage::disk('local')->download($export->file_path, 'encg-dsar-'.$export->id.'.json');
+    }
+
+    private function storeDsar(Request $request, string $type): JsonResponse
+    {
+        $validated = $request->validate([
+            'format' => ['sometimes', 'in:json,pdf'],
+            'payload' => ['sometimes', 'array'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
+        ]);
+
+        $user = $request->user();
+
+        $export = DataExportRequest::create([
+            'institution_id' => $user->institution_id ?? 1,
+            'user_id' => $user->id,
+            'request_type' => $type,
+            'status' => 'pending',
+            'export_format' => $validated['format'] ?? 'json',
+            'payload' => $validated['payload'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        if ($type === 'access') {
+            ProcessDataExportRequest::dispatch($export->id);
+        }
+
+        $messages = [
+            'access' => 'Demande d\'accès (DSAR) enregistrée.',
+            'rectification' => 'Demande de rectification (CNDP art. 8) enregistrée.',
+            'opposition' => 'Demande d\'opposition (CNDP art. 9) enregistrée. Les dossiers académiques restent conservés jusqu\'à instruction de la scolarité.',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => $messages[$type],
+            'data' => $export,
+        ], 202);
     }
 }

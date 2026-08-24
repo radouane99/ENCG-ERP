@@ -15,6 +15,7 @@ class DataExportRequest extends Model
     {
         return [
             'processed_at' => 'datetime',
+            'payload' => 'array',
         ];
     }
 

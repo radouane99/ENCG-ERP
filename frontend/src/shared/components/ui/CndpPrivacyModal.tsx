@@ -39,7 +39,7 @@ export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyMo
         onClick={onClose}
       />
       <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-scale-in" data-testid="cndp-privacy-modal">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-black text-foreground">
               {isAr ? 'حماية المعطيات ذات الطابع الشخصي (القانون 09-08)' : 'Protection des Données Personnelles — Loi 09-08'}

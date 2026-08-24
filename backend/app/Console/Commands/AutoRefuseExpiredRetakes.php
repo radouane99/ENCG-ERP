@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Models\Institution;
 use App\Models\ResitEligibility;
 use App\Mail\RattrapageDecisionMail;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -21,23 +23,22 @@ class AutoRefuseExpiredRetakes extends Command
 
     public function handle(): int
     {
-        // Read deadline from institution settings (key: retake_justification_deadline)
-        $deadline = \App\Models\InstitutionSetting::where('key', 'retake_justification_deadline')->value('value');
+        $deadline = $this->resolveJustificationDeadline();
 
         if (!$deadline) {
             $this->warn('No retake justification deadline configured. Set it in institution settings.');
             return self::SUCCESS;
         }
 
-        $deadlineDate = \Carbon\Carbon::parse($deadline)->endOfDay();
+        $deadlineDate = Carbon::parse($deadline)->endOfDay();
 
         if (now()->lessThanOrEqualTo($deadlineDate)) {
             $this->info("Deadline not yet reached ({$deadline}). No action taken.");
             return self::SUCCESS;
         }
 
-        // Get all pending eligibilities
         $pending = ResitEligibility::where('status', 'En attente')
+            ->where('created_at', '<=', $deadlineDate)
             ->with(['student.user', 'module.filiere'])
             ->get();
 
@@ -74,5 +75,34 @@ class AutoRefuseExpiredRetakes extends Command
 
         $this->info("{$count} dossier(s) en attente refusés automatiquement (délai expiré le {$deadline}).");
         return self::SUCCESS;
+    }
+
+    private function resolveJustificationDeadline(): ?string
+    {
+        if (class_exists(\App\Models\InstitutionSetting::class)) {
+            $value = \App\Models\InstitutionSetting::query()
+                ->where('key', 'retake_justification_deadline')
+                ->value('value');
+            if (filled($value)) {
+                return (string) $value;
+            }
+        }
+
+        foreach (Institution::query()->get() as $institution) {
+            $settings = $institution->settings ?? [];
+            if (is_string($settings)) {
+                $settings = json_decode($settings, true) ?: [];
+            }
+            if (! is_array($settings)) {
+                continue;
+            }
+
+            $value = $settings['retake_justification_deadline'] ?? $settings['retake_justification_deadline'] ?? null;
+            if (filled($value)) {
+                return (string) $value;
+            }
+        }
+
+        return null;
     }
 }

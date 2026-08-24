@@ -1,10 +1,10 @@
 # CONTEXTE TECHNIQUE ET FONCTIONNEL MONUMENTAL ET ABSOLU — ENCG ERP V1
 
-> **Document de Référence Majeur & Manuel de Conception Consolidé (28 Visual Workflows & 24 E2E Scenarios Verified)**  
+> **Document de Référence Majeur & Manuel de Conception Consolidé (28 Visual Workflows ; 8 parcours Playwright + suites Pest/Vitest)**  
 > **Établissement :** École Nationale de Commerce et de Gestion (ENCG Fès)  
 > **Conformité :** Système LMD Marocain (Semestres S1 à S10), Normes APOGEE Ministérielles & **Loi 09-08 CNDP Maroc**  
 > **Architecture :** Découplée Professionnelle (Backend Laravel REST API ⟷ Frontend React SPA)  
-> **Version :** 1.0.0 — Laravel 12 / React 19 (scan 2026-08-24 : sécurité P0 corrigée ; les 24 scénarios E2E restent documentaires)
+> **Version :** 1.0.0 — Laravel 12 / React 19 (scan 2026-08-24 : P0 sécurité ; P2 Playwright, Sentry, DSAR CNDP)
 
 ---
 
@@ -16,7 +16,7 @@ L'application repose sur un **découplage architectural strict et professionnel*
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 NAVIGATEUR / CLIENT WEB                                │
-│                     Single Page Application (React 18 / TypeScript / Vite)              │
+│                     Single Page Application (React 19 / TypeScript / Vite)              │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
                                             │
                                             ▼ (Requêtes Asynchrones HTTP REST / JSON)
@@ -29,7 +29,7 @@ L'application repose sur un **découplage architectural strict et professionnel*
                     │                                               │
                     ▼ (/api/*)                                      ▼ (WebSockets ws://)
 ┌───────────────────────────────────────┐               ┌───────────────────────────────────────┐
-│ LARAVEL 13 RESTFUL API BACKEND        │               │ LARAVEL REVERB WEBSOCKET SERVER       │
+│ LARAVEL 12 RESTFUL API BACKEND        │               │ LARAVEL REVERB WEBSOCKET SERVER       │
 │ (encg_backend - PHP 8.4 FPM)          │               │ (encg_reverb - Port 8080)             │
 │ Sanctum Bearer Token Auth             │               │ Communication Temps Réel              │
 └───────────────────┬───────────────────┘               └───────────────────┬───────────────────┘
@@ -45,7 +45,7 @@ L'application repose sur un **découplage architectural strict et professionnel*
 
 #### Principes Clés du Découplage :
 - **Backend Pure REST API (`backend/`) :** Développé avec Laravel 12 / PHP 8.4-FPM. Il expose des endpoints RESTful stricts retournant exclusivement des réponses structurées en JSON. L'authentification est gérée via des tokens Bearer Laravel Sanctum (`Authorization: Bearer <sanctum_token>`).
-- **Frontend SPA Indépendant (`frontend/`) :** Application Web monopage (SPA) construite avec React 18, TypeScript et Vite. Le frontend est totalement indépendant du backend et consomme les API REST de manière asynchrone (Axios / Fetch API).
+- **Frontend SPA Indépendant (`frontend/`) :** Application Web monopage (SPA) construite avec React 19, TypeScript et Vite. Le frontend est totalement indépendant du backend et consomme les API REST de manière asynchrone (Axios / Fetch API).
 - **Communication Temps Réel bi-directionnelle :** Laravel Reverb sur le port 8080 gère les événements WebSockets pour la mise à jour instantanée du tableau de bord (émargement QR scan en direct, notifications push).
 - **Nginx Reverse Proxy Entrypoint (`encg_nginx`) :** Redirige de façon transparente le trafic HTTP `/api/*` vers le conteneur backend PHP-FPM et sert l'application React SPA frontend.
 
@@ -58,7 +58,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 | :--- | :--- | :--- | :--- |
 | **`encg_nginx`** | Reverse Proxy Web & Router | `nginx:alpine` | `80:80` |
 | **`encg_backend`** | Core API RESTful Backend | `PHP 8.4-FPM Alpine` (Laravel 12) | Interne |
-| **`encg_frontend`** | Interface SPA Client React | `node:22-alpine` (React 18 / Vite) | `5173:5173` |
+| **`encg_frontend`** | Interface SPA Client React | `node:22-alpine` (React 19 / Vite) | `5173:5173` |
 | **`encg_reverb`** | Serveur WebSockets Temps Réel | Laravel Reverb (`reverb:start`) | `8080:8080` |
 | **`encg_queue_worker`** | Worker Asynchrone Queues | Laravel Horizon (`horizon`) | Interne |
 | **`encg_postgres`** | Base de Données Relationnelle | `postgres:16-alpine` | `5432:5432` |
@@ -79,7 +79,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 ---
 
 ### 1.4 Matrice des Variables d'Environnement Critiques (`.env`)
-- **Base de Données :** `DB_CONNECTION=postgres` (ou `mysql`), `DB_HOST=encg_postgres`, `DB_PORT=5432`, `DB_DATABASE=encg_erp`.
+- **Base de Données :** `DB_CONNECTION=pgsql`, `DB_HOST=postgres` (hôte Docker ; le conteneur s'appelle `encg_postgres`), `DB_PORT=5432`, `DB_DATABASE=encg_erp`.
 - **Cache & Queues :** `CACHE_DRIVER=redis`, `QUEUE_CONNECTION=redis`, `REDIS_HOST=encg_redis`, `REDIS_PORT=6379`.
 - **Emailing (Resend Transport) :**
   - `MAIL_MAILER=resend`
@@ -90,6 +90,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 - **Google SSO OAuth 2.0 :** `GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com`, `GOOGLE_CLIENT_SECRET=xxxxxxx`, `GOOGLE_REDIRECT_URI=http://localhost/api/v1/auth/google/callback`.
 - **Moteur IA Gemini :** `GEMINI_API_KEY=AIzaSy...`, `GEMINI_MODEL=gemini-1.5-flash`.
 - **Serveur WebSockets Reverb :** `REVERB_APP_ID=xxx`, `REVERB_APP_KEY=xxx`, `REVERB_APP_SECRET=xxx`, `REVERB_HOST=encg_reverb`, `REVERB_PORT=8080`.
+- **Observabilité :** `SENTRY_LARAVEL_DSN` (API) et `VITE_SENTRY_DSN` (SPA). Laisser vide en local ; renseigner en production uniquement.
 
 ---
 
@@ -106,8 +107,8 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 ### 2.2 Conformité Légale CNDP — Protection des Données Personnelles (Loi N° 09-08 Maroc)
 L'ERP applique rigoureusement les normes de la **Commission Nationale de contrôle de la protection des Données à caractère Personnel (CNDP)** conformément à la Loi marocaine N° 09-08 :
 1. 📝 **Consentement Éclairé Préalable :** Case à cocher obligatoire d'acceptation de traitement des données lors de la pré-inscription TAFEM, des demandes de documents et de la création de compte.
-2. 👁️ **Droit d'Accès et de Rectification (Articles 7, 8, 9) :** Chaque utilisateur (étudiant, professeur) peut consulter l'intégralité de son Dossier 360° et soumettre une demande de rectification de ses données biographiques.
-3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), anonymisation des justificatifs médicaux sous 48h et stockage sécurisé des copies scannées sur MinIO S3 avec contrôle d'accès restreint (`documents.serve`).
+2. 👁️ **Droit d'Accès, de Rectification et d'Opposition (Articles 7, 8, 9) :** Endpoints authentifiés `POST /api/v1/privacy/export` (accès / DSAR), `POST /api/v1/privacy/rectification`, `POST /api/v1/privacy/opposition`. L'export JSON est asynchrone ; la rectification et l'opposition sont enregistrées pour instruction de la scolarité (pas d'anonymisation automatique des dossiers académiques).
+3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), commande `cndp:enforce-retention` pour les comptes inactifs, stockage MinIO S3 avec contrôle d'accès restreint (`documents.serve`).
 4. 📜 **Registre des Traitements Académiques :** Journalisation d'audit complète (`ValidationAudit`, `GradeAudit`) des modifications apportées aux données personnelles et académiques.
 
 ---
@@ -1234,14 +1235,16 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 | **Backend Testing Framework** | **Pest PHP / PHPUnit** | `v3.x / v11.x` | Moteur d'exécution des tests unitaires et fonctionnels backend. |
 | **Environnement PHP** | **PHP CLI (Alpine)** | `8.4.x` | Extensions `pdo_pgsql`, `redis`, `gd`, `intl`, `pcntl`, `opcache`. |
 | **Base de Données de Test** | **PostgreSQL** | `16-alpine` | Base relationnelle avec transactions isolées (`RefreshDatabase`). |
-| **Frontend Unit & Component Testing** | **Vitest** | `v3.2.6` | Tests unitaires ultra-rapides du frontend (LMD calculations, Zustand). |
-| **Frontend Linter & Static Analysis** | **Oxlint & ESLint** | Latest | Analyse statique haute performance avec **0 erreurs** requises. |
+| **Frontend Unit & Component Testing** | **Vitest** | `v3.x` | Tests unitaires du frontend (LMD, Zustand, pages publiques). |
+| **Parcours critiques E2E** | **Playwright** | `v1.x` | 8 parcours : login, notes, PV public, guichet étudiant, inscription TAFEM, TAFEM admin, PV admin, guichet admin. |
+| **Observabilité** | **Sentry** | DSN optionnel | Capture des exceptions SPA (`VITE_SENTRY_DSN`) et API (`SENTRY_LARAVEL_DSN`). |
+| **Frontend Linter & Static Analysis** | **Oxlint** | Latest | Analyse statique haute performance. |
 | **Vérification de Build** | **Vite Bundler** | `v6.x` | Validation du bundle de production PWA optimisé. |
 | **Pipeline d'Intégration Continue (CI)** | **GitHub Actions** | Workflows YAML | Déclenchement automatique et exclusif sur la branche **`docker-v2`**. |
 
 ---
 
-### 17.3 Couverture Exhaustive des Suites de Tests Backend (137 Test Suites — 387 Assertions — 100% Green ✅)
+### 17.3 Couverture des Suites de Tests Backend (Pest / PHPUnit — à relire après chaque CI)
 
 1. **`CybersecurityAndOwaspProtectionTest.php` (Sécurité Applicative & OWASP Top 10) :** Immunité aux injections SQL (`' OR 1=1`), nettoyage XSS (`XssSanitizer`), protection contre le BOLA/IDOR (isolation des dossiers étudiants), blocage de l'élévation de privilèges (Mass Assignment), et résistance aux attaques par force brute.
 2. **`ComprehensivePdfGenerationAndSecurityTest.php` (Génération & Sécurité des PDFs) :** Validation des en-têtes et du flux binaire (`Content-Type: application/pdf`), génération des attestations, diplômes officiels et emplois du temps avec rejet des accès non authentifiés (401).
@@ -1280,12 +1283,13 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 
 ---
 
-### 17.4 Suites de Tests Frontend (17 Tests — 10 Fichiers — 100% Green ✅)
+### 17.4 Suites de Tests Frontend (Vitest) et 8 parcours Playwright
 
 1. **`gradeCalculation.test.ts` :** Validation unitaire des formules de calcul de moyennes LMD ENCG (Rattrapage, note éliminatoire $< 7/20$, rachat $[9.5, 10.0[$).
 2. **`useAuthStore.test.ts` :** Validation du store Zustand pour le contrôle d'accès RBAC (Admin, Enseignant, Étudiant) et la gestion des sessions.
 3. **`PasswordAuthRoutes.test.tsx` :** Tests d'intégration des routes d'authentification et de réinitialisation de mot de passe.
 4. **Composants d'Expérience Utilisateur :** `RoleJourneySection.test.tsx`, `TestimonialsSection.test.tsx`, `MvpRoadmapSection.test.tsx`, `BenefitsSection.test.tsx`, `ImpactSection.test.tsx`, `FaqSection.test.tsx`, `ConversionSection.test.tsx`.
+5. **Playwright (`e2e/critical-journeys.spec.ts`) :** 8 parcours critiques (login, notes, PV public, guichet étudiant, inscription TAFEM, TAFEM admin, PV admin, guichet admin) avec interception API.
 
 ---
 
@@ -1985,7 +1989,7 @@ sequenceDiagram
 1. **Optimistic Locking Obligatoire :** Toute modification concurrente sur le modèle `Grade` utilise la colonne `version`. Si un conflit d'édition survient entre deux enseignants, le système lève une exception `ConcurrencyException` (409 Conflict) au lieu d'écraser silencieusement la note.
 2. **Filtrage par `group_id` :** Les requêtes de notes ou d'étudiants filtrent systématiquement par `group_id` lorsqu'il est fourni (règle stricte anti-surcharge mémoire).
 3. **Transport Email Resend :** Jamais de `Mail::raw()`. Tous les emails transactionnels utilisent les 19 classes `Mailable` typées avec templates Blade inline.
-4. **Zéro Dette Technique :** Aucune duplication de contrôleur ou de migration orpheline. L'intégralité du code exécutable est couvert par **137 suites de tests automatisées (387 assertions, 100% Green)**.
+4. **Qualité continue :** Les suites Pest (backend), Vitest (frontend) et Playwright (8 parcours critiques) s'exécutent sur la branche `docker-v2` via GitHub Actions. Les scénarios métier documentés dans ce fichier restent un référentiel fonctionnel ; ils ne remplacent pas les tests automatisés.
 
 ---
 

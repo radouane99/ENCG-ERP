@@ -34,7 +34,7 @@ export default function StudentGrades() {
   const overallAvg = data.overall_average || 0; // or calculate if needed
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div data-testid="student-grades-page" className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header Banner */}
       <div className="bg-[#0f766e] rounded-[2rem] p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-lg border border-teal-600/50">

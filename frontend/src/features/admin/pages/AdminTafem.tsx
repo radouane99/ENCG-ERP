@@ -153,7 +153,7 @@ export default function AdminTafem() {
   ];
 
   return (
-    <div className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
+    <div data-testid="admin-tafem-page" className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
       
       {/* Hero Header Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">

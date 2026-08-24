@@ -47,8 +47,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       console.groupEnd();
     }
 
-    // TODO: Replace with a real error monitoring service (e.g., Sentry)
-    // captureException(error, { extra: errorInfo });
+    void import('@shared/lib/sentry').then(({ captureException }) => {
+      captureException(error, { componentStack: errorInfo.componentStack ?? '' })
+    })
   }
 
   private handleReload = (): void => {

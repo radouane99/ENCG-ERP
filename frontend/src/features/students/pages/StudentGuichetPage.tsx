@@ -120,7 +120,7 @@ export default function StudentGuichetPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div data-testid="student-guichet-page" className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
 
       {/* ── Deep Navy Hero Banner ── */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">

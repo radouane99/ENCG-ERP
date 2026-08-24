@@ -1582,7 +1582,7 @@ export default function InscriptionPage({
   const pct = ((step - 1) / 4) * 100;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen transition-colors duration-500 selection:bg-[#0f2863]/40 text-slate-900 dark:text-white bg-slate-50 dark:bg-[#030711]", t.font)}>
+    <div data-testid="tafem-inscription-page" dir={isRTL ? 'rtl' : 'ltr'} className={cn("min-h-screen transition-colors duration-500 selection:bg-[#0f2863]/40 text-slate-900 dark:text-white bg-slate-50 dark:bg-[#030711]", t.font)}>
 
       {/* ── Ambient background ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">

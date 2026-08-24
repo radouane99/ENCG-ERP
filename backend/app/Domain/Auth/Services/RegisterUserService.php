@@ -10,8 +10,11 @@ use App\Models\Institution;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
 use App\Models\Application;
+use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class RegisterUserService
 {
@@ -29,58 +32,46 @@ class RegisterUserService
             $user = null;
             if ($emailClean !== '') {
                 $user = User::where('email', $emailClean)->first();
-                if ($user) {
-                    // Vérifier si cet email appartient à un autre candidat (CNE/CIN différent)
-                    $userCne = strtoupper(trim($user->cne ?? ''));
-                    $userCin = strtoupper(trim($user->cin ?? ''));
-                    $isSameCandidate = false;
-
-                    if ($cneClean && $userCne === $cneClean) $isSameCandidate = true;
-                    if ($cinClean && $userCin === $cinClean) $isSameCandidate = true;
-
-                    // Si le CNE/CIN ne correspond pas du tout, refuser la réutilisation du même email
-                    if (!$isSameCandidate && $cneClean !== '') {
-                        $studentByCne = \App\Models\Student::where('cne', $cneClean)->first();
-                        if ($studentByCne && $studentByCne->user_id === $user->id) {
-                            $isSameCandidate = true;
-                        }
-                    }
-
-                    if (!$isSameCandidate && ($userCne !== '' || $userCin !== '')) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'email' => ['Cette adresse email est déjà utilisée par un autre candidat. Veuillez utiliser une adresse email unique.'],
-                        ]);
-                    }
+                if ($user && ! $this->isSameCandidate($user, $cneClean, $cinClean)) {
+                    throw ValidationException::withMessages([
+                        'email' => ['Cette adresse email est déjà utilisée par un autre compte. Veuillez utiliser une adresse email unique.'],
+                    ]);
                 }
             }
 
-            if (!$user && ($cneClean !== '' || $cinClean !== '')) {
-                $existingApp = Application::where(function($q) use ($cneClean, $cinClean) {
-                    if ($cneClean) $q->where('cne', $cneClean);
-                    if ($cinClean) $q->orWhere('cin', $cinClean);
-                })->first();
+            $existingApp = $this->findApplicationForCandidate($cneClean, $cinClean);
 
-                if ($existingApp && !empty($existingApp->email)) {
-                    $user = User::where('email', strtolower($existingApp->email))->first();
+            if (! $user && $existingApp && ! empty($existingApp->email)) {
+                $user = User::where('email', strtolower($existingApp->email))->first();
+                if ($user && ! $this->isSameCandidate($user, $cneClean, $cinClean)) {
+                    throw ValidationException::withMessages([
+                        'email' => ['Cette adresse email est déjà utilisée par un autre compte. Veuillez utiliser une adresse email unique.'],
+                    ]);
                 }
+            }
+
+            $userAttributes = [
+                'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                'email' => $emailClean ?: ($user->email ?? ('candidat_' . strtolower($cneClean ?: uniqid()) . '@encg-fes.ma')),
+                'phone' => $data['phone'] ?? $user?->phone,
+                'is_active' => true,
+            ];
+            if (Schema::hasColumn('users', 'cin') && $cinClean !== '') {
+                $userAttributes['cin'] = $cinClean;
+            }
+            if (Schema::hasColumn('users', 'cne') && $cneClean !== '') {
+                $userAttributes['cne'] = $cneClean;
             }
 
             if ($user) {
-                $user->update([
-                    'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
-                    'email' => $emailClean ?: $user->email,
-                    'password' => !empty($data['password']) ? Hash::make($data['password']) : $user->password,
-                    'phone' => $data['phone'] ?? $user->phone,
-                    'is_active' => true,
-                ]);
+                if (! empty($data['password'])) {
+                    $userAttributes['password'] = Hash::make($data['password']);
+                }
+                $user->update($userAttributes);
             } else {
-                $user = User::create([
-                    'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
-                    'email' => $emailClean ?: ('candidat_' . strtolower($cneClean ?: uniqid()) . '@encg-fes.ma'),
-                    'password' => $data['password'] ?? throw new \InvalidArgumentException('Password required'),
-                    'phone' => $data['phone'] ?? null,
-                    'is_active' => true,
-                ]);
+                $plainPassword = $data['password'] ?? throw new \InvalidArgumentException('Password required');
+                $userAttributes['password'] = Hash::make($plainPassword);
+                $user = User::create($userAttributes);
             }
 
             // 2. Find an active Admission Campaign or create a default one
@@ -107,10 +98,7 @@ class RegisterUserService
             }
 
             // 3. Create or Update Application Record (Confirm Enrollment Intention)
-            $app = Application::where(function($q) use ($cneClean, $cinClean) {
-                if ($cneClean) $q->where('cne', $cneClean);
-                if ($cinClean) $q->orWhere('cin', $cinClean);
-            })->first();
+            $app = $existingApp ?? $this->findApplicationForCandidate($cneClean, $cinClean);
 
             $appFields = [
                 'admission_campaign_id' => $campaign ? $campaign->id : 1,
@@ -169,5 +157,79 @@ class RegisterUserService
 
             return $user;
         });
+    }
+
+    private function isSameCandidate(User $user, string $cneClean, string $cinClean): bool
+    {
+        if ($this->isPrivilegedAccount($user)) {
+            return false;
+        }
+
+        $userCne = strtoupper(trim((string) ($user->cne ?? '')));
+        $userCin = strtoupper(trim((string) ($user->cin ?? '')));
+
+        if ($cneClean !== '' && $userCne !== '' && $userCne === $cneClean) {
+            return true;
+        }
+        if ($cinClean !== '' && $userCin !== '' && $userCin === $cinClean) {
+            return true;
+        }
+
+        if ($cneClean !== '') {
+            $studentByCne = Student::where('cne', $cneClean)->first();
+            if ($studentByCne && (int) $studentByCne->user_id === (int) $user->id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isPrivilegedAccount(User $user): bool
+    {
+        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole([
+            'super-admin', 'institution-admin', 'admin', 'director', 'professor', 'staff',
+        ])) {
+            return true;
+        }
+
+        return $user->professor()->exists();
+    }
+
+    private function findApplicationForCandidate(string $cneClean, string $cinClean): ?Application
+    {
+        if ($cneClean === '' && $cinClean === '') {
+            return null;
+        }
+
+        if ($cneClean !== '') {
+            $byCne = Application::where('cne', $cneClean)->first();
+            if ($byCne) {
+                $appCin = strtoupper(trim((string) ($byCne->cin ?? '')));
+                if ($cinClean !== '' && $appCin !== '' && $appCin !== $cinClean) {
+                    throw ValidationException::withMessages([
+                        'cin' => ['Ce CNE est déjà associé à une autre CIN.'],
+                    ]);
+                }
+
+                return $byCne;
+            }
+        }
+
+        if ($cinClean !== '') {
+            $byCin = Application::where('cin', $cinClean)->first();
+            if ($byCin) {
+                $appCne = strtoupper(trim((string) ($byCin->cne ?? '')));
+                if ($cneClean !== '' && $appCne !== '' && $appCne !== $cneClean) {
+                    throw ValidationException::withMessages([
+                        'cne' => ['Cette CIN est déjà associée à un autre CNE.'],
+                    ]);
+                }
+
+                return $byCin;
+            }
+        }
+
+        return null;
     }
 }
