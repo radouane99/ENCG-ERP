@@ -114,4 +114,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Public PDF streaming for Disciplinary Council
     Route::get('/incidents/{id}/convocation-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'convocationDisciplinePdf']);
     Route::get('/incidents/{id}/decision-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'decisionDisciplinePdf']);
+    // AI Chatbot Assistant (Accessible to all authenticated users)
+    Route::post('/ai/chat', [\App\Http\Controllers\Api\AiChatController::class, 'chat']);
 });
