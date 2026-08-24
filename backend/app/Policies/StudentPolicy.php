@@ -2,17 +2,20 @@
 
 namespace App\Policies;
 
+use App\Support\ChecksStaffAccess;
 use App\Models\User;
 use App\Models\Student;
 
 class StudentPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    use ChecksStaffAccess;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('students.view');
+        return $this->hasPermissionOrRole($user, 'students.view', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'hr-officer',
+        ]);
     }
 
     /**
@@ -30,7 +33,10 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('students.view');
+        return $this->hasPermissionOrRole($user, 'students.view', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'hr-officer',
+        ]);
     }
 
     /**
@@ -38,7 +44,9 @@ class StudentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('students.create');
+        return $this->hasPermissionOrRole($user, 'students.create', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+        ]);
     }
 
     /**
@@ -50,7 +58,9 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('students.edit');
+        return $this->hasPermissionOrRole($user, 'students.edit', [
+            'admin', 'super-admin', 'institution-admin', 'director', 'hr-officer',
+        ]);
     }
 
     /**
@@ -62,6 +72,8 @@ class StudentPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('students.delete');
+        return $this->hasPermissionOrRole($user, 'students.delete', [
+            'admin', 'super-admin', 'institution-admin',
+        ]);
     }
 }

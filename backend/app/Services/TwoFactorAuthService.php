@@ -22,11 +22,11 @@ class TwoFactorAuthService
         $secret        = $this->google2fa->generateSecretKey();
         $recoveryCodes = $this->generateRecoveryCodes();
 
-        $user->update([
+        $user->forceFill([
             'two_factor_secret'          => encrypt($secret),
             'two_factor_recovery_codes'  => encrypt(json_encode($recoveryCodes)),
             'two_factor_confirmed_at'    => null,
-        ]);
+        ])->save();
 
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
             config('app.name', 'ENCG ERP'),
@@ -90,12 +90,12 @@ class TwoFactorAuthService
      */
     public function disable(User $user): void
     {
-        $user->update([
+        $user->forceFill([
             'two_factor_enabled'         => false,
             'two_factor_secret'          => null,
             'two_factor_recovery_codes'  => null,
             'two_factor_confirmed_at'    => null,
-        ]);
+        ])->save();
     }
 
     /**

@@ -1,0 +1,14 @@
+{
+  "title": "Emploi du temps",
+  "week_of": "Semaine du",
+  "add_session": "Ajouter séance",
+  "filters": {
+    "group": "Filière / Groupe",
+    "professor": "Professeur",
+    "room": "Salle",
+    "search": "Rechercher..."
+  },
+  "grid": {
+    "hour": "Heure"
+  }
+}

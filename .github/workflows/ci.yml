@@ -90,7 +90,7 @@ jobs:
           DB_PASSWORD: encg_password
 
   frontend-quality:
-    name: ⚛️ Frontend Lint, Tests & Production Build (Node 20)
+    name: ⚛️ Frontend Lint, Tests & Production Build (Node 22)
     runs-on: ubuntu-latest
 
     defaults:
@@ -104,7 +104,7 @@ jobs:
       - name: 🟢 Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
@@ -123,6 +123,54 @@ jobs:
 
       - name: 🚀 Verify Production Vite Build
         run: npm run build
+
+  security-regression:
+    name: 🔐 Security regression (P0 routes)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: encg_erp_test
+          POSTGRES_USER: encg_user
+          POSTGRES_PASSWORD: encg_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl
+          coverage: none
+      - run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
+      - run: |
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+      - run: php artisan migrate --force --env=testing
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: encg_erp_test
+          DB_USERNAME: encg_user
+          DB_PASSWORD: encg_password
+      - run: php artisan test --env=testing --filter=SensitiveRoutesRequireAuthenticationTest
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: encg_erp_test
+          DB_USERNAME: encg_user
+          DB_PASSWORD: encg_password
 
   code-quality-and-security:
     name: 🔒 Code Quality & Security Audit

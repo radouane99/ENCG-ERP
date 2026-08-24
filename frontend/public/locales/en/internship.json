@@ -1,0 +1,25 @@
+{
+  "apply": {
+    "title": "Nouvelle Demande de Stage",
+    "subtitle": "Remplissez le formulaire ci-dessous pour soumettre votre demande",
+    "form_title": "Informations du stage",
+    "subject": "Sujet / Titre du stage",
+    "subject_placeholder": "Ex: Développement d'une application de gestion...",
+    "company": "Entreprise",
+    "company_placeholder": "Nom de l'entreprise d'accueil",
+    "company_address": "Adresse de l'entreprise (Optionnel)",
+    "company_address_placeholder": "Ex: Technopark, Casablanca",
+    "type": "Type de stage",
+    "type_initiation": "Stage d'initiation",
+    "type_application": "Stage d'application",
+    "type_fin_etudes": "Projet de Fin d'Études (PFE)",
+    "start_date": "Date de début",
+    "end_date": "Date de fin",
+    "cancel": "Annuler",
+    "submit": "Soumettre la demande",
+    "submitting": "Soumission en cours...",
+    "success": "Votre demande de stage a été soumise avec succès",
+    "error_validation": "Veuillez vérifier les champs du formulaire.",
+    "error_general": "Erreur lors de la soumission de la demande"
+  }
+}

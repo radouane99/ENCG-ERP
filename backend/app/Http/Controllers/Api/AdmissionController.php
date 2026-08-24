@@ -9,6 +9,7 @@ use App\Models\Institution;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\User;
+use App\Http\Requests\StoreApplicationRequest;
 use App\Services\Academic\AdmissionService;
 use App\Services\AI\GeminiApiService;
 use Illuminate\Database\Schema\Blueprint;
@@ -50,9 +51,9 @@ class AdmissionController extends Controller
     /**
      * Créer une nouvelle candidature.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreApplicationRequest $request): JsonResponse
     {
-        $data = $request->all();
+        $data = $request->validated();
         $cneClean = strtoupper(trim($data['cne'] ?? ''));
         $cinClean = strtoupper(trim($data['cin'] ?? ''));
         $refNumber = 'TAFEM-' . date('Y') . '-' . strtoupper(substr(md5(($cneClean ?: uniqid()) . microtime()), 0, 6));
@@ -85,7 +86,8 @@ class AdmissionController extends Controller
                     'first_name'     => $data['first_name'] ?? '',
                     'last_name'      => $data['last_name'] ?? '',
                     'cin'            => $cinClean,
-                    'password'       => Hash::make('encg2026'),
+                    'password'       => \App\Support\TemporaryPassword::hash(),
+                    'must_change_password' => true,
                     'institution_id' => $institutionId,
                     'is_active'      => true,
                 ]
@@ -273,7 +275,8 @@ class AdmissionController extends Controller
             $user = User::create([
                 'name'     => $validated['name'],
                 'email'    => $validated['email'],
-                'password' => Hash::make('encg2026'),
+                'password' => \App\Support\TemporaryPassword::hash(),
+                'must_change_password' => true,
             ]);
 
             $student = Student::create([

@@ -1,10 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { AttendanceRecord, AbsenceJustification } from '../model/types';
-
-const api = axios.create({
-  baseURL: '/api',
-});
+import api from '@shared/lib/api';
 
 // Keys
 export const absencesKeys = {

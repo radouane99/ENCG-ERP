@@ -1,0 +1,216 @@
+{
+  "internships": {
+    "title": "Gestion des Stages",
+    "subtitle": "Suivi des conventions, affectations et évaluations de stages.",
+    "new_btn": "Nouvelle Convention",
+    "table": {
+      "student": "Étudiant",
+      "company": "Entreprise",
+      "type": "Type de stage",
+      "status": "Statut",
+      "actions": "Actions",
+      "details": "Détails"
+    },
+    "status": {
+      "approved": "Convention signée",
+      "active": "En cours",
+      "pending": "En attente"
+    }
+  },
+  "vacataires": {
+    "title": "Gestion des Vacataires",
+    "subtitle": "Contrats, suivi des heures et génération des bordereaux de paiement.",
+    "tabs": {
+      "contracts": "Contrats Actifs",
+      "payments": "Bordereaux de Paiement"
+    },
+    "search": "Chercher un contrat...",
+    "new_btn": "Nouveau Contrat",
+    "card": {
+      "active": "Actif",
+      "hours": "Volume Horaire:",
+      "rate": "Taux Horaire:",
+      "btn_hours": "Voir Heures",
+      "btn_pay": "Générer Paie"
+    },
+    "payments_empty": {
+      "title": "Bordereaux Mensuels",
+      "desc": "Les fiches de paiement générées avec calcul automatique du Net à Payer (Heures validées × Taux horaire - 17% IR) apparaîtront ici."
+    },
+    "messages": {
+      "success": "Fiche de paiement générée avec succès.",
+      "error": "Erreur lors de la génération du paiement. Vérifiez qu'il y a des sessions validées."
+    }
+  },
+  "clubs": {
+    "title": "Vie Estudiantine & Clubs",
+    "subtitle": "Gérez les clubs, bureaux et associations d'étudiants."
+  },
+  "final_projects": {
+    "title": "Projets de Fin d'Études (PFE/PFA)",
+    "subtitle": "Gérez les sujets, les affectations et le suivi des projets.",
+    "new_btn": "Nouveau Projet",
+    "search": "Rechercher par sujet, étudiant, entreprise...",
+    "filter_status": "Tous les statuts",
+    "table": {
+      "subject": "Sujet du Projet",
+      "type": "Type",
+      "student": "Étudiant",
+      "company": "Entreprise",
+      "status": "Statut",
+      "actions": "Actions",
+      "empty": "Aucun projet trouvé."
+    },
+    "modal": {
+      "edit": "Modifier le projet",
+      "create": "Nouveau Projet",
+      "subject": "Sujet du projet *",
+      "subject_placeholder": "Titre complet du projet...",
+      "type": "Type *",
+      "type_pfe": "PFE (Projet de Fin d'Études)",
+      "type_pfa": "PFA (Projet de Fin d'Année)",
+      "status": "Statut *",
+      "student": "Étudiant affecté *",
+      "student_placeholder": "— Sélectionner l'étudiant —",
+      "company": "Entreprise d'accueil",
+      "company_placeholder": "Nom de l'entreprise",
+      "city": "Ville",
+      "city_placeholder": "Ex: Casablanca",
+      "cancel": "Annuler",
+      "update": "Mettre à jour",
+      "save": "Enregistrer"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "submitted": "Soumis pour validation",
+      "approved": "Approuvé (En cours)",
+      "rejected": "Refusé",
+      "defended": "Soutenu"
+    },
+    "messages": {
+      "update_success": "Projet mis à jour !",
+      "create_success": "Projet enregistré !",
+      "error": "Erreur.",
+      "delete_confirm": "Supprimer ce projet ?",
+      "delete_success": "Projet supprimé.",
+      "loading": "Chargement..."
+    }
+  },
+  "timetable": {
+    "title": "Consultation des Emplois du Temps",
+    "subtitle": "Vue unifiée des plannings (Groupes, Professeurs, Salles)",
+    "export": "Exporter PDF",
+    "filter": "Filtrer par:",
+    "type_group": "Filière / Groupe",
+    "type_prof": "Professeur",
+    "type_room": "Salle",
+    "search": "Saisir l'identifiant..."
+  },
+  "vacataires_list": {
+    "title": "Gestion des Vacataires",
+    "subtitle": "Ressources Humaines, contrats et paiements",
+    "import": "Excel",
+    "new_btn": "Nouveau Vacataire",
+    "kpi_total": "Total Vacataires",
+    "kpi_active": "Contrats Actifs",
+    "kpi_pending": "Paiements en attente",
+    "list_title": "Liste des Intervenants",
+    "search": "Rechercher un professeur...",
+    "table": {
+      "name": "Intervenant",
+      "dept": "Département",
+      "status": "Statut Contrat",
+      "payment": "Paiement",
+      "actions": "Actions",
+      "empty": "Aucun vacataire trouvé."
+    },
+    "status": {
+      "pending": "En attente de signature",
+      "signed": "Signé",
+      "none": "Pas de contrat actif"
+    },
+    "pay": "Payer",
+    "modal": {
+      "create_title": "Nouveau Vacataire",
+      "edit_title": "Modifier le vacataire",
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "grade": "Grade académique",
+      "specialty": "Spécialité",
+      "dept": "Département",
+      "dept_placeholder": "-- Choisir un département --",
+      "active": "Vacataire actif",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "update": "Mettre à jour"
+    },
+    "messages": {
+      "save_success": "Sauvegardé avec succès !",
+      "save_error": "Erreur lors de la sauvegarde.",
+      "delete_confirm": "Supprimer ce vacataire ?",
+      "delete_success": "Supprimé avec succès."
+    }
+  },
+  "prof_dash": {
+    "welcome": "Bonjour, Pr. BENSOUDA",
+    "subtitle": "Votre espace de travail académique (Semestre 2)",
+    "today_sessions": "Séances du jour",
+    "students": "Étudiants",
+    "quick_access": "Accès Rapide",
+    "classroom_title": "Espace Classroom",
+    "classroom_desc": "Appel par QR Code, partage de documents et interaction.",
+    "enter_class": "Entrer dans la classe",
+    "ai_title": "Assistant IA",
+    "ai_desc": "Générateur de QCM, analyse prédictive des résultats.",
+    "start_ai": "Démarrer l'assistant",
+    "today_timetable": "Emploi du temps d'aujourd'hui",
+    "admin_alerts": "Alertes Administration"
+  },
+  "classroom": {
+    "title": "Espace Classroom",
+    "digital_call": "Appel Numérique",
+    "ai_assistant": "Assistant IA",
+    "scan_title": "Scannez pour valider votre présence",
+    "scan_desc": "Demandez aux étudiants d'ouvrir l'application ENCG Portail et de scanner ce code.",
+    "regen_code": "Régénérer le code",
+    "close_call": "Clôturer l'appel",
+    "present_students": "Étudiants Présents",
+    "ai_gen_title": "Générateur de QCM & Assistant",
+    "ai_powered": "Propulsé par Google Gemini",
+    "settings": "Paramètres",
+    "qcm_prop": "Voici une proposition de QCM :",
+    "ask_ai": "Demandez à l'assistant..."
+  },
+  "documents_attest": {
+    "title": "Guichet Unique : Documents Officiels",
+    "subtitle": "Traitement des demandes étudiantes et sécurisation anti-fraude (QR Code).",
+    "anti_fraud": "Système Anti-Fraude",
+    "anti_fraud_desc": "Tous les documents émis incluent un QR Code certifié garantissant leur authenticité lors d'une vérification externe.",
+    "test_qr": "Tester la vérification PDF",
+    "quick_edit": "Édition Rapide",
+    "cne_placeholder": "CNE ou Numéro étudiant...",
+    "type_scolarite": "Attestation de scolarité",
+    "type_releve": "Relevé de notes global",
+    "generate_pdf": "Générer le PDF",
+    "incoming_requests": "Demandes entrantes (Portail étudiant)",
+    "search": "Rechercher...",
+    "table": {
+      "student": "Étudiant",
+      "doc": "Document Demandé",
+      "date": "Date",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "processed": "Traité",
+      "rejected": "Rejeté",
+      "pending": "En attente"
+    },
+    "messages": {
+      "gen_success": "Document PDF généré avec succès",
+      "gen_error": "Erreur lors de la génération du document"
+    }
+  }
+}

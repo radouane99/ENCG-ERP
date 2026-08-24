@@ -18,6 +18,7 @@ export interface User {
   institution_name: string
   two_factor_enabled: boolean
   locale: 'fr' | 'ar'
+  must_change_password?: boolean
 }
 
 interface AuthState {

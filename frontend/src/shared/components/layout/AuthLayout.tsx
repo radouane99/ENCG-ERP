@@ -4,11 +4,12 @@ import { useTheme } from '@shared/components/layout/ThemeProvider'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { useState, useEffect } from 'react'
+import { changeAppLanguage } from '@shared/lib/locale'
 
 const QUOTES = [
-  { fr: "Excellence & Innovation dans le Management & le Commerce", ar: "التميز والابتكار في التدبير والتجارة" },
-  { fr: "Formons les Leaders Financiers et Managers de Demain", ar: "تكوين قادة الغد في التسيير والمالية" },
-  { fr: "Diplômes Certifiés Blockchain & Réseau Alumnis ENCG Fès", ar: "دبلومات موثقة برقميات الأمان وشبكة خريجين واعدة" },
+  { fr: "Excellence & Innovation dans le Management & le Commerce", ar: "التميز والابتكار في التدبير والتجارة", en: "Excellence & innovation in management and business" },
+  { fr: "Formons les Leaders Financiers et Managers de Demain", ar: "تكوين قادة الغد في التسيير والمالية", en: "Training tomorrow’s financial leaders and managers" },
+  { fr: "Diplômes Certifiés Blockchain & Réseau Alumnis ENCG Fès", ar: "دبلومات موثقة برقميات الأمان وشبكة خريجين واعدة", en: "Blockchain-certified degrees & ENCG Fez alumni network" },
 ]
 
 import { useRef } from 'react'
@@ -44,8 +45,7 @@ export default function AuthLayout() {
   }, [langOpen])
 
   const changeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang)
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+    void changeAppLanguage(lang)
     setLangOpen(false)
   }
 
@@ -133,7 +133,7 @@ export default function AuthLayout() {
                 <Award className="w-4 h-4" /> {isAr ? 'رؤية التميز الأكاديمي' : 'Vision d\'Excellence ENCG'}
               </div>
               <p className="text-white/90 text-sm font-semibold italic">
-                "{isAr ? QUOTES[quoteIndex].ar : QUOTES[quoteIndex].fr}"
+                "{i18n.language.startsWith('ar') ? QUOTES[quoteIndex].ar : i18n.language.startsWith('en') ? QUOTES[quoteIndex].en : QUOTES[quoteIndex].fr}"
               </p>
             </div>
 

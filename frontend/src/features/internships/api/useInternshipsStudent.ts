@@ -1,17 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@shared/lib/api';
 import { Internship, InternshipDocument } from '../model/types';
-
-const api = axios.create({
-  baseURL: '/api/v1/student-portal/internships',
-  withCredentials: true,
-});
 
 export const useStudentInternships = () => {
   return useQuery({
     queryKey: ['studentInternships'],
     queryFn: async () => {
-      const { data } = await api.get<{ internships: Internship[] }>('/');
+      const { data } = await api.get<{ internships: Internship[] }>('/v1/student-portal/internships');
       return data.internships;
     },
   });
@@ -22,7 +17,7 @@ export const useApplyInternship = () => {
 
   return useMutation({
     mutationFn: async (payload: Partial<Internship>) => {
-      const { data } = await api.post<{ internship: Internship }>('/', payload);
+      const { data } = await api.post<{ internship: Internship }>('/v1/student-portal/internships', payload);
       return data.internship;
     },
     onSuccess: () => {
@@ -40,7 +35,7 @@ export const useUploadInternshipDocument = () => {
       formData.append('file', file);
       formData.append('document_type', documentType);
 
-      const { data } = await api.post<{ document: InternshipDocument }>(`/${internshipId}/documents`, formData, {
+      const { data } = await api.post<{ document: InternshipDocument }>(`/v1/student-portal/internships/${internshipId}/documents`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return data.document;

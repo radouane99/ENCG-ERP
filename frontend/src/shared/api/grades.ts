@@ -1,30 +1,10 @@
-import axios from 'axios';
-import { useAuthStore } from '@stores/authStore';
+import api from '@shared/lib/api';
 
 export interface GradeUpdate {
   student_id: number;
   value: number | null;
   absent: boolean;
 }
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  }
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 export const gradesApi = {
   getGradeGrid: async (moduleId: number, groupId: number) => {

@@ -1,0 +1,26 @@
+{
+  "list": {
+    "title": "Professeurs",
+    "subtitle": "Gérez la liste et les affectations du corps professoral",
+    "search": "Rechercher un professeur...",
+    "add_button": "Nouveau Professeur",
+    "empty": "Aucun professeur trouvé",
+    "columns": {
+      "employee_number": "Numéro d'employé",
+      "professor": "Professeur",
+      "department": "Département",
+      "specialty": "Spécialité",
+      "contact": "Contact",
+      "status": "Statut",
+      "actions": "Actions"
+    }
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "create": {
+    "title": "Nouveau Professeur",
+    "subtitle": "Saisissez les informations du professeur"
+  }
+}

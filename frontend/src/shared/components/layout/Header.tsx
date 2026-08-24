@@ -19,8 +19,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
-  const { i18n } = useTranslation('common')
-  const { t } = useTranslation('common')
+  const { t, i18n } = useTranslation(['common', 'pages'])
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -32,23 +31,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
     navigate('/login')
   }
 
-  // Detect current route category / breadcrumb title
-  const getPageTitle = (pathname: string) => {
-    if (pathname === '/dashboard') return isRtl ? 'لوحة التحكم' : 'Tableau de Bord'
-    if (pathname.includes('/admin/pilotage')) return isRtl ? 'القيادة الأكاديمية' : 'Pilotage Académique'
-    if (pathname.includes('/admin/alerts')) return isRtl ? 'جدول التنبيهات' : 'Tableau des Alertes'
-    if (pathname.includes('/admin/grades/pv')) return isRtl ? 'المداولات والمحاضر' : 'Délibérations & PVs'
-    if (pathname.includes('/admin/exams')) return isRtl ? 'إدارة الامتحانات' : 'Examens Planifiés'
-    if (pathname.includes('/admin/students')) return isRtl ? 'إدارة الطلبة' : 'Gestion des Étudiants'
-    if (pathname.includes('/admin/requests')) return isRtl ? 'الطلبات الإدارية' : 'Demandes Administratives'
-    if (pathname.includes('/student/grades')) return isRtl ? 'نقاطي ونتائجي' : 'Mes Notes & Résultats'
-    if (pathname.includes('/student/card')) return isRtl ? 'بطاقتي الرقمية' : 'Carte Numérique'
-    if (pathname.includes('/professor/textbook')) return isRtl ? 'دفتر النصوص' : 'Cahier de Texte'
-    if (pathname.includes('/profile')) return isRtl ? 'الملف الشخصي' : 'Mon Profil'
-    return ''
-  }
-
-  const pageTitle = getPageTitle(location.pathname)
+  const pageTitle = t(`pages:routes.${location.pathname.replace(/\/+$/, '') || '/'}`, { defaultValue: '' })
 
   return (
     <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center px-3 sm:px-4 md:px-6 justify-between gap-2 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-xs">
@@ -95,7 +78,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
             >
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
               <span className="truncate min-w-0">
-                {isRtl ? 'ابحث عن صفحة، طالب، نقطة...' : 'Rechercher une action, étudiant, PV...'}
+                {t('search', { defaultValue: 'Search...' })}
               </span>
               <kbd className="hidden xl:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-extrabold uppercase bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 shadow-xs ms-2 shrink-0">
                 <Command className="w-3 h-3" />
@@ -210,7 +193,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-colors text-start cursor-pointer"
                   >
                     <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                    {isRtl ? 'إعدادات الحساب' : 'Paramètres du compte'}
+                    {t('settings', { defaultValue: 'Settings' })}
                   </button>
                 </div>
 

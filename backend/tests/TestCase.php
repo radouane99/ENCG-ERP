@@ -18,16 +18,22 @@ abstract class TestCase extends BaseTestCase
 
     protected function ensureInstitution(): Institution
     {
-        return Institution::firstOrCreate(
-            ['id' => 1],
-            [
-                'name' => 'ENCG Fès',
-                'code' => 'ENCG_FES',
-                'slug' => 'encg-fes',
-                'city' => 'Fès',
-                'type' => 'grande_ecole',
-            ]
-        );
+        $existing = Institution::query()->find(1);
+        if ($existing) {
+            return $existing;
+        }
+
+        $institution = new Institution([
+            'name' => 'ENCG Fès',
+            'code' => 'ENCG_FES',
+            'slug' => 'encg-fes',
+            'city' => 'Fès',
+            'type' => 'grande_ecole',
+        ]);
+        $institution->id = 1;
+        $institution->save();
+
+        return $institution;
     }
 
     protected function makeTestAcademicYear(array $overrides = []): \App\Models\AcademicYear

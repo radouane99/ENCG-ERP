@@ -77,7 +77,7 @@ class RegisterUserService
                 $user = User::create([
                     'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
                     'email' => $emailClean ?: ('candidat_' . strtolower($cneClean ?: uniqid()) . '@encg-fes.ma'),
-                    'password' => Hash::make($data['password'] ?? 'encg2026'),
+                    'password' => $data['password'] ?? throw new \InvalidArgumentException('Password required'),
                     'phone' => $data['phone'] ?? null,
                     'is_active' => true,
                 ]);

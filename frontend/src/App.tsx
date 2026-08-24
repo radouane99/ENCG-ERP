@@ -2,13 +2,9 @@ import { Suspense, useEffect } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
 import RootRouter from './app/routes/RootRouter'
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/ErrorBoundary'
+import I18nRoot from '@shared/components/i18n/I18nRoot'
 
-/**
- * App.tsx - Root Application Entry Point
- * Extremely thin component: Only responsible for rendering global providers
- * and the Root Router which handles all lazy-loaded route boundaries.
- */
 export default function App() {
   const { fetchUser } = useAuthStore()
 
@@ -18,12 +14,10 @@ export default function App() {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      {/* 
-        In a real scenario, Global Context Providers (QueryClient, Toaster, AuthProvider) 
-        would wrap the RootRouter here. For now, we keep it minimal.
-      */}
       <ErrorBoundary>
-        <RootRouter />
+        <I18nRoot>
+          <RootRouter />
+        </I18nRoot>
       </ErrorBoundary>
     </Suspense>
   )

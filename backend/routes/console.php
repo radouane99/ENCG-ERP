@@ -103,6 +103,9 @@ Schedule::command('reinscription:ouvrir --annee=' . (date('Y') + 1))
     ->yearlyOn(7, 1, '08:00')
     ->description('Ouverture automatique de la réinscription annuelle ENCG Fès');
 
+Schedule::command('cndp:enforce-retention')->weeklyOn(1, '01:30')
+    ->description('Anonymisation CNDP des comptes inactifs');
+
 // ── Rappel Réinscription — J-7 avant fermeture (1er Août à 09:00) ───────────
 Schedule::call(function () {
     $annee = date('Y') + 1;

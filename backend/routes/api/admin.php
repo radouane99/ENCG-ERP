@@ -649,9 +649,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::delete('/admin/absences/{absenceJustification}', [\App\Http\Controllers\Api\AbsenceJustificationController::class, 'destroy']);
 });
 
-// ---------------------------------------------------------
-// PUBLIC PDF STREAMING ENDPOINTS (Accessible natively via window.open)
-// ---------------------------------------------------------
+// Authenticated document streaming and previously exposed admin endpoints
+$staffRoles = 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee';
+
+Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
 Route::get('/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
 Route::get('/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
 Route::get('/v1/admin/students/{student}/transcript', [\App\Http\Controllers\Api\StudentTranscriptController::class, 'generateForAdmin']);
@@ -984,30 +985,31 @@ Route::get('/admin/activity-logs', [\App\Http\Controllers\Api\AdminDashboardCont
 Route::get('/activity-logs', [\App\Http\Controllers\Api\AdminDashboardController::class, 'getActivityLogs']);
 Route::post('/students/{student}/biometric-match', [\App\Http\Controllers\Api\StudentController::class, 'runBiometricMatch']);
 
+    Route::get('/v1/enrollments/scolarite-print-hub', [\App\Http\Controllers\Api\PdfExportController::class, 'scolaritePrintHub']);
+    Route::get('/v1/enrollments/dossier-complet-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportDossierCompletPdf']);
+    Route::get('/v1/assignments/ordre-de-service-pdf/{id}', [\App\Http\Controllers\Api\PdfExportController::class, 'exportOrdreDeServicePdf']);
+    Route::get('/admin/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
+    Route::get('/admin/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
+    Route::get('/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
+    Route::get('/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
+    Route::post('/public/toggle-lock-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'toggleLockCandidateDossier']);
+    Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
-// Public Unauthenticated Endpoints (No Auth Required)
+// Public Unauthenticated Endpoints (candidate TAFEM + document verify only)
 // ──────────────────────────────────────────────────────────────────────────────
 Route::post('/public/preinscription', [\App\Http\Controllers\Api\AdmissionController::class, 'submitOnlinePreinscription']);
 Route::get('/public/track-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'trackCandidateDossier']);
 Route::post('/public/update-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'updateCandidateDossier']);
-Route::post('/public/toggle-lock-candidate-dossier', [\App\Http\Controllers\Api\AdmissionController::class, 'toggleLockCandidateDossier']);
 Route::post('/public/upload-candidate-document', [\App\Http\Controllers\Api\AdmissionController::class, 'uploadCandidateDocument']);
 Route::delete('/public/delete-candidate-document', [\App\Http\Controllers\Api\AdmissionController::class, 'deleteCandidateDocument']);
 Route::post('/public/ocr-extract-documents', [\App\Http\Controllers\Api\AdmissionController::class, 'extractDocumentDataOcr']);
 
 Route::get('/public/recepisse-tafem-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportRecepisseTafemPdf']);
-Route::get('/v1/enrollments/scolarite-print-hub', [\App\Http\Controllers\Api\PdfExportController::class, 'scolaritePrintHub']);
-Route::get('/v1/enrollments/dossier-complet-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'exportDossierCompletPdf']);
-Route::get('/v1/assignments/ordre-de-service-pdf/{id}', [\App\Http\Controllers\Api\PdfExportController::class, 'exportOrdreDeServicePdf']);
 Route::get('/public/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
 Route::get('/public/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
-Route::get('/admin/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
-Route::get('/admin/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
-Route::get('/students/engagement-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'engagementPdf']);
-Route::get('/students/fiche-medicale-pdf', [\App\Http\Controllers\Api\PdfExportController::class, 'ficheMedicalePdf']);
 Route::get('/public/serve-document/{type}/{cne}', [\App\Http\Controllers\Api\AdmissionController::class, 'serveCandidateDocumentPublic']);
-
-Route::post('/public/send-convocation-email', [\App\Http\Controllers\Api\AdmissionController::class, 'sendCandidateConvocationEmail']);
 Route::get('/public/inscription/status', [\App\Http\Controllers\Api\StudentController::class, 'getInscriptionStatusPublic']);
 Route::post('/public/validate-photo-quality', [\App\Http\Controllers\Api\StudentController::class, 'validatePhotoQuality']);
 Route::post('/public/scolarbot/chat', [\App\Http\Controllers\Api\AiScolarBotController::class, 'chat']);

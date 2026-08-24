@@ -1,47 +1,7 @@
-import axios, { AxiosError, type AxiosResponse } from 'axios';
-import { useAuthStore } from '@stores/authStore';
+import axios, { AxiosError } from 'axios';
 
-// ── Instance ────────────────────────────────────────────────────────────────
-
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  },
-  withCredentials: true,
-});
-
-// ── Request: Attach Bearer token ─────────────────────────────────────────────
-
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    const lng = localStorage.getItem('encg_lang') || 'fr';
-    config.headers['Accept-Language'] = lng;
-
-    return config;
-  },
-  (error: AxiosError) => Promise.reject(error)
-);
-
-// ── Response: Handle 401 / 422 ────────────────────────────────────────────────
-
-api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError<ApiErrorResponse>) => {
-    if (error.response?.status === 401) {
-      // Token expired — force logout
-      useAuthStore.getState().logout?.();
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+export { default as api } from '@shared/lib/api';
+export { default } from '@shared/lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

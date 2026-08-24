@@ -79,7 +79,8 @@ class ProfessorService
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
                 'cin' => $data['cin'] ?? null,
-                'password' => bcrypt('password'), // default password
+                'password' => $data['password'] ?? \App\Support\TemporaryPassword::hash(),
+                'must_change_password' => empty($data['password']),
                 'is_active' => $data['is_active'] ?? true,
             ]);
 

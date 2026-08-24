@@ -247,8 +247,8 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasPermissionTo('manage users') || $user->hasRole('admin');
         });
 
-        // Définition des politiques (si nécessaire)
-        // Gate::policy(Post::class, PostPolicy::class);
+        Gate::policy(\App\Models\Student::class, \App\Policies\StudentPolicy::class);
+        Gate::policy(\App\Models\Grade::class, \App\Policies\GradePolicy::class);
     }
 
     /**
@@ -262,8 +262,7 @@ class AppServiceProvider extends ServiceProvider
         // Empêcher les modifications silencieuses
         Model::preventSilentlyDiscardingAttributes(!app()->isProduction());
 
-        // Activer le modèle d'accès aux attributs avec les casts
-        Model::unguard();
+        // Mass assignment remains model-level ($fillable / $guarded). Do not unguard globally.
 
         // Définir les événements de modèle globaux
         Model::creating(function ($model) {

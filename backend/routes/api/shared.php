@@ -31,6 +31,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     Route::post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
 
+    Route::prefix('v1/privacy')->group(function () {
+        Route::post('/export', [\App\Http\Controllers\Api\PrivacyController::class, 'requestExport']);
+        Route::get('/export', [\App\Http\Controllers\Api\PrivacyController::class, 'myExports']);
+        Route::get('/export/{id}/download', [\App\Http\Controllers\Api\PrivacyController::class, 'download']);
+    });
+
     // Notifications
     Route::prefix('notifications')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);

@@ -1,16 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@shared/lib/api';
 import { AttendanceSession, AttendanceRecord } from '../model/types';
-
-const api = axios.create({
-  baseURL: '/api/professor/attendance',
-  withCredentials: true,
-});
 
 export const useStartSession = () => {
   return useMutation({
     mutationFn: async (data: { module_id: number; group_id: number; room_name: string }) => {
-      const res = await api.post<{ session: AttendanceSession }>('/start', data);
+      const res = await api.post<{ session: AttendanceSession }>('/professor/attendance/start', data);
       return res.data.session;
     },
   });
@@ -21,7 +16,7 @@ export const useManualCall = (sessionId: number) => {
 
   return useMutation({
     mutationFn: async (data: { student_id: number; status: 'present' | 'absent' | 'late' | 'excused' }) => {
-      const res = await api.post<{ record: AttendanceRecord }>(`/${sessionId}/manual-call`, data);
+      const res = await api.post<{ record: AttendanceRecord }>(`/professor/attendance/${sessionId}/manual-call`, data);
       return res.data.record;
     },
     onSuccess: () => {
@@ -33,7 +28,7 @@ export const useManualCall = (sessionId: number) => {
 export const useCloseSession = () => {
   return useMutation({
     mutationFn: async (sessionId: number) => {
-      const res = await api.post<{ session: AttendanceSession }>(`/${sessionId}/close`);
+      const res = await api.post<{ session: AttendanceSession }>(`/professor/attendance/${sessionId}/close`);
       return res.data.session;
     },
   });

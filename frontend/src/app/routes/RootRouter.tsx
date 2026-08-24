@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect, type ReactNode } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import AppShell from '@shared/components/layout/AppShell'
@@ -229,10 +229,14 @@ const AdminRolesPermissionsPage = lazy(() => import('@features/admin/pages/Admin
 
 // ── Route Guard ────────────────────────────────────────────────
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthStore()
+  const { isAuthenticated, isLoading, user } = useAuthStore()
+  const location = useLocation()
 
   if (isLoading) return <LoadingScreen />
   if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (user?.must_change_password && location.pathname !== '/profile') {
+    return <Navigate to="/profile?change-password=1" replace />
+  }
   return <>{children}</>
 }
 
@@ -243,6 +247,10 @@ function RequireGuest({ children }: { children: ReactNode }) {
 }
 
 const ADMIN_ROLES = ['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director']
+const ACADEMIC_ROLES = [...ADMIN_ROLES, 'department-head', 'filiere-head']
+const TEACHING_ROLES = [...ACADEMIC_ROLES, 'professor', 'vacataire']
+const HR_ROLES = [...ADMIN_ROLES, 'hr-officer']
+const STAFF_ROLES = [...TEACHING_ROLES, 'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee']
 
 function ProtectedRoute({ roles, children }: { roles: string[]; children?: ReactNode }) {
   const { isAuthenticated, user, isLoading } = useAuthStore()
@@ -311,19 +319,27 @@ export default function RootRouter() {
           <Route path="/cedoc/dashboard" element={<DoctorantDashboard />} />
           </Route>
 
-          {/* Students */}
-          <Route path="/students" element={<StudentsListPage />} />
-          <Route path="/students/new" element={<StudentCreatePage />} />
-          <Route path="/students/:id" element={<StudentDetailPage />} />
+          {/* Students — staff directory */}
+          <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
+            <Route path="/students" element={<StudentsListPage />} />
+            <Route path="/students/new" element={<StudentCreatePage />} />
+            <Route path="/students/:id" element={<StudentDetailPage />} />
+            <Route path="/admin/student-cards" element={<AdminStudentCardsPage />} />
+          </Route>
           <Route path="/profile/card" element={<DigitalCardPage />} />
-          <Route path="/student/course-analysis" element={<StudentCourseAnalysisPage />} />
-          <Route path="/student/recommendations" element={<StudentRecommendationsPage />} />
-          <Route path="/professor/recommendations" element={<ProfessorRecommendationsPage />} />
-          <Route path="/admin/student-cards" element={<AdminStudentCardsPage />} />
+          <Route element={<ProtectedRoute roles={['student']} />}>
+            <Route path="/student/course-analysis" element={<StudentCourseAnalysisPage />} />
+            <Route path="/student/recommendations" element={<StudentRecommendationsPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/professor/recommendations" element={<ProfessorRecommendationsPage />} />
+          </Route>
 
           {/* HR */}
-          <Route path="/hr/professors" element={<ProfessorsListPage />} />
-          <Route path="/hr/vacataires" element={<VacatairesManager />} />
+          <Route element={<ProtectedRoute roles={HR_ROLES} />}>
+            <Route path="/hr/professors" element={<ProfessorsListPage />} />
+            <Route path="/hr/vacataires" element={<VacatairesManager />} />
+          </Route>
 
           {/* Student Portal */}
           <Route element={<ProtectedRoute roles={['student']} />}>
@@ -344,89 +360,106 @@ export default function RootRouter() {
           </Route>
 
           {/* Vacataires */}
-          <Route path="/vacataires" element={<VacatairesListPage />} />
-          <Route path="/vacataires/:id/contract" element={<VacataireContractPage />} />
+          <Route element={<ProtectedRoute roles={HR_ROLES} />}>
+            <Route path="/vacataires" element={<VacatairesListPage />} />
+            <Route path="/vacataires/:id/contract" element={<VacataireContractPage />} />
+          </Route>
 
           {/* Admission */}
-          <Route path="/admissions/candidatures" element={<CandidaturesPage />} />
-          <Route path="/admission/applications" element={<ApplicationsPage />} />
+          <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
+            <Route path="/admissions/candidatures" element={<CandidaturesPage />} />
+            <Route path="/admission/applications" element={<ApplicationsPage />} />
+          </Route>
 
           {/* Academic */}
-          <Route path="/academic/years" element={<AcademicYearsPage />} />
-          <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
-          <Route path="/admin/professor-assignments" element={<AcademicYearSettingsPage />} />
-          <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
-          <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
-          <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
-          <Route path="/academic/groups" element={<GroupsPage />} />
-          <Route path="/academic/filieres" element={<FilieresPage />} />
-          <Route path="/academic/departments" element={<DepartmentsPage />} />
-          <Route path="/academic/modules" element={<ModulesListPage />} />
-          <Route path="/academic/deliberations" element={<DeliberationManager />} />
-          <Route path="/professors" element={<ProfessorsListPage />} />
+          <Route element={<ProtectedRoute roles={ACADEMIC_ROLES} />}>
+            <Route path="/academic/years" element={<AcademicYearsPage />} />
+            <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
+            <Route path="/admin/professor-assignments" element={<AcademicYearSettingsPage />} />
+            <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
+            <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
+            <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
+            <Route path="/academic/groups" element={<GroupsPage />} />
+            <Route path="/academic/filieres" element={<FilieresPage />} />
+            <Route path="/academic/departments" element={<DepartmentsPage />} />
+            <Route path="/academic/modules" element={<ModulesListPage />} />
+            <Route path="/academic/deliberations" element={<DeliberationManager />} />
+            <Route path="/professors" element={<ProfessorsListPage />} />
+          </Route>
 
           {/* Grades & PV Routes */}
-          <Route path="/admin/grades" element={<AdminGradesPage />} />
-          <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
-          <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
-          <Route path="/professor/grades" element={<AdminGradesPage />} />
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/admin/grades" element={<AdminGradesPage />} />
+            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
+            <Route path="/professor/grades" element={<AdminGradesPage />} />
+          </Route>
 
           {/* Timetable & Exams */}
-          <Route path="/timetable" element={<TimetablePage />} />
-          <Route path="/academic/timetable" element={<TimetableAdminView />} />
-          <Route path="/admin/schedules/engine" element={<AdminTimetableEnginePage />} />
-          <Route path="/admin/timetable/engine" element={<AdminTimetableEnginePage />} />
-          <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
-          <Route path="/professor/schedules" element={<InteractiveCalendarPage isAdmin={false} />} />
-          <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
-          <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
-          <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
-          <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
-          <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
-          <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
-          <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
-          <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
-          <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/timetable" element={<TimetablePage />} />
+            <Route path="/academic/timetable" element={<TimetableAdminView />} />
+            <Route path="/admin/schedules/engine" element={<AdminTimetableEnginePage />} />
+            <Route path="/admin/timetable/engine" element={<AdminTimetableEnginePage />} />
+            <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
+            <Route path="/professor/schedules" element={<InteractiveCalendarPage isAdmin={false} />} />
+            <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
+            <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
+            <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
+            <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
+            <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+            <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
+            <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
+            <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
+            <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
+          </Route>
 
 
           
           {/* Convocations Officielles */}
-          <Route path="/academic/convocations/dashboard" element={<AdminConvocationsUIPage />} />
-          <Route path="/academic/convocations/student/:id/print" element={<StudentConvocationPdf />} />
-          <Route path="/academic/convocations/professor/:id/print" element={<ProfessorConvocationPdf />} />
-
-          {/* Scanner & Absences */}
-          <Route path="/academic/scanner" element={<ProfessorScannerApp />} />
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/academic/convocations/dashboard" element={<AdminConvocationsUIPage />} />
+            <Route path="/academic/convocations/student/:id/print" element={<StudentConvocationPdf />} />
+            <Route path="/academic/convocations/professor/:id/print" element={<ProfessorConvocationPdf />} />
+            <Route path="/academic/scanner" element={<ProfessorScannerApp />} />
+          </Route>
 
           {/* Core Academic Administration */}
-          <Route path="/academic/enrollments" element={<EnrollmentManager />} />
-          <Route path="/academic/holidays" element={<HolidayManager />} />
-          <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
-          <Route path="/academic/internships" element={<AdminInternshipsPage />} />
-          <Route path="/student/internships" element={<StudentInternshipsPage />} />
-
-          <Route path="/academic/predictive-analytics" element={<PredictiveDashboard />} />
-          <Route path="/academic/documents" element={<DocumentCenter />} />
-          <Route path="/admissions/campaigns" element={<AdmissionCampaignManager />} />
-          <Route path="/admissions/applications" element={<ApplicationsPage />} />
+          <Route element={<ProtectedRoute roles={ACADEMIC_ROLES} />}>
+            <Route path="/academic/enrollments" element={<EnrollmentManager />} />
+            <Route path="/academic/holidays" element={<HolidayManager />} />
+            <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
+            <Route path="/academic/internships" element={<AdminInternshipsPage />} />
+            <Route path="/academic/predictive-analytics" element={<PredictiveDashboard />} />
+            <Route path="/academic/documents" element={<DocumentCenter />} />
+            <Route path="/admissions/campaigns" element={<AdmissionCampaignManager />} />
+            <Route path="/admissions/applications" element={<ApplicationsPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={['student']} />}>
+            <Route path="/student/internships" element={<StudentInternshipsPage />} />
+          </Route>
           <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
 
           {/* Attendance */}
-          <Route path="/attendance" element={<AttendancePage />} />
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/attendance" element={<AttendancePage />} />
+          </Route>
 
           {/* Exams & Grades */}
-          <Route path="/exams" element={<ExamSessionsPage />} />
-
-          <Route path="/exams/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
-          <Route path="/academic/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
-          <Route path="/exams/deliberations/:id/jury" element={<DeliberationJuryPage />} />
-
+          <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
+            <Route path="/exams" element={<ExamSessionsPage />} />
+            <Route path="/exams/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
+            <Route path="/academic/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
+            <Route path="/exams/deliberations/:id/jury" element={<DeliberationJuryPage />} />
+          </Route>
 
           {/* Documents */}
-          <Route path="/documents/requests" element={<DocumentRequestsPage />} />
-          <Route path="/documents/templates" element={<DocumentTemplatesPage />} />
-          <Route path="/documents/diplomas" element={<DiplomasPage />} />
-          <Route path="/documents/attestations" element={<DocumentsAttestationsPage />} />
+          <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
+            <Route path="/documents/requests" element={<DocumentRequestsPage />} />
+            <Route path="/documents/templates" element={<DocumentTemplatesPage />} />
+            <Route path="/documents/diplomas" element={<DiplomasPage />} />
+            <Route path="/documents/attestations" element={<DocumentsAttestationsPage />} />
+          </Route>
 
           {/* LMS */}
           <Route path="/lms/courses" element={<CoursesPage />} />
@@ -434,10 +467,12 @@ export default function RootRouter() {
           <Route path="/lms/assignments" element={<AssignmentsPage />} />
 
           {/* Internships & PFE */}
-          <Route path="/internships" element={<InternshipsPage />} />
-          <Route path="/final-projects" element={<FinalProjectsPage />} />
-          <Route path="/infrastructure" element={<InfrastructurePage />} />
-          <Route path="/infrastructure/classrooms" element={<ClassroomsPage />} />
+          <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
+            <Route path="/internships" element={<InternshipsPage />} />
+            <Route path="/final-projects" element={<FinalProjectsPage />} />
+            <Route path="/infrastructure" element={<InfrastructurePage />} />
+            <Route path="/infrastructure/classrooms" element={<ClassroomsPage />} />
+          </Route>
 
           {/* Communication */}
           <Route path="/messages" element={<MessagesPage />} />
@@ -450,14 +485,18 @@ export default function RootRouter() {
 
           {/* Clubs & Discipline */}
           <Route path="/clubs" element={<ClubsPage />} />
-          <Route path="/discipline" element={<DisciplinePage />} />
+          <Route element={<ProtectedRoute roles={[...ADMIN_ROLES, 'discipline-committee']} />}>
+            <Route path="/discipline" element={<DisciplinePage />} />
+          </Route>
 
           {/* AI */}
           <Route path="/ai" element={<AiAssistantPage />} />
 
           {/* Profile & Settings */}
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
 
           {/* Outils */}
           <Route path="/calendar" element={<CalendarPage />} />

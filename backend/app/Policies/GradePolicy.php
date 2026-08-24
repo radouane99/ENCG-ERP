@@ -2,17 +2,20 @@
 
 namespace App\Policies;
 
+use App\Support\ChecksStaffAccess;
 use App\Models\User;
 use App\Models\Grade;
 
 class GradePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    use ChecksStaffAccess;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('grades.view');
+        return $this->hasPermissionOrRole($user, 'grades.view', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'vacataire', 'student',
+        ]);
     }
 
     /**
@@ -24,7 +27,10 @@ class GradePolicy
             return $user->student->id === $grade->student_id;
         }
 
-        return $user->hasPermissionTo('grades.view');
+        return $this->hasPermissionOrRole($user, 'grades.view', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'vacataire',
+        ]);
     }
 
     /**
@@ -32,7 +38,10 @@ class GradePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('grades.enter');
+        return $this->hasPermissionOrRole($user, 'grades.enter', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'vacataire',
+        ]);
     }
 
     /**
@@ -46,7 +55,10 @@ class GradePolicy
         }
 
         // Only authorized personnel can enter/edit grades
-        return $user->hasPermissionTo('grades.edit');
+        return $this->hasPermissionOrRole($user, 'grades.edit', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+            'department-head', 'filiere-head', 'professor', 'vacataire',
+        ]);
     }
 
     /**
@@ -54,6 +66,8 @@ class GradePolicy
      */
     public function delete(User $user, Grade $grade): bool
     {
-        return $user->hasPermissionTo('grades.delete');
+        return $this->hasPermissionOrRole($user, 'grades.delete', [
+            'admin', 'super-admin', 'institution-admin', 'director',
+        ]);
     }
 }

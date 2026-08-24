@@ -27,6 +27,7 @@ use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Academic\DeliberationService;
 use App\Services\Academic\GradeService;
+use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -39,7 +40,8 @@ class PdfExportController extends Controller
 {
     public function __construct(
         private DeliberationService $deliberationService,
-        private GradeService $gradeService
+        private GradeService $gradeService,
+        private OfficialPdfFactory $pdfFactory
     ) {}
 
     /**
@@ -47,26 +49,7 @@ class PdfExportController extends Controller
      */
     private function getPdfInstance(string $view, array $data = []): \Barryvdh\DomPDF\PDF
     {
-        $logoPath = public_path('logo-encg.png');
-        $data['logoBase64'] = file_exists($logoPath)
-            ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath))
-            : '';
-
-        if (! isset($data['verifyUrl'])) {
-            $data['verifyUrl'] = url('/verify/document/'.Str::random(10));
-        }
-
-        try {
-            $qrSvg = QrCode::size(150)->margin(0)->generate($data['verifyUrl']);
-            $data['qrBase64'] = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
-        } catch (\Exception $e) {
-            $data['qrBase64'] = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='.urlencode($data['verifyUrl']);
-        }
-
-        return Pdf::setOption([
-            'isRemoteEnabled' => true,
-            'chroot' => public_path(),
-        ])->loadView($view, $data);
+        return $this->pdfFactory->make($view, $data);
     }
 
     // ─── RÉCÉPISSÉ TAFEM ────────────────────────────────────────

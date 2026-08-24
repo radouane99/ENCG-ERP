@@ -1,20 +1,42 @@
-import React from 'react';
+import { useState } from 'react'
+import { toast } from 'sonner'
+import api from '@shared/lib/api'
+import { useAuthStore } from '@stores/authStore'
 
 interface CndpPrivacyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  lang?: string;
+  isOpen: boolean
+  onClose: () => void
+  lang?: string
 }
 
 export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyModalProps) {
-  if (!isOpen) return null;
-  const isAr = lang === 'ar';
-  
+  const [requesting, setRequesting] = useState(false)
+  const token = useAuthStore((s) => s.token)
+
+  if (!isOpen) return null
+  const isAr = lang === 'ar'
+
+  const requestExport = async () => {
+    if (!token) {
+      toast.info(isAr ? 'سجل الدخول لطلب نسخة من معطياتك.' : 'Connectez-vous pour demander une copie de vos données.')
+      return
+    }
+    setRequesting(true)
+    try {
+      await api.post('/v1/privacy/export')
+      toast.success(isAr ? 'تم تسجيل طلب الولوج (DSAR).' : 'Demande d’accès (DSAR) enregistrée. L’export sera disponible depuis votre profil.')
+    } catch {
+      toast.error(isAr ? 'تعذر تسجيل الطلب.' : 'Impossible d’enregistrer la demande DSAR.')
+    } finally {
+      setRequesting(false)
+    }
+  }
+
   return (
     <>
-      <div 
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose} 
+      <div
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
       />
       <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
         <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-scale-in">
@@ -23,6 +45,7 @@ export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyMo
               {isAr ? 'حماية المعطيات ذات الطابع الشخصي (القانون 09-08)' : 'Protection des Données Personnelles — Loi 09-08'}
             </h3>
             <button
+              type="button"
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-muted rounded-lg transition-colors pointer-events-auto"
               aria-label="Fermer"
@@ -30,7 +53,7 @@ export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyMo
               ✕
             </button>
           </div>
-          
+
           <div className="space-y-4 text-xs leading-relaxed text-muted-foreground">
             {isAr ? (
               <div className="space-y-3 text-right" dir="rtl">
@@ -50,15 +73,28 @@ export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyMo
               </div>
             )}
           </div>
-          
-          <button
-            onClick={onClose}
-            className="w-full mt-6 bg-primary text-primary-foreground font-bold py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors pointer-events-auto"
-          >
-            {isAr ? 'إغلاق' : 'Fermer'}
-          </button>
+
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={requestExport}
+              disabled={requesting}
+              className="w-full bg-slate-900 text-white font-bold py-2 rounded-xl text-xs hover:bg-slate-800 transition-colors pointer-events-auto disabled:opacity-60"
+            >
+              {requesting
+                ? (isAr ? 'جاري الإرسال…' : 'Envoi…')
+                : (isAr ? 'طلب نسخة من معطياتي (حق الولوج)' : 'Demander une copie de mes données (droit d’accès)')}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full bg-primary text-primary-foreground font-bold py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors pointer-events-auto"
+            >
+              {isAr ? 'إغلاق' : 'Fermer'}
+            </button>
+          </div>
         </div>
       </div>
     </>
-  );
+  )
 }

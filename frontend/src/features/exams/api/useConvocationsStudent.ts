@@ -1,17 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@shared/lib/api';
 import { Convocation } from '../model/types';
-
-const api = axios.create({
-  baseURL: '/api/v1/student-portal/convocations',
-  withCredentials: true,
-});
 
 export const useStudentConvocations = () => {
   return useQuery({
     queryKey: ['studentConvocations'],
     queryFn: async () => {
-      const { data } = await api.get<{ convocations: Convocation[] }>('/');
+      const { data } = await api.get<{ convocations: Convocation[] }>('/v1/student-portal/convocations');
       return data.convocations;
     },
   });
@@ -22,7 +17,7 @@ export const useDownloadConvocation = () => {
   
   return useMutation({
     mutationFn: async (convocationId: number) => {
-      const { data } = await api.get<{ pdf_url: string }>(`/${convocationId}/download`);
+      const { data } = await api.get<{ pdf_url: string }>(`/v1/student-portal/convocations/${convocationId}/download`);
       return data;
     },
     onSuccess: () => {

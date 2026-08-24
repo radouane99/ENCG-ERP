@@ -92,7 +92,8 @@ class StudentService
                 'email'      => $data['email'],
                 'phone'      => $data['phone'] ?? null,
                 'cin'        => $data['cin'] ?? null,
-                'password'   => bcrypt('password'),
+                'password'   => \App\Support\TemporaryPassword::hash(),
+                'must_change_password' => true,
                 'is_active'  => true,
             ]);
 

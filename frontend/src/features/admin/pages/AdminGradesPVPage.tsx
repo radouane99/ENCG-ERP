@@ -18,196 +18,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { PvFilterSelect } from '../components/PvFilterSelect'
+import { SignaturePad } from '../components/SignaturePad'
 import { QRCodeSVG } from 'qrcode.react'
-interface CustomSelectProps {
-  label: string
-  icon: any
-  value: string | number
-  onChange: (val: any) => void
-  options: { value: string | number; label: string; badge?: string }[]
-  placeholder: string
-  disabled?: boolean
-}
-
-function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder, disabled }: CustomSelectProps) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const selectedOption = options.find(o => String(o.value) === String(value))
-
-  return (
-    <div ref={ref} className={cn("relative space-y-1.5 w-full", open ? "z-[100]" : "z-10")}>
-      <label className="flex items-center gap-1.5 text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
-        <Icon className="w-3.5 h-3.5 text-indigo-500" />
-        {label}
-      </label>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "w-full px-4 py-3 bg-white dark:bg-slate-800/90 border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
-          open 
-            ? "border-indigo-500 ring-4 ring-indigo-500/15 text-indigo-900 dark:text-indigo-200" 
-            : "border-slate-200 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-800 dark:text-slate-100",
-          disabled && "opacity-40 cursor-not-allowed"
-        )}
-      >
-        <span className={cn("truncate font-semibold", !selectedOption && "text-slate-400 font-normal")}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-2", open && "rotate-180 text-indigo-600")} />
-      </button>
-
-      {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
-
-          <div
-            onClick={() => {
-              onChange('')
-              setOpen(false)
-            }}
-            className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer flex items-center justify-between transition-colors"
-          >
-            <span>{placeholder}</span>
-          </div>
-          {options.map((opt) => {
-            const isSelected = String(opt.value) === String(value)
-            return (
-              <div
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value)
-                  setOpen(false)
-                }}
-                className={cn(
-                  "px-4 py-2.5 text-xs font-bold cursor-pointer flex items-center justify-between transition-colors group",
-                  isSelected
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-300"
-                )}
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <span className="truncate">{opt.label}</span>
-                  {opt.badge && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      {opt.badge}
-                    </span>
-                  )}
-                </div>
-                {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SignatureCanvasPad({ onSave }: { onSave: (dataUrl: string) => void }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [hasDrawn, setHasDrawn] = useState(false)
-
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsDrawing(true)
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top
-
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    setHasDrawn(true)
-  }
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top
-
-    ctx.lineWidth = 2.5
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = '#1e3a8a'
-    ctx.lineTo(x, y)
-    ctx.stroke()
-  }
-
-  const stopDrawing = () => {
-    setIsDrawing(false)
-    if (canvasRef.current && hasDrawn) {
-      onSave(canvasRef.current.toDataURL('image/png'))
-    }
-  }
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    setHasDrawn(false)
-    onSave('')
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="relative bg-white dark:bg-slate-800 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl overflow-hidden touch-none shadow-inner">
-        <canvas
-          ref={canvasRef}
-          width={440}
-          height={140}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-          className="w-full h-36 cursor-crosshair"
-        />
-        {!hasDrawn && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs font-medium">
-            ✍️ Dessinez votre signature manuelle ou tactile ici...
-          </div>
-        )}
-      </div>
-      <div className="flex justify-between items-center text-xs">
-        <span className="text-[10px] text-slate-400 italic font-medium">
-          {hasDrawn ? '✓ Empreinte manuelle capturée' : 'Utilisez votre souris, stylet ou doigt'}
-        </span>
-        <button
-          type="button"
-          onClick={clearCanvas}
-          className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-lg font-bold transition-all text-[11px] cursor-pointer"
-        >
-          Effacer
-        </button>
-      </div>
-    </div>
-  )
-}
 
 export default function AdminGradesPVPage() {
 
@@ -1199,11 +1012,11 @@ export default function AdminGradesPVPage() {
 
       {/* Filter Control Bar (Elevated Card) */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 rounded-[2rem] shadow-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <CustomSelect
+        <PvFilterSelect
           label={isRtl ? 'الشعبة' : 'Filière'}
           icon={GraduationCap}
           value={selectedFiliere}
-          onChange={(val) => setSelectedFiliere(val)}
+          onChange={(val) => setSelectedFiliere(String(val))}
           placeholder={isRtl ? 'اختر الشعبة' : 'Sélectionnez une filière'}
           options={filieres.map((f: any) => ({
             value: f.id,
@@ -1212,11 +1025,11 @@ export default function AdminGradesPVPage() {
           }))}
         />
 
-        <CustomSelect
+        <PvFilterSelect
           label={isRtl ? 'الدورة' : 'Semestre'}
           icon={Calendar}
           value={selectedSemester}
-          onChange={(val) => setSelectedSemester(val)}
+          onChange={(val) => setSelectedSemester(String(val))}
           placeholder={isRtl ? 'اختر الدورة' : 'Tous les semestres'}
           options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => ({
             value: s,
@@ -1225,7 +1038,7 @@ export default function AdminGradesPVPage() {
           }))}
         />
 
-        <CustomSelect
+        <PvFilterSelect
           label={isRtl ? 'الوحدة' : 'Module'}
           icon={BookOpen}
           value={moduleId || ''}
@@ -1244,14 +1057,15 @@ export default function AdminGradesPVPage() {
           }))}
         />
 
-        <CustomSelect
+        <PvFilterSelect
           label={isRtl ? 'الفوج (اختياري)' : 'Groupe (Optionnel)'}
           icon={Users}
           value={selectedGroup}
           onChange={(val) => {
-            setSelectedGroup(val);
+            const group = String(val)
+            setSelectedGroup(group)
             if (moduleId) {
-              navigate(`/admin/grades/pv?module_id=${moduleId}${val ? `&group_id=${val}` : ''}`);
+              navigate(`/admin/grades/pv?module_id=${moduleId}${group ? `&group_id=${group}` : ''}`)
             }
           }}
           disabled={groupes.length === 0}
@@ -2250,7 +2064,7 @@ export default function AdminGradesPVPage() {
                     <label className="block text-xs font-black uppercase text-slate-500 mb-1">
                       Zone de Signature Numérique / Tactile
                     </label>
-                    <SignatureCanvasPad onSave={(data) => setSignatureDataUrl(data)} />
+                    <SignaturePad onSave={(data) => setSignatureDataUrl(data)} />
                   </div>
 
 
@@ -3057,7 +2871,7 @@ export default function AdminGradesPVPage() {
                 </p>
 
                 <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
-                  <SignatureCanvasPad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
+                  <SignaturePad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
                 </div>
 
                 {signatureDataUrl && (
@@ -4794,7 +4608,7 @@ export default function AdminGradesPVPage() {
               </p>
 
               <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
-                <SignatureCanvasPad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
+                <SignaturePad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
               </div>
 
               {signatureDataUrl && (

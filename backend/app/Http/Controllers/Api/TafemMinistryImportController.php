@@ -131,7 +131,8 @@ class TafemMinistryImportController extends Controller
                         'first_name'     => $firstName,
                         'last_name'      => $lastName,
                         'cin'            => $cin,
-                        'password'       => Hash::make('encg2026'),
+                        'password'       => \App\Support\TemporaryPassword::hash(),
+                        'must_change_password' => true,
                         'institution_id' => $institutionId,
                         'is_active'      => true,
                     ]

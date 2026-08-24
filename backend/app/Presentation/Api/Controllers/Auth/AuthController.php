@@ -142,12 +142,10 @@ class AuthController extends Controller
             'first_name'  => 'required|string|max:255',
             'last_name'   => 'required|string|max:255',
             'email'       => 'required|email|max:255',
-            'password'    => 'nullable|string|min:6',
+            'password'    => 'required|string|min:8',
             'cne'         => 'required|string|max:255',
             'cin'         => 'nullable|string|max:255',
         ]);
-
-        $validated['password'] = $validated['password'] ?? 'encg2026';
 
         try {
             $user  = $this->registerUserService->registerUser($validated, $request->ip());
@@ -237,23 +235,56 @@ class AuthController extends Controller
      */
     public function handleGoogleCallback()
     {
+        $frontend = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
+
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
+            $email = strtolower((string) $googleUser->getEmail());
+            $domain = Str::after($email, '@');
+            $allowed = array_map('strtolower', config('services.google.allowed_domains', []));
 
-            $user = User::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'name'     => $googleUser->getName(),
-                    'password' => bcrypt(Str::random(16)),
-                ]
-            );
+            if ($email === '' || $domain === '' || ! in_array($domain, $allowed, true)) {
+                return redirect()->to($frontend . '/login?error=domain');
+            }
 
-            $token = $user->createToken('Personal Access Token')->plainTextToken;
+            $user = User::where('email', $email)->first();
+            if (! $user || ! $user->is_active) {
+                return redirect()->to($frontend . '/login?error=unknown_account');
+            }
 
-            return redirect()->to(config('app.frontend_url', 'http://localhost:5173') . '/auth/callback?token=' . $token);
+            $user->update([
+                'last_login_at' => now(),
+            ]);
+
+            $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+
+            return redirect()->to($frontend . '/auth/callback?token=' . $token);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur Google.'], 500);
+            return redirect()->to($frontend . '/login?error=google');
         }
+    }
+
+    /**
+     * Changement de mot de passe obligatoire ou volontaire.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json(['message' => 'Mot de passe actuel incorrect.'], 422);
+        }
+
+        $user->forceFill([
+            'password' => $validated['password'],
+            'must_change_password' => false,
+        ])->save();
+
+        return response()->json(['message' => 'Mot de passe mis à jour.']);
     }
 
     /**
@@ -299,8 +330,9 @@ class AuthController extends Controller
 
         return [
             ...$user->toArray(),
-            'roles'       => $user->roles->pluck('name')->toArray(),
-            'permissions' => $user->permissions->pluck('name')->toArray(),
+            'roles'                 => $user->roles->pluck('name')->toArray(),
+            'permissions'           => $user->permissions->pluck('name')->toArray(),
+            'must_change_password'  => (bool) $user->must_change_password,
         ];
     }
 }

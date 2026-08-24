@@ -1,17 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@shared/lib/api';
 import { Internship, Soutenance } from '../model/types';
-
-const api = axios.create({
-  baseURL: '/api/admin/internships',
-  withCredentials: true,
-});
 
 export const useAdminInternships = () => {
   return useQuery({
     queryKey: ['adminInternships'],
     queryFn: async () => {
-      const { data } = await api.get<{ internships: Internship[] }>('/');
+      const { data } = await api.get<{ internships: Internship[] }>('/admin/internships');
       return data.internships;
     },
   });
@@ -22,7 +17,7 @@ export const useValidateInternship = () => {
 
   return useMutation({
     mutationFn: async ({ id, status, professor_supervisor_id }: { id: number; status: 'approved' | 'rejected'; professor_supervisor_id?: number }) => {
-      const { data } = await api.post<{ internship: Internship }>(`/${id}/validate`, { status, professor_supervisor_id });
+      const { data } = await api.post<{ internship: Internship }>(`/admin/internships/${id}/validate`, { status, professor_supervisor_id });
       return data.internship;
     },
     onSuccess: () => {
@@ -36,7 +31,7 @@ export const useScheduleSoutenance = () => {
 
   return useMutation({
     mutationFn: async (data: { internship_id: number; date_time: string; room_id: number; president_id: number; examiner_id: number }) => {
-      const res = await api.post<{ soutenance: Soutenance }>('/soutenances', data);
+      const res = await api.post<{ soutenance: Soutenance }>('/admin/internships/soutenances', data);
       return res.data.soutenance;
     },
     onSuccess: () => {

@@ -142,12 +142,10 @@ class AuthController extends Controller
             'first_name'  => 'required|string|max:255',
             'last_name'   => 'required|string|max:255',
             'email'       => 'required|email|max:255',
-            'password'    => 'nullable|string|min:6',
+            'password'    => 'required|string|min:8',
             'cne'         => 'required|string|max:255',
             'cin'         => 'nullable|string|max:255',
         ]);
-
-        $validated['password'] = $validated['password'] ?? 'encg2026';
 
         try {
             $user  = $this->registerUserService->registerUser($validated, $request->ip());

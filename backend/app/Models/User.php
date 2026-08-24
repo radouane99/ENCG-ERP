@@ -32,7 +32,11 @@ class User extends Authenticatable implements HasMedia
             ->logOnlyDirty();
     }
 
-    protected $guarded = ['id'];
+    protected $guarded = [
+        'id',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+    ];
 
     protected $hidden = [
         'password',
@@ -50,6 +54,7 @@ class User extends Authenticatable implements HasMedia
             'last_login_at' => 'datetime',
             'two_factor_enabled' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
+            'must_change_password' => 'boolean',
         ];
     }
 

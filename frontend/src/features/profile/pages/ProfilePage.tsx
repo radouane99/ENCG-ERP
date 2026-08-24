@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
+    current_password: '',
     password: '',
     password_confirmation: ''
   })
@@ -65,8 +66,17 @@ export default function ProfilePage() {
           setIsLoading(false)
           return
         }
-        payload.append('password', formData.password)
-        payload.append('password_confirmation', formData.password_confirmation)
+        if (!formData.current_password) {
+          setErrorMessage('Le mot de passe actuel est requis')
+          setIsLoading(false)
+          return
+        }
+        await api.post('/v1/auth/change-password', {
+          current_password: formData.current_password,
+          password: formData.password,
+          password_confirmation: formData.password_confirmation,
+        })
+        updateUser({ must_change_password: false })
       }
 
       if (avatarFile) {
@@ -83,7 +93,7 @@ export default function ProfilePage() {
         const meRes = await api.get('/v1/auth/me')
         updateUser(meRes.data.data)
         setSuccessMessage('Profil mis à jour avec succès')
-        setFormData(prev => ({ ...prev, password: '', password_confirmation: '' }))
+        setFormData(prev => ({ ...prev, current_password: '', password: '', password_confirmation: '' }))
       }
     } catch (error: unknown) {
       const e = error as { response?: { data?: { message?: string } } };
@@ -253,11 +263,27 @@ export default function ProfilePage() {
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-800">Update Password</h2>
             <p className="text-sm text-slate-500 mt-1">
-              Ensure your account is using a long, random password to stay secure.
+              {user?.must_change_password
+                ? 'Vous devez définir un nouveau mot de passe pour continuer.'
+                : 'Utilisez un mot de passe long et unique.'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Mot de passe actuel
+              </label>
+              <input
+                type="password"
+                name="current_password"
+                value={formData.current_password}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 New Password

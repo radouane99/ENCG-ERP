@@ -4,7 +4,7 @@
 > **Établissement :** École Nationale de Commerce et de Gestion (ENCG Fès)  
 > **Conformité :** Système LMD Marocain (Semestres S1 à S10), Normes APOGEE Ministérielles & **Loi 09-08 CNDP Maroc**  
 > **Architecture :** Découplée Professionnelle (Backend Laravel REST API ⟷ Frontend React SPA)  
-> **Version :** 1.0.0 Enterprise Production-Ready Complete
+> **Version :** 1.0.0 — Laravel 12 / React 19 (scan 2026-08-24 : sécurité P0 corrigée ; les 24 scénarios E2E restent documentaires)
 
 ---
 
@@ -44,7 +44,7 @@ L'application repose sur un **découplage architectural strict et professionnel*
 ```
 
 #### Principes Clés du Découplage :
-- **Backend Pure REST API (`backend/`) :** Développé avec Laravel 13 / PHP 8.4-FPM. Il expose des endpoints RESTful stricts retournant exclusivement des réponses structurées en JSON. L'authentification est gérée via des tokens Bearer Laravel Sanctum (`Authorization: Bearer <sanctum_token>`).
+- **Backend Pure REST API (`backend/`) :** Développé avec Laravel 12 / PHP 8.4-FPM. Il expose des endpoints RESTful stricts retournant exclusivement des réponses structurées en JSON. L'authentification est gérée via des tokens Bearer Laravel Sanctum (`Authorization: Bearer <sanctum_token>`).
 - **Frontend SPA Indépendant (`frontend/`) :** Application Web monopage (SPA) construite avec React 18, TypeScript et Vite. Le frontend est totalement indépendant du backend et consomme les API REST de manière asynchrone (Axios / Fetch API).
 - **Communication Temps Réel bi-directionnelle :** Laravel Reverb sur le port 8080 gère les événements WebSockets pour la mise à jour instantanée du tableau de bord (émargement QR scan en direct, notifications push).
 - **Nginx Reverse Proxy Entrypoint (`encg_nginx`) :** Redirige de façon transparente le trafic HTTP `/api/*` vers le conteneur backend PHP-FPM et sert l'application React SPA frontend.
@@ -57,7 +57,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 | Nom du Conteneur | Service / Rôle | Image / Technologies | Ports Exposés |
 | :--- | :--- | :--- | :--- |
 | **`encg_nginx`** | Reverse Proxy Web & Router | `nginx:alpine` | `80:80` |
-| **`encg_backend`** | Core API RESTful Backend | `PHP 8.4-FPM Alpine` (Laravel 13) | Interne |
+| **`encg_backend`** | Core API RESTful Backend | `PHP 8.4-FPM Alpine` (Laravel 12) | Interne |
 | **`encg_frontend`** | Interface SPA Client React | `node:22-alpine` (React 18 / Vite) | `5173:5173` |
 | **`encg_reverb`** | Serveur WebSockets Temps Réel | Laravel Reverb (`reverb:start`) | `8080:8080` |
 | **`encg_queue_worker`** | Worker Asynchrone Queues | Laravel Horizon (`horizon`) | Interne |
@@ -96,7 +96,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 ## 2. STACK TECHNIQUE ET OUTILS INNOVANTS UTILISÉS
 
 ### 2.1 Backend & Architecture System
-- **Framework & Runtime :** PHP 8.4 / Laravel 13 (Architecture RESTful API découplée).
+- **Framework & Runtime :** PHP 8.4 / Laravel 12 (Architecture RESTful API découplée).
 - **Authentification Hybride & Sécurité Avancée :**
   - 🌐 **Connexion Google Socialite SSO (`@encg-fes.ac.ma`) :** Connexion OAuth 2.0 rapide et sécurisée via les adresses institutionnelles Google Workspace de l'établissement.
   - 🔐 **Double Authentification 2FA TOTP (`RequireAdmin2FA`) :** Activation obligatoire de la 2FA pour les comptes administrateurs avec Google Authenticator / Authy.
@@ -124,7 +124,7 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 - **Certification par Promotion (`certifyPromo`) :** Certification en masse d'une promotion complète de diplômés avec vérification d'authenticité infalsifiable.
 
 ### 2.5 Frontend & Architecture UI / UX
-- **Core Stack :** React 18, TypeScript, Vite.
+- **Core Stack :** React 19, TypeScript, Vite.
 - **State Management & Data Fetching :**
   - **TanStack React Query v5 :** Gestion du cache asynchrone, mutations avec mise à jour optimiste, invalidation ciblée des requêtes (`admin-dashboard-stats`, `admin-document-requests`), et polling intelligent d'arrière-plan (5s - 15s).
   - **Zustand :** Store global d'authentification (`authStore`), gestion de session Sanctum et persistance locale.

@@ -1,0 +1,49 @@
+{
+  "title": "Tableau de Bord Administratif",
+  "subtitle": "Vue d'ensemble des statistiques de la plateforme",
+  "stats": {
+    "total_students": "Total Étudiants",
+    "active_professors": "Professeurs Actifs",
+    "programs": "Filières Actives",
+    "departments": "Départements"
+  },
+  "charts": {
+    "enrollment": "Évolution des Inscriptions",
+    "distribution": "Répartition par Filière"
+  },
+  "quick_actions": {
+    "title": "Actions Rapides",
+    "add_student": "Ajouter un Étudiant",
+    "add_professor": "Ajouter un Professeur",
+    "generate_report": "Générer Rapport",
+    "manage_schedule": "Gérer Emplois du Temps"
+  },
+  "tafem": {
+    "badge": "Admissibilité",
+    "title": "Concours TAFEM 2026",
+    "desc": "Gestion de masse des candidats, répartition intelligente dans les centres d'examens et génération des listes principales.",
+    "ai_btn": "Répartition Automatique IA",
+    "stats": {
+      "candidates": "Candidats Inscrits",
+      "candidates_sub": "Dossiers complets",
+      "capacity": "Capacité Amphis",
+      "capacity_sub": "12 Salles / 4 Amphis",
+      "repartition": "Répartition Auto",
+      "repartition_sub": "Placement terminé"
+    },
+    "logistics": {
+      "title": "Logistique Salles",
+      "subtitle": "Occupation et Surveillance",
+      "surveillants": "Surveillants Affectés"
+    },
+    "results": {
+      "title": "Résultats & Délibération",
+      "subtitle": "Post-correction OMR",
+      "import": "Importer Fichier Scanners OMR",
+      "import_sub": "Format .csv ou .xlsx (Notes des QCM)",
+      "gen_main": "Générer Liste Principale (Top 350)",
+      "gen_wait": "Générer Liste d'Attente",
+      "warning": "Attention : La publication des résultats enverra un SMS automatique aux 350 admis. Veuillez vérifier les seuils de coupure avant validation."
+    }
+  }
+}

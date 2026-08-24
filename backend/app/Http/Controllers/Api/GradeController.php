@@ -7,6 +7,7 @@ use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
+use App\Http\Requests\StoreGradeRequest;
 use App\Services\Academic\GradeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -69,7 +70,7 @@ class GradeController extends Controller
     /**
      * Enregistre les notes en masse.
      */
-    public function storeBulk(Request $request, int $assessmentId): JsonResponse
+    public function storeBulk(StoreGradeRequest $request, int $assessmentId): JsonResponse
     {
         $assessment = Assessment::with('module')->findOrFail($assessmentId);
         $user = $request->user();
@@ -97,12 +98,7 @@ class GradeController extends Controller
             ], 403);
         }
 
-        $validated = $request->validate([
-            'grades'             => 'required|array',
-            'grades.*.student_id' => 'required|exists:students,id',
-            'grades.*.value'      => 'nullable|numeric|min:0|max:20',
-            'grades.*.absent'     => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
         

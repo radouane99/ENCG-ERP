@@ -1,4 +1,4 @@
-import { api } from './students';
+import api from '@shared/lib/api';
 
 export const blockchainApi = {
   getLedger: async () => {

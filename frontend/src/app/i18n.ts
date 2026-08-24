@@ -22,18 +22,26 @@ i18n
       'lms',
       'dashboard',
       'admission',
+      'admissions',
       'timetable',
       'attendance',
       'deliberation',
       'library',
       'communication',
       'vacataire',
+      'admin',
+      'sidebar',
+      'modules',
+      'internship',
+      'pages',
     ],
+    load: 'languageOnly',
+    nonExplicitSupportedLngs: true,
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
     detection: {
-      order: ['localStorage'],
+      order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
       lookupLocalStorage: 'encg_lang',
     },
@@ -45,11 +53,14 @@ i18n
     },
   })
 
-// Set document direction when language changes
+import { applyDocumentLocale } from '@shared/lib/locale'
+
 i18n.on('languageChanged', (lng) => {
-  const dir = lng === 'ar' ? 'rtl' : 'ltr'
-  document.documentElement.setAttribute('dir', dir)
-  document.documentElement.setAttribute('lang', lng)
+  applyDocumentLocale(lng)
 })
+
+if (typeof document !== 'undefined') {
+  applyDocumentLocale(i18n.language || 'fr')
+}
 
 export default i18n

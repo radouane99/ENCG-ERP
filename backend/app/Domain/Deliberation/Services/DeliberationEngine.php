@@ -7,6 +7,8 @@ use App\Models\DeliberationDecision;
 use App\Models\ExamSession;
 use App\Models\ResitEligibility;
 use App\Models\Student;
+use App\Models\Module;
+use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +18,19 @@ use Illuminate\Support\Facades\DB;
  */
 class DeliberationEngine
 {
+    public function __construct(
+        private CanonicalDeliberationEngine $moduleEngine = new CanonicalDeliberationEngine()
+    ) {}
+
+    public function calculateModuleResult(Student $student, Module $module): array
+    {
+        return $this->moduleEngine->calculateModuleResult($student, $module);
+    }
+
+    public function calculateSemesterDeliberation(Student $student, $modules): array
+    {
+        return $this->moduleEngine->calculateSemesterDeliberation($student, $modules);
+    }
     /**
      * Run a full deliberation process for a given semester or year.
      */

@@ -15,7 +15,11 @@ class AiServiceProvider extends ServiceProvider
             $driver = env('AI_DRIVER');
 
             if (empty($driver)) {
-                throw new \InvalidArgumentException('AI_DRIVER is not configured. Set AI_DRIVER=gemini in your .env file.');
+                if ($app->environment('production')) {
+                    throw new \InvalidArgumentException('AI_DRIVER is not configured. Set AI_DRIVER=gemini in your .env file.');
+                }
+
+                $driver = 'stub';
             }
 
             if ($driver === 'gemini') {

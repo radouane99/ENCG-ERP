@@ -22,7 +22,7 @@
 4. [📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)](#4-moteur-de-délibération--règles-académiques-lmd-npn-maroc)
 5. [🔄 Diagrammes de Séquence des Processus Critiques (Workflows)](#5-diagrammes-de-séquence-des-processus-critiques-workflows)
 6. [🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP](#6-sécurité-signature-numérique-sha-256--conformité-cndp)
-7. [🧪 Pyramide de Tests & Couverture Complète (128 Backend + 17 Frontend)](#7-pyramide-de-tests--couverture-complète-128-backend--17-frontend)
+7. [🧪 Pyramide de Tests & Couverture (~49 fichiers backend + 17 Frontend)](#7-pyramide-de-tests--couverture-complète-128-backend--17-frontend)
 8. [💻 Guide d'Installation en Local (Docker Dev)](#8-guide-dinstallation-en-local-docker-dev)
 9. [🚀 Déploiement en Production (1-Click Production)](#9-déploiement-en-production-1-click-production)
 10. [⚙️ Référentiel des Variables d'Environnement](#10-référentiel-des-variables-denvironnement)

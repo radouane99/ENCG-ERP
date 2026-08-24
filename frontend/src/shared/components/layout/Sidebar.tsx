@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { changeAppLanguage } from '@shared/lib/locale'
 import { useAuthStore } from '@stores/authStore'
 import { cn } from '@shared/lib/utils'
 import {
@@ -176,7 +177,9 @@ interface SidebarProps {
 export default function Sidebar({ onClose }: SidebarProps) {
   const { i18n } = useTranslation('common')
   const { user, hasAnyRole, activeRole } = useAuthStore()
-  const isRtl = i18n.language === 'ar'
+  const loc = i18n.language.slice(0, 2)
+  const navLabel = (item: { label: string; labelAr?: string; labelEn?: string }) =>
+    loc === 'ar' ? (item.labelAr || item.label) : loc === 'en' ? (item.labelEn || item.label) : item.label
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -307,12 +310,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
         {/* Quick Language Selector */}
         <div className="flex items-center gap-1 bg-black/25 p-1 rounded-xl border border-white/10 w-full justify-between text-[11px] font-bold">
           <button
-            onClick={() => {
-              i18n.changeLanguage('fr');
-              document.documentElement.dir = 'ltr';
-              document.documentElement.lang = 'fr';
-              localStorage.setItem('i18nextLng', 'fr');
-            }}
+            type="button"
+            onClick={() => void changeAppLanguage('fr')}
             className={cn(
               "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
               i18n.language === 'fr' || !i18n.language ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
@@ -321,12 +320,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <span>🇫🇷</span> FR
           </button>
           <button
-            onClick={() => {
-              i18n.changeLanguage('ar');
-              document.documentElement.dir = 'rtl';
-              document.documentElement.lang = 'ar';
-              localStorage.setItem('i18nextLng', 'ar');
-            }}
+            type="button"
+            onClick={() => void changeAppLanguage('ar')}
             className={cn(
               "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
               i18n.language === 'ar' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
@@ -335,12 +330,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <span>🇲🇦</span> العربية
           </button>
           <button
-            onClick={() => {
-              i18n.changeLanguage('en');
-              document.documentElement.dir = 'ltr';
-              document.documentElement.lang = 'en';
-              localStorage.setItem('i18nextLng', 'en');
-            }}
+            type="button"
+            onClick={() => void changeAppLanguage('en')}
             className={cn(
               "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
               i18n.language === 'en' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
