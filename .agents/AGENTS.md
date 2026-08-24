@@ -28,4 +28,4 @@
 - **Never use `Mail::raw()`** — it is incompatible with the Resend transport. Always use proper `Mailable` classes with Blade views.
 - All new Mailables must extend `Illuminate\Mail\Mailable`, use `Queueable` + `SerializesModels`, and define `envelope()` / `content()` / `attachments()` methods.
 - Email views live in `resources/views/emails/` and must be standard Blade HTML templates (inline CSS only, no external stylesheets).
-- The `MAIL_FROM_ADDRESS` is `no-reply@benadadarentcar.com` and `MAIL_FROM_NAME` is `ENCG Portail`.
+- The `MAIL_FROM_ADDRESS` is `noreply@encg-fes.ac.ma` and `MAIL_FROM_NAME` is `ENCG Portail`.

@@ -84,7 +84,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 - **Emailing (Resend Transport) :**
   - `MAIL_MAILER=resend`
   - `RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx`
-  - `MAIL_FROM_ADDRESS=no-reply@benadadarentcar.com` *(Strictement configuré)*
+  - `MAIL_FROM_ADDRESS=noreply@encg-fes.ac.ma` *(Strictement configuré)*
   - `MAIL_FROM_NAME="ENCG Portail"`
   - *Règle : Interdiction formelle d'utiliser `Mail::raw()`. Seules des classes `Mailable` avec templates Blade HTML inline sont autorisées.*
 - **Google SSO OAuth 2.0 :** `GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com`, `GOOGLE_CLIENT_SECRET=xxxxxxx`, `GOOGLE_REDIRECT_URI=http://localhost/api/v1/auth/google/callback`.
@@ -954,7 +954,7 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
    - Lorsqu'un administrateur valide ou rejette une demande depuis le Guichet Unique ou le widget Guichet Express, une notification ciblée est transmise instantanément au profil de l'utilisateur concerné.
    - Le portail enseignant (`ProfessorDocumentsPage.tsx`) et le portail étudiant intègrent un rafraîchissement silencieux d'arrière-plan toutes les 6 secondes, mettant à jour le statut en direct (du badge jaune *En Attente* au badge vert *Prêt & Signé*).
 3. **Transport Email Officiel via Resend** :
-   - Tous les emails transactionnels utilisent le driver `resend` (`MAIL_MAILER=resend`, `MAIL_FROM_ADDRESS=no-reply@benadadarentcar.com`, `MAIL_FROM_NAME="ENCG Portail"`).
+   - Tous les emails transactionnels utilisent le driver `resend` (`MAIL_MAILER=resend`, `MAIL_FROM_ADDRESS=noreply@encg-fes.ac.ma`, `MAIL_FROM_NAME="ENCG Portail"`).
    - Les emails sont expédiés via des classes `Mailable` dédiées avec templates Blade HTML responsifs et pièces jointes PDF générées.
 
 ### 10.2 Sécurité Cryptographique, Cachet Numérique & QR Code Dynamique

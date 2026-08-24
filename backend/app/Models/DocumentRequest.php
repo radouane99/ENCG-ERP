@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasValidationWorkflow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class DocumentRequest extends Model implements HasMedia
 {
-    use \App\Traits\HasValidationWorkflow, HasFactory, InteractsWithMedia;
+    use HasFactory, HasValidationWorkflow, InteractsWithMedia;
 
     protected $guarded = ['id'];
 

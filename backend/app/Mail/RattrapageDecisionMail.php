@@ -56,7 +56,7 @@ class RattrapageDecisionMail extends Mailable
 
         return new Envelope(
             from: new Address(
-                config('mail.from.address', 'no-reply@benadadarentcar.com'),
+                config('mail.from.address', 'noreply@encg-fes.ac.ma'),
                 config('mail.from.name', 'ENCG Portail')
             ),
             subject: $subject,

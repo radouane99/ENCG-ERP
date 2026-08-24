@@ -27,5 +27,5 @@ This skill defines standard domain patterns, business logic constraints, and arc
 
 ## 5. Email Communications (Resend Transport)
 - Use proper `Mailable` classes extending `Illuminate\Mail\Mailable` with inline-styled Blade HTML templates.
-- From Address: `no-reply@benadadarentcar.com` | From Name: `ENCG Portail`.
+- From Address: `noreply@encg-fes.ac.ma` | From Name: `ENCG Portail`.
 - Never use `Mail::raw()`.

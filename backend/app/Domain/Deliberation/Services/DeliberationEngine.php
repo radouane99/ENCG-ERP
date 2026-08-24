@@ -135,7 +135,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
 
     private function isExamComponentType(?string $type): bool
     {
-        return in_array(strtolower(trim((string) $type)), ['exam', 'examen', 'examen_final', 'final', 'epreuve', 'cc2'], true);
+        return in_array(strtolower(trim((string) $type)), ['exam', 'examen', 'examen_final', 'final', 'epreuve'], true);
     }
 
     private function grantResitEligibility(int $studentId, Collection $moduleAverages, Deliberation $deliberation): void

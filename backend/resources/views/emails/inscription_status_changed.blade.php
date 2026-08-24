@@ -112,7 +112,7 @@
               <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.6;">
                 Cet email est envoyé automatiquement par le Portail Scolarité ENCG Fès.<br>
                 Pour toute question, contactez la Division des Affaires Estudiantines — Tél : 0535 xx xx xx<br>
-                <strong>no-reply@benadadarentcar.com</strong>
+                <strong>noreply@encg-fes.ac.ma</strong>
               </p>
             </td>
           </tr>

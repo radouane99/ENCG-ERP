@@ -407,7 +407,7 @@ chmod +x deploy.sh
 | `CACHE_STORE` / `QUEUE_CONNECTION` | Moteur de cache et workers | `redis` |
 | `MAIL_MAILER` | Pilote de messagerie certifié | `resend` |
 | `RESEND_API_KEY` | Clé API Resend Transactional | `re_prod_xxxxxxxxxxxx` |
-| `MAIL_FROM_ADDRESS` | Expéditeur officiel des emails | `no-reply@benadadarentcar.com` |
+| `MAIL_FROM_ADDRESS` | Expéditeur officiel des emails | `noreply@encg-fes.ac.ma` |
 
 ---
 

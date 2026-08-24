@@ -84,7 +84,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 - **Emailing (Resend Transport) :**
   - `MAIL_MAILER=resend`
   - `RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx`
-  - `MAIL_FROM_ADDRESS=no-reply@benadadarentcar.com` *(Strictement configuré)*
+  - `MAIL_FROM_ADDRESS=noreply@encg-fes.ac.ma` *(Strictement configuré)*
   - `MAIL_FROM_NAME="ENCG Portail"`
   - *Règle : Interdiction formelle d'utiliser `Mail::raw()`. Seules des classes `Mailable` avec templates Blade HTML inline sont autorisées.*
 - **Google SSO OAuth 2.0 :** `GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com`, `GOOGLE_CLIENT_SECRET=xxxxxxx`, `GOOGLE_REDIRECT_URI=http://localhost/api/v1/auth/google/callback`.

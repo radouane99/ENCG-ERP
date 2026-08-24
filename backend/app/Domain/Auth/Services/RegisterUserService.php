@@ -79,10 +79,10 @@ class RegisterUserService
 
             // 2. Find an active Admission Campaign or create a default one
             $campaign = AdmissionCampaign::where('status', 'open')->first();
+            $academicYear = AcademicYear::where('is_current', true)->first();
 
             if (! $campaign) {
                 $institution = Institution::first();
-                $academicYear = AcademicYear::where('is_current', true)->first();
                 $filiereModel = Filiere::where('name', 'like', '%'.($data['filiere'] ?? '').'%')->first()
                                 ?? Filiere::first();
 
@@ -149,7 +149,7 @@ class RegisterUserService
                     cin: $data['cin'] ?? 'N/A',
                     filiere: $data['filiere'] ?? 'DEUX ANNÉES PRÉPARATOIRES',
                     pdfPath: null,
-                    academicYear: '2026-2027'
+                    academicYear: $academicYear?->label ?: (date('Y').'-'.((int) date('Y') + 1))
                 ));
             } catch (\Exception $e) {
                 // Log email error gracefully without rolling back transaction

@@ -3,14 +3,16 @@
 namespace App\Services\Academic;
 
 use App\Models\DisciplineCase;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class StudentAffairsService
 {
     /**
      * Get all discipline cases with related entities.
      */
-    public function getAllDisciplineCases(): \Illuminate\Support\Collection
+    public function getAllDisciplineCases(): Collection
     {
         return DisciplineCase::with(['student', 'reportedBy'])
             ->latest()
@@ -43,7 +45,7 @@ class StudentAffairsService
         $validDecisions = ['warning', 'blame', 'annulation_module', 'annulation_semestre', 'exclusion', 'dismissed'];
 
         if (! in_array($decision, $validDecisions)) {
-            throw new \InvalidArgumentException('Invalid decision type. Valid decisions: warning, blame, annulation_module, annulation_semestre, exclusion, dismissed.');
+            throw new InvalidArgumentException('Invalid decision type. Valid decisions: warning, blame, annulation_module, annulation_semestre, exclusion, dismissed.');
         }
 
         return DB::transaction(function () use ($caseId, $decision, $notes) {

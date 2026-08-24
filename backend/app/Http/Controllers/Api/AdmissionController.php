@@ -852,7 +852,9 @@ class AdmissionController extends Controller
                 $name,
                 $cne ?: 'N142088916',
                 $cin ?: 'C3967857',
-                $application->reference_number ?? 'TC'
+                $application->reference_number ?? 'TC',
+                null,
+                AcademicYear::where('is_current', true)->value('label')
             )
         );
 

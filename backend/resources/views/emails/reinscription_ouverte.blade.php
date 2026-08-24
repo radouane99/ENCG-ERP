@@ -103,7 +103,7 @@
               <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.6;">
                 ENCG Fès — Route d'Imouzzer, Fès 30000, Maroc<br>
                 Tél : 0535 xx xx xx | scolarite@encg-fes.ac.ma<br>
-                <strong>no-reply@benadadarentcar.com</strong>
+                <strong>noreply@encg-fes.ac.ma</strong>
               </p>
             </td>
           </tr>

@@ -223,7 +223,7 @@ export default function UnifiedGuichetAttestationsPage() {
   }
 
   const handleSendEmail = (req: any) => {
-    toast.success(`Email certifié avec PDF transmis à ${req.person} (no-reply@benadadarentcar.com) !`)
+    toast.success(`Email certifié avec PDF transmis à ${req.person} (noreply@encg-fes.ac.ma) !`)
   }
 
   const handlePerformVerification = async (customCode?: string, fileToUpload?: File | null) => {

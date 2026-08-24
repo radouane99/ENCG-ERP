@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\AcademicYear;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -31,14 +32,16 @@ class StudentRegistrationSuccessMail extends Mailable
         string $cin,
         string $filiere,
         ?string $pdfPath = null,
-        string $academicYear = '2026-2027'
+        ?string $academicYear = null
     ) {
         $this->studentName = $studentName;
         $this->cne = $cne;
         $this->cin = $cin;
         $this->filiere = $filiere;
         $this->pdfPath = $pdfPath;
-        $this->academicYear = $academicYear;
+        $this->academicYear = $academicYear
+            ?: (AcademicYear::where('is_current', true)->value('label')
+                ?: (date('Y').'-'.((int) date('Y') + 1)));
     }
 
     public function envelope(): Envelope

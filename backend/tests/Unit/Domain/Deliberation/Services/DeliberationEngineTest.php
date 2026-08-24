@@ -41,6 +41,98 @@ it('calculates the mention correctly', function () {
     expect($method->invoke($this->engine, 18.50))->toBe('Très Bien');
 });
 
+it('treats only final exam types as rattrapage-replaceable, not CC2', function () {
+    $reflection = new ReflectionClass(DeliberationEngine::class);
+    $method = $reflection->getMethod('isExamComponentType');
+    $method->setAccessible(true);
+
+    expect($method->invoke($this->engine, 'exam'))->toBeTrue();
+    expect($method->invoke($this->engine, 'examen_final'))->toBeTrue();
+    expect($method->invoke($this->engine, 'CC2'))->toBeFalse();
+    expect($method->invoke($this->engine, 'cc1'))->toBeFalse();
+    expect($method->invoke($this->engine, 'tp'))->toBeFalse();
+});
+
+it('applies rattrapage only to the final exam component, not to CC2', function () {
+    $institution = Institution::firstOrCreate(
+        ['slug' => 'encg-fes'],
+        ['name' => 'ENCG Fes', 'code' => 'ENCGF', 'type' => 'grande_ecole']
+    );
+
+    $academicYear = AcademicYear::firstOrCreate(
+        ['label' => '2025-2026'],
+        [
+            'institution_id' => $institution->id,
+            'start_year' => 2025,
+            'end_year' => 2026,
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-07-31',
+        ]
+    );
+
+    $semester = Semester::firstOrCreate(
+        ['academic_year_id' => $academicYear->id, 'number' => 1],
+        ['name' => 'Semester 1', 'start_date' => '2025-09-01', 'end_date' => '2026-01-31']
+    );
+
+    $filiere = Filiere::firstOrCreate(
+        ['code' => 'COM'],
+        ['institution_id' => $institution->id, 'name' => 'Commerce', 'type' => 'initial']
+    );
+
+    $deliberation = Deliberation::forceCreate([
+        'institution_id' => $institution->id,
+        'academic_year_id' => $academicYear->id,
+        'semester_id' => $semester->id,
+        'filiere_id' => $filiere->id,
+        'type' => 'RATTRAPAGE',
+        'status' => 'pending',
+    ]);
+
+    $student = Student::forceCreate([
+        'institution_id' => $institution->id,
+        'student_number' => 'STU-RAT-CC2',
+        'cne' => 'N987654321',
+        'gender' => 'Female',
+    ]);
+
+    DB::table('student_registrations')->insert([
+        'student_id' => $student->id,
+        'academic_year_id' => $academicYear->id,
+        'filiere_id' => $filiere->id,
+        'semester_number' => 1,
+        'registration_type' => 'initial',
+    ]);
+
+    $module = Module::forceCreate([
+        'institution_id' => $institution->id,
+        'filiere_id' => $filiere->id,
+        'name' => 'Comptabilité',
+        'code' => 'CPT01',
+        'semester_number' => 1,
+        'coefficient' => 1,
+    ]);
+
+    $cc2 = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'cc2', 'weight' => 40]);
+    $exam = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'examen_final', 'weight' => 60]);
+    $resit = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'rattrapage', 'weight' => 0]);
+
+    Grade::forceCreate(['assessment_id' => $cc2->id, 'student_id' => $student->id, 'value' => 8]);
+    Grade::forceCreate(['assessment_id' => $exam->id, 'student_id' => $student->id, 'value' => 7]);
+    Grade::forceCreate(['assessment_id' => $resit->id, 'student_id' => $student->id, 'value' => 16]);
+
+    $this->engine->processDeliberation($deliberation);
+
+    $decision = DeliberationDecision::where('student_id', $student->id)
+        ->where('deliberation_id', $deliberation->id)
+        ->first();
+
+    // CC2 stays 8; only the exam is replaced: 8*0.4 + max(7,16)*0.6 = 12.8
+    // Wrong CC2 replacement would yield 16.0
+    expect($decision)->not->toBeNull();
+    expect((float) $decision->semester_average)->toEqual(12.8);
+});
+
 it('identifies eliminatory marks based on the 6.0 threshold', function () {
     $reflection = new ReflectionClass(DeliberationEngine::class);
     $method = $reflection->getMethod('checkEliminatoryMarks');

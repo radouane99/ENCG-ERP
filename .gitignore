@@ -43,8 +43,7 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
-# Playwright
-frontend/test-results/
-frontend/playwright-report/
-frontend/blob-report/
+# Nested accidental clone of this repo (breaks CI checkout / git 128)
+/ENCG-ERP
+
 

@@ -128,9 +128,9 @@ class GeminiAiDriver implements AiDriverInterface
             Log::error('AI Risk Prediction Parse Error', ['response' => $response]);
 
             return [
-                'risk_level' => 'Low',
-                'confidence' => 0.92,
-                'recommendation' => 'Étudiant présentant un bon profil d\'intégration.',
+                'risk_level' => 'Unknown',
+                'confidence' => 0.0,
+                'recommendation' => 'Unable to generate risk prediction at this time.',
             ];
         }
     }

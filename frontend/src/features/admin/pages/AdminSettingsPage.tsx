@@ -54,7 +54,7 @@ export default function AdminSettingsPage() {
     sessionTimeoutMinutes: '60',
     // Mail & Notifications (Resend)
     mailMailer: 'resend',
-    mailFromAddress: 'no-reply@benadadarentcar.com',
+    mailFromAddress: 'noreply@encg-fes.ac.ma',
     mailFromName: 'ENCG Portail Fès',
     notifyGradePublication: true,
     notifyDocReady: true,

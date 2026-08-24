@@ -1,10 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import {
-  Tent, Search, Users, CheckCircle2, 
-  XCircle, Clock, Filter, Sparkles, Building2, Plus, DollarSign, FileText, Printer, Check, X, ShieldCheck
-} from 'lucide-react'
+import { Tent, Search, Sparkles, Printer, Check } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
