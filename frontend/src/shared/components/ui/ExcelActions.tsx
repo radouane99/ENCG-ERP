@@ -41,7 +41,7 @@ export default function ExcelActions({ model, label, onImportSuccess }: ExcelAct
       link.remove()
       window.URL.revokeObjectURL(url)
       toast.success(`Export réussi — ${label ?? model}.xlsx téléchargé !`)
-    } catch (err: unknown) {
+    } catch {
       toast.error('Erreur lors de l\'export Excel')
     } finally {
       setExporting(false)
@@ -62,7 +62,7 @@ export default function ExcelActions({ model, label, onImportSuccess }: ExcelAct
       link.remove()
       window.URL.revokeObjectURL(url)
       toast.success(`Template téléchargé !`)
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors du téléchargement du template')
     }
   }

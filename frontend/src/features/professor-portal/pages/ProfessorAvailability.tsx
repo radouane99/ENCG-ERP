@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Check, Clock, Calendar, AlertCircle, Save, Loader2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Check, Calendar, Save, Loader2, ShieldCheck } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfessorAvailability() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
   const queryClient = useQueryClient();
 
   const [availability, setAvailability] = useState<Record<string, { matin: boolean; apresMidi: boolean }>>({
@@ -22,7 +20,7 @@ export default function ProfessorAvailability() {
   const [notes, setNotes] = useState('');
 
   // Fetch my availability from real backend
-  const { data: availData, isLoading } = useQuery({
+  const { data: availData } = useQuery({
     queryKey: ['my-availability'],
     queryFn: async () => {
       const res = await api.get('/professor-availability/my');

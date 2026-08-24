@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff, Copy, Check, Volume2 } from 'lucide-react'
+import { X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff, Copy, Check } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'

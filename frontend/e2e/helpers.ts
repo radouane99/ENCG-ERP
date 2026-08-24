@@ -21,8 +21,18 @@ const adminUser = {
 }
 
 export async function mockApi(page: Page) {
-  await page.route('**/api/**', async (route: Route) => {
+  await page.route((url) => {
+    const href = url.href
+    if (href.includes('/src/') || href.includes('node_modules') || href.includes('.tsx') || href.includes('.ts')) {
+      return false
+    }
+    return href.includes('/api/')
+  }, async (route: Route) => {
     const request = route.request()
+    const resourceType = request.resourceType()
+    if (resourceType === 'script' || resourceType === 'stylesheet' || resourceType === 'image' || resourceType === 'font') {
+      return route.continue()
+    }
     const url = request.url()
     const method = request.method()
 
@@ -36,7 +46,7 @@ export async function mockApi(page: Page) {
       })
     }
 
-    if (url.includes('/v1/auth/me')) {
+    if (url.includes('/auth/me')) {
       const auth = request.headers()['authorization'] ?? ''
       const user = auth.includes('admin') ? adminUser : studentUser
       return route.fulfill({

@@ -192,9 +192,9 @@ export default function AdminTafem() {
               <div className="inline-flex items-center gap-2 bg-pink-500/20 text-pink-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-pink-400/30">
                 <Target className="w-4 h-4 text-amber-400" /> Concours National d'Accès TAFEM 2026
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                Gestion & Logistique TAFEM 2026
-              </h1>
+              <p className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                Campagne TAFEM 2026 — centres & listes
+              </p>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
                 Répartition intelligente des candidats dans les centres d'examens, correction des grilles OMR et édition des listes principales de délibération.
               </p>
@@ -308,9 +308,17 @@ export default function AdminTafem() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {kpiStats.map((stat, idx) => (
-          <div key={idx} className={cn("rounded-3xl p-6 shadow-sm border transition-all hover:shadow-md", stat.bg, stat.border)}>
+          <div
+            key={idx}
+            className={cn(
+              'rounded-3xl p-6 shadow-sm border transition-all hover:shadow-md',
+              stat.bg,
+              stat.border,
+              idx === kpiStats.length - 1 && 'col-span-2 md:col-span-1',
+            )}
+          >
             <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{stat.label}</div>
             <div className={cn("text-4xl font-black mb-2 tracking-tight", stat.color)}>{stat.value}</div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.subtext}</div>

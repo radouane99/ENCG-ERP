@@ -23,13 +23,16 @@ test.describe('P2 — 8 parcours critiques', () => {
     await seedSession(page, 'student')
     await open(page, '/student/grades')
     await expect(page.getByTestId('student-grades-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByText('Performance Académique')).toBeVisible()
+    await expect(
+      page.getByTestId('student-grades-page').getByRole('heading', { name: 'Performance Académique' }),
+    ).toBeVisible()
   })
 
   test('2b. dashboard étudiant — CTA métier', async ({ page }) => {
     await seedSession(page, 'student')
     await open(page, '/dashboard')
-    await expect(page.getByTestId('role-quick-actions')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('student-dashboard')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('role-quick-actions')).toBeVisible()
     await expect(page.getByTestId('cta-student-grades')).toBeVisible()
     await expect(page.getByTestId('cta-student-documents')).toBeVisible()
   })
@@ -55,7 +58,9 @@ test.describe('P2 — 8 parcours critiques', () => {
     await seedSession(page, 'admin')
     await open(page, '/admin/tafem')
     await expect(page.getByTestId('admin-tafem-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByText(/TAFEM/)).toBeVisible()
+    await expect(
+      page.getByTestId('admin-tafem-page').getByRole('heading', { name: 'Gestion & Logistique TAFEM', exact: true }),
+    ).toBeVisible()
   })
 
   test('7. PV admin — cockpit délibération', async ({ page }) => {
@@ -69,6 +74,8 @@ test.describe('P2 — 8 parcours critiques', () => {
     await seedSession(page, 'admin')
     await open(page, '/admin/guichet')
     await expect(page.getByTestId('admin-guichet-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByText(/Guichet/)).toBeVisible()
+    await expect(
+      page.getByTestId('admin-guichet-page').getByRole('heading', { name: /Guichet Unique & Demandes Administratives/ }),
+    ).toBeVisible()
   })
 })

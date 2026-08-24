@@ -41,7 +41,7 @@ export default function StudentGrades() {
 
   return (
     <div data-testid="student-grades-page" className="space-y-6 font-sans animate-in fade-in zoom-in duration-500">
-      <PageHeader title="Performance Académique" subtitle="CC / Exam / RAT — V ≥ 10 · RAT · NV · < 6/20 éliminatoire" />
+      <PageHeader title="Performance Académique" titleLang={isRtl ? 'ar' : 'fr'} subtitle="CC / Exam / RAT — V ≥ 10 · RAT · NV · < 6/20 éliminatoire" />
       
       {/* Header Banner */}
       <div className="bg-primary rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-lg border border-blue-800/40">
@@ -50,7 +50,7 @@ export default function StudentGrades() {
         </div>
         
         <div className="relative z-10">
-          <h1 className="text-3xl font-black text-white mb-2" lang={isRtl ? 'ar' : 'fr'}>Performance Académique</h1>
+          <p className="text-3xl font-black text-white mb-2" lang={isRtl ? 'ar' : 'fr'}>Relevé de notes & décisions LMD</p>
           <p className="text-blue-100">CC / Exam / RAT — V ≥ 10 · RAT · NV · &lt; 6/20 éliminatoire</p>
           <div className="flex flex-wrap gap-3 mt-6">
             <button

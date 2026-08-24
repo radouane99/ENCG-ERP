@@ -6,16 +6,18 @@ export default function PageHeader({
   subtitle,
   actions,
   className,
+  titleLang,
 }: {
   title: string
   subtitle?: string
   actions?: ReactNode
   className?: string
+  titleLang?: string
 }) {
   return (
     <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6', className)}>
       <div className="min-w-0">
-        <h1 className="text-2xl font-black text-primary dark:text-white tracking-tight">{title}</h1>
+        <h1 lang={titleLang} className="text-2xl font-black text-primary dark:text-white tracking-tight">{title}</h1>
         {subtitle ? (
           <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         ) : null}

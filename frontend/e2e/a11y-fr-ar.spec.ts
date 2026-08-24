@@ -21,6 +21,8 @@ test.describe('A11y FR/AR — login et notes', () => {
     await seedSession(page, 'student')
     await page.goto('/student/grades', { waitUntil: 'domcontentloaded' })
     await expect(page.getByTestId('student-grades-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByRole('heading', { name: /Performance Académique/i })).toBeVisible()
+    await expect(
+      page.getByTestId('student-grades-page').getByRole('heading', { name: /Performance Académique/i }),
+    ).toBeVisible()
   })
 })

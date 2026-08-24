@@ -444,14 +444,23 @@ export default function AdminConvocationsPage() {
       </div>
 
       {previewUrl && (
-        <div className="rounded-3xl border border-border overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-500">Aperçu PDF</p>
-            <button type="button" onClick={() => setPreviewUrl(null)} className="text-xs font-bold text-slate-500 min-h-11 px-3">
-              Fermer
-            </button>
+        <div className="fixed inset-0 z-[60] bg-black/60 p-3 sm:p-6 flex flex-col">
+          <div className="flex-1 min-h-0 rounded-3xl border border-border overflow-hidden bg-white dark:bg-slate-900 shadow-sm flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <p className="text-xs font-black uppercase tracking-wider text-slate-500">Aperçu PDF</p>
+              <button
+                type="button"
+                onClick={() => {
+                  window.URL.revokeObjectURL(previewUrl)
+                  setPreviewUrl(null)
+                }}
+                className="text-xs font-bold text-slate-500 min-h-11 px-3"
+              >
+                Fermer
+              </button>
+            </div>
+            <iframe title="Aperçu convocation" src={previewUrl} className="w-full flex-1 min-h-[70vh] bg-slate-100" />
           </div>
-          <iframe title="Aperçu convocation" src={previewUrl} className="w-full min-h-[70vh] bg-slate-100" />
         </div>
       )}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-xl p-6 space-y-6 overflow-x-auto">
@@ -1122,7 +1131,15 @@ export default function AdminConvocationsPage() {
             <div className="p-4 px-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <div className="flex gap-2">
                 <button
-                  onClick={() => handlePreviewStudentPdf(selectedStudentDetail.all_seating_ids[0])}
+                  type="button"
+                  onClick={() => {
+                    const seatingId = selectedStudentDetail.all_seating_ids?.[0]
+                    if (!seatingId) {
+                      notify('Aucune convocation à prévisualiser.', 'error')
+                      return
+                    }
+                    void handlePreviewStudentPdf(seatingId)
+                  }}
                   className="px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-500" />

@@ -38,14 +38,22 @@ export default function StudentDashboard() {
     }
   });
 
-  const stats = statsData || {
+  const emptyStats = {
     gpa: 0,
     classes_today: 0,
     absences: { total: 0, justified: 0, unjustified: 0 },
     upcoming_exams: 0,
-    upcoming_classes: [],
-    recent_documents: []
-  };
+    upcoming_classes: [] as unknown[],
+    recent_documents: [] as unknown[],
+  }
+  const statsPayload = statsData && !Array.isArray(statsData) ? statsData : {}
+  const stats = {
+    ...emptyStats,
+    ...statsPayload,
+    absences: { ...emptyStats.absences, ...(statsPayload.absences ?? {}) },
+    upcoming_classes: Array.isArray(statsPayload.upcoming_classes) ? statsPayload.upcoming_classes : [],
+    recent_documents: Array.isArray(statsPayload.recent_documents) ? statsPayload.recent_documents : [],
+  }
 
   const requestDocument = async (kind: 'attestation' | 'releve') => {
     const types = documentTypes || []
