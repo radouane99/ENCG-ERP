@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\GradesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGradeRequest;
+use App\Imports\GradesImport;
 use App\Mail\StudentTranscriptMail;
 use App\Models\AcademicYear;
 use App\Models\Assessment;
@@ -22,8 +24,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Exports\GradesExport;
-use App\Imports\GradesImport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class GradeController extends Controller

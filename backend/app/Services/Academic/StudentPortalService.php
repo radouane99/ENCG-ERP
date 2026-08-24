@@ -60,7 +60,7 @@ class StudentPortalService
      */
     public function submitAbsenceJustification(array $data, ?UploadedFile $file, int $studentId): array
     {
-        app(\App\Services\Academic\AcademicWindowGuard::class)->assertJustificationsOpen();
+        app(AcademicWindowGuard::class)->assertJustificationsOpen();
 
         $attendance = Attendance::where('student_id', $studentId)
             ->whereKey($data['attendance_id'])

@@ -2,11 +2,13 @@
 
 namespace App\Services\Academic;
 
+use App\Models\AcademicYear;
 use App\Models\Filiere;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
+use Carbon\Carbon;
 use Exception;
 
 class ScheduleService
@@ -27,8 +29,8 @@ class ScheduleService
             $data['end_time']
         );
 
-        $day = (int) \Carbon\Carbon::parse($data['date'])->isoWeekday();
-        $yearId = (int) ($data['academic_year_id'] ?? \App\Models\AcademicYear::where('is_current', true)->value('id') ?? 1);
+        $day = (int) Carbon::parse($data['date'])->isoWeekday();
+        $yearId = (int) ($data['academic_year_id'] ?? AcademicYear::where('is_current', true)->value('id') ?? 1);
         $exceptions = app(ScheduleExceptionService::class)->validateSlot(
             $yearId,
             $day,

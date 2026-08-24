@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Domain\AI\Services\GroundedAiService;
 use App\Domain\Deliberation\LmdRules;
+use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Deliberation;
 use App\Models\DisciplinaryCase;
@@ -14,10 +14,12 @@ use App\Models\Module;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Services\Academic\DeliberationEngine;
+use App\Services\Academic\DeliberationSealService;
 use App\Services\Academic\DeliberationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -287,7 +289,7 @@ class DeliberationController extends Controller
     public function applyRachat(Request $request, int $id = 0): JsonResponse
     {
         if ($id) {
-            app(\App\Services\Academic\DeliberationSealService::class)->assertNotSealed(Deliberation::findOrFail($id));
+            app(DeliberationSealService::class)->assertNotSealed(Deliberation::findOrFail($id));
         }
 
         $validated = $request->validate([
@@ -508,7 +510,7 @@ class DeliberationController extends Controller
         $viewData = compact('filiere', 'academicYear', 'semesterNum', 'type', 'modules', 'matrix', 'juries');
         $viewData['seal_hash'] = $delib?->seal_hash;
         $viewData['voters'] = $delib
-            ? \Illuminate\Support\Facades\DB::table('deliberation_votes')->where('deliberation_id', $delib->id)->get()
+            ? DB::table('deliberation_votes')->where('deliberation_id', $delib->id)->get()
             : collect();
 
         if (view()->exists($pdfView)) {
@@ -598,7 +600,7 @@ class DeliberationController extends Controller
             'decision' => 'required|string|max:50',
             'comment' => 'nullable|string|max:2000',
         ]);
-        app(\App\Services\Academic\DeliberationSealService::class)->vote(
+        app(DeliberationSealService::class)->vote(
             $delib,
             $request->user(),
             $validated['decision'],
@@ -610,7 +612,7 @@ class DeliberationController extends Controller
 
     public function seal(Request $request, int $id): JsonResponse
     {
-        $hash = app(\App\Services\Academic\DeliberationSealService::class)->seal(
+        $hash = app(DeliberationSealService::class)->seal(
             Deliberation::findOrFail($id),
             $request->user()
         );
@@ -621,7 +623,7 @@ class DeliberationController extends Controller
     public function requestReopen(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate(['motif' => 'required|string|min:8']);
-        $requestId = app(\App\Services\Academic\DeliberationSealService::class)->requestReopen(
+        $requestId = app(DeliberationSealService::class)->requestReopen(
             Deliberation::findOrFail($id),
             $request->user(),
             $validated['motif']
@@ -632,7 +634,7 @@ class DeliberationController extends Controller
 
     public function approveReopen(Request $request, int $requestId): JsonResponse
     {
-        app(\App\Services\Academic\DeliberationSealService::class)->approveReopen($requestId, $request->user());
+        app(DeliberationSealService::class)->approveReopen($requestId, $request->user());
 
         return response()->json(['success' => true]);
     }

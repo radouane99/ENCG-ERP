@@ -8,6 +8,7 @@ use App\Models\DeliberationDecision;
 use App\Models\ResitEligibility;
 use App\Models\Student;
 use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
+use App\Services\Academic\DeliberationSealService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
 {
     public function processDeliberation(Deliberation $deliberation): void
     {
-        app(\App\Services\Academic\DeliberationSealService::class)->assertNotSealed($deliberation);
+        app(DeliberationSealService::class)->assertNotSealed($deliberation);
 
         DB::transaction(function () use ($deliberation) {
             $deliberation->update(['status' => 'in_progress']);

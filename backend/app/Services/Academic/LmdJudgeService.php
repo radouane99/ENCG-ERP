@@ -6,6 +6,7 @@ use App\Domain\AI\Services\GroundedAiService;
 use App\Domain\Deliberation\LmdRules;
 use App\Models\Module;
 use App\Models\Student;
+use Illuminate\Support\Facades\Schema;
 
 class LmdJudgeService
 {
@@ -79,7 +80,7 @@ class LmdJudgeService
 
         $modulesQuery->where(function ($q) use ($semester) {
             $q->where('semester_number', $semester);
-            if (\Illuminate\Support\Facades\Schema::hasColumn('modules', 'semester_id')) {
+            if (Schema::hasColumn('modules', 'semester_id')) {
                 $q->orWhere('semester_id', $semester);
             }
         });

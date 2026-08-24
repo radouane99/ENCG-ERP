@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\AI\Contracts\AiDriverInterface;
 use App\Domain\AI\Services\GeminiAiDriver;
 use App\Domain\AI\Services\GroundedAiService;
 use App\Domain\Deliberation\LmdRules;
@@ -68,7 +69,7 @@ it('explains NV from precomputed facts without inventing Validé', function () {
 });
 
 it('appends a single grounded-numbers footer from actual facts', function () {
-    $driver = new class implements \App\Domain\AI\Contracts\AiDriverInterface
+    $driver = new class implements AiDriverInterface
     {
         public function generate(string $prompt, array $context = []): string
         {

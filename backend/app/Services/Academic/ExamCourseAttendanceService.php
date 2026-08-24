@@ -7,7 +7,7 @@ use App\Models\DisciplinaryCase;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\User;
-use Illuminate\Support\Facades\Notification;
+use App\Notifications\SystemNotification;
 
 class ExamCourseAttendanceService
 {
@@ -77,7 +77,7 @@ class ExamCourseAttendanceService
 
         try {
             foreach (User::role('discipline-committee')->get() as $user) {
-                $user->notify(new \App\Notifications\SystemNotification(
+                $user->notify(new SystemNotification(
                     'Incident examen — conseil de discipline',
                     'Un cas de fraude a été ouvert pour instruction.'
                 ));

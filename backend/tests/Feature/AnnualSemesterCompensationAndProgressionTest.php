@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Models\AcademicYear;
 use App\Models\Department;
 use App\Models\Filiere;
 use App\Models\Institution;
-use App\Models\Module;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -103,7 +103,7 @@ class AnnualSemesterCompensationAndProgressionTest extends TestCase
 
         $annualAverage = 11.50;
         $lowestModuleScore = 5.50;
-        $eliminatoryThreshold = \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD;
+        $eliminatoryThreshold = LmdRules::ELIMINATORY_THRESHOLD;
 
         $hasEliminatory = $lowestModuleScore < $eliminatoryThreshold;
         $isAnnualAdmittedDirectly = ($annualAverage >= 10.0) && ! $hasEliminatory;

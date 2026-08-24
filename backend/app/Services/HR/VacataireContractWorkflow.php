@@ -2,6 +2,7 @@
 
 namespace App\Services\HR;
 
+use App\Domain\AI\Services\GroundedAiService;
 use App\Models\User;
 use App\Models\VacationContract;
 use App\Models\VacationSession;
@@ -39,7 +40,7 @@ class VacataireContractWorkflow
         $max = (int) ($contract->max_hours_per_module ?: self::MAX_HOURS_PER_MODULE);
         $done = (float) VacationSession::where('vacation_contract_id', $contract->id)->sum('hours');
         if (($done + $additionalHours) > $max) {
-            $copy = app(\App\Domain\AI\Services\GroundedAiService::class)->explain([
+            $copy = app(GroundedAiService::class)->explain([
                 'done' => $done,
                 'additional' => $additionalHours,
                 'max' => $max,

@@ -124,7 +124,7 @@ class ProfessorAiCopilotController extends Controller
             $prompt = "Tu es un Professeur Universitaire à l'ENCG Fès (Université Sidi Mohamed Ben Abdellah). "
                 ."Rédige un sujet d'examen officiel et complet pour le module '{$module->name}' ({$module->filiere?->name}). "
                 ."Format: {$typeLabel}. Niveau: {$validated['difficulty']}. Consignes particulières: {$instructions}.{$fesHint} "
-                ."Barème LMD ENCG : validation ≥ 10/20, éliminatoire < 6/20 — ne propose pas de corrigé type avec une note < 6. "
+                .'Barème LMD ENCG : validation ≥ 10/20, éliminatoire < 6/20 — ne propose pas de corrigé type avec une note < 6. '
                 ."Réponds STRICTEMENT au format JSON valide avec les clés suivantes:\n"
                 ."- 'title' (string): Intitulé officiel du sujet\n"
                 ."- 'context' (string): Contexte entreprise / mise en situation de 2 paragraphes\n"

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Professor;
 use App\Models\VacationContract;
 use App\Services\HR\ProfessorService;
+use App\Services\HR\VacataireContractWorkflow;
 use App\Services\HR\VacataireService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -233,7 +234,7 @@ class VacataireController extends Controller
         ]);
 
         $contract = VacationContract::findOrFail($contractId);
-        app(\App\Services\HR\VacataireContractWorkflow::class)->assertHoursWithinCap($contract, (float) $validated['hours_declared']);
+        app(VacataireContractWorkflow::class)->assertHoursWithinCap($contract, (float) $validated['hours_declared']);
 
         $payment = $this->vacataireService->calculatePayments($contractId, $validated['hours_declared']);
 
@@ -302,7 +303,7 @@ class VacataireController extends Controller
     public function approveDepartment(Request $request, int $contractId): JsonResponse
     {
         $contract = VacationContract::findOrFail($contractId);
-        app(\App\Services\HR\VacataireContractWorkflow::class)->approveByDepartment($contract, $request->user());
+        app(VacataireContractWorkflow::class)->approveByDepartment($contract, $request->user());
 
         return response()->json(['success' => true, 'status' => $contract->fresh()->status]);
     }
@@ -310,7 +311,7 @@ class VacataireController extends Controller
     public function approveHr(Request $request, int $contractId): JsonResponse
     {
         $contract = VacationContract::findOrFail($contractId);
-        app(\App\Services\HR\VacataireContractWorkflow::class)->approveByHr($contract, $request->user());
+        app(VacataireContractWorkflow::class)->approveByHr($contract, $request->user());
 
         return response()->json(['success' => true, 'status' => $contract->fresh()->status]);
     }

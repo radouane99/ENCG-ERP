@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\SubmitAbsenceRequest;
 use App\Models\LearningMaterial;
 use App\Services\Academic\StudentPortalService;
+use App\Services\Library\KohaLibraryClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -83,13 +84,13 @@ class StudentPortalController extends Controller
         $studentId = $this->resolveAuthenticatedStudentId($request);
         $student = $request->user()?->student;
 
-        $materials = \App\Models\LearningMaterial::where('is_published', true)
+        $materials = LearningMaterial::where('is_published', true)
             ->with(['module', 'professor'])
             ->latest()
             ->take(20)
             ->get();
 
-        $kohaLoans = app(\App\Services\Library\KohaLibraryClient::class)->loansForStudent($student?->cne);
+        $kohaLoans = app(KohaLibraryClient::class)->loansForStudent($student?->cne);
 
         return response()->json([
             'success' => true,

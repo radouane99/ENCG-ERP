@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Domain\AI\Services\GroundedAiService;
+use App\Domain\Student\Models\StudentDossierAuditLog;
+use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
@@ -144,7 +145,7 @@ class TafemMinistryImportController extends Controller
                     ]
                 );
 
-                $student = \App\Models\Student::updateOrCreate(
+                $student = Student::updateOrCreate(
                     ['cne' => $cne],
                     [
                         'institution_id' => $institutionId,
@@ -162,10 +163,10 @@ class TafemMinistryImportController extends Controller
                     ]
                 );
 
-                if (class_exists(\App\Domain\Student\Models\StudentDossierAuditLog::class)) {
-                    \App\Domain\Student\Models\StudentDossierAuditLog::log(
+                if (class_exists(StudentDossierAuditLog::class)) {
+                    StudentDossierAuditLog::log(
                         $student->id,
-                        \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_DATA_EDITED,
+                        StudentDossierAuditLog::ACTION_DATA_EDITED,
                         'tafem_import',
                         null,
                         ['cne' => $cne, 'cin' => $cin],

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\Student;
 
-use App\Http\Controllers\Controller;
 use App\Domain\AI\Services\GroundedAiService;
+use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Student;
 use App\Services\Academic\LmdJudgeService;

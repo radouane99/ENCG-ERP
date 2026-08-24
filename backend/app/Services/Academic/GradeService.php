@@ -2,6 +2,7 @@
 
 namespace App\Services\Academic;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Models\Assessment;
 use App\Models\DisciplinaryCase;
 use App\Models\ExamIncident;
@@ -196,10 +197,10 @@ class GradeService
         if ($moyenne === null) {
             return 'DEF';
         }
-        if ($moyenne >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD) {
+        if ($moyenne >= LmdRules::VALIDATION_THRESHOLD) {
             return 'V';
         }
-        if ($moyenne >= \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD) {
+        if ($moyenne >= LmdRules::ELIMINATORY_THRESHOLD) {
             return 'R';
         }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Student\Models\StudentDossierAuditLog;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
 use App\Models\Student;
@@ -136,7 +137,7 @@ class ReinscriptionWorkflowTest extends TestCase
         $this->artisan('reinscription:ouvrir', ['--annee' => '2028'])->assertSuccessful();
         $this->assertSame(
             0,
-            \App\Domain\Student\Models\StudentDossierAuditLog::query()
+            StudentDossierAuditLog::query()
                 ->where('student_id', $this->student->id)
                 ->where('action', 'reinscription_blocked')
                 ->count()
@@ -156,7 +157,7 @@ class ReinscriptionWorkflowTest extends TestCase
         ]);
         $this->assertDatabaseHas('student_dossier_audit_logs', [
             'student_id' => $eligible->id,
-            'action' => \App\Domain\Student\Models\StudentDossierAuditLog::ACTION_REINSCRIPTION,
+            'action' => StudentDossierAuditLog::ACTION_REINSCRIPTION,
             'old_value' => 'inscrit',
             'new_value' => 'reinscrit',
         ]);

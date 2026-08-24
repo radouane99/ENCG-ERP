@@ -6,6 +6,7 @@ use App\Models\AbsenceJustification;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Student;
+use App\Services\Academic\AcademicWindowGuard;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +47,7 @@ class AbsenceManagementService
      */
     public function submitJustification(Student $student, Attendance $attendance, array $data, UploadedFile $file): AbsenceJustification
     {
-        app(\App\Services\Academic\AcademicWindowGuard::class)->assertJustificationsOpen();
+        app(AcademicWindowGuard::class)->assertJustificationsOpen();
 
         if ($attendance->student_id !== $student->id) {
             throw new Exception("Cette absence n'appartient pas à l'étudiant.");

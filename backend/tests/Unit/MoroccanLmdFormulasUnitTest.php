@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Domain\Deliberation\LmdRules;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -60,7 +61,7 @@ class MoroccanLmdFormulasUnitTest extends TestCase
     public function test_eliminatory_grade_detection(): void
     {
         $moduleGrades = [15.0, 16.0, 14.0, 5.5];
-        $eliminatoryThreshold = \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD;
+        $eliminatoryThreshold = LmdRules::ELIMINATORY_THRESHOLD;
 
         $hasEliminatory = false;
         foreach ($moduleGrades as $grade) {

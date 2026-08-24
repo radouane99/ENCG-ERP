@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Http\Controllers\Controller;
 use App\Models\AbsenceJustification;
+use App\Models\Application;
 use App\Models\Attendance;
 use App\Models\Convocation;
 use App\Models\ExamIncident;
@@ -11,10 +13,13 @@ use App\Models\Grade;
 use App\Models\ResitEligibility;
 use App\Models\Student;
 use App\Models\StudentRegistration;
+use App\Models\VacationContract;
+use App\Models\VacationSession;
 use App\Services\Academic\EarlyWarningService;
 use App\Services\Analytics\DashboardAnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class PilotageController extends Controller
 {
@@ -134,31 +139,31 @@ class PilotageController extends Controller
 
     public function getDirectionCockpit(EarlyWarningService $earlyWarnings): JsonResponse
     {
-        $courseAbsences = \App\Models\Attendance::query()
+        $courseAbsences = Attendance::query()
             ->where('status', 'absent')
             ->count();
 
-        $modulesAtRisk = \App\Models\Grade::query()
+        $modulesAtRisk = Grade::query()
             ->whereNotNull('value')
-            ->where('value', '<', \App\Domain\Deliberation\LmdRules::ELIMINATORY_THRESHOLD)
+            ->where('value', '<', LmdRules::ELIMINATORY_THRESHOLD)
             ->count();
 
         $tafemQueue = 0;
-        if (\Illuminate\Support\Facades\Schema::hasTable('applications')) {
-            $tafemQueue = \App\Models\Application::query()
+        if (Schema::hasTable('applications')) {
+            $tafemQueue = Application::query()
                 ->whereIn('status', ['pending', 'submitted', 'liste_attente_1'])
                 ->count();
         }
 
         $vacataireLoad = [];
-        if (\Illuminate\Support\Facades\Schema::hasTable('vacation_contracts')) {
-            $vacataireLoad = \App\Models\VacationContract::query()
+        if (Schema::hasTable('vacation_contracts')) {
+            $vacataireLoad = VacationContract::query()
                 ->select('id', 'first_name', 'last_name', 'agreed_hours', 'max_hours_per_module', 'status')
                 ->latest('id')
                 ->take(20)
                 ->get()
                 ->map(function ($c) {
-                    $hours = (float) \App\Models\VacationSession::where('vacation_contract_id', $c->id)->sum('hours');
+                    $hours = (float) VacationSession::where('vacation_contract_id', $c->id)->sum('hours');
                     $cap = (int) ($c->max_hours_per_module ?: 45);
 
                     return [

@@ -3,11 +3,11 @@
 namespace App\Providers;
 
 use App\Events\DocumentProcessed;
+use App\Events\GradeDeadlineWarning;
 use App\Events\OcrProcessingComplete;
 use App\Listeners\HandleOcrComplete;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
-use App\Listeners\LogSuccessfulLogout;
 use App\Listeners\NotifyDocumentProcessed;
 use App\Models\Grade;
 use App\Models\Student;
@@ -21,10 +21,10 @@ use App\OCR\Parsers\ReleveParser;
 use App\Policies\GradePolicy;
 use App\Policies\StudentPolicy;
 use App\Services\AI\LocalOcrService;
+use App\Services\Campus\CampusAlertService;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -387,9 +387,9 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Event::listen(
-            \App\Events\GradeDeadlineWarning::class,
-            function (\App\Events\GradeDeadlineWarning $event) {
-                app(\App\Services\Campus\CampusAlertService::class)
+            GradeDeadlineWarning::class,
+            function (GradeDeadlineWarning $event) {
+                app(CampusAlertService::class)
                     ->notifyProfessorsGradeDeadline($event->endDate, $event->sessionLabel);
             }
         );

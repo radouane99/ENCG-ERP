@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Deliberation\LmdRules;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,7 +34,7 @@ class Filiere extends Model
 
     public function requiresTuitionPayment(): bool
     {
-        return \App\Domain\Deliberation\LmdRules::filiereRequiresPayment($this->type ?? null);
+        return LmdRules::filiereRequiresPayment($this->type ?? null);
     }
 
     public function specialities(): HasMany

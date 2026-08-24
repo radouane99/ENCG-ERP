@@ -1,18 +1,22 @@
 <?php
 
 use App\Domain\Deliberation\LmdRules;
+use App\Models\AcademicEvent;
 use App\Models\AcademicYear;
 use App\Models\Assessment;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\Campus;
 use App\Models\Deliberation;
 use App\Models\DisciplinaryCase;
 use App\Models\Exam;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
+use App\Models\ExamSession;
 use App\Models\Filiere;
 use App\Models\Grade;
 use App\Models\GradeEntryPeriod;
+use App\Models\Group;
 use App\Models\Holiday;
 use App\Models\Module;
 use App\Models\Room;
@@ -88,7 +92,7 @@ it('opens grade entry when no academic window is configured', function () {
 it('closes grade entry when all grade periods are closed', function () {
     $year = AcademicYear::factory()->create(['is_current' => true]);
     $semester = Semester::factory()->create(['academic_year_id' => $year->id]);
-    $session = \App\Models\ExamSession::query()->create([
+    $session = ExamSession::query()->create([
         'institution_id' => 1,
         'academic_year_id' => $year->id,
         'semester_id' => $semester->id,
@@ -240,7 +244,7 @@ it('rejects timetable slots on holidays, out-of-service rooms and Ramadan late h
     $holiday = $svc->validateSlot($year->id, 1, '08:30:00', '10:30:00', (int) $okRoom->id, 1, 1, now()->toDateString());
     expect($holiday['isValid'])->toBeFalse()->and($holiday['reason'])->toContain('férié');
 
-    \App\Models\AcademicEvent::create([
+    AcademicEvent::create([
         'academic_year_id' => $year->id,
         'title' => 'Horaires aménagés Ramadan',
         'type' => 'ramadan',
@@ -253,7 +257,7 @@ it('rejects timetable slots on holidays, out-of-service rooms and Ramadan late h
     $ramadan = $svc->validateSlot($year->id, 1, '16:45:00', '18:45:00', (int) $okRoom->id, 1, 1, now()->toDateString());
     expect($ramadan['isValid'])->toBeFalse();
 
-    \App\Models\AcademicEvent::query()->where('type', 'ramadan')->update(['meta' => null]);
+    AcademicEvent::query()->where('type', 'ramadan')->update(['meta' => null]);
     $fallback = $svc->validateSlot($year->id, 1, '16:45:00', '18:45:00', (int) $okRoom->id, 1, 1, now()->toDateString());
     expect($fallback['isValid'])->toBeFalse();
 });
@@ -349,7 +353,7 @@ it('keeps a stable exam PV seal and treats unrecorded seating as absent', functi
     $year = $this->makeTestAcademicYear();
     $filiere = $this->makeTestFiliere(['code' => 'PV-SEAL']);
     $semester = $this->makeTestSemester($year->id);
-    $session = \App\Models\ExamSession::query()->create([
+    $session = ExamSession::query()->create([
         'institution_id' => 1,
         'academic_year_id' => $year->id,
         'semester_id' => $semester->id,
@@ -359,7 +363,7 @@ it('keeps a stable exam PV seal and treats unrecorded seating as absent', functi
         'end_date' => now()->addMonth(),
     ]);
     $module = $this->makeTestModule($filiere->id, ['code' => 'PV-MOD']);
-    $campus = \App\Models\Campus::firstOrCreate(
+    $campus = Campus::firstOrCreate(
         ['code' => 'CAMPUS_PV_SEAL'],
         ['institution_id' => 1, 'name' => 'Campus PV', 'is_main' => true]
     );
@@ -371,7 +375,7 @@ it('keeps a stable exam PV seal and treats unrecorded seating as absent', functi
         'type' => 'amphitheater',
         'capacity' => 80,
     ]);
-    $group = \App\Models\Group::create([
+    $group = Group::create([
         'academic_year_id' => $year->id,
         'filiere_id' => $filiere->id,
         'semester_number' => 1,

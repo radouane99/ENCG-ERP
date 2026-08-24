@@ -13,6 +13,7 @@ use App\Models\FinalProject;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
+use App\Services\Academic\ExamCourseAttendanceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -100,7 +101,7 @@ class ExamIncidentController extends Controller
             'status' => 'pending',
         ]);
 
-        app(\App\Services\Academic\ExamCourseAttendanceService::class)->reportFraudIncident($incident);
+        app(ExamCourseAttendanceService::class)->reportFraudIncident($incident);
 
         // Sanction automatique pour fraude
         if ($validated['type'] === 'fraude' && $exam?->module_id) {

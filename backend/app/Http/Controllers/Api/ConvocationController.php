@@ -8,6 +8,7 @@ use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
 use App\Models\Student;
 use App\Services\Academic\ExamConvocationService;
+use App\Services\Campus\CampusAlertService;
 use App\Services\ProctorAssignmentService;
 use App\Services\WhatsAppService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -52,7 +53,7 @@ class ConvocationController extends Controller
         return response()->json($this->convocationService->sendSessionEmails($validated['session_id']));
     }
 
-    public function sendCampusAlerts(int $sessionId, \App\Services\Campus\CampusAlertService $alerts): JsonResponse
+    public function sendCampusAlerts(int $sessionId, CampusAlertService $alerts): JsonResponse
     {
         $seatings = ExamSeating::with(['student.user', 'exam'])
             ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
@@ -64,7 +65,7 @@ class ConvocationController extends Controller
             $user = $student?->user;
             $phone = $user?->phone ?? $student?->phone ?? null;
             $alerts->send(
-                \App\Services\Campus\CampusAlertService::TEMPLATE_CONVOCATION,
+                CampusAlertService::TEMPLATE_CONVOCATION,
                 is_numeric($user?->id) ? (int) $user->id : null,
                 $phone
             );
