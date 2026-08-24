@@ -1,15 +1,21 @@
 name: Deploy ENCG-ERP to Production
 
 on:
-  push:
-    branches:
-      - docker-v2
   workflow_dispatch:
+    inputs:
+      skip_frontend:
+        description: 'Reuse existing frontend/dist on the VPS'
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
   test-and-build:
+    name: Gate — tests + production frontend build
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:16-alpine
@@ -24,23 +30,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl
           coverage: none
-
       - name: Install PHP Dependencies
         working-directory: ./backend
         run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
-
-      - name: Generate key for testing
+      - name: Configure testing env
         working-directory: ./backend
         run: |
           cp .env.example .env.testing
@@ -52,10 +52,11 @@ jobs:
           DB_DATABASE: encg_erp_test
           DB_USERNAME: encg_user
           DB_PASSWORD: encg_password
-
-      - name: Run Database Migrations
+      - name: Migrate & test
         working-directory: ./backend
-        run: php artisan migrate --force --env=testing
+        run: |
+          php artisan migrate --force --env=testing
+          php artisan test --env=testing
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -63,61 +64,50 @@ jobs:
           DB_DATABASE: encg_erp_test
           DB_USERNAME: encg_user
           DB_PASSWORD: encg_password
-
-      - name: Run PHP Tests
-        working-directory: ./backend
-        run: php artisan test --env=testing
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: encg_erp_test
-          DB_USERNAME: encg_user
-          DB_PASSWORD: encg_password
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Install Frontend Dependencies
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend production build
         working-directory: ./frontend
-        run: npm ci
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
 
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Detect VPS secrets
-        id: vps
+      - name: Require VPS secrets
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          if [ -z "$DEPLOY_HOST" ]; then
-            echo "ok=false" >> "$GITHUB_OUTPUT"
-            echo "DEPLOY_HOST secret is empty — skip SSH."
-          else
-            echo "ok=true" >> "$GITHUB_OUTPUT"
-          fi
+          missing=0
+          [ -n "$DEPLOY_HOST" ] || { echo "Missing secret DEPLOY_HOST"; missing=1; }
+          [ -n "$DEPLOY_USER" ] || { echo "Missing secret DEPLOY_USER"; missing=1; }
+          [ -n "$DEPLOY_SSH_KEY" ] || { echo "Missing secret DEPLOY_SSH_KEY"; missing=1; }
+          exit "$missing"
 
-      - name: SSH deploy docker-v2
-        if: steps.vps.outputs.ok == 'true'
+      - name: SSH deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
           script: |
-            cd ~/ENCG-ERP-V1 || cd /opt/encg-erp || exit 1
+            set -euo pipefail
+            cd ~/ENCG-ERP-V1 || cd /opt/encg-erp || cd /var/www/encg-erp || exit 1
             git fetch origin docker-v2
             git checkout docker-v2
             git pull --ff-only origin docker-v2
-            ./deploy.sh docker-v2
+            chmod +x deploy.sh scripts/deploy-preflight.sh scripts/provision-ssl.sh scripts/backup-postgres.sh
+            if [ "${{ github.event.inputs.skip_frontend }}" = "true" ]; then
+              ./deploy.sh --no-git --skip-frontend docker-v2
+            else
+              ./deploy.sh --no-git docker-v2
+            fi

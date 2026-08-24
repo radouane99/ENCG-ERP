@@ -72,7 +72,13 @@
       "@php artisan key:generate --ansi",
       "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
       "@php artisan migrate --graceful --ansi"
-    ]
+    ],
+    "test": "php artisan test",
+    "test:unit": "php artisan test --testsuite=Unit",
+    "test:feature": "php artisan test --testsuite=Feature",
+    "test:lmd": "php artisan test --group=lmd",
+    "test:security": "php artisan test --group=security",
+    "analyse": "phpstan analyse --memory-limit=1G"
   },
   "extra": {
     "laravel": {

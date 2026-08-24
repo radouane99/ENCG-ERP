@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 // هاد السطر كيعلم Pest باش يستعمل الـ TestCase ديال لارافيل والـ RefreshDatabase
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class)->group('lmd');
 
 beforeEach(function () {
     $this->engine = new DeliberationEngine;

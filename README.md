@@ -305,6 +305,8 @@ graph LR
 
 ## 7. Pyramide de Tests & Couverture Complète (128 Backend + 17 Frontend)
 
+Stratégie, 7 principes ISTQB et commandes : **[TESTING.md](TESTING.md)**.
+
 Le projet intègre une suite de tests automatisés exhaustive garantissant **0 régression** :
 
 ```mermaid

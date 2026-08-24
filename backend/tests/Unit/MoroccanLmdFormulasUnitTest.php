@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * Pure Unit Tests for Moroccan Higher Education LMD Formulas & Academic Rules.
  * Reference: Normes Pédagogiques Nationales (NPN) — ENCG / MESRSFC.
+ *
+ * @group lmd
  */
 class MoroccanLmdFormulasUnitTest extends TestCase
 {

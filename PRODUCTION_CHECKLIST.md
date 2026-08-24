@@ -10,7 +10,7 @@ This document outlines the required steps, checks, and configurations before goi
 - [ ] Database credentials (`DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) are correct.
 - [ ] Redis credentials (`REDIS_HOST`, `REDIS_PASSWORD`) are configured.
 - [ ] `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis` are set.
-- [ ] Mail server settings (SMTP, Mailgun, etc.) are valid.
+- [ ] Mail: Resend + `MAIL_FROM_ADDRESS=noreply@encg-fes.ac.ma` (verified domain).
 - [ ] `AI_DRIVER` is explicitly configured and does not point to a local `stub` driver.
   - Production must set `AI_DRIVER` to a supported provider (e.g., `gemini`) and ensure API keys are present.
 
@@ -20,15 +20,12 @@ This document outlines the required steps, checks, and configurations before goi
 - [ ] Horizon Daemon is managed by a process monitor (e.g., Supervisor) to keep `php artisan horizon` running continuously in the background.
 
 ## 3. Deployment / Container Execution
-- [ ] `deploy.sh` is present in the repository root if you use the shell-based deployment path.
-- [ ] If you deploy with Docker Compose, confirm `docker-compose.prod.yml` is the source of truth and the production `.env` file is mounted correctly.
-- [ ] Ensure the deployment process runs:
-  - `composer install --no-dev --optimize-autoloader`
-  - `php artisan migrate --force`
-  - `php artisan optimize`
-  - `php artisan horizon:terminate` or restarts the worker container cleanly
-  - Frontend asset compilation (`npm run build`) when frontend assets are built outside the runtime image
-- [ ] Verify the final production services are the expected ones: app, nginx, db, redis, worker.
+- [ ] `backend/.env.production` exists, `APP_DEBUG=false`, no placeholder passwords (`./scripts/deploy-preflight.sh`).
+- [ ] `docker compose --env-file backend/.env.production -f docker-compose.prod.yml` is the source of truth (same secrets for Postgres, Redis, Laravel).
+- [ ] First boot uses HTTP bootstrap; TLS via `./scripts/provision-ssl.sh` then HTTPS (`prod.conf`).
+- [ ] Deploy: `./deploy.sh docker-v2` (or GitHub Action **workflow_dispatch** only — never auto-deploy on push).
+- [ ] After deploy: `migrate --force`, `storage:link`, `config/route/view:cache`, Horizon restarted.
+- [ ] Services: nginx, backend, postgres, redis, queue-worker, scheduler.
 
 ## 4. File Permissions & Storage
 - [ ] Ensure the `storage` and `bootstrap/cache` directories are writable by the web server user (e.g., `www-data` or `nginx`).

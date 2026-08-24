@@ -1,137 +1,94 @@
-# 🚀 Guide de Déploiement en Production — ENCG ERP
+# Guide de déploiement production — ENCG ERP
 
-Ce guide détaille pas-à-pas la procédure complète pour déployer l'application **ENCG ERP** sur n'importe quel serveur VPS / Cloud (Ubuntu 22.04 / 24.04 LTS).
+Stack : Nginx + PHP 8.4-FPM + PostgreSQL 16 + Redis 7 + Horizon, sur un VPS Ubuntu 22.04/24.04.
 
----
-
-## 📋 Prérequis Serveur
-
-- **Système d'exploitation** : Ubuntu 22.04 LTS ou Ubuntu 24.04 LTS.
-- **Ressources minimales recommandées** :
-  - **CPU** : 2 vCPUs
-  - **RAM** : 4 Go (avec 2 Go Swap)
-  - **Disque** : 40 Go SSD
-- **Ports ouverts (Firewall / UFW)** : `80` (HTTP), `443` (HTTPS), `22` (SSH).
+Le déploiement **n’est pas automatique** au `git push`. CI (`.github/workflows/ci.yml`) valide la branche. La mise en ligne se fait **à la main** : `./deploy.sh` sur le VPS, ou **Actions → Deploy → Run workflow**.
 
 ---
 
-## 🛠️ Étape 1 : Préparation du Serveur & Installation de Docker
+## Prérequis VPS
 
-Connectez-vous à votre serveur en SSH et lancez l'installation de Docker & Docker Compose :
+- 2 vCPU / 4 Go RAM / 40 Go SSD (minimum)
+- Ports `22`, `80`, `443`
+- Docker Engine + Compose plugin
+- DNS `A` : `erp.encg-fes.ac.ma` → IP du VPS (avant le certificat TLS)
 
 ```bash
-# Mise à jour du système
-sudo apt update && sudo apt upgrade -y
-
-# Installation des paquets essentiels
-sudo apt install -y curl git ufw fail2ban
-
-# Installation de Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# Configuration des permissions utilisateur
-sudo usermod -aG docker $USER
-newgrp docker
-
-# Vérification
-docker --version
-docker compose version
+sudo apt update && sudo apt install -y curl git ufw fail2ban
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker "$USER"
 ```
 
 ---
 
-## 📥 Étape 2 : Clonage du Répertoire (Branche `docker-v2`)
+## Premier déploiement
 
 ```bash
-cd /var/www
-git clone https://github.com/radouane99/ENCG-ERP.git encg-erp
-cd encg-erp
-
-# Basculer sur la branche de production docker-v2
-git checkout docker-v2
-```
-
----
-
-## 🔐 Étape 3 : Configuration des Variables d'Environnement
-
-Créez le fichier de configuration de production :
-
-```bash
+sudo mkdir -p /var/www/encg-erp
+sudo chown "$USER:$USER" /var/www/encg-erp
+cd /var/www/encg-erp
+git clone --branch docker-v2 https://github.com/radouane99/ENCG-ERP.git .
 cp .env.production.example backend/.env.production
 nano backend/.env.production
 ```
 
-> [!IMPORTANT]
-> **Remplissez impérativement :**
-> - `APP_URL` et `FRONTEND_URL` : Votre nom de domaine (ex: `https://erp.encg-fes.ac.ma`).
-> - `DB_PASSWORD` : Un mot de passe robuste pour PostgreSQL 16.
-> - `REDIS_PASSWORD` : Un mot de passe robuste pour Redis.
-> - `RESEND_API_KEY` : Votre clé API Resend pour l'envoi des emails institutionnels.
+Remplir **sans placeholders** :
 
----
-
-## 🚀 Étape 4 : Déploiement en 1 Clic via `deploy.sh`
-
-Rendez le script exécutable et lancez le déploiement :
+| Variable | Règle |
+|---|---|
+| `APP_KEY` | Laissé vide : `deploy.sh` le génère si `php` est installé sur l’hôte |
+| `APP_DEBUG` | `false` |
+| `DB_PASSWORD` / `REDIS_PASSWORD` | Secrets longs, **identiques** pour Compose et Laravel (`--env-file backend/.env.production`) |
+| `APP_URL` / `FRONTEND_URL` | `https://erp.encg-fes.ac.ma` |
+| `RESEND_API_KEY` | Domaine `encg-fes.ac.ma` vérifié chez Resend |
+| `MAIL_FROM_ADDRESS` | `noreply@encg-fes.ac.ma` |
 
 ```bash
-chmod +x deploy.sh
+chmod +x deploy.sh scripts/*.sh
 ./deploy.sh docker-v2
 ```
 
-Le script s'occupe automatiquement de :
-1. ✅ Télécharger les dernières modifications de `docker-v2`.
-2. ✅ Compiler le bundle de production React / Vite PWA (`dist`).
-3. ✅ Démarrer les conteneurs Docker (Nginx, PHP 8.4, Postgres 16, Redis 7, Horizon Queue, Scheduler).
-4. ✅ Exécuter les migrations de base de données (`php artisan migrate --force`).
-5. ✅ Mettre en cache la configuration, les routes et les vues (`config:cache`, `route:cache`, `view:cache`).
-6. ✅ Redémarrer les workers de file d'attente (Horizon).
+Sans certificat, Nginx démarre en **HTTP** (`prod-bootstrap.conf`) pour Let’s Encrypt.
+
+```bash
+# DNS doit déjà pointer vers le VPS
+./scripts/provision-ssl.sh
+```
+
+Cela émet le certificat, crée le lien `certbot/conf/live/encg-erp`, et bascule Nginx vers HTTPS (`prod.conf`).
 
 ---
 
-## 🔒 Étape 5 : Obtention du Certificat SSL / HTTPS Gratuit (Let's Encrypt)
+## Mises à jour
 
-Générez le certificat SSL pour votre domaine :
-
-```bash
-docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-  --webroot \
-  --webroot-path=/var/www/certbot \
-  -d erp.encg-fes.ac.ma \
-  --email contact@encg-fes.ac.ma \
-  --agree-tos \
-  --no-eff-email
-```
-
-Puis rechargez Nginx :
-```bash
-docker exec encg_prod_nginx nginx -s reload
-```
-
----
-
-## 🔄 Étape 6 : Mises à Jour Futures (CI/CD Automatisé)
-
-Pour déployer n'importe quelle nouvelle version après un `git push` sur `docker-v2` :
+Sur le VPS :
 
 ```bash
 cd /var/www/encg-erp
 ./deploy.sh docker-v2
 ```
 
+Depuis GitHub : environment **production** + secrets `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`. Le job SSH fait `git pull --ff-only` puis `./deploy.sh --no-git`.
+
+`deploy.sh` refuse de démarrer si `APP_DEBUG=true` ou si les mots de passe sont encore des placeholders (`scripts/deploy-preflight.sh`).
+
 ---
 
-## 🛡️ Sauvegardes Automatiques de la Base de Données
+## Sauvegardes
 
-Ajoutez un cron job pour sauvegarder PostgreSQL tous les soirs à 2h00 du matin :
-
-```bash
-crontab -e
-```
-
-Ajoutez la ligne suivante :
 ```cron
-0 2 * * * docker exec encg_prod_postgres pg_dump -U encg_prod_user encg_erp | gzip > /var/backups/encg_erp_$(date +\%F).sql.gz
+0 2 * * * cd /var/www/encg-erp && DB_USERNAME=encg_prod_user DB_DATABASE=encg_erp ./scripts/backup-postgres.sh
 ```
+
+Drill mensuel : `./scripts/restore-postgres-drill.sh backups/encg_erp_YYYYMMDD_HHMMSS.sql.gz`
+
+---
+
+## Contrôles après go-live
+
+- `https://erp.encg-fes.ac.ma/up` → 200
+- Login admin / prof / étudiant
+- Un PDF guichet + une convocation
+- Horizon : jobs mail / SMS `SMS_DRIVER=log` dans `notification_logs`
+
+Checklist détaillée : [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)

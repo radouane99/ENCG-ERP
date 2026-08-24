@@ -29,3 +29,18 @@ uses(TestCase::class, RefreshDatabase::class)
         ]);
     })
     ->in('Feature');
+
+uses()->group('security')->in(
+    'Feature/SensitiveRoutesRequireAuthenticationTest.php',
+    'Feature/CybersecurityAndOwaspProtectionTest.php',
+    'Feature/AuditLogAndSecurityRegressionTest.php',
+);
+
+uses()->group('lmd')->in(
+    'Feature/DeliberationEngineTest.php',
+    'Feature/GradeCalculationAndPvDeliberationTest.php',
+    'Feature/LmdJudgeTest.php',
+    'Feature/AcademicNonRegressionAndBoundaryTest.php',
+    'Feature/AnnualSemesterCompensationAndProgressionTest.php',
+    'Feature/EncgRoadmapLmdCampusTest.php',
+);

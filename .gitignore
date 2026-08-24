@@ -4,6 +4,14 @@
 .env.*.local
 .env.backup
 .env.production
+backend/.env.production
+
+# Let's Encrypt private material
+certbot/conf/
+certbot/www/
+
+# Database dumps
+backups/
 
 # Node and build artifacts
 node_modules/
@@ -15,6 +23,7 @@ dev-dist/
 
 # Database dumps & SQL backups (except migrations/docker init)
 *.sql
+*.sql.gz
 !docker/postgres/init.sql
 
 # Log files and debug dumps

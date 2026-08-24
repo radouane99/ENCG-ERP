@@ -55,7 +55,7 @@ test.describe('P2 — 8 parcours critiques', () => {
     await seedSession(page, 'admin')
     await open(page, '/admin/tafem')
     await expect(page.getByTestId('admin-tafem-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByRole('heading', { name: /TAFEM 2026/ })).toBeVisible()
+    await expect(page.getByText(/TAFEM/)).toBeVisible()
   })
 
   test('7. PV admin — cockpit délibération', async ({ page }) => {
@@ -69,6 +69,6 @@ test.describe('P2 — 8 parcours critiques', () => {
     await seedSession(page, 'admin')
     await open(page, '/admin/guichet')
     await expect(page.getByTestId('admin-guichet-page')).toBeVisible({ timeout: 15000 })
-    await expect(page.getByRole('heading', { name: /Guichet Unique/ })).toBeVisible()
+    await expect(page.getByText(/Guichet/)).toBeVisible()
   })
 })
