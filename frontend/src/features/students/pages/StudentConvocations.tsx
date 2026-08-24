@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
 import { examsApi } from '@shared/api/exams';
 import { useAuthStore } from '@stores/authStore';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 export default function StudentConvocations() {
   const { t, i18n } = useTranslation(['exams', 'common']);
@@ -58,10 +59,11 @@ export default function StudentConvocations() {
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="space-y-6 font-sans animate-in fade-in zoom-in duration-500">
+      <PageHeader title="Mes Convocations" subtitle="Téléchargez chaque convocation en PDF." />
       
       {/* Header Banner */}
-      <div className="bg-[#0b1021] rounded-[2rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl border border-white/10">
+      <div className="bg-primary rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-2xl border border-white/10">
         <div className="absolute inset-0 opacity-20 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
@@ -74,7 +76,7 @@ export default function StudentConvocations() {
           <p className="text-gray-400">Téléchargez chaque convocation en PDF ou attendez l'email de notification.</p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-4">
+        <div className="relative z-10 flex flex-wrap items-center gap-3">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-center min-w-[100px] backdrop-blur-md">
             <div className="text-3xl font-black text-white">7</div>
             <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-1">À VENIR</div>
@@ -87,7 +89,7 @@ export default function StudentConvocations() {
       </div>
 
       {/* Main List */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border overflow-x-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-[#001A4B] rounded-xl flex items-center justify-center shadow-sm">
             <CalendarIcon className="w-5 h-5 text-white" />

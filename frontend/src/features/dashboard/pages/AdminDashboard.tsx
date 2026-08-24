@@ -14,6 +14,8 @@ import {
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
 import { useTheme } from '@shared/components/layout/ThemeProvider';
+import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 // ── Multi-Language Dictionary ─────────────────────────────────────────────
 const DICT = {
@@ -260,8 +262,22 @@ export default function AdminDashboard() {
     )}>
       <div className="w-full space-y-4 sm:space-y-6">
 
+        <PageHeader
+          title={t.welcome}
+          subtitle={t.subtitle}
+        />
+        <RoleQuickActions
+          className="sm:grid-cols-2 lg:grid-cols-2"
+          actions={QUICK_ACTIONS.map((action) => ({
+            to: action.path,
+            label: action.label,
+            icon: action.icon,
+            color: `${action.color} ${action.shadow}`,
+          }))}
+        />
+
         {/* ── 1. Executive Hero Header ───────────────────────────────────── */}
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#002e5b] via-[#0f2863] to-slate-900 text-white p-6 sm:p-8 shadow-2xl border border-indigo-700/40">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-blue-900 to-slate-900 text-white p-6 sm:p-8 shadow-2xl border border-indigo-700/40">
           <div className="absolute -top-24 -end-24 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -start-20 w-72 h-72 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
 
@@ -766,7 +782,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Live Activity Stream */}
-          <div className="rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between lg:col-span-2">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-black text-slate-900 dark:text-slate-100">{t.activityTitle}</h3>
@@ -785,29 +801,6 @@ export default function AdminDashboard() {
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{a.time}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Action Tiles */}
-          <div className="rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-            <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-slate-100 mb-4">{t.quickActionsTitle}</h3>
-              <div className="grid grid-cols-2 gap-2.5">
-                {QUICK_ACTIONS.map((action) => (
-                  <Link
-                    key={action.label}
-                    to={action.path}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3.5 rounded-2xl bg-gradient-to-br text-white font-black text-xs gap-2 transition-all hover:scale-105 shadow-md",
-                      action.color,
-                      action.shadow
-                    )}
-                  >
-                    <action.icon size={20} />
-                    <span className="truncate text-center">{action.label}</span>
-                  </Link>
                 ))}
               </div>
             </div>

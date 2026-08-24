@@ -18,6 +18,7 @@ import api from '@shared/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
+import PageHeader from '@shared/components/layout/PageHeader';
 import { documentStatusLabel } from '@shared/lib/lmd';
 import { useCreateDocumentRequest, useDocumentTypes, useStudentRequests } from '@features/guichet/api/guichetApi';
 
@@ -74,32 +75,18 @@ export default function StudentDashboard() {
     return 'AJOURNÉ';
   };
 
-  const lineData = [
-    { semester: 'S1', avg: 11.61 },
-    { semester: 'S2', avg: 12.00 },
-    { semester: 'S3', avg: 13.5 },
-    { semester: 'S4', avg: stats.gpa },
-  ];
-
   return (
-    <div data-testid="student-dashboard" className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in zoom-in duration-500 pb-24">
-      {/* Top Navigation / Quick Links */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
-        <div>
-          <h1 className="text-2xl font-black text-[#001A4B] italic">Mon Espace Académique</h1>
-          <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
-        </div>
-
-        <RoleQuickActions
-          actions={[
-            { to: '/student/grades', label: 'Mes notes', icon: BookOpen, testId: 'cta-student-grades', variant: 'primary' },
-            { to: '/student/schedule', label: 'EDT', icon: CalendarIcon, testId: 'cta-student-schedule' },
-            { to: '/student/documents', label: 'Guichet', icon: Stamp, testId: 'cta-student-documents' },
-            { to: '/student/absences', label: 'Justificatif', icon: UserX, testId: 'cta-student-absences' },
-            { to: '/student/convocations', label: 'Convocations', icon: MailCheck, testId: 'cta-student-convocations' },
-          ]}
-        />
-      </div>
+    <div data-testid="student-dashboard" className="space-y-6 font-sans animate-in fade-in zoom-in duration-500 dark:text-slate-100">
+      <PageHeader title="Mon Espace Académique" subtitle={currentDate} />
+      <RoleQuickActions
+        actions={[
+          { to: '/student/grades', label: 'Mes notes', icon: BookOpen, testId: 'cta-student-grades' },
+          { to: '/student/schedule', label: 'EDT', icon: CalendarIcon, testId: 'cta-student-schedule' },
+          { to: '/student/documents', label: 'Guichet', icon: Stamp, testId: 'cta-student-documents' },
+          { to: '/student/absences', label: 'Justificatif', icon: UserX, testId: 'cta-student-absences' },
+          { to: '/student/convocations', label: 'Convocations', icon: MailCheck, testId: 'cta-student-convocations' },
+        ]}
+      />
 
       {isLoading ? (
         <div className="flex justify-center items-center py-20 text-slate-400">Chargement des données...</div>
@@ -109,14 +96,14 @@ export default function StudentDashboard() {
             
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 relative overflow-hidden group">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><GraduationCap className="w-16 h-16" /></div>
                 <div className="text-sm font-bold text-muted-foreground mb-4">Moyenne (GPA)</div>
-                <div className="text-4xl font-black text-[#001A4B]">{stats.gpa}</div>
+                <div className="text-4xl font-black text-primary dark:text-white">{stats.gpa}</div>
                 <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-2">{getMention(stats.gpa)}</div>
               </div>
 
-              <div className="bg-gradient-to-br from-[#001A4B] to-[#003a8c] rounded-3xl p-6 shadow-lg shadow-[#003a8c]/20 relative overflow-hidden group text-white">
+              <div className="bg-gradient-to-br from-primary to-blue-800 rounded-3xl p-6 shadow-lg shadow-blue-500/20 relative overflow-hidden group text-white">
                 <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
                 <div className="text-sm font-bold text-white/70 mb-4">Prochains Examens</div>
                 <div className="text-4xl font-black text-white">{stats.upcoming_exams || 0}</div>
@@ -163,13 +150,13 @@ export default function StudentDashboard() {
             </div>
 
             {/* Secrétariat */}
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-[#001A4B] italic">Secrétariat & Documents Officiels</h2>
+                  <h2 className="text-lg font-black text-primary dark:text-white">Secrétariat & Documents Officiels</h2>
                   <p className="text-xs text-muted-foreground">Accédez aux pièces signées électroniquement par la direction</p>
                 </div>
               </div>
@@ -226,9 +213,9 @@ export default function StudentDashboard() {
           <div className="space-y-6">
 
             {/* Agenda */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-sm font-black text-[#001A4B] flex items-center gap-2">
+                <h2 className="text-sm font-black text-primary dark:text-white flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4" /> Agenda d'Aujourd'hui
                 </h2>
                 <a href="/student/schedule" className="text-xs font-bold text-[#e6007e] hover:underline">
@@ -254,7 +241,7 @@ export default function StudentDashboard() {
             </div>
 
             {/* Absences */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
               <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">ASSIDUITÉ & ABSENCES</h2>
               <div className="grid grid-cols-3 gap-2 mb-6 text-center">
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">

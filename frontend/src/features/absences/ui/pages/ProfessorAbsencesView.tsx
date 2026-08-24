@@ -10,6 +10,7 @@ import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { offlineAttendanceStore } from '@/shared/lib/offlineAttendanceStore';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 interface StudentItem {
   id: number;
@@ -505,10 +506,14 @@ export default function ProfessorAbsencesView() {
   }, [selectedDayFilter, selectedFiliere, filieres]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-3 sm:p-6 pb-24 font-sans animate-in fade-in">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans animate-in fade-in">
+      <PageHeader
+        title="Feuille de Présence & Appel Intelligent"
+        subtitle={`Enseignant : ${currentProfName} · Choisissez votre filière et prenez l'appel.`}
+      />
 
       {/* ── 1. Hero Banner ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#001A4B] via-[#0f2863] to-[#1e3b8a] p-6 sm:p-8 rounded-3xl shadow-2xl text-white border border-indigo-700/40">
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-blue-800 to-blue-900 p-6 sm:p-8 rounded-3xl shadow-2xl text-white border border-blue-800/40">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -885,7 +890,7 @@ export default function ProfessorAbsencesView() {
 
             {/* TAB 1: Trombinoscope Grid */}
             {activeTab === 'trombi' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredStudents.map((st) => (
                   <div
                     key={st.id}
@@ -990,6 +995,19 @@ export default function ProfessorAbsencesView() {
             )}
 
           </div>
+        </div>
+      )}
+
+      {isSessionActive && (
+        <div className="sticky bottom-20 lg:bottom-4 z-30">
+          <button
+            type="button"
+            onClick={handleSaveAndCloseSession}
+            disabled={savingAttendance}
+            className="w-full min-h-11 px-6 py-3.5 bg-primary hover:opacity-90 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2"
+          >
+            <Check className="w-4 h-4" /> Enregistrer l'appel
+          </button>
         </div>
       )}
 

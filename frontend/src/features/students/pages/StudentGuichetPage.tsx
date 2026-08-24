@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@shared/lib/utils';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 export default function StudentGuichetPage() {
   const { t } = useTranslation(['students', 'common']);
@@ -120,10 +121,22 @@ export default function StudentGuichetPage() {
   };
 
   return (
-    <div data-testid="student-guichet-page" className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div data-testid="student-guichet-page" className="space-y-6 font-sans animate-in fade-in">
+      <PageHeader
+        title="Guichet unique"
+        subtitle="Demandez vos pièces officielles et suivez leur statut."
+        actions={
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="min-h-11 flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-black rounded-2xl text-xs uppercase tracking-wider"
+          >
+            <Plus className="w-4 h-4" /> Nouvelle demande
+          </button>
+        }
+      />
 
       {/* ── Deep Navy Hero Banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-blue-800 to-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white border border-blue-800/40 space-y-6">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">

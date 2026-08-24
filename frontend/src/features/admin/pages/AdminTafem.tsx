@@ -4,6 +4,7 @@ import { cn } from '@shared/lib/utils';
 import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 export default function AdminTafem() {
   const { t } = useTranslation('dashboard');
@@ -165,7 +166,8 @@ export default function AdminTafem() {
   ];
 
   return (
-    <div data-testid="admin-tafem-page" className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
+    <div data-testid="admin-tafem-page" className="space-y-6 font-sans animate-in duration-500">
+      <PageHeader title="Gestion & Logistique TAFEM" subtitle="Répartition des candidats, import/export et listes de délibération." />
       {(qualityReport || aiReview) && (
         <div data-testid="tafem-quality-banner" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
           {aiReview && <p className="font-medium">{aiReview}</p>}
@@ -178,7 +180,7 @@ export default function AdminTafem() {
       )}
       
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-blue-800 to-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white border border-blue-800/40 sticky top-0 z-20">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -306,7 +308,7 @@ export default function AdminTafem() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 gap-4">
         {kpiStats.map((stat, idx) => (
           <div key={idx} className={cn("rounded-3xl p-6 shadow-sm border transition-all hover:shadow-md", stat.bg, stat.border)}>
             <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{stat.label}</div>

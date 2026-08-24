@@ -4,8 +4,10 @@ import { useAuthStore } from '@stores/authStore';
 import { gradesApi } from '@shared/api/grades';
 import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { decisionFromScore, decisionLabel } from '@shared/lib/lmd';
+import { decisionFromScore } from '@shared/lib/lmd';
 import LmdLegend from '@shared/components/academic/LmdLegend';
+import LmdBadge from '@shared/components/academic/LmdBadge';
+import PageHeader from '@shared/components/layout/PageHeader';
 function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, delay: number) {
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -112,16 +114,12 @@ export default function GradeEntry() {
   };
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Saisie des Notes</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
-            {meta?.module_name || 'Module'} — {meta?.group_name || 'Groupe'}
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto">
+      <PageHeader
+        title="Saisie des Notes"
+        subtitle={`${meta?.module_name || 'Module'} — ${meta?.group_name || 'Groupe'}`}
+        actions={
+          <div className="flex items-center gap-3">
           {saveStatus === 'saving' && (
             <span className="text-xs font-bold text-slate-400 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Sauvegarde auto...
@@ -140,11 +138,12 @@ export default function GradeEntry() {
           <button onClick={fetchGrid} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200">
             <RefreshCw className="w-4 h-4" />
           </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       <LmdLegend />
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-sm overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
             <tr>
@@ -173,7 +172,7 @@ export default function GradeEntry() {
                     min="0"
                     max="20"
                     step="0.25"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-300"
+                    className="w-full min-h-11 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300"
                     placeholder="—"
                     value={st.cc ?? ''}
                     onChange={(e) => handleCellChange(st.id, 'cc', e.target.value)}
@@ -185,7 +184,7 @@ export default function GradeEntry() {
                     min="0"
                     max="20"
                     step="0.25"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-300"
+                    className="w-full min-h-11 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300"
                     placeholder="—"
                     value={st.exam ?? ''}
                     onChange={(e) => handleCellChange(st.id, 'exam', e.target.value)}
@@ -204,15 +203,9 @@ export default function GradeEntry() {
                 <td className="px-6 py-4 text-center">
                   {(() => {
                     const code = decisionFromScore(st.average)
-                    return (
-                      <span className={cn(
-                        "inline-flex px-3 py-1 rounded-full text-[10px] font-bold",
-                        code === 'V' ? "bg-emerald-50 text-emerald-600" :
-                        code === 'RAT' ? "bg-amber-50 text-amber-600" :
-                        code === 'NV' ? "bg-rose-50 text-rose-600" :
-                        "bg-slate-100 text-slate-500"
-                      )}>
-                        {code ? decisionLabel(code) : (st.status || '—')}
+                    return code ? <LmdBadge decision={code} score={st.average} /> : (
+                      <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                        {st.status || '—'}
                       </span>
                     )
                   })()}

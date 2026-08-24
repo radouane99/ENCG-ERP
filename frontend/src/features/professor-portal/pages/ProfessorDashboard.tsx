@@ -6,7 +6,6 @@ import {
   Trophy,
   Users,
   Calendar,
-  Moon,
   CheckCircle,
   Clock,
   QrCode,
@@ -32,6 +31,8 @@ import { ProfAiCopilotModal } from '../components/ProfAiCopilotModal';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
+import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
+import PageHeader from '@shared/components/layout/PageHeader';
 
 export default function ProfessorDashboard() {
   const { t, i18n } = useTranslation(['professors', 'common']);
@@ -200,27 +201,24 @@ export default function ProfessorDashboard() {
   };
 
   return (
-    <div className="space-y-8 p-6 max-w-7xl mx-auto font-sans animate-in fade-in zoom-in duration-500">
-
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#001A4B] dark:text-white flex items-center gap-2">
-            <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-400" />
-            Bonjour, {user?.name || 'Prof. Abdelhak El Amrani'}
-          </h1>
-          <div className="flex items-center gap-2 mt-1 text-[11px] sm:text-xs font-bold text-gray-400 tracking-wider">
-            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            {currentDate} • TABLEAU DE BORD ENSEIGNANT
-          </div>
-        </div>
-        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest sm:mb-1">Rôle Académique</span>
+    <div className="space-y-6 font-sans animate-in fade-in zoom-in duration-500 dark:text-slate-100">
+      <PageHeader
+        title={`Bonjour, ${user?.name || 'Professeur'}`}
+        subtitle={`${currentDate} · Tableau de bord enseignant`}
+        actions={
           <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100 dark:border-emerald-800">
             {stats.has_contract ? 'Vacataire' : 'Permanent'}
           </span>
-        </div>
-      </div>
+        }
+      />
+      <RoleQuickActions
+        actions={[
+          { to: '/professor/absences', label: 'Émarger', icon: UserX, testId: 'cta-prof-attendance' },
+          { to: '/admin/grades', label: 'CC / Exam', icon: Zap },
+          { to: '/professor/schedules', label: 'EDT', icon: Calendar },
+          { to: '/professor/proctoring', label: 'Surveillance', icon: Eye },
+        ]}
+      />
 
       {isLoading ? (
         <div className="flex justify-center items-center py-20 text-slate-400">Chargement des données...</div>
@@ -228,19 +226,19 @@ export default function ProfessorDashboard() {
         <>
           {/* KPIs Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><BookOpen className="w-16 h-16" /></div>
               <div className="text-sm font-bold text-muted-foreground mb-4">Modules Enseignés</div>
-              <div className="text-4xl font-black text-[#001A4B]">{stats.total_modules}</div>
+              <div className="text-4xl font-black text-primary dark:text-white">{stats.total_modules}</div>
               <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-2 flex items-center gap-1">
                 <CheckCircle className="w-3 h-3" /> AFFECTATIONS VALIDÉES
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Users className="w-16 h-16" /></div>
               <div className="text-sm font-bold text-muted-foreground mb-4">Total Étudiants</div>
-              <div className="text-4xl font-black text-[#001A4B]">{stats.total_students}</div>
+              <div className="text-4xl font-black text-primary dark:text-white">{stats.total_students}</div>
               <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-2 flex items-center gap-1">
                 <Users className="w-3 h-3" /> GROUPES CONFIRMÉS
               </div>
@@ -255,7 +253,7 @@ export default function ProfessorDashboard() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#001A4B] to-[#003a8c] rounded-3xl p-6 shadow-lg shadow-[#003a8c]/20 relative overflow-hidden group text-white">
+            <div className="bg-gradient-to-br from-primary to-blue-800 rounded-3xl p-6 shadow-lg shadow-blue-500/20 relative overflow-hidden group text-white">
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
               <div className="text-sm font-bold text-white/70 mb-4">Prochain Cours</div>
               <div className="text-2xl font-black text-white leading-tight">
@@ -268,7 +266,7 @@ export default function ProfessorDashboard() {
           </div>
 
           {/* Banner: Ordre de Service & Signature */}
-          <div className="bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#001A4B] rounded-3xl p-6 md:p-8 text-white shadow-xl border border-blue-800/40 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-primary via-blue-800 to-primary rounded-3xl p-6 md:p-8 text-white shadow-xl border border-blue-800/40 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
@@ -334,13 +332,10 @@ export default function ProfessorDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-            {/* Left Column - Agenda & Modules */}
-            <div className="xl:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-6">
               
               {/* Prochaines séances */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-sm font-black text-[#001A4B] flex items-center gap-2">
                     <Calendar className="w-4 h-4" /> Agenda d'Aujourd'hui
@@ -375,7 +370,7 @@ export default function ProfessorDashboard() {
               </div>
 
               {/* Modules List */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-sm font-black text-[#001A4B] flex items-center gap-2">
                     <BookOpen className="w-4 h-4" /> Mes Éléments de Modules (Syllabus & Cours)
@@ -416,50 +411,6 @@ export default function ProfessorDashboard() {
               </div>
 
             </div>
-
-            {/* Right Column - Actions Rapides */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 space-y-4">
-                <h2 className="text-sm font-black text-[#001A4B] uppercase tracking-wider">Actions Rapides</h2>
-                
-                <div className="space-y-2.5" data-testid="role-quick-actions">
-                  <Link
-                    to="/professor/absences"
-                    data-testid="cta-prof-attendance"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#001A4B] text-white font-black text-xs hover:bg-[#000d26] transition-all"
-                  >
-                    <UserX className="w-4 h-4" />
-                    <span>Émarger la séance du jour</span>
-                  </Link>
-
-                  <Link
-                    to="/admin/grades"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-50 text-emerald-950 font-black text-xs hover:bg-emerald-100 transition-all border border-emerald-200"
-                  >
-                    <Zap className="w-4 h-4 text-emerald-600" />
-                    <span>Saisir CC / Exam</span>
-                  </Link>
-
-                  <Link
-                    to="/professor/schedules"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
-                  >
-                    <Calendar className="w-4 h-4 text-indigo-600" />
-                    <span>Mon emploi du temps</span>
-                  </Link>
-
-                  <Link
-                    to="/professor/proctoring"
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition-all border border-slate-200"
-                  >
-                    <Eye className="w-4 h-4 text-indigo-600" />
-                    <span>Convocations surveillance</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-          </div>
         </>
       )}
 

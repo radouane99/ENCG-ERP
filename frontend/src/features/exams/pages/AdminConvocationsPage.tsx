@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { examsApi } from '@shared/api/exams'
+import PageHeader from '@shared/components/layout/PageHeader'
 
 export default function AdminConvocationsPage() {
   const navigate = useNavigate()
@@ -206,7 +207,10 @@ export default function AdminConvocationsPage() {
     try {
       const blob = await examsApi.previewConvocationPdf(seatingId);
       const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      setPreviewUrl((prev) => {
+        if (prev) window.URL.revokeObjectURL(prev)
+        return url
+      })
     } catch (error) {
       notify('Erreur lors de la prévisualisation.', 'error');
     }
@@ -375,16 +379,15 @@ export default function AdminConvocationsPage() {
     setSelectedSurveillants(newSet)
   }
 
-  const handlePreview = (id: number) => {
-    setPreviewUrl(`http://localhost:8000/api/admin/exam-planning/student/${id}/preview`)
-  }
-
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
-
+    <div className="space-y-6 animate-in max-w-[1400px] mx-auto font-sans">
+      <PageHeader
+        title="Gestion des Convocations d'Examens"
+        subtitle="Génération A4, QR d'émargement et diffusion SMS."
+      />
 
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-blue-800 to-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white border border-blue-800/40">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -405,7 +408,7 @@ export default function AdminConvocationsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <div className="flex items-center gap-3 flex-wrap shrink-0 w-full md:w-auto">
             <button
               onClick={async () => {
                 const sessionId = selectedSessionId || sessions?.[0]?.id
@@ -440,9 +443,18 @@ export default function AdminConvocationsPage() {
         </div>
       </div>
 
-
-      {/* Step 1: Session Selection */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-xl p-8 space-y-6">
+      {previewUrl && (
+        <div className="rounded-3xl border border-border overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <p className="text-xs font-black uppercase tracking-wider text-slate-500">Aperçu PDF</p>
+            <button type="button" onClick={() => setPreviewUrl(null)} className="text-xs font-bold text-slate-500 min-h-11 px-3">
+              Fermer
+            </button>
+          </div>
+          <iframe title="Aperçu convocation" src={previewUrl} className="w-full min-h-[70vh] bg-slate-100" />
+        </div>
+      )}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-xl p-6 space-y-6 overflow-x-auto">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-amber-400 flex items-center justify-center text-base font-black shadow-md">1</div>
           <div>

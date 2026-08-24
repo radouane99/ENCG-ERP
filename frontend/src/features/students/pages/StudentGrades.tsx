@@ -7,6 +7,8 @@ import api from '@shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import LmdLegend from '@shared/components/academic/LmdLegend';
+import LmdBadge from '@shared/components/academic/LmdBadge';
+import PageHeader from '@shared/components/layout/PageHeader';
 import { decisionLabel, normalizeDecision } from '@shared/lib/lmd';
 export default function StudentGrades() {
   const { t, i18n } = useTranslation(['students', 'common']);
@@ -38,17 +40,18 @@ export default function StudentGrades() {
   const overallAvg = data.overall_average || 0; // or calculate if needed
 
   return (
-    <div data-testid="student-grades-page" className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div data-testid="student-grades-page" className="space-y-6 font-sans animate-in fade-in zoom-in duration-500">
+      <PageHeader title="Performance Académique" subtitle="CC / Exam / RAT — V ≥ 10 · RAT · NV · < 6/20 éliminatoire" />
       
       {/* Header Banner */}
-      <div className="bg-[#0f766e] rounded-[2rem] p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-lg border border-teal-600/50">
+      <div className="bg-primary rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-lg border border-blue-800/40">
         <div className="absolute inset-0 opacity-10 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
         
         <div className="relative z-10">
           <h1 className="text-3xl font-black text-white mb-2" lang={isRtl ? 'ar' : 'fr'}>Performance Académique</h1>
-          <p className="text-teal-100">CC / Exam / RAT — V ≥ 10 · RAT · NV · &lt; 6/20 éliminatoire</p>
+          <p className="text-blue-100">CC / Exam / RAT — V ≥ 10 · RAT · NV · &lt; 6/20 éliminatoire</p>
           <div className="flex flex-wrap gap-3 mt-6">
             <button
               data-testid="lmd-simulator"
@@ -63,7 +66,7 @@ export default function StudentGrades() {
                   setJudgeLoading(false);
                 }
               }}
-              className="bg-white text-teal-800 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-teal-50 transition-colors"
+              className="bg-white text-primary px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-blue-50 transition-colors min-h-11"
             >
               <FlaskConical className="w-4 h-4" /> {judgeLoading ? 'Calcul…' : 'SIMULATEUR'}
             </button>
@@ -87,7 +90,7 @@ export default function StudentGrades() {
                   })
                 })
               }}
-              className="bg-teal-800 text-teal-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-teal-900 border border-teal-700 transition-colors"
+              className="bg-blue-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 hover:bg-blue-950 border border-blue-800 transition-colors min-h-11"
             >
               <Download className="w-4 h-4" /> RELEVÉ (PDF)
             </button>
@@ -143,18 +146,18 @@ export default function StudentGrades() {
         </div>
 
         <div className="relative z-10 text-right">
-          <div className="text-xs font-bold text-teal-200 uppercase tracking-widest mb-1">MOYENNE ANNUELLE</div>
+          <div className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">MOYENNE ANNUELLE</div>
           <div className="flex items-baseline justify-end gap-1">
             <span className="text-6xl font-black text-white">
               {isRevealed ? Number(overallAvg).toFixed(2) : "?.??"}
             </span>
-            <span className="text-2xl font-bold text-teal-200">/ 20</span>
+            <span className="text-2xl font-bold text-blue-200">/ 20</span>
           </div>
           {isRevealed && overallAvg >= 10 && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }} 
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 inline-flex items-center gap-1.5 bg-teal-800/40 border border-teal-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm"
+              className="mt-3 inline-flex items-center gap-1.5 bg-blue-900/40 border border-blue-500/50 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm"
             >
               ANNÉE VALIDÉE <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             </motion.div>
@@ -163,17 +166,17 @@ export default function StudentGrades() {
       </div>
 
       {judge && (
-        <div data-testid="lmd-judge-result" className="bg-white rounded-3xl p-6 border border-teal-100 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-wider text-teal-700">Verdict LMD (moteur, pas le chatbot)</p>
+        <div data-testid="lmd-judge-result" className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-border shadow-sm">
+          <p className="text-xs font-black uppercase tracking-wider text-primary">Verdict LMD (moteur, pas le chatbot)</p>
           <p className="text-2xl font-black text-slate-900 mt-1">{judge.verdict}</p>
           <p className="text-sm text-slate-600 mt-2">{isRtl ? judge.explanation_ar : judge.explanation_fr}</p>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-          <h2 className="text-2xl font-black text-[#001A4B]">Mes Notes</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-border">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+          <h2 className="text-2xl font-black text-primary dark:text-white">Mes Notes</h2>
         </div>
 
         <div className="overflow-x-auto relative min-h-[300px]">
@@ -213,8 +216,6 @@ export default function StudentGrades() {
                 const total = grade.moyenne_finale || grade.moyenne_normale || 0;
                 const decision = normalizeDecision(grade.decision_finale || grade.decision_normale, total);
                 const code = decisionLabel(String(decision));
-                const isValidated = code === 'V' || code === 'VAR' || code === 'VPC' || code === 'VC';
-                const isRat = code === 'RAT';
                 
                 return (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors group">
@@ -225,12 +226,7 @@ export default function StudentGrades() {
                     <td className="py-5 text-center font-black text-[#001A4B] text-lg">{Number(total).toFixed(2)}</td>
                     <td className="py-5 text-right pr-4">
                       <div className="flex justify-end mt-1">
-                        <span className={cn(
-                          "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1",
-                          isValidated ? "bg-emerald-50 text-emerald-600" : (isRat ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600")
-                        )}>
-                          {code} {isValidated && <CheckCircle2 className="w-3 h-3" />}
-                        </span>
+                        <LmdBadge decision={code} score={total} />
                       </div>
                     </td>
                   </tr>
