@@ -39,18 +39,9 @@ class ComprehensivePdfGenerationAndSecurityTest extends TestCase
             ['name' => 'ENCG Fès', 'code' => 'ENCGFES', 'slug' => 'encg-fes-pdf-test']
         );
 
-        $this->academicYear = AcademicYear::firstOrCreate(
-            ['id' => 1],
-            [
-                'label'          => '2026/2027',
-                'start_year'     => 2026,
-                'end_year'       => 2027,
-                'start_date'     => '2026-09-01',
-                'end_date'       => '2027-06-30',
-                'is_current'     => true,
-                'institution_id' => $this->institution->id,
-            ]
-        );
+        $this->academicYear = $this->ensureAcademicYear([
+            'institution_id' => $this->institution->id,
+        ]);
 
         $this->filiere = Filiere::firstOrCreate(
             ['code' => 'GFC-PDF'],

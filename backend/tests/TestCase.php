@@ -36,8 +36,33 @@ abstract class TestCase extends BaseTestCase
         return $institution;
     }
 
+    protected function ensureAcademicYear(array $overrides = []): \App\Models\AcademicYear
+    {
+        $existing = \App\Models\AcademicYear::query()->find(1);
+        if ($existing) {
+            return $existing;
+        }
+
+        $year = new \App\Models\AcademicYear(array_merge([
+            'institution_id' => 1,
+            'label'          => '2026/2027',
+            'start_year'     => 2026,
+            'end_year'       => 2027,
+            'start_date'     => '2026-09-01',
+            'end_date'       => '2027-06-30',
+            'is_current'     => true,
+            'is_locked'      => false,
+        ], $overrides));
+        $year->id = 1;
+        $year->save();
+
+        return $year;
+    }
+
     protected function makeTestAcademicYear(array $overrides = []): \App\Models\AcademicYear
     {
+        unset($overrides['id']);
+
         return \App\Models\AcademicYear::create(array_merge([
             'institution_id' => 1,
             'label'          => '2026/2027',

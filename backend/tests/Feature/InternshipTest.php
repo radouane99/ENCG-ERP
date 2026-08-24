@@ -16,9 +16,8 @@ function ensureInternshipInstitution()
         ['name' => 'ENCG Test', 'code' => 'ENCG', 'slug' => 'encg-test']
     );
 
-    \App\Models\AcademicYear::firstOrCreate(
-        ['id' => 1],
-        [
+    if (! \App\Models\AcademicYear::query()->find(1)) {
+        $year = new \App\Models\AcademicYear([
             'institution_id' => 1,
             'label'          => '2026/2027',
             'start_year'     => 2026,
@@ -27,8 +26,10 @@ function ensureInternshipInstitution()
             'end_date'       => '2027-06-30',
             'is_current'     => true,
             'is_locked'      => false,
-        ]
-    );
+        ]);
+        $year->id = 1;
+        $year->save();
+    }
 }
 
 function makeInternshipAdmin(): User

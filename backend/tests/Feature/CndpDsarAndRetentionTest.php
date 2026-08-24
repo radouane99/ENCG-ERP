@@ -4,9 +4,11 @@ use App\Jobs\ProcessDataExportRequest;
 use App\Models\DataExportRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\artisan;
+use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 
 it('requires authentication to create a DSAR export request', function () {
@@ -81,4 +83,46 @@ it('anonymizes inactive accounts past the retention threshold', function () {
     expect($stale->email)->toStartWith('anonymized_')
         ->and($stale->first_name)->toBe('Anonymized')
         ->and($recent->email)->toBe('recent.inactif@encg-fes.ac.ma');
+});
+
+it('forbids downloading another user DSAR export', function () {
+    Storage::fake('local');
+    $owner = User::factory()->create();
+    $intruder = User::factory()->create();
+
+    $export = DataExportRequest::create([
+        'institution_id' => 1,
+        'user_id' => $owner->id,
+        'request_type' => 'access',
+        'status' => 'completed',
+        'export_format' => 'json',
+        'file_path' => 'privacy/exports/owner.json',
+        'processed_at' => now(),
+    ]);
+    Storage::disk('local')->put('privacy/exports/owner.json', '{"ok":true}');
+
+    actingAs($intruder, 'sanctum')
+        ->getJson('/api/v1/privacy/export/'.$export->id.'/download')
+        ->assertNotFound();
+});
+
+it('lets the owner download a completed DSAR export with a Sanctum Bearer token', function () {
+    Storage::fake('local');
+    $owner = User::factory()->create();
+
+    $export = DataExportRequest::create([
+        'institution_id' => 1,
+        'user_id' => $owner->id,
+        'request_type' => 'access',
+        'status' => 'completed',
+        'export_format' => 'json',
+        'file_path' => 'privacy/exports/owner.json',
+        'processed_at' => now(),
+    ]);
+    Storage::disk('local')->put('privacy/exports/owner.json', '{"ok":true}');
+
+    $this->withToken($owner->createToken('spa')->plainTextToken)
+        ->get('/api/v1/privacy/export/'.$export->id.'/download')
+        ->assertOk()
+        ->assertDownload('encg-dsar-'.$export->id.'.json');
 });

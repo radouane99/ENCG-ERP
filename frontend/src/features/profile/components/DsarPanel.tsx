@@ -20,6 +20,22 @@ export function DsarPanel() {
     queryFn: () => api.get('/v1/privacy/export').then((res) => res.data.data as DsarRequest[]),
   })
 
+  const downloadExport = async (id: number) => {
+    try {
+      const res = await api.get(`/v1/privacy/export/${id}/download`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `encg-dsar-${id}.json`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Export indisponible.')
+    }
+  }
+
   const mutation = useMutation({
     mutationFn: async (type: 'access' | 'rectification' | 'opposition') => {
       const path = type === 'access' ? '/v1/privacy/export' : `/v1/privacy/${type}`
@@ -104,12 +120,14 @@ export function DsarPanel() {
                 {item.request_type ?? 'access'} — {item.status}
               </span>
               {item.status === 'completed' && (
-                <a
-                  href={`/api/v1/privacy/export/${item.id}/download`}
+                <button
+                  type="button"
+                  data-testid="dsar-download"
+                  onClick={() => downloadExport(item.id)}
                   className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600"
                 >
                   <Download className="w-3 h-3" /> Télécharger
-                </a>
+                </button>
               )}
             </li>
           ))}

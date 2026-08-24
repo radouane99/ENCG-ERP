@@ -42,15 +42,16 @@ class AcademicLifecycleIntegrationTest extends TestCase
         );
 
         $this->academicYear = AcademicYear::firstOrCreate(
-            ['id' => 1],
             [
                 'label'          => '2026/2027',
+                'institution_id' => $this->institution->id,
+            ],
+            [
                 'start_year'     => 2026,
                 'end_year'       => 2027,
                 'start_date'     => '2026-09-01',
                 'end_date'       => '2027-06-30',
                 'is_current'     => true,
-                'institution_id' => $this->institution->id,
             ]
         );
 

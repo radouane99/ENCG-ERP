@@ -22,24 +22,21 @@ class AttendanceSessionFactory extends Factory
     {
         $professor = Professor::factory()->create();
         $user = User::factory()->create();
-        $academicYear = AcademicYear::firstOrCreate(
-            ['id' => 1],
+        $academicYear = AcademicYear::query()->firstOrCreate(
+            ['institution_id' => 1, 'start_year' => 2026],
             [
-                'institution_id' => 1,
-                'label'          => '2026/2027',
-                'start_year'     => 2026,
-                'end_year'       => 2027,
-                'start_date'     => '2026-09-01',
-                'end_date'       => '2027-06-30',
-                'is_current'     => true,
+                'label'      => '2026/2027',
+                'end_year'   => 2027,
+                'start_date' => '2026-09-01',
+                'end_date'   => '2027-06-30',
+                'is_current' => true,
             ]
         );
-        $filiere = Filiere::firstOrCreate(
-            ['id' => 1],
+        $filiere = Filiere::query()->firstOrCreate(
+            ['code' => 'MGT'],
             [
                 'institution_id' => 1,
                 'name'           => 'Management',
-                'code'           => 'MGT',
                 'type'           => 'grande_ecole',
                 'duration_years' => 5,
             ]
@@ -55,16 +52,14 @@ class AttendanceSessionFactory extends Factory
                 'credit_hours'    => 45,
             ]
         );
-        $group = Group::firstOrCreate(
-            ['id' => 1],
-            [
+        $group = Group::query()->first()
+            ?? Group::create([
                 'academic_year_id' => $academicYear->id,
                 'filiere_id'       => $filiere->id,
                 'semester_number'  => 1,
                 'name'             => 'Groupe 1',
                 'capacity'         => 60,
-            ]
-        );
+            ]);
 
         return [
             'module_id'        => $module->id,

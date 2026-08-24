@@ -28,6 +28,12 @@ it('rejects unauthenticated access to previously public admin and PDF routes', f
     ['POST', '/api/admin/ai/chat'],
     ['POST', '/api/professor/ai/grade-report'],
     ['GET', '/api/v1/enrollments/dossier-complet-pdf'],
+    ['GET', '/api/exams/1/pv-pdf'],
+    ['GET', '/api/v1/privacy/export'],
+    ['POST', '/api/v1/privacy/export'],
+    ['POST', '/api/v1/privacy/rectification'],
+    ['POST', '/api/v1/privacy/opposition'],
+    ['GET', '/api/v1/privacy/export/1/download'],
 ]);
 
 it('keeps intentional public admission endpoints reachable without a token', function () {
