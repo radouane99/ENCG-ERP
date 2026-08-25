@@ -8,6 +8,7 @@ use App\Models\Grade;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class StudentPortalService
 {
@@ -35,13 +36,30 @@ class StudentPortalService
             return collect([]);
         }
 
-        return DB::table('schedules')
+        $query = DB::table('schedules')
             ->join('modules', 'schedules.module_id', '=', 'modules.id')
             ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
             ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
             ->leftJoin('users', 'professors.user_id', '=', 'users.id')
             ->where('schedules.group_id', $pathway->group_id)
-            ->where('schedules.is_active', true)
+            ->where('schedules.is_active', true);
+
+        if (Schema::hasTable('schedule_versions')) {
+            $query->leftJoin('schedule_versions', 'schedules.schedule_version_id', '=', 'schedule_versions.id')
+                ->where(function ($q) {
+                    $q->whereNull('schedules.schedule_version_id')
+                        ->orWhere('schedule_versions.status', 'PUBLISHED');
+                });
+        }
+
+        if (Schema::hasColumn('rooms', 'is_out_of_service')) {
+            $query->where(function ($q) {
+                $q->whereNull('rooms.id')
+                    ->orWhere('rooms.is_out_of_service', false);
+            });
+        }
+
+        return $query
             ->select(
                 'schedules.id',
                 'schedules.day_of_week as day',

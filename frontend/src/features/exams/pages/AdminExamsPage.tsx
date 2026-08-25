@@ -183,19 +183,18 @@ export default function AdminExamsPage() {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer tous les examens planifiés pour cette session et filière ?")) return;
 
     try {
-      toast.loading("Réinitialisation du calendrier...");
+      toast.loading("Réinitialisation du calendrier...", { id: 'exam-reset' });
       const res = await api.post('/exam-planning/reset', {
         filiere_id: selectedFiliereId ? Number(selectedFiliereId) : null,
+        session_id: selectedSessionId ? Number(selectedSessionId) : null,
         exam_session_id: selectedSessionId ? Number(selectedSessionId) : null,
         semester_number: selectedSemesterNum ? Number(selectedSemesterNum) : null
       });
 
-      toast.dismiss();
-      toast.success(res.data.message || "Planning réinitialisé avec succès.");
+      toast.success(res.data.message || "Planning réinitialisé avec succès.", { id: 'exam-reset' });
       queryClient.invalidateQueries({ queryKey: ['admin-exams'] });
     } catch (err: any) {
-      toast.dismiss();
-      toast.error("Erreur lors de la réinitialisation.");
+      toast.error(err.response?.data?.message || "Erreur lors de la réinitialisation.", { id: 'exam-reset' });
     }
   }
 
@@ -347,20 +346,24 @@ export default function AdminExamsPage() {
             const timeEndMin = exam.start_time ? parseInt(exam.start_time.split(':')[1]) + (exam.duration_minutes % 60) : 0;
             const endTimeStr = `${String(timeEndHour).padStart(2, '0')}:${String(timeEndMin).padStart(2, '0')}`;
             
+            const proctorsText = Array.isArray(exam.proctors) && exam.proctors.length > 0
+              ? exam.proctors.join(', ')
+              : (typeof exam.surveillants === 'string' && exam.surveillants !== 'INCONNU, INCONNU, INCONNU' ? exam.surveillants : 'À affecter');
+
             return (
               <ExamCard key={exam.id} t={t} 
                 id={exam.id}
-                title={exam.module?.name || 'Examen Module'}
-                group={exam.group?.name || 'Tous Groupes'}
+                title={typeof exam.module === 'object' ? (exam.module?.name || 'Examen Module') : (exam.module || 'Examen Module')}
+                group={typeof exam.group === 'object' ? (exam.group?.name || 'Tous Groupes') : (exam.group || 'Tous Groupes')}
                 time={`${exam.start_time?.substring(0, 5) || '08:30'} - ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 120} min`}
-                room={exam.room?.name || 'Amphithéâtre R'}
-                surveillants={exam.surveillants || 'BOUCHRA BENNANI, RADOUANE EL BAHI, FATIM-ZAHRA ALAMI'}
+                room={typeof exam.room === 'object' ? (exam.room?.name || 'Amphithéâtre B') : (exam.room || 'Amphithéâtre B')}
+                surveillants={proctorsText}
                 day={day}
                 month={monthNames[dateObj.getMonth()]}
                 dayName={dayNames[dateObj.getDay()]}
                 type={exam.type || 'EXAMEN'}
-                generated={exam.generated_count ?? 0}
+                generated={exam.convocations_generated ?? exam.generated_count ?? 0}
                 sent={exam.sent_count ?? 0}
                 pending={exam.pending_count ?? 0}
                 onNotify={handleNotify}

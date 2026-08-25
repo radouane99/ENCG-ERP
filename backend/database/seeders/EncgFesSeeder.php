@@ -23,6 +23,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class EncgFesSeeder extends Seeder
@@ -41,6 +42,7 @@ class EncgFesSeeder extends Seeder
             $departments = $this->seedDepartments($institution);
             $academicYear = $this->seedAcademicYear($institution);
             $semesters = $this->seedSemesters($academicYear);
+            $currentSemester = collect($semesters)->first(fn ($s) => $s->is_current) ?? $semesters[0];
             $rooms = $this->seedRooms($institution, $campus);
 
             // 3. Filières
@@ -50,7 +52,7 @@ class EncgFesSeeder extends Seeder
             $professors = $this->seedProfessorsAndAdmins($institution, $departments);
 
             // 5. Seed spring exam sessions (Ordinary + Retake)
-            $sessions = $this->seedSpringExamSessions($institution, $academicYear, $semesters[1]); // S2 is current/spring
+            $sessions = $this->seedSpringExamSessions($institution, $academicYear, $currentSemester);
 
             // 6. Seed Moroccan Students & Groups & Enrollments & Grades (groups are created here)
             $seededInfo = $this->seedMoroccanStudentsAndGrades($institution, $academicYear, $filieres, $sessions, $professors, $rooms);
@@ -76,7 +78,7 @@ class EncgFesSeeder extends Seeder
             $this->seedConvocationsAndSurveillance($institution, $studentList, $professors, $rooms);
 
             // 12. Seed Deliberations and Jury decisions
-            $this->seedDeliberationsAndJury($institution, $academicYear, $semesters[1], $filieres, $groupList, $studentList, $professors);
+            $this->seedDeliberationsAndJury($institution, $academicYear, $currentSemester, $filieres, $groupList, $studentList, $professors);
 
             // 13. Seed Internships, projects, reports, and evaluations
             $this->seedInternshipsAndProjects($institution, $academicYear, $studentList, $professors);
@@ -120,6 +122,8 @@ class EncgFesSeeder extends Seeder
             // 26. Seed Tickets & Replies (Réclamations)
             $this->seedTicketsAndReplies($institution, $studentList, $professors);
         });
+
+        $this->call(AcademicCalendarSeeder::class);
     }
 
     private function clearDatabase(): void
@@ -139,6 +143,12 @@ class EncgFesSeeder extends Seeder
         DB::table('project_defenses')->delete();
         DB::table('final_projects')->delete();
         DB::table('internships')->delete();
+        if (Schema::hasTable('deliberation_reopen_requests')) {
+            DB::table('deliberation_reopen_requests')->delete();
+        }
+        if (Schema::hasTable('deliberation_votes')) {
+            DB::table('deliberation_votes')->delete();
+        }
         DB::table('deliberation_decisions')->delete();
         DB::table('deliberation_members')->delete();
         DB::table('deliberations')->delete();
@@ -152,6 +162,12 @@ class EncgFesSeeder extends Seeder
         DB::table('book_copies')->delete();
         DB::table('books')->delete();
         DB::table('schedules')->delete();
+        if (Schema::hasTable('schedule_versions')) {
+            DB::table('schedule_versions')->delete();
+        }
+        if (Schema::hasTable('academic_events')) {
+            DB::table('academic_events')->delete();
+        }
         DB::table('diploma_verifications')->delete();
         DB::table('diplomas')->delete();
         DB::table('document_requests')->delete();
@@ -255,11 +271,11 @@ class EncgFesSeeder extends Seeder
     {
         return AcademicYear::create([
             'institution_id' => $institution->id,
-            'label' => '2024-2025',
-            'start_year' => 2024,
-            'end_year' => 2025,
-            'start_date' => '2024-09-16',
-            'end_date' => '2025-06-30',
+            'label' => '2026-2027',
+            'start_year' => 2026,
+            'end_year' => 2027,
+            'start_date' => '2026-08-01',
+            'end_date' => '2027-06-30',
             'is_current' => true,
             'is_locked' => false,
         ]);
@@ -269,22 +285,22 @@ class EncgFesSeeder extends Seeder
     {
         $semesters = [
             [
-                'name' => 'Semestre 1 — 2024-2025',
+                'name' => 'Semestre 1 — 2026-2027',
                 'number' => 1,
-                'start_date' => '2024-09-16',
-                'end_date' => '2025-01-31',
-                'exam_start_date' => '2025-01-06',
-                'exam_end_date' => '2025-01-25',
-                'is_current' => false,
+                'start_date' => '2026-08-01',
+                'end_date' => '2027-01-31',
+                'exam_start_date' => '2027-01-06',
+                'exam_end_date' => '2027-01-25',
+                'is_current' => true,
             ],
             [
-                'name' => 'Semestre 2 — 2024-2025',
+                'name' => 'Semestre 2 — 2026-2027',
                 'number' => 2,
-                'start_date' => '2025-02-03',
-                'end_date' => '2025-06-30',
-                'exam_start_date' => '2025-06-02',
-                'exam_end_date' => '2025-06-21',
-                'is_current' => true,
+                'start_date' => '2027-02-01',
+                'end_date' => '2027-06-30',
+                'exam_start_date' => '2027-06-02',
+                'exam_end_date' => '2027-06-21',
+                'is_current' => false,
             ],
         ];
 
@@ -310,7 +326,7 @@ class EncgFesSeeder extends Seeder
 
         $created = [];
         foreach ($rooms as $room) {
-            $created[] = Room::create([
+            $payload = [
                 'institution_id' => $institution->id,
                 'campus_id' => $campus->id,
                 'name' => $room['name'],
@@ -320,7 +336,11 @@ class EncgFesSeeder extends Seeder
                 'has_projector' => $room['projector'],
                 'has_ac' => $room['ac'],
                 'is_available' => true,
-            ]);
+            ];
+            if (Schema::hasColumn('rooms', 'is_out_of_service')) {
+                $payload['is_out_of_service'] = false;
+            }
+            $created[] = Room::create($payload);
         }
 
         return $created;
@@ -1068,6 +1088,19 @@ class EncgFesSeeder extends Seeder
             ['start' => '16:45:00', 'end' => '18:45:00'],
         ];
 
+        $semesterId = collect($semesters)->first(fn ($s) => $s->is_current)?->id ?? $semesters[0]->id;
+        $versionId = null;
+        if (Schema::hasTable('schedule_versions')) {
+            $versionId = DB::table('schedule_versions')->insertGetId([
+                'academic_year_id' => $academicYear->id,
+                'semester_id' => $semesterId,
+                'version_name' => 'Publié '.$academicYear->label,
+                'status' => 'PUBLISHED',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         foreach ($groups as $group) {
             $modules = Module::where('filiere_id', $group->filiere_id)->where('semester_number', $group->semester_number)->get();
 
@@ -1077,15 +1110,15 @@ class EncgFesSeeder extends Seeder
                 $room = $rooms[$index % count($rooms)];
                 $prof = $professors[$index % count($professors)];
 
-                DB::table('schedules')->insert([
+                $row = [
                     'institution_id' => $institution->id,
                     'academic_year_id' => $academicYear->id,
-                    'semester_id' => $semesters[1]->id, // Spring
+                    'semester_id' => $semesterId,
                     'group_id' => $group->id,
                     'module_id' => $mod->id,
                     'room_id' => $room->id,
                     'professor_id' => $prof->id,
-                    'professor_type' => 'App\Models\Professor',
+                    'professor_type' => Professor::class,
                     'day_of_week' => $dayIndex,
                     'start_time' => $timeSlot['start'],
                     'end_time' => $timeSlot['end'],
@@ -1094,7 +1127,17 @@ class EncgFesSeeder extends Seeder
                     'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                if (Schema::hasColumn('schedules', 'uuid')) {
+                    $row['uuid'] = (string) Str::uuid();
+                }
+                if (Schema::hasColumn('schedules', 'version')) {
+                    $row['version'] = 1;
+                }
+                if ($versionId && Schema::hasColumn('schedules', 'schedule_version_id')) {
+                    $row['schedule_version_id'] = $versionId;
+                }
+                DB::table('schedules')->insert($row);
 
                 $dayIndex = ($dayIndex % 5) + 1;
             }
@@ -1289,7 +1332,7 @@ class EncgFesSeeder extends Seeder
         array $professors
     ): void {
         foreach ($groups as $gIndex => $group) {
-            $delibId = DB::table('deliberations')->insertGetId([
+            $delibRow = [
                 'institution_id' => $institution->id,
                 'academic_year_id' => $academicYear->id,
                 'semester_id' => $semester->id,
@@ -1302,7 +1345,11 @@ class EncgFesSeeder extends Seeder
                 'president_id' => 1, // Radouane admin
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+            if (Schema::hasColumn('deliberations', 'is_sealed')) {
+                $delibRow['is_sealed'] = false;
+            }
+            $delibId = DB::table('deliberations')->insertGetId($delibRow);
 
             // Add 2 professors as deliberation jury members
             foreach (array_slice($professors, 0, 2) as $pIndex => $prof) {
@@ -1451,7 +1498,7 @@ class EncgFesSeeder extends Seeder
         $module = Module::first();
         $group = $groups[0];
 
-        $contractId = DB::table('vacation_contracts')->insertGetId([
+        $contract = [
             'professor_id' => $prof->id,
             'institution_id' => $institution->id,
             'user_id' => $prof->user_id,
@@ -1469,18 +1516,28 @@ class EncgFesSeeder extends Seeder
             'group_id' => $group->id,
             'session_type' => 'cm',
             'agreed_hours' => 36,
-            'hourly_rate' => 250.00, // 250 MAD/hour
+            'hourly_rate' => 250.00,
             'status' => 'active',
-            'contract_start' => '2025-02-03',
-            'contract_end' => '2025-06-15',
+            'contract_start' => '2027-02-01',
+            'contract_end' => '2027-06-15',
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ];
+        if (Schema::hasColumn('vacation_contracts', 'max_hours_per_module')) {
+            $contract['max_hours_per_module'] = 45;
+        }
+        if (Schema::hasColumn('vacation_contracts', 'approved_by_dept_at')) {
+            $contract['approved_by_dept_at'] = now();
+        }
+        if (Schema::hasColumn('vacation_contracts', 'approved_by_hr_at')) {
+            $contract['approved_by_hr_at'] = now();
+        }
+        $contractId = DB::table('vacation_contracts')->insertGetId($contract);
 
         // Seed vacation session
         DB::table('vacation_sessions')->insert([
             'vacation_contract_id' => $contractId,
-            'session_date' => '2025-05-12',
+            'session_date' => '2027-05-12',
             'start_time' => '08:30:00',
             'end_time' => '10:30:00',
             'hours' => 2.00,
@@ -1496,8 +1553,8 @@ class EncgFesSeeder extends Seeder
         DB::table('vacation_payments')->insert([
             'institution_id' => $institution->id,
             'vacation_contract_id' => $contractId,
-            'reference_number' => 'PAY-2025-05001',
-            'payment_year' => 2025,
+            'reference_number' => 'PAY-2027-05001',
+            'payment_year' => 2027,
             'payment_month' => 5,
             'total_hours' => 16.00,
             'hourly_rate' => 250.00,
@@ -1506,8 +1563,8 @@ class EncgFesSeeder extends Seeder
             'cnss_deduction' => 0.00,
             'net_amount' => 3320.00,
             'status' => 'paid',
-            'paid_at' => '2025-05-28 10:00:00',
-            'notes' => 'Paiement des vacations du mois de Mai 2025.',
+            'paid_at' => '2027-05-28 10:00:00',
+            'notes' => 'Paiement des vacations du mois de Mai 2027.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -4,6 +4,7 @@ namespace App\Services\Academic;
 
 use App\Models\AcademicEvent;
 use App\Models\GradeEntryPeriod;
+use App\Services\AcademicCalendarService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class AcademicWindowGuard
@@ -11,6 +12,12 @@ class AcademicWindowGuard
     public const GRADES = 'saisie_notes';
 
     public const JUSTIFICATIONS = 'depot_justificatifs';
+
+    /** @var list<string> */
+    public const GRADE_TYPES = ['saisie_notes', 'grades_entry'];
+
+    /** @var list<string> */
+    public const JUSTIFICATION_TYPES = ['depot_justificatifs', 'document_submission'];
 
     public function assertGradesOpen(): void
     {
@@ -33,8 +40,8 @@ class AcademicWindowGuard
             return $periods->contains(fn (GradeEntryPeriod $p) => $p->isActive());
         }
 
-        if (AcademicEvent::ofType(self::GRADES)->exists()) {
-            return AcademicEvent::ofType(self::GRADES)->currentlyActive()->exists();
+        if (AcademicEvent::query()->whereIn('type', self::GRADE_TYPES)->exists()) {
+            return app(AcademicCalendarService::class)->isGradeEntryOpen();
         }
 
         return true;
@@ -42,8 +49,8 @@ class AcademicWindowGuard
 
     public function isJustificationsOpen(): bool
     {
-        if (AcademicEvent::ofType(self::JUSTIFICATIONS)->exists()) {
-            return AcademicEvent::ofType(self::JUSTIFICATIONS)->currentlyActive()->exists();
+        if (AcademicEvent::query()->whereIn('type', self::JUSTIFICATION_TYPES)->exists()) {
+            return app(AcademicCalendarService::class)->isDocumentSubmissionOpen();
         }
 
         return true;

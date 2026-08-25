@@ -15,11 +15,22 @@ class AcademicCalendarService
     }
 
     /**
+     * @param  list<string>  $types
+     */
+    public function isAnyEventActive(array $types): bool
+    {
+        return AcademicEvent::query()
+            ->currentlyActive()
+            ->whereIn('type', $types)
+            ->exists();
+    }
+
+    /**
      * Check if grade entry is currently open.
      */
     public function isGradeEntryOpen(): bool
     {
-        return $this->isEventActive('saisie_notes');
+        return $this->isAnyEventActive(['saisie_notes', 'grades_entry']);
     }
 
     /**
@@ -27,7 +38,7 @@ class AcademicCalendarService
      */
     public function isDocumentSubmissionOpen(): bool
     {
-        return $this->isEventActive('depot_justificatifs');
+        return $this->isAnyEventActive(['depot_justificatifs', 'document_submission']);
     }
 
     /**
@@ -35,7 +46,7 @@ class AcademicCalendarService
      */
     public function isRegistrationOpen(): bool
     {
-        return $this->isEventActive('inscriptions');
+        return $this->isAnyEventActive(['inscriptions']);
     }
 
     /**
@@ -43,7 +54,7 @@ class AcademicCalendarService
      */
     public function areExamsOngoing(): bool
     {
-        return $this->isEventActive('examens');
+        return $this->isAnyEventActive(['examens', 'exams']);
     }
 
     /**

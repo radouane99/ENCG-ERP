@@ -61,7 +61,7 @@ class ExamPlanningController extends Controller
         $filiereId = $request->query('filiere_id');
         $sessionId = $request->query('session_id');
 
-        $query = Exam::with(['module.filiere', 'group', 'room', 'examSession', 'surveillances.professor'])
+        $query = Exam::with(['module.filiere', 'group', 'room', 'examSession', 'surveillances.professor.user'])
             ->withCount('seatings');
 
         if ($sessionId) {
@@ -73,7 +73,22 @@ class ExamPlanningController extends Controller
         }
 
         $exams = $query->orderBy('exam_date')->get()->map(function ($e) {
-            $proctors = $e->surveillances->map(fn ($s) => $s->professor->last_name.' '.$s->professor->first_name)->toArray();
+            $proctors = $e->surveillances->map(function ($s) {
+                if ($s->professor && $s->professor->user) {
+                    $fn = trim(($s->professor->user->first_name ?? '').' '.($s->professor->user->last_name ?? ''));
+                    if (! empty($fn)) {
+                        return $fn;
+                    }
+                }
+                if ($s->professor) {
+                    $fn = trim(($s->professor->first_name ?? '').' '.($s->professor->last_name ?? ''));
+                    if (! empty($fn)) {
+                        return $fn;
+                    }
+                }
+
+                return 'Professeur';
+            })->filter()->values()->toArray();
 
             return [
                 'id' => $e->id,
@@ -96,17 +111,23 @@ class ExamPlanningController extends Controller
     }
 
     /**
-     * Supprimer les examens d'une session.
+     * Supprimer les examens d'une session / filière.
      */
     public function resetExams(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'filiere_id' => 'nullable|integer',
-            'session_id' => 'required|integer',
+            'session_id' => 'nullable|integer',
+            'exam_session_id' => 'nullable|integer',
             'semester_number' => 'nullable|integer',
         ]);
 
-        $query = Exam::where('exam_session_id', $validated['session_id']);
+        $sessionId = $validated['session_id'] ?? $validated['exam_session_id'] ?? null;
+        $query = Exam::query();
+
+        if ($sessionId) {
+            $query->where('exam_session_id', $sessionId);
+        }
 
         if (! empty($validated['filiere_id']) || ! empty($validated['semester_number'])) {
             $query->whereHas('module', function ($q) use ($validated) {
@@ -120,6 +141,7 @@ class ExamPlanningController extends Controller
         }
 
         $exams = $query->get();
+        $count = $exams->count();
 
         foreach ($exams as $exam) {
             ExamSeating::where('exam_id', $exam->id)->delete();
@@ -129,7 +151,10 @@ class ExamPlanningController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Examens et convocations supprimés avec succès.',
+            'message' => $count > 0 
+                ? "{$count} examen(s) et leurs convocations ont été réinitialisés avec succès."
+                : 'Aucun examen à réinitialiser pour les critères sélectionnés.',
+            'deleted_count' => $count,
         ]);
     }
 

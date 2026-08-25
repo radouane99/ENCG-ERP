@@ -89,6 +89,20 @@ it('opens grade entry when no academic window is configured', function () {
     expect(app(AcademicWindowGuard::class)->isGradesOpen())->toBeTrue();
 });
 
+it('opens justifications when only the english academic_events type is active', function () {
+    $year = AcademicYear::factory()->create(['is_current' => true]);
+    AcademicEvent::create([
+        'academic_year_id' => $year->id,
+        'title' => 'Document submission',
+        'type' => 'document_submission',
+        'start_date' => now()->subDay(),
+        'end_date' => now()->addDay(),
+        'is_active' => true,
+    ]);
+
+    expect(app(AcademicWindowGuard::class)->isJustificationsOpen())->toBeTrue();
+});
+
 it('closes grade entry when all grade periods are closed', function () {
     $year = AcademicYear::factory()->create(['is_current' => true]);
     $semester = Semester::factory()->create(['academic_year_id' => $year->id]);

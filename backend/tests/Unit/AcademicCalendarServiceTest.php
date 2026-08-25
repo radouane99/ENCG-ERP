@@ -88,4 +88,36 @@ class AcademicCalendarServiceTest extends TestCase
 
         $this->assertFalse($this->service->isDocumentSubmissionOpen());
     }
+
+    public function test_it_accepts_english_type_aliases_from_academic_events_migration(): void
+    {
+        $year = $this->createAcademicYear();
+
+        AcademicEvent::create([
+            'academic_year_id' => $year->id,
+            'title' => 'Document submission',
+            'type' => 'document_submission',
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($this->service->isDocumentSubmissionOpen());
+    }
+
+    public function test_it_accepts_grades_entry_alias_from_academic_events_migration(): void
+    {
+        $year = $this->createAcademicYear();
+
+        AcademicEvent::create([
+            'academic_year_id' => $year->id,
+            'title' => 'Grade entry',
+            'type' => 'grades_entry',
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($this->service->isGradeEntryOpen());
+    }
 }

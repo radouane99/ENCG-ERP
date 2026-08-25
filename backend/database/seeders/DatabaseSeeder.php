@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 RbacSeeder::class,
                 EncgFesSeeder::class,
+                AcademicCalendarSeeder::class,
                 MobilityPartnerSeeder::class,
             ]);
 
