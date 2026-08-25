@@ -48,7 +48,7 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
       if (!(error.config as any)?.suppressToast) {
-        toast.error('Accès Refusé : Vous n\'avez pas les permissions nécessaires.')
+        toast.error(message || 'Accès Refusé : Vous n\'avez pas les permissions nécessaires.')
       }
       return Promise.reject(error)
     }

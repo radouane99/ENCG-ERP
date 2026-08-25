@@ -172,25 +172,41 @@ export default function UnifiedGuichetAttestationsPage() {
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage) || 1
   const paginatedRequests = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
+  // Helper to securely open authenticated PDF stream in a new browser tab
+  const openAuthenticatedPdf = async (url: string, loadingMessage = 'Chargement du document PDF...') => {
+    try {
+      toast.loading(loadingMessage, { id: 'pdf-stream' })
+      const cleanUrl = url.startsWith('/api') ? url.substring(4) : url
+      const res = await api.get(cleanUrl, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const blobUrl = window.URL.createObjectURL(blob)
+      window.open(blobUrl, '_blank')
+      toast.success('Document PDF ouvert !', { id: 'pdf-stream' })
+    } catch (err: any) {
+      toast.error('Erreur lors du chargement du document PDF.', { id: 'pdf-stream' })
+    }
+  }
+
   // Certified PDF Printable Generator A4 (with SHA-256 + QR Code + Resend email stub)
-  const handlePrintCertificate = (studentName: string, docType: string, cne: string, reqId?: any, isProfessor?: boolean, realId?: number) => {
+  const handlePrintCertificate = async (studentName: string, docType: string, cne: string, reqId?: any, isProfessor?: boolean, realId?: number) => {
     if (reqId) {
-      if (isProfessor || String(reqId).startsWith('prof_')) {
-        const profId = realId || String(reqId).replace('prof_', '')
-        window.open(`/api/professor-portal/documents/${profId}/pdf`, '_blank')
-      } else {
-        window.open(`/api/admin/document-requests/${reqId}/preview`, '_blank')
-      }
+      const url = (isProfessor || String(reqId).startsWith('prof_'))
+        ? `/professor-portal/documents/${realId || String(reqId).replace('prof_', '')}/pdf`
+        : `/admin/document-requests/${reqId}/preview`
+      await openAuthenticatedPdf(url, 'Ouverture du document certifié...')
     } else {
-      api.post('/admin/document-requests/quick-generate', { cne_or_name: cne, document_type: docType })
-        .then(res => {
-          if (res.data?.preview_url) {
-            window.open(res.data.preview_url, '_blank')
-          } else {
-            toast.error('Erreur lors de l\'ouverture du document PDF.')
-          }
-        })
-        .catch(() => toast.error('Échec de la génération du document.'))
+      try {
+        toast.loading('Génération du document...', { id: 'pdf-gen' })
+        const res = await api.post('/admin/document-requests/quick-generate', { cne_or_name: cne, document_type: docType })
+        if (res.data?.preview_url) {
+          toast.dismiss('pdf-gen')
+          await openAuthenticatedPdf(res.data.preview_url, 'Ouverture du document certifié...')
+        } else {
+          toast.error('Erreur lors de l\'ouverture du document PDF.', { id: 'pdf-gen' })
+        }
+      } catch {
+        toast.error('Échec de la génération du document.', { id: 'pdf-gen' })
+      }
     }
   }
 
@@ -210,8 +226,8 @@ export default function UnifiedGuichetAttestationsPage() {
       })
 
       if (res.data?.success && res.data?.preview_url) {
-        toast.success(res.data.message || 'Document officiel certifié généré !', { id: 'quick-gen' })
-        window.open(res.data.preview_url, '_blank')
+        toast.dismiss('quick-gen')
+        await openAuthenticatedPdf(res.data.preview_url, 'Ouverture du document officiel certifié...')
         queryClient.invalidateQueries({ queryKey: ['admin-document-requests'] })
         setQuickStudentCne('')
       } else {

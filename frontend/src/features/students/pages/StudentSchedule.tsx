@@ -11,11 +11,12 @@ export default function StudentSchedule() {
   const isRtl = i18n.language === 'ar';
   const [view, setView] = useState<'MOIS' | 'SEMAINE' | 'JOUR' | 'LISTE'>('SEMAINE');
 
-  const { data: scheduleData, isLoading } = useQuery({
+  const { data: scheduleData, isLoading, isError } = useQuery({
     queryKey: ['student-schedule'],
+    retry: 1,
     queryFn: async () => {
-      const res = await api.get('/student-portal/schedule');
-      return res.data.data;
+      const res = await api.get('/v1/student-portal/schedule');
+      return res.data.data ?? [];
     }
   });
 
@@ -144,6 +145,8 @@ export default function StudentSchedule() {
         {/* Calendar Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>
+        ) : isError ? (
+          <p className="text-center text-sm text-rose-600 py-16 font-medium">Impossible de charger l’emploi du temps. Réessayez dans un instant.</p>
         ) : (
           <div className="border border-gray-100 rounded-2xl overflow-hidden overflow-x-auto">
             <div className="min-w-[800px]">

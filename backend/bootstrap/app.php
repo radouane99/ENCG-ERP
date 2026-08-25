@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuditTrailMiddleware;
 use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\QueryTokenAuth;
 use App\Http\Middleware\RequireAdmin2FA;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SetLocale;
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(prepend: [
+            QueryTokenAuth::class,
             SetLocale::class,
         ]);
 

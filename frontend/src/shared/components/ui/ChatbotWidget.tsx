@@ -94,7 +94,7 @@ export default function ChatbotWidget() {
     setIsTyping(true)
 
     try {
-      const res = await api.post('/ai/chat', { message: msg, context: 'student_assistant' })
+      const res = await api.post('/chatbot/message', { message: msg, role: 'Étudiant' })
       const reply = res.data?.reply ?? res.data?.message ?? 'Je suis à votre disposition. Pour toute assistance immédiate, contactez la scolarité à **scolarite@encg-fes.ma**.'
       setMessages(prev => [...prev, { id: counter + 1, role: 'assistant', content: reply }])
       setCounter(n => n + 2)

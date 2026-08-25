@@ -38,7 +38,8 @@ class StudentPortalService
         return DB::table('schedules')
             ->join('modules', 'schedules.module_id', '=', 'modules.id')
             ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
-            ->leftJoin('users', 'schedules.professor_id', '=', 'users.id')
+            ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
+            ->leftJoin('users', 'professors.user_id', '=', 'users.id')
             ->where('schedules.group_id', $pathway->group_id)
             ->where('schedules.is_active', true)
             ->select(

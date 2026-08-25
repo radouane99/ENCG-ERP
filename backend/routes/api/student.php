@@ -32,8 +32,8 @@ Route::middleware(['auth:sanctum', 'role:student', EnsureInstitutionContext::cla
     Route::post('/attendance/scan', [AttendanceController::class, 'scanQr']);
 });
 
-// Web App Student Portal API
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group(function () {
+// Web App Student Portal API (`/v1/...` and `/student-portal/...` — frontend often omits v1)
+$studentPortalRoutes = function () {
     Route::get('/my-dossier', [UnifiedStudentRecordController::class, 'myDossier']);
     Route::get('/dashboard', [StudentPortalController::class, 'getDashboardStats']);
     Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);
@@ -111,4 +111,7 @@ Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')
     // AI Course Tutor (RAG anchored on ENCG handouts)
     Route::post('/ai-tutor/chat', [AiCourseTutorController::class, 'chat']);
     Route::get('/ai-tutor/quiz', [AiCourseTutorController::class, 'getQuiz']);
-});
+};
+
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('student-portal')->group($studentPortalRoutes);
