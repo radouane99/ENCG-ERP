@@ -75,7 +75,55 @@ export default function AdminTimetableEnginePage() {
 
   // Simulation result state
   const [simResult, setSimResult] = useState<SimulationData | null>(null);
-  const [suggestedSlots, setSuggestedSlots] = useState<any[]>([]);
+  const { data: workspace, refetch: refetchWorkspace } = useQuery({
+    queryKey: ['edt-campaign-workspace'],
+    queryFn: () => api.get('/admin/smart-scheduling/workspace').then(res => res.data.data || res.data),
+  });
+
+  const openCampaignMutation = useMutation({
+    mutationFn: () => api.post('/admin/smart-scheduling/campaign/open', { allow_saturday: false }),
+    onSuccess: () => {
+      toast.success('Campagne EDT ouverte pour ce semestre (lundi–vendredi).');
+      refetchWorkspace();
+    },
+  });
+
+  const draftMutation = useMutation({
+    mutationFn: async (filiereId: number) => {
+      const res = await api.post('/admin/smart-scheduling/draft', {
+        filiere_id: filiereId,
+        include_saturday: false,
+        max_daily_hours: maxDailyHours,
+        energy_weight: energyWeight,
+      });
+      return res.data.data;
+    },
+    onSuccess: (data: any) => {
+      setSimResult(data.simulation || data);
+      toast.success(data.message || 'Brouillon généré (non publié).');
+      refetchWorkspace();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Génération brouillon impossible');
+    },
+  });
+
+  const proposeMutation = useMutation({
+    mutationFn: (versionId: number) => api.post(`/admin/smart-scheduling/versions/${versionId}/propose`),
+    onSuccess: () => {
+      toast.success('Proposition envoyée aux enseignants. Les étudiants ne voient rien tant que vous ne publiez pas.');
+      refetchWorkspace();
+    },
+  });
+
+  const publishVersionMutation = useMutation({
+    mutationFn: (versionId: number) => api.post(`/admin/smart-scheduling/versions/${versionId}/publish`),
+    onSuccess: () => {
+      toast.success('EDT officiel publié pour cette filière.');
+      refetchWorkspace();
+      refetchStats();
+    },
+  });
 
   // Fetch Filieres
   const { data: filieres = [] } = useQuery({
@@ -97,6 +145,7 @@ export default function AdminTimetableEnginePage() {
         semester_id: selectedSemester ? Number(selectedSemester) : undefined,
         energy_weight: energyWeight,
         prof_avail_weight: profAvailWeight,
+        include_saturday: false,
         max_daily_hours: maxDailyHours,
       };
       const res = await api.post('/admin/smart-scheduling/simulate', payload);
@@ -251,9 +300,80 @@ export default function AdminTimetableEnginePage() {
               className="px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all shadow-xl shadow-emerald-950/30 disabled:opacity-50"
             >
               {publishMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4" />}
-              Publier l'Emploi Officiel
+              Forcer publication directe
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-sm space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Atelier EDT par filière</p>
+            <h2 className="text-xl font-black text-slate-900">
+              {workspace?.campaign_label || 'Campagne semestrielle'}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              1 clic génère un <strong>brouillon</strong> lundi–vendredi (pas de samedi). Les profs confirment leurs séances. Vous publiez ensuite — les étudiants ne voient que la version officielle.
+            </p>
+          </div>
+          <button
+            onClick={() => openCampaignMutation.mutate()}
+            disabled={openCampaignMutation.isPending || workspace?.campaign_open}
+            className="px-5 py-3 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-wider disabled:opacity-50"
+          >
+            {workspace?.campaign_open ? 'Campagne ouverte' : 'Ouvrir la campagne du semestre'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-wider">
+          {['Brouillon', 'Proposition profs', 'Publication officielle'].map((step, i) => (
+            <span key={step} className="px-3 py-1 rounded-full bg-slate-100 text-slate-600">
+              {i + 1}. {step}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {(workspace?.filieres || []).map((card: any) => (
+            <div key={card.filiere_id} className="rounded-2xl border border-slate-200 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="text-sm font-black text-slate-900">{card.filiere_code}</div>
+                  <div className="text-xs text-slate-500">{card.filiere_name}</div>
+                </div>
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
+                  {card.status === 'EMPTY' ? 'Vide' : card.status}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Confirmations : {card.confirmations?.confirmed || 0}/{card.confirmations?.total || 0}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => draftMutation.mutate(card.filiere_id)}
+                  disabled={draftMutation.isPending || !workspace?.campaign_open}
+                  className="px-3 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase disabled:opacity-40"
+                >
+                  Générer brouillon
+                </button>
+                {card.version_id && card.status === 'DRAFT' && (
+                  <button
+                    onClick={() => proposeMutation.mutate(card.version_id)}
+                    className="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-800 text-[10px] font-black uppercase"
+                  >
+                    Proposer aux profs
+                  </button>
+                )}
+                {card.version_id && card.status === 'PROPOSED' && (
+                  <button
+                    onClick={() => publishVersionMutation.mutate(card.version_id)}
+                    className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase"
+                  >
+                    Publier
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -148,6 +148,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
         Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
+        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
+        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
+        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
+        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
+        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
     });
     Route::prefix('admin/smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
@@ -155,6 +161,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
         Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
+        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
+        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
+        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
+        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
+        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
     });
 
     // AI Predictive Analytics

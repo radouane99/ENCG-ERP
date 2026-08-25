@@ -56,6 +56,7 @@ class SmartSchedulingEngine
             'energy_weight' => $energyWeight,
             'prof_avail_weight' => $profAvailWeight,
             'max_daily_hours' => $maxDailyHours,
+            'include_saturday' => (bool) ($params['include_saturday'] ?? false),
         ]);
 
         $executionTime = round((microtime(true) - $startTime) * 1000, 2);

@@ -44,6 +44,11 @@ class Schedule extends Model
         return $this->hasMany(ScheduleChange::class);
     }
 
+    public function version(): BelongsTo
+    {
+        return $this->belongsTo(ScheduleVersion::class, 'schedule_version_id');
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];

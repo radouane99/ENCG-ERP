@@ -15,6 +15,9 @@ class TimetablePerformanceStrategy
 {
     public const NAME = 'MRV-Degree-LCV';
 
+    /** @var array<int, int> */
+    private array $workingDays = [1, 2, 3, 4, 5];
+
     public const HEURISTICS = [
         'CM — un cours pour les 2 groupes de la promotion (même prof, même salle, même horaire)',
         'TD — séance séparée par groupe (peuvent être en parallèle si profs et salles distincts)',
@@ -49,6 +52,9 @@ class TimetablePerformanceStrategy
         $maxDailySlots = max(1, (int) ceil($maxDailyHours / 2));
         $energyWeight = (int) ($config['energy_weight'] ?? 80);
         $preferOriginal = (bool) ($config['prefer_original_slot'] ?? false);
+        $this->workingDays = ($config['include_saturday'] ?? false)
+            ? array_keys(SmartSchedulingEngine::DAYS)
+            : [1, 2, 3, 4, 5];
 
         $variables = $this->mergeSharedCours($variables);
 
@@ -281,7 +287,7 @@ class TimetablePerformanceStrategy
     ): int {
         $groupIds = self::occupiedGroupIds($var);
         $size = 0;
-        foreach (array_keys(SmartSchedulingEngine::DAYS) as $day) {
+        foreach ($this->workingDays as $day) {
             if ($grid->maxGroupDaySlots($day, $groupIds) >= $maxDailySlots) {
                 continue;
             }
@@ -323,7 +329,7 @@ class TimetablePerformanceStrategy
         $groupIds = self::occupiedGroupIds($var);
         $best = null;
 
-        foreach (array_keys(SmartSchedulingEngine::DAYS) as $day) {
+        foreach ($this->workingDays as $day) {
             if ($grid->maxGroupDaySlots($day, $groupIds) >= $maxDailySlots) {
                 continue;
             }

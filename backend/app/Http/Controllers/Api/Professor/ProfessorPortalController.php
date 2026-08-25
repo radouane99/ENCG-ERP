@@ -29,14 +29,17 @@ class ProfessorPortalController extends Controller
         $profId = $user->professor?->id;
         $userId = $user->id;
 
-        $schedule = Schedule::with(['module', 'group', 'room'])
+        $schedule = Schedule::with(['module', 'group', 'room', 'version'])
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
                     $q->where('professor_id', $profId);
                 }
                 $q->orWhere('professor_id', $userId);
             })
-            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('is_active', true)
+                    ->orWhereHas('version', fn ($v) => $v->where('status', 'PROPOSED'));
+            })
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
@@ -45,12 +48,32 @@ class ProfessorPortalController extends Controller
                 'room' => $s->room->name ?? 'N/A',
                 'time' => $s->start_time.' - '.$s->end_time,
                 'day_of_week' => $s->day_of_week,
+                'session_type' => $s->session_type,
+                'confirmation_status' => $s->confirmation_status ?? 'pending',
+                'lifecycle' => $s->version?->status ?? ($s->is_active ? 'PUBLISHED' : 'DRAFT'),
             ]);
 
         return response()->json([
             'success' => true,
             'data' => $schedule,
         ]);
+    }
+
+    public function confirmSchedule(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'decision' => 'required|in:confirmed,refused',
+            'note' => 'nullable|string|max:500',
+        ]);
+        $profId = (int) ($request->user()->professor?->id ?? 0);
+        if ($profId < 1) {
+            return response()->json(['success' => false, 'message' => 'Profil enseignant introuvable.'], 403);
+        }
+
+        $result = app(\App\Services\Academic\TimetableCampaignService::class)
+            ->confirmSession($id, $profId, $validated['decision'], $validated['note'] ?? null);
+
+        return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);
     }
 
     /**

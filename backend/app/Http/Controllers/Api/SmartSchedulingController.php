@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\Academic\SlotSuggestionService;
 use App\Services\Academic\SmartSchedulingEngine;
+use App\Services\Academic\TimetableCampaignService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,8 @@ class SmartSchedulingController extends Controller
 {
     public function __construct(
         private SmartSchedulingEngine $engine,
-        private SlotSuggestionService $slotSuggestions
+        private SlotSuggestionService $slotSuggestions,
+        private TimetableCampaignService $campaigns
     ) {}
 
     /**
@@ -25,6 +27,7 @@ class SmartSchedulingController extends Controller
             'semester_id' => 'nullable|integer|exists:semesters,id',
             'energy_weight' => 'nullable|numeric|min:0|max:100',
             'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
+            'include_saturday' => 'nullable|boolean',
             'max_daily_hours' => 'nullable|integer|min:4|max:10',
         ]);
 
@@ -68,6 +71,7 @@ class SmartSchedulingController extends Controller
             'energy_weight' => 'nullable|numeric|min:0|max:100',
             'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
             'overwrite' => 'nullable|boolean',
+            'include_saturday' => 'nullable|boolean',
         ]);
 
         $result = $this->engine->generateAndPublish($validated);
@@ -106,5 +110,64 @@ class SmartSchedulingController extends Controller
             'success' => true,
             'data' => $slots,
         ]);
+    }
+
+    public function workspace(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->campaigns->workspace(),
+        ]);
+    }
+
+    public function openCampaign(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'allow_saturday' => 'nullable|boolean',
+        ]);
+        $campaign = $this->campaigns->openCampaign(
+            (int) $request->user()->id,
+            (bool) ($validated['allow_saturday'] ?? false)
+        );
+
+        return response()->json(['success' => true, 'data' => $campaign]);
+    }
+
+    public function closeCampaign(): JsonResponse
+    {
+        $campaign = $this->campaigns->closeCampaign();
+
+        return response()->json(['success' => true, 'data' => $campaign]);
+    }
+
+    public function generateDraft(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'required|integer|exists:filieres,id',
+            'energy_weight' => 'nullable|numeric|min:0|max:100',
+            'max_daily_hours' => 'nullable|integer|min:4|max:10',
+            'include_saturday' => 'nullable|boolean',
+        ]);
+
+        $result = $this->campaigns->generateDraft((int) $validated['filiere_id'], $validated);
+
+        return response()->json([
+            'success' => $result['success'] ?? false,
+            'data' => $result,
+        ], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    public function propose(int $versionId): JsonResponse
+    {
+        $result = $this->campaigns->propose($versionId);
+
+        return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);
+    }
+
+    public function publishVersion(int $versionId): JsonResponse
+    {
+        $result = $this->campaigns->publish($versionId);
+
+        return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);
     }
 }

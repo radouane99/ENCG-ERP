@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
 
     // Portal
     Route::get('/professor-portal/schedule', [ProfessorPortalController::class, 'getSchedule']);
+    Route::post('/professor-portal/schedules/{id}/confirm', [ProfessorPortalController::class, 'confirmSchedule']);
     Route::get('/professor-portal/reservations', [ProfessorPortalController::class, 'getReservations']);
     Route::post('/professor-portal/reservations', [RoomBookingController::class, 'store']);
     Route::get('/professor-portal/analytics', [ProfessorPortalController::class, 'getAnalytics']);

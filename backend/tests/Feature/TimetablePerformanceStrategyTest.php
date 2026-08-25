@@ -45,6 +45,34 @@ class TimetablePerformanceStrategyTest extends TestCase
         $this->assertContains('cm_shared', $result['hard_constraints']);
     }
 
+    public function test_weekdays_only_never_assigns_saturday(): void
+    {
+        $rooms = collect([
+            (object) ['id' => 1, 'name' => 'Salle 1', 'capacity' => 40, 'type' => 'classroom', 'building' => 'A'],
+        ]);
+        $variables = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $variables[] = [
+                'var_id' => $i,
+                'group_id' => 1,
+                'group_size' => 30,
+                'filiere_code' => 'TC',
+                'professor_id' => 1,
+                'session_type' => 'td',
+                'module_id' => $i,
+            ];
+        }
+
+        $result = app(TimetablePerformanceStrategy::class)->place($variables, $rooms, [
+            'include_saturday' => false,
+            'max_daily_hours' => 10,
+        ]);
+
+        foreach ($result['assignments'] as $session) {
+            $this->assertNotSame(6, (int) $session['day_of_week']);
+        }
+    }
+
     public function test_cours_magistral_places_both_groups_together(): void
     {
         $rooms = collect([
