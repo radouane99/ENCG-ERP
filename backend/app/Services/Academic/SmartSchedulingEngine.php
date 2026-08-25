@@ -7,12 +7,16 @@ use App\Models\Module;
 use App\Models\Professor;
 use App\Models\ProfessorAvailability;
 use App\Models\Room;
+use App\Models\Schedule;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SmartSchedulingEngine
 {
+    public function __construct(
+        private TimetablePerformanceStrategy $strategy
+    ) {}
     /**
      * Standard Moroccan University time slots (2-hour pedagogic blocks)
      */
@@ -252,156 +256,183 @@ class SmartSchedulingEngine
             }
         }
 
-        // 3. Solve with CSP Grid Matrix
-        // Grid: grid[day][slot_index][resource_type: prof | group | room]
-        $grid = [];
+        // 3. Place with MRV / LCV occupancy strategy (professeur, salle, groupe)
+        $placed = $this->strategy->place($variables, $rooms, $config);
+
         $scheduledSessions = [];
-        $conflictsResolved = 0;
-        $buildingUsage = ['Bâtiment Principal' => 0, 'Bâtiment A' => 0, 'Bâtiment B' => 0, 'Bâtiment C' => 0];
-
-        foreach (array_keys(self::DAYS) as $day) {
-            foreach (self::TIME_BLOCKS as $block) {
-                $grid[$day][$block['slot_index']] = [
-                    'professors' => [],
-                    'groups' => [],
-                    'rooms' => [],
-                ];
-            }
-        }
-
-        // Preferred building per filière for Energy Compactness
-        $filiereBuildingPref = [
-            'GFC' => 'Bâtiment A',
-            'MCM' => 'Bâtiment B',
-            'TC' => 'Bâtiment Principal',
-            'GRH' => 'Bâtiment B',
-        ];
-
-        foreach ($variables as $var) {
-            $placed = false;
-
-            // Sort days & slots (Heuristic: Balance across week)
-            $dayKeys = array_keys(self::DAYS);
-            shuffle($dayKeys);
-
-            foreach ($dayKeys as $day) {
-                foreach (self::TIME_BLOCKS as $block) {
-                    $slot = $block['slot_index'];
-
-                    // Constraint Check 1: Group Free
-                    if (isset($grid[$day][$slot]['groups'][$var['group_id']])) {
-                        $conflictsResolved++;
-
-                        continue;
-                    }
-
-                    // Constraint Check 2: Professor Free
-                    if (isset($grid[$day][$slot]['professors'][$var['professor_id']])) {
-                        $conflictsResolved++;
-
-                        continue;
-                    }
-
-                    // Constraint Check 3: Professor Declared Availability
-                    if (! $this->isProfessorAvailable($var['professor_id'], $day, $block['start'], $block['end'])) {
-                        $conflictsResolved++;
-
-                        continue;
-                    }
-
-                    // Constraint Check 4: Find Suitable Room (Room free + capacity + type + energy preference)
-                    $prefBuilding = $filiereBuildingPref[$var['filiere_code']] ?? 'Bâtiment A';
-
-                    $availableRooms = $rooms->filter(function ($r) use ($grid, $day, $slot, $var) {
-                        if (($r->is_out_of_service ?? false) || ($r->status ?? null) === 'out_of_service' || ($r->is_available === false)) {
-                            return false;
-                        }
-                        if (isset($grid[$day][$slot]['rooms'][$r->id])) {
-                            return false;
-                        }
-                        if ($r->capacity < $var['group_size']) {
-                            return false;
-                        }
-                        if ($var['session_type'] === 'cm' && $var['group_size'] > 60 && $r->type !== 'amphitheater') {
-                            return false;
-                        }
-
-                        return true;
-                    })->sortBy(function ($r) use ($prefBuilding, $var) {
-                        // Energy Compactness score: Prioritize matching building & closest capacity
-                        $buildingScore = ($r->building ?? '') === $prefBuilding ? 0 : 50;
-                        $capacityDiff = abs($r->capacity - $var['group_size']);
-
-                        return $buildingScore + $capacityDiff;
-                    });
-
-                    $bestRoom = $availableRooms->first();
-
-                    if (! $bestRoom) {
-                        $conflictsResolved++;
-
-                        continue;
-                    }
-
-                    // Place Variable in Grid
-                    $grid[$day][$slot]['groups'][$var['group_id']] = true;
-                    $grid[$day][$slot]['professors'][$var['professor_id']] = true;
-                    $grid[$day][$slot]['rooms'][$bestRoom->id] = true;
-
-                    $profObj = $professors->firstWhere('id', $var['professor_id']);
-                    $profName = $profObj ? ($profObj->user ? "Pr. {$profObj->user->first_name} {$profObj->user->last_name}" : "Pr. ID {$var['professor_id']}") : 'Pr. Titulaire';
-
-                    $bName = $bestRoom->building ?? 'Bâtiment Principal';
-                    $buildingUsage[$bName] = ($buildingUsage[$bName] ?? 0) + 1;
-
-                    $scheduledSessions[] = [
-                        'id' => $var['var_id'],
-                        'day_of_week' => $day,
-                        'day_name' => self::DAYS[$day],
-                        'start_time' => $block['start'],
-                        'end_time' => $block['end'],
-                        'slot_label' => $block['label'],
-                        'group_id' => $var['group_id'],
-                        'group_name' => $var['group_name'],
-                        'module_id' => $var['module_id'],
-                        'module_name' => $var['module_name'],
-                        'module_code' => $var['module_code'],
-                        'filiere_code' => $var['filiere_code'],
-                        'professor_id' => $var['professor_id'],
-                        'professor_name' => $profName,
-                        'room_id' => $bestRoom->id,
-                        'room_name' => $bestRoom->name,
-                        'room_building' => $bName,
-                        'session_type' => $var['session_type'],
-                        'energy_score' => ($bName === $prefBuilding) ? 98 : 85,
-                    ];
-
-                    $placed = true;
-                    break 2;
-                }
-            }
+        foreach ($placed['assignments'] as $session) {
+            $profObj = $professors->firstWhere('id', $session['professor_id']);
+            $profName = $profObj ? ($profObj->user ? "Pr. {$profObj->user->first_name} {$profObj->user->last_name}" : "Pr. ID {$session['professor_id']}") : 'Pr. Titulaire';
+            $scheduledSessions[] = array_merge($session, [
+                'id' => $session['var_id'],
+                'professor_name' => $profName,
+            ]);
         }
 
         $totalRequired = count($variables);
         $totalPlaced = count($scheduledSessions);
         $satisfactionRate = $totalRequired > 0 ? round(($totalPlaced / $totalRequired) * 100, 1) : 100.0;
 
-        // Energy Efficiency Score: Compactness ratio
         $totalSessions = max(1, count($scheduledSessions));
         $clusteredSessions = $scheduledSessions ? collect($scheduledSessions)->where('energy_score', '>=', 90)->count() : 0;
         $energyScore = round(($clusteredSessions / $totalSessions) * 100, 1);
 
         return [
-            'success' => true,
+            'success' => $placed['zero_hard_conflicts'] && $placed['success'],
+            'strategy' => $placed['strategy'],
+            'heuristics' => $placed['heuristics'],
+            'hard_constraints' => $placed['hard_constraints'],
             'total_variables' => $totalRequired,
             'total_placed' => $totalPlaced,
-            'conflict_rate' => 0.0, // Strict CSP invariant
+            'unplaced_count' => count($placed['unplaced']),
+            'conflict_rate' => $placed['zero_hard_conflicts'] ? 0.0 : 1.0,
             'satisfaction_rate' => $satisfactionRate,
             'energy_efficiency_score' => max(88.0, $energyScore),
-            'conflicts_prevented' => $conflictsResolved,
-            'building_clustering' => $buildingUsage,
+            'load_balance_score' => $placed['load_balance'],
+            'conflicts_prevented' => $placed['conflicts_prevented'],
+            'building_clustering' => $placed['building_clustering'],
             'scheduled_sessions' => $scheduledSessions,
         ];
+    }
+
+    /**
+     * Réorganise les séances existantes (EDT publié) sans conflit professeur / salle / groupe.
+     */
+    public function reoptimizeExisting(array $params = []): array
+    {
+        $startTime = microtime(true);
+        $filiereId = $params['filiere_id'] ?? null;
+        $persist = (bool) ($params['persist'] ?? false);
+
+        $query = Schedule::query()
+            ->with(['module.filiere', 'group.filiere', 'room', 'professor.user'])
+            ->where('is_active', true);
+
+        if ($filiereId) {
+            $query->whereHas('group', fn ($q) => $q->where('filiere_id', $filiereId));
+        }
+
+        $schedules = $query->get();
+        if ($schedules->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Aucune séance publiée à réorganiser. Générez d\'abord un emploi du temps.',
+                'scheduled_sessions' => [],
+                'calendar_events' => [],
+                'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+            ];
+        }
+
+        $rooms = Room::all();
+        if ($rooms->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'Aucune salle disponible pour la stratégie d\'occupation.',
+                'scheduled_sessions' => [],
+                'calendar_events' => [],
+                'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+            ];
+        }
+
+        $variables = [];
+        foreach ($schedules as $schedule) {
+            $group = $schedule->group;
+            $module = $schedule->module;
+            $variables[] = [
+                'var_id' => $schedule->id,
+                'schedule_id' => $schedule->id,
+                'group_id' => $schedule->group_id,
+                'group_name' => $group->name ?? "Groupe {$schedule->group_id}",
+                'group_size' => $group->capacity ?? 40,
+                'module_id' => $schedule->module_id,
+                'module_name' => $module->name ?? 'Module',
+                'module_code' => $module->code ?? '',
+                'filiere_code' => $module?->filiere?->code ?? $group?->filiere?->code ?? 'ENCG',
+                'professor_id' => $schedule->professor_id,
+                'session_type' => $schedule->session_type ?? 'cm',
+                'preferred_day' => (int) $schedule->day_of_week,
+                'preferred_start' => (string) $schedule->start_time,
+            ];
+        }
+
+        $placed = $this->strategy->place($variables, $rooms, array_merge($params, [
+            'prefer_original_slot' => true,
+        ]));
+
+        if ($persist) {
+            foreach ($placed['assignments'] as $session) {
+                Schedule::where('id', $session['schedule_id'])->update([
+                    'day_of_week' => $session['day_of_week'],
+                    'start_time' => $session['start_time'],
+                    'end_time' => $session['end_time'],
+                    'room_id' => $session['room_id'],
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $weekStart = now()->startOfWeek();
+        $calendarEvents = [];
+        foreach ($placed['assignments'] as $session) {
+            $original = $schedules->firstWhere('id', $session['schedule_id']);
+            $prof = $original?->professor;
+            $profName = $prof && $prof->user
+                ? $prof->user->first_name.' '.$prof->user->last_name
+                : 'Professeur';
+            $dayOffset = max(0, ((int) $session['day_of_week']) - 1);
+            $start = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['start_time']);
+            $end = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['end_time']);
+
+            $calendarEvents[] = [
+                'id' => $session['schedule_id'],
+                'title' => $session['module_name'],
+                'start' => $start->toIso8601String(),
+                'end' => $end->toIso8601String(),
+                'extendedProps' => [
+                    'professor' => $profName,
+                    'professor_id' => $session['professor_id'],
+                    'room' => $session['room_name'],
+                    'room_id' => $session['room_id'],
+                    'type' => $session['session_type'],
+                    'group' => $session['group_name'],
+                    'group_id' => $session['group_id'],
+                    'status' => 'published',
+                    'module_code' => $session['module_code'],
+                ],
+            ];
+        }
+
+        return [
+            'success' => $placed['zero_hard_conflicts'],
+            'message' => $placed['zero_hard_conflicts']
+                ? 'Emploi du temps réorganisé : 0 conflit professeur / salle / groupe.'
+                : 'Certaines séances n\'ont pas pu être placées sans relâcher une contrainte.',
+            'strategy' => $placed['strategy'],
+            'heuristics' => $placed['heuristics'],
+            'hard_constraints' => $placed['hard_constraints'],
+            'total_variables' => count($variables),
+            'total_placed' => count($placed['assignments']),
+            'unplaced_count' => count($placed['unplaced']),
+            'conflict_rate' => $placed['zero_hard_conflicts'] ? 0.0 : 1.0,
+            'load_balance_score' => $placed['load_balance'],
+            'conflicts_prevented' => $placed['conflicts_prevented'],
+            'building_clustering' => $placed['building_clustering'],
+            'persisted' => $persist,
+            'scheduled_sessions' => $placed['assignments'],
+            'calendar_events' => $calendarEvents,
+            'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+        ];
+    }
+
+    public function generateSemesterTimetable(int $institutionId, int $academicYearId, int $semesterId, int $filiereId): array
+    {
+        return $this->generateAndPublish([
+            'institution_id' => $institutionId,
+            'academic_year_id' => $academicYearId,
+            'semester_id' => $semesterId,
+            'filiere_id' => $filiereId,
+            'overwrite' => true,
+        ]);
     }
 
     /**

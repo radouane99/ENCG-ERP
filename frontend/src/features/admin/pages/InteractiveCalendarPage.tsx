@@ -7,6 +7,127 @@ import { toast } from 'sonner'
 import { format, startOfWeek, addDays, setHours, setMinutes } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useAuthStore } from '@/stores/authStore'
+import { reorganizeSessionsWithoutResourceConflicts, PERFORMANCE_SLOTS } from '@/features/timetable/lib/timetablePerformanceStrategy'
+
+type CalendarSession = {
+  id: string | number
+  day: string
+  date: string
+  rawDate: Date
+  startTime: string
+  endTime: string
+  startHour: number
+  endHour: number
+  title: string
+  status: string
+  isLocked: boolean | undefined
+  top: string
+  height: string
+  professor: string
+  group: string
+  room: string
+  extendedProps: Record<string, any>
+}
+
+const EMPTY_RESOURCE = /^(n\/a|na|-|none)$/i
+
+function normalizeResource(value?: string | null) {
+  return String(value ?? '').trim()
+}
+
+function isKnownResource(value?: string | null) {
+  const normalized = normalizeResource(value)
+  return normalized.length > 0 && !EMPTY_RESOURCE.test(normalized)
+}
+
+function sameCalendarDay(a: { rawDate: Date }, b: { rawDate: Date }) {
+  return format(a.rawDate, 'yyyy-MM-dd') === format(b.rawDate, 'yyyy-MM-dd')
+}
+
+function timesOverlap(a: { startHour: number; endHour: number }, b: { startHour: number; endHour: number }) {
+  return a.startHour < b.endHour && b.startHour < a.endHour
+}
+
+/** Hard constraints: groupe, enseignant, salle (LMD / EDT ENCG). */
+function isHardConflict(a: CalendarSession, b: CalendarSession) {
+  if (a.id === b.id || !sameCalendarDay(a, b) || !timesOverlap(a, b)) return false
+
+  const aHasIdentity = isKnownResource(a.group) || isKnownResource(a.professor) || isKnownResource(a.room)
+  const bHasIdentity = isKnownResource(b.group) || isKnownResource(b.professor) || isKnownResource(b.room)
+  if (!aHasIdentity || !bHasIdentity) return true
+
+  return (
+    (isKnownResource(a.group) && isKnownResource(b.group) && normalizeResource(a.group) === normalizeResource(b.group))
+    || (isKnownResource(a.professor) && isKnownResource(b.professor) && normalizeResource(a.professor) === normalizeResource(b.professor))
+    || (isKnownResource(a.room) && isKnownResource(b.room) && normalizeResource(a.room) === normalizeResource(b.room))
+  )
+}
+
+function parseSessionBounds(item: any) {
+  let start = new Date(item.start)
+  let end = new Date(item.end)
+
+  if (isNaN(start.getTime())) {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const timeStr = typeof item.start === 'string' && item.start.includes(':') ? item.start : '09:00:00'
+    start = new Date(`${todayStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`)
+  }
+
+  if (isNaN(end.getTime())) {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const timeStr = typeof item.end === 'string' && item.end.includes(':') ? item.end : '11:00:00'
+    end = new Date(`${todayStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`)
+  }
+
+  if (isNaN(start.getTime())) start = new Date()
+  if (isNaN(end.getTime())) end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
+
+  return { start, end }
+}
+
+function mapTimetableItem(item: any, index: number): CalendarSession {
+  const { start, end } = parseSessionBounds(item)
+  const startHour = start.getHours() + start.getMinutes() / 60
+  const endHour = end.getHours() + end.getMinutes() / 60
+  const props = item.extendedProps || {}
+
+  return {
+    id: item.id ?? `session-${index}`,
+    day: format(start, 'EEEE', { locale: fr }),
+    date: format(start, 'd MMMM yyyy', { locale: fr }),
+    rawDate: start,
+    startTime: format(start, 'HH:mm'),
+    endTime: format(end, 'HH:mm'),
+    startHour,
+    endHour,
+    title: (item.title || 'Séance de cours') + (props.group ? ` — ${props.group}` : ''),
+    status: props.status || 'published',
+    isLocked: props.is_locked,
+    top: `${Math.max(0, Math.min(100, ((startHour - 7.5) / 12) * 100))}%`,
+    height: `${Math.max(5, Math.min(100, ((endHour - startHour) / 12) * 100))}%`,
+    professor: props.professor || '',
+    group: props.group || '',
+    room: props.room || '',
+    extendedProps: props,
+  }
+}
+
+const CSP_SLOT_HOURS = PERFORMANCE_SLOTS
+
+function applySessionToSlot(item: any, weekMonday: Date, dayIndex: number, slot: { startHour: number; endHour: number }) {
+  const targetDate = addDays(weekMonday, dayIndex)
+  const toClock = (hour: number) => {
+    const h = Math.floor(hour)
+    const m = Math.round((hour - h) * 60)
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
+  }
+
+  return {
+    ...item,
+    start: `${format(targetDate, 'yyyy-MM-dd')}T${toClock(slot.startHour)}`,
+    end: `${format(targetDate, 'yyyy-MM-dd')}T${toClock(slot.endHour)}`,
+  }
+}
 
 export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const { user } = useAuthStore()
@@ -17,6 +138,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   const [showBatchModal, setShowBatchModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [resolvingCsp, setResolvingCsp] = useState(false)
+  const [cspResolved, setCspResolved] = useState(false)
 
   // Conflict Request Modal State
   const [requestModule, setRequestModule] = useState('')
@@ -126,7 +248,10 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       
       setLoading(true)
       api.get(`/timetable/export/filiere/${selectedFiliere}`)
-        .then(res => setTimetableItems(res.data.data || res.data || []))
+        .then(res => {
+          setTimetableItems(res.data.data || res.data || [])
+          setCspResolved(false)
+        })
         .catch(console.error)
         .finally(() => setLoading(false))
     }
@@ -138,14 +263,17 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       if (selectedGroupe) {
         const res = await api.get(`/timetable/export/group/${selectedGroupe}`)
         setTimetableItems(res.data.data || res.data || [])
+        setCspResolved(false)
         toast.success('Filtre groupe appliqué.')
       } else if (selectedFiliere) {
         const res = await api.get(`/timetable/export/filiere/${selectedFiliere}`)
         setTimetableItems(res.data.data || res.data || [])
+        setCspResolved(false)
         toast.success('Filtre filière appliqué.')
       } else {
         const combined = await fetchAllFilieresSchedules(filieres)
         setTimetableItems(combined)
+        setCspResolved(false)
         toast.success('Emploi du temps de TOUTES vos filières affiché avec succès !')
       }
     } catch (error) {
@@ -158,52 +286,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
 
   // Map API items to visual format
   const mappedEvents = useMemo(() => {
-    return timetableItems.map(item => {
-      let start = new Date(item.start)
-      let end = new Date(item.end)
-
-      if (isNaN(start.getTime())) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd')
-        const timeStr = typeof item.start === 'string' && item.start.includes(':') ? item.start : '09:00:00'
-        start = new Date(`${todayStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`)
-      }
-
-      if (isNaN(end.getTime())) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd')
-        const timeStr = typeof item.end === 'string' && item.end.includes(':') ? item.end : '11:00:00'
-        end = new Date(`${todayStr}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`)
-      }
-
-      if (isNaN(start.getTime())) start = new Date()
-      if (isNaN(end.getTime())) end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
-
-      const startHour = start.getHours() + start.getMinutes() / 60
-      const endHour = end.getHours() + end.getMinutes() / 60
-      
-      const topPercent = Math.max(0, Math.min(100, ((startHour - 7.5) / 12) * 100))
-      const heightPercent = Math.max(5, Math.min(100, ((endHour - startHour) / 12) * 100))
-      
-      const startTimeStr = format(start, 'HH:mm')
-      const endTimeStr = format(end, 'HH:mm')
-      
-      return {
-        id: item.id || Math.random(),
-        day: format(start, 'EEEE', { locale: fr }),
-        date: format(start, 'd MMMM yyyy', { locale: fr }),
-        rawDate: start,
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        startHour,
-        endHour,
-        title: (item.title || 'Séance de cours') + (item.extendedProps?.group ? ` — ${item.extendedProps.group}` : ''),
-        status: item.extendedProps?.status || 'published',
-        isLocked: item.extendedProps?.is_locked,
-        top: `${topPercent}%`,
-        height: `${heightPercent}%`,
-        professor: item.extendedProps?.professor,
-        extendedProps: item.extendedProps || {}
-      }
-    }).filter(e => {
+    return timetableItems.map((item, index) => mapTimetableItem(item, index)).filter(e => {
       if (selectedProfessor) {
         const selectedProfObj = professors.find(p => p.id.toString() === selectedProfessor)
         const profName = selectedProfObj ? `${selectedProfObj.user?.first_name} ${selectedProfObj.user?.last_name}` : ''
@@ -216,28 +299,24 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
   const weekLabel = `${format(currentWeekStart, 'd MMM')} — ${format(addDays(currentWeekStart, 6), 'd MMM. yyyy', { locale: fr })}`
 
-  // 🔍 INTELLIGENT AUTO-DETECT SCANNER: Detect all overlapping conflicts
+  // 🔍 Scanner: chevauchements groupe / enseignant / salle uniquement (groupes parallèles autorisés)
   const conflictClusters = useMemo(() => {
-    const clusters: { day: string; time: string; events: any[] }[] = []
-    const processedIds = new Set<any>()
+    const clusters: { day: string; time: string; events: CalendarSession[] }[] = []
+    const processedIds = new Set<string | number>()
 
     mappedEvents.forEach(e1 => {
       if (processedIds.has(e1.id)) return
 
-      const overlapping = mappedEvents.filter(e2 => {
-        if (e1.id === e2.id || e1.day !== e2.day) return false
-        return e1.startHour < e2.endHour && e2.startHour < e1.endHour
-      })
+      const overlapping = mappedEvents.filter(e2 => isHardConflict(e1, e2))
+      if (overlapping.length === 0) return
 
-      if (overlapping.length > 0) {
-        const group = [e1, ...overlapping]
-        group.forEach(g => processedIds.add(g.id))
-        clusters.push({
-          day: e1.day,
-          time: `${e1.startTime} - ${e1.endTime}`,
-          events: group
-        })
-      }
+      const group = [e1, ...overlapping]
+      group.forEach(g => processedIds.add(g.id))
+      clusters.push({
+        day: e1.day,
+        time: `${e1.startTime} - ${e1.endTime}`,
+        events: group
+      })
     })
 
     return clusters
@@ -245,53 +324,45 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
 
   const totalConflictingEventsCount = conflictClusters.reduce((sum, c) => sum + c.events.length, 0)
 
-  // ⚡ 1-CLICK CSP AI AUTO-RESOLVER
-  const handleCspAutoResolve = () => {
+  // ⚡ Stratégie MRV-LCV : 0 conflit professeur / salle / groupe
+  const handleCspAutoResolve = async () => {
     setResolvingCsp(true)
-
-    setTimeout(() => {
-      const standardSlots = [
-        { dayIndex: 0, startHour: 8.5, endHour: 10.5 },   // Lundi 08:30 - 10:30
-        { dayIndex: 0, startHour: 10.75, endHour: 12.75 }, // Lundi 10:45 - 12:45
-        { dayIndex: 0, startHour: 14.5, endHour: 16.5 },  // Lundi 14:30 - 16:30
-        { dayIndex: 1, startHour: 8.5, endHour: 10.5 },   // Mardi 08:30 - 10:30
-        { dayIndex: 1, startHour: 10.75, endHour: 12.75 }, // Mardi 10:45 - 12:45
-        { dayIndex: 1, startHour: 14.5, endHour: 16.5 },  // Mardi 14:30 - 16:30
-        { dayIndex: 2, startHour: 8.5, endHour: 10.5 },   // Mercredi 08:30 - 10:30
-        { dayIndex: 2, startHour: 10.75, endHour: 12.75 }, // Mercredi 10:45 - 12:45
-        { dayIndex: 3, startHour: 8.5, endHour: 10.5 },   // Jeudi 08:30 - 10:30
-        { dayIndex: 3, startHour: 10.75, endHour: 12.75 }, // Jeudi 10:45 - 12:45
-        { dayIndex: 4, startHour: 8.5, endHour: 10.5 },   // Vendredi 08:30 - 10:30
-        { dayIndex: 4, startHour: 10.75, endHour: 12.75 }, // Vendredi 10:45 - 12:45
-      ]
-
-      const weekMonday = startOfWeek(new Date(), { weekStartsOn: 1 })
-
-      const newItems = timetableItems.map((item, idx) => {
-        const slot = standardSlots[idx % standardSlots.length]
-        const targetDate = addDays(weekMonday, slot.dayIndex)
-        
-        const startH = Math.floor(slot.startHour)
-        const startM = Math.round((slot.startHour - startH) * 60)
-        const endH = Math.floor(slot.endHour)
-        const endM = Math.round((slot.endHour - endH) * 60)
-
-        const startIso = `${format(targetDate, 'yyyy-MM-dd')}T${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00`
-        const endIso = `${format(targetDate, 'yyyy-MM-dd')}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`
-
-        return {
-          ...item,
-          start: startIso,
-          end: endIso
-        }
+    try {
+      const res = await api.post('/admin/smart-scheduling/reoptimize', {
+        filiere_id: selectedFiliere ? Number(selectedFiliere) : undefined,
+        max_daily_hours: 8,
+        energy_weight: 80,
+        persist: Boolean(isAdmin),
       })
-
-      setTimetableItems(newItems)
+      const data = res.data.data || res.data
+      const events = data.calendar_events || []
+      if (events.length > 0) {
+        setTimetableItems(events)
+        setCspResolved(true)
+        toast.success(`Stratégie ${data.strategy || 'MRV-Degree-LCV'} : 0 conflit professeur / salle / groupe.`, {
+          description: `${data.total_placed} séances replacées en ${data.execution_time_ms} ms — équilibre de charge ${data.load_balance_score ?? '—'}.`
+        })
+        return
+      }
+      throw new Error(data.message || 'Aucune séance renvoyée')
+    } catch {
+      const result = reorganizeSessionsWithoutResourceConflicts(timetableItems, (item, dayIndex, slot) =>
+        applySessionToSlot(item, startOfWeek(new Date(), { weekStartsOn: 1 }), dayIndex, slot)
+      )
+      setTimetableItems(result.items)
+      setCspResolved(result.unresolved === 0)
+      if (result.unresolved > 0) {
+        toast.error("Capacité insuffisante : certaines séances restent en conflit.", {
+          description: `${result.unresolved} séance(s) n'ont pas trouvé de créneau libre (professeur, salle ou groupe).`
+        })
+      } else {
+        toast.success('Stratégie MRV-Degree-LCV : emploi réorganisé sans conflit professeur / salle / groupe.', {
+          description: `${result.moved} séance(s) déplacées vers le créneau le moins saturé.`
+        })
+      }
+    } finally {
       setResolvingCsp(false)
-      toast.success("✨ 0 CONFLIT GARANTI ! Emploi du temps réorganisé avec succès par le Moteur CSP IA !", {
-        description: "Toutes les séances en chevauchement ont été redistribuées sur des créneaux libres sans aucun conflit."
-      })
-    }, 1000)
+    }
   }
 
   // 🚨 1-CLICK BATCH CONFLICT REPORT DISPATCH
@@ -457,14 +528,16 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                   return (top1 < top2 + h2 && top2 < top1 + h1)
                 })
 
+                const hasConflict = overlapping.some(other => isHardConflict(evt, other))
+
                 if (overlapping.length > 0) {
-                  const sortedGroup = [evt, ...overlapping].sort((a, b) => (a.id || 0) - (b.id || 0))
+                  const sortedGroup = [evt, ...overlapping].sort((a, b) => String(a.id).localeCompare(String(b.id)))
                   const positionIndex = sortedGroup.findIndex(item => item.id === evt.id)
                   const totalCols = sortedGroup.length
                   const colWidth = Math.floor(96 / totalCols)
                   return {
                     ...evt,
-                    hasConflict: true,
+                    hasConflict,
                     widthStyle: `${colWidth}%`,
                     leftStyle: `${positionIndex * colWidth + 2}%`
                   }
@@ -591,7 +664,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                   </h3>
                 </div>
                 <p className="text-xs text-slate-600 font-medium">
-                  Le système a détecté des cours programmés simultanément sur la même heure. Vous pouvez soit les réorganiser automatiquement par l'IA en 1-clic, soit envoyer le rapport groupé à l'Administration.
+                  Conflits durs détectés : même groupe, même enseignant ou même salle sur un créneau identique. Les cours parallèles de groupes distincts ne sont pas des conflits.
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   {conflictClusters.map((c, idx) => (
@@ -619,8 +692,27 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#001A4B] via-indigo-900 to-purple-900 hover:opacity-95 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-indigo-950/30 cursor-pointer disabled:opacity-50"
               >
                 {resolvingCsp ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Zap className="w-4 h-4 text-amber-400" />}
-                ⚡ Résoudre par l'IA (CSP Zero-Conflit)
+                ⚡ Stratégie performance (0 conflit salle / prof)
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cspResolved && conflictClusters.length === 0 && mappedEvents.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-50 via-white to-teal-50 border-2 border-emerald-400 rounded-3xl p-6 text-emerald-950 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                CSP Zero-Conflit
+              </span>
+              <h3 className="font-black text-lg text-slate-900 mt-1">Stratégie performance : 0 conflit dur</h3>
+              <p className="text-xs text-slate-600 font-medium mt-1">
+                Un professeur, une salle, un groupe par créneau. Les groupes parallèles (G1 / G2) restent autorisés.
+              </p>
             </div>
           </div>
         </div>

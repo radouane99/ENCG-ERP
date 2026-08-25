@@ -16,3 +16,5 @@ interface Window {
 }
 
 declare module '@sentry/react';
+declare module 'react-router-dom';
+declare module 'react-router';

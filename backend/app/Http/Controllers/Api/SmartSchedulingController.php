@@ -37,6 +37,26 @@ class SmartSchedulingController extends Controller
     }
 
     /**
+     * Réorganisation performante des séances existantes (0 conflit prof / salle / groupe).
+     */
+    public function reoptimize(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'nullable|integer|exists:filieres,id',
+            'energy_weight' => 'nullable|numeric|min:0|max:100',
+            'max_daily_hours' => 'nullable|integer|min:4|max:10',
+            'persist' => 'nullable|boolean',
+        ]);
+
+        $result = $this->engine->reoptimizeExisting($validated);
+
+        return response()->json([
+            'success' => $result['success'] ?? false,
+            'data' => $result,
+        ], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    /**
      * Génération CSP & Publication officielle dans la base de données.
      */
     public function generate(Request $request): JsonResponse

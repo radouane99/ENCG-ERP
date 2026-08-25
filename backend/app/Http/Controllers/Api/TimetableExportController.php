@@ -28,9 +28,12 @@ class TimetableExportController extends Controller
                 'end' => $startDate->copy()->addDays($dayOffset)->setTimeFromTimeString($session->end_time)->toIso8601String(),
                 'extendedProps' => [
                     'professor' => $session->professor->user->first_name.' '.$session->professor->user->last_name,
+                    'professor_id' => $session->professor_id,
                     'room' => $session->room->name ?? 'N/A',
+                    'room_id' => $session->room_id,
                     'type' => $session->session_type,
                     'group' => $session->group->name ?? 'N/A',
+                    'group_id' => $session->group_id,
                     'status' => $session->is_active ? 'published' : 'draft',
                     'module_code' => $session->module->code ?? 'N/A',
                 ],

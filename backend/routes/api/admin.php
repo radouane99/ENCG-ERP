@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\DocumentCenterController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\ExamIncidentController;
 use App\Http\Controllers\Api\ExamLockingController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\ExamPlanningController;
@@ -144,12 +145,14 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::prefix('smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
         Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
         Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
     });
     Route::prefix('admin/smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
         Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
         Route::get('/stats', [SmartSchedulingController::class, 'stats']);
         Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
     });

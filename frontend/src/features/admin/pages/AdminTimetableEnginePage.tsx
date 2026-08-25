@@ -58,6 +58,10 @@ interface SimulationData {
   building_clustering: Record<string, number>;
   scheduled_sessions: ScheduledSession[];
   execution_time_ms: number;
+  strategy?: string;
+  heuristics?: string[];
+  hard_constraints?: string[];
+  load_balance_score?: number;
 }
 
 export default function AdminTimetableEnginePage() {
@@ -198,7 +202,7 @@ export default function AdminTimetableEnginePage() {
               Générateur Automatique des Emplois du Temps
             </h1>
             <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">
-              Moteur algorithmique de résolution de contraintes (CSP) avec heuristiques d'optimisation énergétique, respect strict des indisponibilités enseignants et équilibre pédagogique LMD.
+              Stratégie de performance MRV-Degree-LCV : occupation O(1) des ressources, zéro double-booking professeur / salle / groupe, plafond pédagogique et clustering des bâtiments.
             </p>
           </div>
 
@@ -307,8 +311,43 @@ export default function AdminTimetableEnginePage() {
             <div className="text-2xl font-black text-purple-600">
               {simResult ? `${simResult.execution_time_ms} ms` : '< 500 ms'}
             </div>
-            <div className="text-[11px] font-bold text-slate-500">Algorithme CSP temps réel</div>
+            <div className="text-[11px] font-bold text-slate-500">MRV-Degree-LCV · occupation O(1)</div>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-sm space-y-4">
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+          <Cpu className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-base font-black text-slate-900 uppercase tracking-wide">
+            Stratégie de performance EDT
+          </h2>
+          <span className="ml-auto text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full">
+            {simResult?.strategy || 'MRV-Degree-LCV'}
+          </span>
+        </div>
+        <p className="text-sm text-slate-600">
+          Chaque créneau n'admet qu'un professeur, une salle et un groupe. Les séances les plus contraintes sont placées en premier, puis le moteur choisit le créneau le moins saturé (LCV) dans la limite d'heures / jour.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {['Professeur unique / créneau', 'Salle unique / créneau', 'Groupe unique / créneau'].map((label) => (
+            <div key={label} className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs font-bold text-emerald-900">
+              {label}
+            </div>
+          ))}
+        </div>
+        {simResult?.heuristics && (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-medium text-slate-600">
+            {simResult.heuristics.map((h) => (
+              <li key={h} className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 mt-0.5 shrink-0" />
+                {h}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="text-xs font-bold text-slate-500">
+          Équilibre de charge groupes : {simResult?.load_balance_score ?? '—'} / 100
         </div>
       </div>
 
