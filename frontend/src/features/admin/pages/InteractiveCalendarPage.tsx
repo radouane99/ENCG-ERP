@@ -48,7 +48,16 @@ function timesOverlap(a: { startHour: number; endHour: number }, b: { startHour:
   return a.startHour < b.endHour && b.startHour < a.endHour
 }
 
-/** Hard constraints: groupe, enseignant, salle (LMD / EDT ENCG). */
+function isCoursMagistral(session: CalendarSession) {
+  const type = String(session.extendedProps?.type || session.extendedProps?.session_type || '').toLowerCase()
+  return ['cm', 'cours', 'lecture', 'amphi', 'magistral'].includes(type)
+}
+
+function moduleKey(session: CalendarSession) {
+  return String(session.extendedProps?.module_id || session.extendedProps?.module_code || session.title.split(' — ')[0] || '').trim().toLowerCase()
+}
+
+/** Chevauchement réel (08:30–10:30 vs 09:30–11:30). CM G1+G2 = cours commun, pas un conflit. */
 function isHardConflict(a: CalendarSession, b: CalendarSession) {
   if (a.id === b.id || !sameCalendarDay(a, b) || !timesOverlap(a, b)) return false
 
@@ -56,11 +65,21 @@ function isHardConflict(a: CalendarSession, b: CalendarSession) {
   const bHasIdentity = isKnownResource(b.group) || isKnownResource(b.professor) || isKnownResource(b.room)
   if (!aHasIdentity || !bHasIdentity) return true
 
-  return (
-    (isKnownResource(a.group) && isKnownResource(b.group) && normalizeResource(a.group) === normalizeResource(b.group))
-    || (isKnownResource(a.professor) && isKnownResource(b.professor) && normalizeResource(a.professor) === normalizeResource(b.professor))
-    || (isKnownResource(a.room) && isKnownResource(b.room) && normalizeResource(a.room) === normalizeResource(b.room))
-  )
+  const sharedCours = isCoursMagistral(a) && isCoursMagistral(b)
+    && isKnownResource(a.professor) && normalizeResource(a.professor) === normalizeResource(b.professor)
+    && moduleKey(a) !== '' && moduleKey(a) === moduleKey(b)
+  if (sharedCours) return false
+
+  if (isKnownResource(a.professor) && isKnownResource(b.professor) && normalizeResource(a.professor) === normalizeResource(b.professor)) {
+    return true
+  }
+  if (isKnownResource(a.room) && isKnownResource(b.room) && normalizeResource(a.room) === normalizeResource(b.room)) {
+    return true
+  }
+  if (isKnownResource(a.group) && isKnownResource(b.group) && normalizeResource(a.group) === normalizeResource(b.group)) {
+    return true
+  }
+  return false
 }
 
 function parseSessionBounds(item: any) {
@@ -194,18 +213,37 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     }
   }
 
-  const handleExportIcs = () => {
+  const handleExportIcs = async () => {
     const profId = u?.professor?.id || u?.id || 1
-    const url = `/api/timetable/export/professor/${profId}/ics`
-    window.open(url, '_blank')
-    toast.success("📅 Synchronisation du calendrier smartphone (.ics) générée !")
+    try {
+      toast.loading("Génération du fichier iCal (.ics)...", { id: 'prof-ics' })
+      const res = await api.get(`/timetable/export/professor/${profId}/ics`, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'text/calendar' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `emploi_du_temps_prof_${profId}.ics`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success("📅 Synchronisation du calendrier smartphone (.ics) téléchargée !", { id: 'prof-ics' })
+    } catch {
+      toast.error("Erreur lors de l'exportation iCal.", { id: 'prof-ics' })
+    }
   }
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     const profId = u?.professor?.id || u?.id || 1
-    const url = `/api/timetable/export/professor/${profId}/pdf`
-    window.open(url, '_blank')
-    toast.success("📄 Téléchargement de l'Emploi du Temps Officiel PDF !")
+    try {
+      toast.loading("Génération du PDF officiel...", { id: 'prof-pdf' })
+      const res = await api.get(`/timetable/export/professor/${profId}/pdf`, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      toast.success("📄 Emploi du Temps Officiel PDF ouvert !", { id: 'prof-pdf' })
+    } catch {
+      toast.error("Erreur lors de l'exportation du PDF.", { id: 'prof-pdf' })
+    }
   }
 
   // Load filter data & auto-fetch schedule
@@ -664,7 +702,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                   </h3>
                 </div>
                 <p className="text-xs text-slate-600 font-medium">
-                  Conflits durs détectés : même groupe, même enseignant ou même salle sur un créneau identique. Les cours parallèles de groupes distincts ne sont pas des conflits.
+                  CM : les 2 groupes ensemble. TD : par groupe. Un professeur déjà en séance (ex. 08:30–10:30) ne peut pas recevoir un autre créneau qui se chevauche (ex. 09:30–11:30).
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   {conflictClusters.map((c, idx) => (

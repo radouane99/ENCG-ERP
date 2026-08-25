@@ -16,12 +16,28 @@ class TimetablePerformanceStrategy
     public const NAME = 'MRV-Degree-LCV';
 
     public const HEURISTICS = [
-        'MRV — séances au plus petit domaine d\'abord',
-        'Degree — professeurs / groupes les plus partagés d\'abord',
-        'LCV — créneau et salle les moins saturés',
-        'Smallest-fit — salle la plus proche de l\'effectif',
+        'CM — un cours pour les 2 groupes de la promotion (même prof, même salle, même horaire)',
+        'TD — séance séparée par groupe (peuvent être en parallèle si profs et salles distincts)',
+        'Chevauchement — 08:30–10:30 bloque 09:30–11:30 pour le même professeur / salle / groupe',
+        'MRV / LCV — domaine minimal puis créneau le moins saturé',
         'Load-cap — plafond pédagogique heures / jour',
     ];
+
+    public static function isCoursMagistral(string $type): bool
+    {
+        return in_array(strtolower(trim($type)), ['cm', 'cours', 'lecture', 'amphi', 'magistral'], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $var
+     * @return array<int, int|string>
+     */
+    public static function occupiedGroupIds(array $var): array
+    {
+        $ids = $var['occupied_group_ids'] ?? [$var['group_id'] ?? null];
+
+        return array_values(array_filter($ids, fn ($id) => $id !== null && $id !== ''));
+    }
 
     /**
      * @param  array<int, array<string, mixed>>  $variables
@@ -33,6 +49,8 @@ class TimetablePerformanceStrategy
         $maxDailySlots = max(1, (int) ceil($maxDailyHours / 2));
         $energyWeight = (int) ($config['energy_weight'] ?? 80);
         $preferOriginal = (bool) ($config['prefer_original_slot'] ?? false);
+
+        $variables = $this->mergeSharedCours($variables);
 
         $grid = new TimetableOccupancyGrid;
         $unavailable = $this->prefetchUnavailability();
@@ -92,8 +110,10 @@ class TimetablePerformanceStrategy
             $grid->occupy(
                 $candidate['day'],
                 $candidate['slot'],
+                $candidate['block']['start'],
+                $candidate['block']['end'],
                 $var['professor_id'],
-                $var['group_id'],
+                self::occupiedGroupIds($var),
                 $candidate['room']->id
             );
 
@@ -109,6 +129,7 @@ class TimetablePerformanceStrategy
                 'room_id' => $candidate['room']->id,
                 'room_name' => $candidate['room']->name ?? 'Salle',
                 'room_building' => $building,
+                'occupied_group_ids' => self::occupiedGroupIds($var),
                 'energy_score' => ($building === $prefBuilding) ? 98 : 85,
                 'strategy_score' => $candidate['score'],
             ]);
@@ -118,7 +139,7 @@ class TimetablePerformanceStrategy
             'success' => count($unplaced) === 0,
             'strategy' => self::NAME,
             'heuristics' => self::HEURISTICS,
-            'hard_constraints' => ['professor', 'room', 'group'],
+            'hard_constraints' => ['professor_interval', 'room_interval', 'group_interval', 'cm_shared', 'td_per_group'],
             'assignments' => $assignments,
             'unplaced' => $unplaced,
             'conflicts_prevented' => $conflictsPrevented,
@@ -133,22 +154,70 @@ class TimetablePerformanceStrategy
      */
     public function hasZeroHardConflicts(array $assignments): bool
     {
-        $seen = [];
-        foreach ($assignments as $session) {
-            $slot = ($session['day_of_week'] ?? '').'|'.($session['start_time'] ?? '');
-            foreach (['professor_id', 'group_id', 'room_id'] as $resource) {
-                $key = $slot.'|'.$resource.'|'.($session[$resource] ?? '');
-                if ($key === $slot.'|'.$resource.'|') {
-                    continue;
-                }
-                if (isset($seen[$key])) {
+        $count = count($assignments);
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                if ($this->assignmentsConflict($assignments[$i], $assignments[$j])) {
                     return false;
                 }
-                $seen[$key] = true;
             }
         }
 
         return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $a
+     * @param  array<string, mixed>  $b
+     */
+    public function assignmentsConflict(array $a, array $b): bool
+    {
+        if ((int) ($a['day_of_week'] ?? 0) !== (int) ($b['day_of_week'] ?? 0)) {
+            return false;
+        }
+
+        $startA = TimetableOccupancyGrid::minutes((string) ($a['start_time'] ?? '00:00:00'));
+        $endA = TimetableOccupancyGrid::minutes((string) ($a['end_time'] ?? '00:00:00'));
+        $startB = TimetableOccupancyGrid::minutes((string) ($b['start_time'] ?? '00:00:00'));
+        $endB = TimetableOccupancyGrid::minutes((string) ($b['end_time'] ?? '00:00:00'));
+        if (! TimetableOccupancyGrid::intervalsOverlap($startA, $endA, $startB, $endB)) {
+            return false;
+        }
+
+        if ($this->isSharedCoursPair($a, $b)) {
+            return false;
+        }
+
+        if ((string) ($a['professor_id'] ?? '') !== '' && (string) ($a['professor_id'] ?? '') === (string) ($b['professor_id'] ?? '')) {
+            return true;
+        }
+        if ((string) ($a['room_id'] ?? '') !== '' && (string) ($a['room_id'] ?? '') === (string) ($b['room_id'] ?? '')) {
+            return true;
+        }
+
+        $groupsA = array_map('strval', self::occupiedGroupIds($a));
+        $groupsB = array_map('strval', self::occupiedGroupIds($b));
+
+        return count(array_intersect($groupsA, $groupsB)) > 0;
+    }
+
+    /**
+     * Cours magistral : G1 et G2 suivent le même CM (même module, même prof) — ce n'est pas un conflit.
+     *
+     * @param  array<string, mixed>  $a
+     * @param  array<string, mixed>  $b
+     */
+    public function isSharedCoursPair(array $a, array $b): bool
+    {
+        $typeA = (string) ($a['session_type'] ?? 'cm');
+        $typeB = (string) ($b['session_type'] ?? 'cm');
+        if (! self::isCoursMagistral($typeA) || ! self::isCoursMagistral($typeB)) {
+            return false;
+        }
+
+        return (string) ($a['professor_id'] ?? '') === (string) ($b['professor_id'] ?? '')
+            && (string) ($a['module_id'] ?? $a['module_name'] ?? '') === (string) ($b['module_id'] ?? $b['module_name'] ?? '')
+            && (string) ($a['professor_id'] ?? '') !== '';
     }
 
     /**
@@ -160,7 +229,7 @@ class TimetablePerformanceStrategy
         $index = [];
         foreach ($variables as $var) {
             $index[$var['var_id']] = $rooms->filter(function ($room) use ($var) {
-                if (($room->is_out_of_service ?? false) || ($room->status ?? null) === 'out_of_service' || ($room->is_available === false)) {
+                if (($room->is_out_of_service ?? false) || ($room->status ?? null) === 'out_of_service' || (($room->is_available ?? true) === false)) {
                     return false;
                 }
                 $capacity = (int) ($room->capacity ?? 40);
@@ -169,6 +238,9 @@ class TimetablePerformanceStrategy
                     return false;
                 }
                 if (($var['session_type'] ?? 'cm') === 'cm' && $groupSize > 60 && ($room->type ?? '') !== 'amphitheater') {
+                    return false;
+                }
+                if (self::isCoursMagistral((string) ($var['session_type'] ?? 'cm')) && count(self::occupiedGroupIds($var)) > 1 && $capacity < 80 && ($room->type ?? '') === 'classroom' && $groupSize > 70) {
                     return false;
                 }
 
@@ -207,24 +279,27 @@ class TimetablePerformanceStrategy
         int $maxDailySlots,
         array $unavailable
     ): int {
+        $groupIds = self::occupiedGroupIds($var);
         $size = 0;
         foreach (array_keys(SmartSchedulingEngine::DAYS) as $day) {
-            if ($grid->groupDaySlots($day, $var['group_id']) >= $maxDailySlots) {
+            if ($grid->maxGroupDaySlots($day, $groupIds) >= $maxDailySlots) {
                 continue;
             }
             if ($grid->professorDaySlots($day, $var['professor_id']) >= $maxDailySlots) {
                 continue;
             }
             foreach (SmartSchedulingEngine::TIME_BLOCKS as $block) {
-                $slot = $block['slot_index'];
-                if ($grid->professorBusy($day, $slot, $var['professor_id']) || $grid->groupBusy($day, $slot, $var['group_id'])) {
+                if ($grid->professorBusy($day, $block['start'], $block['end'], $var['professor_id'])) {
+                    continue;
+                }
+                if ($grid->groupsBusy($day, $block['start'], $block['end'], $groupIds)) {
                     continue;
                 }
                 if (! $this->isProfessorAvailable($unavailable, (int) $var['professor_id'], $day, $block['start'], $block['end'])) {
                     continue;
                 }
                 foreach ($rooms as $room) {
-                    if (! $grid->roomBusy($day, $slot, $room->id)) {
+                    if (! $grid->roomBusy($day, $block['start'], $block['end'], $room->id)) {
                         $size++;
                         break;
                     }
@@ -245,10 +320,11 @@ class TimetablePerformanceStrategy
         string $prefBuilding,
         bool $preferOriginal
     ): ?array {
+        $groupIds = self::occupiedGroupIds($var);
         $best = null;
 
         foreach (array_keys(SmartSchedulingEngine::DAYS) as $day) {
-            if ($grid->groupDaySlots($day, $var['group_id']) >= $maxDailySlots) {
+            if ($grid->maxGroupDaySlots($day, $groupIds) >= $maxDailySlots) {
                 continue;
             }
             if ($grid->professorDaySlots($day, $var['professor_id']) >= $maxDailySlots) {
@@ -257,7 +333,10 @@ class TimetablePerformanceStrategy
 
             foreach (SmartSchedulingEngine::TIME_BLOCKS as $block) {
                 $slot = $block['slot_index'];
-                if ($grid->professorBusy($day, $slot, $var['professor_id']) || $grid->groupBusy($day, $slot, $var['group_id'])) {
+                if ($grid->professorBusy($day, $block['start'], $block['end'], $var['professor_id'])) {
+                    continue;
+                }
+                if ($grid->groupsBusy($day, $block['start'], $block['end'], $groupIds)) {
                     continue;
                 }
                 if (! $this->isProfessorAvailable($unavailable, (int) $var['professor_id'], $day, $block['start'], $block['end'])) {
@@ -265,7 +344,7 @@ class TimetablePerformanceStrategy
                 }
 
                 foreach ($rooms as $room) {
-                    if ($grid->roomBusy($day, $slot, $room->id)) {
+                    if ($grid->roomBusy($day, $block['start'], $block['end'], $room->id)) {
                         continue;
                     }
 
@@ -277,7 +356,7 @@ class TimetablePerformanceStrategy
                         $stabilityBonus = -40;
                     }
 
-                    $score = ($grid->groupDaySlots($day, $var['group_id']) * 45)
+                    $score = ($grid->maxGroupDaySlots($day, $groupIds) * 45)
                         + ($grid->professorDaySlots($day, $var['professor_id']) * 30)
                         + ($grid->slotOccupancy($day, $slot) * 8)
                         + $capacityWaste
@@ -299,6 +378,64 @@ class TimetablePerformanceStrategy
         }
 
         return $best;
+    }
+
+    /**
+     * Fusionne les CM du même module/prof (G1 + G2) en une seule séance occupée par les deux groupes.
+     *
+     * @param  array<int, array<string, mixed>>  $variables
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeSharedCours(array $variables): array
+    {
+        $standalone = [];
+        $buckets = [];
+
+        foreach ($variables as $var) {
+            $type = (string) ($var['session_type'] ?? 'cm');
+            if (! self::isCoursMagistral($type)) {
+                $standalone[] = $var;
+
+                continue;
+            }
+
+            $key = ($var['professor_id'] ?? '').'|'.($var['module_id'] ?? $var['module_name'] ?? '').'|cm';
+            $buckets[$key][] = $var;
+        }
+
+        foreach ($buckets as $items) {
+            if (count($items) === 1) {
+                $item = $items[0];
+                $item['occupied_group_ids'] = self::occupiedGroupIds($item);
+                $standalone[] = $item;
+
+                continue;
+            }
+
+            $groupIds = [];
+            $scheduleIds = [];
+            $size = 0;
+            $names = [];
+            foreach ($items as $item) {
+                foreach (self::occupiedGroupIds($item) as $gid) {
+                    $groupIds[] = $gid;
+                }
+                if (! empty($item['schedule_id'])) {
+                    $scheduleIds[] = $item['schedule_id'];
+                }
+                $size += (int) ($item['group_size'] ?? 30);
+                $names[] = $item['group_name'] ?? '';
+            }
+
+            $merged = $items[0];
+            $merged['occupied_group_ids'] = array_values(array_unique($groupIds));
+            $merged['schedule_ids'] = $scheduleIds;
+            $merged['group_size'] = $size;
+            $merged['group_name'] = implode(' + ', array_filter($names));
+            $standalone[] = $merged;
+        }
+
+        return $standalone;
     }
 
     /**

@@ -36,6 +36,7 @@ class TimetableExportController extends Controller
                     'group_id' => $session->group_id,
                     'status' => $session->is_active ? 'published' : 'draft',
                     'module_code' => $session->module->code ?? 'N/A',
+                    'module_id' => $session->module_id,
                 ],
                 'backgroundColor' => '#3b82f6',
                 'borderColor' => '#2563eb',

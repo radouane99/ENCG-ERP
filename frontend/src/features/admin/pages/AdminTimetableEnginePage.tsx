@@ -146,14 +146,35 @@ export default function AdminTimetableEnginePage() {
     simulateMutation.mutate();
   }, []);
 
-  const handleExportPdf = () => {
-    window.open('/api/timetable/export/filiere/1/pdf', '_blank');
-    toast.success("📄 Téléchargement de l'emploi du temps généré PDF !");
+  const handleExportPdf = async () => {
+    try {
+      toast.loading("Génération de l'emploi du temps PDF certifié...", { id: 'timetable-pdf' });
+      const res = await api.get('/timetable/export/filiere/1/pdf', { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      toast.success("📄 Emploi du temps PDF ouvert avec succès !", { id: 'timetable-pdf' });
+    } catch {
+      toast.error("Erreur lors de l'exportation du PDF.", { id: 'timetable-pdf' });
+    }
   };
 
-  const handleExportIcs = () => {
-    window.open('/api/timetable/export/filiere/1/ics', '_blank');
-    toast.success("📅 Synchronisation iCal (.ics) téléchargée !");
+  const handleExportIcs = async () => {
+    try {
+      toast.loading("Génération du fichier iCal (.ics)...", { id: 'timetable-ics' });
+      const res = await api.get('/timetable/export/filiere/1/ics', { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/calendar' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'emploi_du_temps_filiere_1.ics');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("📅 Synchronisation iCal (.ics) téléchargée !", { id: 'timetable-ics' });
+    } catch {
+      toast.error("Erreur lors de l'exportation iCal.", { id: 'timetable-ics' });
+    }
   };
 
   const suggestSlotsMutation = useMutation({
@@ -327,7 +348,7 @@ export default function AdminTimetableEnginePage() {
           </span>
         </div>
         <p className="text-sm text-slate-600">
-          Chaque créneau n'admet qu'un professeur, une salle et un groupe. Les séances les plus contraintes sont placées en premier, puis le moteur choisit le créneau le moins saturé (LCV) dans la limite d'heures / jour.
+          Chaque créneau n'admet qu'un professeur et une salle. Le CM réunit G1 et G2 ; le TD reste par groupe. Un horaire qui se chevauche (08:30–10:30 vs 09:30–11:30) est refusé pour le même enseignant.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {['Professeur unique / créneau', 'Salle unique / créneau', 'Groupe unique / créneau'].map((label) => (

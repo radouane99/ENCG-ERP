@@ -3,18 +3,13 @@
 namespace App\Services\Academic;
 
 /**
- * O(1) occupancy indexes for hard EDT constraints: professeur, salle, groupe.
+ * Occupation par intervalle (pas seulement par créneau étiquette).
+ * 08:30–10:30 et 09:30–11:30 se chevauchent donc bloquent professeur / salle / groupes.
  */
 class TimetableOccupancyGrid
 {
-    /** @var array<string, bool> */
-    private array $professors = [];
-
-    /** @var array<string, bool> */
-    private array $groups = [];
-
-    /** @var array<string, bool> */
-    private array $rooms = [];
+    /** @var array<int, array{day: int, start: int, end: int, professor_id: int|string, group_ids: array<int|string>, room_id: int|string}> */
+    private array $bookings = [];
 
     /** @var array<string, int> */
     private array $profDayLoad = [];
@@ -25,35 +20,104 @@ class TimetableOccupancyGrid
     /** @var array<string, int> */
     private array $slotFill = [];
 
-    public function key(int $day, int $slot): string
+    public static function minutes(string $time): int
     {
-        return $day.':'.$slot;
+        $parts = array_map('intval', explode(':', substr($time, 0, 8)));
+
+        return (($parts[0] ?? 0) * 60) + ($parts[1] ?? 0);
     }
 
-    public function occupy(int $day, int $slot, int|string $professorId, int|string $groupId, int|string $roomId): void
+    public static function intervalsOverlap(int $startA, int $endA, int $startB, int $endB): bool
     {
-        $slotKey = $this->key($day, $slot);
-        $this->professors[$slotKey.':'.$professorId] = true;
-        $this->groups[$slotKey.':'.$groupId] = true;
-        $this->rooms[$slotKey.':'.$roomId] = true;
+        return $startA < $endB && $startB < $endA;
+    }
+
+    public function occupy(
+        int $day,
+        int $slot,
+        string $start,
+        string $end,
+        int|string $professorId,
+        array $groupIds,
+        int|string $roomId
+    ): void {
+        $this->bookings[] = [
+            'day' => $day,
+            'start' => self::minutes($start),
+            'end' => self::minutes($end),
+            'professor_id' => $professorId,
+            'group_ids' => array_values(array_unique($groupIds)),
+            'room_id' => $roomId,
+        ];
+
         $this->profDayLoad[$day.':'.$professorId] = ($this->profDayLoad[$day.':'.$professorId] ?? 0) + 1;
-        $this->groupDayLoad[$day.':'.$groupId] = ($this->groupDayLoad[$day.':'.$groupId] ?? 0) + 1;
+        foreach ($groupIds as $groupId) {
+            $this->groupDayLoad[$day.':'.$groupId] = ($this->groupDayLoad[$day.':'.$groupId] ?? 0) + 1;
+        }
+        $slotKey = $day.':'.$slot;
         $this->slotFill[$slotKey] = ($this->slotFill[$slotKey] ?? 0) + 1;
     }
 
-    public function professorBusy(int $day, int $slot, int|string $professorId): bool
+    public function professorBusy(int $day, string $start, string $end, int|string $professorId): bool
     {
-        return isset($this->professors[$this->key($day, $slot).':'.$professorId]);
+        $s = self::minutes($start);
+        $e = self::minutes($end);
+        foreach ($this->bookings as $booking) {
+            if ($booking['day'] !== $day || (string) $booking['professor_id'] !== (string) $professorId) {
+                continue;
+            }
+            if (self::intervalsOverlap($s, $e, $booking['start'], $booking['end'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public function groupBusy(int $day, int $slot, int|string $groupId): bool
+    public function groupBusy(int $day, string $start, string $end, int|string $groupId): bool
     {
-        return isset($this->groups[$this->key($day, $slot).':'.$groupId]);
+        $s = self::minutes($start);
+        $e = self::minutes($end);
+        foreach ($this->bookings as $booking) {
+            if ($booking['day'] !== $day) {
+                continue;
+            }
+            if (! in_array($groupId, $booking['group_ids'], false) && ! in_array((string) $groupId, array_map('strval', $booking['group_ids']), true)) {
+                continue;
+            }
+            if (self::intervalsOverlap($s, $e, $booking['start'], $booking['end'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public function roomBusy(int $day, int $slot, int|string $roomId): bool
+    public function groupsBusy(int $day, string $start, string $end, array $groupIds): bool
     {
-        return isset($this->rooms[$this->key($day, $slot).':'.$roomId]);
+        foreach ($groupIds as $groupId) {
+            if ($this->groupBusy($day, $start, $end, $groupId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function roomBusy(int $day, string $start, string $end, int|string $roomId): bool
+    {
+        $s = self::minutes($start);
+        $e = self::minutes($end);
+        foreach ($this->bookings as $booking) {
+            if ($booking['day'] !== $day || (string) $booking['room_id'] !== (string) $roomId) {
+                continue;
+            }
+            if (self::intervalsOverlap($s, $e, $booking['start'], $booking['end'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function professorDaySlots(int $day, int|string $professorId): int
@@ -66,15 +130,18 @@ class TimetableOccupancyGrid
         return $this->groupDayLoad[$day.':'.$groupId] ?? 0;
     }
 
-    public function slotOccupancy(int $day, int $slot): int
+    public function maxGroupDaySlots(int $day, array $groupIds): int
     {
-        return $this->slotFill[$this->key($day, $slot)] ?? 0;
+        $max = 0;
+        foreach ($groupIds as $groupId) {
+            $max = max($max, $this->groupDaySlots($day, $groupId));
+        }
+
+        return $max;
     }
 
-    public function resourcesFree(int $day, int $slot, int|string $professorId, int|string $groupId, int|string $roomId): bool
+    public function slotOccupancy(int $day, int $slot): int
     {
-        return ! $this->professorBusy($day, $slot, $professorId)
-            && ! $this->groupBusy($day, $slot, $groupId)
-            && ! $this->roomBusy($day, $slot, $roomId);
+        return $this->slotFill[$day.':'.$slot] ?? 0;
     }
 }

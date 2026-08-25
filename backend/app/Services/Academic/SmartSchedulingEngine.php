@@ -10,7 +10,6 @@ use App\Models\Room;
 use App\Models\Schedule;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SmartSchedulingEngine
 {
@@ -105,25 +104,27 @@ class SmartSchedulingEngine
 
             $insertedCount = 0;
             foreach ($simulationResult['scheduled_sessions'] as $session) {
-                DB::table('schedules')->insert([
-                    'id' => (string) Str::uuid(),
-                    'institution_id' => $institutionId,
-                    'academic_year_id' => $academicYearId,
-                    'semester_id' => $semesterId ?? 1,
-                    'group_id' => $session['group_id'],
-                    'module_id' => $session['module_id'],
-                    'room_id' => $session['room_id'],
-                    'professor_id' => $session['professor_id'],
-                    'professor_type' => 'App\Models\Professor',
-                    'day_of_week' => $session['day_of_week'],
-                    'start_time' => $session['start_time'],
-                    'end_time' => $session['end_time'],
-                    'session_type' => $session['session_type'] ?? 'cm',
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $insertedCount++;
+                $groupIds = $session['occupied_group_ids'] ?? [$session['group_id']];
+                foreach ($groupIds as $groupId) {
+                    DB::table('schedules')->insert([
+                        'institution_id' => $institutionId,
+                        'academic_year_id' => $academicYearId,
+                        'semester_id' => $semesterId ?? 1,
+                        'group_id' => $groupId,
+                        'module_id' => $session['module_id'],
+                        'room_id' => $session['room_id'],
+                        'professor_id' => $session['professor_id'],
+                        'professor_type' => 'App\Models\Professor',
+                        'day_of_week' => $session['day_of_week'],
+                        'start_time' => $session['start_time'],
+                        'end_time' => $session['end_time'],
+                        'session_type' => $session['session_type'] ?? 'cm',
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $insertedCount++;
+                }
             }
 
             DB::commit();
@@ -199,24 +200,29 @@ class SmartSchedulingEngine
             ]);
         }
 
-        // 2. Build CSP Variables (Sessions to place)
+        // 2. Build CSP Variables — CM partagé (G1+G2), TD par groupe
         $variables = [];
         $varIndex = 1;
+        $cohorts = $groups->groupBy(fn ($group) => ($group->filiere_id ?? 0).'|'.($group->semester_number ?? 0));
 
-        foreach ($groups as $group) {
-            $groupModules = $modules->where('filiere_id', $group->filiere_id);
+        foreach ($cohorts as $cohortGroups) {
+            $cohortGroups = $cohortGroups->values();
+            $lead = $cohortGroups->first();
+            $groupModules = $modules->where('filiere_id', $lead->filiere_id);
             if ($groupModules->isEmpty()) {
                 $groupModules = $modules->take(5);
             }
 
+            $cohortIds = $cohortGroups->pluck('id')->all();
+            $cohortSize = (int) $cohortGroups->sum(fn ($g) => $g->capacity ?? 40);
+            $cohortLabel = $cohortGroups->map(fn ($g) => $g->name ?? 'G'.$g->id)->implode(' + ');
+
             foreach ($groupModules as $mod) {
-                // Determine CM & TD blocks
                 $cmHours = $mod->hours_cm ?? 20;
                 $tdHours = $mod->hours_td ?? 10;
                 $cmBlocks = (int) max(1, round($cmHours / 15));
                 $tdBlocks = (int) max(1, round($tdHours / 15));
 
-                // Find assigned professor or assign round-robin
                 $assignment = DB::table('module_professor')
                     ->where('module_id', $mod->id)
                     ->first();
@@ -225,23 +231,28 @@ class SmartSchedulingEngine
                 for ($b = 1; $b <= $cmBlocks; $b++) {
                     $variables[] = [
                         'var_id' => $varIndex++,
-                        'group_id' => $group->id,
-                        'group_name' => $group->name ?? "Groupe {$group->id}",
-                        'group_size' => $group->capacity ?? 40,
+                        'group_id' => $lead->id,
+                        'occupied_group_ids' => $cohortIds,
+                        'group_name' => $cohortLabel,
+                        'group_size' => max($cohortSize, 40),
                         'module_id' => $mod->id,
                         'module_name' => $mod->name,
                         'module_code' => $mod->code ?? "MOD-{$mod->id}",
-                        'filiere_code' => $mod->filiere?->code ?? $group->filiere?->code ?? 'ENCG',
+                        'filiere_code' => $mod->filiere?->code ?? $lead->filiere?->code ?? 'ENCG',
                         'professor_id' => $profId,
                         'session_type' => 'cm',
-                        'required_type' => ($group->capacity ?? 40) > 60 ? 'amphitheater' : 'classroom',
+                        'required_type' => $cohortSize > 60 ? 'amphitheater' : 'classroom',
                     ];
                 }
 
-                if ($tdBlocks > 0) {
+                foreach ($cohortGroups as $group) {
+                    if ($tdBlocks <= 0) {
+                        continue;
+                    }
                     $variables[] = [
                         'var_id' => $varIndex++,
                         'group_id' => $group->id,
+                        'occupied_group_ids' => [$group->id],
                         'group_name' => $group->name ?? "Groupe {$group->id}",
                         'group_size' => $group->capacity ?? 35,
                         'module_id' => $mod->id,
@@ -361,45 +372,56 @@ class SmartSchedulingEngine
 
         if ($persist) {
             foreach ($placed['assignments'] as $session) {
-                Schedule::where('id', $session['schedule_id'])->update([
-                    'day_of_week' => $session['day_of_week'],
-                    'start_time' => $session['start_time'],
-                    'end_time' => $session['end_time'],
-                    'room_id' => $session['room_id'],
-                    'updated_at' => now(),
-                ]);
+                $ids = $session['schedule_ids'] ?? array_values(array_filter([$session['schedule_id'] ?? null]));
+                foreach ($ids as $id) {
+                    Schedule::where('id', $id)->update([
+                        'day_of_week' => $session['day_of_week'],
+                        'start_time' => $session['start_time'],
+                        'end_time' => $session['end_time'],
+                        'room_id' => $session['room_id'],
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 
         $weekStart = now()->startOfWeek();
         $calendarEvents = [];
         foreach ($placed['assignments'] as $session) {
-            $original = $schedules->firstWhere('id', $session['schedule_id']);
-            $prof = $original?->professor;
-            $profName = $prof && $prof->user
-                ? $prof->user->first_name.' '.$prof->user->last_name
-                : 'Professeur';
-            $dayOffset = max(0, ((int) $session['day_of_week']) - 1);
-            $start = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['start_time']);
-            $end = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['end_time']);
+            $ids = $session['schedule_ids'] ?? array_values(array_filter([$session['schedule_id'] ?? null]));
+            if ($ids === []) {
+                $ids = [null];
+            }
+            foreach ($ids as $scheduleId) {
+                $original = $scheduleId ? $schedules->firstWhere('id', $scheduleId) : null;
+                $prof = $original?->professor;
+                $profName = $prof && $prof->user
+                    ? $prof->user->first_name.' '.$prof->user->last_name
+                    : 'Professeur';
+                $dayOffset = max(0, ((int) $session['day_of_week']) - 1);
+                $start = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['start_time']);
+                $end = $weekStart->copy()->addDays($dayOffset)->setTimeFromTimeString($session['end_time']);
+                $groupName = $original?->group?->name ?? $session['group_name'];
 
-            $calendarEvents[] = [
-                'id' => $session['schedule_id'],
-                'title' => $session['module_name'],
-                'start' => $start->toIso8601String(),
-                'end' => $end->toIso8601String(),
-                'extendedProps' => [
-                    'professor' => $profName,
-                    'professor_id' => $session['professor_id'],
-                    'room' => $session['room_name'],
-                    'room_id' => $session['room_id'],
-                    'type' => $session['session_type'],
-                    'group' => $session['group_name'],
-                    'group_id' => $session['group_id'],
-                    'status' => 'published',
-                    'module_code' => $session['module_code'],
-                ],
-            ];
+                $calendarEvents[] = [
+                    'id' => $scheduleId ?? $session['var_id'],
+                    'title' => $session['module_name'],
+                    'start' => $start->toIso8601String(),
+                    'end' => $end->toIso8601String(),
+                    'extendedProps' => [
+                        'professor' => $profName,
+                        'professor_id' => $session['professor_id'],
+                        'room' => $session['room_name'],
+                        'room_id' => $session['room_id'],
+                        'type' => $session['session_type'],
+                        'group' => $groupName,
+                        'group_id' => $original?->group_id ?? $session['group_id'],
+                        'status' => 'published',
+                        'module_code' => $session['module_code'],
+                        'module_id' => $session['module_id'] ?? null,
+                    ],
+                ];
+            }
         }
 
         return [

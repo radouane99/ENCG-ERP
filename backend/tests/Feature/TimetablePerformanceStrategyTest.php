@@ -29,7 +29,7 @@ class TimetablePerformanceStrategyTest extends TestCase
                     'module_code' => 'M'.$moduleId,
                     'filiere_code' => 'TC',
                     'professor_id' => 100 + ($moduleId % 3),
-                    'session_type' => 'cm',
+                    'session_type' => 'td',
                 ];
             }
         }
@@ -42,13 +42,13 @@ class TimetablePerformanceStrategyTest extends TestCase
         $this->assertTrue($result['zero_hard_conflicts']);
         $this->assertSame(count($variables), count($result['assignments']));
         $this->assertSame('MRV-Degree-LCV', $result['strategy']);
-        $this->assertSame(['professor', 'room', 'group'], $result['hard_constraints']);
+        $this->assertContains('cm_shared', $result['hard_constraints']);
     }
 
-    public function test_same_professor_cannot_teach_two_groups_at_once(): void
+    public function test_cours_magistral_places_both_groups_together(): void
     {
         $rooms = collect([
-            (object) ['id' => 1, 'name' => 'Salle 1', 'capacity' => 40, 'type' => 'classroom', 'building' => 'A'],
+            (object) ['id' => 1, 'name' => 'Amphi 1', 'capacity' => 120, 'type' => 'amphitheater', 'building' => 'A'],
             (object) ['id' => 2, 'name' => 'Salle 2', 'capacity' => 40, 'type' => 'classroom', 'building' => 'A'],
         ]);
 
@@ -56,27 +56,85 @@ class TimetablePerformanceStrategyTest extends TestCase
             [
                 'var_id' => 1,
                 'group_id' => 1,
-                'group_size' => 30,
-                'filiere_code' => 'GFC',
+                'group_size' => 35,
+                'filiere_code' => 'TC',
                 'professor_id' => 9,
                 'session_type' => 'cm',
-                'module_name' => 'Finance I',
+                'module_id' => 50,
+                'module_name' => 'Statistique',
             ],
             [
                 'var_id' => 2,
                 'group_id' => 2,
-                'group_size' => 30,
-                'filiere_code' => 'GFC',
+                'group_size' => 35,
+                'filiere_code' => 'TC',
                 'professor_id' => 9,
                 'session_type' => 'cm',
-                'module_name' => 'Finance I',
+                'module_id' => 50,
+                'module_name' => 'Statistique',
             ],
         ];
 
         $result = app(TimetablePerformanceStrategy::class)->place($variables, $rooms);
 
-        $slots = collect($result['assignments'])->map(fn ($s) => $s['day_of_week'].'|'.$s['start_time'])->all();
-        $this->assertCount(2, array_unique($slots));
+        $this->assertCount(1, $result['assignments']);
+        $this->assertEqualsCanonicalizing([1, 2], $result['assignments'][0]['occupied_group_ids']);
         $this->assertTrue($result['zero_hard_conflicts']);
+    }
+
+    public function test_same_professor_cannot_have_overlapping_intervals(): void
+    {
+        $strategy = app(TimetablePerformanceStrategy::class);
+
+        $this->assertTrue($strategy->assignmentsConflict(
+            [
+                'day_of_week' => 1,
+                'start_time' => '08:30:00',
+                'end_time' => '10:30:00',
+                'professor_id' => 9,
+                'group_id' => 1,
+                'room_id' => 1,
+                'session_type' => 'td',
+                'module_id' => 1,
+            ],
+            [
+                'day_of_week' => 1,
+                'start_time' => '09:30:00',
+                'end_time' => '11:30:00',
+                'professor_id' => 9,
+                'group_id' => 2,
+                'room_id' => 2,
+                'session_type' => 'td',
+                'module_id' => 2,
+            ]
+        ));
+    }
+
+    public function test_parallel_td_for_two_groups_is_allowed(): void
+    {
+        $strategy = app(TimetablePerformanceStrategy::class);
+
+        $this->assertFalse($strategy->assignmentsConflict(
+            [
+                'day_of_week' => 1,
+                'start_time' => '08:30:00',
+                'end_time' => '10:30:00',
+                'professor_id' => 9,
+                'group_id' => 1,
+                'room_id' => 1,
+                'session_type' => 'td',
+                'module_id' => 1,
+            ],
+            [
+                'day_of_week' => 1,
+                'start_time' => '08:30:00',
+                'end_time' => '10:30:00',
+                'professor_id' => 10,
+                'group_id' => 2,
+                'room_id' => 2,
+                'session_type' => 'td',
+                'module_id' => 1,
+            ]
+        ));
     }
 }
