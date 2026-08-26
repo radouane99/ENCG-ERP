@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import api from '@shared/lib/api'
 
 export interface User {
@@ -150,6 +150,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'encg-auth',
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ token: state.token }),
     }
   )

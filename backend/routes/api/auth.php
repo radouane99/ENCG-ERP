@@ -29,6 +29,7 @@ Route::prefix('v1/auth')->group(function () {
         // 2FA management routes
         Route::post('/two-factor/setup', [AuthController::class, 'setup2FA']);
         Route::post('/two-factor/confirm', [AuthController::class, 'confirm2FA']);
+        Route::post('/two-factor/step-up', [AuthController::class, 'stepUpTwoFactor'])->middleware('throttle:login');
         Route::delete('/two-factor/disable', [AuthController::class, 'disable2FA']);
     });
 });

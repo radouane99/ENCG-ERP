@@ -104,7 +104,7 @@ export default function ProfessorScannerApp() {
             <div className="absolute bottom-4 right-4 w-6 h-6 border-b-4 border-r-4 border-pink-500 rounded-br-lg"></div>
 
             {scanning ? (
-              <div className="w-full h-1 bg-pink-500 shadow-[0_0_10px_#e91e63] animate-[scan_1.5s_ease-in-out_infinite]"></div>
+              <div className="w-full h-1 bg-pink-500 shadow-[0_0_10px_#e91e63] animate-[encg-scan_1.5s_ease-in-out_infinite]"></div>
             ) : (
               <Scan className="w-12 h-12 text-gray-300" />
             )}
@@ -150,13 +150,6 @@ export default function ProfessorScannerApp() {
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes scan {
-          0% { transform: translateY(-80px); }
-          50% { transform: translateY(80px); }
-          100% { transform: translateY(-80px); }
-        }
-      `}} />
     </div>
   );
 }

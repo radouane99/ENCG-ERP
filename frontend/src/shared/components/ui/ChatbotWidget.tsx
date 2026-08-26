@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff, Copy, Check } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { formatSafeRichText } from '@shared/lib/htmlSafe'
 
 interface Message {
   id: number
@@ -117,10 +117,7 @@ export default function ChatbotWidget() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const renderContent = (content: string) =>
-    content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>')
+  const renderContent = (content: string) => formatSafeRichText(content)
 
   return (
     <>

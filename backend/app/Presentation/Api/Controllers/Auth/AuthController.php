@@ -207,6 +207,31 @@ class AuthController extends Controller
     }
 
     /**
+     * Step-up 2FA for sensitive authenticated actions.
+     */
+    public function stepUpTwoFactor(Request $request): JsonResponse
+    {
+        $request->validate(['code' => 'required|string|size:6']);
+
+        $user = $request->user();
+        if (! $user?->two_factor_enabled) {
+            return response()->json([
+                'message' => 'Activez la 2FA dans votre profil avant cette opération.',
+                'requires_2fa_setup' => true,
+            ], 403);
+        }
+
+        if (! $this->twoFactorService->verify($user, $request->code)) {
+            return response()->json(['message' => 'Code 2FA invalide.'], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Autorisation 2FA confirmée.',
+        ]);
+    }
+
+    /**
      * Désactiver 2FA.
      */
     public function disable2FA(Request $request): JsonResponse

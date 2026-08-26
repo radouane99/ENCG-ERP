@@ -15,7 +15,7 @@ import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal'
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
-  password: z.string().min(6, 'Minimum 6 caractères'),
+  password: z.string().min(8, 'Minimum 8 caractères'),
   remember: z.boolean().optional(),
 })
 
@@ -81,7 +81,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Quick Demo Credentials Switcher */}
+      {import.meta.env.DEV && (
       <div className="p-3 bg-muted/50 dark:bg-muted/30 border border-border/70 rounded-2xl space-y-2">
         <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-wider">
           <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> {isAr ? 'حسابات التجربة السريعة' : 'Comptes Démo Rapides'}</span>
@@ -114,6 +114,7 @@ export default function LoginPage() {
           </button>
         </div>
       </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email Field with Lead Icon */}
@@ -226,7 +227,7 @@ export default function LoginPage() {
           variant="outline"
           className="w-full font-bold border-border/80 bg-background/60 hover:bg-muted text-foreground rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           onClick={() => {
-            window.location.href = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/redirect`
+            window.location.href = '/api/v1/auth/google/redirect'
           }}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">

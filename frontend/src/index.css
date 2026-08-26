@@ -454,6 +454,15 @@
 /* ────────────────────────────────────────────────────────────────
    PRINT STYLES FOR OFFICIAL PV DOCUMENTS
    ──────────────────────────────────────────────────────────────── */
+@keyframes encg-scan {
+  0% { transform: translateY(-80px); }
+  50% { transform: translateY(80px); }
+  100% { transform: translateY(-80px); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   PRINT STYLES FOR OFFICIAL PV DOCUMENTS
+   ──────────────────────────────────────────────────────────────── */
 @media print {
   @page {
     size: A3 landscape;
