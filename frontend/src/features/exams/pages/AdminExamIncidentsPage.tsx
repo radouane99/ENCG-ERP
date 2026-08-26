@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertCircle, Search, Filter, MessageCircle, FileText, Download } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { cn } from '@shared/lib/utils'
 
 export default function AdminExamIncidentsPage() {
@@ -92,7 +93,7 @@ export default function AdminExamIncidentsPage() {
                         <div className="flex items-center gap-2">
                           <button 
                             type="button"
-                            onClick={() => window.open(`/api/incidents/${incident.id}/convocation-pdf`, '_blank')}
+                            onClick={() => openAuthenticatedUrl(`/api/incidents/${incident.id}/convocation-pdf`)}
                             className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-blue-200" 
                             title="Télécharger la Convocation au Conseil de Discipline"
                           >
@@ -101,7 +102,7 @@ export default function AdminExamIncidentsPage() {
 
                           <button 
                             type="button"
-                            onClick={() => window.open(`/api/incidents/${incident.id}/decision-pdf`, '_blank')}
+                            onClick={() => openAuthenticatedUrl(`/api/incidents/${incident.id}/decision-pdf`)}
                             className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-rose-200" 
                             title="Télécharger la Décision Officielle du Conseil de Discipline"
                           >

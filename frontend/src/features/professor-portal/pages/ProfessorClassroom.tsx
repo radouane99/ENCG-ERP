@@ -260,6 +260,7 @@ export default function ProfessorClassroom() {
                 <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer mb-6">
                   <input 
                     type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                   />
@@ -370,7 +371,7 @@ export default function ProfessorClassroom() {
                 <div className="space-y-2 mb-8">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fichier de consigne (Optionnel)</label>
                   <div className="border border-dashed border-white/10 rounded-xl p-3 flex items-center bg-white/[0.02]">
-                    <input type="file" className="text-sm text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-white/80 hover:file:bg-gray-300" />
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" className="text-sm text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-white/80 hover:file:bg-gray-300" />
                   </div>
                 </div>
 

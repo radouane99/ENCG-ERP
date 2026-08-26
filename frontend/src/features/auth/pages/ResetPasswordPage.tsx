@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Lock, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import api from '@shared/lib/api';
+import { isPasswordPolicyValid, PASSWORD_POLICY_HINT } from '@shared/lib/htmlSafe';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,10 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordPolicyValid(password)) {
+      setError(PASSWORD_POLICY_HINT);
+      return;
+    }
     if (password !== passwordConfirmation) {
       setError("Les mots de passe ne correspondent pas.");
       return;
@@ -97,6 +102,7 @@ export default function ResetPasswordPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nouveau mot de passe</label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_HINT}</p>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -106,7 +112,7 @@ export default function ResetPasswordPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#02060D] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-slate-900 dark:text-white"
-                      placeholder="8 caractères minimum"
+                      placeholder={PASSWORD_POLICY_HINT}
                     />
                   </div>
                 </div>

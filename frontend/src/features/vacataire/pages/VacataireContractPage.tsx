@@ -3,6 +3,7 @@ import { ArrowLeft, FileText, Download, CheckCircle, Clock, Printer } from 'luci
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { toast } from 'sonner'
 
@@ -43,7 +44,7 @@ export default function VacataireContractPage() {
              <Printer className="w-4 h-4" /> Imprimer
            </button>
            <button onClick={() => {
-              window.open(api.defaults.baseURL?.replace('/api', '') + `/api/admin/hr/vacataires/${id}/contract-pdf`, '_blank');
+              openAuthenticatedUrl(api.defaults.baseURL?.replace('/api', '') + `/api/admin/hr/vacataires/${id}/contract-pdf`);
            }} className="px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm flex items-center gap-2">
              <Download className="w-4 h-4" /> Télécharger PDF
            </button>

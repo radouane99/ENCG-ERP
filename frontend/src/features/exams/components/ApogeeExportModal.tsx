@@ -5,6 +5,7 @@ import {
   Building2, AlertTriangle, RefreshCw, FileText, Loader2
 } from 'lucide-react';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 
@@ -43,16 +44,13 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
     if (selectedFiliere) params.append('filiere_id', selectedFiliere);
     if (selectedSemester) params.append('semester_id', selectedSemester);
 
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
-    if (token) params.append('token', token);
-
     const url = `/api/v1/admin/apogee/export-csv?${params.toString()}`;
     
     toast.success('📥 Téléchargement du fichier APOGEE officiel en cours...', {
       description: 'Format CSV conforme aux spécifications du MESRSFC (Royaume du Maroc).'
     });
 
-    window.open(url, '_blank');
+    openAuthenticatedUrl(url);
   };
 
   if (!isOpen) return null;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import {
   Archive, ShieldCheck, Database, Lock, Calendar, RefreshCw, Eye, Download, Check,
@@ -146,7 +147,7 @@ export default function AdminAcademicArchivingPage() {
       toast.success("📦 Coffre ZIP des Archives téléchargé avec succès !");
     } catch {
       toast.dismiss();
-      window.open('/api/admin/students/bulk-export-zip?document_type=REL_NOTES', '_blank');
+      openAuthenticatedUrl('/api/admin/students/bulk-export-zip?document_type=REL_NOTES');
       toast.success("Téléchargement du Coffre ZIP lancé !");
     }
   };

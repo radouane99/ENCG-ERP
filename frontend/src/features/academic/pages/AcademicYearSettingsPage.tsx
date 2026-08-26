@@ -8,6 +8,7 @@ import {
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { academicApi } from '@shared/api/academic'
 import { toast } from 'sonner'
 import { Spinner } from '@shared/components/ui/Spinner'
@@ -547,7 +548,7 @@ export default function AcademicYearSettingsPage() {
     const toastId = toast.loading('📦 Compilation du lot ZIP (Ordres de Service PDF + Bilan Excel RH)...')
     await new Promise(r => setTimeout(r, 1500))
     toast.success('📦 Lot ZIP exporté avec succès (Ordres_De_Service_Complet_2026_2027.zip) !', { id: toastId })
-    window.open('/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=Tous', '_blank')
+    openAuthenticatedUrl('/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=Tous')
   }
 
   // Relancer Enseignants Non-Notifiés
@@ -585,7 +586,7 @@ export default function AcademicYearSettingsPage() {
     const profName = profGroup?.profName || ''
     const profId = profGroup?.profId || ''
     const pdfUrl = `/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof_id=${profId}&prof=${encodeURIComponent(profName)}`
-    window.open(pdfUrl, '_blank')
+    openAuthenticatedUrl(pdfUrl)
   }
 
   const handleDownloadTemplate = () => {

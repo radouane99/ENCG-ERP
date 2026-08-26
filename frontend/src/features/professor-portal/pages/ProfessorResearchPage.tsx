@@ -18,6 +18,7 @@ import {
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export default function ProfessorResearchPage() {
@@ -39,7 +40,7 @@ export default function ProfessorResearchPage() {
   };
 
   const handleExportMinistryReport = () => {
-    window.open('/api/v1/admin/research/rapport-activite-pdf', '_blank');
+    openAuthenticatedUrl('/api/v1/admin/research/rapport-activite-pdf');
     toast.success('📄 Rapport d\'activité scientifique annuel (MESRSFC) téléchargé !');
   };
 

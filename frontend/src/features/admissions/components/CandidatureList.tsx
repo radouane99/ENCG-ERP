@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Check, Award, Calendar, Sparkles, Printer, Zap, RefreshCw, Edit3, Trash2, AlertTriangle, User, GraduationCap, Heart, Phone, Mail, MapPin, UserPlus } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 
 export default function CandidatureList() {
@@ -132,7 +133,7 @@ export default function CandidatureList() {
     setTimeout(() => {
       toast.dismiss()
       toast.success(`📜 Convocation TAFSEM générée pour ${fullName}`)
-      window.open(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(fullName)}&cne=${encodeURIComponent(cand.cne || '')}&cin=${encodeURIComponent(cand.cin || '')}&filiere=Concours TAFSEM S5 Passerelle&group=Amphi A - Table 42`, '_blank')
+      openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(fullName)}&cne=${encodeURIComponent(cand.cne || '')}&cin=${encodeURIComponent(cand.cin || '')}&filiere=Concours TAFSEM S5 Passerelle&group=Amphi A - Table 42`)
     }, 600)
   }
 

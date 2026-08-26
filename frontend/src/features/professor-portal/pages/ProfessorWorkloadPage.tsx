@@ -16,6 +16,7 @@ import {
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export default function ProfessorWorkloadPage() {
@@ -30,7 +31,7 @@ export default function ProfessorWorkloadPage() {
   });
 
   const handleDownloadTimesheetPdf = () => {
-    window.open('/api/v1/admin/vacataires/payments', '_blank');
+    openAuthenticatedUrl('/api/v1/admin/vacataires/payments');
     toast.success('📄 Téléchargement du Bordereau d\'Heures Certifié (PDF Officiel) !');
   };
 

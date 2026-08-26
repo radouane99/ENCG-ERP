@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Search, Plus, Edit2, Trash2, X, Users, Layers, BookOpen, Upload, Printer, UserCheck, ShieldCheck, Zap } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import MassImportView from '@shared/components/ui/MassImportView'
 
@@ -144,7 +145,7 @@ export default function GroupsPage() {
     toast.loading(`Génération de la Liste d'Émargement A4 (${g.name})...`);
     setTimeout(() => {
       toast.success(`📜 Liste d'Émargement (${g.name}) générée avec succès !`);
-      window.open(`/api/v1/groups/emargement-pdf?code=${encodeURIComponent(g.name)}&filiere=${encodeURIComponent(g.filiere || 'Gestion Financière et Comptable')}&semester=S${g.semester_number || 1}&count=${g.current_count || 12}&capacity=${g.capacity || 35}`, '_blank');
+      openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?code=${encodeURIComponent(g.name)}&filiere=${encodeURIComponent(g.filiere || 'Gestion Financière et Comptable')}&semester=S${g.semester_number || 1}&count=${g.current_count || 12}&capacity=${g.capacity || 35}`);
     }, 600);
   }
 

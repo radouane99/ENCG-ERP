@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import { 
   Eye, 
@@ -111,7 +112,7 @@ export default function ProfessorProctoring() {
   };
 
   const handleDownloadPdf = (ref: string) => {
-    window.open('/api/exams/1/pv-pdf', '_blank');
+    openAuthenticatedUrl('/api/exams/1/pv-pdf');
     toast.success(`Téléchargement de la convocation officielle (${ref}) !`);
   };
 

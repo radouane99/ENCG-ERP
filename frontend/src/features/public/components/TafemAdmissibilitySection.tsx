@@ -69,9 +69,12 @@ export default function TafemAdmissibilitySection({ isRtl = false }: TafemAdmiss
   };
 
   const handleDownloadPdf = () => {
-    if (!result?.cne) return;
-    const pdfUrl = `${api.defaults.baseURL || '/api'}/public/recepisse-tafem-pdf?cne=${encodeURIComponent(result.cne)}&cin=${encodeURIComponent(result.cin || '')}`;
-    window.open(pdfUrl, '_blank');
+    if (!result?.cne || !result?.cin) {
+      toast.error('CNE et CIN requis pour télécharger le récépissé.');
+      return;
+    }
+    const pdfUrl = `${api.defaults.baseURL || '/api'}/public/recepisse-tafem-pdf?cne=${encodeURIComponent(result.cne)}&cin=${encodeURIComponent(result.cin)}`;
+    window.open(pdfUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (

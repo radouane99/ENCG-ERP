@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
 export default function ProfessorPfeEvaluationPage() {
   const { t, i18n } = useTranslation(['professors', 'common']);
@@ -51,7 +52,7 @@ export default function ProfessorPfeEvaluationPage() {
   };
 
   const handleDownloadPv = () => {
-    window.open('/api/v1/admin/pfe/pv-soutenance-sample', '_blank');
+    openAuthenticatedUrl('/api/v1/admin/pfe/pv-soutenance-sample');
     toast.success('📄 Téléchargement du Procès-Verbal officiel de soutenance PDF !');
   };
 

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
-import { protectedDocumentUrl } from '@shared/lib/documentAccess';
+import { protectedDocumentUrl, openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export interface StudentDossierData {
@@ -540,7 +540,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
     // 2. Open 1 SINGLE TAB pointing to Scolarité Print Hub (0 Popup Blocker alerts & Auto-Print!)
     const hubUrl = `/api/v1/enrollments/scolarite-print-hub?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}&print=1`;
-    window.open(hubUrl, '_blank');
+    openAuthenticatedUrl(hubUrl);
 
     toast.success(`✅ Dossier de ${student.last_name?.toUpperCase() || ''} ${student.first_name || ''} validé ! HUB d'Impression ouvert.`, { duration: 4000 });
 
@@ -787,7 +787,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               </button>
 
               <button
-                onClick={() => window.open(`/api/admin/students/engagement-pdf?student_id=${student.id}`, '_blank')}
+                onClick={() => openAuthenticatedUrl(`/api/admin/students/engagement-pdf?student_id=${student.id}`)}
                 className="px-2.5 py-1 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 rounded-xl text-xs font-bold transition-all border border-amber-400/30 flex items-center gap-1 cursor-pointer whitespace-nowrap"
                 title="Engagement (تعهد)"
               >
@@ -795,7 +795,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               </button>
 
               <button
-                onClick={() => window.open(`/api/admin/students/fiche-medicale-pdf?student_id=${student.id}`, '_blank')}
+                onClick={() => openAuthenticatedUrl(`/api/admin/students/fiche-medicale-pdf?student_id=${student.id}`)}
                 className="px-2.5 py-1 bg-teal-400/20 hover:bg-teal-400/30 text-teal-200 rounded-xl text-xs font-bold transition-all border border-teal-400/30 flex items-center gap-1 cursor-pointer whitespace-nowrap"
                 title="Fiche Médicale"
               >
@@ -805,7 +805,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               <button
                 onClick={() => {
                   toast.success('🖨️ Impression Bundle Unifié...');
-                  window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`, '_blank');
+                  openAuthenticatedUrl(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`);
                 }}
                 className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 text-white rounded-xl text-xs font-black transition-all border border-emerald-400/40 flex items-center gap-1 cursor-pointer whitespace-nowrap shadow-sm"
                 title="Imprimer Bundle 1-Clic"
@@ -1427,7 +1427,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">🖨️ Impression Documents Officiels</span>
                         <button
                           type="button"
-                          onClick={() => { toast.success('🖨️ Impression Bundle Unifié...'); window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`, '_blank'); }}
+                          onClick={() => { toast.success('🖨️ Impression Bundle Unifié...'); openAuthenticatedUrl(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(student.cne || '')}&bundle=true`); }}
                           className="text-[9px] font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded-md cursor-pointer shadow-xs transition-all"
                           title="Imprimer tout le dossier en 1 seul clic"
                         >
@@ -1463,7 +1463,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         ].map(doc => (
                           <button
                             key={doc.label}
-                            onClick={() => window.open(doc.url(), '_blank')}
+                            onClick={() => openAuthenticatedUrl(doc.url())}
                             className={`w-full py-1.5 px-3 border font-bold rounded-lg text-[11px] cursor-pointer transition-all active:scale-95 flex items-center justify-between ${doc.color}`}
                           >
                             <span>{doc.label}</span>
@@ -2423,7 +2423,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
           <div className="flex items-center gap-2 shrink-0">
             {!splitViewMode && (
               <button
-                onClick={() => window.open(`/api/admin/students/${student.id}/recepisse-depot-pdf`, '_blank')}
+                onClick={() => openAuthenticatedUrl(`/api/admin/students/${student.id}/recepisse-depot-pdf`)}
                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-bold text-xs cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5 text-slate-400" /> Récépissé
@@ -2515,7 +2515,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
-                    onClick={() => window.open(doc.url, '_blank')}
+                    onClick={() => openAuthenticatedUrl(doc.url)}
                     className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-lg cursor-pointer transition-all border border-slate-200"
                     title="Ouvrir dans un nouvel onglet"
                   >
@@ -2556,7 +2556,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               type="button"
               onClick={() => {
                 const hubUrl = `/api/v1/enrollments/scolarite-print-hub?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}&print=1`;
-                window.open(hubUrl, '_blank');
+                openAuthenticatedUrl(hubUrl);
                 toast.success('⚡ HUB d\'Impression Guichet ouvert dans un nouvel onglet !', { duration: 4000 });
               }}
               className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg cursor-pointer transition-all active:scale-95"

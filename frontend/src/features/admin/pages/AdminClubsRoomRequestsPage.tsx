@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Building, ArrowLeft, Check, X, Calendar as CalendarIcon, Clock, Loader2, Sparkles, Key, QrCode, Printer, CheckCircle2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -65,7 +66,7 @@ export default function AdminClubsRoomRequestsPage() {
       toast.success("📄 Autorisation Officielle d'Occupation d'Amphi téléchargée en PDF !");
     } catch (e) {
       toast.dismiss();
-      window.open(`/api/admin/room-bookings/${req.id}/autorisation-pdf`, '_blank');
+      openAuthenticatedUrl(`/api/admin/room-bookings/${req.id}/autorisation-pdf`);
       toast.success("Impression de l'autorisation lancée !");
     }
   }

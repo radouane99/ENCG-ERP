@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
@@ -90,18 +91,14 @@ export default function AdminExamPvArchivePage() {
   // Handlers for PDF download/print
   const handlePrintEmargementBlankPdf = (examId: number) => {
     toast.info('Génération de la Feuille d\'Émargement Papier A4 (pour signature en salle)...')
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?mode=emargement${token ? `&token=${token}` : ''}`
-    window.open(pdfUrl, '_blank')
+    openAuthenticatedUrl(`${apiUrl}/exams/${examId}/pv-pdf?mode=emargement`)
   }
 
   const handlePrintOfficialPvPdf = (examId: number) => {
     toast.info('Génération du Procès-Verbal Officiel Clôturé A4 (PDF)...')
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    const pdfUrl = `${apiUrl}/exams/${examId}/pv-pdf?mode=pv${token ? `&token=${token}` : ''}`
-    window.open(pdfUrl, '_blank')
+    openAuthenticatedUrl(`${apiUrl}/exams/${examId}/pv-pdf?mode=pv`)
   }
 
   // Options for Dropdowns

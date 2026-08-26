@@ -4,6 +4,7 @@ import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 
 export default function AdminExamDisplayListPage() {
   const { id } = useParams()
@@ -62,7 +63,7 @@ export default function AdminExamDisplayListPage() {
                 const url = window.URL.createObjectURL(blob);
                 window.open(url, '_blank');
               } else {
-                window.open(`/api/admin/exams/${id}/door-sign-pdf`, '_blank');
+                openAuthenticatedUrl(`/api/admin/exams/${id}/door-sign-pdf`);
               }
             }}
             className="h-10 px-4 rounded-xl border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"

@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { FileText, Download, CalendarDays, Clock, MapPin, CheckCircle2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
 
 export default function ProfessorMySurveillancesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-surveillances'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/professor/my-surveillances', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      })
-      const result = await response.json()
-      return result.data || []
+      const response = await api.get('/v1/professor/my-surveillances')
+      return response.data?.data || []
     },
   })
 

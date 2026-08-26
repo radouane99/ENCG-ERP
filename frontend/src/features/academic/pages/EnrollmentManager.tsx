@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download, Upload } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import StudentDigitalDossierModal from '../components/StudentDigitalDossierModal';
 
@@ -184,7 +185,7 @@ export default function EnrollmentManager() {
     try {
       setIsExportingZip(true);
       toast.loading("Génération du bundle ZIP de toutes les attestations d'inscription...");
-      window.open('/api/admin/students/export-attestations-zip', '_blank');
+      openAuthenticatedUrl('/api/admin/students/export-attestations-zip');
       setTimeout(() => {
         toast.dismiss();
         toast.success("📦 Bundle ZIP des attestations téléchargé avec succès !");
@@ -202,7 +203,7 @@ export default function EnrollmentManager() {
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Attestation d'Inscription (${s.first_name} ${s.last_name}) générée !`);
-      window.open(`/api/admin/students/${s.id}/attestation-pdf`, '_blank');
+      openAuthenticatedUrl(`/api/admin/students/${s.id}/attestation-pdf`);
     }, 600);
   };
 
@@ -223,7 +224,7 @@ export default function EnrollmentManager() {
       toast.dismiss();
       toast.error('Erreur lors de la génération du CSV USMBA.');
       // Fallback: open in new tab
-      window.open('/api/admin/students/export-usmba-accounts-csv', '_blank');
+      openAuthenticatedUrl('/api/admin/students/export-usmba-accounts-csv');
     }
   };
 
@@ -641,7 +642,7 @@ export default function EnrollmentManager() {
 
                             {/* 🏷️ Carte CR80 Evolis */}
                             <button
-                              onClick={() => window.open(`/api/admin/students/${s.id}/carte-etudiant-cr80-pdf`, '_blank')}
+                              onClick={() => openAuthenticatedUrl(`/api/admin/students/${s.id}/carte-etudiant-cr80-pdf`)}
                               className="px-2.5 py-1.5 bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 text-violet-700 dark:text-violet-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-violet-200 dark:border-violet-800 cursor-pointer shadow-xs"
                               title="Générer Carte Étudiant CR80 — Evolis Primacy 2"
                             >
@@ -650,7 +651,7 @@ export default function EnrollmentManager() {
 
                             {/* 📜 Engagement (تعهد) */}
                             <button
-                              onClick={() => window.open(`/api/admin/students/engagement-pdf?student_id=${s.id}`, '_blank')}
+                              onClick={() => openAuthenticatedUrl(`/api/admin/students/engagement-pdf?student_id=${s.id}`)}
                               className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-amber-200 dark:border-amber-800 cursor-pointer shadow-xs"
                               title="Imprimer l'Engagement officiel ENCG Fès (تعهد)"
                             >
@@ -659,7 +660,7 @@ export default function EnrollmentManager() {
 
                             {/* 🏥 Fiche Médicale */}
                             <button
-                              onClick={() => window.open(`/api/admin/students/fiche-medicale-pdf?student_id=${s.id}`, '_blank')}
+                              onClick={() => openAuthenticatedUrl(`/api/admin/students/fiche-medicale-pdf?student_id=${s.id}`)}
                               className="px-2.5 py-1.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs"
                               title="Imprimer la Fiche de Renseignements Médicaux"
                             >

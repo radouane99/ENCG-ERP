@@ -25,6 +25,7 @@ import {
 
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 
 interface Filiere {
@@ -159,7 +160,7 @@ export default function FiliereList() {
     const toastId = toast.loading(`Génération de la Maquette Pédagogique Officielle A4 (${filiere.code})...`)
     setTimeout(() => {
       toast.success(`📄 Maquette Pédagogique A4 (${filiere.name}) générée avec succès !`, { id: toastId })
-      window.open(`/api/v1/filieres/maquette-pdf?code=${encodeURIComponent(filiere.code)}&name=${encodeURIComponent(filiere.name)}&coord=${encodeURIComponent(filiere.responsable_name || 'Abdelhak El Amrani')}`, '_blank')
+      openAuthenticatedUrl(`/api/v1/filieres/maquette-pdf?code=${encodeURIComponent(filiere.code)}&name=${encodeURIComponent(filiere.name)}&coord=${encodeURIComponent(filiere.responsable_name || 'Abdelhak El Amrani')}`)
     }, 600)
   }
 

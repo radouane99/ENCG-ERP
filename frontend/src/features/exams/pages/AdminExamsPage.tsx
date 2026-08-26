@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next'
 import { academicApi } from '@shared/api/academic'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import { CustomSelect } from '@shared/components/ui'
 
@@ -522,7 +523,7 @@ function ExamCard({ id, title, group, time, duration, room, surveillants, day, m
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Feuille d'Émargement A4 générée pour ${title} !`);
-      window.open(`/api/v1/groups/emargement-pdf?code=${encodeURIComponent(group)}&filiere=ENCG&semester=S1&count=45&capacity=45`, '_blank');
+      openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?code=${encodeURIComponent(group)}&filiere=ENCG&semester=S1&count=45&capacity=45`);
     }, 600);
   }
 

@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import { cn } from '@shared/lib/utils'
 
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import MassImportView from '@shared/components/ui/MassImportView'
 
 interface Filiere {
@@ -167,7 +168,7 @@ export default function ModulesListPage() {
     const toastId = toast.loading(`Génération de la Fiche Syllabique A4 (${mod.code})...`);
     setTimeout(() => {
       toast.success(`📄 Fiche Syllabique (${mod.name}) générée avec succès !`, { id: toastId });
-      window.open(`/api/v1/modules/syllabique-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`, '_blank');
+      openAuthenticatedUrl(`/api/v1/modules/syllabique-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
     }, 600);
   }
 
@@ -175,7 +176,7 @@ export default function ModulesListPage() {
     const toastId = toast.loading(`Génération du PV d'Accréditation A4 (${mod.code})...`);
     setTimeout(() => {
       toast.success(`📜 PV d'Accréditation (${mod.name}) généré avec succès !`, { id: toastId });
-      window.open(`/api/v1/modules/pv-accreditation-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`, '_blank');
+      openAuthenticatedUrl(`/api/v1/modules/pv-accreditation-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
     }, 600);
   }
 

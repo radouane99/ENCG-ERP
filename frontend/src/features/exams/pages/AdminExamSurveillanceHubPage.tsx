@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
@@ -642,10 +643,8 @@ export default function AdminExamSurveillanceHubPage() {
 
   // Trigger Print Only A4 PV Document
   const handlePrintOfficialPV = () => {
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || ''
     const apiUrl = api.defaults.baseURL || '/api'
-    const pdfUrl = `${apiUrl}/exams/${id}/pv-pdf${token ? `?token=${token}` : ''}`
-    window.open(pdfUrl, '_blank')
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf`)
   }
 
   return (

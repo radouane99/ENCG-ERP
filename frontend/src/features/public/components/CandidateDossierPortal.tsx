@@ -96,10 +96,14 @@ export default function CandidateDossierPortal() {
   };
 
   const handleDownloadPdf = () => {
-    const cneToUse = candidateData?.cne || userCne || 'N142088916';
-    const cinToUse = candidateData?.cin || userCin || 'CD987867';
-    window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(cneToUse)}&cin=${encodeURIComponent(cinToUse)}`, '_blank');
-  };
+    const cneToUse = candidateData?.cne || userCne
+    const cinToUse = candidateData?.cin || userCin
+    if (!cneToUse || !cinToUse) {
+      toast.error('CNE et CIN requis pour télécharger le récépissé.')
+      return
+    }
+    window.open(`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(cneToUse)}&cin=${encodeURIComponent(cinToUse)}`, '_blank', 'noopener,noreferrer')
+  }
 
   const handleSendEmail = async () => {
     setSendingEmail(true);
@@ -584,7 +588,7 @@ export default function CandidateDossierPortal() {
                     <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
                       <Upload className="w-4 h-4 text-blue-600" />
                       <span>{uploadingDoc === 'bac' ? 'Téléversement...' : 'Changer le Bac (PDF)'}</span>
-                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('bac', e)} />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileUpload('bac', e)} />
                     </label>
                   )}
 
@@ -631,7 +635,7 @@ export default function CandidateDossierPortal() {
                     <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
                       <Upload className="w-4 h-4 text-indigo-600" />
                       <span>{uploadingDoc === 'cnie' ? 'Téléversement...' : 'Changer la CNIE (PDF)'}</span>
-                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('cnie', e)} />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileUpload('cnie', e)} />
                     </label>
                   )}
 
@@ -678,7 +682,7 @@ export default function CandidateDossierPortal() {
                     <label className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-extrabold py-2.5 rounded-xl cursor-pointer transition-all">
                       <Upload className="w-4 h-4 text-emerald-600" />
                       <span>{uploadingDoc === 'releve_notes' ? 'Téléversement...' : 'Changer le Relevé (PDF)'}</span>
-                      <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => handleFileUpload('releve_notes', e)} />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileUpload('releve_notes', e)} />
                     </label>
                   )}
 
@@ -732,7 +736,7 @@ export default function CandidateDossierPortal() {
                       <label className="flex items-center gap-2 bg-amber-500 text-slate-950 hover:bg-amber-600 text-xs font-extrabold px-5 py-3 rounded-xl cursor-pointer transition-all">
                         <Upload className="w-4 h-4" />
                         <span>Téléverser une Photo (35x45mm)</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('photo', e)} />
+                        <input type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileUpload('photo', e)} />
                       </label>
                     )}
                   </div>
@@ -857,12 +861,14 @@ export default function CandidateDossierPortal() {
                       className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
                     />
                   )
-                ) : (
+                ) : (userCne && userCin) ? (
                   <iframe
-                    src={`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne || 'N142088916')}`}
+                    src={`/api/public/recepisse-tafem-pdf?cne=${encodeURIComponent(userCne)}&cin=${encodeURIComponent(userCin)}`}
                     className="w-full h-full rounded-xl border-0 bg-white"
                     title="Aperçu Document PDF"
                   />
+                ) : (
+                  <p className="text-sm text-slate-500 p-6">CNE et CIN requis pour afficher le récépissé.</p>
                 )}
               </div>
 

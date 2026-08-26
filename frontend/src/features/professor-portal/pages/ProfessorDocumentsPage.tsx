@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -139,7 +140,7 @@ export default function ProfessorDocumentsPage() {
 
   const handleDownloadPdf = (req: DocumentRequestItem) => {
     const url = `/api/professor-portal/documents/${req.id}/pdf`;
-    window.open(url, '_blank');
+    openAuthenticatedUrl(url);
     toast.success(`📄 Téléchargement de l'${req.type_label} PDF Officiel !`);
   };
 

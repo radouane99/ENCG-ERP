@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { FileText, Download, CalendarDays, Clock, MapPin, Smartphone, AlertTriangle, PlusCircle, MessageSquare, Upload, Loader2, Bot, X } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 
 export default function StudentMyConvocationsPage() {
@@ -173,13 +174,13 @@ export default function StudentMyConvocationsPage() {
                   <div className="flex flex-col gap-2 shrink-0">
                     <button 
                       className="h-10 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors w-full"
-                      onClick={() => window.open(`/api/v1/student-portal/convocations/${conv.id}/wallet-pass`, '_blank')}
+                      onClick={() => openAuthenticatedUrl(`/api/v1/student-portal/convocations/${conv.id}/wallet-pass`)}
                     >
                       <Smartphone className="w-4 h-4" /> Ajouter au Wallet
                     </button>
                     <button 
                       className="h-10 px-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors w-full"
-                      onClick={() => window.open(`/api/v1/student-portal/convocations/${conv.id}/download`, '_blank')}
+                      onClick={() => openAuthenticatedUrl(`/api/v1/student-portal/convocations/${conv.id}/download`)}
                     >
                       <Download className="w-4 h-4" /> PDF
                     </button>
@@ -278,7 +279,7 @@ export default function StudentMyConvocationsPage() {
                       {absenceFile ? absenceFile.name : 'Cliquez pour uploader un fichier'}
                     </p>
                   </div>
-                  <input type="file" className="hidden" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} />
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} />
                 </label>
               </div>
               <button 

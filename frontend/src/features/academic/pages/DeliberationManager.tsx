@@ -5,6 +5,7 @@ import {
   AlertTriangle, Users, BookOpen, Calendar
 } from 'lucide-react';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export default function DeliberationManager() {
@@ -99,7 +100,7 @@ export default function DeliberationManager() {
               ].map(report => (
                 <button
                   key={report.type}
-                  onClick={() => window.open(`/api/academic/reports/${report.type}?semester=${selectedSemester}&session=${selectedSession}`, '_blank')}
+                  onClick={() => openAuthenticatedUrl(`/api/academic/reports/${report.type}?semester=${selectedSemester}&session=${selectedSession}`)}
                   className="w-full text-left px-4 py-2 text-sm bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-colors flex items-center justify-between group"
                 >
                   {report.label}
