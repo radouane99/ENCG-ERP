@@ -164,4 +164,16 @@ class ReinscriptionWorkflowTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_ouvrir_reinscription_defaults_annee_to_upcoming_end_year(): void
+    {
+        Mail::fake();
+        Carbon::setTestNow('2026-07-01');
+
+        $this->artisan('reinscription:ouvrir')
+            ->expectsOutputToContain('2026-2027')
+            ->assertSuccessful();
+
+        Carbon::setTestNow();
+    }
 }

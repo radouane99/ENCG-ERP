@@ -35,8 +35,8 @@ class OuvrirReinscriptionAnnuelle extends Command
 
     public function handle(): int
     {
-        $annee = $this->option('annee') ?? date('Y');
-        $prevAnnee = (int) $annee - 1;
+        $annee = $this->resolveEndYear();
+        $prevAnnee = $annee - 1;
         $academicYear = "{$prevAnnee}-{$annee}";
         $targetYear = $this->resolveAcademicYear($academicYear, $prevAnnee, (int) $annee);
         $hasStudentYearColumn = Schema::hasColumn('students', 'academic_year');
@@ -133,6 +133,21 @@ class OuvrirReinscriptionAnnuelle extends Command
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * --annee is the academic-year END (ex: 2027 → "2026-2027").
+     * Manual runs without the option must match the July scheduler (now()->year + 1).
+     */
+    private function resolveEndYear(): int
+    {
+        $option = $this->option('annee');
+
+        if ($option !== null && $option !== '') {
+            return (int) $option;
+        }
+
+        return (int) now()->year + 1;
     }
 
     /**

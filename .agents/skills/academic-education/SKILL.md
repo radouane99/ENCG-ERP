@@ -29,3 +29,6 @@ This skill defines standard domain patterns, business logic constraints, and arc
 - Use proper `Mailable` classes extending `Illuminate\Mail\Mailable` with inline-styled Blade HTML templates.
 - From Address: `noreply@encg-fes.ac.ma` | From Name: `ENCG Portail`.
 - Never use `Mail::raw()`.
+
+## 6. Code placement
+- Structural rules (layers, canonical models, routes, React slices): see skill `code-architecture`.
