@@ -8,6 +8,8 @@ use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class SmartCampusAndRoomBookingTest extends TestCase
@@ -65,5 +67,63 @@ class SmartCampusAndRoomBookingTest extends TestCase
             'purpose' => 'Séance TP Analyse de Données SPSS',
             'status' => 'approved',
         ]);
+    }
+
+    public function test_professor_cannot_self_approve_a_room_booking(): void
+    {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        $role = Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'sanctum']);
+        $this->professorUser->assignRole($role);
+
+        $response = $this->actingAs($this->professorUser, 'sanctum')->postJson('/api/room-bookings', [
+            'room_id' => $this->room->id,
+            'purpose' => 'Séance extra',
+            'start_time' => '2026-10-16 10:00:00',
+            'end_time' => '2026-10-16 12:00:00',
+            'status' => 'approved',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.status', 'pending');
+        $this->assertDatabaseHas('room_bookings', [
+            'room_id' => $this->room->id,
+            'purpose' => 'Séance extra',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_scolarite_can_create_an_approved_booking(): void
+    {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        $admin = User::factory()->create();
+        $admin->assignRole(Role::firstOrCreate(['name' => 'scolarite', 'guard_name' => 'sanctum']));
+
+        $this->actingAs($admin, 'sanctum')->postJson('/api/room-bookings', [
+            'room_id' => $this->room->id,
+            'purpose' => 'Conseil pédagogique',
+            'start_time' => '2026-10-17 09:00:00',
+            'end_time' => '2026-10-17 11:00:00',
+        ])->assertCreated()->assertJsonPath('data.status', 'approved');
+    }
+
+    public function test_professor_cannot_patch_booking_to_approved(): void
+    {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->professorUser->assignRole(Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'sanctum']));
+
+        $booking = RoomBooking::create([
+            'room_id' => $this->room->id,
+            'room_name' => $this->room->name,
+            'booked_by' => $this->professorUser->id,
+            'purpose' => 'Réunion',
+            'start_time' => '2026-10-18 10:00:00',
+            'end_time' => '2026-10-18 12:00:00',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($this->professorUser, 'sanctum')
+            ->patchJson('/api/room-bookings/'.$booking->id, ['status' => 'approved'])
+            ->assertForbidden();
+
+        $this->assertSame('pending', $booking->fresh()->status);
     }
 }

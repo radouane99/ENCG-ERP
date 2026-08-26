@@ -30,6 +30,7 @@ interface AuthState {
   twoFactorChallengeToken: string | null
   activeRole: string | null
 
+  completeSession: (token: string, user?: User) => Promise<void>
   // Actions
   login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean }>
   verifyTwoFactor: (code: string) => Promise<void>
@@ -53,6 +54,14 @@ export const useAuthStore = create<AuthState>()(
       requiresTwoFactor: false,
       twoFactorChallengeToken: null,
       activeRole: localStorage.getItem('encg_active_role') || null,
+
+      completeSession: async (token, user) => {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        set({ token, user: user ?? get().user, isAuthenticated: true, isLoading: false })
+        if (!user) {
+          await get().fetchUser()
+        }
+      },
 
       login: async (email, password) => {
         const response = await api.post('/v1/auth/login', { email, password })

@@ -80,7 +80,7 @@ export default function CandidateDossierPortal() {
             if (d && d.file_path) {
               docMap[type] = {
                 name: d.original_filename || `${type}_scanné.pdf`,
-                url: `/api/public/serve-document/${type}/${cand.cne || userCne}`,
+                url: d.signed_url || d.file_path,
                 isPdf: true
               };
             }
@@ -571,7 +571,7 @@ export default function CandidateDossierPortal() {
                     type="button"
                     onClick={() => setPreviewModal({
                       title: 'Baccalauréat Original (Scanné PDF)',
-                      url: docFiles.bac?.url || `/api/public/serve-document/bac/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
+                      url: docFiles.bac?.url,
                       isPdf: true
                     })}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
@@ -618,7 +618,7 @@ export default function CandidateDossierPortal() {
                     type="button"
                     onClick={() => setPreviewModal({
                       title: 'Carte d\'Identité Nationale (CNIE PDF)',
-                      url: docFiles.cnie?.url || `/api/public/serve-document/cnie/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
+                      url: docFiles.cnie?.url,
                       isPdf: true
                     })}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"
@@ -665,7 +665,7 @@ export default function CandidateDossierPortal() {
                     type="button"
                     onClick={() => setPreviewModal({
                       title: 'Relevé de Notes du Baccalauréat (PDF)',
-                      url: docFiles.releve_notes?.url || `/api/public/serve-document/releve_notes/${encodeURIComponent(candidateData?.cne || userCne || 'N142088916')}`,
+                      url: docFiles.releve_notes?.url,
                       isPdf: true
                     })}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all cursor-pointer hover:scale-105"

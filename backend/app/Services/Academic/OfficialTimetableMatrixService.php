@@ -73,10 +73,10 @@ class OfficialTimetableMatrixService
             }
 
             $module = $session->module;
-            $moduleName = $module?->name ?? 'Module';
-            $elementName = $module?->name ?? 'Élément';
-            $professorId = (int) $session->professor_id;
             $sessionType = strtolower((string) $session->session_type);
+            $moduleName = $module?->name ?? 'Module';
+            $elementName = $this->elementLabel($moduleName, $sessionType);
+            $professorId = (int) $session->professor_id;
             $key = $module?->id.'|'.$professorId.'|'.$sessionType;
 
             if (! isset($moduleOrder[$module?->id ?? 0])) {
@@ -175,6 +175,25 @@ class OfficialTimetableMatrixService
             ?? $session->module?->semester_number
             ?? $session->semester?->number
             ?? 0);
+    }
+
+    /**
+     * Colonne « Éléments de modules » : nature d'enseignement (CM / TD / TP) + intitulé.
+     */
+    private function elementLabel(string $moduleName, string $sessionType): string
+    {
+        $type = match ($sessionType) {
+            'cm' => 'CM',
+            'td' => 'TD',
+            'tp' => 'TP',
+            default => $sessionType !== '' ? strtoupper($sessionType) : null,
+        };
+
+        if ($type) {
+            return $type.' '.$moduleName;
+        }
+
+        return $moduleName === 'Module' ? 'Élément' : $moduleName;
     }
 
     public function groupShort(?string $name): string

@@ -12,6 +12,10 @@ use Illuminate\Http\Request;
 
 class RoomBookingController extends Controller
 {
+    private const APPROVER_ROLES = [
+        'super-admin', 'institution-admin', 'director', 'scolarite',
+    ];
+
     /**
      * Liste des réservations.
      */
@@ -42,15 +46,20 @@ class RoomBookingController extends Controller
             'status' => 'nullable|string|in:pending,approved,rejected,cancelled',
         ]);
 
-        $validated['booked_by'] = $validated['booked_by'] ?? $request->user()?->id;
+        $user = $request->user();
+        $canApprove = $this->userCanApprove($user);
+
+        $validated['booked_by'] = $validated['booked_by'] ?? $user?->id;
         $validated['room_name'] = $validated['room_name']
             ?? Room::query()->whereKey($validated['room_id'])->value('name')
             ?? 'Salle';
-        $user = $request->user();
-        $canApprove = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole([
-            'super-admin', 'institution-admin', 'director', 'scolarite',
-        ]);
-        $validated['status'] = $validated['status'] ?? ($canApprove ? 'approved' : 'pending');
+        $requestedStatus = $validated['status'] ?? null;
+        unset($validated['status']);
+        if ($canApprove) {
+            $validated['status'] = $requestedStatus ?? 'approved';
+        } else {
+            $validated['status'] = 'pending';
+        }
 
         if ($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time'])) {
             return response()->json([
@@ -75,6 +84,12 @@ class RoomBookingController extends Controller
         $validated = $request->validate([
             'status' => 'sometimes|string|in:pending,approved,rejected,cancelled',
         ]);
+
+        if (array_key_exists('status', $validated) && ! $this->userCanApprove($request->user())) {
+            $isOwnCancellation = $validated['status'] === 'cancelled'
+                && (int) $roomBooking->booked_by === (int) $request->user()?->id;
+            abort_unless($isOwnCancellation, 403, 'Seule la scolarité peut valider ou refuser une réservation.');
+        }
 
         $roomBooking->update($validated);
 
@@ -144,6 +159,11 @@ class RoomBookingController extends Controller
         );
 
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    private function userCanApprove(?object $user): bool
+    {
+        return $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(self::APPROVER_ROLES);
     }
 
     /**

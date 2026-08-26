@@ -69,6 +69,9 @@ class OfficialTimetableMatrixTest extends TestCase
         $this->assertSame('EMPLOI DU TEMPS S1', $matrix['title']);
         $this->assertSame('S1 AP', $matrix['semester_label']);
         $this->assertSame('G1: 14h30-16h30', $matrix['rows'][0]['days'][1][0]);
+        $this->assertSame('Management', $matrix['rows'][0]['module_name']);
+        $this->assertSame('TD Management', $matrix['rows'][0]['element_name']);
+        $this->assertNotSame($matrix['rows'][0]['module_name'], $matrix['rows'][0]['element_name']);
         $this->assertStringContainsString('(TD)', $matrix['rows'][0]['professor_name']);
         $this->assertSame('AMPHI 2', $matrix['rows'][0]['room_label']);
     }
@@ -110,6 +113,8 @@ class OfficialTimetableMatrixTest extends TestCase
         $this->assertCount(1, $catalog['sections']);
         $this->assertSame('EMPLOI DU TEMPS S5', $catalog['sections'][0]['title']);
         $this->assertSame('S5 GFC', $catalog['sections'][0]['semester_label']);
+        $this->assertSame('Finance', $catalog['sections'][0]['rows'][0]['module_name']);
+        $this->assertSame('CM Finance', $catalog['sections'][0]['rows'][0]['element_name']);
         $this->assertSame('G1: 08h30-10h30', $catalog['sections'][0]['rows'][0]['days'][3][0]);
     }
 }

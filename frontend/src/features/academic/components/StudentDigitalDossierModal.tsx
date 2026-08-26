@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
+import { protectedDocumentUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export interface StudentDossierData {
@@ -608,7 +609,18 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
       const res = await api.get(`/students/${studentId}/documents`).catch(() => null);
       if (res?.data?.data && res.data.data.length > 0) {
         (res.data.data as StudentDocumentItem[]).forEach(d => {
-          if (d && d.type) map[d.type] = d;
+          if (d && d.type) {
+            const signed = (d as StudentDocumentItem & { signed_url?: string }).signed_url
+              || d.file_path
+            map[d.type] = {
+              ...d,
+              file_path: protectedDocumentUrl(
+                signed?.includes('/serve-document/')
+                  ? signed
+                  : `/api/public/serve-document/${d.type}/${encodeURIComponent(student?.cne || '')}`
+              ),
+            }
+          }
         });
       }
 
