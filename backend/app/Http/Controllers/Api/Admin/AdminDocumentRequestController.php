@@ -322,6 +322,8 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
         }
 
+        $this->authorize('view', $documentRequest);
+
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
         if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {

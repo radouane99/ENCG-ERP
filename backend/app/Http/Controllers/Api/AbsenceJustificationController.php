@@ -18,7 +18,7 @@ class AbsenceJustificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']) || $request->user()->can('students.view'), 403);
+        $this->authorize('viewAny', AbsenceJustification::class);
 
         $query = AbsenceJustification::with([
             'student.user',
@@ -54,17 +54,17 @@ class AbsenceJustificationController extends Controller
         $items = $paginated->getCollection()->map(function ($j) {
             $std = $j->student;
             $user = $std?->user;
-            $stdName = $user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: 'Étudiant ENCG');
+            $stdName = $user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: null);
 
             $att = $j->attendance;
             $session = $att?->attendanceSession;
             $mod = $session?->module;
             $grp = $session?->group;
 
-            $modName = $mod?->name ?? $att?->module_name ?? 'Comptabilité / Management';
-            $modCode = $mod?->code ?? 'M101';
-            $grpName = $grp?->name ?? $att?->group_name ?? 'TC-S1-G1';
-            $sessType = $session?->session_type ?? $att?->session_type ?? 'CM';
+            $modName = $mod?->name ?? $att?->module_name;
+            $modCode = $mod?->code;
+            $grpName = $grp?->name ?? $att?->group_name;
+            $sessType = $session?->session_type ?? $att?->session_type;
 
             $docUrl = $j->document_path
                 ? (str_starts_with($j->document_path, 'http') ? $j->document_path : Storage::disk('public')->url($j->document_path))
@@ -82,11 +82,11 @@ class AbsenceJustificationController extends Controller
 
             return [
                 'id' => $j->id,
-                'reason' => $j->reason ?? 'Certificat Médical',
-                'description' => $j->description ?? 'Justificatif médical soumis par l\'étudiant pour absence au cours.',
-                'doctor_clinic' => $j->doctor_clinic ?? 'Dr. Bennani — Clinique Ibn Sina Fès',
-                'certificate_date' => Carbon::parse($certDate)->format('d/m/Y'),
-                'absence_date' => Carbon::parse($absenceDate)->format('d/m/Y'),
+                'reason' => $j->reason,
+                'description' => $j->description,
+                'doctor_clinic' => $j->doctor_clinic,
+                'certificate_date' => $certDate ? Carbon::parse($certDate)->format('d/m/Y') : null,
+                'absence_date' => $absenceDate ? Carbon::parse($absenceDate)->format('d/m/Y') : null,
                 'delay_hours' => $delayHours,
                 'is_within_48h' => $isWithin48h,
                 'document_path' => $j->document_path,
@@ -98,12 +98,12 @@ class AbsenceJustificationController extends Controller
                 'student' => [
                     'id' => $std?->id,
                     'name' => $stdName,
-                    'first_name' => $std?->first_name ?? strtok($stdName, ' '),
-                    'last_name' => $std?->last_name ?? substr($stdName, strpos($stdName, ' ') ?: 0),
-                    'student_number' => $std?->student_number ?? '202400'.($std?->id ?? '1'),
-                    'cne' => $std?->cne ?? 'N130000'.($std?->id ?? '1'),
-                    'cin' => $std?->cin ?? 'CD'.(58270 + ($std?->id ?? 1)),
-                    'filiere' => $std?->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG',
+                    'first_name' => $std?->first_name,
+                    'last_name' => $std?->last_name,
+                    'student_number' => $std?->student_number,
+                    'cne' => $std?->cne,
+                    'cin' => $std?->cin,
+                    'filiere' => $std?->registrations?->first()?->filiere?->name,
                 ],
                 'attendance' => [
                     'id' => $att?->id,
@@ -111,7 +111,7 @@ class AbsenceJustificationController extends Controller
                     'module_name' => $modName,
                     'group_name' => $grpName,
                     'session_type' => $sessType,
-                    'date' => Carbon::parse($absenceDate)->format('d/m/Y'),
+                    'date' => $absenceDate ? Carbon::parse($absenceDate)->format('d/m/Y') : null,
                 ],
                 'reviewer' => $j->reviewer?->name,
             ];
@@ -140,7 +140,7 @@ class AbsenceJustificationController extends Controller
      */
     public function updateStatus(Request $request, AbsenceJustification $absenceJustification): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']) || $request->user()->can('students.edit'), 403);
+        $this->authorize('update', $absenceJustification);
 
         $validated = $request->validate([
             'status' => 'required|in:approved,rejected',
@@ -191,7 +191,7 @@ class AbsenceJustificationController extends Controller
      */
     public function destroy(AbsenceJustification $absenceJustification): JsonResponse
     {
-        abort_unless(request()->user()->can('students.delete'), 403);
+        $this->authorize('delete', $absenceJustification);
 
         $absenceJustification->delete();
 

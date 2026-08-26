@@ -10,6 +10,7 @@ import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@shared/lib/utils';
 import PageHeader from '@shared/components/layout/PageHeader';
+import EmptyState from '@shared/components/ui/EmptyState';
 
 export default function StudentGuichetPage() {
   const { t } = useTranslation(['students', 'common']);
@@ -195,6 +196,14 @@ export default function StudentGuichetPage() {
           <div className="flex justify-center py-16">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           </div>
+        ) : requests.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Aucune demande en cours"
+            description="Demandez une attestation ou un relevé depuis le guichet unique."
+            actionLabel="Nouvelle demande"
+            onAction={() => setIsModalOpen(true)}
+          />
         ) : (
           <div className="space-y-5">
             {requests.map((req: any) => {

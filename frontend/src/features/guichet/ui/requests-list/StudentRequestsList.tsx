@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStudentRequests } from '../../api/guichetApi';
 import { DocumentRequestStatus } from '../../model/types';
+import EmptyState from '@shared/components/ui/EmptyState';
 
 const StatusBadge: React.FC<{ status: DocumentRequestStatus }> = ({ status }) => {
   const colors: Record<string, string> = {
@@ -39,9 +40,10 @@ export const StudentRequestsList: React.FC = () => {
       </div>
       
       {(!requests || requests.length === 0) ? (
-        <div className="p-6 text-center text-gray-500">
-          Vous n'avez aucune demande en cours.
-        </div>
+        <EmptyState
+          title="Vous n'avez aucune demande en cours."
+          description="Utilisez le formulaire pour demander une attestation ou un relevé."
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

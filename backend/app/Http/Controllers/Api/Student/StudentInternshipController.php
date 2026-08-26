@@ -24,13 +24,22 @@ class StudentInternshipController extends Controller
         $student = $request->user()?->student;
         abort_unless($student, 403, 'Profil étudiant introuvable.');
 
+        $perPage = min((int) $request->input('per_page', 20), 100);
         $internships = Internship::where('student_id', $student->id)
             ->with(['internshipDocuments'])
-            ->get();
+            ->latest()
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'internships' => $internships,
+            'internships' => $internships->items(),
+            'data' => $internships->items(),
+            'meta' => [
+                'total' => $internships->total(),
+                'per_page' => $internships->perPage(),
+                'current_page' => $internships->currentPage(),
+                'last_page' => $internships->lastPage(),
+            ],
         ]);
     }
 

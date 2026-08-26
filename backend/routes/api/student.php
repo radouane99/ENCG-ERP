@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AiCourseTutorController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\CedocController;
+use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\DeliberationController;
 use App\Http\Controllers\Api\Mobile\MobileStudentController;
 use App\Http\Controllers\Api\ReinscriptionController;
@@ -85,6 +86,10 @@ $studentPortalRoutes = function () {
         Route::post('/', [StudentDocumentRequestController::class, 'store']);
         Route::get('/{id}/download', [StudentDocumentRequestController::class, 'download']);
     });
+
+    Route::get('/complaints', [ComplaintController::class, 'index']);
+    Route::post('/complaints', [ComplaintController::class, 'store']);
+    Route::get('/complaints/{id}', [ComplaintController::class, 'show']);
 
     // International Mobility
     Route::prefix('mobility')->group(function () {

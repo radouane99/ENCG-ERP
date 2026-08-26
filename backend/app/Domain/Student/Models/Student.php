@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @deprecated HTTP, factories and policies must use App\Models\Student.
+ * This class remains for Domain-only sketches (dossier audit helpers). Do not add a third Student model.
+ */
 class Student extends Model
 {
     use Auditable, BelongsToInstitution, SoftDeletes;

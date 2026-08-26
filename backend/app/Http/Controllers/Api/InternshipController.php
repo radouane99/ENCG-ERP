@@ -22,7 +22,7 @@ class InternshipController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->can('internships.view'), 403);
+        $this->authorize('viewAny', Internship::class);
 
         $internships = $this->careerService->getAllInternships();
 
@@ -40,6 +40,8 @@ class InternshipController extends Controller
         Internship $internship,
         UpdateInternshipAction $action
     ): JsonResponse {
+        $this->authorize('update', $internship);
+
         try {
             $updated = $action->execute($internship, $request->validated());
 

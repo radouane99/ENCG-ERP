@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\AdminAiController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AdminExamController;
-use App\Http\Controllers\Api\AdminInternshipController;
+use App\Http\Controllers\Api\Admin\AdminInternshipController;
 use App\Http\Controllers\Api\AdminPredictiveAnalyticsController;
 use App\Http\Controllers\Api\AdminRolePermissionController;
 use App\Http\Controllers\Api\AdminSmartCampusController;
@@ -260,11 +260,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Internships
     Route::apiResource('internships', InternshipController::class)->except(['destroy']);
     Route::prefix('admin/internships')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'index']);
-        Route::post('/{id}/validate', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'validateInternship']);
-        Route::post('/soutenances', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'scheduleSoutenance']);
+        Route::get('/', [AdminInternshipController::class, 'index']);
+        Route::put('/{id}/status', [AdminInternshipController::class, 'updateStatus']);
+        Route::post('/{id}/validate', [AdminInternshipController::class, 'validateInternship']);
+        Route::post('/soutenances', [AdminInternshipController::class, 'scheduleSoutenance']);
     });
-    Route::get('/soutenances', [App\Http\Controllers\Api\Admin\AdminInternshipController::class, 'getSoutenancesList']);
+    Route::get('/soutenances', [AdminInternshipController::class, 'getSoutenancesList']);
 
     // Complaints
     Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);

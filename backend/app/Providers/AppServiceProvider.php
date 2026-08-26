@@ -9,8 +9,18 @@ use App\Listeners\HandleOcrComplete;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
 use App\Listeners\NotifyDocumentProcessed;
+use App\Models\AbsenceJustification;
+use App\Models\Complaint;
+use App\Models\Deliberation;
+use App\Models\DocumentRequest;
 use App\Models\Grade;
+use App\Models\Internship;
 use App\Models\Student;
+use App\Policies\AbsenceJustificationPolicy;
+use App\Policies\ComplaintPolicy;
+use App\Policies\DeliberationPolicy;
+use App\Policies\DocumentRequestPolicy;
+use App\Policies\InternshipPolicy;
 use App\Observers\GradeObserver;
 use App\OCR\Engines\PdfBinaryEngine;
 use App\OCR\Engines\PdfTextEngine;
@@ -270,6 +280,11 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Grade::class, GradePolicy::class);
+        Gate::policy(DocumentRequest::class, DocumentRequestPolicy::class);
+        Gate::policy(AbsenceJustification::class, AbsenceJustificationPolicy::class);
+        Gate::policy(Internship::class, InternshipPolicy::class);
+        Gate::policy(Complaint::class, ComplaintPolicy::class);
+        Gate::policy(Deliberation::class, DeliberationPolicy::class);
     }
 
     /**

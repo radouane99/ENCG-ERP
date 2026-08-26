@@ -6,8 +6,8 @@ export const useStudentInternships = () => {
   return useQuery({
     queryKey: ['studentInternships'],
     queryFn: async () => {
-      const { data } = await api.get<{ internships: Internship[] }>('/v1/student-portal/internships');
-      return data.internships;
+      const { data } = await api.get('/v1/student-portal/internships');
+      return data.internships ?? data.data ?? [];
     },
   });
 };

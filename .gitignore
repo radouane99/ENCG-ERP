@@ -1,9 +1,13 @@
-# Local environment files
+# Local environment files (never commit secrets)
 .env
 .env.local
 .env.*.local
 .env.backup
 .env.production
+backend/.env
+backend/.env.testing
+frontend/.env
+frontend/.env.local
 backend/.env.production
 
 # Let's Encrypt private material

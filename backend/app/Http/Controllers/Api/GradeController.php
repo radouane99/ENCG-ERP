@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\StoreBulkGradesAction;
 use App\Exports\GradesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGradeRequest;
@@ -117,41 +118,16 @@ class GradeController extends Controller
         }
 
         $validated = $request->validated();
-
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
 
-        $updatedCount = DB::transaction(function () use ($validated, $assessment, $fraudIds, $request) {
-            $count = 0;
-            foreach ($validated['grades'] as $gradeData) {
-                $isFraud = $this->gradeService->isStudentFraud($gradeData['student_id'], $fraudIds)
-                    && $this->gradeService->isExamAssessment($assessment);
-
-                $newValue = $isFraud ? 0.0 : ($gradeData['absent'] ? null : ($gradeData['value'] ?? null));
-                $newAbsent = $isFraud ? false : ($gradeData['absent'] ?? false);
-
-                // Audit
-                $oldGrade = Grade::where('student_id', $gradeData['student_id'])
-                    ->where('assessment_id', $assessment->id)
-                    ->first();
-
-                $this->logGradeChange($oldGrade, $newValue, $newAbsent, $gradeData['student_id'], $assessment, $request);
-
-                Grade::updateOrCreate(
-                    [
-                        'student_id' => $gradeData['student_id'],
-                        'assessment_id' => $assessment->id,
-                    ],
-                    [
-                        'value' => $newValue,
-                        'absent' => $newAbsent,
-                    ]
-                );
-
-                $count++;
+        $updatedCount = app(StoreBulkGradesAction::class)->execute(
+            $assessment,
+            $validated['grades'],
+            $fraudIds,
+            function ($oldGrade, $newValue, $newAbsent, $studentId, $assessment) use ($request) {
+                $this->logGradeChange($oldGrade, $newValue, $newAbsent, $studentId, $assessment, $request);
             }
-
-            return $count;
-        });
+        );
 
         return response()->json([
             'success' => true,

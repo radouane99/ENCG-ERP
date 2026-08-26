@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\AI\Services\GroundedAiService;
 use App\Domain\Deliberation\LmdRules;
+use App\Domain\Deliberation\Services\DeliberationEngine;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Deliberation;
@@ -13,7 +14,6 @@ use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
 use App\Models\StudentRegistration;
-use App\Services\Academic\DeliberationEngine;
 use App\Services\Academic\DeliberationSealService;
 use App\Services\Academic\DeliberationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -37,9 +37,11 @@ class DeliberationController extends Controller
      */
     public function index(): JsonResponse
     {
-        $deliberations = Deliberation::with(['semester', 'filiere', 'academicYear'])->get();
+        $this->authorize('viewAny', Deliberation::class);
 
-        $formatted = $deliberations->map(function ($delib) {
+        $deliberations = Deliberation::with(['semester', 'filiere', 'academicYear'])->paginate(20);
+
+        $formatted = $deliberations->getCollection()->map(function ($delib) {
             $totalStudents = StudentRegistration::where('filiere_id', $delib->filiere_id)->count();
             $validatedCount = StudentRegistration::where('filiere_id', $delib->filiere_id)
                 ->where('status', 'admin_validated')->count();
@@ -55,7 +57,15 @@ class DeliberationController extends Controller
             ];
         });
 
-        return response()->json(['data' => $formatted]);
+        return response()->json([
+            'data' => $formatted,
+            'meta' => [
+                'total' => $deliberations->total(),
+                'per_page' => $deliberations->perPage(),
+                'current_page' => $deliberations->currentPage(),
+                'last_page' => $deliberations->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -63,6 +73,8 @@ class DeliberationController extends Controller
      */
     public function run(Request $request): JsonResponse
     {
+        $this->authorize('create', Deliberation::class);
+
         $semesterId = $request->query('semester', 1);
         $sessionType = $request->query('session', 'normale');
         $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
@@ -95,7 +107,7 @@ class DeliberationController extends Controller
 
             if ($isAjourne) {
                 $sessionType === 'normale' ? $results['rattrapage']++ : $results['ajourne']++;
-            } elseif ($semesterAverage < 10.0 || $needsRattrapage) {
+            } elseif ($semesterAverage < LmdRules::VALIDATION_THRESHOLD || $needsRattrapage) {
                 $sessionType === 'normale' ? $results['rattrapage']++ : $results['ajourne']++;
             } else {
                 $results['admitted']++;
@@ -612,8 +624,11 @@ class DeliberationController extends Controller
 
     public function seal(Request $request, int $id): JsonResponse
     {
+        $deliberation = Deliberation::findOrFail($id);
+        $this->authorize('update', $deliberation);
+
         $hash = app(DeliberationSealService::class)->seal(
-            Deliberation::findOrFail($id),
+            $deliberation,
             $request->user()
         );
 

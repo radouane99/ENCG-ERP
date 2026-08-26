@@ -35,6 +35,10 @@ This document outlines the required steps, checks, and configurations before goi
   ```
 - [ ] Run `php artisan storage:link` to create the symbolic link for Spatie MediaLibrary and public assets.
 
+## 4b. Secrets & git
+- [ ] `backend/.env` and `frontend/.env` are **not** committed (see root `.gitignore`).
+- [ ] Production secrets live only in the server env / secret store, never in the repo.
+
 ## 5. Security & Performance (Web Server)
 - [ ] Nginx/Apache configuration properly points to `backend/public/` for the API and serves the React build directory for the Frontend.
 - [ ] SSL/TLS certificate is installed (e.g., Let's Encrypt / Certbot).

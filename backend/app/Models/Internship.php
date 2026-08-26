@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Internship extends Model
 {
@@ -37,6 +38,11 @@ class Internship extends Model
     public function internshipDocuments(): HasMany
     {
         return $this->hasMany(InternshipDocument::class);
+    }
+
+    public function soutenance(): HasOne
+    {
+        return $this->hasOne(Soutenance::class);
     }
 
     public function internshipReports(): HasMany

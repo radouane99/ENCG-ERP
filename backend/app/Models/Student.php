@@ -178,6 +178,22 @@ class Student extends Model
         return ['uuid'];
     }
 
+    public static function generateStudentNumber(string $filiereCode, int $year): string
+    {
+        $prefix = 'ENCG-FES-'.$year.'-'.strtoupper($filiereCode);
+        $lastStudent = self::where('student_number', 'like', $prefix.'-%')
+            ->orderByDesc('student_number')
+            ->first();
+
+        $seq = 1;
+        if ($lastStudent) {
+            $parts = explode('-', (string) $lastStudent->student_number);
+            $seq = ((int) end($parts)) + 1;
+        }
+
+        return $prefix.'-'.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
+    }
+
     public function getRouteKeyName()
     {
         return 'uuid';

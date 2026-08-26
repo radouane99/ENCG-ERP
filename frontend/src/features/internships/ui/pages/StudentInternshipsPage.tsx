@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useStudentInternships } from '../../api/useInternshipsStudent';
 import LoadingScreen from '@shared/components/ui/LoadingScreen';
+import EmptyState from '@shared/components/ui/EmptyState';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
 import { DocumentUploadModal } from '../components/DocumentUploadModal';
-import { Sparkles, Trophy, Building2, Calendar, FileText, Upload, Plus, CheckCircle2, Clock, MapPin, UserCheck, Download, Printer, ShieldCheck, MessageSquare, Check, X, Send, Award, Layers, Search } from 'lucide-react';
+import { Sparkles, Trophy, Building2, Calendar, FileText, Upload, Plus, CheckCircle2, Clock, MapPin, UserCheck, Download, Printer, ShieldCheck, MessageSquare, Check, X, Send, Award, Layers, Search, Briefcase } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
@@ -148,17 +149,10 @@ export default function StudentInternshipsPage() {
 
   if (isLoading) return <LoadingScreen />;
 
-  const displayInternships = (internships && internships.length > 0) ? internships : [
-    {
-      id: 1,
-      position_title: 'Stagiaire Audit & Contrôle de Gestion',
-      company_name: 'BMCE Bank Of Africa',
-      company_city: 'Casablanca',
-      start_date: '2026-04-01',
-      end_date: '2026-06-30',
-      status: 'approved'
-    }
-  ];
+  const displayInternships = internships ?? [];
+  const validatedCount = displayInternships.filter((i: { status?: string }) =>
+    ['validated', 'approved', 'active', 'completed'].includes(String(i.status ?? '').toLowerCase())
+  ).length;
 
   return (
     <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
@@ -204,17 +198,17 @@ export default function StudentInternshipsPage() {
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">CONVENTION VALIDÉE</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">OUI (VALIDÉE)</span>
+            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">{validatedCount}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">AVANCEMENT PFE</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">75% (VALIDE)</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">DEMANDES</span>
+            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">{displayInternships.length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">SOUTENANCE PFE</span>
-            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">28 JUIN 09H</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">EN COURS</span>
+            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">{displayInternships.length - validatedCount}</span>
           </div>
         </div>
       </div>
@@ -224,8 +218,16 @@ export default function StudentInternshipsPage() {
         {/* Left Column: Internship Cards List */}
         <div className="lg:col-span-2 space-y-6">
           <h3 className="text-lg font-black text-slate-900 dark:text-white">Mes Conventions de Stage & PFE</h3>
-          
-          {displayInternships.map((internship: any) => (
+
+          {displayInternships.length === 0 ? (
+            <EmptyState
+              icon={Briefcase}
+              title="Aucun stage enregistré"
+              description="Déposez une demande de convention pour démarrer le suivi PFE."
+              actionLabel="Demander une convention"
+              onAction={() => setShowRequestModal(true)}
+            />
+          ) : displayInternships.map((internship: any) => (
             <div key={internship.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -302,7 +304,13 @@ export default function StudentInternshipsPage() {
         {/* Right Column: Soutenance PFE Info Box */}
         <div className="space-y-6">
           <h3 className="text-lg font-black text-slate-900 dark:text-white">Ma Soutenance PFE</h3>
-          
+          {displayInternships.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title="Aucun créneau de soutenance"
+              description="Le jury et la salle apparaissent une fois la convention et le mémoire validés."
+            />
+          ) : (
           <div className="bg-gradient-to-br from-[#0f2863] to-blue-900 text-white p-6 rounded-[2.5rem] shadow-xl space-y-4 border border-blue-800/40">
             <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-amber-500/30">
               <CheckCircle2 className="w-3.5 h-3.5" /> Créneau Officiel Attribué
@@ -325,6 +333,7 @@ export default function StudentInternshipsPage() {
               <p className="text-white">• Rapporteur : <span>Dr. Tazi</span></p>
             </div>
           </div>
+          )}
         </div>
       </div>
 

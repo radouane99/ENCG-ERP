@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LmdLegend from '@shared/components/academic/LmdLegend';
 import LmdBadge from '@shared/components/academic/LmdBadge';
 import PageHeader from '@shared/components/layout/PageHeader';
+import EmptyState from '@shared/components/ui/EmptyState';
 import { decisionLabel, normalizeDecision } from '@shared/lib/lmd';
 export default function StudentGrades() {
   const { t, i18n } = useTranslation(['students', 'common']);
@@ -232,9 +233,17 @@ export default function StudentGrades() {
                   </tr>
                 )
               })}
-              {grades.length === 0 && (
+              {(!grades || grades.length === 0) && (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-slate-500 font-medium">Aucune note n'est disponible pour le moment.</td>
+                  <td colSpan={3} className="py-4">
+                    <EmptyState
+                      icon={AlertCircle}
+                      title="Aucune note disponible"
+                      description="Les notes apparaissent après la délibération. En attendant, vous pouvez demander un document au guichet."
+                      actionLabel="Ouvrir le guichet"
+                      onAction={() => { window.location.href = '/student/documents' }}
+                    />
+                  </td>
                 </tr>
               )}
             </tbody>

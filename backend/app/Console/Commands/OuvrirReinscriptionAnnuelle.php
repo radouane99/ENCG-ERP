@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\Student\Models\Student;
 use App\Domain\Student\Models\StudentDossierAuditLog;
 use App\Mail\ReinscriptionOuverteMail;
 use App\Models\AcademicYear;
+use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Services\Campus\CampusAlertService;
 use Illuminate\Console\Command;

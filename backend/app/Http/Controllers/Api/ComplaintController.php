@@ -14,11 +14,31 @@ class ComplaintController extends Controller
     /**
      * Liste des réclamations.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $complaints = Complaint::with(['student.user', 'handler'])->get();
+        $this->authorize('viewAny', Complaint::class);
 
-        return response()->json(['success' => true, 'data' => $complaints]);
+        $query = Complaint::with(['student.user', 'handler'])->latest();
+        $user = $request->user();
+
+        if ($user->hasRole('student')) {
+            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
+            $query->where('student_id', $user->student->id);
+        }
+
+        $perPage = min((int) $request->input('per_page', 20), 100);
+        $paginated = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginated->items(),
+            'meta' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -26,12 +46,22 @@ class ComplaintController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create', Complaint::class);
+
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'type' => 'required|string',
+            'student_id' => 'sometimes|exists:students,id',
+            'type' => 'required|string|in:grade,schedule,administrative,other,support',
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ]);
+
+        $user = $request->user();
+        if ($user->hasRole('student')) {
+            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
+            $validated['student_id'] = $user->student->id;
+        } else {
+            abort_unless(! empty($validated['student_id']), 422, 'student_id est requis.');
+        }
 
         $complaint = Complaint::create($validated);
 
@@ -39,7 +69,7 @@ class ComplaintController extends Controller
             'success' => true,
             'message' => 'Réclamation envoyée.',
             'data' => $complaint,
-        ]);
+        ], 201);
     }
 
     /**
@@ -48,6 +78,7 @@ class ComplaintController extends Controller
     public function show(int $id): JsonResponse
     {
         $complaint = Complaint::with(['student.user', 'handler'])->findOrFail($id);
+        $this->authorize('view', $complaint);
 
         return response()->json(['success' => true, 'data' => $complaint]);
     }
@@ -58,6 +89,7 @@ class ComplaintController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $complaint = Complaint::findOrFail($id);
+        $this->authorize('update', $complaint);
 
         $validated = $request->validate([
             'status' => 'string|in:pending,investigating,resolved,closed',
@@ -79,12 +111,22 @@ class ComplaintController extends Controller
      */
     public function submitGradeAppeal(Request $request): JsonResponse
     {
+        $this->authorize('create', Complaint::class);
+
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_id' => 'sometimes|exists:students,id',
             'assessment_id' => 'required|exists:assessments,id',
             'grade_id' => 'nullable|exists:grades,id',
             'reason' => 'required|string|max:1000',
         ]);
+
+        $user = $request->user();
+        if ($user->hasRole('student')) {
+            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
+            $validated['student_id'] = $user->student->id;
+        } else {
+            abort_unless(! empty($validated['student_id']), 422, 'student_id est requis.');
+        }
 
         $existingGrade = Grade::where('student_id', $validated['student_id'])
             ->where('assessment_id', $validated['assessment_id'])
@@ -111,9 +153,15 @@ class ComplaintController extends Controller
      */
     public function listGradeAppeals(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Complaint::class);
+
         $query = GradeAppeal::with(['student.user', 'assessment.module']);
 
-        if ($request->filled('student_id')) {
+        $user = $request->user();
+        if ($user->hasRole('student')) {
+            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
+            $query->where('student_id', $user->student->id);
+        } elseif ($request->filled('student_id')) {
             $query->where('student_id', $request->student_id);
         }
 

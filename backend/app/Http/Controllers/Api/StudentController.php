@@ -190,7 +190,7 @@ class StudentController extends Controller
      */
     public function exportUsmbaAcademicAccountsCsv(Request $request)
     {
-        $students = \App\Domain\Student\Models\Student::with(['user', 'latestPathway.filiere'])
+        $students = Student::with(['user', 'latestPathway.filiere'])
             ->take(500)
             ->get();
 
@@ -226,13 +226,13 @@ class StudentController extends Controller
 
                 fputcsv($file, [
                     $student->id,
-                    $student->cne ?? 'M145092428',
-                    $student->cin ?? 'UB121643',
+                    $student->cne,
+                    $student->cin,
                     strtoupper($lastName),
                     ucfirst($firstName),
                     '2026-2027',
-                    $student->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES',
-                    $student->user?->email ?? ($cleanFirst.$cleanLast.'@gmail.com'),
+                    $student->latestPathway?->filiere?->name,
+                    $student->user?->email,
                     $academicEmail,
                 ]);
             }
@@ -253,7 +253,8 @@ class StudentController extends Controller
             'inscription_notes' => 'nullable|string|max:1000',
         ]);
 
-        $student = \App\Domain\Student\Models\Student::with(['latestPathway.filiere'])->findOrFail($studentId);
+        $student = Student::with(['latestPathway.filiere'])->findOrFail($studentId);
+        $this->authorize('update', $student);
         $oldStatus = $student->inscription_status;
         $newStatus = $request->inscription_status;
 
@@ -265,7 +266,7 @@ class StudentController extends Controller
         if ($newStatus === 'inscrit' && ! $student->student_number) {
             $filiereCode = $student->latestPathway?->filiere?->code ?? 'TC';
             $year = (int) date('Y');
-            $updateData['student_number'] = \App\Domain\Student\Models\Student::generateStudentNumber($filiereCode, $year);
+            $updateData['student_number'] = Student::generateStudentNumber($filiereCode, $year);
             $updateData['inscription_validated_at'] = now();
             $updateData['status'] = 'active';
         }
@@ -312,7 +313,8 @@ class StudentController extends Controller
      */
     public function getDossierAuditLog(Request $request, int $studentId): JsonResponse
     {
-        $student = \App\Domain\Student\Models\Student::findOrFail($studentId);
+        $student = Student::findOrFail($studentId);
+        $this->authorize('view', $student);
 
         $logs = StudentDossierAuditLog::where('student_id', $studentId)
             ->with('admin:id,first_name,last_name,email')
@@ -397,7 +399,8 @@ class StudentController extends Controller
      */
     public function runBiometricMatch(Request $request, int $studentId): JsonResponse
     {
-        $student = \App\Domain\Student\Models\Student::with('documents')->findOrFail($studentId);
+        $student = Student::with('documents')->findOrFail($studentId);
+        $this->authorize('view', $student);
 
         $photoDoc = $student->documents->where('type', 'photo')->first();
         $cnieDoc = $student->documents->where('type', 'cin_recto_verso')->first();

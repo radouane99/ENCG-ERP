@@ -15,15 +15,10 @@ use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /**
- * PdfGeneratorService
+ * @deprecated Prefer App\Domain\Document\Services\PdfGenerationService (canonical HTTP PDF)
+ * or App\Services\PdfGenerationService. Do not add a fourth PDF generator.
  *
- * Generates professional, QR-verified PDF documents:
- * - Student enrollment certificates (attestation d'inscription)
- * - School certificates (certificat de scolarité)
- * - Transcripts (relevé de notes)
- * - Professor work certificates
- * - Internship agreements
- * - Vacataire payment orders
+ * Generates QR-verified PDFs for Domain document templates (legacy path).
  */
 class PdfGeneratorService
 {

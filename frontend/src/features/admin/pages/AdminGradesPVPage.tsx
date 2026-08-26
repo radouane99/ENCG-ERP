@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { PvFilterSelect } from '../components/PvFilterSelect'
+import { PvFilterBar } from '../components/PvFilterBar'
 import { SignaturePad } from '../components/SignaturePad'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -1010,73 +1010,30 @@ export default function AdminGradesPVPage() {
         </div>
       </div>
 
-      {/* Filter Control Bar (Elevated Card) */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 rounded-[2rem] shadow-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <PvFilterSelect
-          label={isRtl ? 'الشعبة' : 'Filière'}
-          icon={GraduationCap}
-          value={selectedFiliere}
-          onChange={(val) => setSelectedFiliere(String(val))}
-          placeholder={isRtl ? 'اختر الشعبة' : 'Sélectionnez une filière'}
-          options={filieres.map((f: any) => ({
-            value: f.id,
-            label: f.name || f.code,
-            badge: f.code
-          }))}
-        />
-
-        <PvFilterSelect
-          label={isRtl ? 'الدورة' : 'Semestre'}
-          icon={Calendar}
-          value={selectedSemester}
-          onChange={(val) => setSelectedSemester(String(val))}
-          placeholder={isRtl ? 'اختر الدورة' : 'Tous les semestres'}
-          options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => ({
-            value: s,
-            label: `Semestre ${s}`,
-            badge: `S${s}`
-          }))}
-        />
-
-        <PvFilterSelect
-          label={isRtl ? 'الوحدة' : 'Module'}
-          icon={BookOpen}
-          value={moduleId || ''}
-          onChange={(val) => {
-            if (val) {
-              setPvType('module');
-              navigate(`/admin/grades/pv?module_id=${val}${selectedGroup ? `&group_id=${selectedGroup}` : ''}`);
-            }
-          }}
-          disabled={modules.length === 0}
-          placeholder={isRtl ? 'اختر الوحدة' : 'Sélectionnez un module'}
-          options={modules.map((m: any) => ({
-            value: m.id,
-            label: m.name || m.code,
-            badge: m.code
-          }))}
-        />
-
-        <PvFilterSelect
-          label={isRtl ? 'الفوج (اختياري)' : 'Groupe (Optionnel)'}
-          icon={Users}
-          value={selectedGroup}
-          onChange={(val) => {
-            const group = String(val)
-            setSelectedGroup(group)
-            if (moduleId) {
-              navigate(`/admin/grades/pv?module_id=${moduleId}${group ? `&group_id=${group}` : ''}`)
-            }
-          }}
-          disabled={groupes.length === 0}
-          placeholder={isRtl ? 'جميع الأفواج' : 'Tous les groupes'}
-          options={groupes.map((g: any) => ({
-            value: g.id,
-            label: g.name,
-            badge: `G${g.id}`
-          }))}
-        />
-      </div>
+      <PvFilterBar
+        isRtl={isRtl}
+        selectedFiliere={selectedFiliere}
+        selectedSemester={selectedSemester}
+        selectedGroup={selectedGroup}
+        moduleId={moduleId}
+        filieres={filieres}
+        modules={modules}
+        groupes={groupes}
+        onFiliereChange={setSelectedFiliere}
+        onSemesterChange={setSelectedSemester}
+        onModuleChange={(val) => {
+          if (val) {
+            setPvType('module')
+            navigate(`/admin/grades/pv?module_id=${val}${selectedGroup ? `&group_id=${selectedGroup}` : ''}`)
+          }
+        }}
+        onGroupChange={(group) => {
+          setSelectedGroup(group)
+          if (moduleId) {
+            navigate(`/admin/grades/pv?module_id=${moduleId}${group ? `&group_id=${group}` : ''}`)
+          }
+        }}
+      />
     </div>
   )
 

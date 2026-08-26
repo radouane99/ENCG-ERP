@@ -80,9 +80,14 @@ class StudentMobilityController extends Controller
      */
     public function calculateMeritRanking(Request $request): JsonResponse
     {
-        $students = Student::with(['user', 'grades.assessment.module'])->take(50)->get();
+        $this->authorize('viewAny', Student::class);
 
-        $rankedStudents = $students->map(function (Student $student) {
+        $perPage = min((int) $request->input('per_page', 50), 100);
+        $students = Student::with(['user', 'grades.assessment.module'])
+            ->orderBy('id')
+            ->paginate($perPage);
+
+        $rankedStudents = $students->getCollection()->map(function (Student $student) {
             $allGrades = $student->grades;
             $languageGrades = $allGrades->filter(fn ($g) => str_contains(strtolower($g->assessment->module->name ?? ''), 'anglais') ||
                 str_contains(strtolower($g->assessment->module->name ?? ''), 'français') ||
@@ -116,6 +121,12 @@ class StudentMobilityController extends Controller
             'message' => 'Classement de mobilité calculé.',
             'formula' => 'Score = (0.6 × GPA) + (0.2 × Langues)',
             'data' => $rankedStudents,
+            'meta' => [
+                'total' => $students->total(),
+                'per_page' => $students->perPage(),
+                'current_page' => $students->currentPage(),
+                'last_page' => $students->lastPage(),
+            ],
         ]);
     }
 }

@@ -87,7 +87,12 @@ class StudentDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
-        $documentRequest = DocumentRequest::where('student_id', $student->id)->findOrFail($id);
+        $documentRequest = DocumentRequest::findOrFail($id);
+        $this->authorize('view', $documentRequest);
+
+        if ((int) $documentRequest->student_id !== (int) $student->id) {
+            abort(403, 'Accès non autorisé.');
+        }
         $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
         if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {

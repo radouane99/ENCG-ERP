@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
-import { toast } from 'sonner';
+import EmptyState from '@shared/components/ui/EmptyState';
 
 export default function StudentClubsHub() {
   const queryClient = useQueryClient();
@@ -130,7 +130,9 @@ export default function StudentClubsHub() {
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">COMMUNAUTÉ ENCG</span>
-            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">385 Étudiants</span>
+            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">
+              {clubs.reduce((sum: number, c: { members_count?: number }) => sum + (c.members_count ?? 0), 0)}
+            </span>
           </div>
         </div>
       </div>
@@ -156,7 +158,15 @@ export default function StudentClubsHub() {
 
           {/* Club Cards */}
           <div className="space-y-4">
-            {filteredClubs.map((club: any) => {
+            {filteredClubs.length === 0 ? (
+              <EmptyState
+                icon={Tent}
+                title="Aucun club pour le moment"
+                description="Créez un club ou patientez la publication de l’annuaire par la scolarité."
+                actionLabel="Créer un club"
+                onAction={() => setShowCreateModal(true)}
+              />
+            ) : filteredClubs.map((club: any) => {
               const active = club.is_active ?? true;
               const isMember = club.is_member ?? false;
               const president = club.president_name || (club.president ? `${club.president.first_name} ${club.president.last_name}` : 'BDE ENCG');

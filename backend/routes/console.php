@@ -36,12 +36,12 @@ Schedule::call(function () {
     }
 })->weeklyOn(0, '04:00')->description('Weekly PostgreSQL Vacuum & Statistics Optimization');
 
-use App\Domain\Student\Models\Student;
 use App\Events\GradeDeadlineWarning;
 use App\Mail\GradeDeadlineReminder;
 use App\Mail\ReinscriptionOuverteMail;
 use App\Models\GradeEntryPeriod;
 use App\Models\Institution;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;

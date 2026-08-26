@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - docker-v2
+      - main
+      - master
   pull_request:
     branches:
       - docker-v2
+      - main
+      - master
   workflow_dispatch:
 
 concurrency:
