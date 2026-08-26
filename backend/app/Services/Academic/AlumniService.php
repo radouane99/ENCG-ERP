@@ -7,30 +7,6 @@ use Illuminate\Database\Eloquent\Collection;
 
 class AlumniService
 {
-    private const FALLBACK_STATS = [
-        'employment_rate' => 88,
-        'avg_starting_salary' => 11500,
-        'avg_months_to_hire' => 2.4,
-        'total_responses' => 45,
-        'status_distribution' => [
-            ['name' => 'CDI', 'value' => 32],
-            ['name' => 'CDD / Stage Prep', 'value' => 8],
-            ['name' => 'Entrepreneur', 'value' => 5],
-        ],
-        'sector_distribution' => [
-            ['name' => 'Finance & Banque', 'value' => 18],
-            ['name' => 'Audit & Conseil', 'value' => 14],
-            ['name' => 'Marketing & Tech', 'value' => 13],
-        ],
-        'top_companies' => [
-            ['name' => 'Attijariwafa bank', 'count' => 12],
-            ['name' => 'Deloitte Maroc', 'count' => 9],
-            ['name' => 'BMCE Bank of Africa', 'count' => 8],
-            ['name' => 'PwC Maroc', 'count' => 7],
-            ['name' => 'OCP Group', 'count' => 5],
-        ],
-    ];
-
     /**
      * Statistiques du tableau de bord Alumni.
      */
@@ -39,19 +15,27 @@ class AlumniService
         $totalResponses = AcademicProject::where('type', 'alumni_survey')->count();
 
         if ($totalResponses === 0) {
-            return self::FALLBACK_STATS;
+            return [
+                'employment_rate' => 0,
+                'avg_starting_salary' => 0,
+                'avg_months_to_hire' => 0,
+                'total_responses' => 0,
+                'status_distribution' => [],
+                'sector_distribution' => [],
+                'top_companies' => [],
+            ];
         }
 
         $employedCount = AcademicProject::where('type', 'alumni_survey')->whereNotNull('company_name')->count();
 
         return [
-            'employment_rate' => $totalResponses > 0 ? (int) round(($employedCount / $totalResponses) * 100) : 88,
-            'avg_starting_salary' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('starting_salary')->avg('starting_salary') ?? 11500),
-            'avg_months_to_hire' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 2.4),
+            'employment_rate' => (int) round(($employedCount / $totalResponses) * 100),
+            'avg_starting_salary' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('starting_salary')->avg('starting_salary') ?? 0),
+            'avg_months_to_hire' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 0),
             'total_responses' => $totalResponses,
-            'status_distribution' => $this->getDistribution('employment_status', [['name' => 'CDI', 'value' => 32]]),
-            'sector_distribution' => $this->getDistribution('sector', [['name' => 'Finance & Banque', 'value' => 18]]),
-            'top_companies' => $this->getTopCompanies([['name' => 'Attijariwafa bank', 'count' => 12]]),
+            'status_distribution' => $this->getDistribution('employment_status'),
+            'sector_distribution' => $this->getDistribution('sector'),
+            'top_companies' => $this->getTopCompanies(),
         ];
     }
 
@@ -73,14 +57,14 @@ class AlumniService
     /**
      * Distribution groupée par champ.
      */
-    private function getDistribution(string $column, array $fallback): array
+    private function getDistribution(string $column): array
     {
         $allowed = ['employment_status', 'sector'];
         if (! in_array($column, $allowed, true)) {
-            return $fallback;
+            return [];
         }
 
-        $data = AcademicProject::where('type', 'alumni_survey')
+        return AcademicProject::where('type', 'alumni_survey')
             ->whereNotNull($column)
             ->selectRaw($column.' as name, count(*) as value')
             ->groupBy($column)
@@ -88,16 +72,14 @@ class AlumniService
             ->get()
             ->map(fn ($row) => ['name' => $row->name, 'value' => (int) $row->value])
             ->toArray();
-
-        return ! empty($data) ? $data : $fallback;
     }
 
     /**
      * Top entreprises.
      */
-    private function getTopCompanies(array $fallback): array
+    private function getTopCompanies(): array
     {
-        $data = AcademicProject::where('type', 'alumni_survey')
+        return AcademicProject::where('type', 'alumni_survey')
             ->whereNotNull('company_name')
             ->selectRaw('company_name as name, count(*) as count')
             ->groupBy('company_name')
@@ -105,7 +87,5 @@ class AlumniService
             ->limit(5)
             ->get()
             ->toArray();
-
-        return ! empty($data) ? $data : $fallback;
     }
 }

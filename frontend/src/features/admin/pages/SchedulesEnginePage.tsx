@@ -22,36 +22,6 @@ interface ScheduleItem {
   session_type?: string
 }
 
-const defaultGroup1Schedule: ScheduleItem[] = [
-  { id: '1', day: 'Lundi', start_time: '08:30', end_time: '10:30', code: 'TC-S1-M01', module: 'Mathématiques pour la Gestion', professor: 'Abdelhak El Amrani', room: 'Amphithéâtre A', group: 'Groupe 1', session_type: 'CM' },
-  { id: '2', day: 'Lundi', start_time: '10:45', end_time: '12:45', code: 'TC-S1-M02', module: 'Comptabilité Générale I', professor: 'Amina Chraibi', room: 'Amphithéâtre B', group: 'Groupe 1', session_type: 'CM' },
-  { id: '3', day: 'Lundi', start_time: '14:00', end_time: '16:00', code: 'TC-S1-M03', module: 'Économie Générale I', professor: 'Tarik Meziane', room: 'Salle 101', group: 'Groupe 1', session_type: 'TD' },
-  { id: '4', day: 'Lundi', start_time: '16:15', end_time: '18:15', code: 'TC-S1-M04', module: 'Langue Anglaise I', professor: 'Bouchra Bennani', room: 'Salle 102', group: 'Groupe 1', session_type: 'TD' },
-  { id: '5', day: 'Mardi', start_time: '08:30', end_time: '10:30', code: 'TC-S1-M05', module: 'Management de Base', professor: 'Mohamed Benjelloun', room: 'Amphithéâtre A', group: 'Groupe 1', session_type: 'CM' },
-  { id: '6', day: 'Mardi', start_time: '10:45', end_time: '12:45', code: 'TC-S1-M06', module: 'Informatique de Gestion I', professor: 'Abdelhak El Amrani', room: 'Amphithéâtre B', group: 'Groupe 1', session_type: 'TP' },
-  { id: '7', day: 'Mardi', start_time: '14:00', end_time: '16:00', code: 'TC-S1-M07', module: 'Soft Skills I', professor: 'Amina Chraibi', room: 'Salle 101', group: 'Groupe 1', session_type: 'TD' },
-  { id: '8', day: 'Mardi', start_time: '16:15', end_time: '18:15', code: 'TC-S1-M01', module: 'Mathématiques pour la Gestion', professor: 'Tarik Meziane', room: 'Salle 102', group: 'Groupe 1', session_type: 'TD' },
-  { id: '9', day: 'Mercredi', start_time: '08:30', end_time: '10:30', code: 'TC-S1-M02', module: 'Comptabilité Générale I', professor: 'Bouchra Bennani', room: 'Amphithéâtre A', group: 'Groupe 1', session_type: 'CM' },
-  { id: '10', day: 'Mercredi', start_time: '10:45', end_time: '12:45', code: 'TC-S1-M03', module: 'Économie Générale I', professor: 'Mohamed Benjelloun', room: 'Amphithéâtre B', group: 'Groupe 1', session_type: 'CM' },
-  { id: '11', day: 'Mercredi', start_time: '14:00', end_time: '16:00', code: 'TC-S1-M04', module: 'Langue Anglaise I', professor: 'Abdelhak El Amrani', room: 'Salle 101', group: 'Groupe 1', session_type: 'TD' },
-  { id: '12', day: 'Mercredi', start_time: '16:15', end_time: '18:15', code: 'TC-S1-M05', module: 'Management de Base', professor: 'Amina Chraibi', room: 'Salle 102', group: 'Groupe 1', session_type: 'TD' },
-  { id: '13', day: 'Jeudi', start_time: '08:30', end_time: '10:30', code: 'TC-S1-M06', module: 'Informatique de Gestion I', professor: 'Tarik Meziane', room: 'Amphithéâtre A', group: 'Groupe 1', session_type: 'TP' },
-  { id: '14', day: 'Jeudi', start_time: '10:45', end_time: '12:45', code: 'TC-S1-M07', module: 'Soft Skills I', professor: 'Bouchra Bennani', room: 'Amphithéâtre B', group: 'Groupe 1', session_type: 'TD' },
-  { id: '15', day: 'Jeudi', start_time: '14:00', end_time: '16:00', code: 'TC-S1-M01', module: 'Mathématiques pour la Gestion', professor: 'Mohamed Benjelloun', room: 'Salle 101', group: 'Groupe 1', session_type: 'CM' },
-  { id: '16', day: 'Jeudi', start_time: '16:15', end_time: '18:15', code: 'TC-S1-M02', module: 'Comptabilité Générale I', professor: 'Abdelhak El Amrani', room: 'Salle 102', group: 'Groupe 1', session_type: 'TD' },
-  { id: '17', day: 'Vendredi', start_time: '08:30', end_time: '10:30', code: 'TC-S1-M03', module: 'Économie Générale I', professor: 'Amina Chraibi', room: 'Amphithéâtre A', group: 'Groupe 1', session_type: 'CM' },
-  { id: '18', day: 'Vendredi', start_time: '10:45', end_time: '12:45', code: 'TC-S1-M04', module: 'Langue Anglaise I', professor: 'Tarik Meziane', room: 'Amphithéâtre B', group: 'Groupe 1', session_type: 'TD' },
-  { id: '19', day: 'Vendredi', start_time: '14:00', end_time: '16:00', code: 'TC-S1-M05', module: 'Management de Base', professor: 'Bouchra Bennani', room: 'Salle 101', group: 'Groupe 1', session_type: 'CM' },
-  { id: '20', day: 'Vendredi', start_time: '16:15', end_time: '18:15', code: 'TC-S1-M06', module: 'Informatique de Gestion I', professor: 'Mohamed Benjelloun', room: 'Salle 102', group: 'Groupe 1', session_type: 'TP' },
-]
-
-const defaultGroup2Schedule: ScheduleItem[] = defaultGroup1Schedule.map(item => ({
-  ...item,
-  id: `g2-${item.id}`,
-  group: 'Groupe 2',
-  room: item.room.replace('Amphithéâtre A', 'Amphithéâtre C').replace('Salle 101', 'Salle 201')
-}))
-
 export default function SchedulesEnginePage() {
   const { t, i18n } = useTranslation(['timetable', 'common'])
   const isRtl = i18n.language === 'ar'
@@ -65,8 +35,8 @@ export default function SchedulesEnginePage() {
   const [activeGroupTab, setActiveGroupTab] = useState<'group1' | 'group2'>('group1')
 
   // Live Drag & Drop State Schedules
-  const [group1Schedule, setGroup1Schedule] = useState<ScheduleItem[]>(defaultGroup1Schedule)
-  const [group2Schedule, setGroup2Schedule] = useState<ScheduleItem[]>(defaultGroup2Schedule)
+  const [group1Schedule, setGroup1Schedule] = useState<ScheduleItem[]>([])
+  const [group2Schedule, setGroup2Schedule] = useState<ScheduleItem[]>([])
   
   // Dragged Item Tracker
   const [draggedItem, setDraggedItem] = useState<{ item: ScheduleItem; fromDay: string; fromTime: string } | null>(null)

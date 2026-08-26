@@ -75,20 +75,8 @@ export default function StudentClubsHub() {
     toast.success('Carte de membre officielle imprimée !');
   };
 
-  // Default data shown when DB has no data yet
-  const defaultClubs = [
-    { id: 1, name: 'Club Enactus ENCG Fes', description: 'Entrepreneuriat social et projets d\'impact durable. Competitions nationales et internationales.', category: 'scientific', president_name: 'Amine Tazi', members_count: 48, is_active: true, is_member: true },
-    { id: 2, name: 'Club Finance & Trading', description: 'Simulations boursieres, ateliers de modelisation financiere et conferences avec des experts.', category: 'scientific', president_name: 'Sara Benjeloun', members_count: 35, is_active: true, is_member: false },
-    { id: 3, name: 'Club Art & Culture', description: 'Theatre, musique, arts plastiques et expressions culturelles au coeur du campus ENCG.', category: 'cultural', president_name: 'Karim Bennani', members_count: 22, is_active: true, is_member: false },
-  ];
-
-  const defaultEvents = [
-    { id: 1, club: { name: 'Club Enactus' }, title: 'Conference Entrepreneuriat Social 2026', description: 'Grande conference annuelle avec des intervenants du secteur prive et des ONG partenaires.', start_at: '2026-08-12T09:00:00', location: 'Amphi Al Khwarizmi', likes: 42 },
-    { id: 2, club: { name: 'Club Finance' }, title: 'Simulation Boursiere & Investment Challenge', description: 'Competition de trading fictif sur plateforme simulee avec classement et remises de prix.', start_at: '2026-08-15T14:00:00', location: 'Salle B10', likes: 27 },
-  ];
-
-  const clubs = (hubData?.clubs && hubData.clubs.length > 0) ? hubData.clubs : defaultClubs;
-  const events = (hubData?.posts && hubData.posts.length > 0) ? hubData.posts : defaultEvents;
+  const clubs = hubData?.clubs || [];
+  const events = hubData?.posts || [];
 
   const filteredClubs = clubs.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()));
   const myClubs = clubs.filter((c: any) => c.is_member);

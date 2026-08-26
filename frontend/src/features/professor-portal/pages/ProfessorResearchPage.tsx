@@ -84,7 +84,7 @@ export default function ProfessorResearchPage() {
           </div>
           <div>
             <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Doctorants Encadrés</div>
-            <div className="text-3xl font-black text-slate-900">{researchData?.active_phd_count || 4}</div>
+            <div className="text-3xl font-black text-slate-900">{researchData?.active_phd_count || 0}</div>
             <div className="text-[11px] font-bold text-indigo-600">Thèses en cours</div>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function ProfessorResearchPage() {
           </div>
           <div>
             <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Publications Indexées</div>
-            <div className="text-3xl font-black text-slate-900">{researchData?.publications_count || 8}</div>
+            <div className="text-3xl font-black text-slate-900">{researchData?.publications_count || 0}</div>
             <div className="text-[11px] font-bold text-purple-600">Scopus, WoS, CNRS</div>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function ProfessorResearchPage() {
           </div>
           <div>
             <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Citations Internationales</div>
-            <div className="text-3xl font-black text-emerald-600">{researchData?.citations_count || 142}</div>
+            <div className="text-3xl font-black text-emerald-600">{researchData?.citations_count || 0}</div>
             <div className="text-[11px] font-bold text-slate-500">Indice H : 6</div>
           </div>
         </div>

@@ -35,61 +35,6 @@ interface ArchiveRecord {
   cndpStatus: string;
 }
 
-const fallbackArchiveRecords: ArchiveRecord[] = [
-  {
-    id: 'ARC-2024-2025',
-    yearLabel: '2024-2025',
-    studentsCount: 2450,
-    admittedCount: 2180,
-    repeatedCount: 140,
-    graduatedCount: 130,
-    pvChecksum: 'sha256:7f8a9b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a',
-    blockchainHash: '0x8f2d9c8b7a6e5f4d3c2b1a0e9f8d7c6b5a4e3f2d',
-    archivedDate: '15/07/2025 18:30:00',
-    archivedBy: 'Super Admin ENCG',
-    cndpStatus: 'CONFORME_LOI_09_08'
-  },
-  {
-    id: 'ARC-2023-2024',
-    yearLabel: '2023-2024',
-    studentsCount: 2380,
-    admittedCount: 2110,
-    repeatedCount: 150,
-    graduatedCount: 120,
-    pvChecksum: 'sha256:1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-    blockchainHash: '0x3c2b1a0e9f8d7c6b5a4e3f2d1c0b9a8f7e6d5c4b',
-    archivedDate: '12/07/2024 16:45:10',
-    archivedBy: 'Super Admin ENCG',
-    cndpStatus: 'CONFORME_LOI_09_08'
-  },
-  {
-    id: 'ARC-2022-2023',
-    yearLabel: '2022-2023',
-    studentsCount: 2290,
-    admittedCount: 2040,
-    repeatedCount: 135,
-    graduatedCount: 115,
-    pvChecksum: 'sha256:9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e',
-    blockchainHash: '0x1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e',
-    archivedDate: '10/07/2023 19:20:04',
-    archivedBy: 'Super Admin ENCG',
-    cndpStatus: 'CONFORME_LOI_09_08'
-  },
-  {
-    id: 'ARC-2021-2022',
-    yearLabel: '2021-2022',
-    studentsCount: 2150,
-    admittedCount: 1920,
-    repeatedCount: 130,
-    graduatedCount: 100,
-    pvChecksum: 'sha256:3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b',
-    blockchainHash: '0x5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b',
-    archivedDate: '14/07/2022 17:15:30',
-    archivedBy: 'Super Admin ENCG',
-    cndpStatus: 'CONFORME_LOI_09_08'
-  },
-];
-
 export default function AdminAcademicArchivingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRolloverModalOpen, setIsRolloverModalOpen] = useState(false);
@@ -108,14 +53,14 @@ export default function AdminAcademicArchivingPage() {
   });
 
   // Archiving Real Backend Query
-  const currentYearObj = academicYears.find(y => y.is_current) || { label: '2025-2026', id: 1 };
+  const currentYearObj = academicYears.find(y => y.is_current) || academicYears[0] || { label: '—', id: 0 };
 
   const { data: archivingResponse, isLoading: isLoadingArchiving, refetch: refetchArchiving } = useQuery({
     queryKey: ['archiving-stats'],
     queryFn: () => api.get('/admin/archiving-stats').then(res => res.data?.data ?? null),
   });
 
-  const archivesList: ArchiveRecord[] = archivingResponse?.archives || fallbackArchiveRecords;
+  const archivesList: ArchiveRecord[] = archivingResponse?.archives || [];
 
   const filteredArchives = archivesList.filter(a =>
     a.yearLabel.includes(searchQuery) ||

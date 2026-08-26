@@ -7,14 +7,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 
-// Default fallback student risk data if DB has few records
-const fallbackDropoutRisks = [
-  { id: '1', name: 'Othmane Berrada', avg_grade: 7.8, absences: 14, risk_score: 84, risk_level: 'high', filiere: 'GFC S5', reason: 'Absences répétées en Finance & CC faible' },
-  { id: '2', name: 'Khadija Senhaji', avg_grade: 8.4, absences: 10, risk_score: 72, risk_level: 'high', filiere: 'MCM S3', reason: 'Baisse subite des notes de Contrôle Continu' },
-  { id: '3', name: 'Youssef El Amrani', avg_grade: 9.1, absences: 8, risk_score: 58, risk_level: 'medium', filiere: 'TC S1', reason: 'Absences non justifiées enregistrées' },
-  { id: '4', name: 'Hajar Naciri', avg_grade: 9.5, absences: 6, risk_score: 46, risk_level: 'medium', filiere: 'GFC S5', reason: 'Module Comptabilité Analytique à risque' },
-];
-
 export default function AdminPredictiveAnalytics() {
   const queryClient = useQueryClient();
   const [selectedModel, setSelectedModel] = useState('gemini-1.5');
@@ -37,20 +29,9 @@ export default function AdminPredictiveAnalytics() {
     onError: () => toast.error("Erreur lors de l'actualisation de l'IA."),
   });
 
-  const rawRisks = analyticsData?.dropoutRisks || [];
-  const dropoutRisks = rawRisks.length > 0 ? rawRisks : fallbackDropoutRisks;
-
-  const defaultPredictions = [
-    { label: 'Prévision Inscriptions', value: '+2.8%', subtext: 'Tendance positive vs 2023-2024 (432 étudiants)', color: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' },
-    { label: 'Taux de Réussite Estimé', value: '86.5%', subtext: 'Moyenne générale projetée S5/S6 : 12.8/20', color: 'border-blue-500/30 bg-blue-500/5 text-blue-500' },
-    { label: 'Étudiants à Risque Élevé', value: `${dropoutRisks.filter((s: any) => s.risk_level === 'high').length}`, subtext: 'Prophylaxie pédagogique requise', color: 'border-rose-500/30 bg-rose-500/5 text-rose-500' },
-  ];
-
-  const predictions = analyticsData?.predictions?.length ? analyticsData.predictions : defaultPredictions;
-
-  const defaultSummary = "L'analyse prédictive exécutée par l'IA Gemini 1.5 Flash estime un taux de réussite global de 86.5% pour l'année académique. Cependant, 2 étudiants en GFC S5 présentent un risque élevé de décrochage (Moyenne < 8/20 et cumuls d'absences). Il est recommandé d'organiser une session de soutien ciblée et d'alerter les tuteurs pédagogiques.";
-  
-  const aiSummary = analyticsData?.ai_summary || defaultSummary;
+  const dropoutRisks = analyticsData?.dropoutRisks || [];
+  const predictions = analyticsData?.predictions || [];
+  const aiSummary = analyticsData?.ai_summary || '';
   const generatedAt = analyticsData?.generated_at;
 
   const handleCopySummary = () => {

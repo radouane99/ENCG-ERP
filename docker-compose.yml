@@ -187,6 +187,23 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ──────────────────────────────────────────────────────────
+  # Cloudflare Tunnel — expose nginx without opening ports
+  # In Zero Trust, set the public hostname origin to http://nginx:80
+  # Token lives in repo-root .env as CLOUDFLARE_TUNNEL_TOKEN
+  # ──────────────────────────────────────────────────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: encg_cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+    networks:
+      - encgnet
+    restart: unless-stopped
+
 # ──────────────────────────────────────────────────────────
 # Networks
 # ──────────────────────────────────────────────────────────

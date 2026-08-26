@@ -160,7 +160,7 @@ export default function FiliereList() {
     const toastId = toast.loading(`Génération de la Maquette Pédagogique Officielle A4 (${filiere.code})...`)
     setTimeout(() => {
       toast.success(`📄 Maquette Pédagogique A4 (${filiere.name}) générée avec succès !`, { id: toastId })
-      openAuthenticatedUrl(`/api/v1/filieres/maquette-pdf?code=${encodeURIComponent(filiere.code)}&name=${encodeURIComponent(filiere.name)}&coord=${encodeURIComponent(filiere.responsable_name || 'Abdelhak El Amrani')}`)
+      openAuthenticatedUrl(`/api/v1/filieres/maquette-pdf?code=${encodeURIComponent(filiere.code)}&name=${encodeURIComponent(filiere.name)}&coord=${encodeURIComponent(filiere.responsable_name || '')}`)
     }, 600)
   }
 
@@ -628,7 +628,7 @@ export default function FiliereList() {
               <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-700 dark:text-slate-200">Chef de Filière / Coordinateur:</div>
-                  <div className="font-black text-sm text-[#0f2863] dark:text-amber-300 mt-0.5">{selectedFiliereForModal.responsable_name || 'Prof. Abdelhak El Amrani'}</div>
+                  <div className="font-black text-sm text-[#0f2863] dark:text-amber-300 mt-0.5">{selectedFiliereForModal.responsable_name || '—'}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono font-black text-emerald-600 text-sm">Volume Horaire Global : 2 400 Heures</div>

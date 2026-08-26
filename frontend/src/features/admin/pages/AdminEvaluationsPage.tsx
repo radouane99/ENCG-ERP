@@ -30,8 +30,8 @@ export default function AdminEvaluationsPage() {
     }
   })
 
-  const campaign = fetchRes?.campaign || { status: 'OPEN', name: 'Campagne d\'Évaluation S5-S6' }
-  const stats = fetchRes?.stats || { total_evaluations: 0, global_average: 4.60, participation_rate: '0%' }
+  const campaign = fetchRes?.campaign || { status: 'CLOSED', name: '' }
+  const stats = fetchRes?.stats || { total_evaluations: 0, global_average: 0, participation_rate: '0%' }
   const evaluationsList = fetchRes?.evaluations || []
   const commentsList = fetchRes?.comments || []
 

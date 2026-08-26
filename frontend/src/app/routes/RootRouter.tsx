@@ -17,7 +17,7 @@ const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'))
 const TwoFactorPage = lazy(() => import('@features/auth/pages/TwoFactorPage'))
 const ForgotPasswordPage = lazy(() => import('@features/auth/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@features/auth/pages/ResetPasswordPage'))
-const GoogleAuthCallbackPage = lazy(() => import('@features/auth/pages/GoogleAuthCallbackPage'))
+const SsoCallbackPage = lazy(() => import('@features/auth/pages/SsoCallbackPage'))
 const VerifyDocument = lazy(() => import('@features/documents/pages/VerifyDocument'))
 const VerifyPv = lazy(() => import('@features/documents/pages/VerifyPv'))
 const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
@@ -291,7 +291,7 @@ export default function RootRouter() {
           <Route path="/two-factor" element={<RequireGuest><TwoFactorPage /></RequireGuest>} />
           <Route path="/forgot-password" element={<RequireGuest><ForgotPasswordPage /></RequireGuest>} />
           <Route path="/reset-password" element={<RequireGuest><ResetPasswordPage /></RequireGuest>} />
-          <Route path="/auth/callback" element={<GoogleAuthCallbackPage />} />
+          <Route path="/auth/callback" element={<SsoCallbackPage />} />
         </Route>
 
         <Route path="/inscription" element={<RequireGuest><InscriptionPage /></RequireGuest>} />

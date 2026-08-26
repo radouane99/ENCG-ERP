@@ -50,6 +50,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: ['erp.irsale.fr', '.irsale.fr', 'localhost'],
     proxy: {
       '/api': {
         target: 'http://encg_nginx:80',

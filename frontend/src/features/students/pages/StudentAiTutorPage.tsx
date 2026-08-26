@@ -5,6 +5,7 @@ import {
   ArrowRight, ShieldCheck, FileText, ChevronDown, Lightbulb
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 
@@ -17,33 +18,34 @@ interface Message {
   suggestedQuiz?: any;
 }
 
-const MODULES = [
-  { key: 'finance', name: 'Finance d\'Entreprise Approfondie', code: 'M11-GFC', prof: 'Pr. Abdelhak El Amrani' },
-  { key: 'controle', name: 'Contrôle de Gestion & Pilotage', code: 'M12-GFC', prof: 'Pr. Meryem Kettani' },
-  { key: 'fiscalite', name: 'Fiscalité Marocaine des Entreprises', code: 'M13-GFC', prof: 'Pr. Youssef Bennani' },
+const QUICK_PROMPTS = [
+  'Expliquer les notions clés de ce module',
+  'Quelles sont les formules à retenir pour l\'examen ?',
+  'Propose un exercice type avec corrigé',
 ];
 
-const QUICK_PROMPTS: Record<string, string[]> = {
-  finance: [
-    'Expliquer le CMPC / WACC selon le cours du Pr. El Amrani',
-    'Quelle est la différence entre la VAN et le TRI ?',
-    'Théorème de Modigliani-Miller avec et sans impôt',
-    'Comment calculer l\'Indice de Profitabilité (IP) ?'
-  ],
-  controle: [
-    'Qu\'est-ce que la méthode ABC (Activity-Based Costing) ?',
-    'Comment décomposer l\'écart sur charges indirectes ?',
-    'Expliquer le rôle des inducteurs de coûts (Cost Drivers)',
-  ],
-  fiscalite: [
-    'Quelles sont les charges non déductibles à l\'IS selon le CGI ?',
-    'Comment calculer la Cotisation Minimale (CM) ?',
-    'Régime de la TVA au Maroc et fait générateur',
-  ]
-};
-
 export default function StudentAiTutorPage() {
-  const [selectedModule, setSelectedModule] = useState(MODULES[0]);
+  const [selectedModule, setSelectedModule] = useState<{ key: string; name: string; code: string; prof: string } | null>(null);
+
+  const { data: catalogModules = [] } = useQuery({
+    queryKey: ['student-modules-tutor'],
+    queryFn: async () => {
+      const res = await api.get('/modules');
+      const list = res.data?.data || res.data || [];
+      return (Array.isArray(list) ? list : []).map((m: any) => ({
+        key: String(m.id),
+        name: m.name,
+        code: m.code || '',
+        prof: m.professor?.last_name ? `Pr. ${m.professor.last_name}` : (m.professor_name || ''),
+      }));
+    }
+  });
+
+  useEffect(() => {
+    if (!selectedModule && catalogModules.length > 0) {
+      setSelectedModule(catalogModules[0]);
+    }
+  }, [catalogModules, selectedModule]);
   const [inputQuery, setInputQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function StudentAiTutorPage() {
       id: 'welcome-1',
       sender: 'ai',
       text: `Bonjour ! Je suis votre **Tuteur Pédagogique IA ENCG Fès**.\n\nJe suis directement connecté aux polycopiés et supports de cours déposés par vos professeurs.\n\nPosez-moi vos questions ou lancez un quiz pour préparer vos examens en toute sérénité !`,
-      citation: '[M11-GFC] Polycopié Officiel ENCG Fès · Pr. Abdelhak El Amrani',
+      citation: '',
       timestamp: 'À l\'instant',
     }
   ]);
@@ -89,7 +91,7 @@ export default function StudentAiTutorPage() {
       const res = looksLmd
         ? await api.post('/v1/student-portal/ai/lmd-judge', { question: text })
         : await api.post('/student-portal/ai-tutor/chat', {
-            module: selectedModule.key,
+            module: selectedModule?.key,
             question: text
           });
 
@@ -107,15 +109,7 @@ export default function StudentAiTutorPage() {
 
       setMessages(prev => [...prev, aiMsg]);
     } catch {
-      // Fallback pedagogical answer
-      const fallbackMsg: Message = {
-        id: 'ai-' + Date.now(),
-        sender: 'ai',
-        text: `D'après le cours de **${selectedModule.name}** dispensé à l'ENCG Fès :\n\n📌 **Rappel de Cours :**\nPour toute question portant sur ${text}, appliquez rigoureusement les formules du polycopié officiel et veillez à vérifier la conformité avec la réglementation et le plan comptable marocain (PCM).\n\n📖 **Référence :** \`[${selectedModule.code}] Polycopié ENCG Fès · ${selectedModule.prof}\``,
-        citation: `[${selectedModule.code}] Polycopié Officiel ENCG`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
+      toast.error('Impossible de contacter le tuteur IA. Réessayez plus tard.');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +117,7 @@ export default function StudentAiTutorPage() {
 
   const handleStartQuiz = async () => {
     try {
-      const res = await api.get(`/student-portal/ai-tutor/quiz?module=${selectedModule.key}`);
+      const res = await api.get(`/student-portal/ai-tutor/quiz?module=${selectedModule?.key || ''}`);
       const questions = res.data.data.questions;
       if (questions && questions.length > 0) {
         setActiveQuiz(questions[0]);
@@ -172,15 +166,17 @@ export default function StudentAiTutorPage() {
           {/* Module Selector Dropdown */}
           <div className="shrink-0 flex items-center gap-2 bg-white/10 p-1.5 rounded-2xl border border-white/15 backdrop-blur-md">
             <select
-              value={selectedModule.key}
+              value={selectedModule?.key || ''}
               onChange={(e) => {
-                const mod = MODULES.find(m => m.key === e.target.value) || MODULES[0];
-                setSelectedModule(mod);
-                toast.info(`Module actif : ${mod.name}`);
+                const mod = catalogModules.find((m: any) => m.key === e.target.value);
+                if (mod) {
+                  setSelectedModule(mod);
+                  toast.info(`Module actif : ${mod.name}`);
+                }
               }}
               className="bg-transparent text-white text-xs font-bold px-3 py-2 outline-none cursor-pointer"
             >
-              {MODULES.map(m => (
+              {catalogModules.map((m: any) => (
                 <option key={m.key} value={m.key} className="bg-slate-900 text-white">
                   {m.code} — {m.name}
                 </option>
@@ -197,8 +193,8 @@ export default function StudentAiTutorPage() {
         <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6">
           <div className="flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-bold text-slate-800 dark:text-slate-200">{selectedModule.name}</span>
-            <span className="text-slate-400">({selectedModule.prof})</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">{selectedModule?.name || 'Aucun module'}</span>
+            <span className="text-slate-400">{selectedModule?.prof ? `(${selectedModule.prof})` : ''}</span>
           </div>
           <button
             onClick={handleStartQuiz}
@@ -282,7 +278,7 @@ export default function StudentAiTutorPage() {
           <span className="text-[10px] font-black uppercase text-slate-400 shrink-0 flex items-center gap-1">
             <Lightbulb className="w-3 h-3 text-amber-500" /> Suggestions :
           </span>
-          {(QUICK_PROMPTS[selectedModule.key] || QUICK_PROMPTS.finance).map((prompt, idx) => (
+          {QUICK_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(prompt)}
@@ -297,7 +293,7 @@ export default function StudentAiTutorPage() {
         <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3 px-6">
           <input
             type="text"
-            placeholder={`Posez votre question sur ${selectedModule.name}...`}
+            placeholder={`Posez votre question sur ${selectedModule?.name || 'votre module'}...`}
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}

@@ -244,18 +244,23 @@ export default function AcademicYearSettingsPage() {
       })
 
       if (suggestions.length === 0) {
-        const defaultProf = professors[0] || { id: 1, first_name: 'Mohamed', last_name: 'Benjelloun' }
-        const defaultMod = modules[0] || { id: 1, code: 'INF-S1', name: 'Informatique' }
-        const defaultGrp = groups[0] || { id: 1, name: 'Groupe 1' }
+        if (!professors[0] || !modules[0] || !groups[0]) {
+          setAiSuggestions([])
+          setIsAnalyzingAi(false)
+          return
+        }
+        const defaultProf = professors[0]
+        const defaultMod = modules[0]
+        const defaultGrp = groups[0]
         suggestions.push({
           prof_id: defaultProf.id,
-          prof_name: (defaultProf.first_name || defaultProf.last_name) ? `${defaultProf.first_name || ''} ${defaultProf.last_name || ''}`.trim() : 'Prof. Mohamed Benjelloun',
+          prof_name: `${defaultProf.first_name || ''} ${defaultProf.last_name || ''}`.trim(),
           module_id: defaultMod.id,
           module_name: `${defaultMod.code ? defaultMod.code + ' - ' : ''}${defaultMod.name}`,
           group_id: defaultGrp.id,
           group_name: defaultGrp.name,
-          match_score: 98,
-          reason: 'Charge optimale statutaire (8h/18h). Équilibrage parfait recommandé par l\'IA.'
+          match_score: 0,
+          reason: 'Première affectation disponible dans le catalogue académique.'
         })
       }
 

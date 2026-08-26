@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Check, X, Calendar as CalendarIcon, Save, Users, Clock, ShieldCheck, ChevronLeft, Loader2, Sparkles } from 'lucide-react';
@@ -34,18 +34,18 @@ export default function ProfessorCall() {
     }
   });
 
-  const [students, setStudents] = useState<Student[]>([
-    { id: '1', name: 'Aniss El Alaoui', cne: 'N134056781', isPresent: true },
-    { id: '2', name: 'Ahmed Naciri', cne: 'N134056782', isPresent: true },
-    { id: '3', name: 'Ilyas Alaoui', cne: 'N134056783', isPresent: true },
-    { id: '4', name: 'Youssef Chraibi', cne: 'N134056784', isPresent: false },
-    { id: '5', name: 'Aya Bennis', cne: 'N134056785', isPresent: true },
-    { id: '6', name: 'Othmane Filali', cne: 'N134056786', isPresent: true },
-    { id: '7', name: 'Ayoub Chraibi', cne: 'N134056787', isPresent: false },
-    { id: '8', name: 'Sara Tazi', cne: 'N134056788', isPresent: true },
-    { id: '9', name: 'Omar Idrissi', cne: 'N134056789', isPresent: true },
-    { id: '10', name: 'Salma Benjelloun', cne: 'N134056790', isPresent: true },
-  ]);
+  const [students, setStudents] = useState<Student[]>([]);
+
+  useEffect(() => {
+    const roster = sessionData?.students || sessionData?.roster || [];
+    if (!Array.isArray(roster)) return;
+    setStudents(roster.map((s: any) => ({
+      id: String(s.id ?? s.student_id),
+      name: s.name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+      cne: s.cne || '',
+      isPresent: s.status === 'present' || s.isPresent === true,
+    })));
+  }, [sessionData]);
 
   const togglePresence = (id: string, isPresent: boolean) => {
     setStudents(prev => prev.map(s => s.id === id ? { ...s, isPresent } : s));

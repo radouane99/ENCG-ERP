@@ -22,39 +22,31 @@ export default function ProfessorScanner() {
     queryFn: () => api.get('/academic/rooms').then(res => res.data.data || res.data || [])
   });
 
-  const examsList = examsData.length > 0 ? examsData : [
-    { id: 1, name: 'Examen Final : Audit & Contrôle de Gestion (S7)' },
-    { id: 2, name: 'Examen Final : Diagnostic Financier & IFRS (S5)' },
-    { id: 3, name: 'Examen Final : Marketing Stratégique (S3)' },
-  ];
+  const examsList = examsData;
+  const roomsList = roomsData;
 
-  const roomsList = roomsData.length > 0 ? roomsData : [
-    { id: 1, name: 'Amphi Ibn Khaldoun' },
-    { id: 2, name: 'Amphi Al Qaraouiyine' },
-    { id: 4, name: 'Salle TD 101' },
-    { id: 5, name: 'Salle TD 102' },
-  ];
-
-  const handleSimulateScan = () => {
+  const handleSimulateScan = async () => {
     if (!exam) {
       toast.error("Veuillez d'abord sélectionner l'examen officiel.");
       return;
     }
 
-    const sampleStudents = [
-      { name: 'Othmane Berrada', cne: 'N134056781', filiere: 'Audit & Contrôle', seat: 'Amphi 1 - Rangée A N° 12' },
-      { name: 'Salma El Fassi', cne: 'N134056782', filiere: 'Finance d\'Entreprise', seat: 'Amphi 1 - Rangée B N° 04' },
-      { name: 'Youssef Bennani', cne: 'N134056783', filiere: 'Marketing & Commerce', seat: 'Amphi 1 - Rangée C N° 18' },
-      { name: 'Aya Chraibi', cne: 'N134056784', filiere: 'Audit & Contrôle', seat: 'Amphi 1 - Rangée A N° 15' },
-    ];
-
-    const randomStudent = sampleStudents[scannedCount % sampleStudents.length];
-    setLastScannedStudent(randomStudent);
-    setScannedCount(prev => prev + 1);
-
-    toast.success(`Émargement validé pour ${randomStudent.name} !`, {
-      description: `CNE : ${randomStudent.cne} • Place : ${randomStudent.seat}`
-    });
+    try {
+      const res = await api.post('/professor/exam-attendance/scan', {
+        exam_id: exam,
+        room_id: room || undefined,
+      });
+      const student = res.data?.student || res.data?.data;
+      if (!student) {
+        toast.error('Aucun étudiant identifié. Scannez un QR de convocation valide.');
+        return;
+      }
+      setLastScannedStudent(student);
+      setScannedCount(prev => prev + 1);
+      toast.success(`Émargement validé pour ${student.name || student.first_name || 'étudiant'} !`);
+    } catch {
+      toast.error('Scan impossible. Utilisez un QR de convocation réel.');
+    }
   };
 
   return (

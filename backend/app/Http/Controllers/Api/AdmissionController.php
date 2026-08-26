@@ -275,9 +275,11 @@ class AdmissionController extends Controller
 
         $cneUpper = strtoupper(trim($validated['cne']));
 
-        $student = Student::where('cne', $cneUpper)
-            ->orWhere('cin', strtoupper($validated['cin']))
-            ->first();
+        $cinUpper = strtoupper(trim($validated['cin']));
+
+        $student = Student::where(function ($q) use ($cneUpper, $cinUpper) {
+            $q->where('cne', $cneUpper)->orWhereCin($cinUpper);
+        })->first();
 
         if ($student) {
             $student->update(['status' => 'pre_inscri']);
@@ -287,15 +289,20 @@ class AdmissionController extends Controller
                 'email' => $validated['email'],
                 'password' => TemporaryPassword::hash(),
                 'must_change_password' => true,
+                'cin' => $cinUpper,
             ]);
 
-            $student = Student::create([
+            $studentPayload = [
                 'user_id' => $user->id,
                 'cne' => $cneUpper,
-                'cin' => strtoupper($validated['cin']),
                 'institution_id' => Institution::first()?->id ?? 1,
                 'status' => 'pre_inscri',
-            ]);
+            ];
+            if (Schema::hasColumn('students', 'cin')) {
+                $studentPayload['cin'] = $cinUpper;
+            }
+
+            $student = Student::create($studentPayload);
         }
 
         $dates = ['Mardi 28 Juillet 2026', 'Mercredi 29 Juillet 2026', 'Jeudi 30 Juillet 2026'];
@@ -614,8 +621,7 @@ class AdmissionController extends Controller
             }
             if (! $student && $cin) {
                 $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
-                    ->where('cin', $cin)
-                    ->orWhereHas('user', fn ($u) => $u->where('cin', $cin))
+                    ->whereCin($cin)
                     ->first();
             }
             if (! $student && $email) {
@@ -626,9 +632,7 @@ class AdmissionController extends Controller
         } else {
             $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
                 ->where('cne', $cne)
-                ->where(function ($q) use ($cin) {
-                    $q->where('cin', $cin)->orWhereHas('user', fn ($u) => $u->where('cin', $cin));
-                })
+                ->whereCin($cin)
                 ->first();
         }
 
@@ -902,7 +906,7 @@ class AdmissionController extends Controller
             $studentCheck = Student::where('cne', $cne)->first();
         }
         if (! $studentCheck && $cin) {
-            $studentCheck = Student::where('cin', $cin)->orWhereHas('user', fn ($u) => $u->where('cin', $cin))->first();
+            $studentCheck = Student::whereCin($cin)->first();
         }
         $appCheck = null;
         if ($cne) {
@@ -1075,7 +1079,7 @@ class AdmissionController extends Controller
             $student = Student::with('user')->where('cne', $cne)->first();
         }
         if (! $student && $cin) {
-            $student = Student::with('user')->whereHas('user', fn ($u) => $u->where('cin', $cin))->orWhere('cin', $cin)->first();
+            $student = Student::with('user')->whereCin($cin)->first();
         }
 
         if ($student) {

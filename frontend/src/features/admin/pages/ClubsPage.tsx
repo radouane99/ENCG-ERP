@@ -120,14 +120,7 @@ export default function AdminClubsPage() {
     setBudgetReason('')
   }
 
-  // ── Default data (shown when DB is empty) ─────────────────────────────────
-  const defaultClubs = [
-    { id: 1, name: 'Club Enactus ENCG Fes', description: 'Entrepreneuriat social et projets d\'impact durable a l\'echelle nationale et internationale.', is_active: true, category: 'scientific', members_count: 48, budget: '25,000', president_name: 'Amine Tazi', events: 12 },
-    { id: 2, name: 'Club Finance & Trading', description: 'Organisation de simulations boursieres, conferences bancaires et ateliers de modelisation financiere.', is_active: true, category: 'scientific', members_count: 35, budget: '18,000', president_name: 'Sara Benjeloun', events: 8 },
-    { id: 3, name: 'Club Art & Culture', description: 'Promotion du theatre, de la musique et des arts plastiques au sein du campus de l\'ENCG Fes.', is_active: false, category: 'cultural', members_count: 22, budget: '12,000', president_name: 'Karim Bennani', events: 5 }
-  ]
-
-  const displayedList = (clubs && clubs.length > 0) ? clubs : defaultClubs
+  const displayedList = clubs || []
 
   const filteredList = displayedList.filter((item: any) => {
     const presidentStr = getClubPresident(item).toLowerCase()

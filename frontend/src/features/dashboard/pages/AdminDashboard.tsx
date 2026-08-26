@@ -886,7 +886,7 @@ function DonutChart({ data }: { data: { name: string; value: number; color: stri
   const circumference = 2 * Math.PI * radius;
   let accumulatedAngle = 0;
 
-  const validData = data && data.length > 0 ? data : [{ name: 'TC', value: 100, color: '#3b82f6' }];
+  const validData = data && data.length > 0 ? data : [];
 
   return (
     <div className="relative flex items-center justify-center py-4">
@@ -913,7 +913,7 @@ function DonutChart({ data }: { data: { name: string; value: number; color: stri
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-        <span className="text-2xl font-black text-slate-800 dark:text-white">100%</span>
+        <span className="text-2xl font-black text-slate-800 dark:text-white">{validData.reduce((s, d) => s + d.value, 0) || 0}%</span>
         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Effectifs</span>
       </div>
     </div>

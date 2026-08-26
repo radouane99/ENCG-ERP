@@ -23,16 +23,13 @@ export default function StudentDigitalLibrary() {
   const recommendedBooks = libraryData?.map((mat: any) => ({
     title: mat.title,
     author: mat.professor?.last_name ? `Pr. ${mat.professor.last_name}` : 'Auteur Inconnu',
-    rating: 4.8,
+    rating: mat.rating ?? null,
     type: mat.type === 'video' ? 'AUDIOBOOK' : 'E-BOOK',
     cover: 'bg-indigo-600',
     recommendedBy: mat.professor?.last_name || 'Administration'
   })) || [];
 
-  const borrowings = [
-    { title: 'Comptabilité Générale', dueDate: 'Dans 3 jours', status: 'WARNING' },
-    { title: 'Droit des Affaires', dueDate: 'Dans 12 jours', status: 'OK' },
-  ];
+  const borrowings = libraryData?.borrowings || [];
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;

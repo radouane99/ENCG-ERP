@@ -17,6 +17,7 @@ final class CandidateDossierGate
         'super-admin',
         'institution-admin',
         'director',
+        'scolarite',
         'department-head',
         'filiere-head',
         'finance-officer',

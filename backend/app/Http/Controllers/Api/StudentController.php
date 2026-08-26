@@ -350,10 +350,8 @@ class StudentController extends Controller
         $cne = strtoupper(trim((string) $request->input('cne')));
         $cin = strtoupper(trim((string) $request->input('cin')));
 
-        $student = \App\Domain\Student\Models\Student::where('cne', $cne)
-            ->where(function ($q) use ($cin) {
-                $q->where('cin', $cin)->orWhereHas('user', fn ($u) => $u->where('cin', $cin));
-            })
+        $student = Student::where('cne', $cne)
+            ->whereCin($cin)
             ->with(['latestPathway.filiere', 'documents'])
             ->first();
 

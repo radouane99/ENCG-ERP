@@ -3,11 +3,7 @@ import { Search, Plus, Ticket, MessageSquare, AlertCircle, CheckCircle2 } from '
 import { cn } from '@shared/lib/utils'
 
 export default function TicketsPage() {
-  const [tickets] = useState([
-    { id: 'TKT-102', subject: 'Problème de connexion WiFi au Campus', category: 'Informatique', author: 'S. Alami', status: 'open', priority: 'high', date: 'Aujourd\'hui' },
-    { id: 'TKT-101', subject: 'Demande de correction de note S3', category: 'Pédagogique', author: 'A. Tazi', status: 'in_progress', priority: 'medium', date: 'Hier' },
-    { id: 'TKT-100', subject: 'Besoin d\'un nouveau badge', category: 'Administratif', author: 'Y. Benali', status: 'closed', priority: 'low', date: '22 Juin' },
-  ])
+  const [tickets] = useState<any[]>([])
 
   return (
     <div className="space-y-6 animate-in p-6">
@@ -43,7 +39,9 @@ export default function TicketsPage() {
           </div>
           
           <div className="space-y-3">
-            {tickets.map(t => (
+            {tickets.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Aucun ticket pour le moment.</p>
+            ) : tickets.map(t => (
               <div key={t.id} className="bg-card border rounded-xl p-4 shadow-sm hover:border-primary/30 transition-all cursor-pointer">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">

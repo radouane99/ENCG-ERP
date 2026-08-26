@@ -89,34 +89,7 @@ export default function DisciplinePage(): React.ReactElement {
         localQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
       } catch (e) {}
 
-      const activeReportedCases = [
-        {
-          id: 201,
-          student: { id: 2, first_name: 'Salma', last_name: 'BENNANI', cne: 'N130000002', apogee: 'N130000002', email: 'salma.bennani@encg-fes.ac.ma', filiere: 'ENCG Grande École S4', guardian_email: 'tuteur.bennani@gmail.com' },
-          module_name: 'Management Stratégique',
-          exam_date: '2026-07-25',
-          type: '🚨 Fraude (Téléphone)',
-          description: 'Consultation d\'un téléphone portable pendant l\'épreuve d\'examen final.',
-          confiscated_items: 'Téléphone Portable Samsung',
-          severity: 'high',
-          status: 'pending',
-          created_at: '2026-07-25'
-        },
-        {
-          id: 202,
-          student: { id: 18, first_name: 'Saad', last_name: 'MEZIANE', cne: 'N130000018', apogee: 'N130000018', email: 'saad.meziane@encg-fes.ac.ma', filiere: 'ENCG Grande École S4', guardian_email: 'tuteur.meziane@gmail.com' },
-          module_name: 'Management Stratégique',
-          exam_date: '2026-07-25',
-          type: '🚨 Fraude (Téléphone)',
-          description: 'Pris en flagrant délit de triche par téléphone portable.',
-          confiscated_items: 'Téléphone Portable iPhone',
-          severity: 'high',
-          status: 'pending',
-          created_at: '2026-07-25'
-        }
-      ]
-
-      const combined = [...localQueue, ...activeReportedCases, ...(Array.isArray(apiItems) ? apiItems : [])]
+      const combined = [...localQueue, ...(Array.isArray(apiItems) ? apiItems : [])]
       
       // Deduplicate by student CNE / ID
       const seen = new Set()

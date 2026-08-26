@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
-use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -234,50 +233,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Redirection Google OAuth.
-     */
-    public function redirectToGoogle()
-    {
-        return Socialite::driver('google')->stateless()->redirect();
-    }
-
-    /**
-     * Callback Google OAuth.
-     */
-    public function handleGoogleCallback()
-    {
-        $frontend = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
-
-        try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
-            $email = strtolower((string) $googleUser->getEmail());
-            $domain = Str::after($email, '@');
-            $allowed = array_map('strtolower', config('services.google.allowed_domains', []));
-
-            if ($email === '' || $domain === '' || ! in_array($domain, $allowed, true)) {
-                return redirect()->to($frontend.'/login?error=domain');
-            }
-
-            $user = User::where('email', $email)->first();
-            if (! $user || ! $user->is_active) {
-                return redirect()->to($frontend.'/login?error=unknown_account');
-            }
-
-            $user->update([
-                'last_login_at' => now(),
-            ]);
-
-            $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
-            $code = Str::random(64);
-            Cache::put('oauth_exchange_'.$code, $token, now()->addMinutes(2));
-
-            return redirect()->to($frontend.'/auth/callback?code='.$code);
-        } catch (\Exception $e) {
-            return redirect()->to($frontend.'/login?error=google');
-        }
-    }
-
-    /**
      * Changement de mot de passe obligatoire ou volontaire.
      */
     public function changePassword(Request $request): JsonResponse
@@ -327,7 +282,8 @@ class AuthController extends Controller
                 $cneExists = Student::where('cne', $cne)->exists();
             }
             if ($cin) {
-                $cinExists = Student::where('cin', $cin)->exists() || User::where('cin', $cin)->exists();
+                $cinExists = User::where('cin', $cin)->exists()
+                    || Student::query()->whereCin($cin)->exists();
             }
         }
 
@@ -337,29 +293,6 @@ class AuthController extends Controller
             'is_pre_admitted' => $isPreAdmitted || $cneExists || $cinExists,
             'message' => $isPreAdmitted ? 'Candidat pré-admis TAFEM identifié.' : 'CNE et CNIE valides.',
         ]);
-    }
-
-    /**
-     * Échange un code OAuth Google à usage unique contre le jeton Sanctum.
-     */
-    public function exchangeGoogleCode(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'code' => 'required|string|max:128',
-        ]);
-
-        $cacheKey = 'oauth_exchange_'.$validated['code'];
-        $token = Cache::pull($cacheKey);
-
-        if (! is_string($token) || $token === '') {
-            return response()->json(['message' => 'Code d\'échange invalide ou expiré.'], 422);
-        }
-
-        return AuthCookie::attach(response()->json([
-            'data' => [
-                'authenticated' => true,
-            ],
-        ]), $token);
     }
 
     private function authenticatedResponse(Request $request, User $user, string $token, ?string $message = null): JsonResponse

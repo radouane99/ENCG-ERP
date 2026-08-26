@@ -625,7 +625,7 @@ export default function AdminAbsencesPage() {
                   {selectedAbsence.certificate_date || selectedAbsence.created_at}
                 </div>
                 <div className="text-[11px] font-bold text-slate-500 truncate" title={selectedAbsence.doctor_clinic}>
-                  {selectedAbsence.doctor_clinic || 'Dr. Bennani — Clinique Fès'}
+                  {selectedAbsence.doctor_clinic || '—'}
                 </div>
               </div>
 

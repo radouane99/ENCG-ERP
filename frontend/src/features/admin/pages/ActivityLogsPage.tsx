@@ -23,79 +23,6 @@ interface AuditLog {
   payload?: any;
 }
 
-const fallbackLogs: AuditLog[] = [
-  {
-    id: 'LOG-AUTH-LIVE-901',
-    user: 'Admin ENCG Fès',
-    email: 'admin@encg-fes.ma',
-    role: 'Super Admin',
-    action: 'Session Active / Connexion (Loi 09-08)',
-    type: 'AUTHENTICATION',
-    description: 'Session active avec jeton Sanctum/JWT sur le portail ERP ENCG (Conforme CNDP)',
-    ip: '10.0.4.12',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0',
-    date: '26/07/2026 00:45:12',
-    severity: 'success',
-    payload: { user_id: 1, method: 'POST /api/login', auth_provider: 'SANCTUM_BEARER', cndp_declaration: 'D-W-2025/ENCG-FES' }
-  },
-  {
-    id: 'LOG-DOC-204',
-    user: 'Youssef El Mansouri',
-    email: 'youssef.mansouri@student.encg-fes.ma',
-    role: 'Étudiant S5 GFC',
-    action: 'Consultation / Demande Document',
-    type: 'DATA_ACCESS',
-    description: 'Demande d\'attestation de scolarité soumise en ligne sur le guichet express (Traçabilité CNDP)',
-    ip: '192.168.1.45',
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)',
-    date: '25/07/2026 23:10:04',
-    severity: 'info',
-    payload: { document_type: 'Attestation de Scolarité', status: 'en_attente', document_id: 204, cndp_compliance: 'Loi 09-08 Art 12' }
-  },
-  {
-    id: 'LOG-GRD-502',
-    user: 'Prof. Amrani',
-    email: 'h.amrani@encg-fes.ma',
-    role: 'Enseignant-Chercheur',
-    action: 'Modification / Saisie Note',
-    type: 'DATA_MUTATION',
-    description: 'Saisie de note certifiée pour l\'étudiant (Note : 15.5/20) — Empreinte Horodatée Non-Modifiable',
-    ip: '192.168.1.88',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-    date: '25/07/2026 21:30:45',
-    severity: 'success',
-    payload: { module_code: 'M23', assessment: 'CC1', grade_value: 15.5, locked: true }
-  },
-  {
-    id: 'LOG-DOC-205',
-    user: 'Salma Bennani',
-    email: 'salma.bennani@student.encg-fes.ma',
-    role: 'Étudiante S3 MCM',
-    action: 'Validation Relevé (Loi 09-08)',
-    type: 'DATA_ACCESS',
-    description: 'Génération et signature numérique du relevé de notes global S1-S4 avec traçabilité légale',
-    ip: '192.168.1.14',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/126.0',
-    date: '25/07/2026 19:15:22',
-    severity: 'success',
-    payload: { document_type: 'Relevé de Notes', hash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }
-  },
-  {
-    id: 'LOG-SEC-901',
-    user: 'Système Securité ENCG',
-    email: 'system.security@encg-fes.ma',
-    role: 'Système & Audit',
-    action: 'Contrôle Accès & Privilèges',
-    type: 'SECURITY_AUDIT',
-    description: 'Vérification automatique CNDP des privilèges d\'administration et des jetons d\'accès',
-    ip: '127.0.0.1',
-    userAgent: 'ENCG-ERP-Daemon/2.4',
-    date: '25/07/2026 18:00:00',
-    severity: 'warning',
-    payload: { check: 'JWT_EXPIRE_SWEEP', active_tokens: 14, cndp_privacy: 'Pseudonymisation Active' }
-  },
-];
-
 export default function ActivityLogsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('ALL');
@@ -109,7 +36,7 @@ export default function ActivityLogsPage() {
     staleTime: 1000 * 30,
   });
 
-  const logs: AuditLog[] = (rawLogs && rawLogs.length > 0) ? rawLogs : fallbackLogs;
+  const logs: AuditLog[] = Array.isArray(rawLogs) ? rawLogs : [];
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =

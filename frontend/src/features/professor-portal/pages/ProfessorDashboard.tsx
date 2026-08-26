@@ -137,7 +137,7 @@ export default function ProfessorDashboard() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    const profName = user?.name || 'Pr. Abdelhak El Amrani';
+    const profName = user?.name || 'Professeur';
     ctx.fillText(profName, canvas.width / 2, canvas.height / 2);
 
     // Decorative underline flourish
@@ -157,7 +157,17 @@ export default function ProfessorDashboard() {
   };
 
   const handleSyncCalendar = () => {
-    const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG Fes ERP//Emploi du temps 2026/2027//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nBEGIN:VEVENT\nSUMMARY:TC-S1-M01 Mathématiques pour la Gestion\nDESCRIPTION:Cours d'affectation officiel ENCG Fès (Groupe TC-S2-G1)\nLOCATION:Amphi 3 - ENCG Fès\nDTSTART:20261001T083000Z\nDTEND:20261001T123000Z\nEND:VEVENT\nEND:VCALENDAR`;
+    const classes = Array.isArray(stats.next_classes) ? stats.next_classes : [];
+    if (classes.length === 0) {
+      toast.error('Aucun cours à exporter.');
+      return;
+    }
+    const events = classes.map((c: any) => {
+      const start = c.start || c.dtstart || '';
+      const end = c.end || c.dtend || '';
+      return `BEGIN:VEVENT\nSUMMARY:${c.title || c.module || 'Cours'}\nDESCRIPTION:${c.description || ''}\nLOCATION:${c.room || ''}\nDTSTART:${start}\nDTEND:${end}\nEND:VEVENT`;
+    }).join('\n');
+    const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG Fes ERP//Emploi du temps//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n${events}\nEND:VCALENDAR`;
 
     const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
@@ -191,9 +201,9 @@ export default function ProfessorDashboard() {
   });
 
   const stats = statsData || {
-    total_students: 80,
-    total_modules: 28,
-    pending_grades: 111,
+    total_students: 0,
+    total_modules: 0,
+    pending_grades: 0,
     next_classes: [],
     modules_list: [],
     has_contract: false,
@@ -297,7 +307,7 @@ export default function ProfessorDashboard() {
 
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <a
-                  href={`/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=${encodeURIComponent(user?.name || 'Abdelhak El Amrani')}`}
+                  href={`/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=${encodeURIComponent(user?.name || '')}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-black rounded-xl text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
@@ -379,12 +389,7 @@ export default function ProfessorDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  {(stats.modules_list && stats.modules_list.length > 0 ? stats.modules_list : [
-                    { id: 1, name: 'Analyse Financière', group_name: 'Audit & Contrôle de Gestion (S7)', progress: 75 },
-                    { id: 2, name: 'Finance d\'Entreprise & Diagnostic', group_name: 'Gestion Financière & Comptable (S5)', progress: 60 },
-                    { id: 3, name: 'Fiscalité des Entreprises', group_name: 'Management & Commerce (S3)', progress: 45 },
-                    { id: 4, name: 'Droit des Sociétés', group_name: 'Tronc Commun (S1)', progress: 90 },
-                  ]).map((mod: any) => (
+                  {(stats.modules_list && stats.modules_list.length > 0 ? stats.modules_list : []).map((mod: any) => (
                     <div key={mod.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all space-y-2">
                       <div className="flex justify-between items-center">
                         <div>
@@ -399,11 +404,11 @@ export default function ProfessorDashboard() {
                           </span>
                         </div>
                         <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                          {mod.progress || 50}% avancement
+                          {mod.progress || 0}% avancement
                         </span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${mod.progress || 50}%` }}></div>
+                        <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${mod.progress || 0}%` }}></div>
                       </div>
                     </div>
                   ))}
@@ -451,7 +456,7 @@ export default function ProfessorDashboard() {
 
             <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
               <p className="font-bold text-slate-700 leading-relaxed">
-                Je soussigné(e), <strong className="text-indigo-900">{user?.name || 'Prof. Abdelhak El Amrani'}</strong>, confirme avoir pris connaissance de mon ordre de service officiel décernant mes modules et horaires d'enseignement pour le semestre courant.
+                Je soussigné(e), <strong className="text-indigo-900">{user?.name || ''}</strong>, confirme avoir pris connaissance de mon ordre de service officiel décernant mes modules et horaires d'enseignement pour le semestre courant.
               </p>
               <div className="font-mono text-[10px] text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

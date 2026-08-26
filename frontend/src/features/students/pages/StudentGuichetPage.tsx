@@ -46,18 +46,13 @@ export default function StudentGuichetPage() {
     }
   });
 
-  const defaultStudentRequests = [
-    { id: 201, type: 'Attestation de Scolarité', motif: 'Dossier de bourse et titre de transport', status: 'approved', created_at: '12 Juillet 2026', step: 3, hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
-    { id: 202, type: 'Relevé de Notes S1-S4', motif: 'Candidature échange international', status: 'pending', created_at: '24 Juillet 2026', step: 2 },
-  ];
-
-  const requests = (fetchRes?.data && fetchRes.data.length > 0) ? fetchRes.data : defaultStudentRequests;
+  const requests = fetchRes?.data || [];
 
   const handlePrintCertificate = (req: any) => {
     const win = window.open('', '_blank');
     if (!win) return;
     const currentDate = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const sha256Fingerprint = req.hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    const sha256Fingerprint = req.hash || '';
 
     win.document.write(`<!DOCTYPE html><html><head><title>${req.type} - Certificat Officiel</title>
       <style>

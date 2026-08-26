@@ -41,83 +41,14 @@ export default function AdminFinanceDashboard() {
   });
 
   const rawPayments: PaymentItem[] = financeData?.payments || [];
-  
-  // High-fidelity fallback records for ENCG Formation Continue & Masters Spécialisés
-  const fallbackPayments: PaymentItem[] = [
-    { 
-      id: 1, 
-      name: 'Youssef El Mansouri', 
-      cne: 'N134056789', 
-      cin: 'CD890123', 
-      type: 'Executive Master — Audit & Contrôle de Gestion (FC)', 
-      tranche: 'Tranche 1 / 2 (Semestre 1)', 
-      method: 'Virement Bancaire (Attijariwafa Bank)', 
-      amount: '17,500.00 MAD', 
-      date: '10/08/2026', 
-      status: 'PAID', 
-      receipt_number: 'REC-ENCG-2026-0891' 
-    },
-    { 
-      id: 2, 
-      name: 'Salma Bennani', 
-      cne: 'N134056782', 
-      cin: 'CD567812', 
-      type: 'Executive Master — Finance & Ingénierie Financière', 
-      tranche: 'Tranche 2 / 2 (Semestre 2)', 
-      method: 'Chèque Certifié (Banque Populaire)', 
-      amount: '17,500.00 MAD', 
-      date: '28/07/2026', 
-      status: 'LATE', 
-      receipt_number: 'REC-ENCG-2026-0892' 
-    },
-    { 
-      id: 3, 
-      name: 'Ghita Berrada', 
-      cne: 'N134056783', 
-      cin: 'CD341290', 
-      type: 'Diplôme d\'Université — Management Stratégique & RH', 
-      tranche: 'Tranche Unique', 
-      method: 'Versement Bancaire (Trésorerie Générale)', 
-      amount: '22,000.00 MAD', 
-      date: '02/08/2026', 
-      status: 'PAID', 
-      receipt_number: 'REC-ENCG-2026-0893' 
-    },
-    { 
-      id: 4, 
-      name: 'Othmane El Alami', 
-      cne: 'N134056784', 
-      cin: 'CD904321', 
-      type: 'Executive MBA — International Business & Data', 
-      tranche: 'Tranche 1 / 3', 
-      method: 'Virement Bancaire (BMCE Bank of Africa)', 
-      amount: '25,000.00 MAD', 
-      date: '12/08/2026', 
-      status: 'PENDING', 
-      receipt_number: 'REC-ENCG-2026-0894' 
-    },
-    { 
-      id: 5, 
-      name: 'Malak Guessous', 
-      cne: 'N134056785', 
-      cin: 'CD654321', 
-      type: 'Executive Master — Marketing Digital & Commerce', 
-      tranche: 'Tranche 2 / 2', 
-      method: 'Virement Bancaire (CIH Bank)', 
-      amount: '16,000.00 MAD', 
-      date: '05/08/2026', 
-      status: 'PAID', 
-      receipt_number: 'REC-ENCG-2026-0895' 
-    },
-  ];
 
-  const paymentsList = rawPayments.length > 0 ? rawPayments : fallbackPayments;
+  const paymentsList = rawPayments;
 
-  const revenueMonth = financeData?.revenue_month || '185,000.00 MAD';
-  const unpaidAmount = financeData?.unpaid_amount || '35,000.00 MAD';
-  const unpaidCount = financeData?.unpaid_count || 2;
-  const clubBudget = financeData?.club_budget || '65,000.00 MAD';
-  const scholarshipTotal = financeData?.scholarship_total || '140,000.00 MAD';
+  const revenueMonth = financeData?.revenue_month || '0.00 MAD';
+  const unpaidAmount = financeData?.unpaid_amount || '0.00 MAD';
+  const unpaidCount = financeData?.unpaid_count || 0;
+  const clubBudget = financeData?.club_budget || '0.00 MAD';
+  const scholarshipTotal = financeData?.scholarship_total || '0.00 MAD';
 
   const handleValidatePayment = async (id: number | string, name: string) => {
     try {
@@ -523,7 +454,7 @@ export default function AdminFinanceDashboard() {
                 </div>
                 <div>
                   <span className="text-slate-400 font-bold uppercase text-[10px]">Identifiants (CIN / CNE)</span>
-                  <p className="font-extrabold text-slate-900 text-sm">{selectedReceipt.cin || 'CD890123'} • {selectedReceipt.cne || 'N134056789'}</p>
+                  <p className="font-extrabold text-slate-900 text-sm">{selectedReceipt.cin || '—'} • {selectedReceipt.cne || '—'}</p>
                 </div>
                 <div className="col-span-2">
                   <span className="text-slate-400 font-bold uppercase text-[10px]">Programme / Formation Spécialisée</span>

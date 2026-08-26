@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
 import { 
   Award, 
   FileText, 
@@ -22,14 +24,23 @@ export default function ProfessorPfeEvaluationPage() {
   const { t, i18n } = useTranslation(['professors', 'common']);
 
   // Criteria ratings (Out of 20 total)
-  const [writtenReport, setWrittenReport] = useState<number>(4.5); // /5
-  const [methodology, setMethodology] = useState<number>(8.5); // /10
-  const [oralDefense, setOralDefense] = useState<number>(4.0); // /5
-  const [remarks, setRemarks] = useState('Excellente maîtrise du sujet, analyse rigoureuse des données empiriques et recommandations pertinentes pour l\'entreprise d\'accueil.');
+  const [writtenReport, setWrittenReport] = useState<number>(0);
+  const [methodology, setMethodology] = useState<number>(0);
+  const [oralDefense, setOralDefense] = useState<number>(0);
+  const [remarks, setRemarks] = useState('');
   
   const [isSigned, setIsSigned] = useState(false);
-  const [presidentSignature, setPresidentSignature] = useState('Pr. Abdelhak El Amrani');
-  const [examinerSignature, setExaminerSignature] = useState('Pr. Fatima Benjelloun');
+  const [presidentSignature, setPresidentSignature] = useState('');
+  const [examinerSignature, setExaminerSignature] = useState('');
+
+  const { data: internships = [] } = useQuery({
+    queryKey: ['professor-internships-eval'],
+    queryFn: async () => {
+      const res = await api.get('/professor/internships/supervised');
+      return res.data.internships || [];
+    }
+  });
+  const pfe = internships[0] || null;
 
   const totalGrade = (writtenReport + methodology + oralDefense).toFixed(2);
   const numericGrade = parseFloat(totalGrade);
@@ -94,26 +105,28 @@ export default function ProfessorPfeEvaluationPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <span className="text-[10px] font-black uppercase text-slate-400">Étudiant(e)</span>
-            <div className="font-black text-sm text-slate-900 mt-0.5">Mehdi Tazi</div>
-            <div className="text-xs text-slate-500 font-bold">CNE : N134056789 • S10</div>
+            <div className="font-black text-sm text-slate-900 mt-0.5">
+              {pfe?.student ? `${pfe.student.first_name} ${pfe.student.last_name}` : '—'}
+            </div>
+            <div className="text-xs text-slate-500 font-bold">CNE : {pfe?.student?.cne || '—'} {pfe?.semester ? `• ${pfe.semester}` : ''}</div>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <span className="text-[10px] font-black uppercase text-slate-400">Filière & Spécialité</span>
-            <div className="font-black text-sm text-slate-900 mt-0.5">Audit & Contrôle de Gestion</div>
+            <div className="font-black text-sm text-slate-900 mt-0.5">{pfe?.filiere || pfe?.student?.filiere || '—'}</div>
             <div className="text-xs text-slate-500 font-bold">ENCG Fès</div>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <span className="text-[10px] font-black uppercase text-slate-400">Entreprise d'Accueil</span>
-            <div className="font-black text-sm text-slate-900 mt-0.5">Attijariwafa Bank</div>
-            <div className="text-xs text-slate-500 font-bold">Direction de l'Audit Interne</div>
+            <div className="font-black text-sm text-slate-900 mt-0.5">{pfe?.company_name || '—'}</div>
+            <div className="text-xs text-slate-500 font-bold">{pfe?.company_department || ''}</div>
           </div>
 
           <div className="md:col-span-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <span className="text-[10px] font-black uppercase text-indigo-600">Intitulé du Mémoire de Fin d'Études</span>
             <div className="font-black text-sm text-slate-900 mt-1">
-              "Conception et mise en place d'une cartographie des risques opérationnels dans le secteur bancaire marocain selon les normes Bâle III"
+              {pfe?.topic || pfe?.title || 'Aucun PFE assigné pour le moment.'}
             </div>
           </div>
         </div>

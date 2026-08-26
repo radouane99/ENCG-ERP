@@ -32,17 +32,13 @@ export default function ProfessorAnalytics() {
     }
   });
 
-  const atRiskStudents = analytics?.atRiskStudents || [
-    { name: 'Othmane Berrada', issue: 'Absent 4 fois consécutives', risk: 'high', absences: 4 },
-    { name: 'Salma El Fassi', issue: 'Taux de présence inférieur à 65%', risk: 'medium', absences: 3 },
-    { name: 'Youssef Bennani', issue: 'Non participation aux évaluations CC', risk: 'medium', absences: 2 },
-  ];
+  const atRiskStudents = analytics?.atRiskStudents || [];
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
   }
 
-  const completionRate = analytics?.completionRate || 92;
+  const completionRate = analytics?.completionRate || 0;
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in duration-500 pb-28">

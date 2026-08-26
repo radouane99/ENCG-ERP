@@ -50,12 +50,7 @@ export default function ProfessorProjectsKanban() {
       { id: 'col-4', title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-900', status: 'completed', cards: [] as any[] }
     ];
 
-    const sourceData = internships.length > 0 ? internships : [
-      { id: 1, company_name: 'Attijariwafa Bank', student: { first_name: 'Karim', last_name: 'Benjelloun' }, status: 'approved', topic: 'Audit des risques opérationnels' },
-      { id: 2, company_name: 'OCP Group', student: { first_name: 'Sara', last_name: 'El Idrissi' }, status: 'active', topic: 'Optimisation de la chaîne logistique' },
-      { id: 3, company_name: 'Deloitte Maroc', student: { first_name: 'Youssef', last_name: 'Alami' }, status: 'submitted', topic: 'Contrôle interne et conformité IFRS' },
-      { id: 4, company_name: 'BMCE Bank of Africa', student: { first_name: 'Nadia', last_name: 'Tazi' }, status: 'completed', topic: 'Diagnostic financier et scoring crédit' }
-    ];
+    const sourceData = internships;
 
     sourceData.forEach((internship: any) => {
       const studentName = internship.student ? `${internship.student.first_name} ${internship.student.last_name}` : 'Étudiant ENCG';
@@ -64,7 +59,7 @@ export default function ProfessorProjectsKanban() {
         title: internship.topic || (internship.company_name ? `Stage chez ${internship.company_name}` : 'Projet de Fin d\'Études'),
         company: internship.company_name || 'Entreprise Partenaire',
         student: studentName,
-        date: internship.updated_at ? new Date(internship.updated_at).toLocaleDateString('fr-FR') : '12/10/2026'
+        date: internship.updated_at ? new Date(internship.updated_at).toLocaleDateString('fr-FR') : ''
       };
 
       if (internship.status === 'pending' || internship.status === 'approved') {

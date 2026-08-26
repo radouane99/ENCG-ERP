@@ -41,9 +41,9 @@ class AbsenceJustificationController extends Controller
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
                             ->orWhere('cne', 'like', "%{$search}%")
-                            ->orWhere('cin', 'like', "%{$search}%")
                             ->orWhere('student_number', 'like', "%{$search}%")
-                            ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
+                            ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
+                                ->orWhere('cin', 'like', "%{$search}%"));
                     });
             });
         }

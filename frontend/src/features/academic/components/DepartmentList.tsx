@@ -20,16 +20,6 @@ interface Department {
   filieres_count?: number;
 }
 
-const DEFAULT_HEADS: Record<string, string> = {
-  'SG': 'Pr. Abdelhak El Amrani',
-  'EA': 'Pr. Karim Idrissi',
-  'CM': 'Pr. Rachid El Abbadi',
-  'MQI': 'Pr. Youssef Alami',
-  'LCD': 'Pr. Nadia Tazi',
-  'GFC': 'Pr. Abdelhak El Amrani',
-  'MAC': 'Pr. Rachid El Abbadi',
-};
-
 export default function DepartmentList() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [professors, setProfessors] = useState<any[]>([])
@@ -61,7 +51,7 @@ export default function DepartmentList() {
 
   // Export Arrêté Nomination PDF
   const handleExportArreteNominationPdf = (dept: Department) => {
-    const headName = dept.head_name && dept.head_name !== 'Non défini' ? dept.head_name : 'Abdelhak El Amrani';
+    const headName = dept.head_name && dept.head_name !== 'Non défini' ? dept.head_name : 'Non défini';
     const toastId = toast.loading(`Génération de l'Arrêté Officiel de Nomination du Chef de Département ${dept.code}...`);
     setTimeout(() => {
       toast.success(`📜 Arrêté de Nomination A4 du Chef de Département généré avec succès !`, { id: toastId });
@@ -82,17 +72,16 @@ export default function DepartmentList() {
       const rawDepts = deptRes.data.data || [];
 
       // Enrich with real professor names and stats
-      const enrichedDepts = rawDepts.map((d: any, index: number) => {
-        const defaultHead = DEFAULT_HEADS[d.code] || `Pr. Enseignant Chercheur`;
-        const realHeadName = (d.head_name && d.head_name !== 'Professeur Nommé' && d.head_name !== 'Non défini')
+      const enrichedDepts = rawDepts.map((d: any) => {
+        const realHeadName = (d.head_name && d.head_name !== 'Professeur Nommé')
           ? d.head_name
-          : defaultHead;
+          : '';
 
         return {
           ...d,
           head_name: realHeadName,
-          professors_count: d.professors_count || [14, 12, 9, 11, 8][index % 5] || 10,
-          filieres_count: d.filieres_count || [3, 2, 2, 4, 3][index % 5] || 2
+          professors_count: d.professors_count || 0,
+          filieres_count: d.filieres_count || 0
         };
       });
 
@@ -354,9 +343,9 @@ export default function DepartmentList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredDepartments.map((dept) => {
-            const headName = (dept.head_name && dept.head_name !== 'Professeur Nommé' && dept.head_name !== 'Non défini' && dept.head_name.trim() !== '')
+            const headName = (dept.head_name && dept.head_name !== 'Professeur Nommé' && dept.head_name.trim() !== '')
               ? dept.head_name
-              : (DEFAULT_HEADS[dept.code] || 'Pr. Abdelhak El Amrani');
+              : 'Non défini';
             const initial = headName.replace(/^(Pr\.|Prof\.)\s*/i, '').charAt(0).toUpperCase() || 'P';
 
             return (
@@ -562,11 +551,6 @@ export default function DepartmentList() {
                   className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none"
                 >
                   <option value="">Sélectionner un enseignant chercheur...</option>
-                  <option value="Prof. Abdelhak El Amrani">Prof. Abdelhak El Amrani (Permanent)</option>
-                  <option value="Prof. Amina Chraibi">Prof. Amina Chraibi (Permanent)</option>
-                  <option value="Prof. Tarik Meziane">Prof. Tarik Meziane (Permanent)</option>
-                  <option value="Prof. Bouchra Bennani">Prof. Bouchra Bennani (Permanent)</option>
-                  <option value="Prof. Mohamed Benjelloun">Prof. Mohamed Benjelloun (Permanent)</option>
                   {professors.map((p: any) => (
                     <option key={p.id} value={`${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim()}>
                       {p.user?.first_name} {p.user?.last_name}
@@ -633,15 +617,6 @@ export default function DepartmentList() {
                     Pr. {p.user?.name || `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name} ({p.department?.code || 'ENCG Fès'})
                   </option>
                 ))}
-                {/* Mock options if professors list empty */}
-                {professors.length === 0 && (
-                  <>
-                    <option value="1">Prof. Abdelhak El Amrani</option>
-                    <option value="2">Prof. Amina Chraibi</option>
-                    <option value="3">Prof. Tarik Meziane</option>
-                    <option value="4">Prof. Bouchra Bennani</option>
-                  </>
-                )}
               </select>
             </div>
 
@@ -755,7 +730,7 @@ export default function DepartmentList() {
                   <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-400/30 inline-block">
                     👑 CHEF DE DÉPARTEMENT
                   </span>
-                  <div className="font-black text-sm">{selectedDeptForOrg.head_name || 'Abdelhak El Amrani'}</div>
+                  <div className="font-black text-sm">{selectedDeptForOrg.head_name || 'Non défini'}</div>
                   <div className="text-[10px] text-blue-200">Professeur Permanent • Supérieur Hiérarchique</div>
                 </div>
                 <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
@@ -765,22 +740,8 @@ export default function DepartmentList() {
               <div className="flex flex-col items-center">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">RESPONSABLES DE FILIÈRES & MASTERS</div>
                 <div className="grid grid-cols-3 gap-3 w-full">
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-1">
-                    <div className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">FILIÈRE AUDIT</div>
-                    <div className="font-bold text-xs text-slate-800 dark:text-white">Prof. Amina Chraibi</div>
-                    <div className="text-[9px] text-slate-400">Coordinateur Pédagogique</div>
-                  </div>
-
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-1">
-                    <div className="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400">FILIÈRE FINANCE</div>
-                    <div className="font-bold text-xs text-slate-800 dark:text-white">Prof. Tarik Meziane</div>
-                    <div className="text-[9px] text-slate-400">Coordinateur Pédagogique</div>
-                  </div>
-
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-1">
-                    <div className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">FILIÈRE MANAGEMENT</div>
-                    <div className="font-bold text-xs text-slate-800 dark:text-white">Prof. Bouchra Bennani</div>
-                    <div className="text-[9px] text-slate-400">Coordinateur Pédagogique</div>
+                  <div className="col-span-3 text-center text-xs text-slate-400 py-4">
+                    Les responsables de filières s’affichent à partir des données académiques enregistrées.
                   </div>
                 </div>
                 <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700 my-2" />
@@ -793,11 +754,16 @@ export default function DepartmentList() {
                   <span className="text-[10px] font-mono text-indigo-600 font-black">ENCG FÈS</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['Prof. A. El Amrani', 'Prof. A. Chraibi', 'Prof. T. Meziane', 'Prof. B. Bennani', 'Prof. M. Benjelloun', 'Prof. H. Filali', 'Prof. K. Alaoui', 'Prof. Y. Tazi'].map((name, i) => (
-                    <span key={i} className="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-700">
+                  {professors.length === 0 ? (
+                    <span className="text-[10px] text-slate-400">Aucun enseignant chargé pour ce département.</span>
+                  ) : professors.slice(0, 12).map((p: any) => {
+                    const name = p.user?.name || `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name;
+                    return (
+                    <span key={p.id} className="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-700">
                       {name}
                     </span>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

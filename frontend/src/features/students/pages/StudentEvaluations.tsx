@@ -46,15 +46,6 @@ export default function StudentEvaluations() {
     }
   });
 
-  // Default modules if schedule is empty
-  const defaultModules: ModuleEval[] = [
-    { id: 1, name: 'Finance d\'Entreprise Approfondie', code: 'M11-GFC', prof: 'Pr. Abdelhak El Amrani', department: 'Sciences de Gestion', isEvaluated: false },
-    { id: 2, name: 'Contrôle de Gestion & Pilotage', code: 'M12-GFC', prof: 'Pr. Meryem Kettani', department: 'Sciences de Gestion', isEvaluated: false },
-    { id: 3, name: 'Fiscalité Marocaine des Entreprises', code: 'M13-GFC', prof: 'Pr. Youssef Bennani', department: 'Droit & Fiscalité', isEvaluated: false },
-    { id: 4, name: 'Marketing Stratégique & Digital', code: 'M14-GFC', prof: 'Pr. Salma Alami', department: 'Commerce & Marketing', isEvaluated: false },
-    { id: 5, name: 'Management des Systèmes d\'Information', code: 'M15-GFC', prof: 'Pr. Reda Chraibi', department: 'Informatique & SI', isEvaluated: false },
-  ];
-
   const modulesList: ModuleEval[] = React.useMemo(() => {
     if (schedule && schedule.length > 0) {
       const unique = new Map<string, ModuleEval>();
@@ -63,19 +54,16 @@ export default function StudentEvaluations() {
           unique.set(s.module, {
             id: idx + 1,
             name: s.module,
-            code: s.module_code || `MOD-${idx + 1}`,
-            prof: s.professor || 'Professeur Titulaire ENCG',
-            department: s.department || 'Sciences de Gestion',
+            code: s.module_code || '',
+            prof: s.professor || '',
+            department: s.department || '',
             isEvaluated: !!evaluatedModules[s.module],
           });
         }
       });
       return Array.from(unique.values());
     }
-    return defaultModules.map(m => ({
-      ...m,
-      isEvaluated: !!evaluatedModules[m.name],
-    }));
+    return [];
   }, [schedule, evaluatedModules]);
 
   const totalCount = modulesList.length;

@@ -22,25 +22,13 @@ export default function AdminTafem() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [statsData, setStatsData] = useState({
-    total_candidates: '4,852',
-    total_capacity: '5,000',
-    repartition_percentage: '100%',
+    total_candidates: '0',
+    total_capacity: '0',
+    repartition_percentage: '0%',
   });
 
-  const [amphis, setAmphis] = useState<any[]>([
-    { name: 'Amphi Al Khwarizmi', capacity: 450, filled: 450, surveillants: 12 },
-    { name: 'Amphi Ibn Sina', capacity: 380, filled: 380, surveillants: 10 },
-    { name: 'Salle B1 à B10', capacity: 600, filled: 580, surveillants: 20 },
-    { name: 'Chapiteau Extérieur & Amphis A-D', capacity: 3500, filled: 3442, surveillants: 70 },
-  ]);
-
-  const regionalStats = [
-    { region: 'Fès-Meknès', count: 1843, percentage: '38%', color: 'bg-[#0f2863]' },
-    { region: 'Casablanca-Settat', count: 1067, percentage: '22%', color: 'bg-blue-600' },
-    { region: 'Rabat-Salé-Kénitra', count: 873, percentage: '18%', color: 'bg-indigo-600' },
-    { region: 'Oriental & Oujda', count: 582, percentage: '12%', color: 'bg-amber-500' },
-    { region: 'Tanger-Tétouan', count: 487, percentage: '10%', color: 'bg-emerald-500' },
-  ];
+  const [amphis, setAmphis] = useState<any[]>([]);
+  const [regionalStats, setRegionalStats] = useState<any[]>([]);
 
   const fetchTafemData = async () => {
     try {
@@ -51,6 +39,9 @@ export default function AdminTafem() {
       }
       if (res.data?.amphis) {
         setAmphis(res.data.amphis);
+      }
+      if (res.data?.regional_stats) {
+        setRegionalStats(res.data.regional_stats);
       }
     } catch (err) {
       console.error('Failed to fetch TAFEM data:', err);
@@ -69,7 +60,7 @@ export default function AdminTafem() {
       const toastId = toast.loading("Calcul et Répartition IA en cours dans les amphithéâtres...");
       setTimeout(() => {
         setRepartitioning(false);
-        toast.success("⚡ Répartition IA effectuée ! 4,852 candidats placés à 100% dans les amphis avec numéros de table.", { id: toastId });
+        toast.success('Répartition effectuée.', { id: toastId });
         fetchTafemData();
       }, 1200);
     } catch (err: any) {

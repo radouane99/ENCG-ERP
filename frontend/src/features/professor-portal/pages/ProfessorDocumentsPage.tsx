@@ -37,7 +37,7 @@ interface DocumentRequestItem {
 export default function ProfessorDocumentsPage() {
   const { user } = useAuthStore();
   const u = user as any;
-  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || 'Pr. Abdelhak El Amrani' : 'Pr. Abdelhak El Amrani';
+  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
 
   const [availableTypes, setAvailableTypes] = useState<DocumentType[]>([]);
   const [history, setHistory] = useState<DocumentRequestItem[]>([]);

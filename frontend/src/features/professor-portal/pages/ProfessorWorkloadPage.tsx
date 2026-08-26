@@ -37,22 +37,17 @@ export default function ProfessorWorkloadPage() {
 
   const w = workloadData || {
     is_vacataire: false,
-    statutory_hours: 200,
-    hours_done: 160,
-    hours_cm: 96,
-    hours_td: 48,
-    hours_tp: 16,
+    statutory_hours: 0,
+    hours_done: 0,
+    hours_cm: 0,
+    hours_td: 0,
+    hours_tp: 0,
     overtime_hours: 0,
-    hourly_rate: 350,
+    hourly_rate: 0,
     estimated_payment: 0,
-    completion_percent: 80,
-    virement_status: 'Validé par Chef de Département — En cours Trésorerie',
-    monthly_breakdown: [
-      { month: 'Octobre', cm: 24, td: 12, tp: 4, total: 40, status: 'Certifié' },
-      { month: 'Novembre', cm: 32, td: 16, tp: 4, total: 52, status: 'Certifié' },
-      { month: 'Décembre', cm: 24, td: 12, tp: 4, total: 40, status: 'Certifié' },
-      { month: 'Janvier', cm: 16, td: 8, tp: 4, total: 28, status: 'En cours' },
-    ]
+    completion_percent: 0,
+    virement_status: '',
+    monthly_breakdown: []
   };
 
   return (

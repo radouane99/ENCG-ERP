@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -79,6 +81,25 @@ class Student extends Model
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('cin'),
         );
+    }
+
+    /**
+     * CNIE/CIN is stored on users (identity SSOT). students.cin was dropped
+     * by the identity-normalize migration and may be absent in production.
+     */
+    public function scopeWhereCin(Builder $query, ?string $cin): Builder
+    {
+        $cin = strtoupper(trim((string) $cin));
+        if ($cin === '') {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function (Builder $q) use ($cin) {
+            $q->whereHas('user', fn (Builder $u) => $u->where('cin', $cin));
+            if (Schema::hasColumn($this->getTable(), 'cin')) {
+                $q->orWhere('cin', $cin);
+            }
+        });
     }
 
     public function institution(): BelongsTo

@@ -15,36 +15,20 @@ import {
 } from 'recharts'
 import { BookOpen, Calendar, Clock, Trophy, FileText, Download, CheckCircle2, XCircle } from 'lucide-react'
 
-const performanceData = [
-  { subject: 'Math', A: 14, fullMark: 20 },
-  { subject: 'Accounting', A: 16, fullMark: 20 },
-  { subject: 'Marketing', A: 13, fullMark: 20 },
-  { subject: 'Law', A: 15, fullMark: 20 },
-  { subject: 'Economics', A: 12, fullMark: 20 },
-];
-
-const attendanceData = [
-  { name: 'Week 1', hours: 24 },
-  { name: 'Week 2', hours: 22 },
-  { name: 'Week 3', hours: 24 },
-  { name: 'Week 4', hours: 20 },
-];
+const performanceData: { subject: string; A: number; fullMark: number }[] = []
+const attendanceData: { name: string; hours: number }[] = []
 
 export default function StudentDashboard() {
   const { t } = useTranslation('common')
 
-  const schedule = [
-    { time: '08:30 - 10:15', course: 'Financial Accounting II', room: 'Amphi 1', prof: 'Dr. Bennani' },
-    { time: '10:30 - 12:15', course: 'Corporate Finance', room: 'Room 204', prof: 'Dr. Alaoui' },
-    { time: '14:00 - 15:45', course: 'Business English', room: 'Lab 3', prof: 'Ms. Smith' },
-  ]
+  const schedule: { time: string; course: string; room: string; prof: string }[] = []
 
   return (
     <div className="space-y-6 animate-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome back, Youssef! ðŸ‘‹</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Tableau de bord étudiant</h1>
           <p className="text-muted-foreground mt-1">Semester 3 â€¢ Financial Commerce</p>
         </div>
         <div className="flex items-center gap-2">

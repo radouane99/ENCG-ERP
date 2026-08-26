@@ -87,7 +87,7 @@ export default function AdminSettingsPage() {
     }
   }, [academicYears, selectedYearId]);
 
-  const currentYearObj = academicYears.find(y => y.id === selectedYearId) || academicYears.find(y => y.is_current) || { label: '2025-2026', id: 1 };
+  const currentYearObj = academicYears.find(y => y.id === selectedYearId) || academicYears.find(y => y.is_current) || { label: '—', id: 0 };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));

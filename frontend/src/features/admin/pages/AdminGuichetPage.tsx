@@ -301,7 +301,7 @@ export default function UnifiedGuichetAttestationsPage() {
         realId: reqData.real_id
       })
       if (!reqData.is_professor) {
-        handlePrintCertificate(reqData.person, reqData.type, reqData.student_cne || 'N134892011', reqData.id)
+        handlePrintCertificate(reqData.person, reqData.type, reqData.student_cne || '', reqData.id)
       }
     } else if (colStatus === 'rejected') {
       setRejectingId(reqData.id)
@@ -789,7 +789,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                   realId: req.real_id
                                 })
                                 if (!req.is_professor) {
-                                  handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                  handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                                 }
                               }}
                               className="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
@@ -866,7 +866,7 @@ export default function UnifiedGuichetAttestationsPage() {
                             <Mail className="w-3 h-3" /> Email
                           </button>
                           <button
-                            onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id, req.is_professor, req.real_id)}
+                            onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id, req.is_professor, req.real_id)}
                             className="flex-1 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer"
                             title="Télécharger ou imprimer le PDF certifié"
                           >
@@ -953,7 +953,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                   realId: req.real_id
                                 })
                                 if (!req.is_professor) {
-                                  handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                  handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                                 }
                               }}
                               className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer"
@@ -1102,7 +1102,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                           realId: req.real_id
                                         })
                                         if (!req.is_professor) {
-                                          handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id)
+                                          handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                                         }
                                       }}
                                       className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
@@ -1131,7 +1131,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                       <Mail className="w-3.5 h-3.5" /> Email
                                     </button>
                                     <button
-                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || 'N134892011', req.id, req.is_professor, req.real_id)}
+                                      onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id, req.is_professor, req.real_id)}
                                       className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-[11px] font-black px-3"
                                     >
                                       <Printer className="w-3.5 h-3.5" /> Imprimer

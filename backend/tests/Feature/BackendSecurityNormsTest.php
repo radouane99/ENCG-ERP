@@ -47,7 +47,6 @@ class BackendSecurityNormsTest extends TestCase
             'user_id' => $user->id,
             'student_number' => 'ENCG-NORMS-001',
             'cne' => 'N142099001',
-            'cin' => 'AB123456',
             'gender' => 'male',
             'status' => 'pre_inscri',
             'institution_id' => 1,
@@ -174,5 +173,22 @@ class BackendSecurityNormsTest extends TestCase
     {
         $this->getJson('/api/public/inscription/status?cne=N142088916')
             ->assertStatus(422);
+    }
+
+    public function test_track_dossier_matches_cin_on_users_not_students(): void
+    {
+        $user = User::factory()->create(['cin' => 'ZG195334']);
+        Student::create([
+            'user_id' => $user->id,
+            'student_number' => 'ENCG-NORMS-CIN-USER',
+            'cne' => 'H148073298',
+            'gender' => 'female',
+            'status' => 'pre_inscri',
+            'institution_id' => 1,
+        ]);
+
+        $this->getJson('/api/public/track-dossier?cne=H148073298&cin=ZG195334')
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 }

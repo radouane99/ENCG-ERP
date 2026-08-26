@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\Auth\SsoController;
 use App\Http\Controllers\Api\ContactController;
 use App\Presentation\Api\Controllers\Auth\AuthController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
@@ -18,9 +20,14 @@ Route::prefix('v1/auth')->group(function () {
 
     Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:login');
 
-    Route::get('/google/redirect', [AuthController::class, 'redirectToGoogle'])->middleware('throttle:login');
-    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:login');
-    Route::post('/google/exchange', [AuthController::class, 'exchangeGoogleCode'])->middleware('throttle:login');
+    Route::get('/sso/providers', [SsoController::class, 'providers'])->middleware('throttle:30,1');
+    Route::get('/sso/{provider}/redirect', [SsoController::class, 'redirect'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'microsoft', 'oidc']);
+    Route::get('/sso/{provider}/callback', [SsoController::class, 'callback'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'microsoft', 'oidc']);
+    Route::post('/sso/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
+
+    Route::get('/google/redirect', fn () => app(SsoController::class)->redirect('google'))->middleware('throttle:30,1');
+    Route::get('/google/callback', fn (Request $request) => app(SsoController::class)->callback('google', $request))->middleware('throttle:30,1');
+    Route::post('/google/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);

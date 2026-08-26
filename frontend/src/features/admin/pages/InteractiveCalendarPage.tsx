@@ -151,7 +151,7 @@ function applySessionToSlot(item: any, weekMonday: Date, dayIndex: number, slot:
 export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const { user } = useAuthStore()
   const u = user as any
-  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || 'Pr. Abdelhak El Amrani' : 'Pr. Abdelhak El Amrani'
+  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
   const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine')
   const [showRattrapageModal, setShowRattrapageModal] = useState(false)
   const [showBatchModal, setShowBatchModal] = useState(false)
@@ -187,8 +187,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       }
 
       if (!targetList || targetList.length === 0) {
-        const fallbackRes = await api.get('/timetable/export/filiere/1')
-        return fallbackRes.data.data || fallbackRes.data || []
+        return []
       }
 
       const requests = targetList.map((f: any) =>

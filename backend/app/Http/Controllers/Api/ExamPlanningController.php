@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Exam;
 use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
@@ -319,7 +320,7 @@ class ExamPlanningController extends Controller
         $pdf = Pdf::loadView('pdf.timetable', [
             'session_name' => 'SESSION '.$sessionType,
             'session_type' => $sessionType,
-            'academic_year' => '2025/2026',
+            'academic_year' => AcademicYear::where('is_current', true)->value('label') ?? now()->format('Y').'/'.(now()->year + 1),
             'filiere_name' => $filiere?->name ?? 'Toutes les Filières',
             'exams' => $examsList,
             'date' => now()->format('d/m/Y'),

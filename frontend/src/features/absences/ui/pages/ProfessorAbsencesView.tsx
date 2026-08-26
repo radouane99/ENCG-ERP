@@ -139,7 +139,7 @@ const WEEKLY_SCHEDULE: TimetableSession[] = [
 export default function ProfessorAbsencesView() {
   const { user } = useAuthStore();
   const u = user as any;
-  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || 'Pr. Abdelhak El Amrani' : 'Pr. Abdelhak El Amrani';
+  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
 
   // Selection state
   const [filieres, setFilieres] = useState<any[]>([]);
@@ -174,22 +174,7 @@ export default function ProfessorAbsencesView() {
   const [savingAttendance, setSavingAttendance] = useState(false);
 
   // Mock initial student list (or fetched from real API)
-  const [students, setStudents] = useState<StudentItem[]>([
-    { id: 101, first_name: 'Aniss', last_name: 'El Alaoui', cne: 'N134056781', status: 'present', scannedAt: '08:32' },
-    { id: 102, first_name: 'Ahmed', last_name: 'Naciri', cne: 'N134056782', status: 'present', scannedAt: '08:33' },
-    { id: 103, first_name: 'Ilyas', last_name: 'Alaoui', cne: 'N134056783', status: 'present', scannedAt: '08:34' },
-    { id: 104, first_name: 'Youssef', last_name: 'Chraibi', cne: 'N134056784', status: 'absent' },
-    { id: 105, first_name: 'Aya', last_name: 'Bennis', cne: 'N134056785', status: 'present', scannedAt: '08:35' },
-    { id: 106, first_name: 'Othmane', last_name: 'Filali', cne: 'N134056786', status: 'present', scannedAt: '08:35' },
-    { id: 107, first_name: 'Ayoub', last_name: 'Chraibi', cne: 'N134056787', status: 'absent' },
-    { id: 108, first_name: 'Sara', last_name: 'Tazi', cne: 'N134056788', status: 'present', scannedAt: '08:36' },
-    { id: 109, first_name: 'Omar', last_name: 'Idrissi', cne: 'N134056789', status: 'late', scannedAt: '08:48' },
-    { id: 110, first_name: 'Salma', last_name: 'Benjelloun', cne: 'N134056790', status: 'present', scannedAt: '08:37' },
-    { id: 111, first_name: 'Mehdi', last_name: 'Berrada', cne: 'N134056791', status: 'present', scannedAt: '08:38' },
-    { id: 112, first_name: 'Kenza', last_name: 'Amrani', cne: 'N134056792', status: 'excused' },
-    { id: 113, first_name: 'Hamza', last_name: 'El Fassi', cne: 'N134056793', status: 'present', scannedAt: '08:39' },
-    { id: 114, first_name: 'Hajar', last_name: 'Mansouri', cne: 'N134056794', status: 'present', scannedAt: '08:40' },
-  ]);
+  const [students, setStudents] = useState<StudentItem[]>([]);
 
   // Load Real Filieres & Modules
   useEffect(() => {
@@ -261,10 +246,12 @@ export default function ProfessorAbsencesView() {
               id: s.id,
               first_name: s.user?.first_name || s.first_name || 'Étudiant',
               last_name: s.user?.last_name || s.last_name || `#${s.id}`,
-              cne: s.cne || s.apogee_code || `CNE-${s.id}`,
+              cne: s.cne || s.apogee_code || '',
               email: s.user?.email || s.email,
               status: 'present'
             })));
+          } else {
+            setStudents([]);
           }
         })
         .catch(() => {});

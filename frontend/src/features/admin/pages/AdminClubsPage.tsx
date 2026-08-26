@@ -90,13 +90,7 @@ export default function AdminClubsPage() {
     toast.success('Attestation d\'agrément officielle imprimée !')
   }
 
-  const defaultClubs = [
-    { id: 1, name: 'Club Enactus ENCG Fès', description: 'Entrepreneuriat social et projets d\'impact durable à l\'échelle nationale et internationale.', status: 'active', members_count: 48, budget: '25,000', president: { first_name: 'Amine', last_name: 'Tazi' } },
-    { id: 2, name: 'Club Finance & Trading', description: 'Organisation de simulations boursières, conférences bancaires et ateliers de modélisation financière.', status: 'active', members_count: 35, budget: '18,000', president: { first_name: 'Sara', last_name: 'Benjeloun' } },
-    { id: 3, name: 'Club Art & Culture', description: 'Promotion du théâtre, de la musique et des arts plastiques au sein du campus de l\'ENCG Fès.', status: 'pending', members_count: 22, budget: '12,000', president: { first_name: 'Karim', last_name: 'Bennani' } }
-  ]
-
-  const displayedList = (clubs && clubs.length > 0) ? clubs : defaultClubs
+  const displayedList = clubs || []
 
   const filteredList = displayedList.filter((item: any) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || 

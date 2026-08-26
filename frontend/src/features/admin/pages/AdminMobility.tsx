@@ -35,13 +35,7 @@ export default function AdminMobility() {
   const [showAddPartnerForm, setShowAddPartnerForm] = useState(false);
 
   // Quotas state for partner universities
-  const [quotas, setQuotas] = useState([
-    { id: 1, partner: 'KEDGE Business School (France)', quota: 15, filled: 12, country: '🇫🇷 France' },
-    { id: 2, partner: 'Université Laval (Canada)', quota: 10, filled: 8, country: '🇨🇦 Canada' },
-    { id: 3, partner: 'NEOMA Business School (France)', quota: 8, filled: 8, country: '🇫🇷 France' },
-    { id: 4, partner: 'Kyung Hee University (Corée du Sud)', quota: 6, filled: 4, country: '🇰🇷 Corée du Sud' },
-    { id: 5, partner: 'ESSEC Business School (France)', quota: 6, filled: 5, country: '🇫🇷 France' },
-  ]);
+  const [quotas, setQuotas] = useState<{ id: number; partner: string; quota: number; filled: number; country: string }[]>([]);
 
   const handleAddPartner = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,39 +63,37 @@ export default function AdminMobility() {
   const fetchMobilityData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/students', { params: { per_page: 15 } });
-      const dbList = res.data?.data || [];
-
-      if (dbList.length > 0) {
-        const partners = ['KEDGE Business School', 'Université Laval', 'Kyung Hee University', 'NEOMA Business School', null];
-        const mapped = dbList.map((st: any, idx: number) => ({
-          rank: idx + 1,
-          id: st.id,
-          name: `${st.first_name} ${st.last_name}`,
-          cne: st.cne || ('N1380000' + st.id),
-          gpa: (17.50 - idx * 0.45).toFixed(2),
-          voeux: ['KEDGE Business School', 'Université Laval'],
-          assigned: partners[idx % partners.length],
-          status: idx === 4 ? 'WAITLIST' : idx === 3 ? 'PENDING_VISA' : 'VALIDATED'
-        }));
-        setStudents(mapped);
-      } else {
-        setStudents(DEFAULT_MOBILITY);
+      const [rankingRes, partnersRes] = await Promise.all([
+        api.get('/admin/mobility/ranking').catch(() => ({ data: { data: [] } })),
+        api.get('/admin/mobility-partners').catch(() => ({ data: { data: [] } })),
+      ]);
+      const ranked = rankingRes.data?.data || [];
+      setStudents(ranked.map((st: any, idx: number) => ({
+        rank: idx + 1,
+        id: st.student_id ?? st.id,
+        name: st.name || '',
+        cne: st.student_number || st.cne || '',
+        gpa: String(st.gpa_s1_s6 ?? st.gpa ?? 0),
+        voeux: st.voeux || [],
+        assigned: st.assigned_partner || st.assigned || null,
+        status: st.status || 'EN_ATTENTE',
+      })));
+      const partners = partnersRes.data?.data || partnersRes.data || [];
+      if (Array.isArray(partners) && partners.length > 0) {
+        setQuotas(partners.map((p: any) => ({
+          id: p.id,
+          partner: p.name,
+          quota: p.slots ?? p.quota ?? 0,
+          filled: p.filled ?? 0,
+          country: p.country || '',
+        })));
       }
     } catch (e) {
-      setStudents(DEFAULT_MOBILITY);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const DEFAULT_MOBILITY: StudentMobility[] = [
-    { rank: 1, id: 101, name: 'Aya Alami', cne: 'N13809281', gpa: '16.42', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'KEDGE Business School', status: 'VALIDATED' },
-    { rank: 2, id: 102, name: 'Mehdi Bennani', cne: 'N13800043', gpa: '15.80', voeux: ['Université Laval', 'KEDGE Business School'], assigned: 'Université Laval', status: 'VALIDATED' },
-    { rank: 3, id: 103, name: 'Zineb Alaoui', cne: 'N13800032', gpa: '14.95', voeux: ['KEDGE Business School', 'Kyung Hee University'], assigned: 'Kyung Hee University', status: 'VALIDATED' },
-    { rank: 4, id: 104, name: 'Youssef El Mansouri', cne: 'N13800001', gpa: '14.10', voeux: ['KEDGE Business School', 'NEOMA Business School'], assigned: 'NEOMA Business School', status: 'PENDING_VISA' },
-    { rank: 5, id: 105, name: 'Karima Belkhayat', cne: 'N13800034', gpa: '13.50', voeux: ['Université Laval', 'Kyung Hee University'], assigned: null, status: 'WAITLIST' },
-  ];
 
   useEffect(() => {
     fetchMobilityData();

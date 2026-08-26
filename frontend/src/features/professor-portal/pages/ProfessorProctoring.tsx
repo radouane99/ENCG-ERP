@@ -41,10 +41,7 @@ export default function ProfessorProctoring() {
   const { t, i18n } = useTranslation(['professors', 'common']);
   const isRtl = i18n.language === 'ar';
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
-  const [confirmedMap, setConfirmedMap] = useState<Record<string, boolean>>({
-    'SURV-2026-000007': true,
-    'SURV-2026-000001': true,
-  });
+  const [confirmedMap, setConfirmedMap] = useState<Record<string, boolean>>({});
 
   const { data: serverSurveillances, isLoading, refetch } = useQuery({
     queryKey: ['professor-surveillances'],
@@ -55,54 +52,7 @@ export default function ProfessorProctoring() {
     staleTime: 60000,
   });
 
-  const fallbackSurveillances: SurveillanceItem[] = [
-    {
-      id: 1,
-      reference: 'SURV-2026-000007',
-      module_name: 'Comptabilité Générale & Analytique',
-      session_type: 'CC1',
-      role: 'Surveillant Principal',
-      date_month: 'Juil.',
-      date_day: '04',
-      time: '09:00 - 10:30 (90 min)',
-      room: 'Amphi Ibn Khaldoun',
-      group_name: 'Tronc Commun ENCG — Groupe 1',
-      is_confirmed: true,
-      color_theme: 'indigo'
-    },
-    {
-      id: 2,
-      reference: 'SURV-2026-000001',
-      module_name: 'Management & Théorie des Organisations',
-      session_type: 'CC1',
-      role: 'Co-Surveillant',
-      date_month: 'Juil.',
-      date_day: '01',
-      time: '14:00 - 15:30 (90 min)',
-      room: 'Salle de Cours 12',
-      group_name: 'Tronc Commun ENCG — Groupe 2',
-      is_confirmed: true,
-      color_theme: 'amber'
-    },
-    {
-      id: 3,
-      reference: 'SURV-2026-000012',
-      module_name: 'Fiscalité d\'Entreprise & TVA',
-      session_type: 'Examen Final',
-      role: 'Surveillant Principal',
-      date_month: 'Juil.',
-      date_day: '10',
-      time: '10:30 - 12:30 (120 min)',
-      room: 'Amphi 2 - ENCG Fès',
-      group_name: 'Master GFC — S8',
-      is_confirmed: false,
-      color_theme: 'purple'
-    }
-  ];
-
-  const items: SurveillanceItem[] = (serverSurveillances && Array.isArray(serverSurveillances) && serverSurveillances.length > 0)
-    ? serverSurveillances
-    : fallbackSurveillances;
+  const items: SurveillanceItem[] = Array.isArray(serverSurveillances) ? serverSurveillances : [];
 
   const handleConfirm = (ref: string) => {
     setConfirmedMap(prev => ({ ...prev, [ref]: true }));

@@ -168,7 +168,7 @@ export default function ModulesListPage() {
     const toastId = toast.loading(`Génération de la Fiche Syllabique A4 (${mod.code})...`);
     setTimeout(() => {
       toast.success(`📄 Fiche Syllabique (${mod.name}) générée avec succès !`, { id: toastId });
-      openAuthenticatedUrl(`/api/v1/modules/syllabique-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
+      openAuthenticatedUrl(`/api/v1/modules/syllabique-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || '')}&filiere=${encodeURIComponent(mod.filiere || '')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
     }, 600);
   }
 
@@ -176,7 +176,7 @@ export default function ModulesListPage() {
     const toastId = toast.loading(`Génération du PV d'Accréditation A4 (${mod.code})...`);
     setTimeout(() => {
       toast.success(`📜 PV d'Accréditation (${mod.name}) généré avec succès !`, { id: toastId });
-      openAuthenticatedUrl(`/api/v1/modules/pv-accreditation-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || 'Prof. Abdelhak El Amrani')}&filiere=${encodeURIComponent(mod.filiere || 'Gestion Financière et Comptable')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
+      openAuthenticatedUrl(`/api/v1/modules/pv-accreditation-pdf?code=${encodeURIComponent(mod.code)}&name=${encodeURIComponent(mod.name)}&prof=${encodeURIComponent(mod.professor || '')}&filiere=${encodeURIComponent(mod.filiere || '')}&semester=S${mod.semester_number}&hours=${mod.credit_hours || 45}&coeff=${mod.coefficient}`);
     }, 600);
   }
 
@@ -849,7 +849,7 @@ export default function ModulesListPage() {
                     </div>
                     <div>
                       <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 1 : Cours Magistral & Diagnostic (60%)</div>
-                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.professor || 'Prof. Abdelhak El Amrani'}</div>
+                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.professor || '—'}</div>
                     </div>
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">27 Heures (60%)</span>
@@ -862,7 +862,7 @@ export default function ModulesListPage() {
                     </div>
                     <div>
                       <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 2 : Travaux Dirigés & Cas Pratiques (40%)</div>
-                      <div className="text-xs text-slate-500 font-medium">Enseignant : Prof. Karim Bennani</div>
+                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.td_professor || selectedModuleEcm.professor || '—'}</div>
                     </div>
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">18 Heures (40%)</span>

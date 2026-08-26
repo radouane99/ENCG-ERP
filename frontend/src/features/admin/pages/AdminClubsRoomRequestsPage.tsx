@@ -71,28 +71,7 @@ export default function AdminClubsRoomRequestsPage() {
     }
   }
 
-  const defaultRequests = [
-    {
-      id: 1,
-      room_name: 'Amphi Al Khwarizmi',
-      purpose: 'Conférence Annuelle de l\'Entrepreneuriat Social - Enactus ENCG',
-      start_time: '2026-06-15T09:00:00',
-      end_time: '2026-06-15T13:00:00',
-      status: 'pending',
-      booker: { first_name: 'Club Enactus', last_name: 'ENCG Fès' }
-    },
-    {
-      id: 2,
-      room_name: 'Amphi Ibn Sina',
-      purpose: 'Atelier de Simulation Boursière & Financial Trading Workshop',
-      start_time: '2026-06-18T14:00:00',
-      end_time: '2026-06-18T17:30:00',
-      status: 'approved',
-      booker: { first_name: 'Club Finance', last_name: '& Trading' }
-    }
-  ]
-
-  const displayList = (requests && requests.length > 0) ? requests : defaultRequests
+  const displayList = requests || []
   const filteredRequests = displayList.filter(r => filter === 'all' || r.status === filter)
 
   const counts = {
