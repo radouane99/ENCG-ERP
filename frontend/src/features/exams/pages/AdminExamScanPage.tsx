@@ -96,7 +96,7 @@ export default function AdminExamScanPage() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingScans, setPendingScans] = useState<any[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('offline_scans_queue') || '[]');
+      return JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
     } catch {
       return [];
     }
@@ -120,7 +120,7 @@ export default function AdminExamScanPage() {
 
   const syncOfflineQueue = async () => {
     try {
-      const queue = JSON.parse(localStorage.getItem('offline_scans_queue') || '[]');
+      const queue = JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
       if (queue.length === 0) return;
 
       for (const item of queue) {
@@ -129,7 +129,7 @@ export default function AdminExamScanPage() {
         } catch (e) {}
       }
 
-      localStorage.setItem('offline_scans_queue', '[]');
+      sessionStorage.setItem('offline_scans_queue', '[]');
       setPendingScans([]);
       setActionSuccess(`🔄 ${queue.length} émargement(s) hors-ligne synchronisé(s) avec succès !`);
       playAudioFeedback('success');
@@ -303,7 +303,7 @@ export default function AdminExamScanPage() {
       if (!isOnline) {
         // Save to offline queue
         const newQueue = [...pendingScans, { qrToken: studentData.qr_token, status, timestamp: new Date().toISOString() }];
-        localStorage.setItem('offline_scans_queue', JSON.stringify(newQueue));
+        sessionStorage.setItem('offline_scans_queue', JSON.stringify(newQueue));
         setPendingScans(newQueue);
         setStudentData({ ...studentData, status });
         setActionSuccess(` Émargement enregistré en mode HORS-LIGNE (${status.toUpperCase()})`);

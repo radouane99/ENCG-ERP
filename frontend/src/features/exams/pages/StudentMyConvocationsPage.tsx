@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
+import { validateUploadFile } from '@shared/lib/fileUpload'
 
 export default function StudentMyConvocationsPage() {
   const { data: convocations, isLoading } = useQuery({
@@ -279,7 +280,18 @@ export default function StudentMyConvocationsPage() {
                       {absenceFile ? absenceFile.name : 'Cliquez pour uploader un fichier'}
                     </p>
                   </div>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} />
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    if (file) {
+                      const invalid = validateUploadFile(file)
+                      if (invalid) {
+                        toast.error(invalid)
+                        e.target.value = ''
+                        return
+                      }
+                    }
+                    setAbsenceFile(file)
+                  }} />
                 </label>
               </div>
               <button 

@@ -61,7 +61,7 @@ async function deleteFile(id: string): Promise<void> {
 export const offlineJustificatifStore = {
   getQueue(): OfflineJustificatifRecord[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = sessionStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -80,7 +80,7 @@ export const offlineJustificatifStore = {
       fileName: record.fileName,
       createdAt: new Date().toISOString(),
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
     toast.warning('Justificatif enregistré hors-ligne', {
       description: 'La photo sera renvoyée dès le retour du réseau.',
     });
@@ -106,7 +106,7 @@ export const offlineJustificatifStore = {
         remaining.push(item);
       }
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
   },
 };
 

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
+import { validateUploadFile } from '@shared/lib/fileUpload';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   GraduationCap, Calendar, FileText, Upload, CheckCircle2,
@@ -14,6 +16,7 @@ import { cn } from '../../../shared/lib/utils';
 
 export default function StudentDashboard() {
   const { t, i18n } = useTranslation(['students', 'common'])
+  const { user } = useAuthStore()
   const isRtl = i18n.language === 'ar'
   const [activeTab, setActiveTab] = useState<'overview' | 'grades' | 'absences' | 'revision'>('overview')
 
@@ -39,9 +42,14 @@ export default function StudentDashboard() {
   // Mutations
   const submitAbsenceMutation = useMutation({
     mutationFn: async () => {
+      if (absenceFile) {
+        const invalid = validateUploadFile(absenceFile)
+        if (invalid) {
+          throw new Error(invalid)
+        }
+      }
       const formData = new FormData()
-      formData.append('student_id', '1') // TO DO: get real user ID
-      formData.append('attendance_id', '1') // TO DO: get real attendance ID
+      formData.append('student_id', String(user?.id ?? ''))
       formData.append('reason', absenceReason)
       formData.append('description', absenceDesc)
       if (absenceFile) formData.append('document', absenceFile)
@@ -79,9 +87,9 @@ export default function StudentDashboard() {
             <User className="w-12 h-12 text-white" />
           </div>
           <div className={cn("text-center md:text-start", isRtl && "md:text-right")}>
-            <h1 className="text-3xl font-black mb-1 drop-shadow-md">Fatima ALAOUI</h1>
+            <h1 className="text-3xl font-black mb-1 drop-shadow-md">{user?.name || 'Étudiant'}</h1>
             <p className="text-white/80 font-medium mb-3 flex items-center justify-center md:justify-start gap-2">
-              <GraduationCap size={16} /> CNE: N123456789 <span className="opacity-50">•</span> ENCG Fès
+              <GraduationCap size={16} /> {user?.cne ? `CNE: ${user.cne}` : user?.email} <span className="opacity-50">•</span> {user?.institution_name || 'ENCG Fès'}
             </p>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               <span className="bg-white/20 px-4 py-1.5 rounded-xl text-xs font-bold backdrop-blur-sm shadow-sm">
@@ -277,7 +285,18 @@ export default function StudentDashboard() {
                   <div>
                     <label className="block text-sm font-bold text-[var(--foreground)] mb-1.5">{t('students:dashboard.absences.document')}</label>
                     <div className="border-2 border-dashed border-[var(--border)] rounded-xl p-6 text-center hover:bg-[color-mix(in srgb, var(--muted) 2000%, transparent)] transition-colors cursor-pointer">
-                      <input type="file" className="hidden" id="file-upload" onChange={(e) => setAbsenceFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.png" />
+                      <input type="file" className="hidden" id="file-upload" onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        if (file) {
+                          const invalid = validateUploadFile(file)
+                          if (invalid) {
+                            toast.error(invalid)
+                            e.target.value = ''
+                            return
+                          }
+                        }
+                        setAbsenceFile(file)
+                      }} accept=".pdf,.jpg,.jpeg,.png" />
                       <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
                         <Upload className="w-8 h-8 text-[var(--muted-foreground)]" />
                         <span className="text-sm font-medium text-[var(--muted-foreground)]">

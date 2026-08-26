@@ -2048,7 +2048,7 @@ export default function InscriptionPage({
                           <div className="flex flex-wrap items-center gap-3">
                             <input
                               type="file"
-                              accept="image/*"
+                              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {

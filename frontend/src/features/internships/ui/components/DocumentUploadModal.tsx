@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@shared/components/ui/Button';
 import { useUploadInternshipDocument } from '../../api/useInternshipsStudent';
+import { validateUploadFile } from '@shared/lib/fileUpload';
+import { toast } from 'sonner';
 
 interface Props {
   internshipId: number;
@@ -16,13 +18,17 @@ export const DocumentUploadModal: React.FC<Props> = ({ internshipId, isOpen, onC
   if (!isOpen) return null;
 
   const handleUpload = () => {
-    if (file) {
-      upload({ internshipId, file, documentType: docType }, {
-        onSuccess: () => {
-          onClose();
-        }
-      });
+    if (!file) return;
+    const invalid = validateUploadFile(file, 'office');
+    if (invalid) {
+      toast.error(invalid);
+      return;
     }
+    upload({ internshipId, file, documentType: docType }, {
+      onSuccess: () => {
+        onClose();
+      }
+    });
   };
 
   return (

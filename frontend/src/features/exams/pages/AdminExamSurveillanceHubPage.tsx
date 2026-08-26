@@ -61,7 +61,7 @@ export default function AdminExamSurveillanceHubPage() {
   useEffect(() => {
     // Check initial queue
     try {
-      const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+      const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
       setOfflineQueueCount(queue.length)
     } catch (e) {}
 
@@ -69,12 +69,12 @@ export default function AdminExamSurveillanceHubPage() {
       setIsOnline(true)
       toast.success('🟢 Connexion Internet rétablie ! Synchronisation de la file d\'émargement...')
       try {
-        const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+        const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
         if (queue.length > 0) {
           queue.forEach((item: any) => {
             updateAttendanceMutation.mutate({ seating_id: item.seating_id, student_id: item.student_id, status: item.status })
           })
-          localStorage.removeItem(`offline_emargement_queue_${id}`)
+          sessionStorage.removeItem(`offline_emargement_queue_${id}`)
           setOfflineQueueCount(0)
           toast.success(`✅ ${queue.length} émargement(s) hors-ligne synchronisés avec la BDD !`)
         }
@@ -344,9 +344,9 @@ export default function AdminExamSurveillanceHubPage() {
 
     if (!navigator.onLine) {
       try {
-        const queue = JSON.parse(localStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
+        const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
         queue.push({ seating_id: candidate.seating_id, student_id: candidate.student_id, status: newStatus, timestamp: Date.now() })
-        localStorage.setItem(`offline_emargement_queue_${id}`, JSON.stringify(queue))
+        sessionStorage.setItem(`offline_emargement_queue_${id}`, JSON.stringify(queue))
         setOfflineQueueCount(queue.length)
         toast.info(`💾 Pointage enregistré localement (${queue.length} en attente de synchro)`)
       } catch (e) {}
@@ -479,8 +479,8 @@ export default function AdminExamSurveillanceHubPage() {
       }
 
       try {
-        const existingQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
-        localStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
+        const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
+        sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
       } catch (e) {}
 
       setIncidentsList(prev => [newReport, ...prev])
@@ -523,8 +523,8 @@ export default function AdminExamSurveillanceHubPage() {
       }
 
       try {
-        const existingQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
-        localStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
+        const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
+        sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
       } catch (e) {}
 
       setIncidentsList(prev => [newReport, ...prev])

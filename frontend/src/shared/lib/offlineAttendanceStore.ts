@@ -22,7 +22,7 @@ const STORAGE_KEY = 'encg_offline_attendance_queue';
 export const offlineAttendanceStore = {
   getQueue(): OfflineAttendanceRecord[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = sessionStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -37,7 +37,7 @@ export const offlineAttendanceStore = {
       createdAt: new Date().toISOString(),
     };
     queue.push(newEntry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
     toast.warning('📡 Mode hors-ligne', {
       description: `${newEntry.records.length} présences enregistrées. Synchronisation automatique au retour du réseau.`,
       duration: 6000,
@@ -69,7 +69,7 @@ export const offlineAttendanceStore = {
       }
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(remainingQueue));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(remainingQueue));
 
     if (successCount > 0) {
       toast.success(`${successCount} émargement(s) synchronisé(s).`, { id: toastId });

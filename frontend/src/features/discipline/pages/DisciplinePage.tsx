@@ -86,7 +86,7 @@ export default function DisciplinePage(): React.ReactElement {
 
       let localQueue: any[] = []
       try {
-        localQueue = JSON.parse(localStorage.getItem('encg_exam_incidents_queue') || '[]')
+        localQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
       } catch (e) {}
 
       const activeReportedCases = [

@@ -8,6 +8,7 @@ import { useAuthStore } from '@stores/authStore';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import { validateUploadFile } from '@shared/lib/fileUpload';
 import InscriptionPage from '../pages/InscriptionPage';
 
 export default function CandidateDossierPortal() {
@@ -125,6 +126,12 @@ export default function CandidateDossierPortal() {
   const handleFileUpload = async (docType: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const invalid = validateUploadFile(file, docType === 'photo' ? 'photo' : 'document');
+    if (invalid) {
+      toast.error(invalid);
+      e.target.value = '';
+      return;
+    }
     setUploadingDoc(docType);
     const toastId = toast.loading(`Téléversement de ${file.name} vers la base de données...`);
 

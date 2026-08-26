@@ -4,6 +4,14 @@ import { useAuthStore } from '@stores/authStore'
 import AppShell from '@shared/components/layout/AppShell'
 import AuthLayout from '@shared/components/layout/AuthLayout'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
+import {
+  ADMIN_ROLES,
+  ACADEMIC_ROLES,
+  TEACHING_ROLES,
+  HR_ROLES,
+  STAFF_ROLES,
+  userCanAccessRoles,
+} from '@shared/lib/routeAccess'
 // ── Lazy-loaded feature routes ─────────────────────────────────
 const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'))
 const TwoFactorPage = lazy(() => import('@features/auth/pages/TwoFactorPage'))
@@ -248,32 +256,13 @@ function RequireGuest({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-const ADMIN_ROLES = ['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director']
-const ACADEMIC_ROLES = [...ADMIN_ROLES, 'department-head', 'filiere-head']
-const TEACHING_ROLES = [...ACADEMIC_ROLES, 'professor', 'vacataire']
-const HR_ROLES = [...ADMIN_ROLES, 'hr-officer']
-const STAFF_ROLES = [...TEACHING_ROLES, 'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee']
-
 function ProtectedRoute({ roles, children }: { roles: string[]; children?: ReactNode }) {
   const { isAuthenticated, user, isLoading } = useAuthStore()
 
   if (isLoading) return <LoadingScreen />
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
-  const normalizeRole = (role: string) => role.toLowerCase().replace(/_/g, '-').trim()
-  const requestedRoles = roles.map(normalizeRole)
-  const userRoles = (user?.roles ?? []).map(normalizeRole)
-  const adminAliases = new Set(ADMIN_ROLES.map(normalizeRole))
-
-  const hasRole = requestedRoles.some((role) => {
-    if (userRoles.includes(role)) return true
-    if (adminAliases.has(role)) {
-      return userRoles.some((userRole: string) => adminAliases.has(userRole))
-    }
-    return false
-  })
-
-  if (!hasRole) return <Navigate to="/dashboard" replace />
+  if (!userCanAccessRoles(user?.roles, roles)) return <Navigate to="/dashboard" replace />
 
   return children ? <>{children}</> : <Outlet />
 }

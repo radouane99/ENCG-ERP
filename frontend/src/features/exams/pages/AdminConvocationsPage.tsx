@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { examsApi } from '@shared/api/exams'
 import PageHeader from '@shared/components/layout/PageHeader'
 
@@ -859,11 +860,15 @@ export default function AdminConvocationsPage() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      if (!s.cne || !s.cin) {
+                                        toast.error('CNE et CIN requis pour générer l’attestation.');
+                                        return;
+                                      }
                                       toast.loading(`Génération du Justificatif Officiel d'Horaires d'Examens pour Entreprise/Stagiaire (${s.student_name})...`);
                                       setTimeout(() => {
                                         toast.dismiss();
                                         toast.success("📜 Attestation d'Horaires d'Examens A4 générée pour l'employeur !");
-                                        window.open(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(s.student_name)}&cne=${encodeURIComponent(s.cne || 'CNE1029')}&cin=${encodeURIComponent(s.cin || 'CIN1029')}&filiere=Justificatif Officiel d'Absence Examens (Employeur/Stage)&group=${encodeURIComponent(s.filiere || 'ENCG Fès')}`, '_blank');
+                                        openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(s.student_name)}&cne=${encodeURIComponent(s.cne)}&cin=${encodeURIComponent(s.cin)}&filiere=Justificatif Officiel d'Absence Examens (Employeur/Stage)&group=${encodeURIComponent(s.filiere || 'ENCG Fès')}`);
                                       }, 600);
                                     }}
                                     className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"

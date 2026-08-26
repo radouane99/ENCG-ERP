@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
       requiresTwoFactor: false,
       twoFactorChallengeToken: null,
-      activeRole: localStorage.getItem('encg_active_role') || null,
+      activeRole: sessionStorage.getItem('encg_active_role') || null,
 
       completeSession: async (token, user) => {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -124,9 +124,9 @@ export const useAuthStore = create<AuthState>()(
 
       setActiveRole: (role) => {
         if (role) {
-          localStorage.setItem('encg_active_role', role)
+          sessionStorage.setItem('encg_active_role', role)
         } else {
-          localStorage.removeItem('encg_active_role')
+          sessionStorage.removeItem('encg_active_role')
         }
         set({ activeRole: role })
       },
