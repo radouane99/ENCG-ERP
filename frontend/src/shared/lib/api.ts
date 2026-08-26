@@ -14,15 +14,8 @@ const api = axios.create({
 
 // ── Request Interceptor ────────────────────────────────────────
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  // Language header for server-side localization
   const lang = localStorage.getItem('encg_lang') || 'fr'
   config.headers['Accept-Language'] = lang
-
   return config
 })
 
@@ -34,7 +27,10 @@ api.interceptors.response.use(
     const message = error.response?.data?.message
 
     if (status === 401) {
-      useAuthStore.getState().logout()
+      const url = String(error.config?.url || '')
+      if (!url.includes('/v1/auth/logout') && !url.includes('/v1/auth/login')) {
+        useAuthStore.getState().clearSession()
+      }
       return Promise.reject(error)
     }
 

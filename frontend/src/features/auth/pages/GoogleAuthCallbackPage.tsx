@@ -20,12 +20,8 @@ export default function GoogleAuthCallbackPage() {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await api.post('/v1/auth/google/exchange', { code })
-        const token = res.data?.data?.token as string | undefined
-        if (!token) {
-          throw new Error('missing token')
-        }
-        await completeSession(token)
+        await api.post('/v1/auth/google/exchange', { code })
+        await completeSession()
         if (!cancelled) {
           navigate('/dashboard', { replace: true })
         }

@@ -110,6 +110,31 @@ class BackendSecurityNormsTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_http_only_auth_cookie_authenticates_without_authorization_header(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'norms.cookie@encg-fes.ac.ma',
+            'password' => 'Password1!',
+        ]);
+
+        $login = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ]);
+
+        $login->assertOk();
+        $this->assertArrayNotHasKey('token', $login->json('data') ?? []);
+
+        $cookie = $login->getCookie(\App\Support\AuthCookie::NAME, false);
+        $this->assertNotNull($cookie);
+        $this->assertTrue($cookie->isHttpOnly());
+
+        $this->withUnencryptedCookie(\App\Support\AuthCookie::NAME, $cookie->getValue())
+            ->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.email', $user->email);
+    }
+
     public function test_login_response_does_not_include_password_or_login_ip(): void
     {
         $user = User::factory()->create([

@@ -47,8 +47,9 @@ export async function mockApi(page: Page) {
     }
 
     if (url.includes('/auth/me')) {
+      const cookie = request.headers()['cookie'] ?? ''
       const auth = request.headers()['authorization'] ?? ''
-      const user = auth.includes('admin') ? adminUser : studentUser
+      const user = cookie.includes('admin') || auth.includes('admin') ? adminUser : studentUser
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -137,7 +138,10 @@ export async function mockApi(page: Page) {
 
 export async function seedSession(page: Page, role: 'student' | 'admin') {
   const token = role === 'admin' ? 'e2e-token-admin' : 'e2e-token-student'
-  await page.addInitScript((value) => {
-    localStorage.setItem('encg-auth', JSON.stringify({ state: { token: value }, version: 0 }))
-  }, token)
+  await page.context().addCookies([
+    { name: 'encg_auth_token', value: token, url: 'http://127.0.0.1:4173' },
+    { name: 'encg_auth_token', value: token, url: 'http://localhost:4173' },
+    { name: 'encg_auth_token', value: token, url: 'http://127.0.0.1:5173' },
+    { name: 'encg_auth_token', value: token, url: 'http://localhost:5173' },
+  ])
 }

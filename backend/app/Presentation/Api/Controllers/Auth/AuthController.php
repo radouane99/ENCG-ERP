@@ -11,6 +11,7 @@ use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\TwoFactorAuthService;
+use App\Support\AuthCookie;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,13 +73,7 @@ class AuthController extends Controller
 
         event(new Login('sanctum', $user, false));
 
-        return response()->json([
-            'data' => [
-                'requires_two_factor' => false,
-                'token' => $token,
-                'user' => $this->buildUserData($user),
-            ],
-        ]);
+        return $this->authenticatedResponse($request, $user, $token);
     }
 
     /**
@@ -109,13 +104,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-        return response()->json([
-            'data' => [
-                'requires_two_factor' => false,
-                'token' => $token,
-                'user' => $this->buildUserData($user),
-            ],
-        ]);
+        return $this->authenticatedResponse($request, $user, $token);
     }
 
     /**
@@ -133,7 +122,8 @@ class AuthController extends Controller
     {
         $request->user()?->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Déconnexion réussie.']);
+        return response()->json(['message' => 'Déconnexion réussie.'])
+            ->withCookie(AuthCookie::forget());
     }
 
     /**
@@ -154,14 +144,7 @@ class AuthController extends Controller
             $user = $this->registerUserService->registerUser($validated, $request->ip());
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
-            return response()->json([
-                'message' => 'Inscription réussie.',
-                'data' => [
-                    'requires_two_factor' => false,
-                    'token' => $token,
-                    'user' => $this->buildUserData($user),
-                ],
-            ]);
+            return $this->authenticatedResponse($request, $user, $token, 'Inscription réussie.');
         } catch (\Exception $e) {
             return response()->json(['message' => 'Erreur lors de l\'inscription.'], 500);
         }
@@ -372,11 +355,30 @@ class AuthController extends Controller
             return response()->json(['message' => 'Code d\'échange invalide ou expiré.'], 422);
         }
 
-        return response()->json([
+        return AuthCookie::attach(response()->json([
             'data' => [
-                'token' => $token,
+                'authenticated' => true,
             ],
-        ]);
+        ]), $token);
+    }
+
+    private function authenticatedResponse(Request $request, User $user, string $token, ?string $message = null): JsonResponse
+    {
+        $data = [
+            'requires_two_factor' => false,
+            'user' => $this->buildUserData($user),
+        ];
+
+        if (strtolower((string) $request->header('X-Client')) === 'mobile') {
+            $data['token'] = $token;
+        }
+
+        $payload = ['data' => $data];
+        if ($message !== null) {
+            $payload['message'] = $message;
+        }
+
+        return AuthCookie::attach(response()->json($payload), $token);
     }
 
     private function buildUserData(User $user): array

@@ -11,13 +11,13 @@ interface CndpPrivacyModalProps {
 
 export function CndpPrivacyModal({ isOpen, onClose, lang = 'fr' }: CndpPrivacyModalProps) {
   const [requesting, setRequesting] = useState(false)
-  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   if (!isOpen) return null
   const isAr = lang === 'ar'
 
   const requestExport = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.info(isAr ? 'سجل الدخول لطلب نسخة من معطياتك.' : 'Connectez-vous pour demander une copie de vos données.')
       return
     }

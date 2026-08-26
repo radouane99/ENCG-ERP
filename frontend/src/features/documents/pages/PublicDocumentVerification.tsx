@@ -4,7 +4,7 @@ import { ShieldCheck, ShieldAlert, FileText, CheckCircle } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function PublicDocumentVerification() {
-  const { token } = useParams<{ token: string }>();
+  const { token } = useParams();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
 

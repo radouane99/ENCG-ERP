@@ -66,7 +66,6 @@ export default function ClassroomPage() {
   });
 
   const totalSupports = classes.reduce((sum, c) => sum + (c.supports || 0), 0);
-  const totalPubs = classes.reduce((sum, c) => sum + (c.pubs || 0), 0);
 
   return (
     <div className="space-y-8 animate-in p-6 md:p-8 max-w-7xl mx-auto pb-24">

@@ -1,18 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { withAuthQuery } from '@shared/lib/documentAccess'
-import { useAuthStore } from '@/stores/authStore'
+import { describe, it, expect } from 'vitest'
+import { withAuthQuery, protectedDocumentUrl } from '@shared/lib/documentAccess'
 
-describe('documentAccess — query token helper', () => {
-  beforeEach(() => {
-    useAuthStore.setState({ token: 'staff-token' })
+describe('documentAccess — cookie session, no query token', () => {
+  it('leaves API PDF URLs unchanged', () => {
+    expect(withAuthQuery('/api/exams/1/pv-pdf')).toBe('/api/exams/1/pv-pdf')
   })
 
-  it('appends a token query param to API PDF URLs', () => {
-    expect(withAuthQuery('/api/exams/1/pv-pdf')).toBe('/api/exams/1/pv-pdf?token=staff-token')
-  })
-
-  it('does not duplicate an existing token or HMAC signature', () => {
-    expect(withAuthQuery('/api/docs?token=abc')).toBe('/api/docs?token=abc')
-    expect(withAuthQuery('/api/docs?sig=hmac')).toBe('/api/docs?sig=hmac')
+  it('keeps HMAC signed public document URLs intact', () => {
+    expect(protectedDocumentUrl('/api/public/serve-document/cnie/N1?sig=hmac')).toBe(
+      '/api/public/serve-document/cnie/N1?sig=hmac',
+    )
   })
 })

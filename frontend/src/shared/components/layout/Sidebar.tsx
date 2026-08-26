@@ -455,7 +455,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                           key={item.href}
                           to={item.href}
                           onClick={onClose}
-                          className={({ isActive }) =>
+                          className={({ isActive }: { isActive: boolean }) =>
                             cn(
                               'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                               isActive 
@@ -464,7 +464,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                             )
                           }
                         >
-                          {({ isActive }) => (
+                          {({ isActive }: { isActive: boolean }) => (
                             <>
                               {/* Active indicator edge bar */}
                               {isActive && (
@@ -499,7 +499,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   <NavLink
                     to={navItem.href}
                     onClick={onClose}
-                    className={({ isActive }) =>
+                    className={({ isActive }: { isActive: boolean }) =>
                       cn(
                         'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                         isActive 
@@ -508,7 +508,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                       )
                     }
                   >
-                    {({ isActive }) => (
+                    {({ isActive }: { isActive: boolean }) => (
                       <>
                         {isActive && (
                           <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-amber-400 rounded-e-full shadow-[0_0_10px_#f59e0b]" />

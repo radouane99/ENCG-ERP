@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, FileText, ArrowLeft, Building2, ShieldCheck, Clo
 import api from '@/shared/lib/api';
 
 export default function VerifyPv() {
-  const { moduleId, groupId } = useParams<{ moduleId: string; groupId: string }>();
+  const { moduleId, groupId } = useParams();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
 

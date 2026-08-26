@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, FileText, ArrowLeft, Building2 } from 'lucide-re
 import api from '@/shared/lib/api';
 
 export default function VerifyDocument() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
 

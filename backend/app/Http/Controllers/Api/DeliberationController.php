@@ -336,7 +336,7 @@ class DeliberationController extends Controller
             'pv_token' => $pvToken,
         ]);
 
-        $pvUrl = url("/api/deliberations/export-pv-rachat?student_id={$validated['student_id']}&filiere_id={$filiereId}&semester={$semester}&points={$validated['points_added']}&reason=".urlencode($reason)."&token={$pvToken}");
+        $pvUrl = url("/api/deliberations/export-pv-rachat?student_id={$validated['student_id']}&filiere_id={$filiereId}&semester={$semester}&points={$validated['points_added']}&reason=".urlencode($reason));
 
         return response()->json([
             'success' => true,

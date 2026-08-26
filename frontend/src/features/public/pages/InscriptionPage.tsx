@@ -1390,11 +1390,11 @@ export default function InscriptionPage({
       } else {
         // NEW INSCRIPTION
         const res = await api.post('/v1/auth/register', payload);
-        if (res.data.data?.token) {
+        if (res.data.data?.user) {
           useAuthStore.setState({
-            token: res.data.data.token,
-            user: res.data.data.user ?? null,
-            isAuthenticated: !!res.data.data.user,
+            user: res.data.data.user,
+            isAuthenticated: true,
+            isLoading: false,
           });
         }
         // Persist full candidate dossier (Academy, Delegation, High School, Parents, Medical) to PostgreSQL

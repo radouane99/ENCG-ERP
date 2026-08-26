@@ -29,7 +29,6 @@ describe('useAuthStore — RBAC & State Management', () => {
   beforeEach(() => {
     useAuthStore.setState({
       user: null,
-      token: null,
       isAuthenticated: false,
       activeRole: null,
     })
@@ -56,7 +55,7 @@ describe('useAuthStore — RBAC & State Management', () => {
 
   it('clears state on user logout', () => {
     useAuthStore.getState().setUser(mockStudentUser)
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false })
+    useAuthStore.setState({ user: null, isAuthenticated: false })
     expect(useAuthStore.getState().user).toBeNull()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })

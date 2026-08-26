@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Bot, User, Sparkles, Loader2, Mic, MicOff, Copy, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { formatSafeRichText } from '@shared/lib/htmlSafe'

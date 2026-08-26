@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, X, Bot, Sparkles, User, RefreshCw } from 'lucide-react';
+import { Send, X, Bot, Sparkles, User, RefreshCw } from 'lucide-react';
 import api from '@shared/lib/api';
 
 interface ChatMessage {
@@ -60,7 +60,7 @@ export default function AiScolarBotWidget() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, botMsg]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [
         ...prev,
         {

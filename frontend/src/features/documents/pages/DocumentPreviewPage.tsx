@@ -8,7 +8,7 @@ import ReleveNotesTemplate from '../components/templates/ReleveNotesTemplate';
 import ConventionStageTemplate from '../components/templates/ConventionStageTemplate';
 
 export default function DocumentPreviewPage() {
-  const { type } = useParams<{ type: string }>();
+  const { type } = useParams();
   const navigate = useNavigate();
 
   const currentType = type || 'attestation';

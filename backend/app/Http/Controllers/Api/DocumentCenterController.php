@@ -33,7 +33,7 @@ class DocumentCenterController extends Controller
                 'document_type' => $validated['document_type'],
                 'student_name' => trim(($student->user->first_name ?? '').' '.($student->user->last_name ?? '')),
                 'verification_token' => $token,
-                'download_url' => url("/api/documents/download/{$validated['document_type']}/{$student->id}?token={$token}"),
+                'download_url' => url("/api/documents/download/{$validated['document_type']}/{$student->id}?v={$token}"),
                 'created_at' => now()->toIso8601String(),
             ],
         ]);
@@ -44,7 +44,7 @@ class DocumentCenterController extends Controller
      */
     public function downloadDocument(Request $request, string $type, int $id)
     {
-        $token = $request->query('token');
+        $token = $request->query('v') ?? $request->query('token');
         if (! $token) {
             abort(400, 'Token de téléchargement manquant.');
         }

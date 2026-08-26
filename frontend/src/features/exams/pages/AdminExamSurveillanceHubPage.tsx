@@ -40,7 +40,7 @@ interface IncidentReport {
 }
 
 export default function AdminExamSurveillanceHubPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 

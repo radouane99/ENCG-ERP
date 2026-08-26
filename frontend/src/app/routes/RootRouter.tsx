@@ -251,7 +251,8 @@ function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 function RequireGuest({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, isLoading } = useAuthStore()
+  if (isLoading) return <LoadingScreen />
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
@@ -272,7 +273,7 @@ export default function RootRouter() {
   const { user, fetchUser } = useAuthStore()
 
   useEffect(() => {
-    fetchUser()
+    void fetchUser()
   }, [fetchUser])
 
   return (
