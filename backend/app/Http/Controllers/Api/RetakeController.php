@@ -142,7 +142,7 @@ class RetakeController extends Controller
         $retake = ResitEligibility::findOrFail($id);
 
         // Store the file
-        $path = $request->file('document')->store('retake-justifications', 'public');
+        $path = $request->file('document')->store('retake-justifications', 'private');
 
         $retake->justification_document = $path;
         // Flag for admin review

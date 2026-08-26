@@ -1164,6 +1164,8 @@ class AdmissionController extends Controller
      */
     public function uploadCandidateDocument(Request $request): JsonResponse
     {
+        CandidateDossierGate::requireIdentity($request, true);
+
         $typeInput = strtolower($request->input('type', ''));
         $allowedMimes = ($typeInput === 'photo') ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf';
 
@@ -1256,7 +1258,7 @@ class AdmissionController extends Controller
      */
     public function serveCandidateDocument(string $type, string $cne): BinaryFileResponse|JsonResponse|Response
     {
-        return $this->serveCandidateDocumentPublic($type, $cne);
+        return $this->serveCandidateDocumentPublic(request(), $type, $cne);
     }
 
     /**
@@ -1300,6 +1302,10 @@ class AdmissionController extends Controller
             // Cas 2 : Chemin relatif disk local  →  private_candidate_documents/xxx.pdf
             if (Storage::disk('private')->exists($path)) {
                 return response()->file(Storage::disk('private')->path($path), $headers);
+            }
+
+            if (Storage::disk('local')->exists($path)) {
+                return response()->file(Storage::disk('local')->path($path), $headers);
             }
 
             // Cas 3 : Chemin relatif disk public  →  candidate_documents/xxx.pdf
@@ -1366,6 +1372,7 @@ class AdmissionController extends Controller
      */
     public function deleteCandidateDocument(Request $request): JsonResponse
     {
+        CandidateDossierGate::requireIdentity($request, true);
         $request->validate([
             'cne' => 'required|string',
             'cin' => 'required|string',

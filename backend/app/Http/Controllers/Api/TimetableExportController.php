@@ -59,12 +59,19 @@ class TimetableExportController extends Controller
     {
         $schedules = $this->fetchSchedules($type, $id, $request);
         $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules));
-        $pdf = Pdf::loadView('pdf.emploi_du_temps_officiel', ['catalog' => $catalog])
-            ->setPaper('a4', 'landscape');
         $stamp = $catalog['sections'][0]['semester_label'] ?? 'EDT';
         $scope = $type === 'all' ? 'TOUTES_FILIERES' : ($catalog['sections'][0]['filiere_code'] ?? $type);
+        $filename = 'EDT_'.$scope.'_'.$stamp.'.pdf';
+        $pdf = app(OfficialPdfFactory::class)
+            ->make('pdf.emploi_du_temps_officiel', [
+                'catalog' => $catalog,
+                'verifyUrl' => url('/verify/document/edt/'.$scope.'/'.$stamp),
+                'signatoryTitle' => 'LE DIRECTEUR',
+                'date' => now()->format('d/m/Y'),
+            ])
+            ->setPaper('a4', 'landscape');
 
-        return $pdf->download('EDT_'.$scope.'_'.$stamp.'.pdf');
+        return $pdf->download($filename);
     }
 
     public function officialMatrix(Request $request, string $type, int $id): JsonResponse

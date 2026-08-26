@@ -62,7 +62,7 @@ class StudentController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Erreur serveur: '.$e->getMessage(),
+                'message' => 'Impossible de charger la liste des étudiants.',
             ], 500);
         }
     }
@@ -165,13 +165,12 @@ class StudentController extends Controller
         $file = $request->file('file');
         $type = $request->input('type');
 
-        $path = $file->store("student_documents/{$student->id}", 'public');
-        $fileUrl = '/storage/'.$path;
+        $path = $file->store("student_documents/{$student->id}", 'private');
 
         StudentDocument::updateOrCreate(
             ['student_id' => $student->id, 'type' => $type],
             [
-                'file_path' => $fileUrl,
+                'file_path' => $path,
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
@@ -181,7 +180,7 @@ class StudentController extends Controller
 
         return response()->json([
             'message' => 'Document numérisé enregistré avec succès.',
-            'file_path' => $fileUrl,
+            'file_path' => $path,
             'type' => $type,
         ]);
     }
@@ -343,12 +342,18 @@ class StudentController extends Controller
      */
     public function getInscriptionStatusPublic(Request $request): JsonResponse
     {
-        $cne = $request->input('cne');
-        if (! $cne) {
-            return response()->json(['message' => 'CNE requis.'], 422);
-        }
+        $request->validate([
+            'cne' => 'required|string',
+            'cin' => 'required|string',
+        ]);
+
+        $cne = strtoupper(trim((string) $request->input('cne')));
+        $cin = strtoupper(trim((string) $request->input('cin')));
 
         $student = \App\Domain\Student\Models\Student::where('cne', $cne)
+            ->where(function ($q) use ($cin) {
+                $q->where('cin', $cin)->orWhereHas('user', fn ($u) => $u->where('cin', $cin));
+            })
             ->with(['latestPathway.filiere', 'documents'])
             ->first();
 

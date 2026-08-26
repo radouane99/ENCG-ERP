@@ -846,7 +846,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
 
             return response()->json(['success' => true, 'events' => $events]);
         } catch (Exception $e) {
-            return response()->json(['success' => true, 'events' => [], 'error' => $e->getMessage()]);
+            return response()->json(['success' => true, 'events' => [], 'error' => 'Une erreur interne est survenue.']);
         }
     });
 
@@ -897,7 +897,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
                 ],
             ]);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage(), 'stages' => [], 'stats' => []]);
+            return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.', 'stages' => [], 'stats' => []]);
         }
     });
 
@@ -912,7 +912,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
 
             return response()->json(['success' => true, 'message' => 'Statut PFE mis à jour.']);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.'], 500);
         }
     });
 
@@ -983,7 +983,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
                 'clubs' => $clubMemberships,
             ]);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.'], 500);
         }
     });
 

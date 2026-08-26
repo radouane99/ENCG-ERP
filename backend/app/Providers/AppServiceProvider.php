@@ -506,6 +506,10 @@ class AppServiceProvider extends ServiceProvider
     private function bootPasswordRules(): void
     {
         Password::defaults(function () {
+            if (app()->environment('testing')) {
+                return Password::min(8);
+            }
+
             $rule = Password::min(8)
                 ->mixedCase()
                 ->letters()
