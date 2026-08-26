@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { 
-  Building2, Sparkles, GraduationCap, Users, BookOpen, Search, Plus, 
-  Edit2, Trash2, X, CheckCircle2, ShieldCheck, UserCheck, Download, 
-  Printer, Eye, Award, FileText, ChevronRight, AlertCircle, Filter, Zap
+import {
+  Building2, Sparkles, GraduationCap, Users, BookOpen, Search, Plus,
+  Edit2, Trash2, X, CheckCircle2,
+  Printer, Eye, Award
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
-import { Spinner } from '@shared/components/ui/Spinner'
 
 interface Department {
   id: number;
@@ -33,7 +31,6 @@ const DEFAULT_HEADS: Record<string, string> = {
 };
 
 export default function DepartmentList() {
-  const { t } = useTranslation('common')
   const [departments, setDepartments] = useState<Department[]>([])
   const [professors, setProfessors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)

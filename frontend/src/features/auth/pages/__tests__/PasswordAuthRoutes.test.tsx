@@ -45,11 +45,11 @@ describe('password auth routes', () => {
       </MemoryRouter>
     )
 
-    fireEvent.change(screen.getByPlaceholderText(/8 caractères minimum/i), {
-      target: { value: 'NewPassword123' },
+    fireEvent.change(screen.getByPlaceholderText(/au moins 8 caractères/i), {
+      target: { value: 'NewPassword123!' },
     })
     fireEvent.change(screen.getByPlaceholderText(/confirmez le mot de passe/i), {
-      target: { value: 'NewPassword123' },
+      target: { value: 'NewPassword123!' },
     })
     fireEvent.click(screen.getByRole('button', { name: /mettre à jour le mot de passe/i }))
 
@@ -57,8 +57,8 @@ describe('password auth routes', () => {
       expect(mockedApi.post).toHaveBeenCalledWith('/v1/auth/reset-password', {
         email: 'student@encg.ma',
         token: 'test-token',
-        password: 'NewPassword123',
-        password_confirmation: 'NewPassword123',
+        password: 'NewPassword123!',
+        password_confirmation: 'NewPassword123!',
       })
     })
   })

@@ -6,6 +6,7 @@ use App\Http\Middleware\QueryTokenAuth;
 use App\Support\AuthCookie;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthCookieTest extends TestCase
 {
@@ -22,7 +23,7 @@ class AuthCookieTest extends TestCase
             AuthCookie::NAME => AuthCookie::encode($plain),
         ]);
 
-        (new QueryTokenAuth)->handle($request, fn () => new \Symfony\Component\HttpFoundation\Response('ok'));
+        (new QueryTokenAuth)->handle($request, fn () => new Response('ok'));
 
         $this->assertSame('Bearer '.$plain, $request->headers->get('Authorization'));
     }
@@ -31,7 +32,7 @@ class AuthCookieTest extends TestCase
     {
         $request = Request::create('/api/v1/auth/me?token=stolen-token', 'GET');
 
-        (new QueryTokenAuth)->handle($request, fn () => new \Symfony\Component\HttpFoundation\Response('ok'));
+        (new QueryTokenAuth)->handle($request, fn () => new Response('ok'));
 
         $this->assertNull($request->headers->get('Authorization'));
     }

@@ -53,6 +53,14 @@ export async function mockApi(page: Page) {
     if (url.includes('/auth/me')) {
       const cookie = request.headers()['cookie'] ?? ''
       const auth = request.headers()['authorization'] ?? ''
+      const hasSession = cookie.includes('encg_auth_token') || auth.includes('e2e-token')
+      if (!hasSession) {
+        return route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Unauthenticated' }),
+        })
+      }
       const user = cookie.includes('admin') || auth.includes('admin') ? adminUser : studentUser
       return route.fulfill({
         status: 200,
