@@ -36,11 +36,11 @@ L'application repose sur un **découplage architectural strict et professionnel*
                     │                                                       │
          ┌──────────┴───────────┬───────────────────────┬───────────────────┘
          ▼                      ▼                       ▼
-┌──────────────────┐  ┌──────────────────┐    ┌──────────────────┐
-│ POSTGRESQL DB    │  │ REDIS CACHE      │    │ MINIO S3 STORAGE │
-│ (encg_postgres)  │  │ (encg_redis)     │    │ (encg_minio)     │
-│ Port 5432        │  │ Port 6379        │    │ Object Storage   │
-└──────────────────┘  └──────────────────┘    └──────────────────┘
+┌──────────────────┐  ┌──────────────────┐
+│ POSTGRESQL DB    │  │ REDIS CACHE      │
+│ (encg_postgres)  │  │ (encg_redis)     │
+│ Port 5432        │  │ Port 6379        │
+└──────────────────┘  └──────────────────┘
 ```
 
 #### Principes Clés du Découplage :
@@ -65,7 +65,6 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 | **`encg_pgadmin`** | GUI Administration Postgres | `dpage/pgadmin4` | `5050:80` |
 | **`encg_redis`** | Cache In-Memory & Queues | `redis:7-alpine` | `6379:6379` |
 | **`encg_mailpit`** | Sandbox Envoi Emails Dev | `axllent/mailpit` | `1025:1025` / `8025` |
-| **`encg_minio_init`** | Initialiseur Stockage S3 | `minio/mc:latest` | Interne |
 
 ---
 
@@ -107,7 +106,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 L'ERP applique rigoureusement les normes de la **Commission Nationale de contrôle de la protection des Données à caractère Personnel (CNDP)** conformément à la Loi marocaine N° 09-08 :
 1. 📝 **Consentement Éclairé Préalable :** Case à cocher obligatoire d'acceptation de traitement des données lors de la pré-inscription TAFEM, des demandes de documents et de la création de compte.
 2. 👁️ **Droit d'Accès et de Rectification (Articles 7, 8, 9) :** Chaque utilisateur (étudiant, professeur) peut consulter l'intégralité de son Dossier 360° et soumettre une demande de rectification de ses données biographiques.
-3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), anonymisation des justificatifs médicaux sous 48h et stockage sécurisé des copies scannées sur MinIO S3 avec contrôle d'accès restreint (`documents.serve`).
+3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), anonymisation des justificatifs médicaux sous 48h et stockage sécurisé des copies scannées sur le disque Laravel `storage/` (`private` / `local`) avec contrôle d'accès restreint (`documents.serve`).
 4. 📜 **Registre des Traitements Académiques :** Journalisation d'audit complète (`ValidationAudit`, `GradeAudit`) des modifications apportées aux données personnelles et académiques.
 
 ---

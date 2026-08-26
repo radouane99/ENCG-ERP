@@ -36,8 +36,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
-        condition: service_healthy
     networks:
       - encgnet
     restart: unless-stopped
@@ -155,50 +153,6 @@ services:
     restart: unless-stopped
 
   # ──────────────────────────────────────────────────────────
-  # MinIO — S3-compatible object storage
-  # ──────────────────────────────────────────────────────────
-  minio:
-    image: minio/minio:latest
-    container_name: encg_minio
-    ports:
-      - '9000:9000'   # S3 API
-      - '9001:9001'   # Web Console → http://localhost:9001
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - encgnet
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # ──────────────────────────────────────────────────────────
-  # MinIO Init — Create default buckets
-  # ──────────────────────────────────────────────────────────
-  minio-init:
-    image: minio/mc:latest
-    container_name: encg_minio_init
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 minioadmin minioadmin123;
-      mc mb --ignore-existing local/encg-documents;
-      mc mb --ignore-existing local/encg-private;
-      mc anonymous set download local/encg-documents;
-      echo 'MinIO buckets initialized.';
-      "
-    networks:
-      - encgnet
-
-  # ──────────────────────────────────────────────────────────
   # Mailpit — Local SMTP + Web UI
   # ──────────────────────────────────────────────────────────
   mailpit:
@@ -246,5 +200,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
   pgadmin_data:

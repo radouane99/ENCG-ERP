@@ -55,7 +55,7 @@ graph TB
     subgraph DataTier["🗄️ Persistance & Données Relationnelles"]
         Postgres[("🐘 PostgreSQL 16 (Alpine)<br/>• 32 Tables Relationnelles<br/>• ACID Transactions & Soft Deletes<br/>• Index B-Tree sur Massar/CNE/CIN")]
         Redis[("⚡ Redis 7 (Alpine)<br/>• Sessions Cache (0ms)<br/>• Rate-Limiting Keys<br/>• Queues de Messages")]
-        Storage["📁 Stockage d'Objets / S3 MinIO<br/>• PVs Signés (PDF/A)<br/>• Diplômes Grand Format<br/>• Justificatifs Médicaux Scannés"]
+        Storage["📁 Laravel storage/ (disque local)<br/>• PVs Signés (PDF/A)<br/>• Diplômes Grand Format<br/>• Justificatifs Médicaux Scannés"]
     end
 
     subgraph ExternalServices["🌍 Services Externes & Tiers de Confiance"]

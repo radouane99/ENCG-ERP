@@ -36,11 +36,11 @@ L'application repose sur un **découplage architectural strict et professionnel*
                     │                                                       │
          ┌──────────┴───────────┬───────────────────────┬───────────────────┘
          ▼                      ▼                       ▼
-┌──────────────────┐  ┌──────────────────┐    ┌──────────────────┐
-│ POSTGRESQL DB    │  │ REDIS CACHE      │    │ MINIO S3 STORAGE │
-│ (encg_postgres)  │  │ (encg_redis)     │    │ (encg_minio)     │
-│ Port 5432        │  │ Port 6379        │    │ Object Storage   │
-└──────────────────┘  └──────────────────┘    └──────────────────┘
+┌──────────────────┐  ┌──────────────────┐
+│ POSTGRESQL DB    │  │ REDIS CACHE      │
+│ (encg_postgres)  │  │ (encg_redis)     │
+│ Port 5432        │  │ Port 6379        │
+└──────────────────┘  └──────────────────┘
 ```
 
 #### Principes Clés du Découplage :
@@ -65,7 +65,6 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 | **`encg_pgadmin`** | GUI Administration Postgres | `dpage/pgadmin4` | `5050:80` |
 | **`encg_redis`** | Cache In-Memory & Queues | `redis:7-alpine` | `6379:6379` |
 | **`encg_mailpit`** | Sandbox Envoi Emails Dev | `axllent/mailpit` | `1025:1025` / `8025` |
-| **`encg_minio_init`** | Initialiseur Stockage S3 | `minio/mc:latest` | Interne |
 
 ---
 
@@ -108,7 +107,7 @@ Le système s'exécute dans un écosystème Docker 100% conteneurisé. Voici la 
 L'ERP applique rigoureusement les normes de la **Commission Nationale de contrôle de la protection des Données à caractère Personnel (CNDP)** conformément à la Loi marocaine N° 09-08 :
 1. 📝 **Consentement Éclairé Préalable :** Case à cocher obligatoire d'acceptation de traitement des données lors de la pré-inscription TAFEM, des demandes de documents et de la création de compte.
 2. 👁️ **Droit d'Accès, de Rectification et d'Opposition (Articles 7, 8, 9) :** Endpoints authentifiés `POST /api/v1/privacy/export` (accès / DSAR), `POST /api/v1/privacy/rectification`, `POST /api/v1/privacy/opposition`. L'export JSON est asynchrone ; la rectification et l'opposition sont enregistrées pour instruction de la scolarité (pas d'anonymisation automatique des dossiers académiques).
-3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), commande `cndp:enforce-retention` pour les comptes inactifs, stockage MinIO S3 avec contrôle d'accès restreint (`documents.serve`).
+3. 🔐 **Chiffrement & Anonymisation des Pièces Sensibles :** Chiffrement des mots de passe (Bcrypt/Argon2), commande `cndp:enforce-retention` pour les comptes inactifs, stockage Laravel `storage/` (disque `private` / `local`) avec contrôle d'accès restreint (`documents.serve`).
 4. 📜 **Registre des Traitements Académiques :** Journalisation d'audit complète (`ValidationAudit`, `GradeAudit`) des modifications apportées aux données personnelles et académiques.
 
 ---
@@ -2043,7 +2042,7 @@ docker exec encg_postgres vacuumdb -U encg_user -d encg_erp --analyze --verbose
 ### 20.3 Pilier 3 : Sécurité & Conformité Réglementaire (Loi 09-08 CNDP & OWASP)
 
 #### A. Rotation & Sauvegarde Automatique des Données (`spatie/laravel-backup`)
-Planifier un backup chiffré quotidien vers MinIO / AWS S3 :
+Planifier un backup chiffré quotidien (disque `storage/` ou stockage distant optionnel) :
 ```bash
 docker exec encg_backend php artisan backup:run --only-db
 ```
