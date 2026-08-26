@@ -131,7 +131,7 @@ class TafemMinistryImportController extends Controller
                 }
 
                 // Créer ou mettre à jour User + Student
-                $user = User::firstOrCreate(
+                $user = User::firstOrProvision(
                     ['email' => strtolower($cne).'@candidat.tafem.ma'],
                     [
                         'name' => $firstName.' '.$lastName,

@@ -10,6 +10,7 @@ use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Services\Academic\TimetablePerformanceStrategy;
+use App\Services\Academic\TimetableRoomGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -191,7 +192,7 @@ class TimetableRoomGuardTest extends TestCase
             'is_active' => true,
         ]);
 
-        $data = app(\App\Services\Academic\TimetableRoomGuard::class)->availableRooms(
+        $data = app(TimetableRoomGuard::class)->availableRooms(
             new \DateTimeImmutable('2026-08-24 08:30:00'),
             new \DateTimeImmutable('2026-08-24 10:30:00'),
             30

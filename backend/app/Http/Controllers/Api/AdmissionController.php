@@ -89,7 +89,7 @@ class AdmissionController extends Controller
         if (! empty($cneClean)) {
             $institutionId = Institution::first()?->id ?? 1;
 
-            $user = User::firstOrCreate(
+            $user = User::firstOrProvision(
                 ['email' => strtolower($cneClean).'@candidat.tafem.ma'],
                 [
                     'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
@@ -282,7 +282,7 @@ class AdmissionController extends Controller
         if ($student) {
             $student->update(['status' => 'pre_inscri']);
         } else {
-            $user = User::create([
+            $user = User::provision([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => TemporaryPassword::hash(),

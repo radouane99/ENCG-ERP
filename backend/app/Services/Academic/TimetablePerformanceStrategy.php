@@ -4,6 +4,7 @@ namespace App\Services\Academic;
 
 use App\Models\ProfessorAvailability;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Stratégie de performance EDT ENCG :
@@ -446,7 +447,7 @@ class TimetablePerformanceStrategy
      */
     private function prefetchUnavailability(): array
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('professor_availabilities')) {
+        if (! Schema::hasTable('professor_availabilities')) {
             return [];
         }
 

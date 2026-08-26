@@ -23,10 +23,10 @@ const adminUser = {
 export async function mockApi(page: Page) {
   await page.route((url) => {
     const href = url.href
-    if (href.includes('/src/') || href.includes('node_modules') || href.includes('.tsx') || href.includes('.ts')) {
+    if (href.includes('/src/') || href.includes('node_modules') || /\.(tsx?|jsx?|css|map)(\?|$)/.test(href)) {
       return false
     }
-    return href.includes('/api/')
+    return href.includes('/api/') || href.includes('/v1/auth')
   }, async (route: Route) => {
     const request = route.request()
     const resourceType = request.resourceType()
@@ -39,10 +39,14 @@ export async function mockApi(page: Page) {
     if (url.includes('/v1/auth/login') && method === 'POST') {
       const body = request.postDataJSON() as { email?: string }
       const user = body?.email?.includes('admin') ? adminUser : studentUser
+      const token = user.roles.includes('institution-admin') ? 'e2e-token-admin' : 'e2e-token-student'
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { token: 'e2e-token', user, requires_two_factor: false } }),
+        headers: {
+          'Set-Cookie': `encg_auth_token=${token}; Path=/; SameSite=Lax`,
+        },
+        body: JSON.stringify({ success: true, data: { token, user, requires_two_factor: false } }),
       })
     }
 
@@ -138,10 +142,16 @@ export async function mockApi(page: Page) {
 
 export async function seedSession(page: Page, role: 'student' | 'admin') {
   const token = role === 'admin' ? 'e2e-token-admin' : 'e2e-token-student'
+  const cookie = {
+    name: 'encg_auth_token',
+    value: token,
+    path: '/',
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax' as const,
+  }
   await page.context().addCookies([
-    { name: 'encg_auth_token', value: token, url: 'http://127.0.0.1:4173' },
-    { name: 'encg_auth_token', value: token, url: 'http://localhost:4173' },
-    { name: 'encg_auth_token', value: token, url: 'http://127.0.0.1:5173' },
-    { name: 'encg_auth_token', value: token, url: 'http://localhost:5173' },
+    { ...cookie, domain: '127.0.0.1' },
+    { ...cookie, domain: 'localhost' },
   ])
 }

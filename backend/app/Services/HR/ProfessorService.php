@@ -74,7 +74,7 @@ class ProfessorService
     {
         return DB::transaction(function () use ($data, $institutionId) {
             // Create user first
-            $user = User::create([
+            $user = User::provision([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'name' => $data['first_name'].' '.$data['last_name'],

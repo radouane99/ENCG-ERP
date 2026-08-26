@@ -70,11 +70,11 @@ class RegisterUserService
                 if (! empty($data['password'])) {
                     $userAttributes['password'] = Hash::make($data['password']);
                 }
-                $user->update($userAttributes);
+                $user->forceFill($userAttributes)->save();
             } else {
                 $plainPassword = $data['password'] ?? throw new \InvalidArgumentException('Password required');
                 $userAttributes['password'] = Hash::make($plainPassword);
-                $user = User::create($userAttributes);
+                $user = User::provision($userAttributes);
             }
 
             // 2. Find an active Admission Campaign or create a default one

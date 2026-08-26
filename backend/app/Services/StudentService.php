@@ -86,7 +86,7 @@ class StudentService
     public function createStudent(array $data, int $institutionId = 1): Student
     {
         return DB::transaction(function () use ($data, $institutionId) {
-            $user = User::create([
+            $user = User::provision([
                 'name' => trim($data['first_name'].' '.$data['last_name']),
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],

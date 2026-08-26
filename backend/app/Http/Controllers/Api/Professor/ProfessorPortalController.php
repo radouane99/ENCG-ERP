@@ -8,6 +8,7 @@ use App\Models\ProfessorDocumentRequest;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Services\Academic\TimetableCampaignService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
@@ -70,7 +71,7 @@ class ProfessorPortalController extends Controller
             return response()->json(['success' => false, 'message' => 'Profil enseignant introuvable.'], 403);
         }
 
-        $result = app(\App\Services\Academic\TimetableCampaignService::class)
+        $result = app(TimetableCampaignService::class)
             ->confirmSession($id, $profId, $validated['decision'], $validated['note'] ?? null);
 
         return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);

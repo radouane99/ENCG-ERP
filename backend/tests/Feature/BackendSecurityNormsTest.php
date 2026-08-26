@@ -6,8 +6,10 @@ use App\Models\Institution;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\User;
+use App\Support\AuthCookie;
 use App\Support\SignedDocumentUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -85,7 +87,7 @@ class BackendSecurityNormsTest extends TestCase
         ]);
 
         $relative = 'candidate_documents/test-cnie.pdf';
-        \Illuminate\Support\Facades\Storage::disk('private')->put($relative, '%PDF-1.4 test');
+        Storage::disk('private')->put($relative, '%PDF-1.4 test');
 
         StudentDocument::create([
             'student_id' => $student->id,
@@ -125,13 +127,15 @@ class BackendSecurityNormsTest extends TestCase
         $login->assertOk();
         $this->assertArrayNotHasKey('token', $login->json('data') ?? []);
 
-        $cookie = $login->getCookie(\App\Support\AuthCookie::NAME, false);
+        $cookie = $login->getCookie(AuthCookie::NAME, false);
         $this->assertNotNull($cookie);
         $this->assertTrue($cookie->isHttpOnly());
 
-        $this->withUnencryptedCookie(\App\Support\AuthCookie::NAME, $cookie->getValue())
-            ->getJson('/api/v1/auth/me')
-            ->assertOk()
+        $this->call('GET', '/api/v1/auth/me', [], [
+            AuthCookie::NAME => $cookie->getValue(),
+        ], [], [
+            'HTTP_ACCEPT' => 'application/json',
+        ])->assertOk()
             ->assertJsonPath('data.email', $user->email);
     }
 

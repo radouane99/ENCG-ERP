@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
-use App\Models\Semester;
 use App\Services\Academic\TimetableCampaignService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

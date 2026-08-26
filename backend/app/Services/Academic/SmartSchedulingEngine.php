@@ -10,12 +10,14 @@ use App\Models\Room;
 use App\Models\Schedule;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SmartSchedulingEngine
 {
     public function __construct(
         private TimetablePerformanceStrategy $strategy
     ) {}
+
     /**
      * Standard Moroccan University time slots (2-hour pedagogic blocks)
      */
@@ -175,7 +177,7 @@ class SmartSchedulingEngine
         if ($filiereId) {
             $modulesQuery->where('filiere_id', $filiereId);
         }
-        if ($semesterNumber >= 1 && $semesterNumber <= 10 && \Illuminate\Support\Facades\Schema::hasColumn('modules', 'semester_number')) {
+        if ($semesterNumber >= 1 && $semesterNumber <= 10 && Schema::hasColumn('modules', 'semester_number')) {
             $modulesQuery->where('semester_number', $semesterNumber);
         }
         $modules = $modulesQuery->get();

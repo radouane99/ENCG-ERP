@@ -151,7 +151,7 @@ class ExamPlanningController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $count > 0 
+            'message' => $count > 0
                 ? "{$count} examen(s) et leurs convocations ont été réinitialisés avec succès."
                 : 'Aucun examen à réinitialiser pour les critères sélectionnés.',
             'deleted_count' => $count,

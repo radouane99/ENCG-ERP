@@ -81,6 +81,7 @@ use App\Http\Controllers\Api\TimetableController;
 use App\Http\Controllers\Api\TimetableExportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VacataireController;
+use App\Http\Resources\UserResource;
 use App\Models\Semester;
 use App\Models\StudentPathway;
 use Illuminate\Http\Request;
@@ -93,7 +94,7 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 
 Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
-        return new \App\Http\Resources\UserResource($request->user());
+        return new UserResource($request->user());
     });
 
     // Removed db-test route from here
@@ -534,20 +535,20 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     // Exam Incidents & Discipline
     Route::prefix('exam-incidents')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\ExamIncidentController::class, 'store']);
-        Route::get('/{id}/download-pdf', [App\Http\Controllers\Api\ExamIncidentController::class, 'downloadPdf']);
+        Route::get('/', [ExamIncidentController::class, 'index']);
+        Route::post('/', [ExamIncidentController::class, 'store']);
+        Route::get('/{id}/download-pdf', [ExamIncidentController::class, 'downloadPdf']);
     });
 
     // Discipline Council Routes
-    Route::get('/discipline', [App\Http\Controllers\Api\ExamIncidentController::class, 'index']);
-    Route::post('/discipline/{id}/convoke', [App\Http\Controllers\Api\ExamIncidentController::class, 'convoke']);
-    Route::post('/discipline/{id}/decide', [App\Http\Controllers\Api\ExamIncidentController::class, 'decide']);
+    Route::get('/discipline', [ExamIncidentController::class, 'index']);
+    Route::post('/discipline/{id}/convoke', [ExamIncidentController::class, 'convoke']);
+    Route::post('/discipline/{id}/decide', [ExamIncidentController::class, 'decide']);
 
     // Exam Analytics & Cartography Route
-    Route::get('/exam-analytics', [App\Http\Controllers\Api\ExamIncidentController::class, 'examAnalytics']);
-    Route::get('/analytics', [App\Http\Controllers\Api\ExamIncidentController::class, 'globalAnalytics']);
-    Route::post('/exams/{id}/pv/lock', [App\Http\Controllers\Api\ExamIncidentController::class, 'lockPv']);
+    Route::get('/exam-analytics', [ExamIncidentController::class, 'examAnalytics']);
+    Route::get('/analytics', [ExamIncidentController::class, 'globalAnalytics']);
+    Route::post('/exams/{id}/pv/lock', [ExamIncidentController::class, 'lockPv']);
 
     // Retakes
     Route::prefix('retakes')->group(function () {

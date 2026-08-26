@@ -88,6 +88,47 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(ProfessorAvailability::class);
     }
 
+    /**
+     * Create a user while allowing guarded account flags (activation, password rotation).
+     */
+    public static function provision(array $attributes): static
+    {
+        [$safe, $guarded] = static::extractGuardedAccountAttributes($attributes);
+        /** @var static $user */
+        $user = static::query()->create($safe);
+        if ($guarded !== []) {
+            $user->forceFill($guarded)->save();
+        }
+
+        return $user;
+    }
+
+    public static function firstOrProvision(array $attributes, array $values = []): static
+    {
+        $existing = static::query()->where($attributes)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        return static::provision(array_merge($attributes, $values));
+    }
+
+    /**
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>}
+     */
+    public static function extractGuardedAccountAttributes(array $attributes): array
+    {
+        $guarded = [];
+        foreach (['is_active', 'must_change_password'] as $key) {
+            if (array_key_exists($key, $attributes)) {
+                $guarded[$key] = $attributes[$key];
+                unset($attributes[$key]);
+            }
+        }
+
+        return [$attributes, $guarded];
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];

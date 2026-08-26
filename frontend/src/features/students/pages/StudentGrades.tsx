@@ -22,12 +22,12 @@ export default function StudentGrades() {
   const [judgeLoading, setJudgeLoading] = useState(false);
 
   if (isLoading) {
-    return <div data-testid="student-grades-page" className="flex h-[50vh] items-center justify-center"><Spinner size="lg" /></div>;
+    return <div className="flex h-[50vh] items-center justify-center"><Spinner size="lg" /></div>;
   }
 
   if (isError || !data) {
     return (
-      <div data-testid="student-grades-page" className="p-6 max-w-4xl mx-auto text-center space-y-4">
+      <div className="p-6 max-w-4xl mx-auto text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
         <h3 className="text-lg font-bold">Impossible de charger les notes</h3>
         <p className="text-sm text-slate-500">Une erreur est survenue lors de la récupération de vos notes.</p>

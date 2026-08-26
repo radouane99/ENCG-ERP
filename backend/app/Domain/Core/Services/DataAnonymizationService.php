@@ -44,7 +44,7 @@ class DataAnonymizationService
             $student = Student::where('user_id', $user->id)->first();
             $originalCne = $student?->cne;
 
-            $user->update($payload);
+            $user->forceFill($payload)->save();
 
             if ($student) {
                 $studentPayload = [];

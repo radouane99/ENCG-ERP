@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 class TimetableExportController extends Controller
 {
     public function __construct(private OfficialTimetableMatrixService $officialMatrix) {}
+
     /**
      * Export pour FullCalendar.
      */

@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -181,8 +182,8 @@ class TimetableRoomGuard
             return true;
         }
 
-        $start = \Carbon\Carbon::parse($start);
-        $end = \Carbon\Carbon::parse($end);
+        $start = Carbon::parse($start);
+        $end = Carbon::parse($end);
         $grid = $this->gridForInstant($start, $end);
 
         return $grid->roomBusy(
@@ -209,8 +210,8 @@ class TimetableRoomGuard
      */
     public function availableRooms(\DateTimeInterface $start, \DateTimeInterface $end, int $minCapacity = 0, string $kind = 'all'): array
     {
-        $start = \Carbon\Carbon::parse($start);
-        $end = \Carbon\Carbon::parse($end);
+        $start = Carbon::parse($start);
+        $end = Carbon::parse($end);
         $grid = $this->gridForInstant($start, $end);
         $day = (int) $start->dayOfWeekIso;
         $tStart = $start->format('H:i:s');
@@ -256,7 +257,7 @@ class TimetableRoomGuard
         ];
     }
 
-    private function gridForInstant(\Carbon\Carbon $start, \Carbon\Carbon $end): TimetableOccupancyGrid
+    private function gridForInstant(Carbon $start, Carbon $end): TimetableOccupancyGrid
     {
         $grid = new TimetableOccupancyGrid;
         $day = (int) $start->dayOfWeekIso;

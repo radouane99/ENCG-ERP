@@ -4,8 +4,6 @@ namespace App\Services\Academic;
 
 use App\Models\AcademicYear;
 use App\Models\Filiere;
-use App\Models\Schedule;
-use App\Models\Semester;
 use Illuminate\Support\Collection;
 
 /**
