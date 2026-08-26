@@ -108,6 +108,27 @@ class TimetablePerformanceStrategyTest extends TestCase
         $this->assertCount(1, $result['assignments']);
         $this->assertEqualsCanonicalizing([1, 2], $result['assignments'][0]['occupied_group_ids']);
         $this->assertTrue($result['zero_hard_conflicts']);
+        $this->assertSame(1, $result['assignments'][0]['room_id']);
+    }
+
+    public function test_td_uses_small_classroom_not_amphitheater(): void
+    {
+        $rooms = collect([
+            (object) ['id' => 1, 'name' => 'Amphi 1', 'capacity' => 180, 'type' => 'amphitheater', 'building' => 'A'],
+            (object) ['id' => 2, 'name' => 'Salle TD 12', 'capacity' => 40, 'type' => 'classroom', 'building' => 'A'],
+        ]);
+        $result = app(TimetablePerformanceStrategy::class)->place([[
+            'var_id' => 1,
+            'group_id' => 1,
+            'occupied_group_ids' => [1],
+            'group_size' => 35,
+            'filiere_code' => 'TC',
+            'professor_id' => 3,
+            'session_type' => 'td',
+            'module_id' => 9,
+        ]], $rooms);
+
+        $this->assertSame(2, $result['assignments'][0]['room_id']);
     }
 
     public function test_same_professor_cannot_have_overlapping_intervals(): void

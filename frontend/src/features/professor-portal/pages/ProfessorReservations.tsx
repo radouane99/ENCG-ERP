@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Building2, Plus, Calendar, Clock, CheckCircle2, AlertCircle, Loader2, X, Send, Sparkles } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
@@ -83,12 +84,20 @@ export default function ProfessorReservations() {
           </div>
         </div>
 
-        <button 
-          onClick={() => setShowModal(true)}
-          className="px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-950/20 shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> Nouvelle Réservation
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 relative z-10 shrink-0">
+          <Link
+            to="/professor/rooms/availability"
+            className="px-6 py-3.5 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center"
+          >
+            Voir les salles libres
+          </Link>
+          <button 
+            onClick={() => setShowModal(true)}
+            className="px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-950/20 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Nouvelle Réservation
+          </button>
+        </div>
       </div>
 
       {/* List Card */}

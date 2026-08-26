@@ -9,18 +9,28 @@ use Symfony\Component\HttpFoundation\Response;
 class QueryTokenAuth
 {
     /**
-     * If no Authorization header is present but a token is provided in the query string
-     * (e.g. for streaming PDFs / direct downloads in browser new tabs), populate the Authorization header.
+     * Allow a Bearer token in the query string only for browser streaming
+     * (PDF / download / iframe). Never authenticate arbitrary API calls this way.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->headers->has('Authorization')) {
             $token = $request->query('token') ?? $request->query('bearer_token');
-            if ($token && is_string($token)) {
+            if (is_string($token) && $token !== '' && $this->allowsQueryToken($request)) {
                 $request->headers->set('Authorization', 'Bearer '.$token);
             }
         }
 
         return $next($request);
+    }
+
+    private function allowsQueryToken(Request $request): bool
+    {
+        $path = $request->path();
+
+        return (bool) preg_match(
+            '/(pdf|download|export|preview|serve-document|fiche-medicale|engagement|recepisse|ordre-de-service|pv-)/i',
+            $path
+        );
     }
 }

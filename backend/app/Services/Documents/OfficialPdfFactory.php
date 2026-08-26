@@ -29,6 +29,8 @@ class OfficialPdfFactory
         return Pdf::setOption([
             'isRemoteEnabled' => true,
             'chroot' => public_path(),
+            'isHtml5ParserEnabled' => true,
+            'defaultFont' => 'DejaVu Sans',
         ])->loadView($view, $data);
     }
 }

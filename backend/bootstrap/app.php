@@ -63,4 +63,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->reportable(function (Throwable $e) {
             app(SentryReporter::class)->capture($e);
         });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! $request->is('api/*') || config('app.debug')) {
+                return null;
+            }
+
+            if ($e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Illuminate\Auth\AuthenticationException
+                || $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur interne est survenue.',
+            ], 500);
+        });
     })->create();

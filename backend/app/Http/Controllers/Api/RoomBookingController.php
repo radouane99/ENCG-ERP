@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Room;
 use App\Models\RoomBooking;
-use App\Models\Schedule;
+use App\Services\Academic\TimetableRoomGuard;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,13 +34,23 @@ class RoomBookingController extends Controller
     {
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
-            'room_name' => 'required|string',
-            'booked_by' => 'required|exists:users,id',
+            'room_name' => 'nullable|string',
+            'booked_by' => 'nullable|exists:users,id',
             'purpose' => 'required|string',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
-            'status' => 'required|string|in:pending,approved,rejected,cancelled',
+            'status' => 'nullable|string|in:pending,approved,rejected,cancelled',
         ]);
+
+        $validated['booked_by'] = $validated['booked_by'] ?? $request->user()?->id;
+        $validated['room_name'] = $validated['room_name']
+            ?? Room::query()->whereKey($validated['room_id'])->value('name')
+            ?? 'Salle';
+        $user = $request->user();
+        $canApprove = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole([
+            'super-admin', 'institution-admin', 'director', 'scolarite',
+        ]);
+        $validated['status'] = $validated['status'] ?? ($canApprove ? 'approved' : 'pending');
 
         if ($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time'])) {
             return response()->json([
@@ -110,37 +121,40 @@ class RoomBookingController extends Controller
     }
 
     /**
-     * Vérifie les conflits de réservation et d'emploi du temps.
+     * Liste des salles libres pour une séance extra / rattrapage.
      */
-    private function hasConflict(int $roomId, string $startDateTime, string $endDateTime): bool
+    public function availableRooms(Request $request): JsonResponse
     {
-        $start = Carbon::parse($startDateTime);
-        $end = Carbon::parse($endDateTime);
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'headcount' => 'nullable|integer|min:1|max:500',
+            'kind' => 'nullable|string|in:all,td,amphi',
+        ]);
 
-        // 1. Conflit avec les réservations existantes
-        $bookingConflict = RoomBooking::where('room_id', $roomId)
-            ->whereIn('status', ['pending', 'approved'])
-            ->where(function ($query) use ($start, $end) {
-                $query->whereBetween('start_time', [$start, $end])
-                    ->orWhereBetween('end_time', [$start, $end])
-                    ->orWhere(fn ($q) => $q->where('start_time', '<=', $start)->where('end_time', '>=', $end));
-            })
-            ->exists();
+        $start = Carbon::parse($validated['date'].' '.$validated['start_time']);
+        $end = Carbon::parse($validated['date'].' '.$validated['end_time']);
 
-        if ($bookingConflict) {
-            return true;
-        }
+        $data = app(TimetableRoomGuard::class)->availableRooms(
+            $start,
+            $end,
+            (int) ($validated['headcount'] ?? 0),
+            $validated['kind'] ?? 'all'
+        );
 
-        // 2. Conflit avec l'emploi du temps
-        $dayOfWeek = $start->dayOfWeekIso;
-        $timeStart = $start->format('H:i:s');
-        $timeEnd = $end->format('H:i:s');
+        return response()->json(['success' => true, 'data' => $data]);
+    }
 
-        return Schedule::where('room_id', $roomId)
-            ->where('is_active', true)
-            ->where('day_of_week', $dayOfWeek)
-            ->whereTime('start_time', '<', $timeEnd)
-            ->whereTime('end_time', '>', $timeStart)
-            ->exists();
+    /**
+     * Vérifie les conflits (EDT + réservations) à la date demandée.
+     */
+    private function hasConflict(int|string $roomId, Carbon|string $startDateTime, Carbon|string $endDateTime): bool
+    {
+        return app(TimetableRoomGuard::class)->isRoomBusyAt(
+            (string) $roomId,
+            Carbon::parse($startDateTime),
+            Carbon::parse($endDateTime)
+        );
     }
 }

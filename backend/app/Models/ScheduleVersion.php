@@ -10,6 +10,13 @@ class ScheduleVersion extends Model
 {
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return [
+            'ai_metadata' => 'array',
+        ];
+    }
+
     public function academicYear(): BelongsTo
     {
         return $this->belongsTo(AcademicYear::class);

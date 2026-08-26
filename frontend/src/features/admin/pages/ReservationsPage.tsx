@@ -128,6 +128,12 @@ export default function ReservationsPage() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <Link
+              to="/admin/rooms/availability"
+              className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider"
+            >
+              Salles libres
+            </Link>
             <Link 
               to="/admin/reservations/create"
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"

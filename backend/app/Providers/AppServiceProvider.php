@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Validator;
+        use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -127,6 +127,10 @@ class AppServiceProvider extends ServiceProvider
 
         // 10. Configuration des commandes (si nécessaire)
         $this->bootCommands();
+
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 
     /**
@@ -272,11 +276,17 @@ class AppServiceProvider extends ServiceProvider
      */
     private function bootEloquent(): void
     {
-        // Empêcher le lazy loading en développement
-        Model::preventLazyLoading(! app()->isProduction());
-
-        // Empêcher les modifications silencieuses
+        Model::preventLazyLoading();
         Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
+
+        if (app()->isProduction()) {
+            Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
+                Log::warning('N+1 lazy load', [
+                    'model' => $model::class,
+                    'relation' => $relation,
+                ]);
+            });
+        }
 
         // Mass assignment remains model-level ($fillable / $guarded). Do not unguard globally.
 

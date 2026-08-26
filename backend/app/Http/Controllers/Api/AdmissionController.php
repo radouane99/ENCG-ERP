@@ -16,6 +16,8 @@ use App\Models\User;
 use App\Services\Academic\AdmissionService;
 use App\Services\AI\GeminiApiService;
 use App\Services\Ocr\OcrExtractionService;
+use App\Support\CandidateDossierGate;
+use App\Support\SignedDocumentUrl;
 use App\Support\TemporaryPassword;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
@@ -583,11 +585,14 @@ class AdmissionController extends Controller
     {
         $this->ensureSchemaColumnsExist();
         $user = auth()->user();
-        $cne = strtoupper(trim($request->query('cne', '')));
-        $cin = strtoupper(trim($request->query('cin', '')));
-        $email = strtolower(trim($request->query('email', '')));
+        $identity = CandidateDossierGate::requireIdentity($request, false);
+        $cne = $identity['cne'];
+        $cin = $identity['cin'];
+        $email = CandidateDossierGate::isStaff($user)
+            ? strtolower(trim((string) $request->query('email', '')))
+            : '';
 
-        if ($user) {
+        if ($user && ! CandidateDossierGate::isStaff($user)) {
             if (empty($email)) {
                 $email = strtolower(trim($user->email ?? ''));
             }
@@ -599,35 +604,31 @@ class AdmissionController extends Controller
             }
         }
 
-        // Fix unique email separation : Badr Boukir -> gm01.ems03@gmail.com & Fatima-Zahra -> radouane.asri99@gmail.com
-        try {
-            Application::where('cne', 'N142088916')->where('email', 'radouane.asri99@gmail.com')->update(['email' => 'gm01.ems03@gmail.com']);
-            Student::where('cne', 'N142088916')->where('email', 'radouane.asri99@gmail.com')->update(['email' => 'gm01.ems03@gmail.com']);
-            User::where('name', 'like', '%BADR%')->where('email', 'radouane.asri99@gmail.com')->update(['email' => 'gm01.ems03@gmail.com']);
-        } catch (\Throwable $e) {
-        }
-
-        if (empty($cne) && empty($cin) && empty($email) && ! $user) {
-            return response()->json(['success' => false, 'message' => 'CNE, CIN ou Email requis.'], 422);
-        }
-
         // 1) Chercher d'abord l'étudiant lié à l'utilisateur connecté ou par CNE / CIN / Email
         $student = null;
-        if ($user) {
+        if ($user && ! CandidateDossierGate::isStaff($user)) {
             $student = Student::with(['user', 'documents', 'latestPathway.filiere'])->where('user_id', $user->id)->first();
-        }
-        if (! $student && $cne) {
-            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])->where('cne', $cne)->first();
-        }
-        if (! $student && $cin) {
+        } elseif (CandidateDossierGate::isStaff($user)) {
+            if ($cne) {
+                $student = Student::with(['user', 'documents', 'latestPathway.filiere'])->where('cne', $cne)->first();
+            }
+            if (! $student && $cin) {
+                $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
+                    ->where('cin', $cin)
+                    ->orWhereHas('user', fn ($u) => $u->where('cin', $cin))
+                    ->first();
+            }
+            if (! $student && $email) {
+                $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
+                    ->whereHas('user', fn ($u) => $u->where('email', $email))
+                    ->first();
+            }
+        } else {
             $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
-                ->where('cin', $cin)
-                ->orWhereHas('user', fn ($u) => $u->where('cin', $cin))
-                ->first();
-        }
-        if (! $student && $email) {
-            $student = Student::with(['user', 'documents', 'latestPathway.filiere'])
-                ->whereHas('user', fn ($u) => $u->where('email', $email))
+                ->where('cne', $cne)
+                ->where(function ($q) use ($cin) {
+                    $q->where('cin', $cin)->orWhereHas('user', fn ($u) => $u->where('cin', $cin));
+                })
                 ->first();
         }
 
@@ -637,13 +638,16 @@ class AdmissionController extends Controller
         $searchCin = $cin ?: ($student?->cin ?? $user?->cin ?? null);
         $searchEmail = $email ?: ($user?->email ?? $student?->email ?? null);
 
-        if ($searchCne) {
+        if ($searchCne && (CandidateDossierGate::isStaff($user) || $user)) {
             $application = Application::where('cne', $searchCne)->latest('id')->first();
         }
-        if (! $application && $searchCin) {
+        if (! $application && $searchCne && $searchCin && ! $user) {
+            $application = Application::where('cne', $searchCne)->where('cin', $searchCin)->latest('id')->first();
+        }
+        if (! $application && $searchCin && CandidateDossierGate::isStaff($user)) {
             $application = Application::where('cin', $searchCin)->latest('id')->first();
         }
-        if (! $application && $searchEmail) {
+        if (! $application && $searchEmail && CandidateDossierGate::isStaff($user)) {
             $application = Application::where('email', $searchEmail)->latest('id')->first();
         }
 
@@ -785,7 +789,8 @@ class AdmissionController extends Controller
         foreach ($docs as $doc) {
             $docMap[$doc->type] = [
                 'id' => $doc->id,
-                'file_path' => $doc->file_path,
+                'file_path' => SignedDocumentUrl::make((string) $doc->type, (string) $cneQuery),
+                'signed_url' => SignedDocumentUrl::make((string) $doc->type, (string) $cneQuery),
                 'original_filename' => $doc->original_filename,
                 'status' => $doc->status,
                 'created_at' => $doc->created_at?->format('d/m/Y H:i'),
@@ -872,6 +877,7 @@ class AdmissionController extends Controller
     public function updateCandidateDossier(Request $request): JsonResponse
     {
         $this->ensureSchemaColumnsExist();
+        CandidateDossierGate::requireIdentity($request, true);
         $userAuth = auth()->user();
         $cne = strtoupper(trim($request->input('cne', '')));
         $cin = strtoupper(trim($request->input('cin', '')));
@@ -1164,8 +1170,8 @@ class AdmissionController extends Controller
         $request->validate([
             'file' => "required|file|max:10240|{$allowedMimes}",
             'type' => 'required|string|in:bac,cnie,photo,releve_notes,cin,cin_recto_verso',
-            'cne' => 'nullable|string',
-            'cin' => 'nullable|string',
+            'cne' => 'required|string',
+            'cin' => 'required|string',
         ], [
             'file.mimes' => ($typeInput === 'photo') ? 'Format de photo invalide (JPG/PNG/WEBP accepté).' : 'Format non autorisé. Seuls les documents au format PDF (.pdf) sont acceptés.',
         ]);
@@ -1224,14 +1230,12 @@ class AdmissionController extends Controller
         $filename = "{$typeCode}_{$cne}_{$nom}_{$prenom}.{$ext}";
         $storagePath = 'candidate_documents/'.$filename;
 
-        // Stocker dans le disk public avec le nom structuré
-        Storage::disk('public')->put($storagePath, file_get_contents($file->getRealPath()));
-        $fileUrl = '/storage/'.$storagePath;
+        Storage::disk('private')->put($storagePath, file_get_contents($file->getRealPath()));
 
         StudentDocument::updateOrCreate(
             ['cne' => $cne, 'type' => strtolower($request->input('type'))],
             [
-                'file_path' => $fileUrl,
+                'file_path' => $storagePath,
                 'original_filename' => $filename,
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
@@ -1242,7 +1246,7 @@ class AdmissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Document '{$typeCode}' enregistré sous le nom : {$filename}",
-            'file_path' => $fileUrl,
+            'file_path' => SignedDocumentUrl::make(strtolower($request->input('type')), $cne),
             'filename' => $filename,
         ]);
     }
@@ -1259,9 +1263,17 @@ class AdmissionController extends Controller
      * Servir un document candidat (Public / Iframe display).
      * Cherche par CNE dans student_documents (portail candidat + admin).
      */
-    public function serveCandidateDocumentPublic(string $type, string $cne): BinaryFileResponse|JsonResponse|Response
+    public function serveCandidateDocumentPublic(Request $request, string $type, string $cne): BinaryFileResponse|JsonResponse|Response
     {
         $cne = strtoupper(trim($cne));
+        $userAuth = $request->user();
+        $hasSignedAccess = SignedDocumentUrl::isValid($type, $cne, $request->query('exp'), $request->query('sig'));
+        $isOwner = $userAuth && strtoupper(trim((string) $userAuth->cne)) === $cne;
+        $isStaff = CandidateDossierGate::isStaff($userAuth);
+
+        if (! $hasSignedAccess && ! $isOwner && ! $isStaff) {
+            return response()->json(['success' => false, 'message' => 'Accès au document refusé.'], 403);
+        }
 
         $typeList = match (strtolower($type)) {
             'bac' => ['bac', 'BAC'],
@@ -1286,8 +1298,8 @@ class AdmissionController extends Controller
             }
 
             // Cas 2 : Chemin relatif disk local  →  private_candidate_documents/xxx.pdf
-            if (Storage::disk('local')->exists($path)) {
-                return response()->file(Storage::disk('local')->path($path), $headers);
+            if (Storage::disk('private')->exists($path)) {
+                return response()->file(Storage::disk('private')->path($path), $headers);
             }
 
             // Cas 3 : Chemin relatif disk public  →  candidate_documents/xxx.pdf
@@ -1355,7 +1367,8 @@ class AdmissionController extends Controller
     public function deleteCandidateDocument(Request $request): JsonResponse
     {
         $request->validate([
-            'cne' => 'nullable|string',
+            'cne' => 'required|string',
+            'cin' => 'required|string',
             'type' => 'required|string',
         ]);
 

@@ -160,17 +160,23 @@ class SmartSchedulingEngine
     {
         $filiereId = $config['filiere_id'] ?? null;
         $semesterId = $config['semester_id'] ?? null;
+        $semesterNumber = isset($config['semester_number']) ? (int) $config['semester_number'] : null;
 
-        // 1. Fetch Academic Domains & Resources
         $groupsQuery = Group::with('filiere');
         if ($filiereId) {
             $groupsQuery->where('filiere_id', $filiereId);
+        }
+        if ($semesterNumber >= 1 && $semesterNumber <= 10) {
+            $groupsQuery->where('semester_number', $semesterNumber);
         }
         $groups = $groupsQuery->get();
 
         $modulesQuery = Module::with('filiere');
         if ($filiereId) {
             $modulesQuery->where('filiere_id', $filiereId);
+        }
+        if ($semesterNumber >= 1 && $semesterNumber <= 10 && \Illuminate\Support\Facades\Schema::hasColumn('modules', 'semester_number')) {
+            $modulesQuery->where('semester_number', $semesterNumber);
         }
         $modules = $modulesQuery->get();
 
@@ -242,7 +248,7 @@ class SmartSchedulingEngine
                         'filiere_code' => $mod->filiere?->code ?? $lead->filiere?->code ?? 'ENCG',
                         'professor_id' => $profId,
                         'session_type' => 'cm',
-                        'required_type' => $cohortSize > 60 ? 'amphitheater' : 'classroom',
+                        'required_type' => (count($cohortIds) > 1 || $cohortSize > 50) ? 'amphitheater' : 'classroom',
                     ];
                 }
 

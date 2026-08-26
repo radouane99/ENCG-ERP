@@ -84,6 +84,7 @@ const QRScannerPage = lazy(() => import('@features/attendance/pages/QRScannerPag
 
 const TimetablePage = lazy(() => import('@features/timetable/pages/ModernTimetable'))
 const AdminTimetableEnginePage = lazy(() => import('@features/admin/pages/AdminTimetableEnginePage'))
+const AdminRoomAvailabilityPage = lazy(() => import('@features/admin/pages/AdminRoomAvailabilityPage'))
 const AttendancePage = lazy(() => import('@features/attendance/pages/AttendancePage'))
 
 const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPage'))
@@ -412,6 +413,10 @@ export default function RootRouter() {
             <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
             <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
             <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={[...TEACHING_ROLES, 'scolarite']} />}>
+            <Route path="/admin/rooms/availability" element={<AdminRoomAvailabilityPage />} />
           </Route>
 
 

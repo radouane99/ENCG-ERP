@@ -18,9 +18,13 @@ class TimetablePerformanceStrategy
     /** @var array<int, int> */
     private array $workingDays = [1, 2, 3, 4, 5];
 
+    public function __construct(private TimetableRoomGuard $roomGuard) {}
+
     public const HEURISTICS = [
         'CM — un cours pour les 2 groupes de la promotion (même prof, même salle, même horaire)',
-        'TD — séance séparée par groupe (peuvent être en parallèle si profs et salles distincts)',
+        'TD — séance séparée par groupe, salle petite adaptée à l\'effectif',
+        'CM — les 2 groupes ensemble dans un amphi / grande salle',
+        'Salle réservée (EDT ou réservation) invisible sur le même créneau',
         'Chevauchement — 08:30–10:30 bloque 09:30–11:30 pour le même professeur / salle / groupe',
         'MRV / LCV — domaine minimal puis créneau le moins saturé',
         'Load-cap — plafond pédagogique heures / jour',
@@ -59,6 +63,16 @@ class TimetablePerformanceStrategy
         $variables = $this->mergeSharedCours($variables);
 
         $grid = new TimetableOccupancyGrid;
+        $exceptIds = array_values(array_filter(array_map('intval', $config['except_schedule_ids'] ?? [])));
+        foreach ($variables as $var) {
+            if (! empty($var['schedule_id'])) {
+                $exceptIds[] = (int) $var['schedule_id'];
+            }
+            foreach ($var['schedule_ids'] ?? [] as $sid) {
+                $exceptIds[] = (int) $sid;
+            }
+        }
+        $this->roomGuard->seedOccupancy($grid, array_values(array_unique($exceptIds)));
         $unavailable = $this->prefetchUnavailability();
         $feasibleRooms = $this->indexFeasibleRooms($variables, $rooms);
         $degree = $this->degreeScores($variables);
@@ -145,7 +159,7 @@ class TimetablePerformanceStrategy
             'success' => count($unplaced) === 0,
             'strategy' => self::NAME,
             'heuristics' => self::HEURISTICS,
-            'hard_constraints' => ['professor_interval', 'room_interval', 'group_interval', 'cm_shared', 'td_per_group'],
+            'hard_constraints' => ['professor_interval', 'room_interval', 'group_interval', 'cm_shared', 'td_per_group', 'room_capacity', 'room_bookings'],
             'assignments' => $assignments,
             'unplaced' => $unplaced,
             'conflicts_prevented' => $conflictsPrevented,
@@ -234,24 +248,7 @@ class TimetablePerformanceStrategy
     {
         $index = [];
         foreach ($variables as $var) {
-            $index[$var['var_id']] = $rooms->filter(function ($room) use ($var) {
-                if (($room->is_out_of_service ?? false) || ($room->status ?? null) === 'out_of_service' || (($room->is_available ?? true) === false)) {
-                    return false;
-                }
-                $capacity = (int) ($room->capacity ?? 40);
-                $groupSize = (int) ($var['group_size'] ?? 30);
-                if ($capacity < $groupSize) {
-                    return false;
-                }
-                if (($var['session_type'] ?? 'cm') === 'cm' && $groupSize > 60 && ($room->type ?? '') !== 'amphitheater') {
-                    return false;
-                }
-                if (self::isCoursMagistral((string) ($var['session_type'] ?? 'cm')) && count(self::occupiedGroupIds($var)) > 1 && $capacity < 80 && ($room->type ?? '') === 'classroom' && $groupSize > 70) {
-                    return false;
-                }
-
-                return true;
-            })->values();
+            $index[$var['var_id']] = $this->roomGuard->feasibleRooms($var, $rooms);
         }
 
         return $index;

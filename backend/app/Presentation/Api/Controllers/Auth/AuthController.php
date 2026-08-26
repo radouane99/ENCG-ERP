@@ -6,6 +6,7 @@ namespace App\Presentation\Api\Controllers\Auth;
 
 use App\Domain\Auth\Services\RegisterUserService;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -143,7 +145,7 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'confirmed', Password::defaults()],
             'cne' => 'required|string|max:255',
             'cin' => 'nullable|string|max:255',
         ]);
@@ -258,8 +260,10 @@ class AuthController extends Controller
             ]);
 
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+            $code = Str::random(64);
+            Cache::put('oauth_exchange_'.$code, $token, now()->addMinutes(2));
 
-            return redirect()->to($frontend.'/auth/callback?token='.$token);
+            return redirect()->to($frontend.'/auth/callback?code='.$code);
         } catch (\Exception $e) {
             return redirect()->to($frontend.'/login?error=google');
         }
@@ -272,7 +276,7 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $user = $request->user();
@@ -320,28 +324,38 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'cne_available' => true,
-            'cin_available' => true,
+            'cne_available' => ! $cneExists,
+            'cin_available' => ! $cinExists,
             'is_pre_admitted' => $isPreAdmitted || $cneExists || $cinExists,
-            'cne' => $cne,
-            'cin' => $cin,
-            'candidate_name' => $application ? trim(($application->first_name ?? '').' '.($application->last_name ?? '')) : null,
-            'message' => $isPreAdmitted ? '🟢 Candidat Pré-Admis TAFEM identifié.' : '✅ CNE et CNIE valides.',
+            'message' => $isPreAdmitted ? 'Candidat pré-admis TAFEM identifié.' : 'CNE et CNIE valides.',
         ]);
     }
 
     /**
-     * Construit les données utilisateur pour l'API.
+     * Échange un code OAuth Google à usage unique contre le jeton Sanctum.
      */
+    public function exchangeGoogleCode(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:128',
+        ]);
+
+        $cacheKey = 'oauth_exchange_'.$validated['code'];
+        $token = Cache::pull($cacheKey);
+
+        if (! is_string($token) || $token === '') {
+            return response()->json(['message' => 'Code d\'échange invalide ou expiré.'], 422);
+        }
+
+        return response()->json([
+            'data' => [
+                'token' => $token,
+            ],
+        ]);
+    }
+
     private function buildUserData(User $user): array
     {
-        $user->loadMissing('roles', 'permissions');
-
-        return [
-            ...$user->toArray(),
-            'roles' => $user->roles->pluck('name')->toArray(),
-            'permissions' => $user->permissions->pluck('name')->toArray(),
-            'must_change_password' => (bool) $user->must_change_password,
-        ];
+        return (new UserResource($user))->resolve();
     }
 }

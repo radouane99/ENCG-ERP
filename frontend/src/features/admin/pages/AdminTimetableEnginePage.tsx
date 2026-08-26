@@ -1,751 +1,733 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { 
-  Sparkles, 
-  Zap, 
-  Cpu, 
-  Leaf, 
-  ShieldCheck, 
-  CheckCircle2, 
-  Play, 
-  Send, 
-  Calendar, 
-  Clock, 
-  Building2, 
-  Users, 
-  Sliders, 
-  RefreshCw,
-  Loader2,
+import React, { useMemo, useState } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import {
+  Building2,
+  Check,
   FileText,
-  DoorOpen,
-  TrendingUp,
-  Award
-} from 'lucide-react';
-import api from '@/shared/lib/api';
-import { toast } from 'sonner';
-import { cn } from '@/shared/lib/utils';
-import { Link } from 'react-router-dom';
+  Filter,
+  GripVertical,
+  Leaf,
+  Loader2,
+  Play,
+  RotateCcw,
+  Search,
+  Send,
+  Sliders,
+  Sparkles,
+  Users,
+} from 'lucide-react'
+import api from '@/shared/lib/api'
+import { toast } from 'sonner'
+import { cn } from '@/shared/lib/utils'
+import ManualTimetableBoard from './ManualTimetableBoard'
+import OfficialTimetableMatrix from './OfficialTimetableMatrix'
 
 interface ScheduledSession {
-  id: number | string;
-  day_of_week: number;
-  day_name: string;
-  start_time: string;
-  end_time: string;
-  slot_label: string;
-  group_id: number;
-  group_name: string;
-  module_id: number;
-  module_name: string;
-  module_code: string;
-  filiere_code: string;
-  professor_id: number;
-  professor_name: string;
-  room_id: number;
-  room_name: string;
-  room_building: string;
-  session_type: string;
-  energy_score: number;
+  id: number | string
+  day_of_week: number
+  day_name: string
+  start_time: string
+  end_time: string
+  group_name: string
+  module_name: string
+  filiere_code: string
+  professor_name: string
+  room_name: string
+  room_building: string
+  session_type: string
+  energy_score: number
 }
 
 interface SimulationData {
-  total_variables: number;
-  total_placed: number;
-  conflict_rate: number;
-  satisfaction_rate: number;
-  energy_efficiency_score: number;
-  conflicts_prevented: number;
-  building_clustering: Record<string, number>;
-  scheduled_sessions: ScheduledSession[];
-  execution_time_ms: number;
-  strategy?: string;
-  heuristics?: string[];
-  hard_constraints?: string[];
-  load_balance_score?: number;
+  total_variables: number
+  total_placed: number
+  satisfaction_rate: number
+  energy_efficiency_score: number
+  conflicts_prevented: number
+  building_clustering: Record<string, number>
+  scheduled_sessions: ScheduledSession[]
+  execution_time_ms: number
+  strategy?: string
+  heuristics?: string[]
+  load_balance_score?: number
 }
 
-export default function AdminTimetableEnginePage() {
-  // Configuration State
-  const [selectedFiliere, setSelectedFiliere] = useState<string>('');
-  const [selectedSemester, setSelectedSemester] = useState<string>('');
-  const [energyWeight, setEnergyWeight] = useState<number>(85);
-  const [profAvailWeight, setProfAvailWeight] = useState<number>(90);
-  const [maxDailyHours, setMaxDailyHours] = useState<number>(8);
-  const [viewTab, setViewTab] = useState<'grid' | 'energy' | 'audit'>('grid');
+const DEFAULTS = {
+  energyWeight: 85,
+  profAvailWeight: 90,
+  maxDailyHours: 8,
+}
 
-  // Simulation result state
-  const [simResult, setSimResult] = useState<SimulationData | null>(null);
+const STATUS_LABEL: Record<string, string> = {
+  EMPTY: 'À générer',
+  DRAFT: 'Brouillon',
+  PROPOSED: 'Chez les profs',
+  PUBLISHED: 'Publié',
+}
+
+const STEPS = [
+  { id: 1, label: 'Campagne', hint: 'Ouvrir le semestre' },
+  { id: 2, label: 'Générer', hint: 'Brouillon par filière' },
+  { id: 3, label: 'Ajuster', hint: 'IA ou glisser-déposer' },
+  { id: 4, label: 'Profs', hint: 'Ils confirment' },
+  { id: 5, label: 'Publier', hint: 'Visible étudiants' },
+]
+
+export default function AdminTimetableEnginePage() {
+  const [selectedFiliere, setSelectedFiliere] = useState('')
+  const [selectedSemester, setSelectedSemester] = useState('')
+  const [energyWeight, setEnergyWeight] = useState(DEFAULTS.energyWeight)
+  const [profAvailWeight, setProfAvailWeight] = useState(DEFAULTS.profAvailWeight)
+  const [maxDailyHours, setMaxDailyHours] = useState(DEFAULTS.maxDailyHours)
+  const [workMode, setWorkMode] = useState<'filieres' | 'official' | 'result'>('filieres')
+  const [viewTab, setViewTab] = useState<'grid' | 'energy' | 'audit'>('grid')
+  const [simResult, setSimResult] = useState<SimulationData | null>(null)
+  const [suggestedSlots, setSuggestedSlots] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [previewDay, setPreviewDay] = useState('ALL')
+  const [previewType, setPreviewType] = useState('ALL')
+  const [previewSearch, setPreviewSearch] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [manualBoard, setManualBoard] = useState<{ versionId: number; label: string } | null>(null)
+  const [busyFiliereId, setBusyFiliereId] = useState<number | null>(null)
+  const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null)
+
   const { data: workspace, refetch: refetchWorkspace } = useQuery({
     queryKey: ['edt-campaign-workspace'],
-    queryFn: () => api.get('/admin/smart-scheduling/workspace').then(res => res.data.data || res.data),
-  });
+    queryFn: () => api.get('/admin/smart-scheduling/workspace').then((res) => res.data.data || res.data),
+  })
+
+  const { data: filieres = [] } = useQuery({
+    queryKey: ['filieres-list'],
+    queryFn: () => api.get('/filieres').then((res) => res.data.data || res.data || []),
+  })
+
+  const officialScope = selectedFiliere ? 'filiere' : 'all'
+  const officialId = selectedFiliere || '0'
+  const { data: officialMatrix, isFetching: matrixLoading } = useQuery({
+    queryKey: ['edt-official-matrix', officialScope, officialId, selectedSemester],
+    enabled: workMode === 'official',
+    queryFn: () =>
+      api.get(`/timetable/export/${officialScope}/${officialId}/matrix`, {
+        params: selectedSemester ? { semester_number: Number(selectedSemester) } : {},
+      }).then((res) => res.data.data),
+  })
+
+  const { refetch: refetchStats } = useQuery({
+    queryKey: ['smart-scheduling-stats'],
+    queryFn: () => api.get('/admin/smart-scheduling/stats').then((res) => res.data.data || res.data || null),
+  })
 
   const openCampaignMutation = useMutation({
     mutationFn: () => api.post('/admin/smart-scheduling/campaign/open', { allow_saturday: false }),
     onSuccess: () => {
-      toast.success('Campagne EDT ouverte pour ce semestre (lundi–vendredi).');
-      refetchWorkspace();
+      toast.success('Campagne ouverte — lundi à vendredi, sans samedi.')
+      refetchWorkspace()
     },
-  });
+  })
 
   const draftMutation = useMutation({
     mutationFn: async (filiereId: number) => {
+      setBusyFiliereId(filiereId)
       const res = await api.post('/admin/smart-scheduling/draft', {
         filiere_id: filiereId,
         include_saturday: false,
         max_daily_hours: maxDailyHours,
         energy_weight: energyWeight,
-      });
-      return res.data.data;
+        semester_number: selectedSemester ? Number(selectedSemester) : undefined,
+      })
+      return res.data.data
     },
     onSuccess: (data: any) => {
-      setSimResult(data.simulation || data);
-      toast.success(data.message || 'Brouillon généré (non publié).');
-      refetchWorkspace();
+      setSimResult(data.simulation || data)
+      toast.success(data.message || 'Brouillon prêt — pas encore visible des étudiants.')
+      refetchWorkspace()
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Génération brouillon impossible');
+      toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Génération impossible')
     },
-  });
+    onSettled: () => setBusyFiliereId(null),
+  })
 
   const proposeMutation = useMutation({
     mutationFn: (versionId: number) => api.post(`/admin/smart-scheduling/versions/${versionId}/propose`),
     onSuccess: () => {
-      toast.success('Proposition envoyée aux enseignants. Les étudiants ne voient rien tant que vous ne publiez pas.');
-      refetchWorkspace();
+      toast.success('Proposition envoyée aux enseignants.')
+      refetchWorkspace()
     },
-  });
+  })
 
   const publishVersionMutation = useMutation({
     mutationFn: (versionId: number) => api.post(`/admin/smart-scheduling/versions/${versionId}/publish`),
     onSuccess: () => {
-      toast.success('EDT officiel publié pour cette filière.');
-      refetchWorkspace();
-      refetchStats();
+      toast.success('Emploi du temps publié pour les étudiants.')
+      setConfirmPublishId(null)
+      refetchWorkspace()
+      refetchStats()
     },
-  });
+  })
 
-  // Fetch Filieres
-  const { data: filieres = [] } = useQuery({
-    queryKey: ['filieres-list'],
-    queryFn: () => api.get('/filieres').then(res => res.data.data || res.data || []),
-  });
-
-  // Fetch Global Stats
-  const { data: globalStats, refetch: refetchStats } = useQuery({
-    queryKey: ['smart-scheduling-stats'],
-    queryFn: () => api.get('/admin/smart-scheduling/stats').then(res => res.data.data || res.data || null),
-  });
-
-  // Simulate Mutation (Dry Run)
   const simulateMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const res = await api.post('/admin/smart-scheduling/simulate', {
         filiere_id: selectedFiliere ? Number(selectedFiliere) : undefined,
-        semester_id: selectedSemester ? Number(selectedSemester) : undefined,
+        semester_number: selectedSemester ? Number(selectedSemester) : undefined,
         energy_weight: energyWeight,
         prof_avail_weight: profAvailWeight,
         include_saturday: false,
         max_daily_hours: maxDailyHours,
-      };
-      const res = await api.post('/admin/smart-scheduling/simulate', payload);
-      return res.data.data;
+      })
+      return res.data.data
     },
     onSuccess: (data: SimulationData) => {
-      setSimResult(data);
-      toast.success('Simulation CSP terminée avec succès !', {
-        description: `${data.total_placed} séances planifiées en ${data.execution_time_ms} ms (0 Conflit).`
-      });
+      setSimResult(data)
+      setWorkMode('result')
+      toast.success(`${data.total_placed} séances simulées, sans conflit.`)
     },
     onError: (err: any) => {
-      toast.error('Erreur lors de la simulation CSP', {
-        description: err.response?.data?.message || err.message
-      });
-    }
-  });
-
-  // Publish Mutation
-  const publishMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        filiere_id: selectedFiliere ? Number(selectedFiliere) : undefined,
-        semester_id: selectedSemester ? Number(selectedSemester) : undefined,
-        energy_weight: energyWeight,
-        prof_avail_weight: profAvailWeight,
-        overwrite: true,
-      };
-      const res = await api.post('/admin/smart-scheduling/generate', payload);
-      return res.data.data;
+      toast.error(err.response?.data?.message || err.message)
     },
-    onSuccess: (data: any) => {
-      toast.success('Emploi du temps officiel publié avec succès !', {
-        description: `${data.published_count} séances enregistrées dans la base de données.`
-      });
-      refetchStats();
+  })
+
+  const emptyDraftMutation = useMutation({
+    mutationFn: async ({ filiereId }: { filiereId: number; label: string }) => {
+      const res = await api.post('/admin/smart-scheduling/draft/empty', { filiere_id: filiereId })
+      return res.data.data
+    },
+    onSuccess: (data: any, vars) => {
+      refetchWorkspace()
+      if (data.version_id) {
+        setManualBoard({ versionId: data.version_id, label: vars.label })
+        toast.success(data.message || 'Grille manuelle prête.')
+      }
     },
     onError: (err: any) => {
-      toast.error('Erreur lors de la publication', {
-        description: err.response?.data?.message || err.message
-      });
-    }
-  });
+      toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Impossible d’ouvrir la grille')
+    },
+  })
 
-  // Auto run initial simulation on first load
-  useEffect(() => {
-    simulateMutation.mutate();
-  }, []);
+  const openManual = (card: any) => {
+    if (card.version_id) {
+      setManualBoard({ versionId: card.version_id, label: card.filiere_code })
+      return
+    }
+    emptyDraftMutation.mutate({ filiereId: card.filiere_id, label: card.filiere_code })
+  }
+
+  const handleResetAll = () => {
+    setSelectedFiliere('')
+    setSelectedSemester('')
+    setEnergyWeight(DEFAULTS.energyWeight)
+    setProfAvailWeight(DEFAULTS.profAvailWeight)
+    setMaxDailyHours(DEFAULTS.maxDailyHours)
+    setWorkMode('filieres')
+    setViewTab('grid')
+    setSimResult(null)
+    setSuggestedSlots([])
+    setSearch('')
+    setStatusFilter('ALL')
+    setPreviewDay('ALL')
+    setPreviewType('ALL')
+    setPreviewSearch('')
+    setShowAdvanced(false)
+    setManualBoard(null)
+    setConfirmPublishId(null)
+    toast.success('Filtres remis à zéro.')
+  }
 
   const handleExportPdf = async () => {
+    const type = selectedFiliere ? 'filiere' : 'all'
+    const id = selectedFiliere || '0'
     try {
-      toast.loading("Génération de l'emploi du temps PDF certifié...", { id: 'timetable-pdf' });
-      const res = await api.get('/timetable/export/filiere/1/pdf', { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      toast.success("📄 Emploi du temps PDF ouvert avec succès !", { id: 'timetable-pdf' });
+      toast.loading('PDF officiel…', { id: 'timetable-pdf' })
+      const res = await api.get(`/timetable/export/${type}/${id}/pdf`, {
+        responseType: 'blob',
+        params: selectedSemester ? { semester_number: Number(selectedSemester) } : {},
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      window.open(url, '_blank')
+      toast.success('PDF ouvert.', { id: 'timetable-pdf' })
     } catch {
-      toast.error("Erreur lors de l'exportation du PDF.", { id: 'timetable-pdf' });
+      toast.error('Export PDF impossible.', { id: 'timetable-pdf' })
     }
-  };
+  }
 
-  const handleExportIcs = async () => {
-    try {
-      toast.loading("Génération du fichier iCal (.ics)...", { id: 'timetable-ics' });
-      const res = await api.get('/timetable/export/filiere/1/ics', { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: 'text/calendar' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'emploi_du_temps_filiere_1.ics');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("📅 Synchronisation iCal (.ics) téléchargée !", { id: 'timetable-ics' });
-    } catch {
-      toast.error("Erreur lors de l'exportation iCal.", { id: 'timetable-ics' });
+  const filiereCards = workspace?.filieres || []
+  const filteredCards = useMemo(() => {
+    return filiereCards.filter((card: any) => {
+      const q = search.trim().toLowerCase()
+      const matchesSearch = !q || `${card.filiere_code} ${card.filiere_name}`.toLowerCase().includes(q)
+      const matchesStatus = statusFilter === 'ALL' || card.status === statusFilter
+      const matchesSelect = !selectedFiliere || String(card.filiere_id) === selectedFiliere
+      return matchesSearch && matchesStatus && matchesSelect
+    })
+  }, [filiereCards, search, statusFilter, selectedFiliere])
+
+  const counts = useMemo(() => {
+    const all = filiereCards as any[]
+    return {
+      total: all.length,
+      empty: all.filter((c) => c.status === 'EMPTY').length,
+      draft: all.filter((c) => c.status === 'DRAFT').length,
+      proposed: all.filter((c) => c.status === 'PROPOSED').length,
+      published: all.filter((c) => c.status === 'PUBLISHED').length,
     }
-  };
+  }, [filiereCards])
 
-  const suggestSlotsMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/admin/smart-scheduling/suggest-slots', {});
-      return res.data.data || [];
-    },
-    onSuccess: (slots: any[]) => {
-      setSuggestedSlots(slots);
-      toast.success(`${slots.length} créneau(x) validé(s) par le moteur anti-conflit.`);
-    },
-  });
+  const previewSessions = useMemo(() => {
+    const list = simResult?.scheduled_sessions || []
+    return list.filter((s) => {
+      const q = previewSearch.trim().toLowerCase()
+      const matchesQ = !q || `${s.module_name} ${s.group_name} ${s.professor_name} ${s.room_name}`.toLowerCase().includes(q)
+      const matchesDay = previewDay === 'ALL' || String(s.day_of_week) === previewDay
+      const matchesType = previewType === 'ALL' || s.session_type === previewType
+      return matchesQ && matchesDay && matchesType
+    })
+  }, [simResult, previewSearch, previewDay, previewType])
+
+  const statusBadge = (status: string) => {
+    if (status === 'PUBLISHED') return 'bg-emerald-50 text-emerald-800 border-emerald-200'
+    if (status === 'PROPOSED') return 'bg-indigo-50 text-indigo-800 border-indigo-200'
+    if (status === 'DRAFT') return 'bg-amber-50 text-amber-900 border-amber-200'
+    return 'bg-slate-100 text-slate-600 border-slate-200'
+  }
 
   const getFiliereColor = (code: string = '') => {
-    const c = code.toUpperCase();
-    if (c.includes('GFC') || c.includes('FINANCE')) return 'bg-indigo-600 border-indigo-800 text-white';
-    if (c.includes('MCM') || c.includes('MARKETING')) return 'bg-purple-600 border-purple-800 text-white';
-    if (c.includes('TC') || c.includes('TRONC')) return 'bg-emerald-600 border-emerald-800 text-white';
-    if (c.includes('GRH') || c.includes('RH')) return 'bg-amber-600 border-amber-800 text-white';
-    return 'bg-blue-600 border-blue-800 text-white';
-  };
+    const c = code.toUpperCase()
+    if (c.includes('GFC') || c.includes('FINANCE')) return 'bg-indigo-600 border-l-indigo-900 text-white'
+    if (c.includes('MCM') || c.includes('MARKETING')) return 'bg-purple-600 border-l-purple-900 text-white'
+    if (c.includes('TC') || c.includes('TRONC')) return 'bg-emerald-600 border-l-emerald-900 text-white'
+    if (c.includes('GRH') || c.includes('RH')) return 'bg-amber-600 border-l-amber-900 text-white'
+    return 'bg-blue-600 border-l-blue-900 text-white'
+  }
+
+  const generateEmpty = async () => {
+    const empties = filteredCards.filter((c: any) => c.status === 'EMPTY')
+    if (empties.length === 0) {
+      toast.info('Aucune filière vide dans le filtre actuel.')
+      return
+    }
+    if (!workspace?.campaign_open) {
+      toast.error('Ouvrez d’abord la campagne.')
+      return
+    }
+    for (const card of empties) {
+      try {
+        await draftMutation.mutateAsync(card.filiere_id)
+      } catch {
+        break
+      }
+    }
+  }
+
+  const activeStep = !workspace?.campaign_open ? 1 : counts.empty === counts.total ? 2 : counts.proposed > 0 ? 4 : counts.published > 0 ? 5 : 3
+
+  const selectClass = 'h-11 w-full px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001A4B]/20'
+
+  if (manualBoard) {
+    return (
+      <div className="max-w-[1600px] mx-auto p-4 md:p-6 pb-16">
+        <ManualTimetableBoard
+          versionId={manualBoard.versionId}
+          filiereLabel={manualBoard.label}
+          onBack={() => {
+            setManualBoard(null)
+            refetchWorkspace()
+          }}
+          onChanged={() => refetchWorkspace()}
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-[1700px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in duration-500 pb-32">
-      
-      {/* ── Hero Banner ────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 p-8 md:p-12 text-white shadow-2xl border border-indigo-900/60">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-          <div className="space-y-4 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 backdrop-blur-md">
-                <Cpu className="w-3.5 h-3.5 text-indigo-400 animate-pulse" /> Moteur IA / Solver CSP
-              </span>
-              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 backdrop-blur-md">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Zéro-Conflit Garanti
-              </span>
-              <span className="bg-teal-500/20 text-teal-300 border border-teal-400/30 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 backdrop-blur-md">
-                <Leaf className="w-3.5 h-3.5 text-teal-400" /> Green Campus ESG
-              </span>
-            </div>
-
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-              Générateur Automatique des Emplois du Temps
-            </h1>
-            <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">
-              Stratégie de performance MRV-Degree-LCV : occupation O(1) des ressources, zéro double-booking professeur / salle / groupe, plafond pédagogique et clustering des bâtiments.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
-            <button
-              onClick={() => suggestSlotsMutation.mutate()}
-              disabled={suggestSlotsMutation.isPending}
-              className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all backdrop-blur-md shadow-lg disabled:opacity-50"
-            >
-              {suggestSlotsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              3 créneaux validés
-            </button>
-            <button
-              onClick={() => simulateMutation.mutate()}
-              disabled={simulateMutation.isPending}
-              className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all backdrop-blur-md shadow-lg disabled:opacity-50"
-            >
-              {simulateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-indigo-400" /> : <Play className="w-4 h-4 text-indigo-300 fill-indigo-300" />}
-              Lancer Simulation CSP
-            </button>
-
-            <button
-              onClick={() => publishMutation.mutate()}
-              disabled={publishMutation.isPending || !simResult}
-              className="px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all shadow-xl shadow-emerald-950/30 disabled:opacity-50"
-            >
-              {publishMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4" />}
-              Forcer publication directe
-            </button>
-          </div>
+    <div className="max-w-[1440px] mx-auto p-4 md:p-6 space-y-5 font-sans pb-28">
+      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Direction des études · ENCG Fès</p>
+          <h1 className="text-2xl md:text-[28px] font-semibold tracking-tight text-[#001A4B] mt-1">Génération des emplois du temps</h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-xl">
+            {workspace?.campaign_label || 'Campagne semestrielle'} · lundi–vendredi · une filière à la fois, puis publication.
+          </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn(
+            'inline-flex items-center gap-2 h-11 px-4 rounded-xl text-sm font-semibold border',
+            workspace?.campaign_open ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-900 border-amber-200'
+          )}>
+            <span className={cn('w-2 h-2 rounded-full', workspace?.campaign_open ? 'bg-emerald-500' : 'bg-amber-500')} />
+            {workspace?.campaign_open ? 'Campagne ouverte' : 'Campagne fermée'}
+          </span>
+          {!workspace?.campaign_open && (
+            <button
+              onClick={() => openCampaignMutation.mutate()}
+              disabled={openCampaignMutation.isPending}
+              className="h-11 px-5 rounded-xl bg-[#001A4B] text-white text-sm font-semibold disabled:opacity-50"
+            >
+              {openCampaignMutation.isPending ? 'Ouverture…' : 'Ouvrir la campagne'}
+            </button>
+          )}
+        </div>
+      </header>
+
+      <ol className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {STEPS.map((step) => (
+          <li
+            key={step.id}
+            className={cn(
+              'rounded-2xl border px-3 py-3',
+              activeStep === step.id ? 'border-[#001A4B] bg-[#001A4B] text-white' : 'border-slate-200 bg-white text-slate-600'
+            )}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Étape {step.id}</p>
+            <p className="text-sm font-semibold">{step.label}</p>
+            <p className={cn('text-[11px] mt-0.5', activeStep === step.id ? 'text-indigo-100' : 'text-slate-400')}>{step.hint}</p>
+          </li>
+        ))}
+      </ol>
+
+      <div className="flex gap-1 p-1 rounded-2xl bg-slate-100 w-full md:w-fit">
+        {([
+          { id: 'filieres' as const, label: 'Filières à traiter' },
+          { id: 'official' as const, label: 'Grille officielle' },
+          { id: 'result' as const, label: 'Résultat IA' },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setWorkMode(tab.id)}
+            className={cn(
+              'flex-1 md:flex-none h-10 px-4 rounded-xl text-sm font-semibold',
+              workMode === tab.id ? 'bg-white text-[#001A4B] shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-sm space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Atelier EDT par filière</p>
-            <h2 className="text-xl font-black text-slate-900">
-              {workspace?.campaign_label || 'Campagne semestrielle'}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              1 clic génère un <strong>brouillon</strong> lundi–vendredi (pas de samedi). Les profs confirment leurs séances. Vous publiez ensuite — les étudiants ne voient que la version officielle.
-            </p>
+      <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-slate-700">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-semibold">Périmètre de travail</h2>
           </div>
-          <button
-            onClick={() => openCampaignMutation.mutate()}
-            disabled={openCampaignMutation.isPending || workspace?.campaign_open}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase tracking-wider disabled:opacity-50"
-          >
-            {workspace?.campaign_open ? 'Campagne ouverte' : 'Ouvrir la campagne du semestre'}
+          <button type="button" onClick={handleResetAll} className="h-9 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center gap-1.5">
+            <RotateCcw className="w-3.5 h-3.5" /> Tout réinitialiser
           </button>
         </div>
-        <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-wider">
-          {['Brouillon', 'Proposition profs', 'Publication officielle'].map((step, i) => (
-            <span key={step} className="px-3 py-1 rounded-full bg-slate-100 text-slate-600">
-              {i + 1}. {step}
-            </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="TC, GFC, MCM…"
+              className={cn(selectClass, 'pl-9')}
+            />
+          </div>
+          <select value={selectedFiliere} onChange={(e) => setSelectedFiliere(e.target.value)} className={selectClass}>
+            <option value="">Toutes les filières</option>
+            {filieres.map((f: any) => (
+              <option key={f.id} value={f.id}>{f.code} — {f.name}</option>
+            ))}
+          </select>
+          <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={selectClass}>
+            <option value="">Tous les semestres</option>
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={String(n)}>S{n} · {n % 2 === 1 ? 'automne' : 'printemps'}</option>
+            ))}
+          </select>
+          <select value={String(maxDailyHours)} onChange={(e) => setMaxDailyHours(Number(e.target.value))} className={selectClass}>
+            <option value="6">6 h max / jour</option>
+            <option value="8">8 h max / jour</option>
+            <option value="10">10 h max / jour</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {['ALL', 'EMPTY', 'DRAFT', 'PROPOSED', 'PUBLISHED'].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                'h-8 px-3 rounded-full text-xs font-semibold border',
+                statusFilter === s ? 'bg-[#001A4B] text-white border-[#001A4B]' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+              )}
+            >
+              {s === 'ALL' ? `Toutes (${counts.total})` : `${STATUS_LABEL[s]} (${s === 'EMPTY' ? counts.empty : s === 'DRAFT' ? counts.draft : s === 'PROPOSED' ? counts.proposed : counts.published})`}
+            </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {(workspace?.filieres || []).map((card: any) => (
-            <div key={card.filiere_id} className="rounded-2xl border border-slate-200 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-sm font-black text-slate-900">{card.filiere_code}</div>
-                  <div className="text-xs text-slate-500">{card.filiere_name}</div>
-                </div>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
-                  {card.status === 'EMPTY' ? 'Vide' : card.status}
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Confirmations : {card.confirmations?.confirmed || 0}/{card.confirmations?.total || 0}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => draftMutation.mutate(card.filiere_id)}
-                  disabled={draftMutation.isPending || !workspace?.campaign_open}
-                  className="px-3 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase disabled:opacity-40"
-                >
-                  Générer brouillon
-                </button>
-                {card.version_id && card.status === 'DRAFT' && (
-                  <button
-                    onClick={() => proposeMutation.mutate(card.version_id)}
-                    className="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-800 text-[10px] font-black uppercase"
-                  >
-                    Proposer aux profs
-                  </button>
-                )}
-                {card.version_id && card.status === 'PROPOSED' && (
-                  <button
-                    onClick={() => publishVersionMutation.mutate(card.version_id)}
-                    className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase"
-                  >
-                    Publier
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      </section>
 
-      {suggestedSlots.length > 0 && (
-        <div data-testid="suggested-slots" className="bg-white rounded-3xl p-6 border border-slate-200 space-y-3">
-          <h2 className="text-sm font-black uppercase tracking-wide">3 créneaux validés (férié / Ramadan / salle)</h2>
-          {suggestedSlots.map((slot, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3">
-              <div>
-                <p className="text-sm font-bold">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
-                <p className="text-xs text-slate-500">{slot.reason_fr || slot.text_fr}</p>
-              </div>
+      {workMode === 'filieres' && (
+        <section className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-slate-500">{filteredCards.length} filière{filteredCards.length > 1 ? 's' : ''} · action principale selon l’étape</p>
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => api.post('/schedules', {
-                  day_of_week: slot.day,
-                  start_time: slot.start_time,
-                  end_time: slot.end_time,
-                  room_id: slot.room_id,
-                }).then(() => toast.success('Séance créée.')).catch(() => toast.error('Création impossible — complète le formulaire EDT.'))}
-                className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"
+                type="button"
+                onClick={() => generateEmpty()}
+                disabled={!workspace?.campaign_open || draftMutation.isPending}
+                className="h-10 px-4 rounded-xl bg-[#001A4B] text-white text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-40"
               >
-                Créer
+                {draftMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Générer les filières vides
+              </button>
+              <button
+                type="button"
+                onClick={() => simulateMutation.mutate()}
+                disabled={simulateMutation.isPending}
+                className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold inline-flex items-center gap-2"
+              >
+                {simulateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                Tester sans enregistrer
               </button>
             </div>
-          ))}
-        </div>
+          </div>
+
+          {filteredCards.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 text-sm">
+              Aucune filière pour ce filtre. Cliquez <button type="button" onClick={handleResetAll} className="font-semibold text-[#001A4B] underline">Tout réinitialiser</button>.
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
+                      <th className="px-4 py-3 font-semibold">Filière</th>
+                      <th className="px-4 py-3 font-semibold">État</th>
+                      <th className="px-4 py-3 font-semibold">Profs (confirmés)</th>
+                      <th className="px-4 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCards.map((card: any) => {
+                      const busy = busyFiliereId === card.filiere_id
+                      return (
+                        <tr key={card.filiere_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/80">
+                          <td className="px-4 py-3.5">
+                            <p className="font-semibold text-slate-900">{card.filiere_code}</p>
+                            <p className="text-xs text-slate-500">{card.filiere_name}</p>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={cn('inline-flex text-[11px] font-semibold px-2.5 py-1 rounded-full border', statusBadge(card.status))}>
+                              {STATUS_LABEL[card.status] || card.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-slate-600">
+                            <p className="font-semibold">{card.confirmations?.confirmed || 0}/{card.confirmations?.total || 0}</p>
+                            <p className="text-[11px] text-slate-400">
+                              {card.confirmations?.sessions || 0} séance{(card.confirmations?.sessions || 0) > 1 ? 's' : ''}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              {(card.status === 'EMPTY' || card.status === 'DRAFT') && (
+                                <button
+                                  onClick={() => draftMutation.mutate(card.filiere_id)}
+                                  disabled={!workspace?.campaign_open || busy}
+                                  className="h-9 px-3 rounded-lg bg-[#001A4B] text-white text-xs font-semibold disabled:opacity-40 inline-flex items-center gap-1.5"
+                                >
+                                  {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                  {card.status === 'EMPTY' ? 'Générer' : 'Regénérer'}
+                                </button>
+                              )}
+                              {card.version_id && card.status === 'DRAFT' && (
+                                <button onClick={() => proposeMutation.mutate(card.version_id)} className="h-9 px-3 rounded-lg bg-indigo-50 text-indigo-800 text-xs font-semibold inline-flex items-center gap-1.5">
+                                  <Send className="w-3.5 h-3.5" /> Aux profs
+                                </button>
+                              )}
+                              {card.version_id && card.status === 'PROPOSED' && (
+                                confirmPublishId === card.version_id ? (
+                                  <span className="inline-flex items-center gap-1">
+                                    <button onClick={() => publishVersionMutation.mutate(card.version_id)} className="h-9 px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold">Confirmer</button>
+                                    <button onClick={() => setConfirmPublishId(null)} className="h-9 px-3 rounded-lg text-xs font-semibold text-slate-500">Non</button>
+                                  </span>
+                                ) : (
+                                  <button onClick={() => setConfirmPublishId(card.version_id)} className="h-9 px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold inline-flex items-center gap-1.5">
+                                    <Check className="w-3.5 h-3.5" /> Publier
+                                  </button>
+                                )
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => openManual(card)}
+                                disabled={emptyDraftMutation.isPending || (!card.version_id && !workspace?.campaign_open)}
+                                className="h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 disabled:opacity-40"
+                              >
+                                <GripVertical className="w-3.5 h-3.5" />
+                                {card.version_id ? 'Ajuster' : 'Manuel'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedFiliere(String(card.filiere_id))
+                                  setWorkMode('official')
+                                }}
+                                className="h-9 px-3 rounded-lg text-xs font-semibold text-slate-500 hover:text-[#001A4B]"
+                              >
+                                Voir
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="text-xs font-semibold text-slate-500 inline-flex items-center gap-2 hover:text-[#001A4B]">
+            <Sliders className="w-4 h-4" />
+            {showAdvanced ? 'Masquer les options IA' : 'Options IA (énergie, disponibilités)'}
+          </button>
+          {showAdvanced && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="inline-flex items-center gap-1"><Leaf className="w-4 h-4 text-teal-600" /> Énergie campus</span>
+                  <span>{energyWeight}%</span>
+                </div>
+                <input type="range" min="0" max="100" value={energyWeight} onChange={(e) => setEnergyWeight(Number(e.target.value))} className="w-full accent-teal-600" />
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="inline-flex items-center gap-1"><Users className="w-4 h-4 text-indigo-600" /> Disponibilités profs</span>
+                  <span>{profAvailWeight}%</span>
+                </div>
+                <input type="range" min="0" max="100" value={profAvailWeight} onChange={(e) => setProfAvailWeight(Number(e.target.value))} className="w-full accent-indigo-600" />
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
-      {/* ── KPI Metrics Cards ──────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex items-center gap-4 group hover:border-indigo-300 transition-all">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-2xl shrink-0 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Taux de Conflits</div>
-            <div className="text-2xl font-black text-emerald-600">0.0%</div>
-            <div className="text-[11px] font-bold text-slate-500">Zéro chevauchement garanti</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex items-center gap-4 group hover:border-indigo-300 transition-all">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-2xl shrink-0 group-hover:scale-105 transition-transform">
-            <CheckCircle2 className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Séances Placées</div>
-            <div className="text-2xl font-black text-slate-900">
-              {simResult ? `${simResult.total_placed} / ${simResult.total_variables}` : '100%'}
+      {workMode === 'official' && (
+        <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">Grille type PDF ENCG</h2>
+              <p className="text-sm text-slate-500">Une page par filière et semestre. Filtrez ci-dessus, puis exportez.</p>
             </div>
-            <div className="text-[11px] font-bold text-indigo-600">
-              {simResult ? `Satisfaction : ${simResult.satisfaction_rate}%` : 'Toutes les séances'}
+            <button onClick={handleExportPdf} className="h-10 px-4 rounded-xl bg-[#001A4B] text-white text-sm font-semibold inline-flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Télécharger le PDF
+            </button>
+          </div>
+          {matrixLoading ? (
+            <div className="py-16 flex justify-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin" /></div>
+          ) : (
+            <OfficialTimetableMatrix matrix={officialMatrix} />
+          )}
+        </section>
+      )}
+
+      {workMode === 'result' && (
+        <section className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+              <p className="text-[11px] font-semibold uppercase text-slate-400">Conflits</p>
+              <p className="text-2xl font-semibold text-emerald-600">0</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+              <p className="text-[11px] font-semibold uppercase text-slate-400">Séances</p>
+              <p className="text-2xl font-semibold">{simResult ? simResult.total_placed : '—'}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+              <p className="text-[11px] font-semibold uppercase text-slate-400">Énergie</p>
+              <p className="text-2xl font-semibold text-teal-600">{simResult ? `${simResult.energy_efficiency_score}%` : '—'}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+              <p className="text-[11px] font-semibold uppercase text-slate-400">Calcul</p>
+              <p className="text-2xl font-semibold">{simResult ? `${simResult.execution_time_ms} ms` : '—'}</p>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex items-center gap-4 group hover:border-indigo-300 transition-all">
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center font-black text-2xl shrink-0 group-hover:scale-105 transition-transform">
-            <Leaf className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Score Green Campus</div>
-            <div className="text-2xl font-black text-teal-600">
-              {simResult ? `${simResult.energy_efficiency_score}%` : '94.2%'}
-            </div>
-            <div className="text-[11px] font-bold text-slate-500">Regroupement thermique optimal</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex items-center gap-4 group hover:border-indigo-300 transition-all">
-          <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black text-2xl shrink-0 group-hover:scale-105 transition-transform">
-            <Zap className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Temps de Calcul Solver</div>
-            <div className="text-2xl font-black text-purple-600">
-              {simResult ? `${simResult.execution_time_ms} ms` : '< 500 ms'}
-            </div>
-            <div className="text-[11px] font-bold text-slate-500">MRV-Degree-LCV · occupation O(1)</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-sm space-y-4">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <Cpu className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-base font-black text-slate-900 uppercase tracking-wide">
-            Stratégie de performance EDT
-          </h2>
-          <span className="ml-auto text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full">
-            {simResult?.strategy || 'MRV-Degree-LCV'}
-          </span>
-        </div>
-        <p className="text-sm text-slate-600">
-          Chaque créneau n'admet qu'un professeur et une salle. Le CM réunit G1 et G2 ; le TD reste par groupe. Un horaire qui se chevauche (08:30–10:30 vs 09:30–11:30) est refusé pour le même enseignant.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {['Professeur unique / créneau', 'Salle unique / créneau', 'Groupe unique / créneau'].map((label) => (
-            <div key={label} className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs font-bold text-emerald-900">
-              {label}
-            </div>
-          ))}
-        </div>
-        {simResult?.heuristics && (
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-medium text-slate-600">
-            {simResult.heuristics.map((h) => (
-              <li key={h} className="flex items-start gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 mt-0.5 shrink-0" />
-                {h}
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="text-xs font-bold text-slate-500">
-          Équilibre de charge groupes : {simResult?.load_balance_score ?? '—'} / 100
-        </div>
-      </div>
-
-      {/* ── Control Deck & Tuning Sliders ──────────────────────── */}
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-sm space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-3">
-            <Sliders className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wide">
-              Paramètres & Pondérations de l'Algorithme CSP
-            </h2>
-          </div>
-          <span className="text-xs font-bold text-slate-400">ENCG Fès — Semestre d'Automne 2026/2027</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Filière Cible</label>
-            <select
-              value={selectedFiliere}
-              onChange={e => setSelectedFiliere(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="">Toutes les Filières (S1 à S10)</option>
-              {filieres.map((f: any) => (
-                <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+          {suggestedSlots.length > 0 && (
+            <div data-testid="suggested-slots" className="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+              <h2 className="text-sm font-semibold">Créneaux suggérés</h2>
+              {suggestedSlots.map((slot, i) => (
+                <p key={i} className="text-sm">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Période / Semestre</label>
-            <select
-              value={selectedSemester}
-              onChange={e => setSelectedSemester(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="">Semestre Actuel (Automne S1, S3, S5, S7, S9)</option>
-              <option value="1">Semestre 1 (Tronc Commun)</option>
-              <option value="3">Semestre 3 (Tronc Commun)</option>
-              <option value="5">Semestre 5 (Gestion / Commerce)</option>
-              <option value="7">Semestre 7 (Spécialités)</option>
-              <option value="9">Semestre 9 (Master & PFE)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Plafond Heures / Jour par Groupe</label>
-            <select
-              value={maxDailyHours}
-              onChange={e => setMaxDailyHours(Number(e.target.value))}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="6">Max 6 heures / jour (Recommandé)</option>
-              <option value="8">Max 8 heures / jour (Standard)</option>
-              <option value="10">Max 10 heures / jour (Intensif)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Sliders */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-slate-700 flex items-center gap-1.5">
-                <Leaf className="w-4 h-4 text-teal-600" /> Poids Optimisation Énergétique (Green Campus)
-              </span>
-              <span className="font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md">{energyWeight}%</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={energyWeight}
-              onChange={e => setEnergyWeight(Number(e.target.value))}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
-            />
-            <p className="text-[11px] text-slate-400">Regroupe les cours dans un même bâtiment pour réduire l'énergie de climatisation/éclairage.</p>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-slate-700 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-indigo-600" /> Poids Disponibilités Déclarées Professeurs
-              </span>
-              <span className="font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">{profAvailWeight}%</span>
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {(['grid', 'energy', 'audit'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setViewTab(tab)}
+                  className={cn('h-9 px-3 rounded-lg text-xs font-semibold', viewTab === tab ? 'bg-[#001A4B] text-white' : 'bg-slate-100 text-slate-600')}
+                >
+                  {tab === 'grid' ? 'Séances' : tab === 'energy' ? 'Bâtiments' : 'Audit'}
+                </button>
+              ))}
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={profAvailWeight}
-              onChange={e => setProfAvailWeight(Number(e.target.value))}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-            />
-            <p className="text-[11px] text-slate-400">Respecte les contraintes et créneaux déclarés par les enseignants dans leur portail.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── View Tabs & Preview Grid ───────────────────────────── */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden space-y-6 p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewTab('grid')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
-                viewTab === 'grid' ? "bg-indigo-900 text-white shadow-md" : "text-slate-500 hover:bg-slate-100"
-              )}
-            >
-              Grille Hebdomadaire ({simResult?.scheduled_sessions.length || 0})
-            </button>
-            <button
-              onClick={() => setViewTab('energy')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
-                viewTab === 'energy' ? "bg-teal-700 text-white shadow-md" : "text-slate-500 hover:bg-slate-100"
-              )}
-            >
-              Clustering Énergétique
-            </button>
-            <button
-              onClick={() => setViewTab('audit')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
-                viewTab === 'audit' ? "bg-purple-900 text-white shadow-md" : "text-slate-500 hover:bg-slate-100"
-              )}
-            >
-              Audit CSP ({simResult?.conflicts_prevented || 0} Résolus)
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportPdf}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-1.5 transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5 text-indigo-600" /> Export PDF
-            </button>
-            <button
-              onClick={handleExportIcs}
-              className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-extrabold flex items-center gap-1.5 transition-colors"
-            >
-              <Calendar className="w-3.5 h-3.5" /> Sync iCal (.ics)
-            </button>
-          </div>
-        </div>
-
-        {/* ── Tab: Grid View ─────────────────────────────────────── */}
-        {viewTab === 'grid' && (
-          <div className="space-y-4">
-            {!simResult || simResult.scheduled_sessions.length === 0 ? (
-              <div className="p-16 text-center text-slate-400 space-y-3">
-                <Clock className="w-12 h-12 mx-auto text-slate-300 animate-spin" />
-                <p className="font-bold text-sm">Génération de la matrice CSP en cours...</p>
+            {viewTab === 'grid' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input value={previewSearch} onChange={(e) => setPreviewSearch(e.target.value)} placeholder="Module, groupe, prof, salle…" className={selectClass} />
+                  <select value={previewDay} onChange={(e) => setPreviewDay(e.target.value)} className={selectClass}>
+                    <option value="ALL">Tous les jours</option>
+                    <option value="1">Lundi</option>
+                    <option value="2">Mardi</option>
+                    <option value="3">Mercredi</option>
+                    <option value="4">Jeudi</option>
+                    <option value="5">Vendredi</option>
+                  </select>
+                  <select value={previewType} onChange={(e) => setPreviewType(e.target.value)} className={selectClass}>
+                    <option value="ALL">CM + TD</option>
+                    <option value="cm">CM</option>
+                    <option value="td">TD</option>
+                  </select>
+                </div>
+                {!simResult ? (
+                  <p className="py-12 text-center text-slate-400 text-sm">Lancez « Tester sans enregistrer » ou générez un brouillon.</p>
+                ) : previewSessions.length === 0 ? (
+                  <p className="py-12 text-center text-slate-400 text-sm">Aucun résultat.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {previewSessions.map((session) => (
+                      <div key={session.id} className={cn('p-4 rounded-2xl border-l-4 space-y-2', getFiliereColor(session.filiere_code))}>
+                        <div className="flex justify-between text-[10px] font-bold uppercase">
+                          <span>{session.day_name} {session.start_time?.substring(0, 5)}–{session.end_time?.substring(0, 5)}</span>
+                          <span>{session.session_type?.toUpperCase()}</span>
+                        </div>
+                        <p className="font-semibold text-sm line-clamp-2">{session.module_name}</p>
+                        <p className="text-[11px] opacity-90">{session.group_name} · {session.room_name} · {session.professor_name}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {simResult.scheduled_sessions.map((session: ScheduledSession) => (
-                  <div
-                    key={session.id}
-                    className={cn(
-                      "p-4 rounded-2xl border-l-4 shadow-sm hover:scale-[1.02] transition-all bg-slate-50/80 border border-slate-200/80 space-y-2",
-                      getFiliereColor(session.filiere_code)
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="bg-black/30 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider text-white">
-                        {session.day_name} • {session.start_time.substring(0, 5)} - {session.end_time.substring(0, 5)}
-                      </span>
-                      <span className="bg-white/20 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase">
-                        {session.session_type.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <h3 className="font-black text-sm text-white line-clamp-1 leading-snug">
-                      {session.module_name}
-                    </h3>
-
-                    <div className="text-[11px] font-bold text-white/90 space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-white/80" /> {session.group_name} ({session.filiere_code})
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <DoorOpen className="w-3.5 h-3.5 text-white/80" /> {session.room_name} ({session.room_building})
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {session.professor_name}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-white/20 flex items-center justify-between text-[10px] text-white/80">
-                      <span>Score Thermique : <strong>{session.energy_score}%</strong></span>
-                      <span className="text-emerald-200 font-bold">✓ Validé CSP</span>
-                    </div>
+            )}
+            {viewTab === 'energy' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {simResult?.building_clustering && Object.entries(simResult.building_clustering).map(([building, count]) => (
+                  <div key={building} className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <Building2 className="w-5 h-5 text-teal-600 mb-2" />
+                    <p className="font-semibold text-sm">{building}</p>
+                    <p className="text-xl font-semibold">{Number(count)}</p>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Tab: Energy Clustering ─────────────────────────────── */}
-        {viewTab === 'energy' && (
-          <div className="space-y-6">
-            <div className="bg-teal-50 border border-teal-200 rounded-3xl p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black">
-                  <Leaf className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-base text-teal-950">Rapport d'Efficacité Énergétique — Green Campus ENCG</h3>
-                  <p className="text-xs text-teal-800 font-medium">
-                    Le solver regroupe automatiquement les séances des mêmes promotions dans des ailes de bâtiments adjacentes pour limiter le fonctionnement simultané des climatiseurs et projecteurs.
-                  </p>
-                </div>
+            {viewTab === 'audit' && simResult && (
+              <div className="bg-slate-900 text-slate-200 rounded-2xl p-4 font-mono text-xs space-y-1">
+                <p>Séances : {simResult.total_placed}/{simResult.total_variables}</p>
+                <p>Conflits évités : {simResult.conflicts_prevented}</p>
+                <p>Stratégie : {simResult.strategy}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {simResult?.building_clustering && Object.entries(simResult.building_clustering).map(([building, count]) => (
-                <div key={building} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <Building2 className="w-6 h-6 text-teal-600" />
-                  <div className="font-black text-sm text-slate-800">{building}</div>
-                  <div className="text-2xl font-black text-slate-900">{Number(count)} <span className="text-xs font-medium text-slate-400">séances</span></div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div className="bg-teal-600 h-2 rounded-full" style={{ width: `${Math.min(100, Number(count) * 10)}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </div>
-        )}
-
-        {/* ── Tab: CSP Audit ─────────────────────────────────────── */}
-        {viewTab === 'audit' && (
-          <div className="space-y-4">
-            <div className="bg-slate-900 text-white rounded-3xl p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-black text-sm uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Journal de Preuve Formelle CSP
-                </h3>
-                <span className="font-mono text-xs text-emerald-400 font-bold">100% Validé Mathématiquement</span>
-              </div>
-              <div className="font-mono text-xs text-slate-300 space-y-2 bg-black/40 p-4 rounded-2xl border border-white/10">
-                <div>[CSP SOLVER] Variables total : {simResult?.total_variables} créneaux nécessaires</div>
-                <div>[CSP SOLVER] Conflits potentiels résolus par Backtracking : {simResult?.conflicts_prevented}</div>
-                <div>[CSP SOLVER] Hard Constraints testées : 1. Pas de chevauchement prof (OK) • 2. Pas de chevauchement groupe (OK) • 3. Capacité salle (OK) • 4. Indisponibilités (OK)</div>
-                <div>[CSP SOLVER] Soft Constraints : Efficacité énergétique = {simResult?.energy_efficiency_score}% • Équilibre pédagogique = 100%</div>
-                <div className="text-emerald-400 font-bold">[CSP STATUS] SUCCESS : ZÉRO CONFLIT ENREGISTRÉ EN {simResult?.execution_time_ms} MS.</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
+        </section>
+      )}
     </div>
-  );
+  )
 }

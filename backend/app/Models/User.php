@@ -36,6 +36,9 @@ class User extends Authenticatable implements HasMedia
         'id',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'is_active',
+        'must_change_password',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -43,6 +46,7 @@ class User extends Authenticatable implements HasMedia
         'remember_token',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'last_login_ip',
     ];
 
     protected function casts(): array

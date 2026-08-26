@@ -14,18 +14,33 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing('roles', 'permissions', 'institution');
+
+        $roles = $this->roles->pluck('name')->values()->toArray();
+
         return [
             'id' => $this->uuid ?? $this->id,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'name' => trim($this->first_name.' '.$this->last_name),
+            'name' => trim(($this->first_name ?? '').' '.($this->last_name ?? '')) ?: $this->name,
+            'name_ar' => $this->name_ar,
             'email' => $this->email,
+            'phone' => $this->phone,
+            'cin' => $this->cin,
+            'cne' => $this->cne,
+            'avatar_path' => $this->avatar_path,
             'is_active' => (bool) $this->is_active,
-            'roles' => $this->whenLoaded('roles', function () {
-                return $this->roles->pluck('name')->values()->toArray();
-            }, []),
-            'type' => $this->relationLoaded('roles') && $this->roles->whereNotIn('name', ['professor', 'student'])->isNotEmpty() ? 'admin' : 'professor',
-            'role_label' => $this->relationLoaded('roles') && $this->roles->isNotEmpty() ? $this->roles->first()->name : 'Non assigné',
+            'must_change_password' => (bool) $this->must_change_password,
+            'two_factor_enabled' => (bool) $this->two_factor_enabled,
+            'locale' => $this->locale ?? 'fr',
+            'institution_id' => $this->institution_id,
+            'institution_name' => $this->institution?->name,
+            'roles' => $roles,
+            'permissions' => $this->permissions->pluck('name')->values()->toArray(),
+            'type' => collect($roles)->intersect(['professor', 'student', 'vacataire'])->count() === count($roles) && count($roles) > 0
+                ? ($roles[0] ?? 'user')
+                : (count($roles) ? 'admin' : 'user'),
+            'role_label' => $roles[0] ?? 'Non assigné',
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

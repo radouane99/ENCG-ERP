@@ -80,12 +80,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/events', [CalendarController::class, 'getEvents']);
         Route::get('/', [TimetableController::class, 'index']);
         Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
+        Route::get('/export/{type}/{id}/matrix', [TimetableExportController::class, 'officialMatrix']);
         Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
         Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
     });
 
     // Room Bookings
     Route::get('/room-bookings/check-availability', [RoomBookingController::class, 'checkAvailability']);
+    Route::get('/room-bookings/available-rooms', [RoomBookingController::class, 'availableRooms']);
     Route::apiResource('room-bookings', RoomBookingController::class);
 
     // Anti-Fraud Documents & PDFs

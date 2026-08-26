@@ -10,17 +10,17 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
 Route::prefix('v1/auth')->group(function () {
-    Route::get('/check-cne-availability', [AuthController::class, 'checkCneAvailability']);
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::get('/check-cne-availability', [AuthController::class, 'checkCneAvailability'])->middleware('throttle:10,1');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->middleware('throttle:login');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:login');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-    Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:5,1');
+    Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:login');
 
-    // Google Socialite Auth
-    Route::get('/google/redirect', [AuthController::class, 'redirectToGoogle']);
-    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback']);
+    Route::get('/google/redirect', [AuthController::class, 'redirectToGoogle'])->middleware('throttle:login');
+    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:login');
+    Route::post('/google/exchange', [AuthController::class, 'exchangeGoogleCode'])->middleware('throttle:login');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);

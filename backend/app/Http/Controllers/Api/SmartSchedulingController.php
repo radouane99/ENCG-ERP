@@ -29,6 +29,7 @@ class SmartSchedulingController extends Controller
             'prof_avail_weight' => 'nullable|numeric|min:0|max:100',
             'include_saturday' => 'nullable|boolean',
             'max_daily_hours' => 'nullable|integer|min:4|max:10',
+            'semester_number' => 'nullable|integer|min:1|max:10',
         ]);
 
         $result = $this->engine->simulate($validated);
@@ -147,6 +148,7 @@ class SmartSchedulingController extends Controller
             'energy_weight' => 'nullable|numeric|min:0|max:100',
             'max_daily_hours' => 'nullable|integer|min:4|max:10',
             'include_saturday' => 'nullable|boolean',
+            'semester_number' => 'nullable|integer|min:1|max:10',
         ]);
 
         $result = $this->campaigns->generateDraft((int) $validated['filiere_id'], $validated);
@@ -169,5 +171,83 @@ class SmartSchedulingController extends Controller
         $result = $this->campaigns->publish($versionId);
 
         return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);
+    }
+
+    public function emptyDraft(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'filiere_id' => 'required|integer|exists:filieres,id',
+        ]);
+        $result = $this->campaigns->ensureEmptyDraft((int) $validated['filiere_id']);
+
+        return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    public function board(int $versionId): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->campaigns->board($versionId),
+        ]);
+    }
+
+    public function moveBlock(Request $request, int $versionId): JsonResponse
+    {
+        $validated = $request->validate([
+            'schedule_ids' => 'required|array|min:1',
+            'schedule_ids.*' => 'integer',
+            'day_of_week' => 'required|integer|min:0|max:6',
+            'start_time' => 'nullable|string',
+            'end_time' => 'nullable|string',
+            'unplace' => 'nullable|boolean',
+            'professor_id' => 'nullable|integer|exists:professors,id',
+            'room_id' => 'nullable|integer|exists:rooms,id',
+        ]);
+
+        $result = $this->campaigns->moveBlock(
+            $versionId,
+            $validated['schedule_ids'],
+            (int) $validated['day_of_week'],
+            (string) ($validated['start_time'] ?? '08:30:00'),
+            (string) ($validated['end_time'] ?? '10:30:00'),
+            (bool) ($validated['unplace'] ?? false),
+            array_filter([
+                'professor_id' => $validated['professor_id'] ?? null,
+                'room_id' => $validated['room_id'] ?? null,
+            ], fn ($v) => $v !== null)
+        );
+
+        return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    public function addSession(Request $request, int $versionId): JsonResponse
+    {
+        $validated = $request->validate([
+            'group_ids' => 'nullable|array',
+            'group_ids.*' => 'integer|exists:groups,id',
+            'group_id' => 'nullable|integer|exists:groups,id',
+            'module_id' => 'required|integer|exists:modules,id',
+            'professor_id' => 'required|integer|exists:professors,id',
+            'room_id' => 'required|integer|exists:rooms,id',
+            'session_type' => 'required|string|in:cm,td,tp',
+            'day_of_week' => 'nullable|integer|min:0|max:6',
+            'start_time' => 'nullable|string',
+            'end_time' => 'nullable|string',
+        ]);
+
+        $result = $this->campaigns->addSession($versionId, $validated);
+
+        return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    public function deleteBlock(Request $request, int $versionId): JsonResponse
+    {
+        $validated = $request->validate([
+            'schedule_ids' => 'required|array|min:1',
+            'schedule_ids.*' => 'integer',
+        ]);
+        $result = $this->campaigns->deleteSession($versionId, $validated['schedule_ids']);
+
+        return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
     }
 }

@@ -75,9 +75,14 @@ class AlumniService
      */
     private function getDistribution(string $column, array $fallback): array
     {
+        $allowed = ['employment_status', 'sector'];
+        if (! in_array($column, $allowed, true)) {
+            return $fallback;
+        }
+
         $data = AcademicProject::where('type', 'alumni_survey')
             ->whereNotNull($column)
-            ->selectRaw("{$column} as name, count(*) as value")
+            ->selectRaw($column.' as name, count(*) as value')
             ->groupBy($column)
             ->orderByDesc('value')
             ->get()

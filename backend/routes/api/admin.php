@@ -93,7 +93,7 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 
 Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return new \App\Http\Resources\UserResource($request->user());
     });
 
     // Removed db-test route from here
@@ -152,6 +152,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
         Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
         Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
+        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
+        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
+        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
+        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
         Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
         Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
     });
@@ -165,6 +170,11 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
         Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
         Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
+        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
+        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
+        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
+        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
         Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
         Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
     });
@@ -404,7 +414,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Excel Import / Export (global — all modules)
     Route::get('export/{model}', [ExcelController::class, 'export']);
     Route::get('export/{model}/template', [ExcelController::class, 'template']);
-    Route::post('import/{model}', [ExcelController::class, 'import'])->middleware('throttle:10,1');
+    Route::post('import/{model}', [ExcelController::class, 'import'])->middleware('throttle:uploads');
 
     // Secure Documents & Anti-Fraud
     Route::post('documents/generate-attestation', [DocumentController::class, 'generateAttestation']);
@@ -988,7 +998,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
         Route::post('/{id}/revoke', [ProfessorSubstitutionController::class, 'revoke']);
     });
 
-    Route::middleware(['auth:sanctum'])->prefix('v1/admin/roles-permissions')->group(function () {
+    Route::middleware(['role:super-admin|institution-admin|director|admin', 'require-admin-2fa'])->prefix('v1/admin/roles-permissions')->group(function () {
         Route::get('/data', [AdminRolePermissionController::class, 'getData']);
         Route::post('/users/{user}', [AdminRolePermissionController::class, 'updateUserPermissions']);
     });
@@ -1013,7 +1023,8 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     // APOGEE Inscriptions Engine & Moteur Paie Vacataires RH/DAF
     // ──────────────────────────────────────────────────────────────────────────────
     Route::post('/academic/candidates/validate', [ApogeeEngineController::class, 'validateCandidate']);
-    Route::get('/hr/vacataires/payroll', [ApogeeEngineController::class, 'calculateVacationPayroll']);
+    Route::get('/hr/vacataires/payroll', [ApogeeEngineController::class, 'calculateVacationPayroll'])
+        ->middleware(['role:super-admin|institution-admin|director|finance-officer|hr-officer', 'require-admin-2fa']);
 
     // ──────────────────────────────────────────────────────────────────────────────
     // Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
@@ -1044,17 +1055,19 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
 // ──────────────────────────────────────────────────────────────────────────────
 // Public Unauthenticated Endpoints (candidate TAFEM + document verify only)
 // ──────────────────────────────────────────────────────────────────────────────
-Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
-Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
-Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
-Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument']);
-Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
-Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:6,1');
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
+    Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
+    Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
+    Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument'])->middleware('throttle:uploads');
+    Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
+    Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:ocr');
 
-Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
-Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
-Route::get('/public/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
-Route::get('/public/serve-document/{type}/{cne}', [AdmissionController::class, 'serveCandidateDocumentPublic']);
-Route::get('/public/inscription/status', [StudentController::class, 'getInscriptionStatusPublic']);
-Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality']);
-Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat']);
+    Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
+    Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+    Route::get('/public/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    Route::get('/public/serve-document/{type}/{cne}', [AdmissionController::class, 'serveCandidateDocumentPublic']);
+    Route::get('/public/inscription/status', [StudentController::class, 'getInscriptionStatusPublic']);
+    Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality'])->middleware('throttle:uploads');
+    Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat'])->middleware('throttle:10,1');
+});

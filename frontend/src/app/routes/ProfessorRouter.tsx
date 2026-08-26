@@ -11,6 +11,7 @@ const ProfessorAbsences = lazy(() => import('@features/absences/ui/pages/Profess
 const ProfessorCall = lazy(() => import('@features/professor-portal/pages/ProfessorCall'))
 const ProfessorClassroom = lazy(() => import('@features/professor-portal/pages/ProfessorClassroom'))
 const ProfessorReservations = lazy(() => import('@features/professor-portal/pages/ProfessorReservations'))
+const AdminRoomAvailabilityPage = lazy(() => import('@features/admin/pages/AdminRoomAvailabilityPage'))
 const ProfessorQCMGenerator = lazy(() => import('@features/professor-portal/pages/ProfessorQCMGenerator'))
 const ProfessorAnalytics = lazy(() => import('@features/professor-portal/pages/ProfessorAnalytics'))
 const ProfessorSmartGrading = lazy(() => import('@features/professor-portal/pages/ProfessorSmartGrading'))
@@ -51,6 +52,7 @@ export default function ProfessorRouter() {
       <Route path="absences/call/:sessionId" element={<ProfessorCall />} />
       <Route path="classroom/:moduleId" element={<ProfessorClassroom />} />
       <Route path="reservations" element={<ProfessorReservations />} />
+      <Route path="rooms/availability" element={<AdminRoomAvailabilityPage />} />
       <Route path="qcm-generator" element={<ProfessorQCMGenerator />} />
       <Route path="analytics" element={<ProfessorAnalytics />} />
       <Route path="grading" element={<ProfessorSmartGrading />} />

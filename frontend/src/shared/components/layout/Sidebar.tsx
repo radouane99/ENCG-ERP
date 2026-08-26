@@ -114,6 +114,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Jurys de Soutenance PFE', labelAr: 'لجان مناقشة التخرج', href: '/admin/jury-pfe', icon: Award, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
       { label: 'Salles & Amphithéâtres', labelAr: 'القاعات والمدرجات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Réservations de Salles', labelAr: 'حجز القاعات والمدرجات', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Salles libres (extra / rattrapage)', labelAr: 'القاعات المتاحة', href: '/admin/rooms/availability', icon: MapPin, roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Clubs & Vie Étudiante', labelAr: 'الأندية والأنشطة الطلابية', href: '/admin/clubs', icon: HeartHandshake, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Mobilité Internationale', labelAr: 'برامج التبادل والحركية', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
@@ -159,6 +160,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الأستاذ',
     items: [
       { label: 'Mon Emploi du Temps', labelAr: 'جدول أوقاتي', href: '/professor/schedules', icon: CalendarDays, roles: ['professor', 'vacataire'] },
+      { label: 'Salles libres (extra / rattrapage)', labelAr: 'القاعات المتاحة', href: '/professor/rooms/availability', icon: MapPin, roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Notes (Apogée)', labelAr: 'إدخال النقاط (أبوجي)', href: '/admin/grades', icon: FileEdit, roles: ['professor', 'vacataire'] },
       { label: 'Double Correction Apogée', labelAr: 'التصحيح المزدوج للمواد', href: '/professor/double-grading', icon: ArrowRightLeft, badge: 'LMD', roles: ['professor'] },
       { label: 'Cahier de Texte Vocal (IA)', labelAr: 'دفتر النصوص الصوتي الذكي', href: '/professor/voice-textbook', icon: Mic, badge: 'IA', roles: ['professor', 'vacataire'] },

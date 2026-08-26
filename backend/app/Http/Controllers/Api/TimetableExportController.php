@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Filiere;
 use App\Models\Schedule;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\Academic\OfficialTimetableMatrixService;
+use App\Services\Documents\OfficialPdfFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TimetableExportController extends Controller
 {
+    public function __construct(private OfficialTimetableMatrixService $officialMatrix) {}
     /**
      * Export pour FullCalendar.
      */
@@ -54,10 +57,24 @@ class TimetableExportController extends Controller
      */
     public function exportPdf(Request $request, string $type, int $id)
     {
-        $schedules = $this->fetchSchedules($type, $id);
-        $pdf = Pdf::loadView('pdf.timetable', ['schedules' => $schedules]);
+        $schedules = $this->fetchSchedules($type, $id, $request);
+        $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules));
+        $pdf = Pdf::loadView('pdf.emploi_du_temps_officiel', ['catalog' => $catalog])
+            ->setPaper('a4', 'landscape');
+        $stamp = $catalog['sections'][0]['semester_label'] ?? 'EDT';
+        $scope = $type === 'all' ? 'TOUTES_FILIERES' : ($catalog['sections'][0]['filiere_code'] ?? $type);
 
-        return $pdf->download("emploi_du_temps_{$type}_{$id}.pdf");
+        return $pdf->download('EDT_'.$scope.'_'.$stamp.'.pdf');
+    }
+
+    public function officialMatrix(Request $request, string $type, int $id): JsonResponse
+    {
+        $schedules = $this->fetchSchedules($type, $id, $request);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules)),
+        ]);
     }
 
     /**
@@ -100,18 +117,38 @@ class TimetableExportController extends Controller
     /**
      * Récupère les schedules selon le type et l'ID.
      */
-    private function fetchSchedules(string $type, int $id)
+    private function fetchSchedules(string $type, int $id, ?Request $request = null)
     {
-        $query = Schedule::with(['module', 'professor.user', 'room', 'group']);
+        $query = Schedule::with(['module', 'professor.user', 'room', 'group.filiere']);
+        $versionId = $request?->integer('version_id') ?: null;
+        $semesterNumber = $request?->integer('semester_number') ?: null;
+
+        if ($versionId) {
+            $query->where('schedule_version_id', $versionId);
+        }
 
         match ($type) {
             'group' => $query->where('group_id', $id),
             'filiere' => $query->whereHas('group', fn ($q) => $q->where('filiere_id', $id)),
             'professor' => $query->where('professor_id', $id),
             'room' => $query->where('room_id', $id),
+            'all' => null,
             default => null,
         };
 
-        return $query->get();
+        if ($semesterNumber >= 1 && $semesterNumber <= 10) {
+            $query->whereHas('group', fn ($q) => $q->where('semester_number', $semesterNumber));
+        }
+
+        return $query->orderBy('day_of_week')->orderBy('start_time')->get();
+    }
+
+    private function matrixMeta(string $type, int $id, $schedules): array
+    {
+        $filiere = $type === 'filiere'
+            ? Filiere::query()->find($id)
+            : $schedules->first()?->group?->filiere;
+
+        return ['filiere' => $filiere];
     }
 }
