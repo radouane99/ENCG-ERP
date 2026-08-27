@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Sparkles, Send, BrainCircuit, MessageSquareText,
   FileQuestion, Lightbulb, GraduationCap, Copy, CheckCircle2,
-  Mic, MicOff, Volume2, Square
+  Mic, Volume2, Square
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { aiApi } from '@shared/api/ai'
@@ -14,7 +14,7 @@ import { Input } from '@shared/components/ui/Input'
 import { toast } from 'sonner'
 
 export default function AiAssistantPage() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const chatEndRef = useRef<HTMLDivElement>(null)
   
@@ -138,7 +138,7 @@ export default function AiAssistantPage() {
 
       mediaRecorder.start()
       setIsRecording(true)
-    } catch (err) {
+    } catch {
       toast.error(isRtl ? 'الرجاء السماح بالوصول للميكروفون' : 'Veuillez autoriser l\'accès au microphone')
     }
   }

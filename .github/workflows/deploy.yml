@@ -64,7 +64,7 @@ jobs:
           DB_DATABASE: encg_erp_test
           DB_USERNAME: encg_user
           DB_PASSWORD: encg_password
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm

@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, UserCheck, Clock, FileSignature, CheckCircle2, FileText, Banknote, Plus, Edit2, Trash2, X, Download, LayoutGrid, List, XCircle, ChevronDown, Check, Building2, BookOpen, GraduationCap, Sparkles } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -149,7 +148,6 @@ const KANBAN_COLUMNS = [
 ];
 
 export default function VacataireList() {
-  const { t } = useTranslation('common')
   const [vacataires, setVacataires] = useState<Vacataire[]>([])
   const [modules, setModules] = useState<Module[]>([])
   const [departments, setDepartments] = useState<any[]>([])
@@ -163,7 +161,7 @@ export default function VacataireList() {
   
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const [vacRes, modRes, deptRes, filRes] = await Promise.all([
@@ -177,14 +175,14 @@ export default function VacataireList() {
       setModules(modRes.data.data || [])
       setDepartments(deptRes.data.data || [])
       setFilieres(filRes.data.data || [])
-    } catch (err) {
-      console.error(err)
+    } catch {
+      toast.error('Impossible de charger les vacataires.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery])
 
-  useEffect(() => { fetchData() }, [searchQuery])
+  useEffect(() => { void fetchData() }, [fetchData])
 
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY_FORM }); setShowModal(true) }
   const openEdit = (v: Vacataire) => {
@@ -227,7 +225,7 @@ export default function VacataireList() {
         await api.delete(`/hr/vacataires/${id}`)
         toast.success('Vacataire supprimé avec succès')
         fetchData()
-      } catch (err) { toast.error('Erreur lors de la suppression.') }
+      } catch { toast.error('Erreur lors de la suppression.') }
     }
   }
   
@@ -241,7 +239,7 @@ export default function VacataireList() {
         document.body.appendChild(link);
         link.click();
         link.remove();
-    } catch (error) {
+    } catch {
         toast.error('Erreur lors du téléchargement du contrat PDF');
     }
   }
@@ -386,7 +384,7 @@ export default function VacataireList() {
         await api.put(`/hr/vacataires/${vacataireId}`, { status: newStatus });
         toast.success('Statut mis à jour avec succès');
         fetchData();
-    } catch (err) {
+    } catch {
         toast.error('Erreur lors de la mise à jour du statut');
         fetchData(); // Revert
     }
