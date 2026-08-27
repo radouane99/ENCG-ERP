@@ -262,7 +262,7 @@ class RbacSeeder extends Seeder
                 'institution_id' => null,
             ],
             [
-                'name' => 'Admin ENCG Fès',
+                'name' => "Admin ENCG F\u{00E8}s",
                 'email' => 'admin@encg-fes.ma',
                 'role' => 'institution-admin',
                 'institution_id' => $institution?->id,

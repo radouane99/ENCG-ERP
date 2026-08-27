@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Utf8Text;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,10 +21,10 @@ class UserResource extends JsonResource
 
         return [
             'id' => $this->uuid ?? $this->id,
-            'first_name' => $this->first_name,
-            'last_name' => $this->last_name,
-            'name' => trim(($this->first_name ?? '').' '.($this->last_name ?? '')) ?: $this->name,
-            'name_ar' => $this->name_ar,
+            'first_name' => Utf8Text::repair($this->first_name),
+            'last_name' => Utf8Text::repair($this->last_name),
+            'name' => Utf8Text::repair(trim(($this->first_name ?? '').' '.($this->last_name ?? '')) ?: $this->name),
+            'name_ar' => Utf8Text::repair($this->name_ar),
             'email' => $this->email,
             'phone' => $this->phone,
             'cin' => $this->cin,
@@ -34,7 +35,7 @@ class UserResource extends JsonResource
             'two_factor_enabled' => (bool) $this->two_factor_enabled,
             'locale' => $this->locale ?? 'fr',
             'institution_id' => $this->institution_id,
-            'institution_name' => $this->institution?->name,
+            'institution_name' => Utf8Text::repair($this->institution?->name),
             'roles' => $roles,
             'permissions' => $this->permissions->pluck('name')->values()->toArray(),
             'type' => collect($roles)->intersect(['professor', 'student', 'vacataire'])->count() === count($roles) && count($roles) > 0
