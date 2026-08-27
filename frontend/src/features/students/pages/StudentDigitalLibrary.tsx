@@ -61,7 +61,7 @@ export default function StudentDigitalLibrary() {
                 <Clock className="w-4 h-4 text-amber-400" /> Mes Emprunts Actifs
               </h3>
               <div className="space-y-3">
-                {borrowings.map((b, i) => (
+                {borrowings.map((b: { title: string; status: string }, i: number) => (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-gray-300 text-sm truncate pr-4">{b.title}</span>
                     <span className={cn(

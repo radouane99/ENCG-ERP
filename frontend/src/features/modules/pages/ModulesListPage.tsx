@@ -25,6 +25,7 @@ interface Module {
   filiere: string;
   filiere_id: number | null;
   professor: string;
+  td_professor?: string;
   studentsCount: number;
   active: boolean;
   credit_hours: number | null;

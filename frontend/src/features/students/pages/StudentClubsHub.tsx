@@ -8,6 +8,7 @@ import {
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
 import EmptyState from '@shared/components/ui/EmptyState';
+import { toast } from 'sonner';
 
 export default function StudentClubsHub() {
   const queryClient = useQueryClient();

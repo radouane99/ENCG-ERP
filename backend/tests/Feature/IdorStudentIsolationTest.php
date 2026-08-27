@@ -4,7 +4,6 @@ use App\Models\Complaint;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Student;
-use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 function portalStudent(array $overrides = []): Student

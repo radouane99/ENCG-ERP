@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@shared/components/ui/
 import { Input } from '@shared/components/ui/Input'
 import { Button } from '@shared/components/ui/Button'
 import { toast } from 'sonner'
-import { gradeEntrySchema } from '../../../schemas/grade.schema'
+import { gradeEntrySchema, type GradeEntry } from '../../../schemas/grade.schema'
 import { ZodError } from 'zod'
 
 import { Badge } from '@shared/components/ui/Badge'
@@ -13,7 +13,7 @@ import LmdLegend from '@shared/components/academic/LmdLegend'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 
-type GradeRow = { student_id: number; value: number | null; absent: boolean }
+type GradeRow = GradeEntry
 
 export default function GradeEntryTable() {
   const [searchParams] = useSearchParams()

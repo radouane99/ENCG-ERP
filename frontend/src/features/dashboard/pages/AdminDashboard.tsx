@@ -4,12 +4,12 @@ import api from '@shared/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import {
-  Users, GraduationCap, BookOpen, CalendarCheck,
-  Activity, Layers, ChevronRight, Zap, Sparkles,
-  UserPlus, CheckCircle2, ShieldAlert,
+  Users, GraduationCap, CalendarCheck,
+  Activity, ChevronRight, Zap, Sparkles,
+  CheckCircle2, ShieldAlert,
   RefreshCcw, FileSpreadsheet, Filter, Check, X,
   BrainCircuit, ShieldCheck, Link2, Calendar, Lock, Globe, Sun, Moon,
-  Stamp, Clock, TrendingUp, TrendingDown, ArrowUpRight, Trophy
+  Stamp, Trophy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
