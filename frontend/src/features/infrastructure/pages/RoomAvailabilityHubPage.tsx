@@ -21,12 +21,17 @@ import {
   FileText,
   ChevronRight,
   PlusCircle,
-  Building2
+  Building2,
+  ShieldCheck,
+  Printer,
+  Download,
+  CalendarPlus,
+  BellRing
 } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
-import { format, addDays, startOfWeek } from 'date-fns'
+import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 const TIME_BLOCKS = [
@@ -38,6 +43,7 @@ const TIME_BLOCKS = [
 
 export default function RoomAvailabilityHubPage() {
   const [activeTab, setActiveTab] = useState<'finder' | 'matrix' | 'room_schedule' | 'bookings'>('finder')
+  const [isExamMode, setIsExamMode] = useState<boolean>(false)
 
   // --- Common Data ---
   const [rooms, setRooms] = useState<any[]>([])
@@ -67,6 +73,7 @@ export default function RoomAvailabilityHubPage() {
   const [selectedScheduleRoomId, setSelectedScheduleRoomId] = useState<string>('')
   const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([])
   const [roomScheduleLoading, setRoomScheduleLoading] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   // --- Bookings State ---
   const [bookings, setBookings] = useState<any[]>([])
@@ -74,6 +81,7 @@ export default function RoomAvailabilityHubPage() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false)
   const [bookingRoom, setBookingRoom] = useState<any>(null)
   const [bookingPurpose, setBookingPurpose] = useState('')
+  const [notifyStudents, setNotifyStudents] = useState(true)
   const [submittingBooking, setSubmittingBooking] = useState(false)
 
   // Initial Load
@@ -223,9 +231,10 @@ export default function RoomAvailabilityHubPage() {
   }, [activeTab])
 
   // Open booking modal
-  const handleOpenBooking = (room: any, overrideSlot?: any) => {
+  const handleOpenBooking = (room: any) => {
     setBookingRoom(room)
     setBookingPurpose(`Séance de rattrapage — ${sessionType.toUpperCase()}`)
+    setNotifyStudents(true)
     setBookingModalOpen(true)
   }
 
@@ -246,11 +255,13 @@ export default function RoomAvailabilityHubPage() {
         start_time: `${targetDate} ${slot.start}:00`,
         end_time: `${targetDate} ${slot.end}:00`,
         status: 'approved',
+        group_ids: selectedGroupIds,
+        notify_students: notifyStudents,
       })
 
-      toast.success(`Réservation confirmée pour ${bookingRoom.name} !`)
+      toast.success(`Réservation confirmée pour ${bookingRoom.name} ! ${notifyStudents ? 'Notifications et emails envoyés.' : ''}`)
       setBookingModalOpen(false)
-      handleRunSmartFind() // Refresh find
+      handleRunSmartFind()
       if (activeTab === 'bookings') loadBookings()
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erreur lors de la réservation')
@@ -270,13 +281,54 @@ export default function RoomAvailabilityHubPage() {
     }
   }
 
+  // Download Door Sign PDF
+  const handleDownloadDoorSign = async () => {
+    if (!selectedScheduleRoomId) return
+    try {
+      setExportingPdf(true)
+      toast.info('Génération du panneau de porte PDF A4 officiel avec QR Code…')
+      const response = await api.get(`/rooms/${selectedScheduleRoomId}/door-sign-pdf`, {
+        responseType: 'blob',
+      })
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Affiche_Porte_Salle_${selectedScheduleRoomId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toast.success('Panneau de porte PDF téléchargé avec succès !')
+    } catch (err) {
+      console.error(err)
+      toast.error('Erreur lors du téléchargement du PDF de porte')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
+  // Export iCal .ics
+  const handleExportIcs = () => {
+    if (!selectedScheduleRoomId) return
+    window.open(`${api.defaults.baseURL}/timetable/export/room/${selectedScheduleRoomId}/ics`, '_blank')
+    toast.success('Téléchargement du calendrier .ics (Google / Outlook / Apple) lancé !')
+  }
+
+  // Helper for capacity in exam vs normal mode
+  const getDisplayCapacity = (r: any) => {
+    if (isExamMode) {
+      return r.exam_capacity ?? Math.floor(r.capacity / 2)
+    }
+    return r.capacity
+  }
+
   const selectClass = "h-10 w-full px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
 
   return (
     <div className="max-w-[1700px] mx-auto p-4 md:p-6 space-y-5 font-sans pb-28">
 
       {/* ══════════════════════════════════════════════════════
-          HERO HEADER — Deep ENCG Navy
+          HERO HEADER — Deep ENCG Navy with Mode Toggle
       ══════════════════════════════════════════════════════ */}
       <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
         <div className="absolute top-0 right-0 w-80 h-80 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
@@ -288,6 +340,11 @@ export default function RoomAvailabilityHubPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300/90 inline-flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-400" /> Infrastructure & Gestion du Campus · ENCG Fès
               </span>
+              {isExamMode && (
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-xs animate-pulse">
+                  🛡️ Mode Capacité Examen (1 place sur 2)
+                </span>
+              )}
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
               Occupation des Salles & Moteur de Rattrapage
@@ -298,6 +355,24 @@ export default function RoomAvailabilityHubPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Mode Examen Switch */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsExamMode(!isExamMode)
+                toast.info(!isExamMode ? 'Mode Examen activé : les jauges sont basculées à 50% (Anti-fraude).' : 'Mode Enseignement standard rétabli.')
+              }}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border shadow-sm",
+                isExamMode
+                  ? "bg-rose-600 text-white border-rose-400 ring-2 ring-rose-300/30"
+                  : "bg-white/10 hover:bg-white/20 text-white border-white/20"
+              )}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              {isExamMode ? 'Jauge Examen : 1 place sur 2 (Active)' : 'Activer Jauge Examen (Anti-fraude)'}
+            </button>
+
             <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md">
               <DoorOpen className="w-5 h-5 text-indigo-300" />
               <div>
@@ -308,8 +383,10 @@ export default function RoomAvailabilityHubPage() {
             <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md">
               <Building2 className="w-5 h-5 text-emerald-300" />
               <div>
-                <p className="text-[10px] uppercase font-bold text-blue-200/70">Amphithéâtres</p>
-                <p className="text-sm font-black text-white">{rooms.filter(r => r.type === 'amphitheatre').length}</p>
+                <p className="text-[10px] uppercase font-bold text-blue-200/70">Places {isExamMode ? 'Examen' : 'Enseignement'}</p>
+                <p className="text-sm font-black text-white">
+                  {rooms.reduce((acc, r) => acc + getDisplayCapacity(r), 0)}
+                </p>
               </div>
             </div>
           </div>
@@ -324,7 +401,7 @@ export default function RoomAvailabilityHubPage() {
         {[
           { id: 'finder' as const, label: 'Assistant Rattrapage & Smart Finder', icon: Sparkles },
           { id: 'matrix' as const, label: 'Matrice d\'Occupation Globale (Heatmap)', icon: Layers },
-          { id: 'room_schedule' as const, label: 'Planning par Salle', icon: Calendar },
+          { id: 'room_schedule' as const, label: 'Planning & Panneau de Porte PDF', icon: Calendar },
           { id: 'bookings' as const, label: 'Registre des Réservations', icon: FileText },
         ].map(tab => (
           <button
@@ -407,7 +484,7 @@ export default function RoomAvailabilityHubPage() {
                   <option value="td">Travaux Dirigés (TD) — Salle standard</option>
                   <option value="rattrapage">Séance de Rattrapage</option>
                   <option value="seminar">Séminaire / Master</option>
-                  <option value="exam">Examen / Épreuve de contrôle</option>
+                  <option value="exam">Examen / Épreuve de contrôle (Jauge 50%)</option>
                 </select>
               </div>
 
@@ -486,7 +563,7 @@ export default function RoomAvailabilityHubPage() {
                   <option value="">Aucune préférence (Trouver la meilleure salle)</option>
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>
-                      {r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {r.capacity} places)
+                      {r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} places {isExamMode ? 'exam' : ''})
                     </option>
                   ))}
                 </select>
@@ -602,7 +679,7 @@ export default function RoomAvailabilityHubPage() {
                       Salles Libres Disponibles ({finderResult.available_rooms_count})
                     </h3>
                     <span className="text-[10px] font-bold text-slate-400">
-                      Classées par pertinence & capacité
+                      Classées par pertinence & capacité {isExamMode ? '(Jauge 50%)' : ''}
                     </span>
                   </div>
 
@@ -628,7 +705,7 @@ export default function RoomAvailabilityHubPage() {
                               <p className="text-[10px] text-slate-400 font-bold uppercase">{room.type === 'amphitheatre' ? 'Amphithéâtre' : 'Salle TD'}</p>
                             </div>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              {room.capacity} places
+                              {getDisplayCapacity(room)} places {isExamMode ? 'exam' : ''}
                             </span>
                           </div>
 
@@ -741,7 +818,9 @@ export default function RoomAvailabilityHubPage() {
                     <tr key={r.room_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-black text-slate-900 dark:text-slate-100">{r.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium">{r.type === 'amphitheatre' ? 'Amphi' : 'Salle TD'} · {r.capacity} pl.</p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {r.type === 'amphitheatre' ? 'Amphi' : 'Salle TD'} · {getDisplayCapacity(r)} pl. {isExamMode ? '(exam)' : ''}
+                        </p>
                       </td>
                       {r.slots?.map((slot: any, idx: number) => {
                         const isFree = slot.status === 'free'
@@ -784,7 +863,7 @@ export default function RoomAvailabilityHubPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 3: SINGLE ROOM SCHEDULE
+          TAB 3: SINGLE ROOM SCHEDULE & DOOR SIGN PDF
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'room_schedule' && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
@@ -792,23 +871,48 @@ export default function RoomAvailabilityHubPage() {
             <div>
               <h2 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-indigo-500" />
-                Planning Détaillé par Salle
+                Planning Détaillé & Panneau de Porte PDF
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Consultez toutes les séances programmées pour une salle spécifique.
+                Consultez toutes les séances, exportez le panneau de porte A4 avec QR Code ou synchronisez votre agenda.
               </p>
             </div>
 
-            <div className="w-64">
-              <select
-                value={selectedScheduleRoomId}
-                onChange={(e) => setSelectedScheduleRoomId(e.target.value)}
-                className={selectClass}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="w-64">
+                <select
+                  value={selectedScheduleRoomId}
+                  onChange={(e) => setSelectedScheduleRoomId(e.target.value)}
+                  className={selectClass}
+                >
+                  {rooms.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} pl.)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* PDF Door Sign Export */}
+              <button
+                type="button"
+                onClick={handleDownloadDoorSign}
+                disabled={exportingPdf}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs disabled:opacity-60"
               >
-                {rooms.map(r => (
-                  <option key={r.id} value={r.id}>{r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {r.capacity} pl.)</option>
-                ))}
-              </select>
+                {exportingPdf ? <Loader2 size={13} className="animate-spin" /> : <Printer size={13} />}
+                Affiche de Porte PDF (A4)
+              </button>
+
+              {/* iCal Export */}
+              <button
+                type="button"
+                onClick={handleExportIcs}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all active:scale-95 cursor-pointer border border-slate-200 dark:border-slate-700"
+              >
+                <CalendarPlus size={13} className="text-indigo-600" />
+                Sync Agenda (.ics)
+              </button>
             </div>
           </div>
 
@@ -945,7 +1049,7 @@ export default function RoomAvailabilityHubPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          CONFIRMATION MODAL FOR BOOKING
+          CONFIRMATION MODAL FOR BOOKING WITH AUTO-NOTIFICATION
       ══════════════════════════════════════════════════════ */}
       {bookingModalOpen && bookingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
@@ -982,10 +1086,31 @@ export default function RoomAvailabilityHubPage() {
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-1">
-                <p><strong>Salle :</strong> {bookingRoom.name} ({bookingRoom.capacity} places)</p>
+                <p><strong>Salle :</strong> {bookingRoom.name} ({getDisplayCapacity(bookingRoom)} places {isExamMode ? 'exam' : ''})</p>
                 <p><strong>Effectif prévu :</strong> {calculatedHeadcount} étudiants</p>
                 <p><strong>Date & Heure :</strong> {targetDate} ({TIME_BLOCKS[selectedSlotIndex].label})</p>
               </div>
+
+              {/* Notification Toggle */}
+              {selectedGroupIds.length > 0 && (
+                <label className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifyStudents}
+                    onChange={(e) => setNotifyStudents(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                      <BellRing size={13} className="text-indigo-600" />
+                      Notifier automatiquement les étudiants
+                    </span>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Envoie une notification Push in-app + Email officiel aux étudiants des groupes sélectionnés.
+                    </p>
+                  </div>
+                </label>
+              )}
 
               <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
                 <button

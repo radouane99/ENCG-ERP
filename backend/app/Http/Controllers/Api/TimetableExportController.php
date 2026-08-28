@@ -114,6 +114,39 @@ class TimetableExportController extends Controller
             $ics .= "DESCRIPTION:Prof: {$profName}\n";
             $ics .= "END:VEVENT\n";
         }
+
+        // Include approved room bookings / rattrapages
+        $bookingsQuery = \App\Models\RoomBooking::with('booker')
+            ->where('status', 'approved')
+            ->where('start_time', '>=', $startDate->copy()->startOfDay());
+
+        if ($type === 'room') {
+            $bookingsQuery->where('room_id', $id);
+        } elseif ($type === 'professor') {
+            $profUserId = \App\Models\Professor::find($id)?->user_id;
+            if ($profUserId) {
+                $bookingsQuery->where('booked_by', $profUserId);
+            }
+        }
+
+        foreach ($bookingsQuery->get() as $booking) {
+            $bStart = \Carbon\Carbon::parse($booking->start_time)->format('Ymd\THis\Z');
+            $bEnd = \Carbon\Carbon::parse($booking->end_time)->format('Ymd\THis\Z');
+            $purpose = $booking->purpose ?? 'Séance Extra / Rattrapage';
+            $rName = $booking->room_name ?? 'Salle';
+            $bName = $booking->booker ? "{$booking->booker->first_name} {$booking->booker->last_name}" : 'Admin';
+
+            $ics .= "BEGIN:VEVENT\n";
+            $ics .= "UID:booking-{$booking->id}@encg-erp.com\n";
+            $ics .= 'DTSTAMP:'.now()->format('Ymd\THis\Z')."\n";
+            $ics .= "DTSTART:{$bStart}\n";
+            $ics .= "DTEND:{$bEnd}\n";
+            $ics .= "SUMMARY:[Rattrapage/Extra] {$purpose}\n";
+            $ics .= "LOCATION:{$rName}\n";
+            $ics .= "DESCRIPTION:Organisateur: {$bName}\n";
+            $ics .= "END:VEVENT\n";
+        }
+
         $ics .= 'END:VCALENDAR';
 
         return response($ics, 200, [

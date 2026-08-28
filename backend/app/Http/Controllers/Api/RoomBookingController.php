@@ -44,6 +44,10 @@ class RoomBookingController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'status' => 'nullable|string|in:pending,approved,rejected,cancelled',
+            'group_ids' => 'nullable|array',
+            'group_ids.*' => 'integer',
+            'module_id' => 'nullable|integer',
+            'notify_students' => 'nullable|boolean',
         ]);
 
         $user = $request->user();
@@ -54,7 +58,11 @@ class RoomBookingController extends Controller
             ?? Room::query()->whereKey($validated['room_id'])->value('name')
             ?? 'Salle';
         $requestedStatus = $validated['status'] ?? null;
-        unset($validated['status']);
+        $notifyStudents = (bool) ($validated['notify_students'] ?? false);
+        $groupIds = (array) ($validated['group_ids'] ?? []);
+        $moduleId = $validated['module_id'] ?? null;
+
+        unset($validated['status'], $validated['notify_students'], $validated['group_ids'], $validated['module_id']);
         if ($canApprove) {
             $validated['status'] = $requestedStatus ?? 'approved';
         } else {
@@ -70,10 +78,88 @@ class RoomBookingController extends Controller
 
         $booking = RoomBooking::create($validated);
 
+        // Auto-notify students if requested and approved
+        if ($notifyStudents && $validated['status'] === 'approved' && ! empty($groupIds)) {
+            $this->dispatchStudentNotifications($booking, $groupIds, $moduleId);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $booking->load(['booker', 'room']),
         ], 201);
+    }
+
+    /**
+     * Générer le panneau d'affichage de porte PDF officiel A4 avec QR Code.
+     */
+    public function doorSignPdf(Room $room)
+    {
+        $schedules = Schedule::with(['module', 'professor.user', 'group.filiere'])
+            ->where('room_id', $room->id)
+            ->where('is_active', true)
+            ->get();
+
+        $verifyUrl = url('/public/rooms/'.$room->code);
+        $qrCodeSvg = class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)
+            ? \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl)
+            : null;
+
+        $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+            ->make('pdf.door_sign', [
+                'room' => $room,
+                'schedules' => $schedules,
+                'verifyUrl' => $verifyUrl,
+                'qrCodeSvg' => $qrCodeSvg,
+            ])
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download("Affiche_Porte_{$room->code}.pdf");
+    }
+
+    /**
+     * Diffuse les notifications et emails aux étudiants du groupe.
+     */
+    private function dispatchStudentNotifications(RoomBooking $booking, array $groupIds, ?int $moduleId): void
+    {
+        try {
+            $students = \App\Models\Student::with('user')
+                ->whereHas('groups', fn ($q) => $q->whereIn('groups.id', $groupIds))
+                ->get();
+
+            $moduleName = $moduleId ? (\App\Models\Module::find($moduleId)?->name ?? $booking->purpose) : $booking->purpose;
+            $startDT = Carbon::parse($booking->start_time);
+            $endDT = Carbon::parse($booking->end_time);
+
+            $mailData = [
+                'moduleName' => $moduleName,
+                'professorName' => $booking->booker ? "{$booking->booker->first_name} {$booking->booker->last_name}" : 'Direction des Études',
+                'newDate' => $startDT->locale('fr')->isoFormat('dddd D MMMM YYYY'),
+                'newStartTime' => $startDT->format('H:i'),
+                'newEndTime' => $endDT->format('H:i'),
+                'roomName' => $booking->room_name,
+                'reason' => $booking->purpose,
+            ];
+
+            foreach ($students as $student) {
+                if ($student->user) {
+                    // 1. In-App Notification
+                    $student->user->notify(new \App\Notifications\RattrapageSessionScheduledNotification([
+                        'room_name' => $booking->room_name,
+                        'date' => $startDT->format('d/m/Y'),
+                        'time' => $startDT->format('H:i').' – '.$endDT->format('H:i'),
+                        'purpose' => $booking->purpose,
+                    ]));
+
+                    // 2. Email via Resend
+                    if (! empty($student->user->email)) {
+                        \Illuminate\Support\Facades\Mail::to($student->user->email)
+                            ->queue(new \App\Mail\ScheduleChangeNotificationMail($mailData));
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to dispatch rattrapage notifications: '.$e->getMessage());
+        }
     }
 
     /**
