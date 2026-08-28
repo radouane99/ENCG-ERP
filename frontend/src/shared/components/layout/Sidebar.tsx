@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { changeAppLanguage } from '@shared/lib/locale'
 import { useAuthStore } from '@stores/authStore'
 import { cn } from '@shared/lib/utils'
 import {
@@ -307,43 +306,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </button>
       )}
 
-      {/* Header Logo & Language Switcher */}
-      <div className="flex flex-col items-center justify-center px-5 py-4 border-b border-sidebar-border bg-gradient-to-b from-white/[0.03] to-transparent gap-3 shrink-0">
+      {/* Header Logo */}
+      <div className="flex items-center justify-center px-5 py-4 border-b border-sidebar-border bg-gradient-to-b from-white/[0.03] to-transparent shrink-0">
         <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain drop-shadow-md" />
-
-        {/* Quick Language Selector */}
-        <div className="flex items-center gap-1 bg-black/25 p-1 rounded-xl border border-white/10 w-full justify-between text-[11px] font-bold">
-          <button
-            type="button"
-            onClick={() => void changeAppLanguage('fr')}
-            className={cn(
-              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
-              i18n.language === 'fr' || !i18n.language ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
-            )}
-          >
-            <span>🇫🇷</span> FR
-          </button>
-          <button
-            type="button"
-            onClick={() => void changeAppLanguage('ar')}
-            className={cn(
-              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
-              i18n.language === 'ar' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
-            )}
-          >
-            <span>🇲🇦</span> العربية
-          </button>
-          <button
-            type="button"
-            onClick={() => void changeAppLanguage('en')}
-            className={cn(
-              "flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1",
-              i18n.language === 'en' ? "bg-indigo-600 text-white shadow-sm font-black" : "text-white/60 hover:text-white hover:bg-white/5"
-            )}
-          >
-            <span>🇬🇧</span> EN
-          </button>
-        </div>
       </div>
 
       {/* Dynamic Route Search Bar */}

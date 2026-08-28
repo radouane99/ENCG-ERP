@@ -98,9 +98,10 @@ export default function AdminProfessorAvailabilityPage() {
   const [selectedYear, setSelectedYear] = useState('2026')
   const [selectedProfDetails, setSelectedProfDetails] = useState<any>(null)
 
-  const { data: academicYears } = useQuery({
+  const { data: academicYears = [] } = useQuery({
     queryKey: ['academic-years'],
-    queryFn: academicApi.getAcademicYears
+    queryFn: academicApi.getAcademicYears,
+    select: (rows) => (Array.isArray(rows) ? rows : []),
   })
 
   const fetchProfessors = async () => {
@@ -330,14 +331,16 @@ export default function AdminProfessorAvailabilityPage() {
             value={selectedYear}
             onChange={(val) => setSelectedYear(val)}
             placeholder="Sélectionner l'année"
-            options={academicYears?.map((year: any) => ({
-              value: year.id,
-              label: year.label,
-              badge: 'OFFICIEL'
-            })) || [
-              { value: '2026', label: '2026 / 2027', badge: 'EN COURS' },
-              { value: '2025', label: '2025 / 2026', badge: 'ARCHIVÉ' }
-            ]}
+            options={academicYears.length > 0
+              ? academicYears.map((year: any) => ({
+                  value: year.id,
+                  label: year.label,
+                  badge: 'OFFICIEL',
+                }))
+              : [
+                  { value: '2026', label: '2026 / 2027', badge: 'EN COURS' },
+                  { value: '2025', label: '2025 / 2026', badge: 'ARCHIVÉ' },
+                ]}
           />
         </div>
       </div>

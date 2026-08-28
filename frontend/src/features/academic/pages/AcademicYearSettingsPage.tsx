@@ -320,9 +320,10 @@ export default function AcademicYearSettingsPage() {
     queryFn: () => academicApi.getExamSessions()
   })
 
-  const { data: yearsData } = useQuery({
+  const { data: yearsData = [] } = useQuery({
     queryKey: ['academic-years'],
-    queryFn: () => api.get('/academic-years').then(r => r.data)
+    queryFn: academicApi.getAcademicYears,
+    select: (rows) => (Array.isArray(rows) ? rows : []),
   })
 
   const { data: semestersData } = useQuery({
@@ -339,7 +340,7 @@ export default function AcademicYearSettingsPage() {
   const groups = groupsData?.data || []
   const assignments = assignmentsData?.data || []
   const examSessions = examSessionsData || []
-  const years = yearsData?.data || []
+  const years = Array.isArray(yearsData) ? yearsData : []
   const semesters = semestersData?.data || []
 
   useEffect(() => {

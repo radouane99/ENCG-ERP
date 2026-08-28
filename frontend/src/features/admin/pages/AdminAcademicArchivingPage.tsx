@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { academicApi } from '@shared/api/academic';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import {
@@ -49,7 +50,7 @@ export default function AdminAcademicArchivingPage() {
   // Academic Years Query
   const { data: academicYears = [], isLoading: isLoadingYears, refetch: refetchYears } = useQuery<AcademicYear[]>({
     queryKey: ['academic-years'],
-    queryFn: () => api.get('/academic-years').then(res => res.data?.data ?? res.data ?? []),
+    queryFn: academicApi.getAcademicYears,
   });
 
   // Archiving Real Backend Query

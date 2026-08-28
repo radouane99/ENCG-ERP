@@ -127,6 +127,7 @@ const BorrowingsPage = lazy(() => import('@features/library/pages/BorrowingsPage
 const ClubsPage = lazy(() => import('@features/clubs/pages/ClubsPage'))
 
 const ClassroomsPage = lazy(() => import('@features/infrastructure/pages/ClassroomsPage'))
+const RoomAvailabilityHubPage = lazy(() => import('@features/infrastructure/pages/RoomAvailabilityHubPage'))
 const TimetableAdminView = lazy(() => import('@features/academic/pages/TimetableAdminView'))
 const ExamLivePresence = lazy(() => import('@features/academic/pages/ExamLivePresence'))
 const ExamDisplayList = lazy(() => import('@features/academic/pages/ExamDisplayList'))
@@ -469,6 +470,9 @@ export default function RootRouter() {
             <Route path="/final-projects" element={<FinalProjectsPage />} />
             <Route path="/infrastructure" element={<InfrastructurePage />} />
             <Route path="/infrastructure/classrooms" element={<ClassroomsPage />} />
+            <Route path="/admin/rooms/availability" element={<RoomAvailabilityHubPage />} />
+            <Route path="/admin/reservations" element={<RoomAvailabilityHubPage />} />
+            <Route path="/infrastructure/availability" element={<RoomAvailabilityHubPage />} />
           </Route>
 
           {/* Communication */}

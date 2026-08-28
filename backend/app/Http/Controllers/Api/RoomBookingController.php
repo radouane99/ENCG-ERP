@@ -161,6 +161,51 @@ class RoomBookingController extends Controller
         return response()->json(['success' => true, 'data' => $data]);
     }
 
+    /**
+     * Assistant intelligent de disponibilité & alternatives de salles (Rattrapages, extras).
+     */
+    public function smartFind(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'preferred_room_id' => 'nullable|integer',
+            'session_type' => 'nullable|string',
+            'headcount' => 'nullable|integer|min:1|max:500',
+            'filiere_id' => 'nullable|integer',
+            'group_ids' => 'nullable|array',
+            'group_ids.*' => 'integer',
+        ]);
+
+        $result = $service->smartFind($validated);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Matrice d'occupation en temps réel de toutes les salles pour une date.
+     */
+    public function occupancyMatrix(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    {
+        $request->validate([
+            'date' => 'nullable|date',
+            'type' => 'nullable|string',
+            'search' => 'nullable|string',
+        ]);
+
+        $date = $request->input('date', now()->format('Y-m-d'));
+        $type = $request->input('type');
+        $search = $request->input('search');
+
+        $result = $service->getOccupancyMatrix($date, $type, $search);
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+        ]);
+    }
+
     private function userCanApprove(?object $user): bool
     {
         return $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(self::APPROVER_ROLES);

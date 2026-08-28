@@ -1,10 +1,30 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Sparkles, Plus, Grid, ChevronLeft, ChevronRight, X, Loader2, Cpu, AlertTriangle, CheckCircle2, Send, Zap, RotateCcw, CalendarSync, ShieldAlert, Check } from 'lucide-react'
+import {
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  Send,
+  Zap,
+  CalendarSync,
+  Calendar,
+  Filter,
+  FileText,
+  Clock,
+  MapPin,
+  User,
+  Layers,
+  Search,
+  Check
+} from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import { format, startOfWeek, addDays, setHours, setMinutes } from 'date-fns'
+import { format, startOfWeek, addDays, addWeeks, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useAuthStore } from '@/stores/authStore'
 import { reorganizeSessionsWithoutResourceConflicts, PERFORMANCE_SLOTS } from '@/features/timetable/lib/timetablePerformanceStrategy'
@@ -131,8 +151,6 @@ function mapTimetableItem(item: any, index: number): CalendarSession {
   }
 }
 
-const CSP_SLOT_HOURS = PERFORMANCE_SLOTS
-
 function applySessionToSlot(item: any, weekMonday: Date, dayIndex: number, slot: { startHour: number; endHour: number }) {
   const targetDate = addDays(weekMonday, dayIndex)
   const toClock = (hour: number) => {
@@ -151,30 +169,25 @@ function applySessionToSlot(item: any, weekMonday: Date, dayIndex: number, slot:
 export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const { user } = useAuthStore()
   const u = user as any
-  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
+  const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : ''
   const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine')
-  const [showRattrapageModal, setShowRattrapageModal] = useState(false)
   const [showBatchModal, setShowBatchModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [resolvingCsp, setResolvingCsp] = useState(false)
   const [cspResolved, setCspResolved] = useState(false)
+  const [currentDate, setCurrentDate] = useState(new Date())
 
-  // Conflict Request Modal State
-  const [requestModule, setRequestModule] = useState('')
-  const [requestDay, setRequestDay] = useState('Mercredi')
-  const [requestTime, setRequestTime] = useState('08:30 - 10:30')
-  const [requestReason, setRequestReason] = useState('')
   const [submittingRequest, setSubmittingRequest] = useState(false)
 
   // Filters state
   const [filieres, setFilieres] = useState<any[]>([])
   const [groupes, setGroupes] = useState<any[]>([])
   const [professors, setProfessors] = useState<any[]>([])
-  
+
   const [selectedFiliere, setSelectedFiliere] = useState('')
   const [selectedGroupe, setSelectedGroupe] = useState('')
   const [selectedProfessor, setSelectedProfessor] = useState('')
-  
+
   const [timetableItems, setTimetableItems] = useState<any[]>([])
 
   // Helper to fetch and merge schedules across all filieres
@@ -251,7 +264,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       const list = r.data.data || r.data || []
       setFilieres(list)
     }).catch(console.error)
-    
+
     api.get('/professors').then(r => setProfessors(r.data.data || r.data)).catch(console.error)
 
     if (!isAdmin) {
@@ -282,7 +295,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       setSelectedGroupe('')
       api.get('/groups', { params: { filiere_id: selectedFiliere } })
         .then(r => setGroupes(r.data.data || r.data)).catch(console.error)
-      
+
       setLoading(true)
       api.get(`/timetable/export/filiere/${selectedFiliere}`)
         .then(res => {
@@ -333,8 +346,8 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     })
   }, [timetableItems, selectedProfessor, professors])
 
-  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-  const weekLabel = `${format(currentWeekStart, 'd MMM')} — ${format(addDays(currentWeekStart, 6), 'd MMM. yyyy', { locale: fr })}`
+  const currentWeekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
+  const weekLabel = `${format(currentWeekStart, 'd MMM')} — ${format(addDays(currentWeekStart, 6), 'd MMMM yyyy', { locale: fr })}`
 
   // 🔍 Scanner: chevauchements groupe / enseignant / salle uniquement (groupes parallèles autorisés)
   const conflictClusters = useMemo(() => {
@@ -384,7 +397,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       throw new Error(data.message || 'Aucune séance renvoyée')
     } catch {
       const result = reorganizeSessionsWithoutResourceConflicts(timetableItems, (item, dayIndex, slot) =>
-        applySessionToSlot(item, startOfWeek(new Date(), { weekStartsOn: 1 }), dayIndex, slot)
+        applySessionToSlot(item, currentWeekStart, dayIndex, slot)
       )
       setTimetableItems(result.items)
       setCspResolved(result.unresolved === 0)
@@ -406,7 +419,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   const handleSendBatchConflictReport = async () => {
     setSubmittingRequest(true)
     try {
-      const conflictSummary = conflictClusters.map(c => 
+      const conflictSummary = conflictClusters.map(c =>
         `• ${c.day.toUpperCase()} (${c.time}) : ${c.events.length} cours superposés (${c.events.map(e => e.title).join(', ')})`
       ).join('\n')
 
@@ -425,7 +438,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
         description: "Le Chef de Département et le Service des Emplois du Temps ont reçu le rapport complet."
       })
       setShowBatchModal(false)
-    } catch (err) {
+    } catch {
       toast.success("Rapport groupé de conflits transmis à l'Administration.")
       setShowBatchModal(false)
     } finally {
@@ -439,44 +452,51 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       return {
         bg: 'bg-indigo-600 border-l-indigo-900 text-white',
         badge: 'bg-indigo-800/90 text-indigo-100',
-        label: 'GFC'
+        label: 'GFC',
+        color: '#4f46e5'
       }
     }
     if (text.includes('MCM') || text.includes('MARKETING') || text.includes('COMMUNICATION')) {
       return {
         bg: 'bg-purple-600 border-l-purple-900 text-white',
         badge: 'bg-purple-800/90 text-purple-100',
-        label: 'MCM'
+        label: 'MCM',
+        color: '#9333ea'
       }
     }
-    if (text.includes('TC') || text.includes('TRONC') || text.includes('STATISTIQUE') || text.includes('INFORMATIQUE')) {
+    if (text.includes('TC') || text.includes('TRONC COMMUN') || text.includes('TRONC')) {
       return {
         bg: 'bg-emerald-600 border-l-emerald-900 text-white',
         badge: 'bg-emerald-800/90 text-emerald-100',
-        label: 'TC'
+        label: 'TC',
+        color: '#059669'
       }
     }
-    if (text.includes('GRH') || text.includes('RH') || text.includes('HUMAINES')) {
+    if (text.includes('GRH') || text.includes('HUMAINES') || text.includes('MANAGEMENT')) {
       return {
         bg: 'bg-amber-600 border-l-amber-900 text-white',
         badge: 'bg-amber-800/90 text-amber-100',
-        label: 'GRH'
+        label: 'GRH',
+        color: '#d97706'
       }
     }
     return {
       bg: 'bg-blue-600 border-l-blue-900 text-white',
       badge: 'bg-blue-800/90 text-blue-100',
-      label: 'Filière'
+      label: 'EDT',
+      color: '#2563eb'
     }
   }
 
   const renderListView = () => {
-    const grouped = mappedEvents.reduce((acc, event) => {
-      const key = `${event.day} ${event.date}`
-      if (!acc[key]) acc[key] = []
-      acc[key].push(event)
-      return acc
-    }, {} as Record<string, typeof mappedEvents>)
+    const grouped: Record<string, CalendarSession[]> = {}
+
+    mappedEvents.forEach(e => {
+      if (!grouped[e.date]) {
+        grouped[e.date] = []
+      }
+      grouped[e.date].push(e)
+    })
 
     const sortedDates = Object.keys(grouped).sort((a, b) => {
       const dateA = new Date(grouped[a][0].date)
@@ -485,30 +505,41 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     })
 
     return (
-      <div className="bg-white border border-slate-100 rounded-b-2xl p-4">
+      <div className="p-4 md:p-6 bg-white dark:bg-slate-900">
         {mappedEvents.length === 0 ? (
-           <div className="p-8 text-center text-slate-400">Aucun cours trouvé pour cette sélection.</div>
+          <div className="py-16 text-center text-slate-400 text-sm">
+            <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            Aucun cours trouvé pour cette sélection.
+          </div>
         ) : (
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="space-y-4">
             {sortedDates.map((date) => (
-              <div key={date}>
-                <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-                  <span className="font-bold text-slate-700 capitalize">{date.split(' ')[0]}</span>
-                  <span className="text-sm font-bold text-slate-500">{date.split(' ').slice(1).join(' ')}</span>
+              <div key={date} className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+                  <span className="font-black text-slate-900 dark:text-slate-100 capitalize text-sm">{date.split(' ')[0]}</span>
+                  <span className="text-xs font-bold text-slate-400">{date.split(' ').slice(1).join(' ')}</span>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {grouped[date].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(event => {
                     const style = getFiliereStyle(event.title, event.extendedProps?.group)
                     return (
-                      <div key={event.id} className={cn("px-4 py-3 flex items-center gap-4 border-l-4", style.bg)}>
-                        <div className="w-32 shrink-0 font-bold text-sm bg-white/20 px-2 py-1 rounded inline-block text-center shadow-sm">
-                          {event.startTime} - {event.endTime}
-                        </div>
-                        <div className="flex-1 font-bold text-sm flex items-center gap-2">
-                          <span className={cn("px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider", style.badge)}>
+                      <div key={event.id} className="px-5 py-3.5 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-black text-white shrink-0 shadow-xs" style={{ background: style.color }}>
                             {style.label}
                           </span>
-                          <span>{event.title}</span>
+                          <div className="min-w-0">
+                            <p className="font-black text-sm text-slate-900 dark:text-slate-100 truncate">{event.title}</p>
+                            <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-3">
+                              {event.professor && <span className="flex items-center gap-1"><User size={11} />{event.professor}</span>}
+                              {event.room && <span className="flex items-center gap-1"><MapPin size={11} />{event.room}</span>}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            {event.startTime} – {event.endTime}
+                          </span>
                         </div>
                       </div>
                     )
@@ -525,33 +556,37 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   const renderWeekView = () => {
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = addDays(currentWeekStart, i)
-      return format(d, 'EEE. dd/MM', { locale: fr })
+      return {
+        date: d,
+        formatted: format(d, 'EEE. dd/MM', { locale: fr }),
+        isToday: isSameDay(d, new Date())
+      }
     })
-    
+
     const hours = Array.from({ length: 13 }, (_, i) => `${i + 7}:30`)
 
     return (
       <div className="space-y-4">
-        <div className="bg-white border border-slate-100 rounded-2xl flex overflow-x-auto relative shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex overflow-x-auto relative shadow-xs">
           {loading && (
-             <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
-               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-             </div>
+            <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[2px] flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            </div>
           )}
-          
+
           {/* Time column */}
-          <div className="w-16 shrink-0 border-r border-slate-100 pt-12">
+          <div className="w-16 shrink-0 border-r border-slate-100 dark:border-slate-800 pt-12">
             {hours.map(hour => (
-              <div key={hour} className="h-12 border-b border-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 relative">
-                <span className="absolute -top-2 bg-white px-1">{hour}</span>
+              <div key={hour} className="h-12 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 relative">
+                <span className="absolute -top-2 bg-white dark:bg-slate-900 px-1">{hour}</span>
               </div>
             ))}
           </div>
 
           {/* Days grid */}
           <div className="flex-1 min-w-[800px] flex">
-            {days.map((day) => {
-              const dayName = day.split('.')[0]
+            {days.map(({ date, formatted, isToday }) => {
+              const dayName = formatted.split('.')[0]
               const dayEvents = mappedEvents.filter(e => e.day.startsWith(dayName))
 
               // Process side-by-side positioning for overlapping events
@@ -588,47 +623,57 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
               })
 
               return (
-                <div key={day} className="flex-1 border-r border-slate-100 relative">
-                  <div className="h-12 border-b border-slate-100 flex items-center justify-center font-bold text-sm text-slate-700 capitalize">
-                    {day}
+                <div key={formatted} className="flex-1 border-r border-slate-100 dark:border-slate-800 relative last:border-r-0">
+                  <div className={cn(
+                    "h-12 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-xs capitalize transition-colors",
+                    isToday ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300"
+                  )}>
+                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mr-1.5" />}
+                    {formatted}
                   </div>
                   <div className="relative" style={{ height: `${13 * 48}px` }}>
                     {hours.map((_, h) => (
-                      <div key={h} className="h-12 border-b border-slate-50" />
+                      <div key={h} className="h-12 border-b border-slate-50 dark:border-slate-800/50" />
                     ))}
-                    
+
                     {processedEvents.map(event => {
                       const style = getFiliereStyle(event.title, event.extendedProps?.group)
                       return (
-                        <div 
+                        <div
                           key={event.id}
                           className={cn(
-                            "absolute rounded-xl p-2 text-white text-[10px] font-bold leading-tight shadow-md cursor-grab active:cursor-grabbing border-l-4 transition-all hover:scale-[1.03] hover:z-30",
+                            "absolute rounded-xl p-2.5 text-white text-[10px] font-bold leading-tight shadow-md cursor-grab active:cursor-grabbing border-l-4 transition-all hover:scale-[1.03] hover:z-30",
                             style.bg,
-                            event.hasConflict && "ring-2 ring-red-500 shadow-red-500/40 shadow-lg"
+                            event.hasConflict && "ring-2 ring-rose-500 shadow-rose-500/40 shadow-lg"
                           )}
-                          style={{ 
-                            top: event.top, 
+                          style={{
+                            top: event.top,
                             height: event.height,
                             width: event.widthStyle,
                             left: event.leftStyle
                           }}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className={cn("px-1.5 py-0.5 rounded text-[8px] font-black uppercase", style.badge)}>
+                            <span className={cn("px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider", style.badge)}>
                               {style.label}
                             </span>
-                            <span className="text-[9px] opacity-90 font-mono font-bold bg-black/20 px-1 py-0.5 rounded">
+                            <span className="text-[9px] opacity-90 font-mono font-bold bg-black/25 px-1 py-0.5 rounded">
                               {event.startTime} - {event.endTime}
                             </span>
                           </div>
 
-                          <div className="font-extrabold line-clamp-2 leading-tight">
+                          <div className="font-black line-clamp-2 leading-tight">
                             {event.title}
                           </div>
 
+                          {(event.room || event.professor) && (
+                            <div className="text-[9px] opacity-80 mt-1 truncate">
+                              {event.room} {event.professor ? `· ${event.professor}` : ''}
+                            </div>
+                          )}
+
                           {event.hasConflict && (
-                            <div className="mt-1 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
+                            <div className="mt-1 bg-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                               ⚠️ CONFLIT
                             </div>
@@ -646,90 +691,109 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     )
   }
 
-  return (
-    <div className="space-y-6 p-4 md:p-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
-      
-      {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
-            <CalendarSync className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Emploi du Temps Intelligent ENCG Fès
-            </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Emploi du Temps & Synchronisation</h1>
-            <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
-              Visualisation dynamique, détection automatique des conflits et synchronisation smartphone.
-            </p>
-          </div>
-        </div>
+  const selectClass = "w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all cursor-pointer"
 
-        <div className="flex flex-wrap items-center gap-2.5 relative z-10">
-          <button
-            onClick={handleExportPdf}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-white/20 backdrop-blur-md cursor-pointer"
-          >
-            PDF Officiel
-          </button>
-          <button
-            onClick={handleExportIcs}
-            className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer"
-          >
-            📅 Exporter Agenda (.ics)
-          </button>
+  return (
+    <div className="space-y-5 p-4 md:p-6 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
+
+      {/* ══════════════════════════════════════════════════════
+          HERO HEADER — Deep ENCG Navy Style
+      ══════════════════════════════════════════════════════ */}
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+        <div className="absolute top-0 right-0 w-80 h-80 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-1/4 w-48 h-48 opacity-8 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }} />
+
+        <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', boxShadow: '0 4px 15px rgba(79,70,229,0.4)' }}>
+              <CalendarSync className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300/90 inline-flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> Emploi du Temps Intelligent · ENCG Fès
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                Emploi du Temps & Synchronisation
+              </h1>
+              <p className="text-xs md:text-sm text-blue-200/70 font-medium">
+                Visualisation dynamique, détection automatique des conflits et synchronisation smartphone.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleExportPdf}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <FileText className="w-3.5 h-3.5" /> PDF Officiel
+            </button>
+            <button
+              onClick={handleExportIcs}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all active:scale-95 cursor-pointer shadow-md"
+              style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', boxShadow: '0 4px 15px rgba(79,70,229,0.35)' }}
+            >
+              <Calendar className="w-3.5 h-3.5" /> Exporter Agenda (.ics)
+            </button>
+          </div>
         </div>
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)' }} />
       </div>
 
-      {/* 🚀 AUTO-DETECT CONFLICTS & CSP AI RESOLUTION MASTER DECK */}
+      {/* ══════════════════════════════════════════════════════
+          CONFLICT DETECTOR & CSP RESOLUTION DECK
+      ══════════════════════════════════════════════════════ */}
       {conflictClusters.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 border-2 border-amber-400 rounded-3xl p-6 md:p-8 text-amber-950 shadow-lg space-y-4 animate-in fade-in">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-black shadow-md">
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
+        <div className="rounded-2xl p-5 md:p-6 border border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/20 text-amber-950 dark:text-amber-200 space-y-4 animate-in fade-in">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-bold shadow-md">
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                     Scanner IA Actif
                   </span>
-                  <h3 className="font-black text-lg text-slate-900">
+                  <h3 className="font-black text-base text-slate-900 dark:text-slate-100">
                     {totalConflictingEventsCount} Séances en Chevauchement Détectées ({conflictClusters.length} Créneaux Surchargés)
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 font-medium">
-                  CM : les 2 groupes ensemble. TD : par groupe. Un professeur déjà en séance (ex. 08:30–10:30) ne peut pas recevoir un autre créneau qui se chevauche (ex. 09:30–11:30).
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                  CM : les 2 groupes ensemble. TD : par groupe. Un professeur ou une salle ne peut pas recevoir 2 créneaux qui se chevauchent.
                 </p>
-                <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {conflictClusters.map((c, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-white/90 border border-amber-300 text-amber-900 rounded-xl text-xs font-black shadow-2xs">
-                      • {c.day.toUpperCase()} ({c.time}) : <strong>{c.events.length} cours</strong>
+                    <span key={idx} className="px-2.5 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-lg text-xs font-bold">
+                      {c.day.toUpperCase()} ({c.time}) : <strong>{c.events.length} cours</strong>
                     </span>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="px-5 py-3 rounded-2xl bg-white border border-amber-300 hover:bg-amber-100 text-amber-950 text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 text-amber-950 dark:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-xs"
               >
-                <Send className="w-4 h-4 text-amber-700" />
-                🚨 Déclarer Tout en 1-Clic
+                <Send className="w-3.5 h-3.5 text-amber-600" />
+                Déclarer en 1-Clic
               </button>
 
               <button
                 onClick={handleCspAutoResolve}
                 disabled={resolvingCsp}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#001A4B] via-indigo-900 to-purple-900 hover:opacity-95 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-indigo-950/30 cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #001A4B, #003087)', boxShadow: '0 4px 15px rgba(0,26,75,0.3)' }}
               >
-                {resolvingCsp ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Zap className="w-4 h-4 text-amber-400" />}
-                ⚡ Stratégie performance (0 conflit salle / prof)
+                {resolvingCsp ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                Stratégie performance (0 conflit)
               </button>
             </div>
           </div>
@@ -737,17 +801,19 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       )}
 
       {cspResolved && conflictClusters.length === 0 && mappedEvents.length > 0 && (
-        <div className="bg-gradient-to-r from-emerald-50 via-white to-teal-50 border-2 border-emerald-400 rounded-3xl p-6 text-emerald-950 shadow-sm animate-in fade-in">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
-              <CheckCircle2 className="w-6 h-6" />
+        <div className="rounded-2xl p-5 border border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-950 dark:text-emerald-200 animate-in fade-in">
+          <div className="flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <span className="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                CSP Zero-Conflit
-              </span>
-              <h3 className="font-black text-lg text-slate-900 mt-1">Stratégie performance : 0 conflit dur</h3>
-              <p className="text-xs text-slate-600 font-medium mt-1">
+              <div className="flex items-center gap-2">
+                <span className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  CSP Zero-Conflit
+                </span>
+                <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Stratégie performance : 0 conflit dur validé</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
                 Un professeur, une salle, un groupe par créneau. Les groupes parallèles (G1 / G2) restent autorisés.
               </p>
             </div>
@@ -755,29 +821,29 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
         </div>
       )}
 
-      {/* Filters Card */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-700">
-              {!isAdmin ? "Filtres & Sélection de Vue de l'Emploi du Temps" : "Filtres Global de Recherche"}
-            </h3>
-          </div>
+      {/* ══════════════════════════════════════════════════════
+          FILTERS CARD
+      ══════════════════════════════════════════════════════ */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+            {!isAdmin ? "Filtres & Vue Enseignant" : "Filtres Globaux de Recherche"}
+          </h2>
           {!isAdmin && (
-            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
+            <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 px-3 py-0.5 rounded-full">
               Mode Enseignant Connecté : {currentProfName}
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filière</label>
-            <select 
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Filière</label>
+            <select
               value={selectedFiliere}
               onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-blue-500 transition-colors"
+              className={selectClass}
             >
               <option value="">Toutes les Filières</option>
               {filieres.map((f: any) => (
@@ -786,12 +852,12 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Groupe</label>
-            <select 
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Groupe</label>
+            <select
               value={selectedGroupe}
               onChange={(e) => setSelectedGroupe(e.target.value)}
               disabled={!selectedFiliere}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+              className={cn(selectClass, !selectedFiliere && "opacity-50 cursor-not-allowed")}
             >
               <option value="">Tous les Groupes</option>
               {groupes.map((g: any) => (
@@ -800,16 +866,16 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Professeur</label>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Professeur</label>
             {!isAdmin ? (
-              <select disabled className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] cursor-not-allowed">
+              <select disabled className={cn(selectClass, "bg-slate-50 dark:bg-slate-800 opacity-75 cursor-not-allowed")}>
                 <option value="">{currentProfName} (Compte Enseignant)</option>
               </select>
             ) : (
-              <select 
+              <select
                 value={selectedProfessor}
                 onChange={(e) => setSelectedProfessor(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-blue-500 transition-colors"
+                className={selectClass}
               >
                 <option value="">Tous les professeurs</option>
                 {professors.map((p: any) => (
@@ -819,46 +885,61 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
             )}
           </div>
           <div>
-            <button 
+            <button
               onClick={fetchTimetable}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-xs uppercase tracking-wide shadow-md h-[46px] disabled:opacity-70 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 h-10 px-5 text-white font-bold rounded-xl text-xs uppercase tracking-wide transition-all active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               Appliquer le filtre
             </button>
           </div>
         </div>
       </div>
 
-      {/* Calendar View Controls & Grid */}
-      <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-        {/* Calendar Header */}
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* ══════════════════════════════════════════════════════
+          CALENDAR CONTROLS & HEADER
+      ══════════════════════════════════════════════════════ */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-slate-800 rounded-lg p-1">
-              <button className="p-1.5 text-white/80 hover:text-white transition-colors">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setCurrentDate(addWeeks(currentDate, -1))}
+                className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                title="Semaine précédente"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button className="p-1.5 text-white/80 hover:text-white transition-colors">
+              <button
+                onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
+                className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                title="Semaine suivante"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            <button className="px-4 py-2 bg-slate-400 text-white text-xs font-bold rounded-lg shadow-sm">
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+            >
               Aujourd'hui
             </button>
           </div>
 
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800 capitalize">{weekLabel}</h2>
+          <h2 className="text-base md:text-lg font-black text-slate-800 dark:text-slate-100 capitalize">{weekLabel}</h2>
 
-          <div className="flex bg-slate-800 p-1 rounded-xl overflow-x-auto">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             {(['Semaine', 'Jour', 'Liste'] as const).map(mode => (
-              <button 
+              <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={cn(
-                  "px-6 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap cursor-pointer",
-                  viewMode === mode ? "bg-slate-700 text-white shadow-sm" : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                  viewMode === mode
+                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                    : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
                 {mode}
@@ -870,37 +951,39 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
         {viewMode === 'Liste' ? renderListView() : renderWeekView()}
       </div>
 
-      {/* Modal Demande Groupée de Réaménagement */}
+      {/* ══════════════════════════════════════════════════════
+          BATCH CONFLICT REPORT MODAL
+      ══════════════════════════════════════════════════════ */}
       {showBatchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 space-y-6">
-            
-            <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-indigo-950 p-6 text-white relative">
-              <button 
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 space-y-6">
+
+            <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+              <button
                 onClick={() => setShowBatchModal(false)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"
+                className="absolute top-5 right-5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
               <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Déclaration Groupée Automatisée
               </span>
-              <h3 className="font-black text-2xl tracking-tight">Signalement Pack de Conflits</h3>
-              <p className="text-xs text-slate-300 font-medium mt-1">
+              <h3 className="font-black text-xl tracking-tight">Signalement Pack de Conflits</h3>
+              <p className="text-xs text-blue-200/80 font-medium mt-1">
                 Génération automatique du rapport récapitulatif pour le Service des Emplois du Temps.
               </p>
             </div>
 
-            <div className="p-6 md:p-8 space-y-4">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
-                <span className="text-[10px] font-black uppercase text-amber-900 tracking-wider">
-                  Détail du Pack de Conflits Détectés ({totalConflictingEventsCount} Séances)
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
+                <span className="text-[10px] font-black uppercase text-amber-900 dark:text-amber-300 tracking-wider">
+                  Détail du Pack de Conflits ({totalConflictingEventsCount} Séances)
                 </span>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {conflictClusters.map((c, i) => (
-                    <div key={i} className="text-xs font-bold text-slate-800 bg-white p-2.5 rounded-xl border border-amber-200">
+                    <div key={i} className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800">
                       <strong>{c.day.toUpperCase()} ({c.time}) :</strong> {c.events.length} cours simultanés
-                      <div className="text-[11px] text-slate-500 font-normal mt-0.5">
+                      <div className="text-[11px] text-slate-400 font-normal mt-0.5">
                         {c.events.map(e => e.title).join(' • ')}
                       </div>
                     </div>
@@ -908,11 +991,11 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowBatchModal(false)}
-                  className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -920,10 +1003,11 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                   type="button"
                   onClick={handleSendBatchConflictReport}
                   disabled={submittingRequest}
-                  className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+                  style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}
                 >
-                  {submittingRequest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Transmettre le Rapport Global à l'Admin
+                  {submittingRequest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Transmettre le Rapport Global
                 </button>
               </div>
             </div>

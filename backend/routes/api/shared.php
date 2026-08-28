@@ -85,9 +85,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
     });
 
-    // Room Bookings
+    // Room Bookings & Real-time Availability
     Route::get('/room-bookings/check-availability', [RoomBookingController::class, 'checkAvailability']);
     Route::get('/room-bookings/available-rooms', [RoomBookingController::class, 'availableRooms']);
+    Route::post('/rooms/smart-find', [RoomBookingController::class, 'smartFind']);
+    Route::get('/rooms/occupancy-matrix', [RoomBookingController::class, 'occupancyMatrix']);
     Route::apiResource('room-bookings', RoomBookingController::class);
 
     // Anti-Fraud Documents & PDFs

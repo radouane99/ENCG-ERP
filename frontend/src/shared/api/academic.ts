@@ -1,11 +1,21 @@
 import api from '@shared/lib/api';
 import type { AcademicYearPayload } from '../../types/models';
 
+function unwrapList(payload: unknown): any[] {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)) {
+    return (payload as { data: any[] }).data
+  }
+  return []
+}
+
 export const academicApi = {
   // Academic Years
   getAcademicYears: async () => {
     const response = await api.get('/academic-years');
-    return response.data.data;
+    return unwrapList(response.data?.data ?? response.data);
   },
   createAcademicYear: async (data: AcademicYearPayload) => {
     const response = await api.post('/academic-years', data);

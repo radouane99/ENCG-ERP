@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { academicApi } from '@shared/api/academic';
 import { toast } from 'sonner';
 import {
   Settings, Building2, Image as ImageIcon, Calendar, ShieldCheck, Scale, Check, Save,
@@ -75,7 +76,7 @@ export default function AdminSettingsPage() {
   // Academic Years Query
   const { data: academicYears = [], isLoading: isLoadingYears, refetch: refetchYears } = useQuery<AcademicYear[]>({
     queryKey: ['academic-years'],
-    queryFn: () => api.get('/academic-years').then(res => res.data?.data ?? res.data ?? []),
+    queryFn: academicApi.getAcademicYears,
   });
 
   const [selectedYearId, setSelectedYearId] = useState<number | null>(null);
