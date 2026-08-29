@@ -52,15 +52,6 @@ const STATUS_COLORS: Record<string, string> = {
   defended: 'bg-green-500/10 text-green-600 border-green-500/20'
 }
 
-const BADGE_MAP: Record<string, string> = {
-  draft: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
-  submitted: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  validated: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  rejected: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-  defense_scheduled: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-  defended: 'bg-green-500/10 text-green-600 border-green-500/20'
-}
-
 const EMPTY = { title: '', type: 'pfe', company_name: '', company_city: '', status: 'draft', student_id: '' }
 
 export default function FinalProjectsPage() {

@@ -184,7 +184,7 @@ export default function DepartmentList() {
       toast.success(`✨ ${headName} nommé officiellement Chef du Département ${selectedDeptForHead.name} !`, { id: toastId });
       setShowAssignHeadModal(false);
       fetchData();
-    } catch (e) {
+    } catch {
       // Fallback local update
       setDepartments(prev => prev.map(d => d.id === selectedDeptForHead.id ? { ...d, head_name: headName } : d));
       toast.success(`✨ ${headName} nommé officiellement Chef du Département ${selectedDeptForHead.name} !`, { id: toastId });
@@ -193,7 +193,7 @@ export default function DepartmentList() {
   }
 
   // RECOM 2: Export Fiche Bilan A4 PDF
-  const handleExportDepartmentPdf = (dept: Department) => {
+  const _handleExportDepartmentPdf = (dept: Department) => {
     const toastId = toast.loading(`Génération de la Fiche Bilan Officielle du Département ${dept.code}...`);
     setTimeout(() => {
       toast.success(`📄 Fiche Bilan A4 du Département ${dept.name} générée avec succès !`, { id: toastId });

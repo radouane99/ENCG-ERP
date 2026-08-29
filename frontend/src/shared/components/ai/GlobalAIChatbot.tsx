@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   X, Send, Loader2, Sparkles, RefreshCw,
   BookOpen, Calendar, FileText, BarChart2, HelpCircle,
@@ -68,7 +68,7 @@ export default function GlobalAIChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const userRoles: string[] = (user as any)?.roles ?? [];
+  const userRoles: string[] = useMemo(() => (user as any)?.roles ?? [], [user]);
   const quickActions = getRoleActions(userRoles);
 
   // Load chat history from backend

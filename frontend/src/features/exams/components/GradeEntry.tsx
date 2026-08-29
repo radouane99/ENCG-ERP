@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAuthStore } from '@stores/authStore';
 import { gradesApi } from '@shared/api/grades';
-import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { decisionFromScore } from '@shared/lib/lmd';
 import LmdLegend from '@shared/components/academic/LmdLegend';
@@ -22,12 +21,9 @@ function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, del
 }
 
 export default function GradeEntry() {
-  const { user } = useAuthStore();
-  
   const [students, setStudents] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Read module and group from route parameters; do NOT hardcode values
@@ -35,11 +31,7 @@ export default function GradeEntry() {
   const moduleId = params.moduleId ? Number(params.moduleId) : null;
   const groupId = params.groupId ? Number(params.groupId) : null;
 
-  useEffect(() => {
-    fetchGrid();
-  }, []);
-
-  const fetchGrid = async () => {
+  const fetchGrid = useCallback(async () => {
     try {
       setIsLoading(true);
       if (!moduleId || !groupId) {
@@ -56,7 +48,11 @@ export default function GradeEntry() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [moduleId, groupId]);
+
+  useEffect(() => {
+    fetchGrid();
+  }, [fetchGrid]);
 
   const handleSave = async (updates: any[]) => {
     if (!moduleId || !groupId) {
@@ -65,7 +61,6 @@ export default function GradeEntry() {
     }
     try {
       setSaveStatus('saving');
-      setIsSaving(true);
       const res = await gradesApi.saveGrades(moduleId, groupId, updates);
       
       // Update local state with computed averages and statuses
@@ -82,8 +77,6 @@ export default function GradeEntry() {
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
       setSaveStatus('error');
-    } finally {
-      setIsSaving(false);
     }
   };
 
