@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Download, QrCode, MapPin, Clock, FileText, CheckCircle2, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, Download, QrCode, MapPin, Clock, CheckCircle2, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import api from '@shared/lib/api';
 
 export default function StudentConvocationsPage() {
-  const { t, i18n } = useTranslation(['student', 'common']);
+  const { i18n } = useTranslation(['student', 'common']);
   const isRtl = i18n.language === 'ar';
   const { user } = useAuthStore();
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Plus, Calendar, User } from 'lucide-react'
+import { Plus, Calendar, User } from 'lucide-react'
 
 export default function AnnouncementsPage() {
   const [announcements] = useState([

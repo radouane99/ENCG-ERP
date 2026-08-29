@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Bell, BarChart2, MessageSquare, AlertTriangle, Sparkles, CheckCircle2,
-  Clock, ShieldCheck, Filter, Search, Award, ThumbsUp, Star, HelpCircle, ToggleLeft, ToggleRight, ArrowUpRight, Loader2
+  Search, Award, Star, HelpCircle, ToggleLeft, ToggleRight, ArrowUpRight, Loader2
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'

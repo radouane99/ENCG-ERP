@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, GraduationCap, BarChart3, Calendar, FileText, AlertTriangle, Mic, MicOff, Loader2, Sparkles } from 'lucide-react';
+import { X, Send, BarChart3, Calendar, FileText, AlertTriangle, Mic, MicOff, Sparkles } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ export default function StudentChatbot() {
         { role: 'bot', text: `Bonjour ${userName} 👋\nJe suis votre Assistant ${botTitle} IA, propulsé par Gemini 1.5 Pro ✨\n\nComment puis-je vous aider aujourd'hui ?` }
       ]);
     }
-  }, [isOpen, user?.name, botTitle]);
+  }, [isOpen, user?.name, botTitle, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

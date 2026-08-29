@@ -1,5 +1,5 @@
 import React from 'react'
-import { BookOpen, Users, Calendar, Award, ChevronRight, MessageSquare, BrainCircuit } from 'lucide-react'
+import { Users, ChevronRight, MessageSquare, BrainCircuit } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { cn } from '@shared/lib/utils'

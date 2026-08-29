@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Search, Briefcase, MapPin, Calendar, Plus, AlertCircle } from 'lucide-react'
+import { Briefcase, MapPin, Plus, AlertCircle } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'

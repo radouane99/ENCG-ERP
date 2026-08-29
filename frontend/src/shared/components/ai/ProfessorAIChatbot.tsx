@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Calendar, FileText, Building, Send, MessageSquare, Loader2 } from 'lucide-react';
+import { X, Calendar, FileText, Send, MessageSquare, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
@@ -24,23 +24,23 @@ export default function ProfessorAIChatbot() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    if (isOpen) scrollToBottom();
-  }, [messages, isTyping, isOpen]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
+
+  if (!hasAnyRole(['professor', 'vacataire'])) {
+    return null;
+  }
 
   const handleSendMessage = async (e?: React.FormEvent, predefinedText?: string) => {
     e?.preventDefault();
-    const textToSend = predefinedText || inputValue;
-    if (!textToSend.trim()) return;
+    const text = predefinedText || inputValue;
+    if (!text.trim() || isTyping) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: textToSend
+      text: text
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -59,7 +59,7 @@ export default function ProfessorAIChatbot() {
       };
 
       setMessages(prev => [...prev, botMsg]);
-    } catch (error) {
+    } catch {
       toast.error("Erreur de connexion à l'IA.");
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),

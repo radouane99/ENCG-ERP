@@ -2,21 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   Search, 
-  Filter, 
   BookOpen, 
   Edit2, 
-  Users, 
   Plus, 
   Trash2, 
   X, 
   ShieldCheck, 
   UserCheck, 
-  Building2, 
-  Layers, 
-  Sparkles, 
   GraduationCap,
-  Award,
-  CheckCircle2,
   ChevronDown,
   Check,
   Eye,
@@ -146,7 +139,7 @@ function CustomChefSelect({
 }
 
 export default function FiliereList() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [professors, setProfessors] = useState<any[]>([])

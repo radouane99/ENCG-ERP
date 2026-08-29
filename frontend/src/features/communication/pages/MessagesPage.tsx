@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Send, User } from 'lucide-react'
+import { Search, Send } from 'lucide-react'
 
 export default function MessagesPage() {
   const [contacts] = useState([
