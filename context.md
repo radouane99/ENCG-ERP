@@ -2124,3 +2124,129 @@ jobs:
       - run: npm --prefix frontend run test -- --run
       - run: npm --prefix frontend run build
 ```
+
+---
+
+## 21. INNOVATIONS MAJEURES IA & NOUVEAUX MODULES PÉDAGOGIQUES (V1.1)
+
+> **Référence :** Modules d'Intelligence Artificielle d'Aide à la Décision Académique et d'Optimisation des Ressources Campus.
+
+---
+
+### 21.1 🧭 Simulateur d'Orientation & Choix de Master (AI Path Advisor & Simulateur LMD)
+
+#### A. Rôle Métier & Contexte Pédagogique
+Spécialement conçu pour les étudiants du Tronc Commun (semestres S1 à S4) et de Licence, ce module répond à deux problématiques majeures du système LMD marocain :
+1. **Choix de Filière de Spécialisation (S5/S7) :** Orientation personnalisée basée sur l'analyse algorithmique des performances académiques passées de l'étudiant vers les 5 Masters d'excellence de l'ENCG Fès :
+   - **GFC :** Gestion Financière et Comptable (Comptabilité générale/analytique, Mathématiques financières, Fiscalité)
+   - **MCM :** Management Commercial et Marketing (Marketing fondamental, Études de marché, Commerce, Communication)
+   - **ACG :** Audit et Contrôle de Gestion (Contrôle de gestion, Droit des affaires, Audit interne, Comptabilité)
+   - **GRH :** Management des Ressources Humaines (Management d'équipe, Droit social, Psychologie des organisations)
+   - **MACI :** Management du Commerce International (Commerce international, Douanes, Logistique, Économie internationale)
+2. **Calculateur Prédictif de Compensation LMD (Solveur de Rattrapage) :** Simulation en temps réel des notes cibles requises au rattrapage ou dans les modules restants pour valider le semestre ($\ge 10.00/20$), éviter la note éliminatoire ($< 06.00/20$ en TC, $< 07.00/20$ en Master) et décrocher la mention souhaitée (*Passable, Assez Bien, Bien, Très Bien*).
+
+#### B. Architecture Backend & Algorithmes
+- **`OrientationAdvisorService.php` (`backend/app/Services/Academic/`) :**
+  - Calcule un indice d'affinité pondéré (0 à 100%) pour chaque filière Master.
+  - Génère les axes de compétences multidimensionnels (Finance, Marketing, Audit, Management, International, Droit) pour le graphique Radar.
+- **`LmdCompensationPredictorService.php` (`backend/app/Services/Academic/`) :**
+  - Moteur de simulation stochastique conforme aux Normes Pédagogiques Nationales (NPN).
+  - Résout l'équation de compensation : $\text{Moyenne Semestre} = \frac{1}{N} \sum_{i=1}^N \text{Module}_i \ge 10.00$.
+- **`OrientationAdvisorController.php` (`backend/app/Http/Controllers/Api/`) :**
+  - `GET /api/student/orientation/profile` : Profil académique, affinités Master et axes radar.
+  - `POST /api/student/orientation/simulate` : Simulation interactive de compensation avec sliders.
+  - `GET /api/student/orientation/masters` : Fiches descriptives et débouchés des 5 spécialisations.
+  - `GET /api/admin/orientation/analytics` : Baromètre d'orientation global pour la direction.
+
+#### C. Interface Utilisateur Frontend
+- **Page Client :** `StudentOrientationAdvisorPage.tsx` (`frontend/src/features/academic/pages/`)
+- **Route :** `/student/orientation` (Intégrée dans `StudentRouter.tsx` et dans la `Sidebar.tsx` avec icône `Compass`).
+- **Composants :** Radar Chart interactif (Recharts), Cartes de recommandation avec badges de compatibilité, Simulateur de notes dynamiques avec jauges d'admission colorées (Vert/Orange/Rouge).
+
+---
+
+### 21.2 🤖 Générateur Intelligent d'Emplois du Temps Anti-Conflits (AI Timetable Scheduler)
+
+#### A. Rôle Métier & Contexte d'Exploitation
+Résout le casse-tête algorithmique de la planification semestrielle pour l'ensemble des promotions (TC1, TC2, S5 à S10). Il garantit la génération automatique d'emplois du temps optimisés sans aucune intervention manuelle fastidieuse.
+
+#### B. Résolveur de Contraintes (Constraint Satisfaction Problem - CSP)
+Le moteur `AiTimetableSchedulerService.php` applique un solveur déterministe respectant :
+- **Contraintes Strictes (Hard Constraints - 100% respectées) :**
+  1. *Zéro collision de salle :* Une même salle ne peut accueillir qu'une seule séance à un créneau donné.
+  2. *Zéro collision de professeur :* Un enseignant ne peut pas être planifié sur deux cours simultanés.
+  3. *Zéro collision de groupe étudiant :* Une section ou un groupe de TD ne peut avoir qu'un seul cours actif.
+  4. *Capacité d'accueil :* Capacité de la salle $\ge$ effectif du groupe d'étudiants.
+- **Contraintes Souples (Soft Constraints - Optimisation Heuristique) :**
+  1. *Équilibre des créneaux :* Priorité aux matinées (`08:30–10:30`, `10:45–12:45`) pour les cours magistraux.
+  2. *Journée sans cours :* Préservation des samedis après-midi pour les activités parascolaires et révisions.
+  3. *Regroupement géographique :* Minimisation des déplacements inter-bâtiments pour un même groupe dans la journée.
+
+#### C. Architecture Backend & Endpoints
+- **Service Métier :** `AiTimetableSchedulerService.php` (`backend/app/Services/Academic/`)
+  - `generateTimetable(int $academicYearId, ?int $semester)` : Génération complète de la grille hebdomadaire.
+  - `detectDatabaseConflicts(int $academicYearId)` : Scanner temps réel de tous les conflits existants dans la table `schedules`.
+  - `autoResolveConflicts(int $academicYearId)` : Algorithme de réaffectation automatique des séances en collision vers des créneaux/salles libres.
+  - `applyGeneratedSchedule(int $academicYearId, array $scheduleItems)` : Écriture atomique transactionnelle en base de données.
+- **Contrôleur API :** `AiTimetableSchedulerController.php` (`backend/app/Http/Controllers/Api/`)
+  - `POST /api/admin/ai-scheduler/generate`
+  - `GET /api/admin/ai-scheduler/conflicts`
+  - `POST /api/admin/ai-scheduler/resolve`
+  - `POST /api/admin/ai-scheduler/apply`
+
+#### D. Interface Administrateur & Direction
+- **Page Client :** `AdminAiTimetableSchedulerPage.tsx` (`frontend/src/features/timetable/pages/`)
+- **Route :** `/admin/ai-timetable-scheduler` (Intégrée dans `RootRouter.tsx` et dans la `Sidebar.tsx` sous *ENSEIGNANTS & PLANNINGS* avec icône `Cpu`).
+- **Fonctionnalités Clés :**
+  - Lancement de la génération automatisée avec sélection de l'année et du semestre.
+  - Diagnostic instantané des anomalies et conflits existants avec bouton de résolution en 1 clic.
+  - Prévisualisation interactive de la grille d'emploi du temps générée avant validation définitive.
+  - Statistiques de performance : Taux d'occupation des salles, couverture des modules, indice de satisfaction des créneaux.
+
+---
+
+### 21.3 📑 Parapheur Électronique & Ordres de Mission (Circuit des Visas à 3 Niveaux & PDF Scellé SHA-256)
+
+#### A. Rôle Métier & Contexte d'Application
+Dématérialise à 100% le circuit administratif des enseignants et chercheurs (missions scientifiques, colloques internationaux, jurys de thèse de doctorat, autorisations d'absence, attestations).
+
+#### B. Workflow Hiérarchique de Validation à 3 Niveaux
+```mermaid
+flowchart TD
+    A["1. Dépôt de la demande<br/>(Enseignant / Chercheur)"] -->|Statut PENDING| B{"2. Avis Chef de Département"}
+    B -- Avis Favorable --> C{"3. Décision Direction / SG"}
+    B -- Avis Défavorable --> R1["❌ Dossier Rejeté Motivé"]
+    C -- Approuvé --> D["🛡️ Scellement Numérique SHA-256<br/>Génération Automatique PDF + QR Code<br/>Statut : READY / APPROVED"]
+    C -- Refusé --> R2["❌ Dossier Rejeté Direction"]
+    D --> E["📱 Notification Push/Email & Téléchargement Instantané"]
+```
+
+#### C. Architecture Backend, Modèles & Endpoints
+- **Modèle Enrichi :** `ProfessorDocumentRequest.php` (`backend/app/Models/`)
+  - Champs de visa départemental : `department_visa`, `department_visa_by`, `department_visa_at`, `department_notes`.
+  - Champs de décision direction : `direction_decision`, `direction_signed_by`, `direction_signed_at`, `digital_seal` (SHA-256), `qr_token`.
+  - Paramètres de mission : `mission_category`, `vehicle_registration`, `expense_coverage` (Décret n° 2-97-511).
+- **Service Métier :** `ParapheurWorkflowService.php` (`backend/app/Services/HR/`)
+  - `submitRequest(User $user, array $data)`
+  - `applyDepartmentVisa(int $requestId, User $signer, string $visa, ?string $notes)`
+  - `signDirectionDecision(int $requestId, User $signer, string $decision, ?string $notes, ?string $signatoryTitle)`
+  - `batchSignDirection(array $requestIds, User $signer, ?string $signatoryTitle)` (Signature groupée en 1 clic)
+  - `renderMissionOrderPdf(ProfessorDocumentRequest $request)` (Rendu PDF réglementaire avec cachet et QR)
+  - `getParapheurCounters(User $user, ?int $departmentId)`
+- **Contrôleur API :** `ParapheurController.php` (`backend/app/Http/Controllers/Api/`)
+  - `GET /api/admin/parapheur/inbox`
+  - `GET /api/admin/parapheur/counters`
+  - `POST /api/admin/parapheur/{id}/department-visa`
+  - `POST /api/admin/parapheur/{id}/direction-sign`
+  - `POST /api/admin/parapheur/batch-sign`
+  - `GET /api/admin/parapheur/{id}/preview-pdf`
+- **Template Blade PDF :** `ordre_mission_officiel.blade.php` (`backend/resources/views/pdf/`)
+  - En-tête bilingue FR/AR (Ministère, USMBA, ENCG Fès), double bloc d'émargement visa chef de dept / signature direction, empreinte SHA-256, QR code de vérification publique.
+
+#### D. Couche Présentation Frontend
+- **Espace Direction / Admin :** `AdminParapheurPage.tsx` (`frontend/src/features/hr/pages/`)
+  - Route : `/admin/parapheur` (Accessible depuis `Sidebar.tsx` sous *ENSEIGNANTS & PLANNINGS*).
+  - 4 compteurs dynamiques en temps réel, filtres par étape, signature par lot, tiroirs de validation et aperçu PDF.
+- **Espace Enseignant :** `ProfessorDocumentsPage.tsx` (`frontend/src/features/professor-portal/pages/`)
+  - Route : `/professor/documents`.
+  - Formulaire de demande complet + Timeline visuelle à 3 étapes (*1. Dépôt ➔ 2. Visa Département ➔ 3. Signature Direction*) + Téléchargement en 1 clic du PDF certifié.

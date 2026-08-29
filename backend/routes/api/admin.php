@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\AdmissionController;
 use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AiFeatureController;
 use App\Http\Controllers\Api\AiScolarBotController;
+use App\Http\Controllers\Api\AiTimetableSchedulerController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ApogeeEngineController;
 use App\Http\Controllers\Api\AssessmentController;
@@ -55,6 +56,8 @@ use App\Http\Controllers\Api\InternshipController;
 use App\Http\Controllers\Api\LmsCourseController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OrientationAdvisorController;
+use App\Http\Controllers\Api\ParapheurController;
 use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Api\PilotageController;
 use App\Http\Controllers\Api\ProfessorAiController;
@@ -141,6 +144,38 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     // Room Bookings PDF Export & Management
     Route::get('/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
     Route::get('/admin/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
+
+    // 🤖 AI Timetable Scheduler & Zero-Conflict Generator
+    Route::post('/timetable/ai-scheduler/generate', [AiTimetableSchedulerController::class, 'generate']);
+    Route::post('/admin/timetable/ai-scheduler/generate', [AiTimetableSchedulerController::class, 'generate']);
+    Route::get('/timetable/ai-scheduler/conflicts', [AiTimetableSchedulerController::class, 'scanConflicts']);
+    Route::get('/admin/timetable/ai-scheduler/conflicts', [AiTimetableSchedulerController::class, 'scanConflicts']);
+    Route::post('/timetable/ai-scheduler/resolve', [AiTimetableSchedulerController::class, 'resolveConflict']);
+    Route::post('/admin/timetable/ai-scheduler/resolve', [AiTimetableSchedulerController::class, 'resolveConflict']);
+    Route::post('/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
+    Route::post('/admin/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
+
+    // 🧭 Student Orientation & Master Specialization Analytics
+    Route::get('/orientation/analytics', [OrientationAdvisorController::class, 'getAdminAnalytics']);
+    Route::get('/admin/orientation/analytics', [OrientationAdvisorController::class, 'getAdminAnalytics']);
+
+    // 📑 Parapheur Électronique & Ordres de Mission (3-Tier Workflow)
+    Route::get('/parapheur/inbox', [ParapheurController::class, 'index']);
+    Route::get('/admin/parapheur/inbox', [ParapheurController::class, 'index']);
+    Route::get('/parapheur/counters', [ParapheurController::class, 'counters']);
+    Route::get('/admin/parapheur/counters', [ParapheurController::class, 'counters']);
+    Route::get('/parapheur/{id}', [ParapheurController::class, 'show']);
+    Route::get('/admin/parapheur/{id}', [ParapheurController::class, 'show']);
+    Route::post('/parapheur', [ParapheurController::class, 'store']);
+    Route::post('/admin/parapheur', [ParapheurController::class, 'store']);
+    Route::post('/parapheur/{id}/department-visa', [ParapheurController::class, 'departmentVisa']);
+    Route::post('/admin/parapheur/{id}/department-visa', [ParapheurController::class, 'departmentVisa']);
+    Route::post('/parapheur/{id}/direction-sign', [ParapheurController::class, 'directionSign']);
+    Route::post('/admin/parapheur/{id}/direction-sign', [ParapheurController::class, 'directionSign']);
+    Route::post('/parapheur/batch-sign', [ParapheurController::class, 'batchSign']);
+    Route::post('/admin/parapheur/batch-sign', [ParapheurController::class, 'batchSign']);
+    Route::get('/parapheur/{id}/preview-pdf', [ParapheurController::class, 'previewPdf']);
+    Route::get('/admin/parapheur/{id}/preview-pdf', [ParapheurController::class, 'previewPdf']);
 
     // Automated Timetable Engine — CSP Solver & Energy Optimizer
     Route::prefix('smart-scheduling')->group(function () {

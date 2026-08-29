@@ -104,6 +104,7 @@ class PublicVerificationController extends Controller
         if ($code) {
             $pDoc = ProfessorDocumentRequest::with('user')
                 ->where('tracking_code', $code)
+                ->orWhere('qr_token', $code)
                 ->orWhere('id', is_numeric($code) ? (int) $code : 0)
                 ->first();
 

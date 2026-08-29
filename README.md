@@ -24,7 +24,7 @@
 6. [🏛️ Hub Intelligent des Salles & Moteur de Rattrapage (Smart Room Hub)](#6-hub-intelligent-des-salles--moteur-de-rattrapage-smart-room-hub)
 7. [🤖 Écosystème d'Intelligence Artificielle & Modèles Hybrides (Gemini 1.5 & OCR)](#7-écosystème-dintelligence-artificielle--modèles-hybrides-gemini-15--ocr)
 8. [👥 Matrice des Rôles & Permissions (RBAC)](#8-matrice-des-rôles--permissions-rbac)
-9. [📦 Description Détaillée des 15 Modules Fonctionnels](#9-description-détaillée-des-15-modules-fonctionnels)
+9. [📦 Description Détaillée des 18 Modules Fonctionnels](#9-description-détaillée-des-18-modules-fonctionnels)
 10. [📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)](#10-moteur-de-délibération--règles-académiques-lmd-npn-maroc)
 11. [🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP](#11-sécurité-signature-numérique-sha-256--conformité-cndp)
 12. [🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)](#12-pyramide-de-tests-principes-istqb--couverture-complète-100-green)
@@ -594,7 +594,7 @@ graph TD
     Poly --> Generator --> ProfTool
 ```
 
-### 🧠 Les 8 Services d'IA Spécialisés Intégrés :
+### 🧠 Les 10 Services d'IA Spécialisés Intégrés :
 
 | Service IA Backend | Classe PHP | Rôle & Fonctionnalité Métier |
 |---|---|---|
@@ -602,10 +602,12 @@ graph TD
 | **2. 👁️ Pipeline OCR Hybride** | `LocalOcrService.php` / `OcrPipeline.php` | Extraction automatique des données textuelles sur les pièces scannées (CIN, attestations de Baccalauréat, justificatifs médicaux) pour pré-remplir les dossiers d'admission. |
 | **3. 🛡️ Copilote Exécutif de Direction** | `AdminAiCopilotService.php` | Synthèse décisionnelle 360°, génération automatique de rapports institutionnels pour le Ministère (MESRSFC) et détection proactive d'anomalies. |
 | **4. 📈 Analytique Prédictive Anti-Décrochage** | `AiPredictiveAnalyticsService.php` | Identification précoce des étudiants en situation de vulnérabilité académique basée sur l'historique des notes, les retards et le taux d'absentéisme. |
-| **5. 👨‍🏫 Assistant Pédagogique Enseignant** | `ProfAiService.php` | Génération automatique d'exercices d'entraînement, banques de QCMs calibrées et aide à la rédaction des plans de cours (syllabus LMD). |
-| **6. 💰 Prévisionniste Budgétaire & Régie** | `AiFinancialForecasterService.php` | Modélisation prédictive des flux d'encaissement et projections financières pour les Masters Spécialisés et la Formation Continue. |
-| **7. 💼 Conseiller Carrière & Stage** | `StudentAiService.php` | Simulation d'entretiens de recrutement, optimisation du CV académique et recommandations d'orientation pour le choix de filière en S5 et S7. |
-| **8. 🗓️ Solveur d'Emplois du Temps (CSP IA)** | `ScheduleController.php` | Algorithme de résolution par contraintes (MRV-Degree-LCV) générant des plannings optimisés avec zéro conflit de salle, de professeur ou de groupe. |
+| **5. 🧭 Conseiller d'Orientation & Choix de Master** | `OrientationAdvisorService.php` | Algorithme de compatibilité multidimensionnelle (Radar 6 axes) guidant les étudiants de Tronc Commun vers les 5 Masters d'excellence (GFC, MCM, ACG, GRH, MACI). |
+| **6. 🧮 Simulateur Prédictif LMD** | `LmdCompensationPredictorService.php` | Calculateur stochastique de compensation LMD et solveur de note cible pour les sessions de rattrapage et l'obtention des mentions. |
+| **7. 🤖 Générateur d'Emplois du Temps Anti-Conflits (CSP)** | `AiTimetableSchedulerService.php` | Solveur de contraintes (Constraint Satisfaction) éliminant 100% des collisions de salles, d'enseignants et de groupes d'étudiants. |
+| **8. 👨‍🏫 Assistant Pédagogique Enseignant** | `ProfAiService.php` | Génération automatique d'exercices d'entraînement, banques de QCMs calibrées et aide à la rédaction des plans de cours (syllabus LMD). |
+| **9. 💰 Prévisionniste Budgétaire & Régie** | `AiFinancialForecasterService.php` | Modélisation prédictive des flux d'encaissement et projections financières pour les Masters Spécialisés et la Formation Continue. |
+| **10. 💼 Conseiller Carrière & Stage** | `StudentAiService.php` | Simulation d'entretiens de recrutement, optimisation du CV académique et recommandations professionnelles. |
 
 ### 🔒 Souveraineté & Anonymisation CNDP (Loi 09-08)
 - **Anonymisation préalable des prompts** : Les noms des étudiants, CIN et identifiants sensibles sont strippés ou hachés en amont de toute transmission au LLM.
@@ -649,6 +651,7 @@ classDiagram
         +Réception Notifications Push/Email
         +Émargement Présence (Scan QR)
         +Demande Documents en Ligne
+        +Simulateur Orientation & LMD
     }
 
     SuperAdmin <|-- DirectionScolarite
@@ -659,7 +662,7 @@ classDiagram
 
 ---
 
-## 9. 📦 Description Détaillée des 15 Modules Fonctionnels
+## 9. 📦 Description Détaillée des 18 Modules Fonctionnels
 
 | N° | Module | Description & Rôle Métier |
 |:---:|---|---|
@@ -678,6 +681,9 @@ classDiagram
 | **13** | **📚 Médiathèque & Prêts Koha LMS** | Gestion des emprunts d'ouvrages et alertes automatiques de retards. |
 | **14** | **🤖 Tuteur IA & Baromètre Qualité** | Assistant IA sur polycopiés de cours et évaluations anonymisées par hash SHA-256. |
 | **15** | **🔒 Sécurité & Audit Forensics** | Journalisation milliseconde de toute modification et scellement HMAC-SHA256. |
+| **16** | **🧭 Simulateur d'Orientation & Choix de Master** | IA Path Advisor avec radar de compétences 6 axes et prédiction d'affinité vers les Masters GFC/MCM/ACG/GRH/MACI (`/student/orientation`). |
+| **17** | **🤖 AI Timetable Scheduler (Solveur CSP)** | Génération automatique d'emplois du temps sans conflits et scanner/résolveur d'anomalies en 1 clic (`/admin/ai-timetable-scheduler`). |
+| **18** | **📑 Parapheur Électronique & Ordres de Mission** | Circuit des visas à 3 niveaux (Enseignant ➔ Chef Dept ➔ Direction), scellement cryptographique SHA-256 et ordres de mission officiels PDF (`/admin/parapheur`). |
 
 ---
 

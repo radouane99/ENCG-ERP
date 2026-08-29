@@ -12,7 +12,7 @@ import {
   ShieldAlert, UserPlus, Target,
   ScanLine, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   Network, MapPin, Ticket, Crown, Book,
-  BrainCircuit, Landmark, ShieldCheck, Globe, PlaneTakeoff, Lock, Sparkles,
+  BrainCircuit, Landmark, ShieldCheck, Globe, PlaneTakeoff, Lock, Sparkles, Compass,
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
@@ -96,7 +96,9 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'الأساتذة واستعمالات الزمن',
     items: [
       { label: 'Professeurs & Vacataires', labelAr: 'هيئة التدريس والأساتذة', href: '/professors', icon: UserCheck, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
+      { label: 'Parapheur Électronique', labelAr: 'المحفظة الإلكترونية وأوامر المهمة', href: '/admin/parapheur', icon: Stamp, badge: 'RH', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'hr-officer'] },
       { label: 'Affectations Pédagogiques', labelAr: 'التوزيع البيداغوجي للمواد', href: '/admin/professor-assignments', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'department-head', 'director'] },
+      { label: 'Générateur Anti-Conflits (IA)', labelAr: 'مولد الجداول الذكي بدون تعارض', href: '/admin/ai-timetable-scheduler', icon: Cpu, badge: 'AI', roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
       { label: 'Emplois du Temps (EDT)', labelAr: 'استعمالات الزمن', href: '/admin/timetable/calendar', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Générateur CSP (IA)', labelAr: 'المولد الذكي لاستعمال الزمن', href: '/admin/schedules/engine', icon: Cpu, badge: 'CSP', roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
       { label: 'Occupation & Salles Libres (Rattrapages)', labelAr: 'شغل القاعات وحصص الاستدراك', href: '/admin/rooms/availability', icon: MapPin, badge: 'LIVE', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
@@ -140,6 +142,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الطالب',
     items: [
       { label: 'Mon Emploi du Temps', labelAr: 'جداول أوقاتي', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
+      { label: 'Orientation Master & LMD (IA)', labelAr: 'التوجيه الذكي وحساب التعويض', href: '/student/orientation', icon: Compass, badge: 'IA', roles: ['student'] },
       { label: 'Mes Stages & PFE', labelAr: 'تداريبي ومشاريع التخرج', href: '/student/internships', icon: Briefcase, roles: ['student'] },
       { label: 'Mes Notes & Résultats', labelAr: 'نقاطي ونتائجي', href: '/student/grades', icon: TrendingUp, roles: ['student'] },
       { label: 'Mes Absences & Justificatifs', labelAr: 'غياباتي والمبررات', href: '/student/absences', icon: UserX, roles: ['student'] },

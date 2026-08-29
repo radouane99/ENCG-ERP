@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, PlaneTakeoff, Coins, CalendarClock, Download, Sparkles, 
   Plus, CheckCircle2, Clock, X, ShieldCheck, 
-  ChevronRight, Send, Loader2, Stamp, Eye
+  ChevronRight, Send, Loader2, Stamp
 } from 'lucide-react';
-import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
@@ -27,11 +26,16 @@ interface DocumentRequestItem {
   purpose: string;
   destination?: string;
   dates?: string;
-  status: 'ready' | 'pending' | 'rejected';
+  status: 'ready' | 'pending' | 'rejected' | 'approved';
+  department_visa?: 'pending' | 'favorable' | 'unfavorable';
+  direction_decision?: 'pending' | 'approved' | 'rejected';
   created_at: string;
   pdf_url: string;
   signer: string;
   download_ready: boolean;
+  digital_seal?: string;
+  mission_category?: string;
+  expense_coverage?: string;
 }
 
 export default function ProfessorDocumentsPage() {
@@ -46,13 +50,15 @@ export default function ProfessorDocumentsPage() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
-  const [selectedType, setSelectedType] = useState('attestation_travail');
+  const [selectedType, setSelectedType] = useState('ordre_de_mission');
   const [purpose, setPurpose] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [transportMode, setTransportMode] = useState<'voiture_personnelle' | 'train' | 'avion' | 'autre'>('voiture_personnelle');
   const [vehicleRegistration, setVehicleRegistration] = useState('');
+  const [missionCategory, setMissionCategory] = useState('colloque_international');
+  const [expenseCoverage, setExpenseCoverage] = useState('charge_ecole');
 
   const fetchDocumentsData = async (silent = false) => {
     try {
@@ -71,7 +77,6 @@ export default function ProfessorDocumentsPage() {
 
   useEffect(() => {
     fetchDocumentsData(false);
-    // Background polling every 6 seconds to update status in real-time
     const interval = setInterval(() => {
       fetchDocumentsData(true);
     }, 6000);
@@ -86,6 +91,8 @@ export default function ProfessorDocumentsPage() {
     setEndDate('');
     setTransportMode('voiture_personnelle');
     setVehicleRegistration('');
+    setMissionCategory('colloque_international');
+    setExpenseCoverage('charge_ecole');
     setShowModal(true);
   };
 
@@ -103,7 +110,7 @@ export default function ProfessorDocumentsPage() {
 
     if (selectedType === 'ordre_de_mission' && transportMode === 'voiture_personnelle') {
       if (!vehicleRegistration.trim()) {
-        toast.error('Veuillez obligatoirement renseigner le numéro d\'immatriculation du véhicule personnel.');
+        toast.error('Veuillez renseigner l\'immatriculation de votre véhicule personnel.');
         return;
       }
     }
@@ -118,20 +125,22 @@ export default function ProfessorDocumentsPage() {
         end_date: endDate || null,
         transport_mode: selectedType === 'ordre_de_mission' ? transportMode : null,
         vehicle_registration: selectedType === 'ordre_de_mission' ? vehicleRegistration : null,
+        mission_category: selectedType === 'ordre_de_mission' ? missionCategory : null,
+        expense_coverage: selectedType === 'ordre_de_mission' ? expenseCoverage : null,
       });
 
       if (res.data?.data) {
         setHistory(prev => [res.data.data, ...prev]);
       }
 
-      toast.success("✅ Demande de document transmise avec succès !", {
-        description: "Votre demande est en cours de traitement par l'administration."
+      toast.success("✅ Demande transmise avec succès au Parapheur Électronique !", {
+        description: "Votre dossier a été soumis au Chef de Département pour visa préalable."
       });
       setShowModal(false);
       setPurpose('');
       setDestination('');
       setVehicleRegistration('');
-    } catch (err) {
+    } catch  {
       toast.error('Erreur lors de la soumission de la demande.');
     } finally {
       setSubmitting(false);
@@ -147,13 +156,13 @@ export default function ProfessorDocumentsPage() {
   const renderIcon = (typeId: string) => {
     switch (typeId) {
       case 'ordre_de_mission':
-        return <PlaneTakeoff className="w-6 h-6 text-purple-400" />;
+        return <PlaneTakeoff className="w-6 h-6 text-purple-500" />;
       case 'attestation_salaire':
-        return <Coins className="w-6 h-6 text-amber-400" />;
+        return <Coins className="w-6 h-6 text-amber-500" />;
       case 'autorisation_absence':
-        return <CalendarClock className="w-6 h-6 text-teal-400" />;
+        return <CalendarClock className="w-6 h-6 text-teal-500" />;
       default:
-        return <FileText className="w-6 h-6 text-blue-400" />;
+        return <FileText className="w-6 h-6 text-blue-500" />;
     }
   };
 
@@ -169,21 +178,21 @@ export default function ProfessorDocumentsPage() {
           </div>
           <div>
             <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Guichet RH Numérique ENCG Fès
+              <Sparkles className="w-3 h-3 text-amber-400" /> Parapheur Électronique & Guichet RH
             </span>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Demandes de Documents & Ordres de Mission</h1>
             <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
-              Générez instantanément vos attestations certifiées avec signature numérique et code QR anti-fraude.
+              Circuit des visas à 3 niveaux : Chef de Département ➔ Direction / SG ➔ Scellement SHA-256 avec QR Code.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 relative z-10">
           <button
-            onClick={() => handleOpenRequestModal('attestation_travail')}
+            onClick={() => handleOpenRequestModal('ordre_de_mission')}
             className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" /> Nouvelle Demande
+            <Plus className="w-4 h-4" /> Nouvel Ordre de Mission
           </button>
         </div>
       </div>
@@ -191,10 +200,10 @@ export default function ProfessorDocumentsPage() {
       {/* Catalog of Available Documents */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" /> Catalogue des Documents Disponibles en 1-Clic
+          <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-indigo-600" /> Catalogue des Demandes Administratives
           </h2>
-          <span className="text-xs font-bold text-slate-400">Délivrance immédiate & conforme Loi 53-05</span>
+          <span className="text-xs font-bold text-slate-400">Workflow officiel conforme Loi 53-05</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -202,33 +211,33 @@ export default function ProfessorDocumentsPage() {
             <div 
               key={doc.id}
               onClick={() => handleOpenRequestModal(doc.id)}
-              className="p-6 bg-white border border-slate-200/90 hover:border-indigo-400 rounded-3xl shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between space-y-4 group relative overflow-hidden"
+              className="p-6 bg-card border border-border hover:border-indigo-400 rounded-3xl shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between space-y-4 group relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 group-hover:bg-[#0f2863] flex items-center justify-center transition-colors shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 group-hover:bg-[#0f2863] flex items-center justify-center transition-colors shadow-sm">
                     {renderIcon(doc.id)}
                   </div>
-                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                    Certifié RH
+                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                    3 Niveaux
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="font-black text-base text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="font-black text-base text-foreground group-hover:text-indigo-600 transition-colors">
                     {doc.title}
                   </h3>
-                  <span className="text-xs font-bold text-slate-400 block mt-0.5">
+                  <span className="text-xs font-bold text-muted-foreground block mt-0.5">
                     {doc.title_ar}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                <p className="text-xs text-muted-foreground font-medium leading-relaxed">
                   {doc.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-700">
+              <div className="pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
                 <span>{doc.processing_time}</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -237,109 +246,161 @@ export default function ProfessorDocumentsPage() {
         </div>
       </div>
 
-      {/* History & Tracking Table */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      {/* History & 3-Tier Workflow Tracking */}
+      <div className="bg-card border border-border rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-700">
-              Historique de Vos Demandes & Documents Prêts ({history.length})
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-foreground">
+              Suivi en Temps Réel du Parapheur & Documents Prêts ({history.length})
             </h3>
           </div>
-          <span className="text-xs font-bold text-slate-400">
-            Dossier Administratif de : <strong>{currentProfName}</strong>
+          <span className="text-xs font-bold text-muted-foreground">
+            Dossier de : <strong className="text-foreground">{currentProfName}</strong>
           </span>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center p-12 space-y-3">
             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-            <span className="text-xs font-bold text-slate-400">Chargement de votre dossier administratif réel...</span>
+            <span className="text-xs font-bold text-muted-foreground">Actualisation de votre dossier administratif...</span>
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-16 px-6 border-2 border-dashed border-slate-200 rounded-3xl space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-inner">
+          <div className="text-center py-16 px-6 border-2 border-dashed border-border rounded-3xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center mx-auto shadow-inner">
               <FileText className="w-7 h-7" />
             </div>
             <div className="space-y-1">
-              <h4 className="font-black text-slate-800 text-base">Aucune demande enregistrée en base de données</h4>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Vos demandes d'Attestation de Travail, Ordre de Mission ou Autorisations apparaîtront ici dès que vous soumettez une nouvelle demande.
+              <h4 className="font-black text-foreground text-base">Aucune demande enregistrée</h4>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                Vos demandes d'Ordre de Mission et d'Attestations certifiées apparaîtront ici avec l'état d'avancement des visas.
               </p>
             </div>
             <button
-              onClick={() => handleOpenRequestModal('attestation_travail')}
-              className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#001A4B] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer inline-flex items-center gap-2"
+              onClick={() => handleOpenRequestModal('ordre_de_mission')}
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4 text-amber-400" /> Créer une première demande
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {history.map((req) => (
-              <div key={req.id} className="py-4.5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/60 p-3 rounded-2xl transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 font-black">
-                    {renderIcon(req.type_id)}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                        {req.tracking_code}
-                      </span>
-                      <h4 className="font-black text-sm text-slate-900">{req.type_label}</h4>
-                      {req.status === 'pending' ? (
-                        <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-amber-700" /> En Attente de Validation SG
-                        </span>
-                      ) : req.status === 'rejected' ? (
-                        <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
-                          <X className="w-3 h-3 text-rose-600" /> Demande Non Accordée
-                        </span>
+          <div className="space-y-4">
+            {history.map((req) => {
+              const isReady = req.status === 'ready' || req.status === 'approved' || req.download_ready;
+              const isRejected = req.status === 'rejected';
+
+              return (
+                <div 
+                  key={req.id} 
+                  className="border border-border/80 hover:border-indigo-400/60 p-5 rounded-2xl transition-all bg-card/60 space-y-4"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 flex items-center justify-center shrink-0 font-black">
+                        {renderIcon(req.type_id)}
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="font-mono text-xs font-black text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                            {req.tracking_code}
+                          </span>
+                          <h4 className="font-black text-sm text-foreground">{req.type_label}</h4>
+                          
+                          {isReady ? (
+                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Scellé & Signé (SHA-256)
+                            </span>
+                          ) : isRejected ? (
+                            <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                              <X className="w-3 h-3 text-rose-600" /> Demande Non Accordée
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-700" /> Circuit Parapheur en Cours
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-foreground font-medium">
+                          <strong>Motif :</strong> {req.purpose}
+                          {req.destination && <span className="ml-2">📍 <strong>Lieu :</strong> {req.destination}</span>}
+                          {req.dates && <span className="ml-2">🗓️ <strong>Période :</strong> {req.dates}</span>}
+                        </p>
+
+                        <p className="text-[11px] text-muted-foreground font-medium">
+                          Soumis le : {req.created_at} • Signataire final : <strong className="text-foreground">{req.signer}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
+                      {isReady ? (
+                        <button
+                          onClick={() => handleDownloadPdf(req)}
+                          className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#001A4B] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                        >
+                          <Download className="w-4 h-4 text-amber-400" /> Télécharger PDF Certifié
+                        </button>
                       ) : (
-                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Prêt & Signé
-                        </span>
+                        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-bold border border-amber-200 dark:border-amber-800 flex items-center gap-2 select-none">
+                          <Clock className="w-4 h-4 text-amber-600" /> En cours d'approbation
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    <p className="text-xs text-slate-600 font-medium">
-                      <strong>Motif :</strong> {req.purpose}
-                      {req.destination && <span> • <strong>Destination :</strong> {req.destination}</span>}
-                      {req.dates && <span> • <strong>Période :</strong> {req.dates}</span>}
-                    </p>
+                  {/* 3-Stage Progress Timeline */}
+                  <div className="bg-muted/30 p-3 rounded-xl border border-border/50 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                        ✓
+                      </div>
+                      <div>
+                        <div className="font-bold text-foreground">1. Dépôt de la demande</div>
+                        <div className="text-[10px] text-muted-foreground">{req.created_at}</div>
+                      </div>
+                    </div>
 
-                    <p className="text-[11px] text-slate-400 font-medium">
-                      Date de demande : {req.created_at} • Signataire officiel : <strong className="text-slate-600">{req.signer}</strong>
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        isRejected ? 'bg-rose-500 text-white' : (isReady || req.department_visa === 'favorable') ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white animate-pulse'
+                      }`}>
+                        {isRejected ? '✕' : (isReady || req.department_visa === 'favorable') ? '✓' : '2'}
+                      </div>
+                      <div>
+                        <div className="font-bold text-foreground">2. Visa Département</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {req.department_visa === 'favorable' || isReady ? 'Avis Favorable Apposé' : isRejected ? 'Rejeté / Défavorable' : 'En attente du Chef Dept'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        isReady ? 'bg-blue-600 text-white' : isRejected ? 'bg-rose-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        {isReady ? '✓' : isRejected ? '✕' : '3'}
+                      </div>
+                      <div>
+                        <div className="font-bold text-foreground">3. Signature Direction & QR</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {isReady ? 'Scellé & Prêt au Téléchargement' : isRejected ? 'Non validé' : 'En attente Direction'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 shrink-0">
-                  {req.download_ready ? (
-                    <button
-                      onClick={() => handleDownloadPdf(req)}
-                      className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#001A4B] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
-                    >
-                      <Download className="w-4 h-4 text-amber-400" /> Télécharger PDF Certifié
-                    </button>
-                  ) : (
-                    <div className="px-4 py-2.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-bold border border-amber-200 flex items-center gap-2 select-none" title="Le document sera téléchargeable dès validation par le Secrétariat Général">
-                      <Clock className="w-4 h-4 text-amber-600" /> En Attente de Signature
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Modal Nouvelle Demande Express */}
+      {/* Modal Nouvelle Demande */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 space-y-6">
+          <div className="bg-card rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
             
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
               <button 
@@ -349,83 +410,106 @@ export default function ProfessorDocumentsPage() {
                 <X className="w-5 h-5" />
               </button>
               <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
-                <Stamp className="w-3.5 h-3.5 text-amber-400" /> Guichet RH Numérique
+                <Stamp className="w-3.5 h-3.5 text-amber-400" /> Parapheur Électronique ENCG Fès
               </span>
-              <h3 className="font-black text-2xl tracking-tight">Nouvelle Demande de Document</h3>
+              <h3 className="font-black text-2xl tracking-tight">Nouvelle Demande Administrative</h3>
               <p className="text-xs text-slate-300 font-medium mt-1">
-                Le document sera généré automatiquement avec le tampon officiel et la signature certifiée.
+                Votre demande sera soumise au Chef de Département puis au Directeur pour scellement électronique.
               </p>
             </div>
 
             <form onSubmit={handleSubmitRequest} className="p-6 md:p-8 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Type de Document</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Type de Document</label>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#0f2863] focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3 bg-background border border-input rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <option value="attestation_travail">Attestation de Travail (شهادة العمل)</option>
                   <option value="ordre_de_mission">Ordre de Mission Officiel (أمر بمهمة)</option>
+                  <option value="attestation_travail">Attestation de Travail (شهادة العمل)</option>
                   <option value="attestation_salaire">Attestation de Salaire / Émoluments (شهادة الأجرة)</option>
                   <option value="autorisation_absence">Autorisation d'Absence / Congé (رخصة التغيب)</option>
                 </select>
               </div>
 
+              {selectedType === 'ordre_de_mission' && (
+                <div>
+                  <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                    Catégorie de la Mission *
+                  </label>
+                  <select
+                    value={missionCategory}
+                    onChange={(e) => setMissionCategory(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="colloque_international">Colloque / Congrès Scientifique International</option>
+                    <option value="seminaire_national">Séminaire de Recherche / Journée d'Études Nationale</option>
+                    <option value="jury_these">Participation à un Jury de Thèse / Habilitation (HDR)</option>
+                    <option value="visite_entreprise">Visite d'Entreprise & Encadrement PFE / Stages</option>
+                    <option value="reunion_pedagogique">Réunion Pédagogique Inter-Universitaire</option>
+                  </select>
+                </div>
+              )}
+
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Motif / Justification de la Demande</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Motif / Justification Détaillée *</label>
                 <textarea
                   rows={3}
+                  required
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="Ex : Dépôt de dossier de Visa Scientifique / Participation au jury de thèse à l'Université Hassan II..."
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
+                  placeholder="Ex : Présentation d'une communication scientifique sur la gouvernance financière / Jury de thèse de doctorat..."
+                  className="w-full px-4 py-3 bg-background border border-input rounded-xl text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
               {selectedType === 'ordre_de_mission' && (
                 <>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Lieu / Ville de Destination</label>
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Lieu / Ville de Destination *</label>
                     <input
                       type="text"
+                      required
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
-                      placeholder="Ex : Casablanca / Rabat / Tanger..."
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                      placeholder="Ex : Casablanca / Rabat / Tanger / Paris..."
+                      className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Date de Début</label>
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Date de Début *</label>
                       <input
                         type="date"
+                        required
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Date de Fin</label>
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Date de Fin *</label>
                       <input
                         type="date"
+                        required
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
                         Moyen de Transport *
                       </label>
                       <select
                         value={transportMode}
                         onChange={(e) => setTransportMode(e.target.value as any)}
-                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                       >
                         <option value="voiture_personnelle">🚗 Voiture Personnelle</option>
                         <option value="train">🚆 Train ONCF (Al Boraq / Al Atlas)</option>
@@ -434,30 +518,45 @@ export default function ProfessorDocumentsPage() {
                       </select>
                     </div>
 
-                    {transportMode === 'voiture_personnelle' && (
-                      <div className="animate-in fade-in zoom-in-95">
-                        <label className="block text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-2">
-                          Immatriculation du Véhicule *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={vehicleRegistration}
-                          onChange={(e) => setVehicleRegistration(e.target.value)}
-                          placeholder="Ex : 12345-A-15 ou 67890 | B | 26"
-                          className="w-full px-4 py-2.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-sm font-mono font-bold text-indigo-900 focus:outline-none focus:border-indigo-500 placeholder:text-slate-400"
-                        />
-                      </div>
-                    )}
+                    <div>
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        Prise en Charge des Frais
+                      </label>
+                      <select
+                        value={expenseCoverage}
+                        onChange={(e) => setExpenseCoverage(e.target.value)}
+                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="charge_ecole">Budget ENCG Fès (Décret 2-97-511)</option>
+                        <option value="charge_organisme_accueil">Organisme / Université d'Accueil</option>
+                        <option value="sans_frais">Sans Incidence Financière</option>
+                      </select>
+                    </div>
                   </div>
+
+                  {transportMode === 'voiture_personnelle' && (
+                    <div className="animate-in fade-in zoom-in-95">
+                      <label className="block text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-2">
+                        Immatriculation du Véhicule Personnel *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={vehicleRegistration}
+                        onChange={(e) => setVehicleRegistration(e.target.value)}
+                        placeholder="Ex : 12345-A-15 ou 67890 | B | 26"
+                        className="w-full px-4 py-2.5 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-mono font-bold text-indigo-900 dark:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-4 flex justify-end gap-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 text-muted-foreground hover:bg-muted rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -467,7 +566,7 @@ export default function ProfessorDocumentsPage() {
                   className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Valider & Générer le Document
+                  Transmettre au Parapheur
                 </button>
               </div>
             </form>

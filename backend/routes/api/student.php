@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CedocController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\DeliberationController;
 use App\Http\Controllers\Api\Mobile\MobileStudentController;
+use App\Http\Controllers\Api\OrientationAdvisorController;
 use App\Http\Controllers\Api\ReinscriptionController;
 use App\Http\Controllers\Api\Student\ClubController;
 use App\Http\Controllers\Api\Student\JobOfferController;
@@ -116,7 +117,15 @@ $studentPortalRoutes = function () {
     // AI Course Tutor (RAG anchored on ENCG handouts)
     Route::post('/ai-tutor/chat', [AiCourseTutorController::class, 'chat']);
     Route::get('/ai-tutor/quiz', [AiCourseTutorController::class, 'getQuiz']);
+
+    // AI Path Advisor & LMD Simulator (Orientation Master & Compensation)
+    Route::prefix('orientation')->group(function () {
+        Route::get('/profile', [OrientationAdvisorController::class, 'getStudentProfile']);
+        Route::post('/simulate-compensation', [OrientationAdvisorController::class, 'simulateCompensation']);
+    });
 };
 
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('student-portal')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum'])->prefix('v1/student')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum'])->prefix('student')->group($studentPortalRoutes);

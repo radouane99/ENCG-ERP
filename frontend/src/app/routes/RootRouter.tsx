@@ -233,10 +233,12 @@ const AdminReinscriptionCockpitPage = lazy(() => import('@features/admin/pages/A
 const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
+const AdminAiTimetableSchedulerPage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
 const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminAnalyticsDashboard'))
 const AdminGuichetPage = lazy(() => import('@features/admin/pages/AdminGuichetPage'))
 const DepartmentSubstitutionsPage = lazy(() => import('@features/admin/pages/DepartmentSubstitutionsPage'))
 const AdminRolesPermissionsPage = lazy(() => import('@features/admin/pages/AdminRolesPermissionsPage'))
+const AdminParapheurPage = lazy(() => import('@features/hr/pages/AdminParapheurPage'))
 
 // ── Route Guard ────────────────────────────────────────────────
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -373,6 +375,8 @@ export default function RootRouter() {
             <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
             <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
             <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
+            <Route path="/admin/parapheur" element={<AdminParapheurPage />} />
+            <Route path="/parapheur" element={<AdminParapheurPage />} />
             <Route path="/academic/groups" element={<GroupsPage />} />
             <Route path="/academic/filieres" element={<FilieresPage />} />
             <Route path="/academic/departments" element={<DepartmentsPage />} />
@@ -528,6 +532,8 @@ export default function RootRouter() {
             <Route path="/admin/users/:id" element={<ViewUserPage />} />
             <Route path="/admin/students" element={<AdminStudentsPage />} />
             <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
+            <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/timetable/ai-scheduler" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/schedules" element={<SchedulesEnginePage />} />
             <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
             <Route path="/admin/reservations" element={<ReservationsPage />} />
