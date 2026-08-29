@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Users, MailQuestion, Hourglass, CheckSquare, AlertTriangle, Loader2, Calendar, Sparkles, Download, Check, ChevronDown, Clock, ShieldCheck, Grid, X } from 'lucide-react'
+import { Bell, MailQuestion, CheckSquare, Loader2, Calendar, Sparkles, Check, ChevronDown, Clock, Grid, X } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
 import { academicApi } from '@shared/api/academic'

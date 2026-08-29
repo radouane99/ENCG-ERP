@@ -4,12 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { 
   Award, 
-  FileText, 
   CheckCircle2, 
-  UserCheck, 
-  Sparkles, 
-  Building, 
-  Calendar, 
   Save, 
   Printer, 
   Send, 
@@ -21,7 +16,7 @@ import { toast } from 'sonner';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
 export default function ProfessorPfeEvaluationPage() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  const { i18n } = useTranslation(['professors', 'common']);
 
   // Criteria ratings (Out of 20 total)
   const [writtenReport, setWrittenReport] = useState<number>(0);
