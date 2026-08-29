@@ -3447,7 +3447,7 @@ export default function AdminGradesPVPage() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          header, nav, aside, .print\:hidden, button, input:not([type="hidden"]), select {
+          header, nav, aside, .print\\:hidden, button, input:not([type="hidden"]), select {
             display: none !important;
           }
           .pv-print-card {

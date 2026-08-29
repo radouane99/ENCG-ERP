@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Tent, Search, Sparkles,
-  DollarSign, Printer, Check, X, Calendar, BarChart2,
+  DollarSign, Check, X, Calendar, BarChart2,
   ShieldCheck, Send
 } from 'lucide-react'
 import api from '@shared/lib/api'

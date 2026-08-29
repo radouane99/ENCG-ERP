@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Search, Users, BookOpen, MapPin, ChevronRight, X, User, 
   Zap, FileSpreadsheet, Calendar, Scale, Landmark, ShieldCheck, 
-  Layers, ArrowRight, Sparkles, Clock, CheckCircle2
+  Layers, ArrowRight
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { cn } from '@/shared/lib/utils';
@@ -91,14 +91,12 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
-      setSelectedIndex(0);
     } else {
       setQuery('');
       setResults([]);

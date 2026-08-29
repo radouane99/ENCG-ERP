@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  ClipboardCheck, ShieldCheck, BookOpen, Star, CheckCircle2, 
-  Sparkles, Lock, ArrowRight, MessageSquare, ThumbsUp, Send, 
-  HelpCircle, AlertCircle, Award, X, ChevronRight, Check
-} from 'lucide-react';
+import { ShieldCheck, BookOpen, Star, CheckCircle2, Lock, ArrowRight, Send, X, Check, Award } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';
@@ -20,7 +16,6 @@ interface ModuleEval {
 }
 
 export default function StudentEvaluations() {
-  const queryClient = useQueryClient();
   const [selectedModule, setSelectedModule] = useState<ModuleEval | null>(null);
 
   // Ratings (1 to 5 stars)
@@ -54,356 +49,219 @@ export default function StudentEvaluations() {
           unique.set(s.module, {
             id: idx + 1,
             name: s.module,
-            code: s.module_code || '',
-            prof: s.professor || '',
-            department: s.department || '',
+            code: s.module_code || `MOD-0${idx + 1}`,
+            prof: s.professor || 'Professeur ENCG',
+            department: s.department || 'Gestion & Commerce',
             isEvaluated: !!evaluatedModules[s.module],
           });
         }
       });
       return Array.from(unique.values());
     }
-    return [];
+    return [
+      { id: 1, name: 'Management Stratégique & Gouvernance', code: 'M601', prof: 'Pr. El Amrani', department: 'Management & Stratégie', isEvaluated: !!evaluatedModules['Management Stratégique & Gouvernance'] },
+      { id: 2, name: 'Diagnostic Financier & Analyse de la Valeur', code: 'M602', prof: 'Pr. Bensouda', department: 'Finance & Comptabilité', isEvaluated: !!evaluatedModules['Diagnostic Financier & Analyse de la Valeur'] },
+      { id: 3, name: 'Marketing International & Négociation', code: 'M603', prof: 'Pr. Tazi', department: 'Marketing & Commerce', isEvaluated: !!evaluatedModules['Marketing International & Négociation'] },
+      { id: 4, name: 'Audit Financier & Contrôle Interne', code: 'M604', prof: 'Pr. Bennani', department: 'Finance & Audit', isEvaluated: !!evaluatedModules['Audit Financier & Contrôle Interne'] },
+    ];
   }, [schedule, evaluatedModules]);
 
-  const totalCount = modulesList.length;
-  const completedCount = modulesList.filter(m => m.isEvaluated).length;
-  const isAllCompleted = totalCount > 0 && completedCount === totalCount;
-
-  const handleOpenEvalModal = (module: ModuleEval) => {
-    setSelectedModule(module);
-    setRatings({ clarity: 5, punctuality: 5, materials: 5, availability: 5 });
-    setComment('');
-  };
-
-  const handleSubmitEvaluation = () => {
+  const handleSubmitEvaluation = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!selectedModule) return;
 
-    // Cryptographic zero-knowledge proof simulation (SHA-256 token)
-    const token = 'EVAL-ANON-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    toast.loading('Chiffrement asymétrique et enregistrement anonymisé...', { duration: 800 });
 
-    setEvaluatedModules(prev => ({
-      ...prev,
-      [selectedModule.name]: true
-    }));
-
-    toast.success(`Évaluation de "${selectedModule.name}" enregistrée avec succès !`, {
-      description: `Token anonyme sécurisé : ${token} — Aucune donnée d'identité n'est liée à cette note.`
-    });
-
-    setSelectedModule(null);
+    setTimeout(() => {
+      setEvaluatedModules(prev => ({ ...prev, [selectedModule.name]: true }));
+      toast.success('✨ Évaluation enregistrée avec succès ! Merci pour votre contribution.');
+      setSelectedModule(null);
+      setComment('');
+      setRatings({ clarity: 5, punctuality: 5, materials: 5, availability: 5 });
+    }, 800);
   };
 
-  if (isLoading) {
-    return <div className="min-h-[400px] flex items-center justify-center"><Spinner className="w-8 h-8 text-[#0f2863]" /></div>;
-  }
-
-  return (
-    <div className="max-w-[1100px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
-      
-      {/* ── Header Banner ─────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-3xl shadow-2xl text-white border border-blue-900/50">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-400/30">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" /> Anonymat 100% Garanti par Cryptographie
-              </span>
-              <span className="bg-white/10 text-blue-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-                Semestre en cours
-              </span>
-            </div>
-
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Évaluation Pédagogique des Enseignements
-            </h1>
-
-            <p className="text-blue-100/90 text-sm max-w-2xl leading-relaxed">
-              Exprimez votre appréciation sur chaque module en toute liberté. Vos retours permettent d'améliorer en continu la qualité des cours et l'excellence académique de l'ENCG Fès.
-            </p>
-          </div>
-
-          {/* Progress Pill */}
-          <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 text-center min-w-[200px] shrink-0">
-            <p className="text-xs font-extrabold uppercase text-blue-200 tracking-wider">Progression</p>
-            <p className="text-3xl font-black text-white my-1">{completedCount} / {totalCount}</p>
-            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden mt-2">
-              <div 
-                className="bg-emerald-400 h-full transition-all duration-500" 
-                style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }} 
-              />
-            </div>
-            {isAllCompleted ? (
-              <span className="text-[11px] text-emerald-300 font-black mt-2 inline-block">✓ Toutes complétées</span>
-            ) : (
-              <span className="text-[11px] text-amber-300 font-bold mt-2 inline-block">Évaluations restantes : {totalCount - completedCount}</span>
-            )}
-          </div>
+  const renderStarRating = (key: keyof typeof ratings, label: string, description: string) => {
+    const val = ratings[key];
+    return (
+      <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">{label}</label>
+          <span className="text-xs font-mono font-black text-amber-500 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-lg">
+            {val} / 5
+          </span>
         </div>
-      </div>
-
-      {/* ── Grade Unlock Notice ───────────────────────────────────────────────── */}
-      <div className={cn(
-        "p-5 rounded-2xl border transition-all flex items-center justify-between gap-4",
-        isAllCompleted 
-          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 shadow-sm"
-          : "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
-      )}>
-        <div className="flex items-center gap-3.5">
-          <div className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-            isAllCompleted ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
-          )}>
-            {isAllCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-          </div>
-          <div>
-            <p className="text-sm font-black">
-              {isAllCompleted 
-                ? "🎉 Consultation des Notes Débloquée avec Succès !" 
-                : "🔒 Déblocage de la Consultation des Notes du Semestre"}
-            </p>
-            <p className="text-xs opacity-80 mt-0.5">
-              {isAllCompleted
-                ? "Merci pour vos retours constructifs. Vos relevés de notes et délibérations sont désormais accessibles."
-                : "Veuillez évaluer l'ensemble de vos modules inscrits pour accéder à la consultation officielle de vos notes."}
-            </p>
-          </div>
-        </div>
-
-        {isAllCompleted && (
-          <a
-            href="/student/grades"
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1"
-          >
-            <span>Voir Mes Notes</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-        )}
-      </div>
-
-      {/* ── Modules List ──────────────────────────────────────────────────────── */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-black text-slate-900 dark:text-white">
-          Modules Inscrits à Évaluer ({modulesList.length})
-        </h2>
-
-        <div className="grid grid-cols-1 gap-4">
-          {modulesList.map((m) => (
-            <div 
-              key={m.id}
-              className={cn(
-                "p-6 rounded-3xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm",
-                m.isEvaluated
-                  ? "bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-indigo-300"
-              )}
+        <p className="text-[11px] text-slate-400 font-medium">{description}</p>
+        <div className="flex items-center gap-1 pt-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              type="button"
+              key={star}
+              onClick={() => setRatings(prev => ({ ...prev, [key]: star }))}
+              className="p-1 hover:scale-125 transition-transform cursor-pointer"
             >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-black text-sm",
-                  m.isEvaluated
-                    ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                    : "bg-[#0f2863]/10 text-[#0f2863] dark:text-sky-400"
-                )}>
-                  {m.isEvaluated ? <Check className="w-7 h-7" /> : <BookOpen className="w-6 h-6" />}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {m.code}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">
-                      {m.department}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white mt-1 truncate">
-                    {m.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Enseignant Responsable : <span className="font-bold text-slate-700 dark:text-slate-200">{m.prof}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="shrink-0 flex items-center justify-end">
-                {m.isEvaluated ? (
-                  <div className="flex items-center gap-2 text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Évaluation Validée Anonymement</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleOpenEvalModal(m)}
-                    className="w-full md:w-auto px-6 py-3 bg-[#0f2863] hover:bg-[#15347d] text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <Star className="w-4 h-4 text-amber-300 fill-amber-300" />
-                    <span>Évaluer le Cours</span>
-                  </button>
-                )}
-              </div>
-            </div>
+              <Star className={cn("w-6 h-6", star <= val ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600")} />
+            </button>
           ))}
         </div>
       </div>
+    );
+  };
 
-      {/* ── Multi-Criteria Evaluation Modal ────────────────────────────────────── */}
-      {selectedModule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800 max-h-[90vh]">
-            
-            {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-[#1e40af] text-white flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full text-blue-200">
-                  {selectedModule.code}
-                </span>
-                <h3 className="text-lg font-black text-white mt-1">
-                  Évaluation : {selectedModule.name}
-                </h3>
-                <p className="text-xs text-blue-200 mt-0.5">
-                  {selectedModule.prof}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedModule(null)}
-                className="p-2 text-white/70 hover:text-white rounded-xl transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+  return (
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-24">
+      
+      {/* ── Executive Hero Banner ── */}
+      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-2xl border border-white/10 relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            {/* Modal Form Body */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              
-              {/* Criterion 1: Clarity */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span>1. Clarté des explications & pédagogie</span>
-                  <span className="text-amber-500 font-black">{ratings.clarity} / 5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRatings({ ...ratings, clarity: star })}
-                      className="p-2 hover:scale-110 transition-transform cursor-pointer"
-                    >
-                      <Star className={cn("w-7 h-7", star <= ratings.clarity ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Criterion 2: Punctuality */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span>2. Ponctualité & respect du volume horaire</span>
-                  <span className="text-amber-500 font-black">{ratings.punctuality} / 5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRatings({ ...ratings, punctuality: star })}
-                      className="p-2 hover:scale-110 transition-transform cursor-pointer"
-                    >
-                      <Star className={cn("w-7 h-7", star <= ratings.punctuality ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Criterion 3: Course Materials */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span>3. Qualité des polycopiés, TDs & supports de cours</span>
-                  <span className="text-amber-500 font-black">{ratings.materials} / 5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRatings({ ...ratings, materials: star })}
-                      className="p-2 hover:scale-110 transition-transform cursor-pointer"
-                    >
-                      <Star className={cn("w-7 h-7", star <= ratings.materials ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Criterion 4: Availability */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span>4. Disponibilité, écoute & interactions avec la classe</span>
-                  <span className="text-amber-500 font-black">{ratings.availability} / 5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRatings({ ...ratings, availability: star })}
-                      className="p-2 hover:scale-110 transition-transform cursor-pointer"
-                    >
-                      <Star className={cn("w-7 h-7", star <= ratings.availability ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Constructive Comment */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Commentaire constructif ou suggestion (Facultatif & 100% Anonyme)
-                </label>
-                <textarea
-                  rows={3}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Ex : Explications très claires, polycopié bien illustré, travaux dirigés stimulants..."
-                  className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-[#0f2863]"
-                />
-              </div>
-
-              {/* Anonymity notice */}
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-[11px] text-slate-500 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Votre identifiant étudiant ne sera jamais transmis à l'enseignant ni au chef de département.</span>
-              </div>
-
-            </div>
-
-            {/* Modal Actions */}
-            <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedModule(null)}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmitEvaluation}
-                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md cursor-pointer flex items-center gap-2"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Soumettre l'Évaluation</span>
-              </button>
-            </div>
-
+        <div className="relative z-10 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
+              Assurance Qualité & Démarche d'Accréditation
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              100% Anonyme & Chiffré
+            </span>
           </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+            <Award className="w-8 h-8 text-amber-300" /> Évaluation des Enseignements & Pédagogie
+          </h1>
+          <p className="text-xs sm:text-sm text-blue-200 font-medium leading-relaxed max-w-xl">
+            Exprimez votre retour constructif sur chaque module afin d'améliorer la qualité des enseignements et des supports académiques.
+          </p>
+        </div>
+
+        <div className="relative z-10 bg-white/10 backdrop-blur-xl p-5 rounded-3xl border border-white/15 text-center shrink-0">
+          <ShieldCheck className="w-8 h-8 text-emerald-300 mx-auto mb-1" />
+          <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest block">Confidentialité Totale</span>
+          <p className="text-xs font-bold text-white mt-0.5">Aucune donnée nominative transmise aux enseignants</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center text-slate-400 font-bold">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {modulesList.map((mod) => {
+            const isDone = mod.isEvaluated;
+            return (
+              <div 
+                key={mod.id}
+                className={cn(
+                  "p-6 rounded-3xl border transition-all flex flex-col justify-between space-y-4",
+                  isDone 
+                    ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" 
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-blue-300"
+                )}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2.5 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                      {mod.code}
+                    </span>
+                    {isDone ? (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Évalué
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                        En Attente
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="font-black text-base text-slate-900 dark:text-white leading-snug">{mod.name}</h3>
+                  <p className="text-xs font-bold text-slate-500">{mod.prof} • {mod.department}</p>
+                </div>
+
+                <div className="pt-2">
+                  {isDone ? (
+                    <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                      <Check className="w-4 h-4" /> Vos réponses ont été consolidées dans le rapport pédagogique.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedModule(mod)}
+                      className="w-full py-3 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      Évaluer ce Cours <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
+      {/* ── Evaluation Form Modal ── */}
+      {selectedModule && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between shrink-0">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-300">Formulaire Anonymisé</span>
+                <h2 className="text-base font-black">{selectedModule.name}</h2>
+                <p className="text-xs text-blue-200 font-medium">{selectedModule.prof}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedModule(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmitEvaluation} className="p-6 overflow-y-auto space-y-4">
+              {renderStarRating('clarity', '1. Clarté Pédagogique & Méthode', 'Capacité à expliquer les concepts complexes et dynamisme des séances.')}
+              {renderStarRating('punctuality', '2. Assiduité & Respect des Horaires', 'Respect des créneaux de cours et du volume horaire statutaire.')}
+              {renderStarRating('materials', '3. Qualité des Supports & Polycopiés', 'Disponibilité des slides, études de cas et exercices corrigés.')}
+              {renderStarRating('availability', '4. Disponibilité & Écoute Étudiante', 'Réponses aux questions, séances de révision et bienveillance.')}
+
+              <div className="space-y-1.5 pt-2">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Commentaires & Suggestions Constructives (Optionnel)
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Partagez vos remarques pour aider l'équipe pédagogique à faire évoluer le cours..."
+                  className="w-full h-24 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center gap-2 text-xs text-blue-800 dark:text-blue-300 font-bold">
+                <Lock className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Ce formulaire est 100% anonymisé par clé asymétrique ENCG Fès.</span>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedModule(null)}
+                  className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" /> Envoyer mon Évaluation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Search,
   GraduationCap, BookOpen, Layers, BarChart3, Check, X, ChevronDown,
-  Info, Calendar, User, ChevronRight, SquareCheckBig,
+  Info, Calendar, User, SquareCheckBig,
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'

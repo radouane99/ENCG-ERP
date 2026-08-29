@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Users, Calendar, Award } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 export default function ClubsPage() { 

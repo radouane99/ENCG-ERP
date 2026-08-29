@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Search, Filter, BookOpen, Edit2, Plus, Trash2, X, Download, Upload, Zap, CheckCircle2, AlertTriangle, Percent, Printer, Eye, FileText, Layers, ShieldCheck } from 'lucide-react'
+import { Search, BookOpen, Edit2, Plus, Trash2, X, Download, Upload, Zap, CheckCircle2, AlertTriangle, Printer, Layers, ShieldCheck } from 'lucide-react'
 
 import { toast } from 'react-hot-toast'
 import { cn } from '@shared/lib/utils'
@@ -82,7 +81,6 @@ const MODALITY_PRESETS: PresetOption[] = [
 ];
 
 export default function ModulesListPage() {
-  const { t } = useTranslation('common')
   const [modules, setModules] = useState<Module[]>([])
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,7 +156,7 @@ export default function ModulesListPage() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err: unknown) {
+    } catch {
       console.error('Erreur lors de l\'export Excel')
     } finally {
       setExporting(false)

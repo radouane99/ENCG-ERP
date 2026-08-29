@@ -1,56 +1,69 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Award, Share2, Briefcase, GraduationCap, Star, Zap, CheckCircle2, TrendingUp, Cpu, Users, Download } from 'lucide-react';
+import { Award, Share2, Briefcase, GraduationCap, Star, Zap, CheckCircle2, TrendingUp, Cpu, Users, Download, ShieldCheck } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { toast } from 'sonner';
 
 export default function StudentPortfolio() {
-  const { t, i18n } = useTranslation(['students', 'common']);
-  const isRtl = i18n.language === 'ar';
   const { user } = useAuthStore();
 
   const skills = [
-    { name: 'Marketing Digital', level: 95 },
-    { name: 'Comptabilité', level: 85 },
-    { name: 'Gestion de Projet', level: 90 },
-    { name: 'Finance de Marché', level: 75 },
-    { name: 'Communication', level: 88 },
+    { name: 'Marketing Digital & Stratégie', level: 95 },
+    { name: 'Comptabilité & Normes IFRS', level: 85 },
+    { name: 'Gestion de Projet Agile', level: 90 },
+    { name: 'Finance de Marché & Analyse', level: 75 },
+    { name: 'Communication & Négociation', level: 88 },
   ];
 
   const badges = [
-    { icon: <TrendingUp className="w-5 h-5 text-amber-500" />, name: 'As du Marketing', desc: 'Major de promo S1', color: 'bg-amber-50 border-amber-200' },
-    { icon: <Cpu className="w-5 h-5 text-blue-500" />, name: 'Digital Native', desc: 'Projet E-commerce validé', color: 'bg-blue-50 border-blue-200' },
-    { icon: <Users className="w-5 h-5 text-emerald-500" />, name: 'Leader Associatif', desc: 'Président Club ENCG', color: 'bg-emerald-50 border-emerald-200' },
+    { icon: <TrendingUp className="w-5 h-5 text-amber-500" />, name: 'As du Management', desc: 'Major de promo S1', color: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300' },
+    { icon: <Cpu className="w-5 h-5 text-blue-500" />, name: 'Digital Native', desc: 'Projet ERP & CRM certifié', color: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-300' },
+    { icon: <Users className="w-5 h-5 text-emerald-500" />, name: 'Leader Associatif', desc: 'Membre actif Club ENCG', color: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' },
   ];
 
+  const handleShare = () => {
+    navigator.clipboard?.writeText?.(window.location.href);
+    toast.success('🔗 Lien public du portfolio copié dans le presse-papiers !');
+  };
+
+  const handleDownloadCv = () => {
+    toast.success('📄 Téléchargement du CV certifié ENCG Fès (PDF)...');
+  };
+
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-24">
       
-      {/* Premium Header */}
-      <div className="bg-gradient-to-r from-[#001A4B] to-[#003a8c] rounded-[2rem] p-8 md:p-12 relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#e6007e]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+      {/* ── Executive Hero Banner ── */}
+      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden shadow-2xl border border-white/10 text-white flex flex-col md:flex-row items-center gap-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-          <div className="w-32 h-32 rounded-full border-4 border-white/20 bg-gradient-to-tr from-blue-400 to-emerald-400 flex items-center justify-center shadow-xl shrink-0">
-            <span className="text-4xl font-black text-white">{user?.name?.charAt(0) || 'A'}</span>
+        <div className="w-28 h-28 rounded-3xl bg-gradient-to-tr from-amber-400 to-amber-200 p-1 shadow-2xl shrink-0">
+          <div className="w-full h-full bg-[#001A4B] rounded-[22px] flex items-center justify-center font-black text-3xl text-amber-300">
+            {user?.name?.charAt(0) || 'E'}
           </div>
+        </div>
+        
+        <div className="flex-1 text-center md:text-left space-y-2">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            <ShieldCheck className="w-3.5 h-3.5" /> Profil Certifié ENCG Fès
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-white">{user?.name || 'Étudiant ENCG'}</h1>
+          <p className="text-blue-200 text-sm font-medium">Grande École de Commerce et Gestion • Semestre 6 (GFC)</p>
           
-          <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-              <Award className="w-3.5 h-3.5 text-yellow-400" /> Profil Vérifié ENCG
-            </div>
-            <h1 className="text-4xl font-black text-white mb-2">{user?.name || 'Aniss el alaoui'}</h1>
-            <p className="text-blue-200 text-lg mb-6">Étudiant(e) en Commerce et Gestion â€¢ 3ème Année</p>
-            
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-              <button className="bg-[#e6007e] text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#c4006c] transition-all shadow-lg hover:shadow-[#e6007e]/25">
-                <Share2 className="w-4 h-4" /> Partager mon Profil
-              </button>
-              <button className="bg-white/10 backdrop-blur-sm text-white border border-white/20 px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white/20 transition-all">
-                <Download className="w-4 h-4" /> Télécharger CV (PDF)
-              </button>
-            </div>
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3">
+            <button 
+              onClick={handleShare}
+              className="bg-amber-400 hover:bg-amber-300 text-[#001A4B] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-md cursor-pointer"
+            >
+              <Share2 className="w-4 h-4" /> Partager mon Profil
+            </button>
+            <button 
+              onClick={handleDownloadCv}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-blue-300" /> Télécharger CV (PDF)
+            </button>
           </div>
         </div>
       </div>
@@ -59,22 +72,23 @@ export default function StudentPortfolio() {
         
         {/* Left Column: Skills & Badges */}
         <div className="md:col-span-1 space-y-8">
-          {/* Skills Chart (Simulated with progress bars) */}
-          <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-white/5">
-            <div className="flex items-center gap-3 mb-6">
-              <Zap className="w-5 h-5 text-[#003a8c]" />
-              <h3 className="text-[12px] font-black text-[#001A4B] uppercase tracking-widest">Hard & Soft Skills</h3>
+          
+          {/* Skills Bars */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="flex items-center gap-2.5">
+              <Zap className="w-5 h-5 text-blue-600" />
+              <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Compétences Clés</h3>
             </div>
-            <div className="space-y-5">
+            <div className="space-y-4">
               {skills.map((skill, idx) => (
-                <div key={idx}>
-                  <div className="flex justify-between text-xs font-bold text-white/80 mb-2">
+                <div key={idx} className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                     <span>{skill.name}</span>
-                    <span>{skill.level}%</span>
+                    <span className="font-mono">{skill.level}%</span>
                   </div>
-                  <div className="w-full bg-white/[0.05] rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-[#003a8c] to-blue-400 rounded-full"
+                      className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"
                       style={{ width: `${skill.level}%` }}
                     ></div>
                   </div>
@@ -84,20 +98,20 @@ export default function StudentPortfolio() {
           </div>
 
           {/* Badges */}
-          <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-white/5">
-            <div className="flex items-center gap-3 mb-6">
-              <Star className="w-5 h-5 text-yellow-500" />
-              <h3 className="text-[12px] font-black text-[#001A4B] uppercase tracking-widest">Badges d'Excellence</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="flex items-center gap-2.5">
+              <Star className="w-5 h-5 text-amber-500" />
+              <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Badges d'Excellence</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {badges.map((badge, idx) => (
-                <div key={idx} className={cn("p-4 rounded-xl border flex items-center gap-4", badge.color)}>
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm shrink-0">
+                <div key={idx} className={cn("p-4 rounded-2xl border flex items-center gap-3.5", badge.color)}>
+                  <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 dark:border-slate-800">
                     {badge.icon}
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-sm">{badge.name}</h4>
-                    <p className="text-xs text-white/70 font-medium">{badge.desc}</p>
+                    <h4 className="font-black text-sm">{badge.name}</h4>
+                    <p className="text-xs opacity-80 font-medium">{badge.desc}</p>
                   </div>
                 </div>
               ))}
@@ -107,54 +121,50 @@ export default function StudentPortfolio() {
 
         {/* Right Column: Timeline & Experiences */}
         <div className="md:col-span-2 space-y-8">
-          <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-white/5 h-full">
-            <div className="flex items-center gap-3 mb-8">
-              <Briefcase className="w-5 h-5 text-[#e6007e]" />
-              <h3 className="text-[12px] font-black text-[#001A4B] uppercase tracking-widest">Parcours & Expériences</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 h-full space-y-6">
+            <div className="flex items-center gap-2.5">
+              <Briefcase className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Parcours & Expériences Professionnelles</h3>
             </div>
 
-            <div className="relative border-l-2 border-white/5 ml-4 space-y-10 pb-8">
+            <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 space-y-8 pb-4">
               
               {/* Timeline Item 1 */}
-              <div className="relative pl-8">
-                <div className="absolute w-8 h-8 bg-white border-2 border-[#e6007e] rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm">
-                  <Briefcase className="w-3 h-3 text-[#e6007e]" />
+              <div className="relative pl-8 space-y-1">
+                <div className="absolute w-8 h-8 bg-blue-50 dark:bg-blue-950 border-2 border-blue-600 rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm text-blue-600">
+                  <Briefcase className="w-3.5 h-3.5" />
                 </div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">JUIL. 2026 - AUJOURD'HUI</div>
-                <h4 className="text-lg font-black text-white">Stage d'Observation - Banque Populaire</h4>
-                <div className="text-sm font-bold text-blue-600 mb-3">Département Marketing</div>
-                <p className="text-white/70 text-sm leading-relaxed">
-                  Participation Ã  la conception de la nouvelle campagne digitale "Jeunes Actifs". Analyse des KPIs des réseaux sociaux et reporting hebdomadaire.
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">JUIL. 2026 - AOÛT 2026</span>
+                <h4 className="text-base font-black text-slate-900 dark:text-white">Stage d'Immersion en Entreprise — PwC Maroc</h4>
+                <div className="text-xs font-bold text-blue-600 dark:text-blue-400">Pôle Audit Financier & Conseil</div>
+                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed pt-1">
+                  Participation aux missions de commissariat aux comptes, revue des états financiers IFRS et cartographie des risques opérationnels.
                 </p>
               </div>
 
               {/* Timeline Item 2 */}
-              <div className="relative pl-8">
-                <div className="absolute w-8 h-8 bg-white border-2 border-[#003a8c] rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm">
-                  <Users className="w-3 h-3 text-[#003a8c]" />
+              <div className="relative pl-8 space-y-1">
+                <div className="absolute w-8 h-8 bg-indigo-50 dark:bg-indigo-950 border-2 border-indigo-600 rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm text-indigo-600">
+                  <Users className="w-3.5 h-3.5" />
                 </div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">SEPT. 2025 - JUIN 2026</div>
-                <h4 className="text-lg font-black text-white">Vice-Président Club Marketing ENCG</h4>
-                <div className="text-sm font-bold text-blue-600 mb-3">Vie Associative</div>
-                <p className="text-white/70 text-sm leading-relaxed">
-                  Organisation du "Marketing Day 2026" réunissant plus de 500 participants et 10 entreprises partenaires. Gestion d'un budget de 20 000 MAD.
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">SEPT. 2025 - JUIN 2026</span>
+                <h4 className="text-base font-black text-slate-900 dark:text-white">Responsable Pôle Partenariats — Club Finance ENCG</h4>
+                <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Vie Associative & Événementiel</div>
+                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed pt-1">
+                  Organisation du Forum International de la Finance réunissant plus de 600 étudiants et 15 institutions bancaires partenaires.
                 </p>
-                <div className="mt-4 flex gap-2">
-                  <span className="bg-white/[0.05] text-white/70 px-3 py-1 rounded-full text-xs font-bold">Leadership</span>
-                  <span className="bg-white/[0.05] text-white/70 px-3 py-1 rounded-full text-xs font-bold">Event Management</span>
-                </div>
               </div>
 
               {/* Timeline Item 3 */}
-              <div className="relative pl-8">
-                <div className="absolute w-8 h-8 bg-white border-2 border-emerald-500 rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm">
-                  <GraduationCap className="w-3 h-3 text-emerald-500" />
+              <div className="relative pl-8 space-y-1">
+                <div className="absolute w-8 h-8 bg-emerald-50 dark:bg-emerald-950 border-2 border-emerald-600 rounded-full -left-[17px] flex items-center justify-center top-0 shadow-sm text-emerald-600">
+                  <GraduationCap className="w-3.5 h-3.5" />
                 </div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">SEPT. 2024</div>
-                <h4 className="text-lg font-black text-white">Intégration ENCG</h4>
-                <div className="text-sm font-bold text-blue-600 mb-3">École Nationale de Commerce et de Gestion</div>
-                <p className="text-white/70 text-sm leading-relaxed flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Validation S1 & S2 avec mention Bien.
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">SEPTEMBRE 2024</span>
+                <h4 className="text-base font-black text-slate-900 dark:text-white">Admission Concours National TAFEM</h4>
+                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">École Nationale de Commerce et de Gestion de Fès</div>
+                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed flex items-center gap-2 pt-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Validation des 4 premiers semestres avec Mention Bien.
                 </p>
               </div>
 

@@ -24,7 +24,6 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const isRtl = i18n.language === 'ar'
 
   const handleLogout = async () => {
     await logout()

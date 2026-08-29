@@ -4,8 +4,7 @@ import LoadingScreen from '@shared/components/ui/LoadingScreen';
 import EmptyState from '@shared/components/ui/EmptyState';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
 import { DocumentUploadModal } from '../components/DocumentUploadModal';
-import { Sparkles, Trophy, Building2, Calendar, FileText, Upload, Plus, CheckCircle2, Clock, MapPin, UserCheck, Download, Printer, ShieldCheck, MessageSquare, Check, X, Send, Award, Layers, Search, Briefcase } from 'lucide-react';
-import { cn } from '@shared/lib/utils';
+import { Sparkles, Trophy, Building2, Calendar, Upload, Plus, CheckCircle2, Clock, Printer, MessageSquare, X, Send, Layers, Briefcase } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 

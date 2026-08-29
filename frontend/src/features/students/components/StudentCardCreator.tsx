@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Upload, Calendar, ArrowRight, ShieldCheck, AlertCircle, RefreshCw, Eye, Check } from 'lucide-react';
-import QRCode from 'react-qr-code';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';
 import { toast } from 'sonner';
@@ -14,8 +13,6 @@ interface StudentCardCreatorProps {
 }
 
 export default function StudentCardCreator({ studentId, isAdmin = false, onSuccess }: StudentCardCreatorProps) {
-  const { t } = useTranslation('common');
-  
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
@@ -303,7 +300,7 @@ export default function StudentCardCreator({ studentId, isAdmin = false, onSucce
                 <div className="border-t border-dashed border-border pt-3 flex flex-col items-center">
                   <Barcode value={previewData.card_number} className="mb-2 bg-white/5 p-1 rounded-xl border border-border w-full" />
                   <div className="bg-white p-1 rounded-lg border border-border mb-1">
-                    <QRCode value={`${window.location.origin}/verify/card/${previewData.qr_token}`} size={70} level="M" />
+                    <QRCodeSVG value={`${window.location.origin}/verify/card/${previewData.qr_token}`} size={70} level="M" />
                   </div>
                   <p className="text-[8px] text-muted-foreground font-medium uppercase tracking-widest text-center">
                     Authentification instantanée

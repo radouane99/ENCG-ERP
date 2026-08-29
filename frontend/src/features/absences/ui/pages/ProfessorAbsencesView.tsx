@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, Check, X, Clock, QrCode, Sparkles, Mic, MicOff, 
-  Search, ShieldCheck, Download, Play, CheckCircle2, AlertTriangle, 
-  RefreshCw, Volume2, Building2, BookOpen, Layers, UserCheck, UserX, Loader2,
-  Calendar, CalendarDays, ArrowRight, Zap, CheckSquare
+  Search, Play, BookOpen, Layers,
+  CalendarDays, Zap, CheckSquare
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
@@ -149,7 +148,7 @@ export default function ProfessorAbsencesView() {
   const [selectedFiliere, setSelectedFiliere] = useState('');
   const [selectedGroupe, setSelectedGroupe] = useState('');
   const [selectedModule, setSelectedModule] = useState('');
-  const [sessionType, setSessionType] = useState('Cours Magistral (CM)');
+  const [_sessionType, setSessionType] = useState('Cours Magistral (CM)');
   const [roomName, setRoomName] = useState('Amphi 2');
   const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -322,10 +321,6 @@ export default function ProfessorAbsencesView() {
     }));
   };
 
-  const handleSetStatus = (id: number, status: StudentItem['status']) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, status } : s));
-  };
-
   // Voice Dictation for Absents
   const handleToggleVoiceRecognition = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -401,7 +396,7 @@ export default function ProfessorAbsencesView() {
       toast.success("🚀 Session d'appel démarrée avec succès !", {
         description: "Vous pouvez émarger rapidement via le trombinoscope ou projeter le QR code rotatif."
       });
-    } catch (err) {
+    } catch {
       setIsSessionActive(true);
       toast.success("Session d'appel démarrée.");
     } finally {
@@ -437,7 +432,7 @@ export default function ProfessorAbsencesView() {
         description: `Total: ${stats.total} · Présents: ${stats.present} · Absents: ${stats.absent}`
       });
       setIsSessionActive(false);
-    } catch (error) {
+    } catch {
       // Fallback to offline store
       offlineAttendanceStore.saveOffline(payload);
       setIsSessionActive(false);
