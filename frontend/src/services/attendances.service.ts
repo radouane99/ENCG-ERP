@@ -1,5 +1,5 @@
 import { api } from '@/api/axios';
-import type { AttendanceSession, PaginatedResponse } from '@/types/models';
+import type { AttendanceSession } from '@/types/models';
 
 // [FE-01] Typed query parameters and response — replaces any
 export interface AttendanceQueryParams {

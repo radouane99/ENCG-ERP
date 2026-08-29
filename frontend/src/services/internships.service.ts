@@ -1,5 +1,5 @@
 import { api } from '@/api/axios';
-import type { Internship, PaginatedResponse, ApiResponse } from '@/types/models';
+import type { Internship, PaginatedResponse } from '@/types/models';
 import type { UpdateInternshipInput } from '@/schemas/internship.schema';
 
 // [FE-01] Typed query parameters — replaces Record<string, any>
