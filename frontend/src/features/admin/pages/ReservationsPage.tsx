@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, Calendar as CalendarIcon, User, Clock, CheckCircle2, Loader2, Sparkles, Building2, Check, X, ShieldCheck, Printer, FileText, QrCode, Key } from 'lucide-react'
+import { Plus, Trash2, Clock, CheckCircle2, Loader2, Sparkles, Building2, Check, X, Printer, QrCode, Key } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'

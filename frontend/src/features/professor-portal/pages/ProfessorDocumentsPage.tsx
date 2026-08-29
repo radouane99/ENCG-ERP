@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, PlaneTakeoff, Coins, CalendarClock, Download, Sparkles, 
-  Plus, CheckCircle2, Clock, X, ShieldCheck, QrCode, Search, 
-  ChevronRight, Building2, Send, Loader2, Stamp, Eye
+  Plus, CheckCircle2, Clock, X, ShieldCheck, 
+  ChevronRight, Send, Loader2, Stamp, Eye
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
