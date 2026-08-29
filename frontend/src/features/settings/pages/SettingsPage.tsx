@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Wrench, AlertTriangle, GraduationCap, Users, Save, Database, RefreshCw } from 'lucide-react';
+import { Calendar, AlertTriangle, GraduationCap, Users, Save, Database, RefreshCw } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 

@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { AlertCircle, Search, Filter, MessageCircle, FileText, Download } from 'lucide-react'
+import { AlertCircle, FileText, Download } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'

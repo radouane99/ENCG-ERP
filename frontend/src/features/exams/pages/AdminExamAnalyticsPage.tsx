@@ -1,30 +1,26 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  BarChart2, PieChart as PieIcon, Calendar, Filter, Download, ShieldAlert,
-  UserX, Clock, CheckCircle2, TrendingUp, AlertTriangle, Building, Sparkles
+  BarChart2, Clock, TrendingUp, AlertTriangle, Building, Sparkles
 } from 'lucide-react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend
 } from 'recharts'
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
-import { Spinner } from '@shared/components/ui/Spinner'
-import { toast } from 'sonner'
 
 export default function AdminExamAnalyticsPage() {
-  const [academicYear, setAcademicYear] = useState('2025/2026')
-  const [semesterFilter, setSemesterFilter] = useState<string>('all')
+  const academicYear = '2025/2026'
+  const semesterFilter = 'all'
 
   // Fetch Real Analytics Data or fallback stats
-  const { data: analyticsData, isLoading } = useQuery({
+  const { data: analyticsData } = useQuery({
     queryKey: ['exam-analytics', academicYear, semesterFilter],
     queryFn: async () => {
       try {
         const res = await api.get('/admin/exam-analytics', { params: { year: academicYear, semester: semesterFilter } })
         return res.data?.data || res.data
-      } catch (e) {
+      } catch {
         // Fallback default rich analytics
         return {
           overview: {
@@ -63,11 +59,6 @@ export default function AdminExamAnalyticsPage() {
   const filiereData = analyticsData?.by_filiere || []
   const timeslotData = analyticsData?.by_timeslot || []
   const roomData = analyticsData?.by_room || []
-
-  const pieData = [
-    { name: 'Présents', value: Math.round(stats.average_presence_rate), color: '#10b981' },
-    { name: 'Absents (ABI)', value: Math.round(100 - stats.average_presence_rate), color: '#ef4444' },
-  ]
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 pb-24 animate-in fade-in">

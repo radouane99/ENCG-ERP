@@ -29,6 +29,7 @@ export default function DocumentViewerModal({
     }
 
     let active = true
+    let createdUrl: string | null = null
     const loadPdfBlob = async () => {
       try {
         setLoading(true)
@@ -45,10 +46,13 @@ export default function DocumentViewerModal({
         const response = await api.get(pdfUrl, { responseType: 'blob' })
         const blob = new Blob([response.data], { type: 'application/pdf' })
         const url = URL.createObjectURL(blob)
+        createdUrl = url
         
         if (active) {
           setBlobUrl(url)
           setLoading(false)
+        } else {
+          URL.revokeObjectURL(url)
         }
       } catch (err) {
         console.error('Failed to load PDF blob:', err)
@@ -63,8 +67,8 @@ export default function DocumentViewerModal({
 
     return () => {
       active = false
-      if (blobUrl && blobUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(blobUrl)
+      if (createdUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(createdUrl)
       }
     }
   }, [isOpen, pdfUrl])

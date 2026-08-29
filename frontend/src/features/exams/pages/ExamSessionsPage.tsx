@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit2, Trash2, X, CalendarDays, CheckCircle, Lock } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -41,25 +41,29 @@ export default function ExamSessionsPage() {
 
   const [options, setOptions] = useState({ years: [], semesters: [] })
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get('/exam-sessions')
       setSessions(res.data.data || [])
-      
-      // Load options in background if first time
-      if (options.years.length === 0) {
-        const [yRes, sRes] = await Promise.all([api.get('/academic-years'), api.get('/semesters')])
-        setOptions({ years: yRes.data.data || [], semesters: sRes.data?.data || [] })
-      }
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  useEffect(() => {
+    Promise.all([api.get('/academic-years'), api.get('/semesters')])
+      .then(([yRes, sRes]) => {
+        setOptions({ years: yRes.data.data || [], semesters: sRes.data?.data || [] })
+      })
+      .catch((err) => console.error(err))
+  }, [])
 
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY }); setShowModal(true) }
   
@@ -86,7 +90,11 @@ export default function ExamSessionsPage() {
         semester_id: form.semester_id ? parseInt(form.semester_id) : null
       }
       
-      editingId ? await api.put(`/exam-sessions/${editingId}`, payload) : await api.post('/exam-sessions', payload)
+      if (editingId) {
+        await api.put(`/exam-sessions/${editingId}`, payload)
+      } else {
+        await api.post('/exam-sessions', payload)
+      }
       toast.success(editingId ? 'Session mise à jour !' : 'Session créée !')
       setShowModal(false)
       fetchData()

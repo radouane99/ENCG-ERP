@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ChevronLeft, Download, FileText, ArrowLeft, Loader2, Eye } from 'lucide-react'
+import { Download, FileText, ArrowLeft, Loader2, Eye } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
