@@ -2,13 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Campus;
-use App\Models\Filiere;
 use App\Models\Group;
-use App\Models\Module;
-use App\Models\Professor;
 use App\Models\Room;
-use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Services\Academic\RoomAvailabilityService;
@@ -23,7 +18,9 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Room $amphi;
+
     private Room $salleTd;
 
     protected function setUp(): void
@@ -164,10 +161,10 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
                             'type',
                             'capacity',
                             'slots' => [
-                                '*' => ['slot_index', 'time_label', 'status', 'title']
+                                '*' => ['slot_index', 'time_label', 'status', 'title'],
                             ],
                             'occupancy_rate',
-                        ]
+                        ],
                     ],
                     'stats' => [
                         'total_rooms',
@@ -175,8 +172,8 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
                         'occupied_slots',
                         'free_slots',
                         'global_occupancy_rate',
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 
@@ -229,9 +226,9 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
                                     'slot_index',
                                     'time_label',
                                     'days',
-                                ]
-                            ]
-                        ]
+                                ],
+                            ],
+                        ],
                     ],
                     'stats' => [
                         'total_rooms',
@@ -239,8 +236,8 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
                         'occupied_cells',
                         'free_cells',
                         'occupancy_rate',
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 }

@@ -3,13 +3,10 @@
 namespace App\Services\Academic;
 
 use App\Models\Group;
-use App\Models\Module;
-use App\Models\Professor;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 class RoomAvailabilityService
 {
@@ -471,7 +468,7 @@ class RoomAvailabilityService
                     $blockEndDT = Carbon::parse("{$dayDateStr} {$blockEnd}");
 
                     // 1. Check Schedule
-                    $matchingSchedule = $schedules->first(function ($s) use ($room, $dayIndex, $blockStart, $blockEnd) {
+                    $matchingSchedule = $schedules->first(function ($s) use ($room, $dayIndex, $blockStart) {
                         return (int) $s->room_id === (int) $room->id
                             && (int) $s->day_of_week === (int) $dayIndex
                             && str_starts_with($s->start_time, $blockStart);

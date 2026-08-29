@@ -3,12 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ScheduleChangeNotificationMail;
+use App\Models\Module;
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\Student;
+use App\Notifications\RattrapageSessionScheduledNotification;
+use App\Services\Academic\RoomAvailabilityService;
 use App\Services\Academic\TimetableRoomGuard;
+use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class RoomBookingController extends Controller
 {
@@ -100,11 +109,11 @@ class RoomBookingController extends Controller
             ->get();
 
         $verifyUrl = url('/public/rooms/'.$room->code);
-        $qrCodeSvg = class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)
-            ? \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(0)->generate($verifyUrl)
+        $qrCodeSvg = class_exists(QrCode::class)
+            ? QrCode::size(120)->margin(0)->generate($verifyUrl)
             : null;
 
-        $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+        $pdf = app(OfficialPdfFactory::class)
             ->make('pdf.door_sign', [
                 'room' => $room,
                 'schedules' => $schedules,
@@ -122,11 +131,11 @@ class RoomBookingController extends Controller
     private function dispatchStudentNotifications(RoomBooking $booking, array $groupIds, ?int $moduleId): void
     {
         try {
-            $students = \App\Models\Student::with('user')
+            $students = Student::with('user')
                 ->whereHas('groups', fn ($q) => $q->whereIn('groups.id', $groupIds))
                 ->get();
 
-            $moduleName = $moduleId ? (\App\Models\Module::find($moduleId)?->name ?? $booking->purpose) : $booking->purpose;
+            $moduleName = $moduleId ? (Module::find($moduleId)?->name ?? $booking->purpose) : $booking->purpose;
             $startDT = Carbon::parse($booking->start_time);
             $endDT = Carbon::parse($booking->end_time);
 
@@ -143,7 +152,7 @@ class RoomBookingController extends Controller
             foreach ($students as $student) {
                 if ($student->user) {
                     // 1. In-App Notification
-                    $student->user->notify(new \App\Notifications\RattrapageSessionScheduledNotification([
+                    $student->user->notify(new RattrapageSessionScheduledNotification([
                         'room_name' => $booking->room_name,
                         'date' => $startDT->format('d/m/Y'),
                         'time' => $startDT->format('H:i').' – '.$endDT->format('H:i'),
@@ -152,13 +161,13 @@ class RoomBookingController extends Controller
 
                     // 2. Email via Resend
                     if (! empty($student->user->email)) {
-                        \Illuminate\Support\Facades\Mail::to($student->user->email)
-                            ->queue(new \App\Mail\ScheduleChangeNotificationMail($mailData));
+                        Mail::to($student->user->email)
+                            ->queue(new ScheduleChangeNotificationMail($mailData));
                     }
                 }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed to dispatch rattrapage notifications: '.$e->getMessage());
+            Log::warning('Failed to dispatch rattrapage notifications: '.$e->getMessage());
         }
     }
 
@@ -250,7 +259,7 @@ class RoomBookingController extends Controller
     /**
      * Assistant intelligent de disponibilité & alternatives de salles (Rattrapages, extras).
      */
-    public function smartFind(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    public function smartFind(Request $request, RoomAvailabilityService $service): JsonResponse
     {
         $validated = $request->validate([
             'date' => 'required|date',
@@ -272,7 +281,7 @@ class RoomBookingController extends Controller
     /**
      * Matrice d'occupation en temps réel de toutes les salles pour une date.
      */
-    public function occupancyMatrix(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    public function occupancyMatrix(Request $request, RoomAvailabilityService $service): JsonResponse
     {
         $request->validate([
             'date' => 'nullable|date',
@@ -295,7 +304,7 @@ class RoomBookingController extends Controller
     /**
      * Matrice hebdomadaire globale (Lundi à Samedi) d'affectation des salles pour l'ENCG Fès.
      */
-    public function weeklyMasterMatrix(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    public function weeklyMasterMatrix(Request $request, RoomAvailabilityService $service): JsonResponse
     {
         $filters = [
             'start_date' => $request->input('start_date', now()->startOfWeek()->format('Y-m-d')),

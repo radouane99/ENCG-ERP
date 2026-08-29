@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Filiere;
+use App\Models\Professor;
+use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Services\Academic\OfficialTimetableMatrixService;
 use App\Services\Documents\OfficialPdfFactory;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -116,22 +119,22 @@ class TimetableExportController extends Controller
         }
 
         // Include approved room bookings / rattrapages
-        $bookingsQuery = \App\Models\RoomBooking::with('booker')
+        $bookingsQuery = RoomBooking::with('booker')
             ->where('status', 'approved')
             ->where('start_time', '>=', $startDate->copy()->startOfDay());
 
         if ($type === 'room') {
             $bookingsQuery->where('room_id', $id);
         } elseif ($type === 'professor') {
-            $profUserId = \App\Models\Professor::find($id)?->user_id;
+            $profUserId = Professor::find($id)?->user_id;
             if ($profUserId) {
                 $bookingsQuery->where('booked_by', $profUserId);
             }
         }
 
         foreach ($bookingsQuery->get() as $booking) {
-            $bStart = \Carbon\Carbon::parse($booking->start_time)->format('Ymd\THis\Z');
-            $bEnd = \Carbon\Carbon::parse($booking->end_time)->format('Ymd\THis\Z');
+            $bStart = Carbon::parse($booking->start_time)->format('Ymd\THis\Z');
+            $bEnd = Carbon::parse($booking->end_time)->format('Ymd\THis\Z');
             $purpose = $booking->purpose ?? 'Séance Extra / Rattrapage';
             $rName = $booking->room_name ?? 'Salle';
             $bName = $booking->booker ? "{$booking->booker->first_name} {$booking->booker->last_name}" : 'Admin';
