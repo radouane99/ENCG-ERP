@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, FileText, ArrowLeft, Building2 } from 'lucide-react';
 import api from '@/shared/lib/api';
@@ -14,7 +14,7 @@ export default function VerifyDocument() {
       try {
         const response = await api.get(`/verify/document/${id}`);
         setResult(response.data);
-      } catch (error) {
+      } catch {
         setResult({ success: false });
       } finally {
         setLoading(false);

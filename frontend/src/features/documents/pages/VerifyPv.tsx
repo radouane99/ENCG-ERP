@@ -13,7 +13,7 @@ export default function VerifyPv() {
       try {
         const response = await api.get(`/verify/pv/${moduleId}/${groupId}`);
         setResult(response.data);
-      } catch (error) {
+      } catch {
         setResult({ success: false });
       } finally {
         setLoading(false);

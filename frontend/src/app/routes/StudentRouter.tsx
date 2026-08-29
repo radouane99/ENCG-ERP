@@ -20,11 +20,13 @@ const StudentAbsencesPage = lazy(() => import('@features/absences/ui/pages/Stude
 const StudentGuichetPage = lazy(() => import('@features/students/pages/StudentGuichetPage'))
 const StudentAiTutorPage = lazy(() => import('@features/students/pages/StudentAiTutorPage'))
 const StudentReinscriptionPage = lazy(() => import('@features/students/pages/StudentReinscriptionPage'))
+const DigitalCardPage = lazy(() => import('@features/students/pages/DigitalCardPage'))
 
 export default function StudentRouter() {
   return (
     <Routes>
       <Route path="dashboard" element={<StudentDashboard />} />
+      <Route path="card" element={<DigitalCardPage />} />
       <Route path="grades" element={<StudentGrades />} />
       <Route path="reinscription" element={<StudentReinscriptionPage />} />
       <Route path="re-inscription" element={<StudentReinscriptionPage />} />
