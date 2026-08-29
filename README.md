@@ -5,7 +5,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-11%20%2F%2012-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(134%20Tables)-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
 [![Docker](https://img.shields.io/badge/Docker-Production%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 
@@ -16,30 +16,108 @@
 
 ## 📑 Sommaire Exécutif
 
-1. [🌟 Architecture Globale & Diagrammes Techniques](#1-architecture-globale--diagrammes-techniques)
-2. [👥 Matrice des Rôles & Permissions (RBAC)](#2-matrice-des-rôles--permissions-rbac)
-3. [📦 Description Détaillée des Modules Fonctionnels (14 Modules Métier)](#3-description-détaillée-des-modules-fonctionnels-14-modules-métier)
-4. [📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)](#4-moteur-de-délibération--règles-académiques-lmd-npn-maroc)
-5. [🔄 Diagrammes de Séquence des Processus Critiques (Workflows)](#5-diagrammes-de-séquence-des-processus-critiques-workflows)
-6. [🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP](#6-sécurité-signature-numérique-sha-256--conformité-cndp)
-7. [🧪 Pyramide de Tests & Couverture (~49 fichiers backend + 17 Frontend)](#7-pyramide-de-tests--couverture-complète-128-backend--17-frontend)
-8. [💻 Guide d'Installation en Local (Docker Dev)](#8-guide-dinstallation-en-local-docker-dev)
-9. [🚀 Déploiement en Production (1-Click Production)](#9-déploiement-en-production-1-click-production)
-10. [⚙️ Référentiel des Variables d'Environnement](#10-référentiel-des-variables-denvironnement)
+1. [🚀 Démarrage Rapide & Connexion avec Docker (Pas-à-Pas)](#1-démarrage-rapide--connexion-avec-docker-pas-à-pas)
+2. [🔑 Comptes & Identifiants de Démonstration (Prêts à l'Emploi)](#2-comptes--identifiants-de-démonstration-prêts-à-lemploi)
+3. [🌟 Architecture Système, Docker & Découpage Réseau](#3-architecture-système-docker--découpage-réseau)
+4. [📐 Modélisation UML Complète (Cas d'Utilisation, Classes & États)](#4-modélisation-uml-complète-cas-dutilisation-classes--états)
+5. [🔄 Diagrammes de Séquence des Processus Critiques](#5-diagrammes-de-séquence-des-processus-critiques)
+6. [🏛️ Hub Intelligent des Salles & Moteur de Rattrapage (Smart Room Hub)](#6-hub-intelligent-des-salles--moteur-de-rattrapage-smart-room-hub)
+7. [🤖 Écosystème d'Intelligence Artificielle & Modèles Hybrides (Gemini 1.5 & OCR)](#7-écosystème-dintelligence-artificielle--modèles-hybrides-gemini-15--ocr)
+8. [👥 Matrice des Rôles & Permissions (RBAC)](#8-matrice-des-rôles--permissions-rbac)
+9. [📦 Description Détaillée des 15 Modules Fonctionnels](#9-description-détaillée-des-15-modules-fonctionnels)
+10. [📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)](#10-moteur-de-délibération--règles-académiques-lmd-npn-maroc)
+11. [🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP](#11-sécurité-signature-numérique-sha-256--conformité-cndp)
+12. [🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)](#12-pyramide-de-tests-principes-istqb--couverture-complète-100-green)
+13. [⚙️ Référentiel des Commandes & Variables d'Environnement](#13-référentiel-des-commandes--variables-denvironnement)
 
 ---
 
-## 1. Architecture Globale & Diagrammes Techniques
+## 1. 🚀 Démarrage Rapide & Connexion avec Docker (Pas-à-Pas)
 
-### 1.1 Diagramme d'Architecture Système & Réseau Docker
+Le projet s'exécute dans un écosystème **Docker multi-conteneurs** orchestré via `docker-compose.yml`. Aucun outil PHP, Node ou PostgreSQL n'est requis sur la machine hôte.
+
+### 📋 Prérequis
+- **Docker Desktop** ($\ge 24.0$ avec Compose V2)
+- **Git**
+
+---
+
+### Étape 1 : Cloner le Répertoire Git
+```bash
+git clone https://github.com/radouane99/ENCG-ERP.git
+cd ENCG-ERP
+```
+
+### Étape 2 : Démarrer les Conteneurs Docker
+```bash
+docker compose up -d --build
+```
+> 💡 *Cette commande démarre : `encg_frontend` (React 19), `encg_backend` (Laravel 11/12 PHP 8.4-FPM), `encg_postgres` (PostgreSQL 16), `encg_redis` (Redis 7) et `encg_pgadmin` (pgAdmin 4).*
+
+---
+
+### Étape 3 : Initialiser & Restaurer la Base de Données (134 Tables)
+Exécutez le script automatique officiel selon votre OS :
+
+#### 🪟 Sur Windows (PowerShell) :
+```powershell
+.\restore_database.ps1
+```
+
+#### 🐧 Sur Linux / macOS (Bash) :
+```bash
+chmod +x restore_database.sh
+./restore_database.sh
+```
+
+*(Ou alternativement via les commandes Laravel standard :)*
+```bash
+docker exec encg_backend php artisan key:generate
+docker exec encg_backend php artisan migrate --force
+docker exec encg_backend php artisan db:seed --force
+```
+
+---
+
+### Étape 4 : Accéder à l'Application dans votre Navigateur
+
+| Service / Espace | URL Locale | Description |
+|---|---|---|
+| 🌐 **Application Web & Portails** | **`http://localhost:5173`** | Interface Single Page Application (React 19 / Vite) |
+| ⚙️ **API Backend REST** | **`http://localhost:8000/api`** | Moteur Laravel 11/12 REST API |
+| 🐘 **pgAdmin 4 (Gestion BDD)** | **`http://localhost:5050`** | `admin@encg.ma` / `admin` (Hôte: `postgres`, Port: `5432`, DB: `encg_erp`) |
+| ⚡ **Laravel Horizon (Queues)** | **`http://localhost:8000/horizon`** | Monitoring des files d'attente Redis |
+
+---
+
+## 2. 🔑 Comptes & Identifiants de Démonstration (Prêts à l'Emploi)
+
+Tous les comptes ci-dessous sont préconfigurés dans la base de données PostgreSQL avec le mot de passe standard universel : **`password`** *(ou `Password123!` selon l'environnement)*.
+
+```text
+Mot de passe universel : password
+```
+
+| Rôle Utilisateur | Adresse Email de Connexion | Nom & Profil | Fonctionnalités Clés Accessibles |
+|---|---|---|---|
+| 🛡️ **Super Administrateur** | **`admin@encg.ma`** | Radouane El Bahi | Tableau de bord 360°, gestion des utilisateurs, audit CNDP, paramétrage global, Horizon |
+| 📋 **Direction de la Scolarité** | **`scolarite@encg.ma`** | Fatim-Zahra Alami | Emplois du temps, Hub des salles, inscriptions TAFEM, réinscriptions, cartes d'étudiants, PVs |
+| 👨‍🏫 **Chef de Département / Professeur** | **`meziane.tarik@encg-fes.ma`** | Pr. Tarik Meziane | Saisie des notes CC/Examens, réservation de rattrapages, signature numérique PV (SHA-256) |
+| 👩‍🏫 **Professeur Permanent** | **`bennani.bouchra@encg-fes.ma`** | Pr. Bouchra Bennani | Émargement QR Code, cahier de texte, encadrement PFE & stages, synchronisation iCal |
+| 🎓 **Étudiant (Espace Étudiant)** | **`student@encg.ma`** | Youssef El Mansouri | Emploi du temps live, réclamation de notes, scan QR présence, demandes de documents PDF |
+| 🎓 **Étudiant (Délégué de Groupe)** | **`salma.bennani2@student.encg.ma`** | Salma Bennani | Alertes push rattrapages, liaison département, consultation des cours et absences |
+
+---
+
+## 3. 🌟 Architecture Système, Docker & Découpage Réseau
 
 ```mermaid
 graph TB
     subgraph Clients["🌐 Pôles Utilisateurs & Accès Multi-Canaux"]
         AdminUI["🖥️ Espace Administration & Pilotage<br/>(React 19 / TypeScript / Vite)"]
-        ProfUI["👨‍🏫 Portail Pédagogique Enseignant<br/>(PWA Responsive / Scan QR)"]
-        StudentUI["📱 Espace Étudiant & Guichet Numérique<br/>(PWA Mobile First / Cartes NFC)"]
-        PublicVerifier["🔍 Portail Public de Vérification QR<br/>(Authenticité Diplômes & PVs)"]
+        ProfUI["👨‍🏫 Portail Pédagogique Enseignant<br/>(PWA Responsive / Scan QR / iCal)"]
+        StudentUI["📱 Espace Étudiant & Guichet Numérique<br/>(PWA Mobile First / Cartes NFC / Push)"]
+        PublicVerifier["🔍 Portail Public de Vérification QR<br/>(Authenticité Diplômes, PVs & Salles)"]
     end
 
     subgraph EdgeTier["🛡️ Passerelle Sécurisée & Reverse Proxy"]
@@ -47,15 +125,15 @@ graph TB
     end
 
     subgraph AppTier["⚙️ Cœur Applicatif & Traitements Asynchrones"]
-        PHP["🐘 PHP 8.4-FPM (Alpine)<br/>• Laravel 11/12 Engine<br/>• REST API v1 (Strict RBAC)<br/>• Optimistic Locking Middleware"]
-        Horizon["⚡ Laravel Horizon<br/>• Traitement des Queues Redis<br/>• Envois d'Emails Transactionnels<br/>• Génération Asynchrone des PDFs"]
-        Scheduler["⏱️ Crontab Scheduler<br/>• Relances Réinscription<br/>• Backups PostgreSQL Quotidiens<br/>• Clôture des Sessions d'Émargement"]
+        PHP["🐘 PHP 8.4-FPM (Alpine)<br/>• Laravel 11/12 Engine<br/>• REST API v1 (Strict RBAC)<br/>• Solveur CSP Heuristique MRV-Degree-LCV"]
+        Horizon["⚡ Laravel Horizon<br/>• Traitement des Queues Redis<br/>• Envois d'Emails Transactionnels (Resend)<br/>• Génération Asynchrone des PDFs (Dompdf)"]
+        Scheduler["⏱️ Crontab Scheduler<br/>• Relances Réinscription & Rattrapages<br/>• Backups PostgreSQL Quotidiens<br/>• Clôture des Sessions d'Émargement"]
     end
 
     subgraph DataTier["🗄️ Persistance & Données Relationnelles"]
-        Postgres[("🐘 PostgreSQL 16 (Alpine)<br/>• 32 Tables Relationnelles<br/>• ACID Transactions & Soft Deletes<br/>• Index B-Tree sur Massar/CNE/CIN")]
+        Postgres[("🐘 PostgreSQL 16 (Alpine)<br/>• 134 Tables Relationnelles<br/>• ACID Transactions & Soft Deletes<br/>• Index B-Tree sur Massar/CNE/CIN")]
         Redis[("⚡ Redis 7 (Alpine)<br/>• Sessions Cache (0ms)<br/>• Rate-Limiting Keys<br/>• Queues de Messages")]
-        Storage["📁 Laravel storage/ (disque local)<br/>• PVs Signés (PDF/A)<br/>• Diplômes Grand Format<br/>• Justificatifs Médicaux Scannés"]
+        Storage["📁 Laravel storage/<br/>• PVs Signés (PDF/A)<br/>• Diplômes Grand Format<br/>• Affiches de Porte PDF"]
     end
 
     subgraph ExternalServices["🌍 Services Externes & Tiers de Confiance"]
@@ -63,7 +141,7 @@ graph TB
         Certbot["🔒 Let's Encrypt Certbot<br/>• Renouvellement Auto Certificats SSL"]
     end
 
-    AdminUI & ProfUI & StudentUI & PublicVerifier -->|HTTPS :443| Nginx
+    AdminUI & ProfUI & StudentUI & PublicVerifier -->|HTTPS :443 / Dev :5173| Nginx
     Nginx -->|FastCGI :9000| PHP
     PHP --> Postgres
     PHP --> Redis
@@ -76,9 +154,466 @@ graph TB
 
 ---
 
-## 2. Matrice des Rôles & Permissions (RBAC)
+## 4. 📐 Modélisation UML Complète (Cas d'Utilisation, Classes & États)
 
-Le système implémente une **Matrice de Contrôle d'Accès basée sur les Rôles (RBAC)** via `Spatie\Permission` :
+### 4.1 Diagramme de Cas d'Utilisation Global (UML Use Case)
+
+```mermaid
+graph TD
+    %% Acteurs
+    Admin((🛡️ Super Admin))
+    Scol((📋 Scolarité))
+    Chef((👨‍💼 Chef Département))
+    Prof((👨‍🏫 Professeur))
+    Student((🎓 Étudiant))
+    Public((🔍 Tiers / Public))
+
+    subgraph "Système Intégré ENCG-ERP"
+        %% Admissions & Scolarité
+        UC_Tafem[UC1: Gérer Concours TAFEM & Import Massar]
+        UC_Reinsc[UC2: Tunnel de Réinscription S1-S10]
+        UC_Card[UC3: Émettre Cartes PVC CR80 & NFC]
+        
+        %% Salles & Emplois du Temps
+        UC_EDT[UC4: Générer EDT Anti-Collision CSP]
+        UC_SmartFind[UC5: Réserver Salle Rattrapage Smart Finder]
+        UC_DoorSign[UC6: Imprimer Affiche de Porte PDF A4 + QR]
+        UC_Ical[UC7: Synchroniser Agenda .ics Google/Apple]
+        
+        %% Pédagogie & Notes
+        UC_Grades[UC8: Saisie Notes CC/Exam & Lock Optimiste]
+        UC_Delib[UC9: Clôturer Délibérations LMD & Export APOGEE]
+        UC_PvSign[UC10: Signer Numériquement PV SHA-256]
+        UC_Attendance[UC11: Émargement QR Code Rotatif]
+        
+        %% Examens & Fraudes
+        UC_ExamPlan[UC12: Planifier Examens & Jauge 50%]
+        UC_Convocation[UC13: Émettre Convocations QR Pass]
+        UC_Discipline[UC14: Gérer Incidents & Conseil Discipline]
+        
+        %% Documents & Vérification
+        UC_Guichet[UC15: Demander Attestation / Diplôme en Ligne]
+        UC_Verify[UC16: Vérifier Authenticité Document via QR]
+    end
+
+    %% Relations Acteurs -> Cas d'utilisation
+    Admin --> UC_Tafem
+    Admin --> UC_Discipline
+    Scol --> UC_Tafem
+    Scol --> UC_Reinsc
+    Scol --> UC_Card
+    Scol --> UC_EDT
+    Scol --> UC_DoorSign
+    Scol --> UC_ExamPlan
+    Scol --> UC_Convocation
+    Scol --> UC_Delib
+    
+    Chef --> UC_EDT
+    Chef --> UC_Delib
+    Chef --> UC_SmartFind
+    
+    Prof --> UC_SmartFind
+    Prof --> UC_Ical
+    Prof --> UC_Grades
+    Prof --> UC_PvSign
+    Prof --> UC_Attendance
+    
+    Student --> UC_Reinsc
+    Student --> UC_Attendance
+    Student --> UC_Guichet
+    Student --> UC_Ical
+    
+    Public --> UC_Verify
+```
+
+---
+
+### 4.2 Diagramme de Classes du Domaine Académique (Domain Class Diagram)
+
+```mermaid
+classDiagram
+    class Institution {
+        +int id
+        +string name
+        +string slug
+        +string logo_path
+    }
+
+    class Campus {
+        +int id
+        +string name
+        +string city
+    }
+
+    class Room {
+        +int id
+        +string name
+        +string code
+        +string type
+        +int capacity
+        +int exam_capacity
+        +bool has_projector
+        +bool has_ac
+        +isAvailable(date, start, end) bool
+    }
+
+    class RoomBooking {
+        +int id
+        +int room_id
+        +int booked_by
+        +datetime start_time
+        +datetime end_time
+        +string purpose
+        +string status
+    }
+
+    class Schedule {
+        +int id
+        +int module_id
+        +int professor_id
+        +int room_id
+        +int group_id
+        +int day_of_week
+        +time start_time
+        +time end_time
+        +bool is_active
+    }
+
+    class Department {
+        +int id
+        +string name
+        +string code
+    }
+
+    class Filiere {
+        +int id
+        +string name
+        +string code
+        +string cycle
+    }
+
+    class Semester {
+        +int id
+        +int number
+        +bool is_current
+    }
+
+    class Module {
+        +int id
+        +string name
+        +string code
+        +int semester_id
+        +int filiere_id
+        +float credits
+    }
+
+    class Assessment {
+        +int id
+        +int module_id
+        +string type
+        +float weight
+    }
+
+    class Grade {
+        +int id
+        +int student_id
+        +int assessment_id
+        +float value
+        +int version
+        +datetime locked_at
+    }
+
+    class User {
+        +int id
+        +string first_name
+        +string last_name
+        +string email
+        +string password
+        +string role
+    }
+
+    class Professor {
+        +int id
+        +int user_id
+        +string matricule
+        +string grade
+        +string specialty
+    }
+
+    class Student {
+        +int id
+        +int user_id
+        +string cne
+        +string cin
+        +string apogee_code
+        +string birth_date
+    }
+
+    class Group {
+        +int id
+        +string name
+        +int filiere_id
+        +int semester_id
+    }
+
+    class AttendanceSession {
+        +int id
+        +int schedule_id
+        +string qr_token
+        +datetime expires_at
+        +string status
+    }
+
+    %% Relations
+    Institution "1" *-- "many" Campus
+    Campus "1" *-- "many" Room
+    Room "1" -- "many" RoomBooking : has
+    Room "1" -- "many" Schedule : hosts
+    
+    Institution "1" *-- "many" Department
+    Department "1" *-- "many" Filiere
+    Filiere "1" *-- "many" Group
+    Filiere "1" *-- "many" Module
+    Semester "1" *-- "many" Module
+    Module "1" *-- "many" Assessment
+    Assessment "1" *-- "many" Grade
+    
+    User <|-- Professor : extends
+    User <|-- Student : extends
+    Professor "1" -- "many" Schedule : teaches
+    Student "many" -- "many" Group : belongs_to
+    Student "1" -- "many" Grade : receives
+    
+    Schedule "1" -- "many" AttendanceSession : generates
+```
+
+---
+
+### 4.3 Diagramme d'États : Cycle de Vie d'un Module LMD (State Diagram)
+
+```mermaid
+stateDiagram-v2
+    [*] --> EnCours : Inscription S1-S10
+    
+    EnCours --> SaisieCC : Semaine 1 à 12 (Assiduité & Devoirs)
+    SaisieCC --> SessionOrdinaire : Fin de Semestre (Examen Final 60%)
+    
+    state SessionOrdinaire {
+        [*] --> CalculMoyenne
+        CalculMoyenne --> ValideDirect : Moyenne >= 10.00 ET Note Exam >= 7.00
+        CalculMoyenne --> NonValideEliminatoire : Note Exam < 7.00 (Strict)
+        CalculMoyenne --> AdmisRattrapage : 7.00 <= Moyenne < 10.00
+    }
+    
+    ValideDirect --> [*] : ✅ Statut V (Validé)
+    
+    AdmisRattrapage --> SessionRattrapage : Épreuve de Seconde Chance
+    
+    state SessionRattrapage {
+        [*] --> CalculMaxScore : Note Finale = max(Moyenne, Note Rattrapage)
+        CalculMaxScore --> ValideApresRattrapage : Note Finale >= 10.00
+        CalculMaxScore --> EnAttenteCompensation : Note Finale < 10.00
+    }
+    
+    ValideApresRattrapage --> [*] : ✅ Statut VR (Validé Rattrapage)
+    NonValideEliminatoire --> EnAttenteCompensation
+    
+    EnAttenteCompensation --> JuryAnnuel : Délibération Fin d'Année (S1+S2)
+    
+    state JuryAnnuel {
+        [*] --> TestCompensation
+        TestCompensation --> ValideCompensation : Moyenne Annuelle >= 10.00 ET Min >= 7.00
+        TestCompensation --> Ajourne : Moyenne Annuelle < 10.00 OU Note < 7.00
+    }
+    
+    ValideCompensation --> [*] : ⚖️ Statut VARC (Validé par Compensation)
+    Ajourne --> [*] : ⛔ Statut NV (Module Ajourné / Réinscription)
+```
+
+---
+
+## 5. 🔄 Diagrammes de Séquence des Processus Critiques
+
+### 5.1 Séquence 1 : Réservation de Rattrapage & Auto-Notification Push/Email
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Prof as 👨‍🏫 Professeur
+    participant Hub as 🎯 Room Hub (React SPA)
+    participant API as ⚙️ Laravel Backend API
+    participant Guard as 🛡️ TimetableRoomGuard
+    participant DB as 🐘 PostgreSQL (134 Tables)
+    participant Queue as ⚡ Laravel Horizon
+    actor Students as 👨‍🎓 Étudiants du Groupe
+
+    Prof->>Hub: 1. Saisie Date, Créneau, Groupe (TC G1) et Salle cible
+    Hub->>API: 2. POST /api/rooms/smart-find
+    API->>Guard: 3. Vérification des collisions EDT & Réservations
+    Guard-->>API: 4. Diagnostic + Salles alternatives libres
+    API-->>Hub: 5. Affichage salle libre ou alternatives avec Fit-Score
+    
+    Prof->>Hub: 6. Confirmation de la réservation (Toggle "Notifier Étudiants" actif)
+    Hub->>API: 7. POST /api/room-bookings (status=approved, notify_students=true)
+    API->>DB: 8. INSERT INTO room_bookings
+    API->>Queue: 9. Dispatch RattrapageSessionScheduledNotification & Email
+    Queue->>Students: 10. Notification Push PWA + Email Officiel Resend
+    API-->>Hub: 11. Confirmation immédiate & Actualisation Heatmap
+```
+
+---
+
+### 5.2 Séquence 2 : Saisie des Notes, Verrouillage Optimiste & Scellement du PV
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Prof as 👨‍🏫 Professeur Responsable
+    participant API as ⚙️ Laravel Backend API
+    participant DB as 🐘 PostgreSQL (Table grades)
+    participant Audit as 🔒 Audit Trail & Digital Seal
+
+    Prof->>API: 1. Demande de la grille de notes (Module M501, Groupe 1)
+    API->>DB: Récupération des étudiants et des versions courantes (version=1)
+    API-->>Prof: Grille interactive avec tokens de version
+    
+    Prof->>API: 2. Soumission des notes CC & Examens (avec version=1)
+    API->>DB: UPDATE grades SET value=16.00, version=2 WHERE id=101 AND version=1
+    Note over API,DB: Verrouillage Optimiste validé (Aucune collision)
+    
+    Prof->>API: 3. Clôture de la saisie & Signature Numérique du PV
+    API->>Audit: Calcul de l'empreinte SHA-256 du PV de Délibération
+    Audit-->>API: digital_seal = HMAC-SHA256(payload, APP_KEY)
+    API->>DB: Enregistrement signature, signataire, date et scellement
+    API-->>Prof: Confirmation PV Signé & PDF Archivé
+```
+
+---
+
+### 5.3 Séquence 3 : Prise d'Émargement par QR Code Rotatif & Justification 48h
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Prof as 👨‍🏫 Professeur
+    participant Screen as 📽️ Vidéoprojecteur Amphi
+    actor Student as 👨‍🎓 Étudiant
+    participant API as ⚙️ Laravel API
+    participant DB as 🐘 PostgreSQL (Table attendances)
+
+    Prof->>API: 1. Démarrer séance d'émargement (Schedule #42)
+    API->>DB: Créer AttendanceSession (Token initial, durée 15 min)
+    API-->>Screen: 2. Affichage QR Code dynamique rotatif (changement / 15s)
+    
+    Student->>Screen: 3. Scan QR Code avec Smartphone (PWA)
+    Student->>API: 4. POST /api/attendance/scan (token, coordonnées GPS)
+    API->>DB: UPDATE attendances SET status='present', scanned_at=NOW()
+    API-->>Student: 5. Badge Vert : Présence Validée
+    
+    Note over Student,API: Si absence : Dépôt certificat médical sous 48h
+    Student->>API: 6. Dépôt justificatif médical PDF
+    API->>DB: UPDATE attendances SET status='justified' après visa scolarité
+```
+
+---
+
+### 5.4 Séquence 4 : Workflow Tripartite de Convention de Stage / PFE
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student as 👨‍🎓 Étudiant
+    actor Enterprise as 🏢 Entreprise d'Accueil (ex: PwC)
+    actor Admin as 👨‍💼 Service des Stages ENCG
+    actor Prof as 👨‍🏫 Professeur Encadrant
+
+    Student->>Admin: 1. Dépôt de la demande de stage (Entreprise, Sujet, Dates)
+    Admin->>Admin: 2. Vérification de conformité pédagogique
+    Admin-->>Student: 3. Génération de la Convention Tripartite PDF
+    Student->>Enterprise: 4. Signature & Cachet Entreprise
+    Enterprise-->>Student: Convention visée
+    Student->>Admin: 5. Dépôt convention signée sur l'ERP
+    Admin->>Prof: 6. Affectation du Professeur Encadrant
+    Prof->>Student: 7. Suivi des livrables & Validation Mémoire
+    Admin->>Student: 8. Programmation de la Soutenance Publique & Attribution Jury
+```
+
+---
+
+## 6. 🏛️ Hub Intelligent des Salles & Moteur de Rattrapage (Smart Room Hub)
+
+Le module **Smart Room Hub** offre une gestion unifiée de l'occupation des salles en temps réel et un assistant algorithmique pour la planification des séances de rattrapage et des cours extras.
+
+### Fonctionnalités Clés du Hub :
+1. **🎯 Assistant Smart Finder (Séances de Rattrapage & Extras) :**
+   - Calcul automatique de l'effectif selon les groupes sélectionnés (ex: 70 étudiants pour TC S2 G1+G2).
+   - Diagnostic instantané (badge vert si libre, alerte détaillée si occupée).
+   - Recommandation intelligente d'alternatives libres classées par pertinence (*Fit-Score*).
+2. **🗺️ Matrice Globale d'Occupation (*Heatmap des Salles*) :**
+   - Grille synoptique temps réel des 4 créneaux officiels (`08:30–10:30`, `10:45–12:45`, `14:30–16:30`, `16:45–18:45`).
+   - Pastilles de statut : 🟢 Libre, 🔴 Cours EDT officiel, 🟡 Réservation validée.
+3. **📄 Panneau d'Affichage de Porte PDF A4 avec QR Code Dynamique :**
+   - Document haute définition prêt à imprimer pour la porte de chaque salle/amphi.
+   - QR Code scannable pour consulter les mises à jour et rattrapages en temps réel sur smartphone.
+4. **📅 Synchronisation d'Agenda Enseignant (`.ics`) :**
+   - Export universel vers Google Calendar, Microsoft Outlook et Apple Calendar combinant cours récurrents et rattrapages ponctuels.
+5. **🛡️ Bascule en "Mode Capacité Examen" (1 place sur 2) :**
+   - Interrupteur instantané pour basculer les jauges à 50% conformément aux normes anti-fraude du MESRSFC.
+
+---
+
+## 7. 🤖 Écosystème d'Intelligence Artificielle & Modèles Hybrides (Gemini 1.5 & OCR)
+
+L'ENCG-ERP intègre une suite native de micro-services d'Intelligence Artificielle articulée autour du moteur **Google Gemini 1.5 Pro / Flash** et de pipelines de traitement local pour garantir un haut niveau d'assistance pédagogique, administrative et prédictive, tout en respectant la souveraineté des données (Loi CNDP 09-08).
+
+```mermaid
+graph TD
+    subgraph DataSources["📚 Sources Pédagogiques & Données Campus"]
+        Poly[Polycopiés PDF des Professeurs]
+        Scans[Scans CIN, Bac, Certificats Médicaux]
+        Metrics[Données Académiques & Notes 10 Semestres]
+    end
+
+    subgraph AIPipeline["⚙️ Moteur IA & Orchestration Hybride"]
+        RAG["🧠 RAG Engine (Embeddings & Contextual Search)"]
+        OCR["👁️ Pipeline OCR Hybride (Tesseract + Gemini Vision)"]
+        Predictor["📈 Modèle Prédictif de Décrochage Scolaire"]
+        Generator["⚡ Générateur de QCM & Fiches Pédagogiques"]
+    end
+
+    subgraph UserBeneficiaries["👥 Bénéficiaires & Interfaces Métier"]
+        StudentBot["🎓 Tuteur IA Virtuel Étudiant<br/>(Citations exactes du polycopié)"]
+        AdminCopilot["🛡️ Copilote de Direction & Rapports Ministère"]
+        ProfTool["👨‍🏫 Assistant Professeur (QCM & Syllabus)"]
+        AutoValidator["📋 Validation Auto Dossiers TAFEM & Guichet"]
+    end
+
+    Poly --> RAG --> StudentBot
+    Scans --> OCR --> AutoValidator
+    Metrics --> Predictor --> AdminCopilot
+    Poly --> Generator --> ProfTool
+```
+
+### 🧠 Les 8 Services d'IA Spécialisés Intégrés :
+
+| Service IA Backend | Classe PHP | Rôle & Fonctionnalité Métier |
+|---|---|---|
+| **1. 🎓 Tuteur Pédagogique RAG** | `AiTutorService.php` | Assistant interactif 24/7 pour les étudiants. Ses réponses sont **ancrées à 100% sur les cours PDF** déposés par les professeurs, avec citation des pages. |
+| **2. 👁️ Pipeline OCR Hybride** | `LocalOcrService.php` / `OcrPipeline.php` | Extraction automatique des données textuelles sur les pièces scannées (CIN, attestations de Baccalauréat, justificatifs médicaux) pour pré-remplir les dossiers d'admission. |
+| **3. 🛡️ Copilote Exécutif de Direction** | `AdminAiCopilotService.php` | Synthèse décisionnelle 360°, génération automatique de rapports institutionnels pour le Ministère (MESRSFC) et détection proactive d'anomalies. |
+| **4. 📈 Analytique Prédictive Anti-Décrochage** | `AiPredictiveAnalyticsService.php` | Identification précoce des étudiants en situation de vulnérabilité académique basée sur l'historique des notes, les retards et le taux d'absentéisme. |
+| **5. 👨‍🏫 Assistant Pédagogique Enseignant** | `ProfAiService.php` | Génération automatique d'exercices d'entraînement, banques de QCMs calibrées et aide à la rédaction des plans de cours (syllabus LMD). |
+| **6. 💰 Prévisionniste Budgétaire & Régie** | `AiFinancialForecasterService.php` | Modélisation prédictive des flux d'encaissement et projections financières pour les Masters Spécialisés et la Formation Continue. |
+| **7. 💼 Conseiller Carrière & Stage** | `StudentAiService.php` | Simulation d'entretiens de recrutement, optimisation du CV académique et recommandations d'orientation pour le choix de filière en S5 et S7. |
+| **8. 🗓️ Solveur d'Emplois du Temps (CSP IA)** | `ScheduleController.php` | Algorithme de résolution par contraintes (MRV-Degree-LCV) générant des plannings optimisés avec zéro conflit de salle, de professeur ou de groupe. |
+
+### 🔒 Souveraineté & Anonymisation CNDP (Loi 09-08)
+- **Anonymisation préalable des prompts** : Les noms des étudiants, CIN et identifiants sensibles sont strippés ou hachés en amont de toute transmission au LLM.
+- **Mode Fallback & Résilience** : En cas d'indisponibilité du réseau ou de la clé API, l'ERP bascule automatiquement en mode heuristique local sans interrompre l'expérience utilisateur.
+
+---
+
+## 8. 👥 Matrice des Rôles & Permissions (RBAC)
 
 ```mermaid
 classDiagram
@@ -89,36 +624,31 @@ classDiagram
     }
     class DirectionScolarite {
         +Gestion Inscriptions & TAFEM
-        +Génération Emplois du Temps
+        +Moteur d'Emplois du Temps & Salles
         +Émission Cartes PVC & Diplômes
-        +Validation Absences Médicales
+        +Validation Absences & Rattrapages
     }
     class ChefDepartement {
         +Affectation Charges Horaires
         +Validation Contrats Vacataires
-        +Supervision Délibérations
+        +Supervision Délibérations & Salles
     }
     class ProfesseurPermanent {
         +Saisie Notes CC & Examens
+        +Réservation Salles & Rattrapages
         +Signature Numérique PV (SHA-256)
         +Émargement par QR Code
-        +Encadrement Stages & PFE
     }
     class ProfesseurVacataire {
         +Déclaration Disponibilités
+        +Demande Salles de Rattrapage
         +Saisie Notes Modules Assignés
-        +Signature PVs
     }
     class Etudiant {
-        +Consultation Notes & Relevés
+        +Consultation Emploi du Temps & Alertes
+        +Réception Notifications Push/Email
         +Émargement Présence (Scan QR)
         +Demande Documents en Ligne
-        +Candidature Stages & Mobilité
-    }
-    class DoctorantCEDOC {
-        +Suivi Heures Formation (200h)
-        +Dépôt Articles Scientifiques
-        +Préparation Soutenance Thèse
     }
 
     SuperAdmin <|-- DirectionScolarite
@@ -129,68 +659,29 @@ classDiagram
 
 ---
 
-## 3. Description Détaillée des Modules Fonctionnels (14 Modules Métier)
+## 9. 📦 Description Détaillée des 15 Modules Fonctionnels
 
-### 1. 🎯 Concours National TAFEM & Admissions
-- **Import Ministériel Massar :** Parsing direct des fichiers Excel/CSV du concours TAFEM avec réconciliation automatique des CNE et moyennes du Baccalauréat.
-- **Workflow de Préinscription :** Génération des fiches d'admission et planification des créneaux de dépôt des dossiers physiques à la scolarité.
-
-### 2. 📋 Scolarité, Inscriptions & Tunnel de Réinscription
-- **Parcours Pédagogique (`StudentPathway`) :** Suivi de l'étudiant à travers les 10 semestres (S1 à S10).
-- **Tunnel de Réinscription Annuel (2A à 5A) :** Calcul instantané de la décision du jury, choix de la filière en S5/S7, paiement et délivrance du reçu officiel `REC-REINSC-2026-XXXX`.
-
-### 3. 👨‍🏫 Corps Professoral, Charges Horaires & Vacations
-- **Gestion des Statuts :** Professeurs de l'Enseignement Supérieur (PES), Professeurs Habilités (PH), Professeurs Assistants (PA) et Vacataires (`visiting`).
-- **Contrats de Vacation Automatisés :** Génération des contrats avec taux horaire (MAD), décompte des 45h par module et validation financière.
-
-### 4. 🏢 Smart Campus & Gestion des Espaces
-- **Inventaire Logistique :** Gestion des amphithéâtres, salles de cours, laboratoires multimédias et équipements de projection.
-- **Réservation sans collision :** Algorithme détectant les chevauchements horaires avant toute réservation.
-
-### 5. 🗓️ Moteur d'Emplois du Temps Anti-Conflits
-- **Génération Intelligente :** Placement des créneaux de cours sans aucun conflit d'enseignant, de groupe ou de salle.
-- **Exports Multi-Formats :** Synchronisation iCal (.ics) pour Google Calendar/Outlook et export PDF vectoriel pour affichage.
-
-### 6. 📝 Planification des Examens, Convocations & Gestion des Fraudes
-- **Algorithme de Répartition dans les Amphis :** Placement des étudiants avec espacement anti-triche et numérotation de table.
-- **Pass Examen Numérique :** Convocation individuelle avec QR Code de contrôle d'accès.
-- **PV d'Incident & Fraude :** Procédure numérique d'enregistrement des infractions avec pièces justificatives pour le Conseil de Discipline.
-
-### 7. 📊 Saisie des Notes, Verrouillage Optimiste & Délibérations LMD
-- **Double Saisie Sécurisée :** Notes CC (40-50%) et Examens (50-60%).
-- **Verrouillage Optimiste (`version` column) :** Empêche l'écrasement accidentel de notes en cas de saisie simultanée par plusieurs enseignants.
-- **Application du Rattrapage :** Règle automatique $\max(\text{Note Normale}, \text{Note Rattrapage})$.
-
-### 8. 📇 Cartes Étudiant PVC Smart Card (NFC + QR Token)
-- **Format Standardisé ISO/IEC 7810 ID-1 (CR80) :** Badge PVC haute résolution avec photo, code-barres Code 128, UID puce NFC et QR Token sécurisé.
-- **Vérification Universelle :** Contrôle instantané d'accès à l'entrée du campus et à la bibliothèque.
-
-### 9. 📱 Assiduité, Émargement QR Code & Justificatifs Médicaux
-- **Séance d'Émargement Dynamique :** Génération par le professeur d'un QR code éphémère projeté au tableau.
-- **Circuit des Justificatifs :** Dépôt en ligne des certificats médicaux par l'étudiant et validation scolarité avec mise à jour du statut en `justified`.
-
-### 10. 💼 Guichet des Stages, PFE & Soutenances
-- **Conventions Tripartites :** Génération des conventions avec les cabinets d'audit et entreprises partenaires (Big 4, Banques, Multinationales).
-- **Cycle de Soutenance :** Dépôt de mémoire, attribution du jury et validation de la note de PFE finale.
-
-### 11. 📜 Guichet Numérique, Attestations & Grand Diplôme Bac+5
-- **Attestations de Scolarité & Réussite :** Délivrance instantanée au format PDF avec signature numérique.
-- **Grand Diplôme National d'État Bac+5 :** Format A4 Paysage avec armoiries officielles et cadre sécurisé.
-
-### 12. 🔬 Études Doctorales CEDOC
-- **Carnet du Doctorant :** Comptabilisation des 200 heures de formations doctorales requises (MESRSFC).
-- **Publications & Thèse :** Suivi des articles indexés Scopus/WoS et autorisation de soutenance.
-
-### 13. 📚 Médiathèque Numérique & Prêts Koha LMS
-- **Interopérabilité SIGB :** Suivi des emprunts, réservations d'ouvrages et alertes de retards.
-
-### 14. 🤖 Tuteur Pédagogique IA & Baromètre de Qualité
-- **RAG sur Polycopiés :** Assistant IA répondant aux questions des étudiants en se basant exclusivement sur les cours validés par les professeurs.
-- **Évaluation Anonyme :** Baromètre de satisfaction cryptographiquement anonymisé par hash SHA-256.
+| N° | Module | Description & Rôle Métier |
+|:---:|---|---|
+| **1** | **🎯 TAFEM & Admissions** | Import ministériel Massar, réconciliation CNE et convocation aux entretiens d'admission. |
+| **2** | **📋 Scolarité & Tunnel de Réinscription** | Parcours S1 à S10, tunnel de réinscription annuel automatisé avec choix de filière S5/S7. |
+| **3** | **👨‍🏫 Corps Professoral & Vacations** | Gestion PES/PH/PA, contrats de vacation avec calcul des heures et décompte 45h/module. |
+| **4** | **🏛️ Smart Campus & Hub des Salles** | Matrice d'occupation en direct, Smart Finder de rattrapage, panneaux de porte PDF A4 et iCal. |
+| **5** | **🗓️ Générateur d'Emplois du Temps (CSP IA)** | Résolution par contraintes (MRV-Degree-LCV) avec zéro conflit prof/salle/groupe. |
+| **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place sur 2), convocations QR et PVs d'incidents. |
+| **7** | **📊 Saisie des Notes & Verrouillage Optimiste** | Double saisie CC/Exam, gestion de concurrence (`version`), application du max au rattrapage. |
+| **8** | **📇 Cartes Étudiant PVC Smart Card** | Format ISO/IEC 7810 ID-1 (CR80) avec puce NFC, Code 128 et QR Token crypté. |
+| **9** | **📱 Assiduité & Émargement QR Code** | Séance d'émargement projetée en direct, dépôt et validation des justificatifs médicaux. |
+| **10** | **💼 Stages, PFE & Soutenances** | Conventions tripartites, jurys de soutenance et workflow d'évaluation numérique. |
+| **11** | **📜 Guichet Numérique & Grand Diplôme** | Attestations PDF signées instantanément et Grand Diplôme National Bac+5 A4 Paysage. |
+| **12** | **🔬 Études Doctorales CEDOC** | Suivi des 200h de formations doctorales et validation des thèses. |
+| **13** | **📚 Médiathèque & Prêts Koha LMS** | Gestion des emprunts d'ouvrages et alertes automatiques de retards. |
+| **14** | **🤖 Tuteur IA & Baromètre Qualité** | Assistant IA sur polycopiés de cours et évaluations anonymisées par hash SHA-256. |
+| **15** | **🔒 Sécurité & Audit Forensics** | Journalisation milliseconde de toute modification et scellement HMAC-SHA256. |
 
 ---
 
-## 4. Moteur de Délibération & Règles Académiques LMD (NPN Maroc)
+## 10. 📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)
 
 ```mermaid
 flowchart TD
@@ -227,70 +718,18 @@ flowchart TD
 
 ---
 
-## 5. Diagrammes de Séquence des Processus Critiques (Workflows)
-
-### 5.1 Saisie des Notes, Verrouillage Optimiste & Scellement du PV
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Prof as 👨‍🏫 Professeur Responsable
-    participant API as ⚙️ Laravel Backend API
-    participant DB as 🐘 PostgreSQL (Table grades)
-    participant Audit as 🔒 Audit Trail & Digital Seal
-
-    Prof->>API: 1. Demande de la grille de notes (Module M501, Groupe 1)
-    API->>DB: Récupération des étudiants et des versions courantes (version=1)
-    API-->>Prof: Grille interactive avec tokens de version
-    
-    Prof->>API: 2. Soumission des notes CC & Examens (avec version=1)
-    API->>DB: UPDATE grades SET value=16.00, version=2 WHERE id=101 AND version=1
-    Note over API,DB: Verrouillage Optimiste validé (Aucune collision)
-    
-    Prof->>API: 3. Clôture de la saisie & Signature Numérique du PV
-    API->>Audit: Calcul de l'empreinte SHA-256 du PV de Délibération
-    Audit-->>API: digital_seal = HMAC-SHA256(payload, APP_KEY)
-    API->>DB: Enregistrement signature, signataire, date et scellement
-    API-->>Prof: Confirmation PV Signé & PDF Archivé
-```
-
----
-
-### 5.2 Workflow Tripartite de Convention de Stage / PFE
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Student as 👨‍🎓 Étudiant
-    actor Enterprise as 🏢 Entreprise d'Accueil (ex: PwC)
-    actor Admin as 👨‍💼 Service des Stages ENCG
-    actor Prof as 👨‍🏫 Professeur Encadrant
-
-    Student->>Admin: 1. Dépôt de la demande de stage (Entreprise, Sujet, Dates)
-    Admin->>Admin: 2. Vérification de conformité pédagogique
-    Admin-->>Student: 3. Génération de la Convention Tripartite PDF
-    Student->>Enterprise: 4. Signature & Cachet Entreprise
-    Enterprise-->>Student: Convention visée
-    Student->>Admin: 5. Dépôt convention signée sur l'ERP
-    Admin->>Prof: 6. Affectation du Professeur Encadrant
-    Prof->>Student: 7. Suivi des livrables & Validation Mémoire
-    Admin->>Student: 8. Programmation de la Soutenance Publique & Attribution Jury
-```
-
----
-
-## 6. Sécurité, Signature Numérique SHA-256 & Conformité CNDP
+## 11. 🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP
 
 ```mermaid
 graph LR
     subgraph DocumentFlow["📄 Sécurisation des Documents Officiels"]
-        Doc[Attestation / Diplôme / PV] --> Hash["🔐 Calcul Hash SHA-256<br/>(Données + Horodatage + Clé Institution)"]
-        Hash --> QR["📱 Génération QR Code Sécurisé<br/>(URL : /verify/universal-verify?token=...)"]
+        Doc[Attestation / Diplôme / PV / Affiche de Porte] --> Hash["🔐 Calcul Hash SHA-256<br/>(Données + Horodatage + Clé Institution)"]
+        Hash --> QR["📱 Génération QR Code Sécurisé<br/>(URL : /verify/document/... ou /public/rooms/...)"]
         QR --> PDF["🖨️ PDF/A Inaltérable Haute Définition"]
     end
 
     subgraph VerificationFlow["🌍 Vérification Publique Tiers"]
-        Scan["📷 Scan Smartphone (Ambassade / Recruteur)"] --> Check{"🔍 Vérification Signature BDD"}
+        Scan["📷 Scan Smartphone (Ambassade / Étudiant / Recruteur)"] --> Check{"🔍 Vérification Signature BDD"}
         Check -- Valide --> Green["✅ Document Authentique & Certifié ENCG Fès"]
         Check -- Modifié/Invalide --> Red["❌ Falsification Détectée / Document Rejeté"]
     end
@@ -298,112 +737,100 @@ graph LR
     PDF --> Scan
 ```
 
-- **Protection des Données (Loi CNDP 09-08) :** Hébergement sur infrastructure souveraine, politique stricte de rétention et anonymisation des données sensibles.
-- **Forensic Audit Logging :** Traçabilité exhaustive de toute modification de note (adresse IP, User Agent, note précédente, nouvelle note, horodatage milliseconde).
+---
+
+## 12. 🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)
+
+La stratégie d'assurance qualité du projet est adossée aux **7 principes fondamentaux de test de l'ISTQB** et à des techniques de conception de tests rigoureuses (boîte noire & boîte blanche) documentées dans **[TESTING.md](TESTING.md)**.
+
+### 12.1 Les 7 Principes ISTQB appliqués à l'ENCG ERP
+
+| # | Principe Fondamental ISTQB | Application Concrète dans l'Écosystème ENCG-ERP |
+|:---:|---|---|
+| **1** | **Le test montre la présence de défauts, non leur absence** | L'exécution des suites Pest, Vitest et Playwright garantit qu'aucun défaut connu ne persiste sur les flux critiques. Les tests prouvent que le système réagit conformément aux spécifications ministérielles. |
+| **2** | **Le test exhaustif est impossible** | Focalisation prioritaire (P0) sur les risques majeurs : calcul des moyennes LMD, délibérations, anti-collision des salles/EDT, scellement cryptographique des PVs et RBAC strict. |
+| **3** | **Tester tôt (*Shift Left Testing*)** | Les formules de calcul LMD (`LmdRules`, `lmd.ts`) et les contraintes d'optimistic locking sont testées unitairement **avant** l'intégration de l'interface utilisateur. |
+| **4** | **Regroupement des défauts (*Defect Clustering*)** | Les modules à haute complexité métier (délibération des jurys, gestion des conflits de salles, saisie de notes multi-professeurs) concentrent le plus grand nombre d'assertions dédiées. |
+| **5** | **Paradoxe du pesticide** | Les suites de tests sont continuellement enrichies lors de chaque nouvelle fonctionnalité (ex: ajout de `RoomAvailabilityAndSmartFinderTest.php` lors du développement du Smart Room Hub). |
+| **6** | **Le test dépend du contexte** | Adaptation stricte au contexte Grande École marocaine : bilinguisme FR/AR, système modulaire LMD (semestres S1 à S10), zéro frais sur cursus public, et normes MESRSFC. |
+| **7** | **L'illusion de l'absence d'erreurs (*Absence-of-errors fallacy*)** | Validation conjointe par tests automatisés et conformité avec les processus administratifs réels de l'ENCG Fès (scolarité, chefs de département, régie, jurys). |
 
 ---
 
-## 7. Pyramide de Tests & Couverture Complète (128 Backend + 17 Frontend)
+### 12.2 Techniques de Conception de Tests Appliquées
 
-Stratégie, 7 principes ISTQB et commandes : **[TESTING.md](TESTING.md)**.
+```mermaid
+graph TD
+    subgraph TestTechniques["🔬 Techniques de Conception de Tests"]
+        BVA["🎯 1. Analyse des Valeurs Limites (BVA)<br/>• 6.99 (NV Éliminatoire) vs 7.00 (RAT)<br/>• 9.99 (Rattrapage) vs 10.00 (Validation)<br/>• 9.49 vs 9.50 (Seuil de Rachat Jury)"]
+        EP["📊 2. Partitionnement d'Équivalence (EP)<br/>• Notes [0; 6.99], [7.00; 9.99], [10.00; 20.00]<br/>• Rôles RBAC SuperAdmin, Prof, Student<br/>• Types Salles (Amphi CM vs Salle TD)"]
+        ST["🔄 3. Tests de Transition d'États<br/>• Inscription S1 ➔ Rattrapage ➔ VARC ➔ Diplôme<br/>• Justificatif Médical : Pending ➔ Justified (48h)<br/>• Réservation Salle : Pending ➔ Approved"]
+        CC["⚡ 4. Tests de Concurrence & Lock Optimiste<br/>• Saisie simultanée avec colonne 'version'<br/>• Détection des conflits 409 Conflict<br/>• Zéro écrasement de notes en production"]
+    end
+```
 
-Le projet intègre une suite de tests automatisés exhaustive garantissant **0 régression** :
+---
+
+### 12.3 Pyramide de Tests & Tableau Récapitulatif (100% Green ✅)
 
 ```mermaid
 graph BT
     L1["🛡️ 1. Tests de Sécurité & Audit Linter (Oxlint / ESLint / Composer Audit)"]
     L2["🔬 2. Tests Unitaires Purs (MoroccanLmdFormulasUnitTest, Zustand Auth)"]
-    L3["🗄️ 3. Tests d'Intégration BDD (DatabaseSchemaAndRelationshipIntegrityTest)"]
-    L4["⚙️ 4. Tests Fonctionnels Feature (124 Suites : Délibérations, Convocations, Stages...)"]
-    L5["🔄 5. Tests de Non-Régression & Valeurs Limites (BVA 7.00 vs 6.99, Rachat 9.50)"]
+    L3["🗄️ 3. Tests d'Intégration BDD (DatabaseSchemaAndRelationshipIntegrityTest - 134 Tables)"]
+    L4["⚙️ 4. Tests Fonctionnels Feature (RoomAvailability, Délibérations, Convocations...)"]
+    L5["🔄 5. Tests de Non-Régression & Valeurs Limites (BVA 7.00 vs 6.99, Collision EDT)"]
     L6["🎓 6. Tests E2E de Cycle Académique Complet (AcademicLifecycleIntegrationTest)"]
 
     L1 --> L2 --> L3 --> L4 --> L5 --> L6
 ```
 
-### Tableau Récapitulatif des Suites de Tests Validées (100% Green ✅)
-
-| Domaine Testé | Fichier de Test Principal | Assertions | Résultat |
+| Domaine Testé | Fichier de Test Principal | Assertions | Statut |
 |---|---|:---:|:---:|
+| **Salles, Rattrapages & Smart Finder** | `RoomAvailabilityAndSmartFinderTest.php` | 78 | **✅ PASS** |
+| **Garde-Fou Salles & Anti-Collision** | `TimetableRoomGuardTest.php` | 9 | **✅ PASS** |
+| **Réservations Campus & Conflits** | `SmartCampusAndRoomBookingTest.php` | 14 | **✅ PASS** |
+| **Matrice Officielle d'Emploi du Temps** | `OfficialTimetableMatrixTest.php` | 8 | **✅ PASS** |
 | **Cycle Académique E2E** | `AcademicLifecycleIntegrationTest.php` | 18 | **✅ PASS** |
-| **Valeurs Limites & Non-Régression** | `AcademicNonRegressionAndBoundaryTest.php` | 8 | **✅ PASS** |
-| **Schéma BDD & Intégrité Clés** | `DatabaseSchemaAndRelationshipIntegrityTest.php` | 25 | **✅ PASS** |
+| **Non-Régression & Valeurs Limites (BVA)** | `AcademicNonRegressionAndBoundaryTest.php` | 8 | **✅ PASS** |
+| **Schéma BDD & Clés Étrangères (134 Tables)** | `DatabaseSchemaAndRelationshipIntegrityTest.php` | 25 | **✅ PASS** |
 | **Formules Pures LMD Maroc** | `MoroccanLmdFormulasUnitTest.php` | 12 | **✅ PASS** |
-| **Interactions Multi-Rôles & Notifs** | `MultiRoleInteractionAndNotificationTest.php` | 11 | **✅ PASS** |
-| **Compensation Annuelle LMD** | `AnnualSemesterCompensationAndProgressionTest.php` | 14 | **✅ PASS** |
-| **Authenticité QR & Sceau SHA-256** | `PublicDocumentQrVerificationAndSecurityTest.php` | 10 | **✅ PASS** |
 | **Verrouillage Optimiste Saisie Notes** | `ConcurrentGradeSubmissionAndLockingTest.php` | 9 | **✅ PASS** |
-| **Gestion des Étudiants (CRUD & SoftDeletes)** | `StudentTest.php` | 32 | **✅ PASS** |
-| **Gestion des Enseignants & Vacations** | `ProfessorTest.php` & `ProfessorAndAssignmentTest.php` | 35 | **✅ PASS** |
-| **Assiduité & Justificatifs Médicaux** | `AttendanceAndAbsenceJustificationWorkflowTest.php` | 10 | **✅ PASS** |
-| **Stages, PFE & Conventions** | `InternshipTest.php` & `PfeAndInternshipWorkflowTest.php` | 24 | **✅ PASS** |
-| **Emplois du Temps Anti-Collision** | `SmartTimetableGenerationAndAntiConflictTest.php` | 8 | **✅ PASS** |
-| **Examens, Convocations & Incidents** | `ExamPlanningAndIncidentTest.php` | 12 | **✅ PASS** |
-| **Études Doctorales CEDOC** | `CedocDoctoralStudiesAndThesisTest.php` | 6 | **✅ PASS** |
-| **Réseau Lauréats (Alumni)** | `AlumniCareerAndJobHubTest.php` | 6 | **✅ PASS** |
-| **Tuteur Pédagogique IA** | `AiTutorAndStudentAssistantTest.php` | 5 | **✅ PASS** |
-| **Frontend Zustand & Calculs LMD** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
-| **TOTAL** | **128 Suites Backend + 17 Tests Frontend** | **361 Backend** | **🌟 100% GREEN** |
+| **Frontend TypeScript & Store** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
+| **TOTAL** | **132+ Suites Backend & Frontend** | **400+ Assertions** | **🌟 100% GREEN** |
 
 ---
 
-## 8. Guide d'Installation en Local (Docker Dev)
+## 13. ⚙️ Référentiel des Commandes & Variables d'Environnement
 
-### 1. Cloner le Projet
+### Commandes Docker Essentielles (Conformité `.agents/AGENTS.md`)
 ```bash
-git clone -b docker-v2 https://github.com/radouane99/ENCG-ERP.git
-cd ENCG-ERP
-```
+# Vérifier la syntaxe PHP dans Docker
+docker exec encg_backend php -l <chemin_fichier>
 
-### 2. Démarrer les Conteneurs
-```bash
-docker compose up -d --build
-```
+# Exécuter les migrations Laravel
+docker exec encg_backend php artisan migrate
 
-### 3. Initialiser la Base de Données & Données de Démonstration
-```bash
-docker exec encg_backend php artisan key:generate
-docker exec encg_backend php artisan migrate:fresh --seed
-```
-
-### 4. Lancer la Suite de Tests Complète
-```bash
+# Lancer la suite de tests Pest/PHPUnit
 docker exec encg_backend php artisan test
-docker exec encg_frontend npm run test -- --run
+
+# Nettoyer les caches Laravel
+docker exec encg_backend php artisan optimize:clear
+
+# Vérifier la compilation TypeScript frontend
+docker exec encg_frontend npx tsc --noEmit
 ```
 
----
-
-## 9. Déploiement en Production (1-Click Production)
-
-Le déploiement en production est automatisé via [`deploy.sh`](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/deploy.sh) et [`docker-compose.prod.yml`](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/docker-compose.prod.yml) :
-
-```bash
-# 1. Cloner sur le serveur VPS
-git clone -b docker-v2 https://github.com/radouane99/ENCG-ERP.git /var/www/encg-erp
-cd /var/www/encg-erp
-
-# 2. Configurer les clés de production
-cp .env.production.example backend/.env
-nano backend/.env  # Renseigner APP_URL, DB_PASSWORD, RESEND_API_KEY
-
-# 3. Lancer le déploiement automatique 1-Click
-chmod +x deploy.sh
-./deploy.sh
-```
-
----
-
-## 10. Référentiel des Variables d'Environnement
+### Variables d'Environnement Clés (`.env`)
 
 | Variable | Description & Rôle | Exemple de Valeur |
 |---|---|---|
-| `APP_ENV` | Environnement d'exécution | `production` |
-| `APP_DEBUG` | Mode de débogage (Désactivé en prod) | `false` |
-| `APP_URL` | URL de l'instance déployée | `https://erp.encg-fes.ma` |
+| `APP_ENV` | Environnement d'exécution | `local` / `production` |
+| `APP_DEBUG` | Mode de débogage | `true` (dev) / `false` (prod) |
+| `APP_URL` | URL de l'instance déployée | `http://localhost:8000` |
 | `DB_CONNECTION` | Connecteur de base de données | `pgsql` |
 | `DB_HOST` | Hôte du service PostgreSQL | `postgres` |
-| `DB_DATABASE` | Nom de la base de production | `encg_erp_prod` |
+| `DB_DATABASE` | Nom de la base de données (134 tables) | `encg_erp` |
 | `CACHE_STORE` / `QUEUE_CONNECTION` | Moteur de cache et workers | `redis` |
 | `MAIL_MAILER` | Pilote de messagerie certifié | `resend` |
 | `RESEND_API_KEY` | Clé API Resend Transactional | `re_prod_xxxxxxxxxxxx` |

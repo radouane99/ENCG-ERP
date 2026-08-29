@@ -292,6 +292,26 @@ class RoomBookingController extends Controller
         ]);
     }
 
+    /**
+     * Matrice hebdomadaire globale (Lundi à Samedi) d'affectation des salles pour l'ENCG Fès.
+     */
+    public function weeklyMasterMatrix(Request $request, \App\Services\Academic\RoomAvailabilityService $service): JsonResponse
+    {
+        $filters = [
+            'start_date' => $request->input('start_date', now()->startOfWeek()->format('Y-m-d')),
+            'type' => $request->input('type'),
+            'search' => $request->input('search'),
+            'semester' => $request->input('semester'),
+        ];
+
+        $result = $service->getWeeklyMasterMatrix($filters);
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+        ]);
+    }
+
     private function userCanApprove(?object $user): bool
     {
         return $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(self::APPROVER_ROLES);

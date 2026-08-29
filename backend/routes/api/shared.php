@@ -90,6 +90,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/room-bookings/available-rooms', [RoomBookingController::class, 'availableRooms']);
     Route::post('/rooms/smart-find', [RoomBookingController::class, 'smartFind']);
     Route::get('/rooms/occupancy-matrix', [RoomBookingController::class, 'occupancyMatrix']);
+    Route::get('/rooms/weekly-master-matrix', [RoomBookingController::class, 'weeklyMasterMatrix']);
     Route::get('/rooms/{room}/door-sign-pdf', [RoomBookingController::class, 'doorSignPdf']);
     Route::apiResource('room-bookings', RoomBookingController::class);
 

@@ -264,6 +264,18 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 ### 4.19 📖 CAHIER DE TEXTE GLOBAL & SUIVI PÉDAGOGIQUE (`ScheduleController`, `AttendanceController`)
 - Suivi du déroulement des séances de cours, saisie du contenu pédagogique traité à chaque séance par le professeur et validation par le chef de département.
 
+### 4.20 🏛️ HUB INTELLIGENT DES SALLES, OCCUPATION TEMPS RÉEL & MOTEUR DE RATTRAPAGE (`RoomAvailabilityService`, `RoomBookingController`)
+- **Assistant Rattrapage & Smart Room Finder (`POST /api/rooms/smart-find`) :** Moteur intelligent permettant aux enseignants et à la scolarité de réserver un créneau de cours extra ou de rattrapage.
+  - Calcul dynamique de l'effectif selon les groupes sélectionnés (ex: 70 étudiants pour TC S2 G1+G2).
+  - Détection instantanée des collisions avec les emplois du temps officiels et les réservations existantes.
+  - Diagnostic exhaustif en cas de salle occupée (nom du module, professeur, groupe occupant).
+  - Algorithme de recommandation de salles libres alternatives selon la règle *Smallest-Fit* (amphithéâtres pour CM, salles pour TD) et proposition de créneaux alternatifs libres pour la même salle.
+- **Matrice d'Occupation Globale Heatmap (`GET /api/rooms/occupancy-matrix`) :** Vue synoptique en temps réel de tous les amphis et salles TD du campus découpée selon les 4 créneaux officiels (`08:30–10:30`, `10:45–12:45`, `14:30–16:30`, `16:45–18:45`).
+- **Affiches de Porte Officielles PDF A4 avec QR Code Dynamique (`GET /api/rooms/{room}/door-sign-pdf`) :** Génération instantanée d'un panneau d'affichage PDF A4 prêt à imprimer pour la porte de chaque salle/amphi, intégrant l'emploi du temps hebdomadaire officiel et un QR Code sécurisé renvoyant au statut live (`/public/rooms/{code}`).
+- **Synchronisation Agenda Universelle iCal (`GET /api/timetable/export/room/{id}/ics` & `/professor/{id}/ics`) :** Export `.ics` compatible Google Calendar, Microsoft Outlook et Apple Calendar combinant créneaux récurrents et rattrapages ponctuels validés.
+- **Bascule Mode Capacité Examen (Anti-fraude 50%) :** Switch immédiat réduisant les jauges à 1 place sur 2 pour respecter les normes du Ministère (MESRSFC).
+- **Diffusion Automatique des Notifications (Push + Email) :** Dispatch automatique via `RattrapageSessionScheduledNotification` et `ScheduleChangeNotificationMail` (Resend Mailer) aux étudiants et au délégué du groupe dès confirmation de la séance.
+
 ---
 
 ## 5. CATALOGUE DES 37 MODULES FRONTEND (REACT SPA)
@@ -670,9 +682,30 @@ L'ERP applique rigoureusement les normes de la **Commission Nationale de contrô
 └──────────────────────────┘    └──────────────────────────┘    └──────────────────────────┘
 ```
 
+### 🔄 Workflow 29 (Nouveau) : Hub Intelligent des Salles, Assistant Rattrapage & Auto-Notification Push/Email
+```text
+┌──────────────────────────┐    ┌──────────────────────────┐    ┌──────────────────────────┐
+│ 1. Demande de Rattrapage │───►│ 2. RoomAvailabilityServ. │───►│ 3. Détection Collision   │
+│ (Date, Créneau, Groupe)  │    │ (Calcul Effectif Groupe) │    │ (EDT Officiel + Bookings)│
+└──────────────────────────┘    └──────────────────────────┘    └────────────┬─────────────┘
+                                                                             │
+                                ┌──────────────────────────┐                 │
+                                │ 5. Notification Auto     │◄────────────────┤ 4. Suggestion Smallest-Fit
+                                │ Push PWA + Resend Email  │                 │    si occupée ou dispo
+                                └──────────────────────────┘                 ┘
+```
+
 ---
 
 ## 7. SCÉNARIOS DE TEST DÉTAILLÉS (END-TO-END GHERKIN STYLED)
+
+### 🧪 Scénario 20 (Nouveau) : Réservation de Rattrapage, Recommandation Intelligente & Panneau de Porte PDF
+- **GIVEN :** Le professeur de *Marketing Approfondi* souhaite planifier une séance de rattrapage le *Mardi de 08:30 à 10:30* pour les groupes *TC S2 G1 & G2* (Effectif calculé : 70 étudiants).
+- **WHEN :** Il saisit sa demande dans le Smart Room Finder (`POST /api/rooms/smart-find`) en ciblant la *Salle TD 1* (Capacité 40 places).
+- **THEN :** Le système signale que la capacité est insuffisante pour 70 étudiants et propose automatiquement les amphithéâtres libres (*Amphi 1 : 150 places, Amphi 2 : 120 places*) classés par pertinence (*Fit-Score*).
+- **WHEN :** L'enseignant sélectionne l'*Amphi 2* et confirme avec l'option *"Notifier automatiquement les étudiants"*.
+- **THEN :** La réservation est enregistrée en BDD (`room_bookings`), une notification Push in-app est diffusée aux étudiants de *TC S2 G1 & G2*, et un email officiel Resend est expédié avec la salle, la date et le créneau.
+- **AND :** La scolarité peut télécharger en 1-clic l'Affiche de Porte PDF A4 (`GET /api/rooms/{id}/door-sign-pdf`) intégrant l'emploi du temps hebdomadaire officiel et un QR Code dynamique pour l'affichage physique sur la porte.
 
 ### 🧪 Scénario 1 : Admission TAFEM & Génération du Code APOGEE
 - **GIVEN :** Le fichier CSV du Ministère contient le candidat `CNE=N134056789`, `CIN=CD890123`, `Note_BAC=16.50`, `Score_TAFEM=175.00`.
@@ -1360,18 +1393,19 @@ jobs:
 | Composant | Nombre Réel Vérifié |
 |---|:---:|
 | Modèles Eloquent (`app/Models/`) | **98** |
-| Contrôleurs API (`app/Http/Controllers/Api/` + sous-dossiers) | **113** (après nettoyage) |
+| Tables PostgreSQL Relationnelles (`encg_erp`) | **134** |
+| Contrôleurs API (`app/Http/Controllers/Api/` + sous-dossiers) | **114** (avec `RoomBookingController` et `RoomAvailabilityService`) |
 | Migrations PostgreSQL (`database/migrations/`) | **115** |
-| Classes de Services (`app/Services/` — 9 sous-dossiers) | **66** |
-| Templates Blade (`resources/views/`) | **72** |
+| Classes de Services (`app/Services/` — 9 sous-dossiers) | **68** |
+| Templates Blade & PDF (`resources/views/`) | **74** |
 | Classes Mail — Mailables (`app/Mail/`) | **19** |
 | Enums PHP (`app/Enums/`) | **5** |
 | Policies RBAC (`app/Policies/`) | **2** |
-| Jobs Asynchrones (`app/Jobs/`) | **1** |
-| Fichiers PHP totaux dans `/app` | **~430** |
+| Jobs Asynchrones & Notifications (`app/Jobs/`, `app/Notifications/`) | **6** |
+| Fichiers PHP totaux dans `/app` | **~435** |
 | Modules Frontend (`frontend/src/features/`) | **37** |
-| Fichiers TypeScript / TSX (`frontend/src/`) | **356** |
-| Suites de Tests Backend (Feature + Unit) | **48 fichiers, 137 suites** |
+| Fichiers TypeScript / TSX (`frontend/src/`) | **358** |
+| Suites de Tests Backend (Feature + Unit) | **50 fichiers, 142 suites (100% Green)** |
 | Tests Frontend (Vitest) | **10 fichiers, 17 tests** |
 
 ---

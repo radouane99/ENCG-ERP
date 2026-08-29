@@ -394,4 +394,208 @@ class RoomAvailabilityService
 
         return max(10, min(100, $score));
     }
+
+    /**
+     * Matrice Hebdomadaire Globale (Lundi à Samedi x 4 créneaux) par Salle pour l'ENCG Fès.
+     */
+    public function getWeeklyMasterMatrix(array $filters = []): array
+    {
+        $startDateStr = $filters['start_date'] ?? now()->startOfWeek()->format('Y-m-d');
+        $startOfWeek = Carbon::parse($startDateStr)->startOfWeek();
+        $roomType = $filters['type'] ?? null;
+        $search = $filters['search'] ?? null;
+        $semesterNumber = isset($filters['semester']) && $filters['semester'] ? (int) $filters['semester'] : null;
+
+        $roomsQuery = Room::query()->where('is_available', true);
+
+        if ($roomType && $roomType !== 'all') {
+            $roomsQuery->where('type', $roomType);
+        }
+        if ($search) {
+            $roomsQuery->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('code', 'ilike', "%{$search}%")
+                    ->orWhere('building', 'ilike', "%{$search}%");
+            });
+        }
+
+        $rooms = $roomsQuery->orderBy('type')->orderBy('name')->get();
+
+        // Load all schedules
+        $schedulesQuery = Schedule::with(['module.filiere', 'professor.user', 'group.filiere', 'room'])
+            ->where('is_active', true);
+
+        if ($semesterNumber) {
+            $schedulesQuery->whereHas('module', function ($q) use ($semesterNumber) {
+                $q->where('semester_number', $semesterNumber);
+            });
+        }
+
+        $schedules = $schedulesQuery->get();
+
+        // Load approved bookings for the week
+        $endOfWeek = $startOfWeek->copy()->addDays(6)->endOfDay();
+        $bookings = RoomBooking::with(['booker', 'room'])
+            ->where('status', 'approved')
+            ->where('start_time', '<=', $endOfWeek)
+            ->where('end_time', '>=', $startOfWeek->copy()->startOfDay())
+            ->get();
+
+        $days = [
+            1 => ['key' => 1, 'name' => 'Lundi', 'date' => $startOfWeek->copy()->addDays(0)->format('Y-m-d')],
+            2 => ['key' => 2, 'name' => 'Mardi', 'date' => $startOfWeek->copy()->addDays(1)->format('Y-m-d')],
+            3 => ['key' => 3, 'name' => 'Mercredi', 'date' => $startOfWeek->copy()->addDays(2)->format('Y-m-d')],
+            4 => ['key' => 4, 'name' => 'Jeudi', 'date' => $startOfWeek->copy()->addDays(3)->format('Y-m-d')],
+            5 => ['key' => 5, 'name' => 'Vendredi', 'date' => $startOfWeek->copy()->addDays(4)->format('Y-m-d')],
+            6 => ['key' => 6, 'name' => 'Samedi', 'date' => $startOfWeek->copy()->addDays(5)->format('Y-m-d')],
+        ];
+
+        $matrixRows = [];
+        $totalCells = 0;
+        $occupiedCells = 0;
+
+        foreach ($rooms as $room) {
+            $slotsData = [];
+
+            foreach (self::TIME_BLOCKS as $timeBlock) {
+                $slotIndex = $timeBlock['slot_index'];
+                $blockStart = $timeBlock['start'];
+                $blockEnd = $timeBlock['end'];
+
+                $daysCells = [];
+
+                foreach ($days as $dayIndex => $dayInfo) {
+                    $totalCells++;
+                    $dayDateStr = $dayInfo['date'];
+                    $blockStartDT = Carbon::parse("{$dayDateStr} {$blockStart}");
+                    $blockEndDT = Carbon::parse("{$dayDateStr} {$blockEnd}");
+
+                    // 1. Check Schedule
+                    $matchingSchedule = $schedules->first(function ($s) use ($room, $dayIndex, $blockStart, $blockEnd) {
+                        return (int) $s->room_id === (int) $room->id
+                            && (int) $s->day_of_week === (int) $dayIndex
+                            && str_starts_with($s->start_time, $blockStart);
+                    });
+
+                    // 2. Check Booking
+                    $matchingBooking = $bookings->first(function ($b) use ($room, $blockStartDT, $blockEndDT) {
+                        if ((int) $b->room_id !== (int) $room->id) {
+                            return false;
+                        }
+                        $bStart = Carbon::parse($b->start_time);
+                        $bEnd = Carbon::parse($b->end_time);
+
+                        return $bStart < $blockEndDT && $bEnd > $blockStartDT;
+                    });
+
+                    if ($matchingSchedule) {
+                        $occupiedCells++;
+                        $filiereCode = $matchingSchedule->group?->filiere?->code
+                            ?? $matchingSchedule->module?->filiere?->code
+                            ?? 'TC';
+                        $groupName = $matchingSchedule->group?->name ?? 'Gr.';
+                        $colorTheme = $this->getFiliereColorTheme($filiereCode);
+
+                        $daysCells[$dayIndex] = [
+                            'status' => 'occupied',
+                            'type' => 'course',
+                            'session_type' => $matchingSchedule->session_type ?? 'cours',
+                            'filiere_code' => $filiereCode,
+                            'group_name' => $groupName,
+                            'badge_label' => "{$filiereCode} • {$groupName}",
+                            'module_name' => $matchingSchedule->module?->name ?? 'Cours',
+                            'module_code' => $matchingSchedule->module?->code ?? '',
+                            'professor_name' => $matchingSchedule->professor?->user
+                                ? "Pr. {$matchingSchedule->professor->user->first_name} {$matchingSchedule->professor->user->last_name}"
+                                : 'Enseignant',
+                            'color_theme' => $colorTheme,
+                            'schedule_id' => $matchingSchedule->id,
+                        ];
+                    } elseif ($matchingBooking) {
+                        $occupiedCells++;
+                        $daysCells[$dayIndex] = [
+                            'status' => 'occupied',
+                            'type' => 'booking',
+                            'session_type' => 'rattrapage',
+                            'filiere_code' => 'RATTRAPAGE',
+                            'group_name' => 'Séance Extra',
+                            'badge_label' => 'Rattrapage / Extra',
+                            'module_name' => $matchingBooking->purpose ?? 'Séance de Rattrapage',
+                            'module_code' => 'EXTRA',
+                            'professor_name' => $matchingBooking->booker
+                                ? "{$matchingBooking->booker->first_name} {$matchingBooking->booker->last_name}"
+                                : 'Administration',
+                            'color_theme' => 'cyan',
+                            'booking_id' => $matchingBooking->id,
+                        ];
+                    } else {
+                        $daysCells[$dayIndex] = [
+                            'status' => 'free',
+                            'badge_label' => 'Libre',
+                            'color_theme' => 'emerald',
+                            'date' => $dayDateStr,
+                            'slot_index' => $slotIndex,
+                            'start_time' => $blockStart,
+                            'end_time' => $blockEnd,
+                        ];
+                    }
+                }
+
+                $slotsData[] = [
+                    'slot_index' => $slotIndex,
+                    'time_label' => $timeBlock['label'],
+                    'start' => $blockStart,
+                    'end' => $blockEnd,
+                    'days' => $daysCells,
+                ];
+            }
+
+            $matrixRows[] = [
+                'room_id' => $room->id,
+                'name' => $room->name,
+                'code' => $room->code,
+                'type' => $room->type,
+                'capacity' => $room->capacity,
+                'exam_capacity' => $room->exam_capacity ?? (int) floor($room->capacity / 2),
+                'building' => $room->building ?? 'Campus Principal',
+                'slots' => $slotsData,
+            ];
+        }
+
+        $occupancyRate = $totalCells > 0 ? round(($occupiedCells / $totalCells) * 100, 1) : 0;
+
+        return [
+            'start_of_week' => $startOfWeek->format('Y-m-d'),
+            'week_label' => 'Semaine du '.$startOfWeek->locale('fr')->isoFormat('D MMMM YYYY').' au '.$startOfWeek->copy()->addDays(5)->locale('fr')->isoFormat('D MMMM YYYY'),
+            'days' => array_values($days),
+            'time_blocks' => self::TIME_BLOCKS,
+            'rooms' => $matrixRows,
+            'stats' => [
+                'total_rooms' => $rooms->count(),
+                'total_cells' => $totalCells,
+                'occupied_cells' => $occupiedCells,
+                'free_cells' => $totalCells - $occupiedCells,
+                'occupancy_rate' => $occupancyRate,
+            ],
+        ];
+    }
+
+    /**
+     * Palette de couleurs par filière ENCG.
+     */
+    private function getFiliereColorTheme(string $filiereCode): string
+    {
+        $code = strtoupper(trim($filiereCode));
+
+        return match (true) {
+            str_contains($code, 'TC') => 'indigo',
+            str_contains($code, 'GFC') => 'emerald',
+            str_contains($code, 'MCM') || str_contains($code, 'MAC') => 'amber',
+            str_contains($code, 'ACG') => 'purple',
+            str_contains($code, 'MRH') => 'rose',
+            str_contains($code, 'CI') => 'sky',
+            str_contains($code, 'MST') || str_contains($code, 'MASTER') => 'violet',
+            default => 'blue',
+        };
+    }
 }

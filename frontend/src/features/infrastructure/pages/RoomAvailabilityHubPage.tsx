@@ -26,12 +26,16 @@ import {
   Printer,
   Download,
   CalendarPlus,
-  BellRing
+  BellRing,
+  Table,
+  Grid,
+  FileSpreadsheet,
+  RefreshCw
 } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
-import { format } from 'date-fns'
+import { format, startOfWeek, addDays } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 const TIME_BLOCKS = [
@@ -42,7 +46,7 @@ const TIME_BLOCKS = [
 ]
 
 export default function RoomAvailabilityHubPage() {
-  const [activeTab, setActiveTab] = useState<'finder' | 'matrix' | 'room_schedule' | 'bookings'>('finder')
+  const [activeTab, setActiveTab] = useState<'master_matrix' | 'finder' | 'matrix' | 'room_schedule' | 'bookings'>('master_matrix')
   const [isExamMode, setIsExamMode] = useState<boolean>(false)
 
   // --- Common Data ---
@@ -50,6 +54,14 @@ export default function RoomAvailabilityHubPage() {
   const [filieres, setFilieres] = useState<any[]>([])
   const [groups, setGroups] = useState<any[]>([])
   const [loadingInitial, setLoadingInitial] = useState(true)
+
+  // --- Master Weekly Matrix State ---
+  const [masterStartDate, setMasterStartDate] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'))
+  const [masterSemester, setMasterSemester] = useState<string>('')
+  const [masterTypeFilter, setMasterTypeFilter] = useState<string>('all')
+  const [masterSearch, setMasterSearch] = useState<string>('')
+  const [masterLoading, setMasterLoading] = useState(false)
+  const [masterMatrixData, setMasterMatrixData] = useState<any>(null)
 
   // --- Smart Finder State ---
   const [targetDate, setTargetDate] = useState(format(new Date(), 'yyyy-MM-dd'))
@@ -62,7 +74,7 @@ export default function RoomAvailabilityHubPage() {
   const [searching, setSearching] = useState(false)
   const [finderResult, setFinderResult] = useState<any>(null)
 
-  // --- Matrix State ---
+  // --- Matrix Daily Heatmap State ---
   const [matrixDate, setMatrixDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [matrixTypeFilter, setMatrixTypeFilter] = useState<string>('all')
   const [matrixSearch, setMatrixSearch] = useState<string>('')
@@ -108,6 +120,33 @@ export default function RoomAvailabilityHubPage() {
     }
     loadData()
   }, [])
+
+  // Load Master Matrix Data
+  const loadMasterMatrix = async () => {
+    try {
+      setMasterLoading(true)
+      const res = await api.get('/rooms/weekly-master-matrix', {
+        params: {
+          start_date: masterStartDate,
+          semester: masterSemester || undefined,
+          type: masterTypeFilter !== 'all' ? masterTypeFilter : undefined,
+          search: masterSearch || undefined,
+        }
+      })
+      setMasterMatrixData(res.data.data)
+    } catch (err) {
+      console.error(err)
+      toast.error('Erreur lors du chargement de la matrice hebdomadaire')
+    } finally {
+      setMasterLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'master_matrix') {
+      loadMasterMatrix()
+    }
+  }, [activeTab, masterStartDate, masterSemester, masterTypeFilter])
 
   // When filiere changes, load groups
   useEffect(() => {
@@ -165,7 +204,7 @@ export default function RoomAvailabilityHubPage() {
     }
   }
 
-  // Load Matrix Data
+  // Load Daily Matrix Data
   const loadOccupancyMatrix = async () => {
     try {
       setMatrixLoading(true)
@@ -231,8 +270,10 @@ export default function RoomAvailabilityHubPage() {
   }, [activeTab])
 
   // Open booking modal
-  const handleOpenBooking = (room: any) => {
+  const handleOpenBooking = (room: any, initialDate?: string, slotIdx?: number) => {
     setBookingRoom(room)
+    if (initialDate) setTargetDate(initialDate)
+    if (slotIdx !== undefined && slotIdx >= 0) setSelectedSlotIndex(slotIdx)
     setBookingPurpose(`Séance de rattrapage — ${sessionType.toUpperCase()}`)
     setNotifyStudents(true)
     setBookingModalOpen(true)
@@ -261,7 +302,8 @@ export default function RoomAvailabilityHubPage() {
 
       toast.success(`Réservation confirmée pour ${bookingRoom.name} ! ${notifyStudents ? 'Notifications et emails envoyés.' : ''}`)
       setBookingModalOpen(false)
-      handleRunSmartFind()
+      if (activeTab === 'master_matrix') loadMasterMatrix()
+      if (activeTab === 'matrix') loadOccupancyMatrix()
       if (activeTab === 'bookings') loadBookings()
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erreur lors de la réservation')
@@ -314,12 +356,71 @@ export default function RoomAvailabilityHubPage() {
     toast.success('Téléchargement du calendrier .ics (Google / Outlook / Apple) lancé !')
   }
 
+  // Export Master Matrix CSV
+  const handleExportMasterCsv = () => {
+    if (!masterMatrixData?.rooms) return
+
+    const daysHeaders = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+    let csv = "Salle,Code,Capacite,Creneau," + daysHeaders.join(",") + "\n"
+
+    masterMatrixData.rooms.forEach((r: any) => {
+      r.slots.forEach((s: any) => {
+        const row = [
+          `"${r.name}"`,
+          `"${r.code}"`,
+          r.capacity,
+          `"${s.time_label}"`,
+          `"${s.days[1]?.badge_label || 'Libre'}"`,
+          `"${s.days[2]?.badge_label || 'Libre'}"`,
+          `"${s.days[3]?.badge_label || 'Libre'}"`,
+          `"${s.days[4]?.badge_label || 'Libre'}"`,
+          `"${s.days[5]?.badge_label || 'Libre'}"`,
+          `"${s.days[6]?.badge_label || 'Libre'}"`,
+        ]
+        csv += row.join(",") + "\n"
+      })
+    })
+
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Matrice_Occupation_Salles_ENCG_${masterStartDate}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    toast.success('Export CSV généré avec succès !')
+  }
+
   // Helper for capacity in exam vs normal mode
   const getDisplayCapacity = (r: any) => {
     if (isExamMode) {
       return r.exam_capacity ?? Math.floor(r.capacity / 2)
     }
     return r.capacity
+  }
+
+  // Filière theme colors
+  const getThemeClasses = (theme: string, isOccupied: boolean) => {
+    if (!isOccupied) {
+      return "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60"
+    }
+    switch (theme) {
+      case 'indigo': // TC
+        return "bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200"
+      case 'emerald': // GFC
+        return "bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-950 dark:text-emerald-200"
+      case 'amber': // MCM / MAC
+        return "bg-amber-50/90 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-200"
+      case 'purple': // ACG
+        return "bg-purple-50/90 dark:bg-purple-950/50 border-purple-300 dark:border-purple-700 text-purple-950 dark:text-purple-200"
+      case 'rose': // MRH
+        return "bg-rose-50/90 dark:bg-rose-950/50 border-rose-300 dark:border-rose-700 text-rose-950 dark:text-rose-200"
+      case 'cyan': // Rattrapage
+        return "bg-cyan-50/90 dark:bg-cyan-950/50 border-cyan-300 dark:border-cyan-700 text-cyan-950 dark:text-cyan-200"
+      default:
+        return "bg-blue-50/90 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 text-blue-950 dark:text-blue-200"
+    }
   }
 
   const selectClass = "h-10 w-full px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
@@ -350,7 +451,7 @@ export default function RoomAvailabilityHubPage() {
               Occupation des Salles & Moteur de Rattrapage
             </h1>
             <p className="text-xs md:text-sm text-blue-200/70 font-medium max-w-2xl">
-              Vérification instantanée de disponibilité, assistant intelligent pour séances de rattrapage / cours extras, et matrice d'occupation temps réel.
+              Matrice de répartition hebdomadaire des amphithéâtres et salles TD, diagnostic de collision et assistant intelligent pour les rattrapages.
             </p>
           </div>
 
@@ -395,14 +496,15 @@ export default function RoomAvailabilityHubPage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          TAB NAVIGATION
+          TAB NAVIGATION (With Master Matrix as Primary Tab)
       ══════════════════════════════════════════════════════ */}
       <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full md:w-fit overflow-x-auto">
         {[
-          { id: 'finder' as const, label: 'Assistant Rattrapage & Smart Finder', icon: Sparkles },
-          { id: 'matrix' as const, label: 'Matrice d\'Occupation Globale (Heatmap)', icon: Layers },
-          { id: 'room_schedule' as const, label: 'Planning & Panneau de Porte PDF', icon: Calendar },
-          { id: 'bookings' as const, label: 'Registre des Réservations', icon: FileText },
+          { id: 'master_matrix' as const, label: '📊 Matrice Hebdomadaire (Vue Maître Globale)', icon: Table },
+          { id: 'finder' as const, label: '🎯 Assistant Rattrapage & Smart Finder', icon: Sparkles },
+          { id: 'matrix' as const, label: '🗺️ Vue Journalière (Heatmap)', icon: Layers },
+          { id: 'room_schedule' as const, label: '📅 Planning & Panneau de Porte PDF', icon: Calendar },
+          { id: 'bookings' as const, label: '📋 Registre des Réservations', icon: FileText },
         ].map(tab => (
           <button
             key={tab.id}
@@ -421,7 +523,261 @@ export default function RoomAvailabilityHubPage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          TAB 1: SMART ROOM FINDER & RATTRAPAGE
+          TAB 1 (PRIMARY): MASTER WEEKLY ROOM ALLOCATION MATRIX
+      ══════════════════════════════════════════════════════ */}
+      {activeTab === 'master_matrix' && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
+          
+          {/* Top Controls & Filters */}
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                  Vue Synthétique ENCG Fès
+                </span>
+                <h2 className="text-base font-black text-slate-900 dark:text-slate-100">
+                  Capacité, Répartition & Disponibilité des Salles (Semaine)
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {masterMatrixData?.week_label || 'Planning hebdomadaire officiel par salle et par créneau'}.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Semester Filter */}
+              <select
+                value={masterSemester}
+                onChange={(e) => setMasterSemester(e.target.value)}
+                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+              >
+                <option value="">Tous les semestres</option>
+                <option value="1">Semestre 1 (S1)</option>
+                <option value="2">Semestre 2 (S2)</option>
+                <option value="3">Semestre 3 (S3)</option>
+                <option value="4">Semestre 4 (S4)</option>
+                <option value="5">Semestre 5 (S5)</option>
+                <option value="6">Semestre 6 (S6)</option>
+                <option value="7">Semestre 7 (S7)</option>
+                <option value="8">Semestre 8 (S8)</option>
+              </select>
+
+              {/* Room Type Filter */}
+              <select
+                value={masterTypeFilter}
+                onChange={(e) => setMasterTypeFilter(e.target.value)}
+                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+              >
+                <option value="all">Tous les espaces</option>
+                <option value="amphitheater">Amphithéâtres (CM)</option>
+                <option value="classroom">Salles de Cours / TD</option>
+                <option value="lab">Laboratoires TP / Info</option>
+              </select>
+
+              {/* Week Date Picker */}
+              <input
+                type="date"
+                value={masterStartDate}
+                onChange={(e) => setMasterStartDate(e.target.value)}
+                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+              />
+
+              {/* Export CSV / Excel */}
+              <button
+                type="button"
+                onClick={handleExportMasterCsv}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+              >
+                <FileSpreadsheet size={13} />
+                Exporter Excel (.csv)
+              </button>
+
+              {/* Refresh */}
+              <button
+                type="button"
+                onClick={loadMasterMatrix}
+                disabled={masterLoading}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 transition-colors"
+                title="Actualiser la matrice"
+              >
+                <RefreshCw size={14} className={cn(masterLoading && "animate-spin")} />
+              </button>
+            </div>
+          </div>
+
+          {/* Filiere Color Legend */}
+          <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-[10px] font-bold">
+            <span className="text-slate-400 uppercase tracking-wider mr-1">Légende Filières ENCG :</span>
+            <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
+              TC (Tronc Commun)
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
+              GFC (Finance & Comptabilité)
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200">
+              MCM / MAC (Marketing & Commerce)
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200">
+              ACG (Audit & Contrôle de Gestion)
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 border border-cyan-200">
+              Rattrapage / Extra
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border border-dashed border-emerald-300">
+              Libre (Clic pour réserver)
+            </span>
+          </div>
+
+          {/* Master Table */}
+          {masterLoading ? (
+            <div className="py-24 flex items-center justify-center gap-3 text-slate-400">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+              <span className="text-sm font-medium">Génération de la matrice hebdomadaire ENCG…</span>
+            </div>
+          ) : !masterMatrixData?.rooms?.length ? (
+            <div className="py-16 text-center text-slate-400 text-xs font-medium">
+              Aucune salle trouvée avec ces critères.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-300 dark:border-slate-700 shadow-xs">
+              <table className="w-full min-w-[1100px] border-collapse text-xs">
+                <thead>
+                  {/* Top Header Row: School Banner */}
+                  <tr className="bg-[#001A4B] text-white text-center font-black tracking-wider uppercase text-[11px] border-b border-indigo-900">
+                    <th colSpan={9} className="py-2.5 px-4">
+                      ÉCOLE NATIONALE DE COMMERCE ET DE GESTION — ENCG FÈS · REPARTITION HEBDOMADAIRE DES ESPACES
+                    </th>
+                  </tr>
+                  {/* Column Titles */}
+                  <tr className="bg-amber-300 dark:bg-amber-400 text-slate-950 font-black uppercase text-[10px] tracking-wide border-b-2 border-slate-400">
+                    <th className="py-2.5 px-3 text-left w-36 border-r border-amber-400">Salle</th>
+                    <th className="py-2.5 px-2 text-center w-24 border-r border-amber-400">Nbre Places</th>
+                    <th className="py-2.5 px-3 text-center w-36 border-r border-amber-400">Créneau</th>
+                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Lundi</th>
+                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Mardi</th>
+                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Mercredi</th>
+                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Jeudi</th>
+                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Vendredi</th>
+                    <th className="py-2.5 px-2 text-center w-40">Samedi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-300 dark:divide-slate-700">
+                  {masterMatrixData.rooms.map((room: any) => (
+                    <React.Fragment key={room.room_id}>
+                      {room.slots.map((slot: any, sIdx: number) => {
+                        const isFirstSlot = sIdx === 0
+                        return (
+                          <tr
+                            key={`${room.room_id}-${slot.slot_index}`}
+                            className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors divide-x divide-slate-200 dark:divide-slate-800"
+                          >
+                            {/* Room Name (RowSpan = 4) */}
+                            {isFirstSlot && (
+                              <td
+                                rowSpan={room.slots.length}
+                                className="py-3 px-3.5 bg-slate-50 dark:bg-slate-800/60 font-black text-slate-900 dark:text-slate-100 text-left align-middle border-r border-slate-300 dark:border-slate-700"
+                              >
+                                <div className="space-y-0.5">
+                                  <p className="text-xs font-black text-[#001A4B] dark:text-blue-300">{room.name}</p>
+                                  <p className="text-[9px] text-slate-400 font-bold uppercase">
+                                    {room.type === 'amphitheater' ? 'Amphithéâtre' : (room.type === 'lab' ? 'Labo Info' : 'Salle TD')}
+                                  </p>
+                                  <p className="text-[9px] text-slate-400 font-medium truncate">{room.building}</p>
+                                </div>
+                              </td>
+                            )}
+
+                            {/* Capacity (RowSpan = 4) */}
+                            {isFirstSlot && (
+                              <td
+                                rowSpan={room.slots.length}
+                                className="py-3 px-2 bg-slate-50 dark:bg-slate-800/60 text-center align-middle font-black text-xs text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700"
+                              >
+                                <div>
+                                  <span className="text-sm font-black text-slate-900 dark:text-slate-100">{getDisplayCapacity(room)}</span>
+                                  {isExamMode && <p className="text-[8px] text-rose-500 font-bold uppercase">(Exam 50%)</p>}
+                                </div>
+                              </td>
+                            )}
+
+                            {/* Time Slot Label */}
+                            <td className="py-2 px-2.5 bg-amber-50/40 dark:bg-slate-800/40 text-center font-bold text-[10px] text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-slate-700">
+                              <span className="font-mono">{slot.time_label}</span>
+                            </td>
+
+                            {/* Days 1 to 6 (Lundi to Samedi) */}
+                            {[1, 2, 3, 4, 5, 6].map(dayIdx => {
+                              const cell = slot.days[dayIdx]
+                              const isOccupied = cell?.status === 'occupied'
+
+                              return (
+                                <td
+                                  key={dayIdx}
+                                  className="p-1 text-center align-middle"
+                                >
+                                  {isOccupied ? (
+                                    <div
+                                      className={cn(
+                                        "p-2 rounded-lg border text-left transition-all shadow-2xs group relative cursor-default",
+                                        getThemeClasses(cell.color_theme, true)
+                                      )}
+                                      title={`${cell.module_name} — ${cell.professor_name}`}
+                                    >
+                                      {/* Promo / Group Badge */}
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className="font-black text-[10px] uppercase tracking-wide truncate">
+                                          {cell.badge_label}
+                                        </span>
+                                        <span className="text-[8px] opacity-75 uppercase font-mono">
+                                          {cell.session_type === 'cm' ? 'CM' : (cell.session_type === 'td' ? 'TD' : 'TP')}
+                                        </span>
+                                      </div>
+
+                                      {/* Module Title */}
+                                      <p className="text-[9.5px] font-bold truncate mt-0.5 leading-tight" title={cell.module_name}>
+                                        {cell.module_name}
+                                      </p>
+
+                                      {/* Professor Name */}
+                                      <p className="text-[8.5px] opacity-75 truncate mt-0.5">
+                                        {cell.professor_name}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenBooking(room, cell?.date, slot.slot_index - 1)}
+                                      className={cn(
+                                        "w-full h-full min-h-[50px] p-2 rounded-lg border border-dashed text-center transition-all flex flex-col items-center justify-center cursor-pointer group",
+                                        getThemeClasses('free', false)
+                                      )}
+                                      title="Créneau libre — Cliquer pour réserver un rattrapage"
+                                    >
+                                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:hidden">
+                                        Libre
+                                      </span>
+                                      <span className="hidden group-hover:inline-flex items-center gap-1 text-[9px] font-black text-indigo-600 dark:text-indigo-400">
+                                        <PlusCircle size={11} /> Réserver
+                                      </span>
+                                    </button>
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
+          TAB 2: SMART ROOM FINDER & RATTRAPAGE
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'finder' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -563,7 +919,7 @@ export default function RoomAvailabilityHubPage() {
                   <option value="">Aucune préférence (Trouver la meilleure salle)</option>
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>
-                      {r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} places {isExamMode ? 'exam' : ''})
+                      {r.name} ({r.type === 'amphitheater' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} places {isExamMode ? 'exam' : ''})
                     </option>
                   ))}
                 </select>
@@ -702,7 +1058,7 @@ export default function RoomAvailabilityHubPage() {
                           <div className="flex items-center justify-between gap-2">
                             <div>
                               <p className="text-sm font-black text-slate-900 dark:text-slate-100">{room.name}</p>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase">{room.type === 'amphitheatre' ? 'Amphithéâtre' : 'Salle TD'}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">{room.type === 'amphitheater' ? 'Amphithéâtre' : 'Salle TD'}</p>
                             </div>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                               {getDisplayCapacity(room)} places {isExamMode ? 'exam' : ''}
@@ -737,7 +1093,7 @@ export default function RoomAvailabilityHubPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 2: GLOBAL OCCUPANCY MATRIX (HEATMAP)
+          TAB 3: DAILY MATRIX (HEATMAP)
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'matrix' && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
@@ -745,7 +1101,7 @@ export default function RoomAvailabilityHubPage() {
             <div>
               <h2 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-indigo-500" />
-                Matrice d'Occupation des Salles
+                Matrice Journalière d'Occupation des Salles
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Vue synoptique de toutes les salles pour la journée du {matrixData?.day_name || matrixDate}.
@@ -765,7 +1121,7 @@ export default function RoomAvailabilityHubPage() {
                 className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
               >
                 <option value="all">Tous les types</option>
-                <option value="amphitheatre">Amphithéâtres</option>
+                <option value="amphitheater">Amphithéâtres</option>
                 <option value="classroom">Salles TD</option>
                 <option value="lab">Laboratoires TP</option>
               </select>
@@ -819,7 +1175,7 @@ export default function RoomAvailabilityHubPage() {
                       <td className="px-4 py-3">
                         <p className="font-black text-slate-900 dark:text-slate-100">{r.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          {r.type === 'amphitheatre' ? 'Amphi' : 'Salle TD'} · {getDisplayCapacity(r)} pl. {isExamMode ? '(exam)' : ''}
+                          {r.type === 'amphitheater' ? 'Amphi' : 'Salle TD'} · {getDisplayCapacity(r)} pl. {isExamMode ? '(exam)' : ''}
                         </p>
                       </td>
                       {r.slots?.map((slot: any, idx: number) => {
@@ -863,7 +1219,7 @@ export default function RoomAvailabilityHubPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 3: SINGLE ROOM SCHEDULE & DOOR SIGN PDF
+          TAB 4: SINGLE ROOM SCHEDULE & DOOR SIGN PDF
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'room_schedule' && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
@@ -887,7 +1243,7 @@ export default function RoomAvailabilityHubPage() {
                 >
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>
-                      {r.name} ({r.type === 'amphitheatre' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} pl.)
+                      {r.name} ({r.type === 'amphitheater' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} pl.)
                     </option>
                   ))}
                 </select>
@@ -947,7 +1303,7 @@ export default function RoomAvailabilityHubPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 4: BOOKINGS LEDGER
+          TAB 5: BOOKINGS LEDGER
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'bookings' && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
@@ -1067,7 +1423,7 @@ export default function RoomAvailabilityHubPage() {
               </span>
               <h3 className="font-black text-xl tracking-tight">Réserver {bookingRoom.name}</h3>
               <p className="text-xs text-blue-200/80 font-medium mt-1">
-                Créneau : {targetDate} · {TIME_BLOCKS[selectedSlotIndex].label}
+                Créneau : {targetDate} · {TIME_BLOCKS[selectedSlotIndex]?.label || 'Créneau sélectionné'}
               </p>
             </div>
 
@@ -1088,7 +1444,7 @@ export default function RoomAvailabilityHubPage() {
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-1">
                 <p><strong>Salle :</strong> {bookingRoom.name} ({getDisplayCapacity(bookingRoom)} places {isExamMode ? 'exam' : ''})</p>
                 <p><strong>Effectif prévu :</strong> {calculatedHeadcount} étudiants</p>
-                <p><strong>Date & Heure :</strong> {targetDate} ({TIME_BLOCKS[selectedSlotIndex].label})</p>
+                <p><strong>Date & Heure :</strong> {targetDate} ({TIME_BLOCKS[selectedSlotIndex]?.label})</p>
               </div>
 
               {/* Notification Toggle */}

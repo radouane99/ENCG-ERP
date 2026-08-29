@@ -201,4 +201,46 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
                 'available_rooms_count',
             ]);
     }
+
+    public function test_weekly_master_matrix_api_endpoint()
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/rooms/weekly-master-matrix');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'data' => [
+                    'start_of_week',
+                    'week_label',
+                    'days',
+                    'time_blocks',
+                    'rooms' => [
+                        '*' => [
+                            'room_id',
+                            'name',
+                            'code',
+                            'type',
+                            'capacity',
+                            'slots' => [
+                                '*' => [
+                                    'slot_index',
+                                    'time_label',
+                                    'days',
+                                ]
+                            ]
+                        ]
+                    ],
+                    'stats' => [
+                        'total_rooms',
+                        'total_cells',
+                        'occupied_cells',
+                        'free_cells',
+                        'occupancy_rate',
+                    ]
+                ]
+            ]);
+    }
 }
