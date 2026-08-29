@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Search, Plus, Edit2, Trash2, X, Building } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -14,14 +14,26 @@ interface StudentOption {
 
 interface FinalProject {
   id: number;
-  title: string;
-  type: 'pfe' | 'pfa';
-  company_name: string;
-  company_city: string;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'defended';
-  student_name: string;
   student_id: number;
+  professor_id?: number;
+  title: string;
+  type: string;
+  company_name?: string;
+  company_city?: string;
   academic_year: string;
+  status: string;
+  student_name?: string;
+  student?: {
+    first_name: string;
+    last_name: string;
+    cne: string;
+  };
+  supervisor?: {
+    user?: {
+      first_name: string;
+      last_name: string;
+    };
+  };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -40,6 +52,15 @@ const STATUS_COLORS: Record<string, string> = {
   defended: 'bg-green-500/10 text-green-600 border-green-500/20'
 }
 
+const BADGE_MAP: Record<string, string> = {
+  draft: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+  submitted: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  validated: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  rejected: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+  defense_scheduled: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  defended: 'bg-green-500/10 text-green-600 border-green-500/20'
+}
+
 const EMPTY = { title: '', type: 'pfe', company_name: '', company_city: '', status: 'draft', student_id: '' }
 
 export default function FinalProjectsPage() {
@@ -54,7 +75,7 @@ export default function FinalProjectsPage() {
   const [form, setForm] = useState({ ...EMPTY })
   const [students, setStudents] = useState<StudentOption[]>([])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get('/final-projects', { params: { search, status: statusFilter } })
@@ -68,9 +89,11 @@ export default function FinalProjectsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, statusFilter, students.length])
 
-  useEffect(() => { fetchData() }, [search, statusFilter])
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const openCreate = () => { setEditingId(null); setForm({ ...EMPTY }); setShowModal(true) }
   const openEdit = (p: FinalProject) => {
@@ -90,11 +113,14 @@ export default function FinalProjectsPage() {
     e.preventDefault()
     try {
       const payload = { ...form, student_id: parseInt(form.student_id) }
-      editingId
-        ? await api.put(`/final-projects/${editingId}`, payload)
-        : await api.post('/final-projects', payload)
+      if (editingId) {
+        await api.put(`/final-projects/${editingId}`, payload)
+      } else {
+        await api.post('/final-projects', payload)
+      }
       toast.success(editingId ? t('final_projects.messages.update_success') : t('final_projects.messages.create_success'))
-      setShowModal(false); fetchData()
+      setShowModal(false)
+      fetchData()
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       toast.error(e?.response?.data?.message || t('final_projects.messages.error'))
@@ -165,7 +191,9 @@ export default function FinalProjectsPage() {
                       <span className="text-xs font-bold uppercase tracking-wider bg-muted px-2 py-1 rounded border">{p.type}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-medium text-foreground">{p.student_name}</p>
+                      <p className="font-medium text-foreground">
+                        {p.student ? `${p.student.first_name} ${p.student.last_name}` : (p.student_name || 'Étudiant')}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
                       {p.company_name ? (

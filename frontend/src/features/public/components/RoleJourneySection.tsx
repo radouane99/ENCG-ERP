@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Compass, GraduationCap, ShieldCheck, Users } from 'lucide-react'
+import { ArrowRight, Building2, Compass, GraduationCap, Users } from 'lucide-react'
 
 export type RoleJourneyLang = 'fr' | 'en' | 'ar'
 

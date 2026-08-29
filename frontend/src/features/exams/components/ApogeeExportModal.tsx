@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Download, FileSpreadsheet, X, CheckCircle2, ShieldCheck, 
-  Building2, AlertTriangle, RefreshCw, FileText, Loader2
+  Download, FileSpreadsheet, X, ShieldCheck, 
+  RefreshCw, Loader2
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';

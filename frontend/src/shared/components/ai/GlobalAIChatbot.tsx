@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  X, Send, Loader2, MessageSquare, Sparkles, RefreshCw,
+  X, Send, Loader2, Sparkles, RefreshCw,
   BookOpen, Calendar, FileText, BarChart2, HelpCircle,
   Minimize2, Maximize2, Bot, User
 } from 'lucide-react';
@@ -59,7 +59,7 @@ function renderText(text: string) {
 }
 
 export default function GlobalAIChatbot() {
-  const { user, hasAnyRole } = useAuthStore();
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -90,14 +90,15 @@ export default function GlobalAIChatbot() {
       }));
       setMessages(loaded);
     } else if (isOpen && messages.length === 0 && !historyData) {
+      const userName = (user as any)?.first_name ?? (user as any)?.name ?? 'à vous';
       setMessages([{
         id: 'welcome',
         role: 'bot',
-        text: `Bonjour ${user?.name?.split(' ')[0] ?? ''} ! ?? Je suis votre assistant IA de l'ENCG Fès, propulsé par **Gemini**.\n\nJe peux vous aider avec vos cours, notes, plannings, documents et bien plus encore. Comment puis-je vous aider ?`,
+        text: `Bonjour **${userName}** ! Je suis **ENCG Assistant IA**. Comment puis-je vous aider aujourd'hui ?`,
         timestamp: new Date(),
       }]);
     }
-  }, [historyData, isOpen]);
+  }, [historyData, isOpen, messages.length, user]);
 
   useEffect(() => {
     if (isOpen) {
