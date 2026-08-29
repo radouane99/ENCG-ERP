@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
-  BrainCircuit, TrendingUp, AlertTriangle, Users, Activity, Target, Zap, BellRing, RefreshCw, Loader2, Sparkles,
-  ShieldAlert, CheckCircle2, ChevronRight, Mail, Phone, ArrowUpRight, Cpu, FileText, Database, Info, Copy, Check
+  BrainCircuit, AlertTriangle, Activity, BellRing, RefreshCw, Sparkles, Cpu, Copy, Check,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -12,7 +11,7 @@ export default function AdminPredictiveAnalytics() {
   const [selectedModel, setSelectedModel] = useState('gemini-1.5');
   const [copied, setCopied] = useState(false);
 
-  const { data: analyticsData, isLoading, refetch } = useQuery({
+  const { data: analyticsData, isLoading } = useQuery({
     queryKey: ['admin-predictive-analytics'],
     queryFn: () => api.get('/admin/predictive-analytics').then(res => res.data.data),
     staleTime: 1000 * 60 * 10,

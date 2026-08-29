@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bot, Send, TrendingUp, DollarSign, Award, X, Loader2 } from 'lucide-react';
+import { Bot, Send, X, Loader2 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { cn } from '@shared/lib/utils';
 
@@ -10,7 +10,7 @@ interface AdminAiCopilotModalProps {
 }
 
 export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotModalProps) {
-  const { t, i18n } = useTranslation(['admin', 'common']);
+  const { i18n } = useTranslation(['admin', 'common']);
   const isRtl = i18n.language === 'ar';
 
   const [inputQuery, setInputQuery] = useState('');
@@ -47,7 +47,7 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
           data: aiResponse
         }
       ]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [
         ...prev,
         {

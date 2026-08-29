@@ -230,8 +230,34 @@ jobs:
 
       - name: 🛡️ Composer Security Audit
         working-directory: ./backend
-        run: composer audit --abandoned=report
-        continue-on-error: true
+        env:
+          COMPOSER_PROCESS_TIMEOUT: 600
+        run: |
+          composer config --global process-timeout 600
+          # Packagist /security-advisories often times out on GHA (Composer exit 100).
+          # Retry network failures; fail the job only on real advisories.
+          attempt=1
+          max_attempts=4
+          while [ "$attempt" -le "$max_attempts" ]; do
+            set +e
+            composer audit --abandoned=report
+            status=$?
+            set -e
+            if [ "$status" -eq 0 ]; then
+              exit 0
+            fi
+            if [ "$status" -ne 100 ]; then
+              echo "composer audit failed with exit ${status} (not a transport timeout)."
+              exit "$status"
+            fi
+            echo "Packagist security-advisories timed out (attempt ${attempt}/${max_attempts})."
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "::warning::Packagist unreachable after ${max_attempts} attempts (curl timeout). Audit skipped this run."
+              exit 0
+            fi
+            sleep $((attempt * 10))
+            attempt=$((attempt + 1))
+          done
 
   backup-restore-drill:
     name: 🗄️ Postgres restore drill (manual)
