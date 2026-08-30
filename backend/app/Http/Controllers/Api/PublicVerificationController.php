@@ -130,6 +130,7 @@ class PublicVerificationController extends Controller
                         'cin' => $user?->cin ?? 'N/A',
                         'issued_at' => $pDoc->signed_at ? $pDoc->signed_at->format('d/m/Y H:i') : $pDoc->created_at->format('d/m/Y H:i'),
                         'signer' => $pDoc->signed_by ?? 'Secrétaire Général ENCG Fès',
+                    'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
                         'purpose' => $pDoc->purpose,
                         'destination' => $pDoc->destination,
                         'status' => $pDoc->status === 'ready' || $pDoc->status === 'approved' ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En cours de validation',
@@ -143,7 +144,7 @@ class PublicVerificationController extends Controller
         // 3. Recherche Document Étudiant (GeneratedDocument ou DocumentRequest)
         $genDoc = null;
         if ($code) {
-            $genDoc = GeneratedDocument::with('student.user')
+            $genDoc = GeneratedDocument::with(['student.user', 'student.registrations.filiere'])
                 ->where('verification_token', $code)
                 ->orWhere('id', is_numeric($code) ? (int) $code : 0)
                 ->first();
@@ -151,19 +152,23 @@ class PublicVerificationController extends Controller
 
         if ($genDoc && $genDoc->student) {
             $stUser = $genDoc->student->user;
+            $filiereName = $genDoc->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun / Gestion';
 
             return response()->json([
                 'success' => true,
                 'is_valid' => true,
                 'data' => [
-                    'document_type' => $genDoc->document_type ?? 'Attestation Officielle',
+                    'document_type' => $genDoc->document_type ?? 'Attestation de Scolarité',
                     'tracking_code' => $genDoc->verification_token,
                     'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant',
                     'role' => 'Étudiant ENCG Fès',
+                    'filiere' => $filiereName,
+                    'academic_year' => '2025/2026',
                     'cne' => $genDoc->student->cne ?? $genDoc->student->student_number,
                     'issued_at' => $genDoc->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
                     'signer' => 'Direction & Scolarité ENCG Fès',
                     'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'preview_url' => $genDoc->document_request_id ? url("/api/admin/document-requests/{$genDoc->document_request_id}/preview") : null,
                     'sha256_hash' => hash('sha256', "encg-doc-{$genDoc->id}-{$genDoc->verification_token}"),
                     'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 ],
@@ -172,7 +177,7 @@ class PublicVerificationController extends Controller
 
         // 3.b Recherche dans DocumentRequest (par ID de demande, CNE ou Hash généré)
         if ($code) {
-            $docReq = DocumentRequest::with(['student.user', 'documentType'])
+            $docReq = DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])
                 ->where('id', is_numeric($code) ? (int) $code : 0)
                 ->orWhereHas('student', function ($q) use ($code) {
                     $q->where('cne', $code)->orWhere('student_number', $code);
@@ -182,18 +187,23 @@ class PublicVerificationController extends Controller
 
             if ($docReq && $docReq->student) {
                 $stUser = $docReq->student->user;
+                $filiereName = $docReq->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
+
                 return response()->json([
                     'success' => true,
                     'is_valid' => true,
                     'data' => [
-                        'document_type' => $docReq->documentType?->name ?? 'Attestation Officielle',
+                        'document_type' => $docReq->documentType?->name ?? 'Attestation de Scolarité',
                         'tracking_code' => "DOC-ENCG-{$docReq->id}-".strtoupper(substr(md5((string) $docReq->id), 0, 6)),
                         'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
                         'role' => 'Étudiant ENCG Fès',
+                        'filiere' => $filiereName,
+                        'academic_year' => '2025/2026',
                         'cne' => $docReq->student->cne ?? $docReq->student->student_number,
                         'issued_at' => $docReq->processed_at?->format('d/m/Y H:i') ?? $docReq->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
                         'signer' => 'Direction & Scolarité ENCG Fès',
                         'status' => in_array($docReq->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
+                        'preview_url' => url("/api/admin/document-requests/{$docReq->id}/preview"),
                         'sha256_hash' => hash('sha256', "encg-req-{$docReq->id}-{$docReq->student_id}-{$docReq->created_at}"),
                         'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                     ],
@@ -202,9 +212,11 @@ class PublicVerificationController extends Controller
         }
 
         // 4. Si aucune donnée précise n'est transmise ou pour un test rapide sur le dernier document réel en base
-        $latestStudentDoc = DocumentRequest::with(['student.user', 'documentType'])->latest()->first();
+        $latestStudentDoc = DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])->latest()->first();
         if ($latestStudentDoc && $latestStudentDoc->student) {
             $stUser = $latestStudentDoc->student->user;
+            $filiereName = $latestStudentDoc->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
+
             return response()->json([
                 'success' => true,
                 'is_valid' => true,
@@ -214,10 +226,13 @@ class PublicVerificationController extends Controller
                     'tracking_code' => "DOC-ENCG-{$latestStudentDoc->id}-".strtoupper(substr(md5((string) $latestStudentDoc->id), 0, 6)),
                     'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
                     'role' => 'Étudiant ENCG Fès',
+                    'filiere' => $filiereName,
+                    'academic_year' => '2025/2026',
                     'cne' => $latestStudentDoc->student->cne ?? $latestStudentDoc->student->student_number,
                     'issued_at' => $latestStudentDoc->processed_at?->format('d/m/Y H:i') ?? $latestStudentDoc->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
                     'signer' => 'Direction & Scolarité ENCG Fès',
                     'status' => in_array($latestStudentDoc->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
+                    'preview_url' => url("/api/admin/document-requests/{$latestStudentDoc->id}/preview"),
                     'sha256_hash' => hash('sha256', "encg-req-{$latestStudentDoc->id}-{$latestStudentDoc->student_id}-{$latestStudentDoc->created_at}"),
                     'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 ],
@@ -250,6 +265,7 @@ class PublicVerificationController extends Controller
                     'purpose' => $latestProfDoc->purpose,
                     'destination' => $latestProfDoc->destination,
                     'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'preview_url' => url("/api/professor-portal/documents/{$latestProfDoc->id}/pdf"),
                     'sha256_hash' => hash('sha256', "encg-prof-doc-{$latestProfDoc->id}-{$latestProfDoc->tracking_code}-{$latestProfDoc->created_at}"),
                     'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 ],
